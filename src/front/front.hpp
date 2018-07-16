@@ -227,7 +227,7 @@ private:
             void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {
+                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {  /*NOLINT*/
                     const uint16_t max_image_width
                       = std::min<uint16_t>(
                             align4(this->max_data_block_size / nbbytes(new_bmp.bpp())),
@@ -1260,7 +1260,7 @@ public:
     TpduBuffer buf;
     size_t channel_list_index = 0;
 
-    void incoming(Callback & cb, time_t /*now*/) /*NOLINT(hicpp-function-size)*/
+    void incoming(Callback & cb, time_t /*now*/) /*NOLINT*/
     {
         if (bool(this->verbose & Verbose::basic_trace3)) {
             LOG(LOG_INFO, "Front::incoming");

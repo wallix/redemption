@@ -1694,7 +1694,7 @@ public:
 
         if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == server_window_id) {
             LOG(LOG_ERR, "ClientActivatePDU::map_window_id: Failed to map window id. ClientWindowId=0x%X", this->WindowId_);
-            throw ERR_UNEXPECTED;
+            throw Error(ERR_UNEXPECTED);
         }
 
         if (server_window_id == this->WindowId_) {

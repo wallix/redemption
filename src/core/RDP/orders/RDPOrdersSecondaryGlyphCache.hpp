@@ -29,7 +29,7 @@
 #include "utils/stream.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 // [MS-RDPEGDI] - 2.2.2.2.1.2.5 Cache Glyph - Revision 1 (CACHE_GLYPH_ORDER)
 // =========================================================================

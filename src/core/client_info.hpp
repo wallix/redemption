@@ -199,7 +199,7 @@ struct ClientInfo {
         this->remote_program          = (infoPacket.flags & INFO_RAIL);
         this->remote_program_enhanced = (infoPacket.flags & INFO_HIDEF_RAIL_SUPPORTED);
 
-        if (::strcasecmp(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP) &&
+        if (0 != ::strcasecmp(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP) &&
             (::strcasestr(::char_ptr_cast(infoPacket.AlternateShell), DUMMY_REMOTEAPP ":") != ::char_ptr_cast(infoPacket.AlternateShell))) {
             snprintf(this->alternate_shell, sizeof(this->alternate_shell), "%s", infoPacket.AlternateShell);
             snprintf(this->working_dir,     sizeof(this->working_dir),     "%s", infoPacket.WorkingDir    );

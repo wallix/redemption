@@ -663,7 +663,6 @@ public:
                         int scanCode = 0;
                         scanCode = std::stoi(ligne.substr(0, pos));
                         ligne = ligne.substr(pos + 1, ligne.length());
-                        pos = ligne.find(' ');
 
                         std::string ASCII8 = ligne.substr(0, 1);
                         int next_pos = 2;
@@ -682,10 +681,7 @@ public:
 
                         std::string name = ligne.substr(pos + 1, ligne.length());
 
-
-                        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
-
-                        this->keyCustomDefinitions.push_back(keyCustomDefinition);
+                        this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
                     }
                 }
             }
@@ -716,9 +712,7 @@ public:
 
 
     void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) override {
-
-        KeyCustomDefinition keyCustomDefinition = {qtKeyID, scanCode, ASCII8, extended, name};
-        this->keyCustomDefinitions.push_back(keyCustomDefinition);
+        this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
     }
 
 
@@ -726,7 +720,7 @@ public:
     void setClientInfo() override {
 
         this->userProfils.clear();
-        this->userProfils.push_back({0, "Default"});
+        this->userProfils.emplace_back(0, "Default");
 
         // file config
         std::ifstream ifichier(this->USER_CONF_DIR);
@@ -744,7 +738,7 @@ public:
                 } else
                 if (line.compare(0, pos, "name") == 0) {
                     if (read_id) {
-                        this->userProfils.push_back({read_id, info});
+                        this->userProfils.emplace_back(read_id, info);
                     }
                 } else
                 if (this->current_user_profil == read_id) {
@@ -1047,9 +1041,7 @@ public:
                                 std::getline(ofile, file_resolution);
                                 std::getline(ofile, file_checksum);
 
-                                IconMovieData iconData = {file_name, file_path, file_version, file_resolution, file_checksum, movie_len};
-
-                                this->icons_movie_data.push_back(iconData);
+                                this->icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
 
                             } else {
                                 LOG(LOG_INFO, "Can't open file \"%s\"", file_path);

@@ -99,6 +99,9 @@ namespace re {
             this->data.range.r = range_right;
         }
 
+        State(const State &) = delete;
+        State& operator=(const State &) = delete;
+
         ~State()
         {
             if (this->type == SEQUENCE) {
@@ -194,10 +197,6 @@ namespace re {
 
         State *out1;
         State *out2;
-
-    private:
-        State(const State &);
-        State& operator=(const State &);
     };
 
     inline std::ostream& operator<<(std::ostream& os, const State& st)

@@ -48,11 +48,11 @@
 #include <cstddef>
 #include <cstdlib>
 #include <ctime>
+#include <csignal>
 
 #include <arpa/inet.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/un.h>

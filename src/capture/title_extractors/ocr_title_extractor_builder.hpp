@@ -93,7 +93,7 @@ class OcrTitleExtractorBuilder
         struct {} dummy;
 
         Variant() : dummy() {}
-        ~Variant() {}
+        ~Variant() {} /*NOLINT*/
     } variant;
 
 public:

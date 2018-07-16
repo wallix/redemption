@@ -20,11 +20,6 @@
 
 #pragma once
 
-#include <cstdio>
-#include <cstring>
-#include <fcntl.h>
-#include <sys/uio.h>
-
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 #include "core/client_info.hpp"
@@ -32,7 +27,12 @@
 
 #include "core/RDP/clipboard.hpp"
 
+// #include <cstdio>
+// #include <cstring>
 
+
+#include <sys/uio.h>
+#include <fcntl.h>
 
 
 
@@ -139,15 +139,10 @@ struct RDPMetrics {
 
     void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
         SslSha1 sha1;
-        sha1.update(reinterpret_cast<const uint8_t*>(src), src_len);
+        sha1.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha1::DIGEST_LENGTH];
         sha1.final(sig);
-
-        std::memcpy(dest, sig, SslSha1::DIGEST_LENGTH);
-//         snprintf(dest, SslSha1::DIGEST_LENGTH,
-//                  "%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X%01X",
-//                  sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
-//                  sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
+        memcpy(dest, sig, SslSha1::DIGEST_LENGTH);
     }
 
     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
@@ -231,7 +226,7 @@ struct RDPMetrics {
         ::snprintf(sentence, sizeof(sentence), "Session_starting_time=%s delta_time(s)=%ld Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s"
 
           " main_channel_data_from_client=%ld"
-          " right_click_sent=%d left_click_sent=%d keys_sent=%d"
+          " right_click_sent=%d left_click_sent=%d keys_sent=%d mouse_move=%d"
           " main_channel_data_from_serveur=%ld"
 
           " cliprdr_channel_data_from_server=%ld"
@@ -283,20 +278,13 @@ struct RDPMetrics {
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
-
         } else {
-
-            struct iovec iov[1];
-            iov[0].iov_base = sentence;
-            iov[0].iov_len = std::strlen(sentence);
-
-            ssize_t nwritten = ::writev(fd, iov, 1);
+            const iovec vec[1]{{sentence, std::strlen(sentence)}};
+            ssize_t nwritten = ::writev(this->fd, vec, 1); // atomic write
 
             if (nwritten == -1) {
-                std::string file_path_template(this->path_template);
-                file_path_template += this->last_date;
-                file_path_template += ".log";
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
+                    this->fd, this->path_template, this->last_date);
                 return;
             }
         }

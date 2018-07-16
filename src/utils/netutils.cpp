@@ -38,7 +38,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-#include <signal.h>
+#include <csignal>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <netdb.h>

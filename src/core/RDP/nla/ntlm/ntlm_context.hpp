@@ -1023,8 +1023,7 @@ public:
         this->ntlm_init_rc4_seal_states();
         if (this->UseMIC) {
             this->ntlm_compute_MIC();
-            if (memcmp(this->MessageIntegrityCheck,
-                       this->AUTHENTICATE_MESSAGE.MIC, 16)) {
+            if (0 != memcmp(this->MessageIntegrityCheck, this->AUTHENTICATE_MESSAGE.MIC, 16)) {
                 LOG(LOG_ERR, "MIC NOT MATCHING STOP AUTHENTICATE");
                 hexdump_c(this->MessageIntegrityCheck, 16);
                 hexdump_c(this->AUTHENTICATE_MESSAGE.MIC, 16);

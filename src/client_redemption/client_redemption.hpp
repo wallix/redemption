@@ -1431,7 +1431,7 @@ private:
     {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            if constexpr (with_log) {
+            if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip_or_bmp);
             }
             LOG(LOG_INFO, "========================================\n");
@@ -1453,7 +1453,7 @@ private:
     {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
-            if constexpr (with_log) {
+            if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
             }
             LOG(LOG_INFO, "========================================\n");
@@ -1477,7 +1477,7 @@ private:
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             (void)clip;
             (void)order;
-            if constexpr (with_log) {
+            if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
             }
             LOG(LOG_INFO, "========================================\n");

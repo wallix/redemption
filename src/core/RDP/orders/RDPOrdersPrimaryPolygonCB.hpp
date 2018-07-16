@@ -293,8 +293,8 @@ public:
             | (memcmp(this->brush.extra, oldcmd.brush.extra, 7) != 0) * 0x0400
             | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0800
             | ((this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
-               memcmp(this->deltaPoints, oldcmd.deltaPoints,
-                      this->NumDeltaEntries * sizeof(DeltaPoint))
+               0 != memcmp(this->deltaPoints, oldcmd.deltaPoints,
+                           this->NumDeltaEntries * sizeof(DeltaPoint))
                ) * 0x1000
               ;
 

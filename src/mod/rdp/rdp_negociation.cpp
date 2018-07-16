@@ -1461,11 +1461,8 @@ bool RdpNegociation::get_license(InStream & stream)
                     LOG(LOG_INFO, "Rdp::Get license status");
                 }
                 LIC::ErrorAlert_Recv lic(sec.payload);
-                if ((lic.validClientMessage.dwErrorCode == LIC::STATUS_VALID_CLIENT)
-                    && (lic.validClientMessage.dwStateTransition == LIC::ST_NO_TRANSITION)){
-                    r = true;
-                }
-                else {
+                if ((lic.validClientMessage.dwErrorCode != LIC::STATUS_VALID_CLIENT)
+                 || (lic.validClientMessage.dwStateTransition != LIC::ST_NO_TRANSITION)){
                     LOG(LOG_ERR, "RDP::License Alert: error=%u transition=%u",
                         lic.validClientMessage.dwErrorCode, lic.validClientMessage.dwStateTransition);
                 }

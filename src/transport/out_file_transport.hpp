@@ -35,7 +35,7 @@ class ReportError
 {
 public:
     template<class F>
-    explicit ReportError(F && f)
+    explicit ReportError(F && f) /*NOLINT*/
     : impl(new FuncImpl<typename std::decay<F>::type>{std::forward<F>(f)})
     {}
 
@@ -90,7 +90,7 @@ private:
     {
         F fun;
         template<class Fu>
-        explicit FuncImpl(Fu && f) : fun(std::forward<Fu>(f)) {}
+        explicit FuncImpl(Fu && f) /*NOLINT*/ : fun(std::forward<Fu>(f)) {}
         Error get_error(Error err) override { return fun(err); }
         ImplPtr clone() const override { return ImplPtr(new FuncImpl(fun)); }
     };

@@ -170,6 +170,31 @@ private:
     char msg[256];
 };
 
+namespace
+{
+    struct HashHex
+    {
+        HashHex() noexcept
+        {
+            memset(this->hashhex, '0', sizeof(this->hashhex)-1); // NOLINT(bugprone-suspicious-memset-usage)
+            this->hashhex[sizeof(this->hashhex)-1] = 0;
+        }
+
+        char const* c_str() const noexcept
+        {
+            return this->hashhex;
+        }
+
+        HashHexArray& data() noexcept
+        {
+            return this->hashhex;
+        }
+
+    private:
+        HashHexArray hashhex;
+    };
+} // namespace
+
 struct RedCryptoWriterHandle
 {
     enum RandomType { LCG, UDEV };
@@ -185,12 +210,7 @@ struct RedCryptoWriterHandle
             old_encryption_scheme, one_shot_encryption_scheme,
             filename_derivator)
     , out_crypto_transport(cctxw.cctx, *random_wrapper.rnd, fstat)
-    {
-        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
-        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
-        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
-        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
-    }
+    {}
 
 private:
     struct RandomWrapper
@@ -216,7 +236,7 @@ private:
             UdevRandom udev;
             char dummy;
             U() : dummy() {}
-            ~U() {}
+            ~U() {} /*NOLINT*/
         } u;
     };
 
@@ -226,8 +246,8 @@ private:
 public:
     CryptoContextWrapper cctxw;
 
-    HashHexArray qhashhex;
-    HashHexArray fhashhex;
+    HashHex qhashhex;
+    HashHex fhashhex;
 
     OutCryptoTransport out_crypto_transport;
     RedCryptoErrorContext error_ctx;
@@ -236,8 +256,8 @@ public:
 
 struct RedCryptoReaderHandle
 {
-    HashHexArray qhashhex;
-    HashHexArray fhashhex;
+    HashHex qhashhex;
+    HashHex fhashhex;
 
     RedCryptoReaderHandle(
         InCryptoTransport::EncryptionMode encryption,
@@ -249,12 +269,7 @@ struct RedCryptoReaderHandle
             old_encryption_scheme, one_shot_encryption_scheme,
             filename_derivator)
     , in_crypto_transport(cctxw.cctx, encryption, this->fstat)
-    {
-        memset(this->qhashhex, '0', sizeof(this->qhashhex)-1);
-        this->qhashhex[sizeof(this->qhashhex)-1] = 0;
-        memset(this->fhashhex, '0', sizeof(this->fhashhex)-1);
-        this->fhashhex[sizeof(this->fhashhex)-1] = 0;
-    }
+    {}
 
     CryptoContextWrapper cctxw;
     Fstat fstat;
@@ -304,14 +319,14 @@ const char* scytale_version() {
 char const * scytale_writer_qhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
-    return handle->qhashhex;
+    return handle->qhashhex.c_str();
 }
 
 /// \return HashHexArray
 char const * scytale_writer_fhashhex(RedCryptoWriterHandle * handle) {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, "");
-    return handle->fhashhex;
+    return handle->fhashhex.c_str();
 }
 
 
@@ -369,8 +384,8 @@ int scytale_writer_close(RedCryptoWriterHandle * handle) {
     HashArray qhash;
     HashArray fhash;
     CHECK_NOTHROW(handle->out_crypto_transport.close(qhash, fhash), ERR_TRANSPORT_CLOSED);
-    hash_to_hashhex(qhash, handle->qhashhex);
-    hash_to_hashhex(fhash, handle->fhashhex);
+    hash_to_hashhex(qhash, handle->qhashhex.data());
+    hash_to_hashhex(fhash, handle->fhashhex.data());
     return 0;
 }
 
@@ -475,7 +490,7 @@ int scytale_reader_fhash(RedCryptoReaderHandle * handle, const char * file)
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(
         InCryptoTransport::HASH fhash = handle->in_crypto_transport.fhash(file);
-        hash_to_hashhex(fhash.hash, handle->fhashhex),
+        hash_to_hashhex(fhash.hash, handle->fhashhex.data()),
         ERR_TRANSPORT_READ_FAILED
     );
     return 0;
@@ -487,7 +502,7 @@ int scytale_reader_qhash(RedCryptoReaderHandle * handle, const char * file)
     CHECK_HANDLE(handle);
     CHECK_NOTHROW(
         InCryptoTransport::HASH qhash = handle->in_crypto_transport.qhash(file);
-        hash_to_hashhex(qhash.hash, handle->qhashhex),
+        hash_to_hashhex(qhash.hash, handle->qhashhex.data()),
         ERR_TRANSPORT_READ_FAILED
     );
     return 0;
@@ -498,14 +513,14 @@ const char * scytale_reader_qhashhex(RedCryptoReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
-    return handle->qhashhex;
+    return handle->qhashhex.c_str();
 }
 
 const char * scytale_reader_fhashhex(RedCryptoReaderHandle * handle)
 {
     SCOPED_TRACE;
     CHECK_HANDLE_R(handle, nullptr);
-    return handle->fhashhex;
+    return handle->fhashhex.c_str();
 }
 
 

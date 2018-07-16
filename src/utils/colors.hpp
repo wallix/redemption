@@ -154,9 +154,7 @@ constexpr uint32_t log_value(BGRColor const & c) noexcept { return c.to_u32(); }
 
 struct RDPColor
 {
-    constexpr RDPColor() noexcept
-    : color_(0)
-    {}
+    constexpr RDPColor() noexcept = default;
 
     constexpr BGRColor as_bgr() const noexcept { return BGRColor(this->color_); }
     constexpr BGRasRGBColor as_rgb() const noexcept { return BGRasRGBColor(this->as_bgr()); }
@@ -169,7 +167,7 @@ private:
     : color_(c)
     {}
 
-    uint32_t color_;
+    uint32_t color_ = 0;
 };
 
 constexpr bool operator == (RDPColor const & lhs, RDPColor const & rhs)

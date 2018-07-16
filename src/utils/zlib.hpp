@@ -28,6 +28,7 @@
 
 #include <cstdint>
 #include <cstring>
+
 #include <zlib.h>
 
 
@@ -60,7 +61,7 @@ class Zcompressor
 
     // send more data to compressor
     // returns the amount of data processed
-    size_t update(uint8_t * const data, size_t data_size)
+    size_t update(uint8_t const * data, size_t data_size)
     {
         this->z.next_in = data;
         this->z.avail_in = data_size;
@@ -130,7 +131,7 @@ class Zdecompressor
 
     // send more data to compressor
     // returns the amount of data processed
-    size_t update(uint8_t * const data, size_t data_size)
+    size_t update(uint8_t const * data, size_t data_size)
     {
         this->z.next_in = data;
         this->z.avail_in = data_size;

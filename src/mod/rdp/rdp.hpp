@@ -691,8 +691,6 @@ protected:
 
     ModRdpVariables vars;
 
-    RDPMetrics metrics;
-
 
 public:
     using Verbose = RDPVerbose;
@@ -701,6 +699,10 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
+private:
+    RDPMetrics metrics;
+
+public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
@@ -1203,7 +1205,7 @@ public:
         this->remote_programs_session_manager.reset();
 
         if (!this->server_redirection_packet_received) {
-            this->redir_info.reset();
+            this->redir_info = RedirectionInfo();
         }
     }
 
@@ -4240,11 +4242,12 @@ public:
         //    domain_username_format_0, domain_username_format_0);
 
         if (this->disconnect_on_logon_user_change &&
-            ((::strcasecmp(domain, this->logon_info.domain()) || ::strcasecmp(username, this->logon_info.username())) &&
+            ((0 != ::strcasecmp(domain, this->logon_info.domain())
+             || 0 != ::strcasecmp(username, this->logon_info.username())) &&
              (this->logon_info.domain()[0] ||
-              (::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
-               ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
-               ::strcasecmp(username, this->logon_info.username()))))) {
+              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
+               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
+               0 != ::strcasecmp(username, this->logon_info.username()))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }

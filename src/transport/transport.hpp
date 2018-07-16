@@ -37,7 +37,7 @@
 #include "configs/autogen/enums.hpp"
 
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 class ServerNotifier;
 
@@ -48,6 +48,9 @@ protected:
 
 public:
     explicit Transport() = default;
+
+    Transport(const Transport &) = delete;
+    Transport& operator=(const Transport &) = delete;
 
     virtual ~Transport() = default;
 
@@ -202,10 +205,6 @@ public:
     }
 
     virtual int get_fd() const { return INVALID_SOCKET; }
-
-private:
-    Transport(const Transport &) = delete;
-    Transport& operator=(const Transport &) = delete;
 };
 
 

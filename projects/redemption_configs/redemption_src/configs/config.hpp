@@ -295,13 +295,13 @@ public:
 
         FieldReference() = default;
 
+        FieldReference(FieldReference const &) = delete;
+        FieldReference & operator=(FieldReference const &) = delete;
+
     private:
         FieldBase * field = nullptr;
         Inifile * ini = nullptr;
         authid_t id = authid_t::AUTHID_UNKNOWN;
-
-        FieldReference(FieldReference const &) = delete;
-        FieldReference & operator=(FieldReference const &) = delete;
 
         FieldReference(Inifile & ini, authid_t id)
         : field(&ini.fields[id])

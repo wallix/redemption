@@ -28,7 +28,7 @@
 
 namespace RDP {
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 // [MS-RDPBCGR] - 2.2.1.17 Client Persistent Key List PDU
 // ======================================================

@@ -196,7 +196,8 @@ public:
     }
 
 
-    void receive(InStream & chunk) {
+    void receive(InStream & chunk) /*NOLINT*/
+    {
         if (this->impl_io_disk == nullptr) {
             return ;
         }

@@ -117,7 +117,7 @@ public:
     {
         assert(!this->fdobject);
         this->fdobject = session_reactor.create_fd_event(
-            this->file_descriptor, std::ref(*this), std::move(terminate_notifier))
+            this->file_descriptor, std::ref(*this), terminate_notifier)
         .on_action([](auto ctx, RdpdrDriveReadTask& self, TerminateEventNotifier& terminate_notifier) {
             if (self.run()) {
                 return ctx.need_more_data();
@@ -238,7 +238,7 @@ public:
         assert(!this->timer_ptr);
         // TODO create_yield_event
         this->timer_ptr = session_reactor.create_timer(
-            std::ref(*this), std::move(terminate_notifier))
+            std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendDriveIOResponseTask& self, TerminateEventNotifier&){
@@ -317,7 +317,7 @@ public:
         assert(!this->timer_ptr);
         // TODO create_yield_event
         this->timer_ptr = session_reactor.create_timer(
-            std::ref(*this), std::move(terminate_notifier))
+            std::ref(*this), terminate_notifier)
         .set_notify_delete(detail::create_notify_delete_task())
         .set_delay(std::chrono::milliseconds(1))
         .on_action([](auto ctx, RdpdrSendClientMessageTask& self, TerminateEventNotifier&){

@@ -81,7 +81,7 @@ private:
         : dummy()
         {}
 
-        ~CompressionTransport() {}
+        ~CompressionTransport() {} /*NOLINT*/
     } compressors;
 
     void destruct_()

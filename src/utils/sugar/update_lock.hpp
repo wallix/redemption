@@ -37,8 +37,7 @@ public:
         this->r_.end_update();
     }
 
-private:
-    update_lock(update_lock const &);
-    update_lock&operator=(update_lock const &);
+    update_lock(update_lock const &) = delete;
+    update_lock&operator=(update_lock const &) = delete;
 };
 

@@ -37,7 +37,7 @@ namespace CHANNELS
         {}
 
         template<std::size_t n>
-        constexpr explicit ChannelNameId(char const (&channel_name)[n])
+        constexpr explicit ChannelNameId(char const (&channel_name)[n]) noexcept
           : id(Id(
             #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
                 (n > 0 ? (lower<0>(channel_name) << 0 ) : uint64_t{})

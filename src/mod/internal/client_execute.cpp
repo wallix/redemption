@@ -860,7 +860,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_NORTH: {
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
+                        offset_y = std::min(yPos - this->captured_mouse_y, offset_y_max);
                         offset_cy = -offset_y;
                     }
                     break;
@@ -869,10 +869,10 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
+                        offset_x = std::min(xPos - this->captured_mouse_x, offset_x_max);
                         offset_cx = -offset_x;
 
-                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
+                        offset_y = std::min(yPos - this->captured_mouse_y, offset_y_max);
                         offset_cy = -offset_y;
                     }
                     break;
@@ -880,7 +880,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_WEST: {
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
 
-                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
+                        offset_x = std::min(xPos - this->captured_mouse_x, offset_x_max);
                         offset_cx = -offset_x;
                     }
                     break;
@@ -888,49 +888,49 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
                     case MOUSE_BUTTON_PRESSED_SOUTHWEST: {
                         const int offset_x_max = this->window_rect_saved.cx - INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH;
 
-                        offset_x = std::min(int(xPos - this->captured_mouse_x), offset_x_max);
+                        offset_x = std::min(xPos - this->captured_mouse_x, offset_x_max);
                         offset_cx = -offset_x;
 
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
+                        offset_cy = std::max(yPos - this->captured_mouse_y, offset_cy_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_SOUTH : {
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
+                        offset_cy = std::max(yPos - this->captured_mouse_y, offset_cy_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_SOUTHEAST: {
                         const int offset_cy_min = INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT - this->window_rect_saved.cy;
 
-                        offset_cy = std::max(int(yPos - this->captured_mouse_y), offset_cy_min);
+                        offset_cy = std::max(yPos - this->captured_mouse_y, offset_cy_min);
 
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
+                        offset_cx = std::max(xPos - this->captured_mouse_x, offset_cx_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_EAST: {
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
+                        offset_cx = std::max(xPos - this->captured_mouse_x, offset_cx_min);
                     }
                     break;
 
                     case MOUSE_BUTTON_PRESSED_NORTHEAST: {
                         const int offset_y_max = this->window_rect_saved.cy - INTERNAL_MODULE_MINIMUM_WINDOW_HEIGHT;
 
-                        offset_y = std::min(int(yPos - this->captured_mouse_y), offset_y_max);
+                        offset_y = std::min(yPos - this->captured_mouse_y, offset_y_max);
                         offset_cy = -offset_y;
 
                         const int offset_cx_min = INTERNAL_MODULE_MINIMUM_WINDOW_WIDTH - this->window_rect_saved.cx;
 
-                        offset_cx = std::max(int(xPos - this->captured_mouse_x), offset_cx_min);
+                        offset_cx = std::max(xPos - this->captured_mouse_x, offset_cx_min);
                     }
                     break;
                 }
@@ -1921,7 +1921,7 @@ void ClientExecute::process_client_execute_pdu(uint32_t total_length,
 
     const char * exe_of_file = cepdu.ExeOrFile();
 
-    if (::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
+    if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
         (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
         this->client_execute_flags       = cepdu.Flags();
         this->client_execute_exe_or_file = cepdu.ExeOrFile();

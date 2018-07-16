@@ -21,7 +21,7 @@
 */
 
 #include <unistd.h>
-#include <signal.h>
+#include <csignal>
 #include <sys/un.h>
 #include <arpa/inet.h>
 #include <cerrno>
@@ -95,7 +95,7 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 #if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
-    sa.sa_handler = SIG_IGN;
+    sa.sa_handler = SIG_IGN; /*NOLINT*/
     sigaction(SIGSEGV, &sa, nullptr);
 
     sa.sa_handler = SIG_DFL;
@@ -113,16 +113,16 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     sa.sa_handler = sigpipe;
     sigaction(SIGPIPE, &sa, nullptr);
 
-    sa.sa_handler = SIG_IGN;
+    sa.sa_handler = SIG_IGN; /*NOLINT*/
     sigaction(SIGCHLD, &sa, nullptr);
 
     sa.sa_handler = SIG_DFL;
     sigaction(SIGALRM, &sa, nullptr);
 
-    sa.sa_handler = SIG_IGN;
+    sa.sa_handler = SIG_IGN; /*NOLINT*/
     sigaction(SIGUSR1, &sa, nullptr);
 
-    sa.sa_handler = SIG_IGN;
+    sa.sa_handler = SIG_IGN; /*NOLINT*/
     sigaction(SIGUSR2, &sa, nullptr);
 REDEMPTION_DIAGNOSTIC_POP
 }

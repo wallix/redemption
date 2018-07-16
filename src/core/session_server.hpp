@@ -186,7 +186,7 @@ public:
 //                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.set_acl<cfg::globals::target>(target_ip);
                     if (ini.get<cfg::globals::enable_transparent_mode>()
-                        &&  strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
+                        && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {
                         ini.set_acl<cfg::context::real_target_device>(real_target_ip);
                     }
                     Session session(unique_fd{sck}, ini, this->cctx, this->rnd, this->fstat);

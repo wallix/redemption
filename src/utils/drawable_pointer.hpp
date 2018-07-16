@@ -185,12 +185,13 @@ struct DrawablePointer {
         const uint8_t * data;
     };
 
-    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT];    // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
-    uint8_t number_of_contiguous_pixels;
-    uint8_t Bpp;
-    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3];  // 32 pixels per line * 32 lines * 3 bytes per pixel
 
-    explicit DrawablePointer() : contiguous_pixels(), number_of_contiguous_pixels(0), Bpp(3), data() {}
+    ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT] {}; // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
+    uint8_t number_of_contiguous_pixels = 0;
+    uint8_t Bpp = 3;
+    uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 32 pixels per line * 32 lines * 3 bytes per pixel
+
+    explicit DrawablePointer() = default;
 
     void initialize(unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));

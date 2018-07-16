@@ -112,6 +112,6 @@ Translation::language_t language(variables<Cfg...> const & vars) {
 
 } // namespace vcfg
 
-using vcfg::language;
+using vcfg::language; /*NOLINT*/
 
 #endif

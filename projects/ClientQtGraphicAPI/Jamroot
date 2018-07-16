@@ -103,6 +103,7 @@ project redemption_qt_client
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
     <define>__STDC_FORMAT_MACROS
+    <define>ZLIB_CONST
 
     <define>QT_NO_KEYWORDS
 
