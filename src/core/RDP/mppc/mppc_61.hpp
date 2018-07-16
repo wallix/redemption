@@ -407,7 +407,7 @@ struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_matc
         const uint8_t * history_data_end   = history_data_begin + history_data_size - (RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1);
         while (history_data_begin != history_data_end) {
             assert(history_data_begin <= history_data_end);
-            if (memcmp(output_data, history_data_begin, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
+            if (0 != memcmp(output_data, history_data_begin, RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH)) {
                 history_data_begin++;
                 continue;
             }

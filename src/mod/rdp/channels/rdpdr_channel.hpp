@@ -2297,7 +2297,7 @@ public:
                                               /* strict_check = */false) &&
                 !(device_create_request.CreateOptions() &
                   smb2::FILE_DIRECTORY_FILE) &&
-                ::strcmp(device_create_request.Path(), "/")) {
+                0 != ::strcmp(device_create_request.Path(), "/")) {
                 access_ok = false;
             }
             if (!this->param_file_system_write_authorized &&

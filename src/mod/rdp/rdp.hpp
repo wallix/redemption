@@ -4236,11 +4236,12 @@ public:
         //    domain_username_format_0, domain_username_format_0);
 
         if (this->disconnect_on_logon_user_change &&
-            ((::strcasecmp(domain, this->logon_info.domain()) || ::strcasecmp(username, this->logon_info.username())) &&
+            ((0 != ::strcasecmp(domain, this->logon_info.domain())
+             || 0 != ::strcasecmp(username, this->logon_info.username())) &&
              (this->logon_info.domain()[0] ||
-              (::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
-               ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
-               ::strcasecmp(username, this->logon_info.username()))))) {
+              (0 != ::strcasecmp(domain_username_format_0, this->logon_info.username()) &&
+               0 != ::strcasecmp(domain_username_format_1, this->logon_info.username()) &&
+               0 != ::strcasecmp(username, this->logon_info.username()))))) {
             if (this->error_message) {
                 *this->error_message = "Unauthorized logon user change detected!";
             }

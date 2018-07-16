@@ -1921,7 +1921,7 @@ void ClientExecute::process_client_execute_pdu(uint32_t total_length,
 
     const char * exe_of_file = cepdu.ExeOrFile();
 
-    if (::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
+    if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
         (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
         this->client_execute_flags       = cepdu.Flags();
         this->client_execute_exe_or_file = cepdu.ExeOrFile();

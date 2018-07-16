@@ -4,6 +4,7 @@
 
 ${CLANG_TIDY:=clang-tidy} -checks='*,
 -android-cloexec-accept,
+-android-cloexec-fopen,
 -android-cloexec-open,
 -cert-dcl03-c,
 -cert-err09-cpp,

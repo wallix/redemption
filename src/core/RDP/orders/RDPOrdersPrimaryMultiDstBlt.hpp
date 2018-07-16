@@ -190,9 +190,9 @@ public:
               | (this->nDeltaEntries != oldcmd.nDeltaEntries) * 0x0020
               | (
                  (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
-                 memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
-                        this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
-                                                            ) * 0x0040
+                 0 != memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
+                             this->nDeltaEntries * sizeof(RDP::DeltaEncodedRectangle))
+                ) * 0x0040
               ;
 
         common.emit(stream, header, oldcommon);

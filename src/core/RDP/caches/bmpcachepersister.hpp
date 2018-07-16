@@ -115,7 +115,7 @@ public:
         //   , magic[0], magic[1], magic[2], magic[3]);
         //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        if (::memcmp(magic, "PDBC", 4)) {
+        if (0 != ::memcmp(magic, "PDBC", 4)) {
             LOG( LOG_ERR
                , "BmpCachePersister::BmpCachePersister: "
                  "File is not a persistent bitmap cache file. filename=\"%s\""
@@ -200,7 +200,7 @@ private:
 
                 uint8_t sha1[SslSha1::DIGEST_LENGTH];
                 bmp.compute_sha1(sha1);
-                if (memcmp(sig, sha1, sizeof(sig))) {
+                if (0 != memcmp(sig, sha1, sizeof(sig))) {
                     LOG( LOG_ERR
                        , "BmpCachePersister::preload_from_disk: Preload failed. Cause: bitmap or key corruption.");
                     assert(false);
@@ -265,7 +265,7 @@ public:
         //   , magic[0], magic[1], magic[2], magic[3]);
         //LOG( LOG_INFO, "BmpCachePersister: version=%u", version);
 
-        if (::memcmp(magic, "PDBC", 4)) {
+        if (0 != ::memcmp(magic, "PDBC", 4)) {
             LOG( LOG_ERR
                , "BmpCachePersister::load_all_from_disk: "
                  "File is not a persistent bitmap cache file. filename=\"%s\""

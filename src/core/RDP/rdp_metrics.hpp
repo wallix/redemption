@@ -28,8 +28,7 @@
 #include <cstdio>
 #include <cstring>
 
-#include <unistd.h>
-
+#include <sys/uio.h>
 #include <fcntl.h>
 
 
@@ -198,7 +197,8 @@ struct RDPMetrics {
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
         } else {
-            ssize_t nwritten = ::write(this->fd, sentence, len);
+            const iovec vec[1]{{sentence, size_t(len)}};
+            ssize_t nwritten = ::writev(this->fd, vec, 1); // atomic write
 
             if (nwritten == -1) {
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",

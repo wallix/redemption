@@ -197,7 +197,7 @@ static int _internal_make_directory(const char *directory, mode_t mode, const in
     struct stat st;
     int status = 0;
 
-    if ((directory[0] != 0) && strcmp(directory, ".") && strcmp(directory, "..")) {
+    if ((directory[0] != 0) && 0 != strcmp(directory, ".") && 0 != strcmp(directory, "..")) {
         if (stat(directory, &st) != 0) {
             /* Directory does not exist. */
             if ((mkdir(directory, mode) != 0) && (errno != EEXIST)) {

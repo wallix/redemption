@@ -13,7 +13,7 @@
 
 namespace
 {
-    const std::string prefix_msg_error = "Exception of type 'Error': ";
+    const std::string prefix_msg_error = "Exception of type 'Error': "; /*NOLINT*/
 } // namespace
 
 namespace redemption_unit_test__

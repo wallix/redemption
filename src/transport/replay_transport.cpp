@@ -53,7 +53,7 @@ namespace
             data.begin(), data.end(),
             expected_data.begin(), expected_data.end());
         auto pos = unsigned(p.first - data.begin());
-		LOG(LOG_INFO, "At position: %d (0x%x)", pos, pos);
+		LOG(LOG_INFO, "At position: %u (0x%x)", pos, pos);
 		LOG(LOG_INFO, "Data:");
         hexdump_av(data);
 		LOG(LOG_INFO, "Expected:");
@@ -336,8 +336,9 @@ size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
 	}
 
 	/* try to find the requested kind of record in the prefetch queue */
-	for ( ; counter < mPrefetchQueue.size() && mPrefetchQueue[counter].type != kind; counter++)
-		;
+	while (counter < mPrefetchQueue.size() && mPrefetchQueue[counter].type != kind) {
+        ++counter;
+    }
 
 	if (counter < mPrefetchQueue.size()) {
         return counter;
@@ -426,7 +427,7 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 
 	if (UncheckedPacket::Send == this->unchecked_packet) {
 		auto av = mPrefetchQueue[pos].av();
-		if (av.size() != len || memcmp(av.data(), buffer, len)) {
+		if (av.size() != len || 0 != memcmp(av.data(), buffer, len)) {
 			if (av.size() != len) {
 				LOG(LOG_ERR, "ReplayTransport::do_send(buf, len=%zu) should be %zu [pck_num=%lld]", len, av.size(), this->count_packet);
 			}

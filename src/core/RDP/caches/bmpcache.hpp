@@ -293,7 +293,7 @@ private:
             auto pred = [sig, &bmp](const T & e) {
                 return e
                     && (*reinterpret_cast<uint64_t const *>(&sig[0]) == *reinterpret_cast<uint64_t const *>(&e.sha1[0]))
-                    ? (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()))
+                    ? (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || 0 != memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()))
                     : false;
             };
             if (std::count_if(this->first, this->last, pred) > 1) {

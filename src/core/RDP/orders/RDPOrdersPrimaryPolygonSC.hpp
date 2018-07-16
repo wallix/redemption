@@ -251,9 +251,9 @@ public:
               | (this->NumDeltaEntries != oldcmd.NumDeltaEntries) * 0x0020
               | (
                  (this->NumDeltaEntries != oldcmd.NumDeltaEntries) ||
-                 memcmp(this->deltaPoints, oldcmd.deltaPoints,
-                        this->NumDeltaEntries * sizeof(DeltaPoint))
-                                                                ) * 0x0040
+                 0 != memcmp(this->deltaPoints, oldcmd.deltaPoints,
+                             this->NumDeltaEntries * sizeof(DeltaPoint))
+                ) * 0x0040
               ;
 
         common.emit(stream, header, oldcommon);

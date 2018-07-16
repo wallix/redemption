@@ -324,7 +324,7 @@ private:
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.Flags());
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_exe_or_file>(remoteapplicationprogram);
         }
-        else if (::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)) {
+        else if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)) {
             return true;
         }
 

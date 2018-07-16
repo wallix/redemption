@@ -238,9 +238,9 @@ public:
                       | (this->nDeltaEntries != oldcmd.nDeltaEntries) * 0x1000
                       | (
                          (this->nDeltaEntries != oldcmd.nDeltaEntries) ||
-                         memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
-                                this->nDeltaEntries * sizeof(DeltaEncodedRectangle))
-                                                                    ) * 0x2000
+                         0 != memcmp(this->deltaEncodedRectangles, oldcmd.deltaEncodedRectangles,
+                                     this->nDeltaEntries * sizeof(DeltaEncodedRectangle))
+                        ) * 0x2000
                       ;
 
         common.emit(stream, header, oldcommon);
