@@ -19,23 +19,24 @@
 
    A proxy that will capture all the traffic to the target
 */
-#include <netinet/tcp.h>
-#include <sys/select.h>
 
-#include <chrono>
-
-#include "core/listen.hpp"
-#include "core/session_reactor.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 //#include "core/RDP/nego.hpp"
+#include "core/listen.hpp"
 #include "core/server_notifier_api.hpp"
-
-#include "transport/socket_transport.hpp"
+#include "core/session_reactor.hpp"
+#include "main/version.hpp"
 #include "transport/recorder_transport.hpp"
+#include "transport/socket_transport.hpp"
+#include "utils/cli.hpp"
+#include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"
 
-#include "utils/fixed_random.hpp"
+#include <chrono>
+#include <iostream>
 
+#include <netinet/tcp.h>
+#include <sys/select.h>
 #include <openssl/ssl.h>
 
 
@@ -259,14 +260,57 @@ private:
 
 int main(int argc, char *argv[])
 {
-    if (argc < 4) {
-        LOG(LOG_ERR, "expecting target host, port and capture template");
+    char const* target_host = nullptr;
+    int target_port = 3389;
+    int listen_port = 3389;
+    char const* capture_file = nullptr;
+
+    auto options = cli::options(
+        cli::option('h', "help").help("Show help").action(cli::help),
+        cli::option('v', "version").help("Show version")
+            .action(cli::quit([]{ std::cout << "Version 1, ReDemPtion " VERSION << "\n"; })),
+        cli::option('s', "target-host").action(cli::arg_location("host", target_host)),
+        cli::option('p', "target-port").action(cli::arg_location("port", target_port)),
+        cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),
+        cli::option('t', "template").help("Ex: dump-%d.out")
+            .action(cli::arg_location("path", capture_file))
+    );
+
+    auto cli_result = cli::parse(options, argc, argv);
+    switch (cli_result.res) {
+        case cli::Res::Ok:
+            break;
+        case cli::Res::Exit:
+            return 0;
+        case cli::Res::Help:
+            cli::print_help(options, std::cout);
+            return 0;
+        case cli::Res::BadFormat:
+        case cli::Res::BadOption:
+            std::cerr << "Bad " << (cli_result.res == cli::Res::BadFormat ? "format" : "option") << " at parameter " << cli_result.opti;
+            if (cli_result.opti < cli_result.argc) {
+                std::cerr << " (" << cli_result.argv[cli_result.opti] << ")";
+            }
+            std::cerr << "\n";
+            return 1;
+    }
+
+    if (!target_host) {
+        std::cerr << "Missing --target-host\n";
+    }
+
+    if (!capture_file) {
+        std::cerr << "Missing --template\n";
+    }
+
+    if (!target_host || !capture_file) {
+        cli::print_help(options, std::cerr << "\n");
         return 1;
     }
 
     SSL_library_init();
 
-    FrontServer front(argv[1], strtol(argv[2], nullptr, 10), argv[3]);
-    Listen listener(front, inet_addr("0.0.0.0"), 3389);
+    FrontServer front(target_host, target_port, capture_file);
+    Listen listener(front, inet_addr("0.0.0.0"), listen_port);
     listener.run(false);
 }

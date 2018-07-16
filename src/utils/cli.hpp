@@ -99,7 +99,7 @@ namespace cli
         Act act;
 
         Option(char short_name, char const * long_name, Act act = Act{})
-          : d{short_name, long_name, nullptr, false}
+          : d{short_name, long_name, "", false}
           , act(act)
         {}
 
