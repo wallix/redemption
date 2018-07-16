@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <alloca.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <string>
 
@@ -223,17 +223,15 @@ static int _internal_make_directory(const char *directory, mode_t mode, const in
 
 int recursive_create_directory(const char * directory, mode_t mode, const int groupid)
 {
-    char * pTemp;
-    char * pSearch;
-
-    int    status         = 0;
-    char * copy_directory = strdup(directory);
-
-    if (copy_directory == nullptr) {
+    if (!directory) {
         return -1;
     }
 
-    for ( pTemp = copy_directory
+    int status = 0;
+    std::string copy_directory = directory;
+    char * pSearch;
+
+    for (char * pTemp = &copy_directory[0]
         ; (status == 0) && ((pSearch = strchr(pTemp, '/')) != nullptr)
         ; pTemp = pSearch + 1) {
         if (pSearch == pTemp) {
@@ -241,15 +239,13 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
         }
 
         pSearch[0] = 0;
-        status = _internal_make_directory(copy_directory, mode, groupid);
+        status = _internal_make_directory(copy_directory.data(), mode, groupid);
         *pSearch = '/';
     }
 
     if (status == 0) {
         status = _internal_make_directory(directory, mode, groupid);
     }
-
-    free(copy_directory);
 
     return status;
 }

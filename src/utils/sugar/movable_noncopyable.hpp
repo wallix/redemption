@@ -28,10 +28,12 @@ namespace adl_barrier
         movable_noncopyable() = default;
         ~movable_noncopyable() = default;
 
-        movable_noncopyable(const movable_noncopyable&) = delete;
         movable_noncopyable& operator=(movable_noncopyable&&) = default;
 
         movable_noncopyable(movable_noncopyable&&) = default;
+
+    public:
+        movable_noncopyable(const movable_noncopyable&) = delete;
         movable_noncopyable& operator=(const movable_noncopyable&) = delete;
     };
 }  // namespace adl_barrier

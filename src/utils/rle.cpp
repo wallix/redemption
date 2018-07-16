@@ -33,7 +33,7 @@
 #include "utils/stream.hpp"
 #include "utils/image_data_view.hpp"
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 namespace {
 // [MS-RDPEGDI] 2.2.2.5.1 RDP 6.0 Bitmap Compressed Bitmap Stream

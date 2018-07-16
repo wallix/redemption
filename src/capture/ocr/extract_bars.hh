@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <cstdlib>
-#include <stdint.h>
+#include <cstdint>
 
 
 namespace ocr
@@ -286,7 +286,7 @@ namespace ocr
             this->context.col_last_text = 0;
 
             if (iw - x < ocr::bbox_min_width - this->context.bbox_max_height*2) {
-                this->rect_deja_vu.push_back(mln::box2d(mln::point2d(y,iw), mln::point2d(y+1,iw+1)));
+                this->rect_deja_vu.emplace_back(mln::point2d(y,iw), mln::point2d(y+1,iw+1));
                 this->deja_vu[y * input.width() + iw] = true;
                 return ;
             }
@@ -315,8 +315,8 @@ namespace ocr
                     for (; first != last; first += width) {
                         std::fill(first, first + this->w, true);
                     }
-                    this->extract_titles.rect_deja_vu.push_back(
-                        mln::box2d(mln::point2d(this->y,this->x), mln::point2d(this->y+h, this->x+this->w)));
+                    this->extract_titles.rect_deja_vu.emplace_back(
+                        mln::point2d(this->y,this->x), mln::point2d(this->y+h, this->x+this->w));
                 }
             } set_deja_vu(*this, input, bx, y, iw - x, ih);
 

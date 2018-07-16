@@ -419,7 +419,7 @@ struct EncryptContext
             LOG(LOG_ERR, "EncryptContext::encrypt");
             throw Error(ERR_SSL_CALL_FAILED);
         }
-        return size_t(safe_size + remaining_size);
+        return size_t(safe_size + remaining_size); /*NOLINT*/
     }
 
 private:
@@ -465,7 +465,7 @@ struct DecryptContext
             }
             throw Error(ERR_SSL_CALL_FAILED);
         }
-        return size_t(written + trail);
+        return size_t(written + trail); /*NOLINT*/
     }
 
     void disable_log_decrypt(bool disable = true) noexcept

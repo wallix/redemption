@@ -280,14 +280,16 @@ public:
     uint32_t dataLen()  const { return this->dataLen_; }
 
 
-    CliprdrHeader()
-         = default;   // CliprdrHeader()
+    CliprdrHeader() = default; // CliprdrHeader()
 
     CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
         : msgType_(msgType)
         , msgFlags_(msgFlags)
         , dataLen_(dataLen) {
     }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
+
+    CliprdrHeader(CliprdrHeader const &) = delete;
+    CliprdrHeader& operator=(CliprdrHeader const &) = delete;
 
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->msgType_);
@@ -318,11 +320,6 @@ public:
         LOG(LOG_INFO, "          * MsgFlags = 0x%x (2 bytes): %s", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
         LOG(LOG_INFO, "          * DataLen  = %u Byte(s) (4 bytes)", this->dataLen_);
     }
-
-
-private:
-    CliprdrHeader(CliprdrHeader const &);
-    CliprdrHeader& operator=(CliprdrHeader const &);
 };  // struct CliprdrHeader
 
 // [MS-RDPECLIP] - 2.2.2.1 Clipboard Capabilities PDU (CLIPRDR_CAPS)

@@ -32,16 +32,11 @@
 
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/noncopyable.hpp"
 
 
-class Random
+class Random : noncopyable
 {
-    // this makes object noncopyable by removing copy constructors
-    Random(Random&&) = delete;
-    Random(const Random&) = delete;
-    Random& operator=(Random&&) = delete;
-    Random& operator=(const Random&) = delete;
-
 public:
              Random() = default;
     virtual ~Random() = default;
@@ -59,10 +54,9 @@ public:
 
 class UdevRandom : public Random
 {
-   public:
-    UdevRandom() {
-        // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
-    }
+public:
+    // TODO See if it wouldn't be better to always leave random source open. Maybe another class with that behaviour, to use when we need many random numbers/many randoms block. Unlikely in our use case.
+    UdevRandom() = default;
 
     void random(void * dest, size_t size) override {
 

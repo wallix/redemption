@@ -55,11 +55,10 @@ class Array {
         }
     }
 
-private:
-    Array(Array const &) /* = delete*/;
-    Array& operator=(Array const &) /* = delete*/;
-
 public:
+    Array(Array const &) = delete;
+    Array& operator=(Array const &) = delete;
+
     size_t size() const {
         return this->capacity;
     }

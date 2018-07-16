@@ -118,14 +118,14 @@ struct byte_array : array_view<uint8_t>
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<uint8_t>, U&&>::value, bool
     >::type = 1>
-    constexpr byte_array(U && a) noexcept
+    constexpr byte_array(U && a) noexcept /*NOLINT*/
     : array_view<uint8_t>(a)
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<char>, U&&>::value, bool
     >::type = 1>
-    constexpr byte_array(U && a) noexcept
+    constexpr byte_array(U && a) noexcept /*NOLINT*/
     : byte_array(array_view<char>(a))
     {}
 
@@ -172,14 +172,14 @@ struct const_byte_array : array_view<const uint8_t>
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<const uint8_t>, U&&>::value, bool
     >::type = 1>
-    constexpr const_byte_array(U && a) noexcept
+    constexpr const_byte_array(U && a) noexcept /*NOLINT*/
     : array_view<const uint8_t>(a)
     {}
 
     template<class U, typename std::enable_if<
       std::is_constructible<array_view<const char>, U&&>::value, bool
     >::type = 1>
-    constexpr const_byte_array(U && a) noexcept
+    constexpr const_byte_array(U && a) noexcept /*NOLINT*/
     : const_byte_array(array_view<const char>(a))
     {}
 

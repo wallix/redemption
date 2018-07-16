@@ -32,7 +32,7 @@
 
 #include <new>
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 namespace aux_ {
     extern class BmpMemAlloc {

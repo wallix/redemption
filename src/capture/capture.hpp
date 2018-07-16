@@ -415,7 +415,7 @@ public:
 
     void add_graphic(gdi::GraphicApi & gd) {
         if (this->capture_drawable) {
-            this->gds.push_back(gd);
+            this->gds.emplace_back(gd);
         }
     }
 

@@ -32,7 +32,7 @@
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "utils/verbose_flags.hpp"
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 struct BmpCache {
 
@@ -122,13 +122,11 @@ private:
         std::unique_ptr<void*[]> free_list;
         void* * free_list_cur{nullptr};
 
-        storage_value_set(storage_value_set const &);
-        storage_value_set& operator=(storage_value_set const &);
-
     public:
-        storage_value_set()
+        storage_value_set() = default;
 
-        = default;
+        storage_value_set(storage_value_set const &) = delete;
+        storage_value_set& operator=(storage_value_set const &) = delete;
 
         template<class T>
         void update() {
@@ -312,7 +310,7 @@ private:
             this->sorted_elements.insert(e);
         }
 
-        cache_range(cache_range &&) = default; // FIXME g++ (4.8, 4.9, other ?)
+        cache_range(cache_range &&) noexcept = default; // FIXME g++ (4.8, 4.9, other ?)
         cache_range(cache_range const &) = delete;
         cache_range& operator=(cache_range const &) = delete;
     };  // cache_range

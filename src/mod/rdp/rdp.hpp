@@ -1204,7 +1204,7 @@ public:
         this->remote_programs_session_manager.reset();
 
         if (!this->server_redirection_packet_received) {
-            this->redir_info.reset();
+            this->redir_info = RedirectionInfo();
         }
     }
 

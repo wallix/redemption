@@ -92,7 +92,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         va_start(ap, format);
-        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1;
+        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
         va_end(ap);
         log_buf.resize(log_buf.size() + sz);
         va_start(ap, format);
@@ -113,7 +113,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         va_start(ap, format);
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-        std::vprintf(format, ap);
+        std::vprintf(format, ap); /*NOLINT*/
         REDEMPTION_DIAGNOSTIC_POP
         std::puts("");
         std::fflush(stdout);

@@ -26,9 +26,9 @@
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/cli.hpp"
 
-#include <iomanip>
+#include <iostream>
 
-#include <signal.h>
+#include <csignal>
 
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user QA\\proxyuser --pwd $mdp --ip 10.10.46.88 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 

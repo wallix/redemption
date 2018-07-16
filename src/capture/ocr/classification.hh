@@ -138,8 +138,7 @@ struct Classification
 {
     using result_type = classifier_type;
 
-    Classification()
-    {}
+    Classification() = default;
 
     const classifier_type & classify(
         const ::mln::image2d<bool> & input
@@ -172,10 +171,10 @@ struct Classification
         return this->classifier;
     }
 
-private:
-    Classification(const Classification &);
-    Classification & operator=(const Classification &);
+    Classification(const Classification &) = delete;
+    Classification & operator=(const Classification &) = delete;
 
+private:
     std::vector<label_attr_t> attrs;
     classifier_type classifier;
 };

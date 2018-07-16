@@ -155,7 +155,7 @@ namespace jln
             {}
 
             template<class U>
-            constexpr tuple_elem(U&& x)
+            constexpr tuple_elem(U&& x) /*NOLINT*/
             noexcept(noexcept(T(static_cast<U&&>(x))))
             : x(static_cast<U&&>(x))
             {}
@@ -994,11 +994,11 @@ namespace jln
                     assert(o);
                     (o->*f)(static_cast<Args&&>(args)...);
                 }
-                else {
+                else { /*NOLINT*/
                     (o.*f)(static_cast<Args&&>(args)...);
                 }
             }
-            else {
+            else { /*NOLINT*/
                 f(static_cast<T&&>(o), static_cast<Args&&>(args)...);
             }
         }
@@ -1059,14 +1059,10 @@ namespace jln
             }
 
             template<class F>
-            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
+            named_function<S, std::decay_t<F>> operator=(F&& f) const noexcept /*NOLINT*/
             {
                 return {static_cast<F&&>(f)};
             }
-
-            named_type const& operator=(named_type& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
-            named_type const& operator=(named_type&& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
-            named_type const& operator=(named_type const& /*unused*/) const noexcept { return *this; } /*NOLINT(cppcoreguidelines-c-copy-assignment-signature)*/
         };
 
         struct unamed{};
@@ -1883,7 +1879,7 @@ namespace jln
 
             template<class... Ts>
             U(Ts&&... xs) : value(static_cast<Ts&&>(xs)...){}
-            ~U() { /* removed by this->deleter */}
+            ~U() { /* removed by this->deleter */} /*NOLINT*/
         } u;
 
         REDEMPTION_DEBUG_ONLY(bool is_deleted = false;)
@@ -2006,7 +2002,7 @@ namespace jln
                     return f(TopTimerContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
                 };
             }
-            else {
+            else { /*NOLINT*/
                 return [f, &g](
                     GroupTimerContext<Ts...> ctx, Ts... xs
                 ) mutable /*-> R*/ {
@@ -2584,7 +2580,7 @@ namespace jln
         if constexpr (std::is_same<Tuple, detail::tuple<>>::value) {
             g->on_action(static_cast<F&&>(f));
         }
-        else {
+        else { /*NOLINT*/
             auto& group = static_cast<GroupExecutorWithValues<Tuple, Ts...>&>(
                 this->current_group);
             g->GroupExecutor<Ts...>::on_action = [f, &group](GroupContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
@@ -2640,7 +2636,7 @@ namespace jln
             top.sub_group(std::move(g));
             return R::CreateGroup;
         }
-        else {
+        else { /*NOLINT*/
             return detail::GroupExecutorBuilderImpl<HasAct, HasExit, Top, Group>{top, std::move(g)};
         }
     }
@@ -2677,7 +2673,7 @@ namespace jln
         if constexpr (detail::BuilderInit::has(Has, E::Action | E::Exit | E::Timer | E::Timeout)) {
             return init_ctx.terminate_init();
         }
-        else {
+        else { /*NOLINT*/
             return detail::TopExecutorBuilderImpl<E(Has), InitCtx>{std::move(init_ctx)};
         }
     }
@@ -2756,7 +2752,7 @@ namespace jln
         if constexpr (detail::BuilderInit::has(Has, E::Timer | E::Timeout)) {
             return init_ctx.terminate_init();
         }
-        else {
+        else { /*NOLINT*/
             return detail::TimerExecutorBuilderImpl<E(Has), InitCtx>{std::move(init_ctx)};
         }
     }

@@ -46,6 +46,9 @@ private:
     unsigned     last_num;
 
 public:
+    FilenameGenerator(FilenameGenerator const &) = delete;
+    FilenameGenerator& operator=(FilenameGenerator const &) = delete;
+
     FilenameGenerator(
         Format format,
         const char * const prefix,
@@ -103,10 +106,6 @@ public:
         this->last_num = num;
         this->last_filename = name;
     }
-
-private:
-    FilenameGenerator(FilenameGenerator const &) = delete;
-    FilenameGenerator& operator=(FilenameGenerator const &) = delete;
 };
 
 using FilenameFormat = FilenameGenerator::Format;

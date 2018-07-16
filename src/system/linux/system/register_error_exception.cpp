@@ -11,6 +11,10 @@
 #include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
 
+namespace
+{
+    const std::string prefix_msg_error = "Exception of type 'Error': ";
+} // namespace
 
 namespace redemption_unit_test__
 {
@@ -24,11 +28,10 @@ namespace redemption_unit_test__
                 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
             #endif
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
-                std::string s = "Exception of type 'Error': "; s += e.errmsg();
-                throw std::runtime_error{std::move(s)};
+                throw std::runtime_error{prefix_msg_error + e.errmsg()};
             });
             REDEMPTION_DIAGNOSTIC_POP
         }
     };
-    static register_exception Init;
+    static register_exception Init; /*NOLINT*/
 } // namespace redemption_unit_test__

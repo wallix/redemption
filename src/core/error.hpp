@@ -369,10 +369,8 @@ struct Error
     error_type id;
     int errnum;
 
-private:
-    Error() = delete;
-
 public:
+    Error() = delete;
     explicit Error(error_type id, int errnum = 0) noexcept;
 
     const char * errmsg(bool with_id = true) const noexcept;

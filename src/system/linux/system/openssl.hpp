@@ -843,7 +843,7 @@ public:
 
         DH *ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
         BIO_free(bio);
-        if(SSL_CTX_set_tmp_dh(ctx, ret) < 0)
+        if(SSL_CTX_set_tmp_dh(ctx, ret) < 0) /*NOLINT*/
         {
             BIO_printf(bio_err,"Couldn't set DH parameters\n");
             ERR_print_errors(bio_err);

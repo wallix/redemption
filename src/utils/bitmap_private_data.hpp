@@ -74,17 +74,22 @@ class Bitmap::DataBitmap : DataBitmapBase
     DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
     : DataBitmapBase(24, cx, cy, ptr)
     {}
+
     DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
     : DataBitmapBase(bpp, align4(cx), cy, ptr)
     {}
+
     ~DataBitmap()
     {
         aux_::bitmap_data_allocator.dealloc(this->data_compressed_);
     }
+
+    static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
+
+public:
     DataBitmap(DataBitmap const &) = delete;
     DataBitmap & operator=(DataBitmap const &) = delete;
-    static const size_t palette_index = sizeof(typename std::aligned_storage<sizeof(DataBitmapBase), alignof(BGRColor)>::type);
-public:
+
     static DataBitmap * construct(uint8_t bpp, uint16_t cx, uint16_t cy)
     {
         const size_t sz = align4(cx) * nbbytes(bpp) * cy;
@@ -92,6 +97,7 @@ public:
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
         return new (p) DataBitmap(bpp, cx, cy, p + sz_struct); /*NOLINT*/
     }
+
     static DataBitmap * construct_png(uint16_t cx, uint16_t cy)
     {
         const size_t sz = cx * cy * 3;
@@ -99,11 +105,15 @@ public:
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
         return new (p) DataBitmap(cx, cy, p + sz_struct); /*NOLINT*/
     }
-    static void destruct(DataBitmap * cdata) noexcept {
+
+    static void destruct(DataBitmap * cdata) noexcept
+    {
         cdata->~DataBitmap();
         aux_::bitmap_data_allocator.dealloc(cdata);
     }
-    void copy_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const {
+
+    void copy_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const
+    {
         if (!this->sha1_is_init_) {
             this->sha1_is_init_ = true;
             SslSha1 sha1;
@@ -122,57 +132,87 @@ public:
         }
         memcpy(sig, this->sha1_, sizeof(this->sha1_));
     }
-    uint8_t * get() const noexcept {
+
+    uint8_t * get() const noexcept
+    {
         return this->ptr_;
     }
+
 protected:
-    uint8_t const * data_palette() const noexcept {
+    uint8_t const * data_palette() const noexcept
+    {
         //assert(this->bpp() == 8);
         return reinterpret_cast<uint8_t const*>(this) + palette_index;
     }
+
 public:
-    BGRPalette & palette() noexcept {
+    BGRPalette & palette() noexcept
+    {
         //assert(this->bpp() == 8);
         return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
     }
-    const BGRPalette & palette() const noexcept {
+
+    const BGRPalette & palette() const noexcept
+    {
         //assert(this->bpp() == 8);
         return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
     }
-    uint16_t cx() const noexcept {
+
+    uint16_t cx() const noexcept
+    {
         return this->cx_;
     }
-    uint16_t cy() const noexcept {
+
+    uint16_t cy() const noexcept
+    {
         return this->cy_;
     }
-    size_t line_size() const noexcept {
+
+    size_t line_size() const noexcept
+    {
         return this->line_size_;
     }
-    uint8_t bpp() const noexcept {
+
+    uint8_t bpp() const noexcept
+    {
         return this->bpp_;
     }
-    size_t bmp_size() const noexcept {
+
+    size_t bmp_size() const noexcept
+    {
         return this->bmp_size_;
     }
-    void copy_compressed_buffer(void const * data, size_t n) {
+
+    void copy_compressed_buffer(void const * data, size_t n)
+    {
         assert(this->compressed_size() == 0);
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(n));
         this->data_compressed_ = static_cast<uint8_t*>(memcpy(p, data, n));
         this->size_compressed_ = n;
     }
-    const uint8_t * compressed_data() const noexcept {
+
+    const uint8_t * compressed_data() const noexcept
+    {
         return this->data_compressed_;
     }
-    size_t compressed_size() const noexcept {
+
+    size_t compressed_size() const noexcept
+    {
         return this->size_compressed_;
     }
-    void inc() noexcept {
+
+    void inc() noexcept
+    {
         ++this->counter_;
     }
-    void dec() noexcept {
+
+    void dec() noexcept
+    {
         --this->counter_;
     }
-    uint_fast8_t count() const noexcept {
+
+    uint_fast8_t count() const noexcept
+    {
         return this->counter_;
     }
 };

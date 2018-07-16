@@ -1170,7 +1170,7 @@ namespace details_ {
 
     template<class DataBufSz, class HeaderBufSz, class Transport, class DataWriter, class... HeaderWriters>
     void write_packets_impl(
-        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf,
+        DataBufSz data_buf_sz, HeaderBufSz header_buf_sz, uint8_t * buf, /*NOLINT*/
         Transport & trans, DataWriter & data_writer, HeaderWriters & ... header_writers)
     {
         OutStream data_stream(buf + header_buf_sz, data_buf_sz);

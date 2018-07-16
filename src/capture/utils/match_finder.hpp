@@ -30,7 +30,7 @@ class ReportMessageApi;
 
 namespace utils {
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 struct MatchFinder
 {

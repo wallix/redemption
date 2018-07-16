@@ -1037,6 +1037,9 @@ namespace re {
             this->m_accu.sts.reserve(32);
         }
 
+        StateParser(const StateParser &) = delete;
+        StateParser& operator=(const StateParser &) = delete;
+
         void compile(const char * s, const char * * msg_err = nullptr, size_t * pos_err = nullptr)
         {
             this->m_accu.clear();
@@ -1109,9 +1112,6 @@ namespace re {
         }
 
     private:
-        StateParser(const StateParser &);
-        StateParser& operator=(const StateParser &);
-
         State * m_root = nullptr;
         StateAccu m_accu;
     };

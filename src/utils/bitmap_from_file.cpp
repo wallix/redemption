@@ -43,10 +43,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <stdio.h>
+#include <cstdio>
 
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 inline bool read_all(int fd, void * data_, std::size_t len)
 {

@@ -53,7 +53,7 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#include <signal.h>
+#include <csignal>
 
 
 enum {
@@ -1127,15 +1127,15 @@ inline void remove_file(
     char infile_fullpath[2048];
     if (is_encrypted) {
         std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, input_filename, infile_extension);
-        files.push_back(infile_fullpath);
+        files.emplace_back(infile_fullpath);
     }
     std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, input_filename, infile_extension);
-    files.push_back(infile_fullpath);
+    files.emplace_back(infile_fullpath);
 
     try {
         do {
             in_wrm_trans.next();
-            files.push_back(in_wrm_trans.path());
+            files.emplace_back(in_wrm_trans.path());
         }
         while (true);
     }

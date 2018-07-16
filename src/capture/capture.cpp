@@ -1269,7 +1269,7 @@ public:
                 report_and_transform_error(
                     error, ReportMessageReporter{*capture_params.report_message});
             }
-            throw error;
+            throw error; /* NOLINT */
         }
         return fd;
     }()}, report_error_from_reporter(capture_params.report_message))
@@ -1452,7 +1452,7 @@ Capture::Capture(
                 drawable_params.width, drawable_params.height);
             this->gd_drawable = this->gd_drawable_.get();
         }
-        this->gds.push_back(*this->gd_drawable);
+        this->gds.emplace_back(*this->gd_drawable);
 
         not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
 
@@ -1550,29 +1550,29 @@ Capture::Capture(
         }
 
         if (capture_wrm) {
-            this->gds.push_back(*this->wrm_capture_obj);
+            this->gds.emplace_back(*this->wrm_capture_obj);
             // TODO kbd_log_params.wrm_keyboard_log
-            this->kbds.push_back(*this->wrm_capture_obj);
-            this->caps.push_back(*this->wrm_capture_obj);
-            this->ext_caps.push_back(*this->wrm_capture_obj);
-            this->probes.push_back(*this->wrm_capture_obj);
+            this->kbds.emplace_back(*this->wrm_capture_obj);
+            this->caps.emplace_back(*this->wrm_capture_obj);
+            this->ext_caps.emplace_back(*this->wrm_capture_obj);
+            this->probes.emplace_back(*this->wrm_capture_obj);
         }
 
         if (this->png_capture_real_time_obj) {
-            this->caps.push_back(*this->png_capture_real_time_obj);
+            this->caps.emplace_back(*this->png_capture_real_time_obj);
         }
 
         if (this->png_capture_obj) {
-            this->caps.push_back(*this->png_capture_obj);
+            this->caps.emplace_back(*this->png_capture_obj);
         }
 #ifndef REDEMPTION_NO_FFMPEG
         if (this->sequenced_video_capture_obj) {
-            //this->caps.push_back(this->sequenced_video_capture_obj->vc);
-            this->caps.push_back(*this->sequenced_video_capture_obj);
+            //this->caps.emplace_back(this->sequenced_video_capture_obj->vc);
+            this->caps.emplace_back(*this->sequenced_video_capture_obj);
         }
 
         if (this->full_video_capture_obj) {
-            this->caps.push_back(*this->full_video_capture_obj);
+            this->caps.emplace_back(*this->full_video_capture_obj);
         }
 #endif
     }
@@ -1580,15 +1580,15 @@ Capture::Capture(
     if (capture_kbd) {
         if (kbd_log_params.syslog_keyboard_log) {
             this->syslog_kbd_capture_obj = std::make_unique<SyslogKbd>(capture_params.now);
-            this->kbds.push_back(*this->syslog_kbd_capture_obj);
-            this->caps.push_back(*this->syslog_kbd_capture_obj);
+            this->kbds.emplace_back(*this->syslog_kbd_capture_obj);
+            this->caps.emplace_back(*this->syslog_kbd_capture_obj);
         }
 
         if (kbd_log_params.session_log_enabled) {
             this->session_log_kbd_capture_obj = std::make_unique<SessionLogKbd>(
                 *capture_params.report_message);
-            this->kbds.push_back(*this->session_log_kbd_capture_obj);
-            this->probes.push_back(*this->session_log_kbd_capture_obj);
+            this->kbds.emplace_back(*this->session_log_kbd_capture_obj);
+            this->probes.emplace_back(*this->session_log_kbd_capture_obj);
         }
 
         this->pattern_kbd_capture_obj = std::make_unique<PatternKbd>(
@@ -1598,7 +1598,7 @@ Capture::Capture(
             pattern_params.verbose);
 
         if (this->pattern_kbd_capture_obj->contains_pattern()) {
-            this->kbds.push_back(*this->pattern_kbd_capture_obj);
+            this->kbds.emplace_back(*this->pattern_kbd_capture_obj);
         }
         else {
             this->pattern_kbd_capture_obj.reset();
@@ -1606,20 +1606,20 @@ Capture::Capture(
     }
 
     if (this->meta_capture_obj) {
-        this->caps.push_back(this->meta_capture_obj->meta);
+        this->caps.emplace_back(this->meta_capture_obj->meta);
         if (kbd_log_params.meta_keyboard_log) {
-            this->kbds.push_back(this->meta_capture_obj->meta);
-            this->probes.push_back(this->meta_capture_obj->meta);
+            this->kbds.emplace_back(this->meta_capture_obj->meta);
+            this->probes.emplace_back(this->meta_capture_obj->meta);
         }
         else if (this->meta_capture_obj->enable_agent) {
             // meta includes session_log_agent
-            this->probes.push_back(this->meta_capture_obj->session_log_agent);
+            this->probes.emplace_back(this->meta_capture_obj->session_log_agent);
         }
     }
 
     if (this->title_capture_obj) {
-        this->caps.push_back(*this->title_capture_obj);
-        this->probes.push_back(*this->title_capture_obj);
+        this->caps.emplace_back(*this->title_capture_obj);
+        this->probes.emplace_back(*this->title_capture_obj);
     }
 }
 

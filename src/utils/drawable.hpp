@@ -35,7 +35,7 @@
 #include "utils/drawable_pointer.hpp"
 #include "gdi/image_frame_api.hpp"
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 
 namespace Ops {
     using u8 = uint8_t;

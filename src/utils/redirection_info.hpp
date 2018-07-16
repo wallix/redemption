@@ -28,49 +28,21 @@
 
 
 struct RedirectionInfo {
-    bool valid;
-    uint32_t session_id;
-    uint8_t host[513];
-    uint8_t username[257];
-    uint8_t password[257];
-    uint8_t domain[257];
-    uint8_t lb_info[513];
-    uint32_t lb_info_length;
-    bool dont_store_username;
-    bool server_tsv_capable;
-    bool smart_card_logon;
+    bool valid = false;
+    uint32_t session_id = 0;
+    uint8_t host[513] {};
+    uint8_t username[257] {};
+    uint8_t password[257] {};
+    uint8_t domain[257] {};
+    uint8_t lb_info[513] {};
+    uint32_t lb_info_length = 0;
+    bool dont_store_username = false;
+    bool server_tsv_capable = false;
+    bool smart_card_logon = false;
 
-    bool host_is_fqdn;
+    bool host_is_fqdn = false;
 
-    RedirectionInfo()
-        : valid(false)
-        , session_id(0)
-        , host()
-        , username()
-        , password()
-        , domain()
-        , lb_info()
-        , lb_info_length(0)
-        , dont_store_username(false)
-        , server_tsv_capable(false)
-        , smart_card_logon(false)
-        , host_is_fqdn(false)
-    {
-    }
-
-    void reset() {
-        this->valid = false;
-        this->session_id = 0;
-        memset(this->host, 0, sizeof(this->host));
-        memset(this->username, 0, sizeof(this->username));
-        memset(this->password, 0, sizeof(this->password));
-        memset(this->domain, 0, sizeof(this->domain));
-        memset(this->lb_info, 0, sizeof(this->lb_info));
-        this->dont_store_username = false;
-        this->server_tsv_capable = false;
-        this->smart_card_logon = false;
-        this->host_is_fqdn = false;
-    }
+    RedirectionInfo() = default;
 
     void log(int level, const char * message) const {
         LOG(level
@@ -94,4 +66,3 @@ struct RedirectionInfo {
         }
     }
 };
-

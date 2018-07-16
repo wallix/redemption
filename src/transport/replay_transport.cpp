@@ -374,7 +374,7 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
         }
 
 		/* cleanup DataOut packets that may have been already treated */
-		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
+		while (!mPrefetchQueue.empty() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
 			if (data_in_pos) {
@@ -424,7 +424,7 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
         }
 
 		/* cleanup DataOut packets that may have been already treated */
-		while (mPrefetchQueue.size() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
+		while (!mPrefetchQueue.empty() && data_out_pos && mPrefetchQueue[0].type == PacketType::DataOut) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
 			if (data_in_pos) {
@@ -472,7 +472,7 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
         }
 
 		/* cleanup DataIn packets that may have been already treated */
-		while (mPrefetchQueue.size() && data_in_pos && mPrefetchQueue[0].type == PacketType::DataIn) {
+		while (!mPrefetchQueue.empty() && data_in_pos && mPrefetchQueue[0].type == PacketType::DataIn) {
 			mPrefetchQueue.erase(mPrefetchQueue.begin());
 
 			if (data_in_pos) {

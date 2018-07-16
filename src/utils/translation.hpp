@@ -337,10 +337,11 @@ private:
     Inifile * ini = nullptr;
 
     Translation() = default;
+
+public:
     Translation(Translation const&) = delete;
     void operator=(Translation const&) = delete;
 
-public:
     static Translation& getInstance()
     {
         static Translation instance;

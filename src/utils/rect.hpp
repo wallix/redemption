@@ -36,10 +36,10 @@
 #include <cstdio> // snprintf
 
 struct Rect {
-    int16_t x;
-    int16_t y;
-    uint16_t cx;
-    uint16_t cy;
+    int16_t x = 0;
+    int16_t y = 0;
+    uint16_t cx = 0;
+    uint16_t cy = 0;
 
     int16_t left() const {
         return this->x;
@@ -57,8 +57,7 @@ struct Rect {
         return static_cast<int16_t>(this->y + this->cy);
     }
 
-    Rect() : x(0), y(0), cx(0), cy(0) {
-    }
+    Rect() = default;
 
     Rect(int16_t left, int16_t top, uint16_t width, uint16_t height)
         : x(left), y(top), cx(width), cy(height)
@@ -319,13 +318,10 @@ inline auto log_value(Rect const & rect)
 
 
 struct Dimension {
-    uint16_t w;
-    uint16_t h;
+    uint16_t w = 0;
+    uint16_t h = 0;
 
-    Dimension()
-        : w(0)
-        , h(0)
-    {}
+    Dimension() = default;
 
     Dimension(uint16_t w, uint16_t h)
         : w(w)

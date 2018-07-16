@@ -25,9 +25,10 @@
 
 namespace
 {
-    static void msgdump_impl(bool from_or_to_client,
-        uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,
-        uint32_t chunk_data_length)
+    void msgdump_impl(
+        bool from_or_to_client,
+        uint32_t total_length, uint32_t flags,
+        const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         const uint32_t dest = (from_or_to_client
                             ? 0  // Client
@@ -42,7 +43,7 @@ namespace
             sizeof(chunk_data_length));
         hexdump_c(chunk_data, chunk_data_length);
     }
-}
+} // namespace
 
 inline static void msgdump_c(bool send, bool from_or_to_client,
     uint32_t total_length, uint32_t flags, const uint8_t* chunk_data,

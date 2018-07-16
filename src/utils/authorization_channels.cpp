@@ -125,7 +125,7 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
                 case 5: ids.emplace_back(c_array<5>(trimmed.begin())); break;
                 case 6: ids.emplace_back(c_array<6>(trimmed.begin())); break;
                 case 7: ids.emplace_back(c_array<7>(trimmed.begin())); break;
-                default: large_ids.push_back({trimmed.begin(), trimmed.end()});
+                default: large_ids.emplace_back(trimmed.begin(), trimmed.end());
             }
         }
         return all;

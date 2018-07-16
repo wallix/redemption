@@ -36,7 +36,7 @@
 #include "system/ssl_sha1.hpp"
 
 
-using std::size_t;
+using std::size_t; /*NOLINT*/
 class Rect;
 class BGRPalette;
 class OutStream;
@@ -47,9 +47,9 @@ class Bitmap
 
     DataBitmap *data_bitmap = nullptr;
 
+public:
     void *operator new(size_t n) = delete;
 
-public:
     struct PrivateData;
 
     friend class PrivateData;
