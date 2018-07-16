@@ -100,15 +100,16 @@ struct RDPMetrics {
     }
 
 
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
+    void sha1_encrypt(char (&dest)[SslSha1::DIGEST_LENGTH*2+1], const char * src, const size_t src_len) {
         SslSha1 sha1;
-        sha1.update(reinterpret_cast<const uint8_t*>(src), src_len);
+        sha1.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha1::DIGEST_LENGTH];
         sha1.final(sig);
-        snprintf(dest, SslSha1::DIGEST_LENGTH,
-                 "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                 sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
-                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
+        snprintf(dest, sizeof(dest),
+            "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+            sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7],
+            sig[8], sig[9], sig[10], sig[11], sig[12], sig[13], sig[14], sig[15],
+            sig[16], sig[17], sig[18], sig[19]);
     }
 
     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
@@ -164,10 +165,10 @@ struct RDPMetrics {
             this->new_day();
         }
 
-        char primary_user_sig[SslSha1::DIGEST_LENGTH];
+        char primary_user_sig[SslSha1::DIGEST_LENGTH*2+1];
         this->sha1_encrypt(primary_user_sig, this->primary_user, sizeof(this->primary_user));
 
-        char account_sig[SslSha1::DIGEST_LENGTH];
+        char account_sig[SslSha1::DIGEST_LENGTH*2+1];
         this->sha1_encrypt(primary_user_sig, this->account, sizeof(this->account));
 
 
