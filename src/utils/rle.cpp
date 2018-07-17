@@ -1119,9 +1119,6 @@ void compress_(ConstImageDataView const & image, OutStream & outbuffer)
 }
 
 };
-template<int BitsPerPixel>
-constexpr std::integral_constant<unsigned char, nbbytes(BitsPerPixel)>
-    RLEDecompressorImpl<BitsPerPixel>::Bpp;
 
 void get_run(
     const uint8_t * data, uint16_t data_size, uint8_t last_raw, uint32_t & run_length,

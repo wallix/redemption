@@ -367,14 +367,18 @@ public:
                                 // authentifier never opened or closed by me (close box)
                                 try {
                                     std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
-                                    size_t pos = authtarget.find(':');
+                                    size_t const pos = authtarget.find(':');
                                     unique_fd client_sck = (pos == std::string::npos)
                                         ? local_connect(authtarget.c_str(), 30, 1000)
                                         : [&](){
                                             // TODO: add some explicit error checking
-                                            std::string ip = authtarget.substr(0, pos);
-                                            int port = std::atoi(authtarget.c_str() + pos+1);
-                                            return ip_connect(ip.c_str(), port, 30, 1000);
+                                            char* end;
+                                            char const* ip = authtarget.c_str() + pos + 1;
+                                            long port = std::strtol(ip, &end, 10);
+                                            if (port > std::numeric_limits<int>::max()) {
+                                                return unique_fd{-1};
+                                            }
+                                            return ip_connect(ip, int(port), 30, 1000);
                                         }();
                                     if (!client_sck.is_open()) {
                                         LOG(LOG_ERR,

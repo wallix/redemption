@@ -19,6 +19,7 @@
 */
 
 #include "utils/log.hpp"
+#include "test_only/get_file_contents.hpp"
 
 #define RED_TEST_MODULE TestRDPMetrics
 #include "system/redemption_unit_tests.hpp"
@@ -37,8 +38,7 @@
 RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
 
     ClientInfo info;
-    // tmp/rdp_metrics_file_test
-    const char * templace_path_file = "tests/core/RDP/rdp_metrics_file_test";
+    const char * templace_path_file = "/tmp/rdp_metrics_file_test1";
     RDPMetrics metrics( templace_path_file
                       , 1
                       , "user"
@@ -54,10 +54,14 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
 
     char complete_file_path[4096] = {'\0'};
     ::snprintf(complete_file_path, sizeof(complete_file_path), "%s-%s.log", templace_path_file, current_date);
+<<<<<<< HEAD
     int fd = ::open(complete_file_path, O_RDONLY| O_APPEND);
     RED_CHECK(fd > 0);
     ::close(fd);
     remove(complete_file_path);
+=======
+    RED_CHECK(unique_fd(complete_file_path, O_RDONLY).is_open());
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
 
     time_t yesterday_time = metrics.last_date - 3600*24;
     metrics.last_date = yesterday_time;
@@ -68,14 +72,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
     metrics.set_current_formated_date(yesterday_date, false, yesterday_time);
     char yesterday_complete_path[4096] = {'\0'};
     ::snprintf(yesterday_complete_path, sizeof(yesterday_complete_path), "%s-%s.log", templace_path_file, yesterday_date);
-    fd = ::open(yesterday_complete_path, O_RDONLY| O_APPEND);
-    RED_CHECK(fd == -1);
+    RED_CHECK(!unique_fd(yesterday_complete_path, O_RDONLY).is_open());
     RED_CHECK(yesterday_time <= metrics.last_date);
 
-    fd = ::open(complete_file_path, O_RDONLY | O_APPEND);
-    RED_CHECK(fd > 0);
-
-    ::close(fd);
+    RED_CHECK(unique_fd(complete_file_path, O_RDONLY).is_open());
     remove(complete_file_path);
 }
 
@@ -83,7 +83,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
 RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader) {
 
     ClientInfo info;
+<<<<<<< HEAD
     const char * templace_path_file = "tests/core/RDP/rdp_metrics_file_test";
+=======
+    const char * templace_path_file = "/tmp/rdp_metrics_file_test2";
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
     RDPMetrics metrics( templace_path_file
                       , 1
                       , "user"
@@ -99,19 +103,43 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader) {
 
     char complete_file_path[4096] = {'\0'};
     ::snprintf(complete_file_path, sizeof(complete_file_path), "%s-%s.log", templace_path_file, current_date);
-    int fd = ::open(complete_file_path, O_RDONLY| O_APPEND);
-    RED_CHECK(fd > 0);
     metrics.log();
 
     std::string expected_log("Session_starting_time=");
     expected_log += metrics.start_full_date_time;
-    expected_log += " delta_time(s)=0 Session_id=1 user=D033E22AE348AEB5660 account=12DEA96FEC20593566A hostname=DA39A3EE5E6B4B0D325 target_service=EE5D8A196324C9649DC session_info=1709919F0A4B52AE2A7";
+    expected_log +=
+        " delta_time(s)=0 Session_id=1"
+        " user=D033E22AE348AEB5660FC2140AEC35850C4DA997"
+        " account=12DEA96FEC20593566AB75692C9949596833ADC9"
+        " hostname=DA39A3EE5E6B4B0D3255BFEF95601890AFD80709"
+        " target_service=EE5D8A196324C9649DCB8B0E98B77C574E635C6A"
+        " session_info=1709919F0A4B52AE2A778DCDE07E5602FEBA1155"
+        " main_channel_data_from_client=0 right_click_sent=0 left_click_sent=0"
+        " keys_sent=0 mouse_move=0 main_channel_data_from_serveur=0"
+        " cliprdr_channel_data_from_server=0 nb_text_paste_server=0"
+        " nb_image_paste_server=0 nb_file_paste_server=0 nb_text_copy_server=0"
+        " nb_image_copy_server=0 nb_file_copy_server=0 cliprdr_channel_data_from_client=0"
+        " nb_text_paste_client=0 nb_image_paste_client=0 nb_file_paste_client=0"
+        " nb_text_copy_client=0 nb_image_copy_client=0 nb_file_copy_client=0"
+        " rdpdr_channel_data_from_client=0 rdpdr_channel_data_from_server=0"
+        " nb_more_1k_byte_read_file=0 nb_deleted_file_or_folder=0 nb_write_file=0"
+        " nb_rename_file=0 nb_open_folder=0 rail_channel_data_from_client=0"
+        " rail_channel_data_from_serveur=0 other_channel_data_from_client=0"
+        " other_channel_data_from_serveur=0\n"
+    ;
 
+    RED_CHECK(unique_fd(complete_file_path, O_RDONLY).is_open());
+    auto data = get_file_contents(complete_file_path);
+    RED_CHECK_EQUAL(data, expected_log);
+
+<<<<<<< HEAD
     char log_read[512] = {'\0'};
     ::read(fd, log_read, expected_log.length());
     std::string str_log_read(log_read);
     RED_CHECK_EQUAL(str_log_read, expected_log);
     ::close(fd);
+=======
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
     remove(complete_file_path);
 }
 

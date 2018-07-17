@@ -138,7 +138,7 @@ inline int shutdown()
 
         text[InFileTransport(std::move(fd)).partial_read(text, sizeof(text)-1)] = 0;
 
-        int pid = atoi(text);
+        int pid = atoi(text); /*NOLINT*/
         std::cout << "Stopping process id " << pid << "\n";
 
         // check name of pid

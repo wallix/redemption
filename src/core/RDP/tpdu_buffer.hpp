@@ -52,11 +52,9 @@ namespace Extractors
         }
 
     private:
-        HeaderResult() noexcept
+        explicit HeaderResult() noexcept = default;
 
-        = default;
-
-        HeaderResult(uint16_t len) noexcept
+        explicit HeaderResult(uint16_t len) noexcept
           : is_extracted(true)
           , len(len)
         {}

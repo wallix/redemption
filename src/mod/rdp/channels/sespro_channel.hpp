@@ -54,7 +54,7 @@ class ExtraSystemProcesses
     std::vector<std::string> processes;
 
 public:
-    ExtraSystemProcesses(const char * comme_separated_processes) {
+    explicit ExtraSystemProcesses(const char * comme_separated_processes) {
         if (comme_separated_processes) {
             const char * process = comme_separated_processes;
 
@@ -1186,10 +1186,10 @@ public:
         }
         else if (!::strcasecmp(order_.c_str(), "ExecuteResult") && (4 <= parameters_.size())) {
             this->rdp.sespro_rail_exec_result(
-                    ::atoi(parameters_[3].c_str()),
+                    ::atoi(parameters_[3].c_str()), /*NOLINT*/
                     parameters_[0].c_str(),
-                    ::atoi(parameters_[1].c_str()),
-                    ::atoi(parameters_[2].c_str())
+                    ::atoi(parameters_[1].c_str()), /*NOLINT*/
+                    ::atoi(parameters_[2].c_str())  /*NOLINT*/
                 );
         }
         else if (!::strcasecmp(order_.c_str(), "ExtraInfo") && !parameters_.empty()) {

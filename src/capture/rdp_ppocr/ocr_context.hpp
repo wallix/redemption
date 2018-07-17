@@ -46,7 +46,7 @@ struct OcrContext
 
     std::string result;
 
-    OcrContext(std::size_t datas_sz)
+    explicit OcrContext(std::size_t datas_sz)
     : probabilities(datas_sz)
     , tmp_probabilities(datas_sz)
     {

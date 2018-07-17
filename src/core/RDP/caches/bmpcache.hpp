@@ -77,7 +77,7 @@ private:
             this->is_valid = false;
         }
 
-        operator bool() const {
+        explicit operator bool() const {
             return this->is_valid;
         }
     };
@@ -111,7 +111,7 @@ private:
             this->cached = false;
         }
 
-        operator bool() const {
+        explicit operator bool() const {
             return this->bmp.is_valid();
         }
     };

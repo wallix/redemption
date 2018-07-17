@@ -1024,24 +1024,21 @@ public:
 
     void send_textBuffer_to_clipboard(bool is_utf16) {
 
-        const char * str_data;
-        size_t length_of_utf8_string;
+        this->clientIOClipboardAPI->set_local_clipboard_stream(false);
 
         if (is_utf16) {
-            std::unique_ptr<uint8_t[]> utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
-            length_of_utf8_string = ::UTF16toUTF8(
-            this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
-            utf8_string.get(), this->_cb_buffers.sizeTotal);
-            str_data = char_ptr_cast(utf8_string.get());
+            auto utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
+            size_t len = ::UTF16toUTF8(
+                this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
+                utf8_string.get(), this->_cb_buffers.sizeTotal);
+            char const* str_data = char_ptr_cast(utf8_string.get());
+            this->clientIOClipboardAPI->setClipboard_text({str_data, len});
         } else {
-            str_data = char_ptr_cast(this->_cb_buffers.data.get());
-            length_of_utf8_string = this->_cb_buffers.size;
+            char const* str_data = char_ptr_cast(this->_cb_buffers.data.get());
+            size_t len = this->_cb_buffers.size;
+            this->clientIOClipboardAPI->setClipboard_text({str_data, len});
         }
 
-        std::string str(str_data, length_of_utf8_string);
-
-        this->clientIOClipboardAPI->set_local_clipboard_stream(false);
-        this->clientIOClipboardAPI->setClipboard_text(str);
         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
         this->empty_buffer();
@@ -1112,6 +1109,8 @@ public:
 
 
     void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
+
+        // TODO code duplication with ClientChannelRDPDRManager::process_client_clipboard_out_data
 
         // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
@@ -1202,7 +1201,6 @@ public:
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
                 out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
-                data_sent += remains_PDU;
                 InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
                 this->client->mod->send_to_mod_channel( front_channel_name

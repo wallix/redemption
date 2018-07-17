@@ -2220,18 +2220,17 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     }
 
     if (options.count("png-geometry") > 0) {
-        const char * png_geometry_c = png_geometry.c_str();
-        const char * separator      = strchr(png_geometry_c, 'x');
-        int          png_w          = atoi(png_geometry_c);
-        int          png_h          = 0;
-        if (separator) {
-            png_h = atoi(separator + 1);
-        }
-        if (!png_w || !png_h) {
+        char * end;
+        auto png_w = strtoul(png_geometry.c_str(), &end, 10);
+        auto png_h = (*end == 'x') ? strtoul(end+1, &end, 10) : 0L;
+
+        unsigned long const max_size = 16 * 1024;
+
+        if (!png_w || !png_h || *end || png_w > max_size || png_h > max_size) {
             return cl_error("Invalide png geometry");
         }
-        recorder.png_params.png_width  = png_w;
-        recorder.png_params.png_height = png_h;
+        recorder.png_params.png_width  = unsigned(png_w);
+        recorder.png_params.png_height = unsigned(png_h);
         std::cout << "png-geometry: " << recorder.png_params.png_width << "x" << recorder.png_params.png_height << std::endl;
     }
 

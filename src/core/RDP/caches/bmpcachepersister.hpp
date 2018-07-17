@@ -175,7 +175,6 @@ private:
 
             uint16_t bmp_size;
             t.recv_boom(end, sizeof(bmp_size));
-            end += sizeof(original_palette);
             bmp_size = stream.in_uint16_le();
 
             end = buf;

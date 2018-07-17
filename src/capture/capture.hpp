@@ -206,7 +206,7 @@ private:
     {
         Capture & capture;
 
-        TitleChangedFunctions(Capture & capture) : capture(capture) {}
+        explicit TitleChangedFunctions(Capture & capture) : capture(capture) {}
 
         void notify_title_changed(timeval const & now, string_view title) override;
     } notifier_title_changed{*this};
@@ -322,9 +322,10 @@ private:
         const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds;
         const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps;
 
-        Graphic(MouseTrace const & mouse,
-                const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
-                const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps)
+        explicit Graphic(
+            MouseTrace const & mouse,
+            const std::vector<std::reference_wrapper<gdi::GraphicApi>> & gds,
+            const std::vector<std::reference_wrapper<gdi::CaptureApi>> & caps)
         : mouse(mouse)
         , gds(gds)
         , caps(caps)

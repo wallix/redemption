@@ -4098,7 +4098,7 @@ public:
             this->FileName_[FileName_utf8_len] = '\0';
 
 
-            for (size_t i = 0; i < this->FileNameLength/2; i++) {
+            for (size_t i = 0; i < FileName_utf8_len; i++) {
                 if ('\\' == this->FileName_[i]) {
                     this->FileName_[i] = '/';
                 }

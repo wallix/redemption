@@ -33,7 +33,6 @@ namespace {
     struct unknown_addr_ {
         static constexpr const char unknown_array[2] = "?";
     };
-    constexpr decltype(unknown_addr_::unknown_array) unknown_addr_::unknown_array;
 } // namespace
 static constexpr const char * const & unknown = unknown_addr_::unknown_array;
 

@@ -1740,9 +1740,9 @@ struct FileDispositionInformation {
 struct FileEndOfFileInformation {
     uint64_t EndOfFile = 0;
 
-    FileEndOfFileInformation() = default;
+    explicit FileEndOfFileInformation() = default;
 
-    FileEndOfFileInformation( uint64_t EndOfFile)
+    explicit FileEndOfFileInformation( uint64_t EndOfFile)
     : EndOfFile(EndOfFile) {}
 
     void emit(OutStream & stream) const {

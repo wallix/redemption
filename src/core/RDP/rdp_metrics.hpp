@@ -214,16 +214,21 @@ struct RDPMetrics {
     char complete_file_path[4096] = {'\0'};
     time_t start_time;
     const char * path_template;
+<<<<<<< HEAD
+=======
+
+    // TODO unique_fd
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
     int fd = -1;
 
 
     // Header
     const uint32_t session_id;
-    char primary_user_sig[SslSha1::DIGEST_LENGTH*2];
-    char account_sig[SslSha1::DIGEST_LENGTH*2];
-    char hostname_sig[SslSha1::DIGEST_LENGTH*2];
-    char target_service_sig[SslSha1::DIGEST_LENGTH*2];
-    char session_info_sig[SslSha1::DIGEST_LENGTH*2];
+    char primary_user_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char account_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char hostname_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char target_service_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char session_info_sig[SslSha1::DIGEST_LENGTH*2+1];
     char start_full_date_time[24];
 
     char header_part1[64];
@@ -278,19 +283,22 @@ struct RDPMetrics {
     }
 
 
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
+    void sha1_encrypt(char (&dest)[SslSha1::DIGEST_LENGTH*2+1], const char * src, const size_t src_len) {
         SslSha1 sha1;
         sha1.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha1::DIGEST_LENGTH];
         sha1.final(sig);
-        snprintf(dest, SslSha1::DIGEST_LENGTH,
-                 "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                 sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
-                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
+        snprintf(
+            dest, sizeof(dest),
+            "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+            sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7],
+            sig[8], sig[9], sig[10], sig[11], sig[12], sig[13], sig[14], sig[15],
+            sig[16], sig[17], sig[18], sig[19]);
     }
 
-    void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
+    void set_current_formated_date(char (&date)[24], bool keep_hhmmss, time_t time) {
         char current_date[24] = {'\0'};
+        // TODO strftime
         memcpy(current_date, ctime(&time), 24);
 
         date[0] = current_date[20];
@@ -345,6 +353,7 @@ struct RDPMetrics {
         }
         const long int delta_time = time_date - this->start_time;
 
+<<<<<<< HEAD
         char header[1024];
         ::snprintf(header, sizeof(header), "%s%ld%s", this->header_part1, delta_time, this->header_part2);
 
@@ -368,15 +377,82 @@ struct RDPMetrics {
             memcpy(sentence_char, sentence.c_str(), sentence.length());
             iov[0].iov_base = sentence_char;
             iov[0].iov_len = sentence.length();
+=======
+        char sentence[4096];
+        int const len = ::snprintf(sentence, sizeof(sentence), "Session_starting_time=%s delta_time(s)=%ld Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s"
+
+          " main_channel_data_from_client=%ld"
+          " right_click_sent=%d left_click_sent=%d keys_sent=%d mouse_move=%d"
+          " main_channel_data_from_serveur=%ld"
+
+          " cliprdr_channel_data_from_server=%ld"
+          " nb_text_paste_server=%d nb_image_paste_server=%d nb_file_paste_server=%d"
+          " nb_text_copy_server=%d nb_image_copy_server=%d nb_file_copy_server=%d"
+          " cliprdr_channel_data_from_client=%ld"
+          " nb_text_paste_client=%d nb_image_paste_client=%d nb_file_paste_client=%d"
+          " nb_text_copy_client=%d nb_image_copy_client=%d nb_file_copy_client=%d"
+
+          " rdpdr_channel_data_from_client=%ld"
+          " rdpdr_channel_data_from_server=%ld"
+          " nb_more_1k_byte_read_file=%d nb_deleted_file_or_folder=%d nb_write_file=%d nb_rename_file=%d"
+          " nb_open_folder=%d"
+
+          " rail_channel_data_from_client=%ld"
+          " rail_channel_data_from_serveur=%ld"
+
+          " other_channel_data_from_client=%ld"
+          " other_channel_data_from_serveur=%ld"
+          "\n",
+
+            this->start_full_date_time, delta_time,
+            this->session_id, this->primary_user_sig, this->account_sig, this->hostname_sig, this->target_service_sig, this->session_info_sig,
+
+            this->total_main_amount_data_rcv_from_client,
+            this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed, this->total_mouse_move,
+            this->total_main_amount_data_rcv_from_server,
+
+            this->total_cliprdr_amount_data_rcv_from_server,
+            this->nb_text_paste_from_serveur, this->nb_image_paste_from_serveur, this->nb_file_paste_from_serveur,
+            this->nb_text_copy_from_serveur, this->nb_image_copy_from_serveur, this->nb_file_copy_from_serveur,
+            this->total_cliprdr_amount_data_rcv_from_client,
+            this->nb_text_paste_from_client, this->nb_image_paste_from_client, this->nb_file_paste_from_client,
+            this->nb_text_copy_from_client, this->nb_image_copy_from_client, this->nb_file_copy_from_client,
+
+            this->total_rdpdr_amount_data_rcv_from_client,
+            this->total_rdpdr_amount_data_rcv_from_server,
+            this->nb_more_1k_byte_read_file,
+            this->nb_deleted_file_or_folder,
+            this->nb_write_file,
+            this->nb_rename_file,
+            this->nb_open_folder,
+
+            this->total_rail_amount_data_rcv_from_client,
+            this->total_rail_amount_data_rcv_from_server,
+
+            this->total_other_amount_data_rcv_from_client,
+            this->total_other_amount_data_rcv_from_server
+        );
+
+        if (this->fd == -1) {
+            LOG(LOG_INFO, "sentence=%s", sentence);
+        }
+        else {
+            struct iovec iov[1]{ {sentence, size_t(len)} };
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
 
             ssize_t nwritten = ::writev(fd, iov, 1);
             //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
 
             if (nwritten == -1) {
+<<<<<<< HEAD
                 std::string file_path_template(this->path_template);
                 file_path_template += this->last_date;
                 file_path_template += ".log";
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
+=======
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
+                    this->fd, this->path_template, this->last_date);
+>>>>>>> 08c5bad2334e9cf0f41d693f4066330920f02a1b
             }
         }
     }
