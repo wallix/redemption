@@ -733,6 +733,7 @@ class PngCaptureRT : public PngCapture
     unsigned png_limit;
 
     bool enable_rt_display;
+    bool enable_verbose;
 
     SmartVideoCropping smart_video_cropping;
 
@@ -744,6 +745,7 @@ public:
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
+    , enable_verbose(capture_params.verbose)
     , smart_video_cropping(capture_params.smart_video_cropping)
     {
     }
@@ -754,6 +756,9 @@ public:
 
     void update_config(bool enable_rt_display) {
         if (enable_rt_display != this->enable_rt_display){
+            if (this->enable_verbose) {
+                LOG(LOG_INFO, "PngCaptureRT::enable_rt_display=%d", enable_rt_display);
+            }
             this->enable_rt_display = enable_rt_display;
             // clear files if we go from RT to non-RT
             if (!this->enable_rt_display) {
