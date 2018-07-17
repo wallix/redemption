@@ -264,7 +264,7 @@ public:
 
 
 
-    ClientRedemptionAPI(SessionReactor& session_reactor)
+    explicit ClientRedemptionAPI(SessionReactor& session_reactor)
     : vnc_conf(session_reactor, *(this))
     {}
 

@@ -913,7 +913,8 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        Params(ReportMessageApi & report_message) : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(ReportMessageApi & report_message)
+          : BaseVirtualChannel::Params(report_message) {}
     };
 
     FileSystemVirtualChannel(

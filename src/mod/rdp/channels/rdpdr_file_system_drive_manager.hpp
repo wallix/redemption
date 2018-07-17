@@ -1689,7 +1689,7 @@ public:
             this->upper_name_[0] = 0;
         }
 
-        explicit DriveName(array_view_const_char name, bool reserved = false) noexcept
+        DriveName(array_view_const_char name, bool reserved = false) noexcept
         : read_only_(false)
         {
             if (!name.empty() && name[0] == '*') {

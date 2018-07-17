@@ -54,7 +54,7 @@ class ExtraSystemProcesses
     std::vector<std::string> processes;
 
 public:
-    ExtraSystemProcesses(const char * comme_separated_processes) {
+    explicit ExtraSystemProcesses(const char * comme_separated_processes) {
         if (comme_separated_processes) {
             const char * process = comme_separated_processes;
 

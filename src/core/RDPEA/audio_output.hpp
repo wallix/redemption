@@ -763,7 +763,7 @@ struct QualityModePDU {
 
     QualityModePDU() = default;
 
-    QualityModePDU(int16_t wQualityMode)
+    explicit QualityModePDU(int16_t wQualityMode)
       : wQualityMode(wQualityMode) {}
 
     void emit(OutStream & stream) {
