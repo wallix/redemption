@@ -27,8 +27,8 @@
 
 #include "core/RDP/clipboard.hpp"
 
-// #include <cstdio>
-// #include <cstring>
+#include <cstdio>
+#include <cstring>
 
 
 #include <sys/uio.h>
@@ -276,20 +276,23 @@ struct RDPMetrics {
             this->total_other_amount_data_rcv_from_server
         );
 
-        if (this->fd == -1) {
+ if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
-        } else {
-            LOG(LOG_INFO, "looooooooooooooooooool");
-            iovec vec[1];
-            vec[0].iov_base = sentence;
-            vec[0].iov_len  = strlen(sentence);
 
-            ssize_t nwritten = ::writev(this->fd, vec, 1); // atomic write
-            LOG(LOG_INFO, "looooooooooooooooooool %zu", nwritten);
+        } else {
+
+            struct iovec iov[1];
+            iov[0].iov_base = sentence;
+            iov[0].iov_len = std::strlen(sentence);
+
+            ssize_t nwritten = ::writev(fd, iov, 1);
+            LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
 
             if (nwritten == -1) {
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
-                    this->fd, this->path_template, this->last_date);
+                std::string file_path_template(this->path_template);
+                file_path_template += this->last_date;
+                file_path_template += ".log";
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
                 return;
             }
         }
