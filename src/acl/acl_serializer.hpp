@@ -23,10 +23,6 @@
 
 
 #pragma once
-#include <unistd.h>
-#include <fcntl.h>
-
-#include <cinttypes>
 
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
@@ -38,14 +34,20 @@
 #include "transport/transport.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/exchange.hpp"
 #include "utils/translation.hpp"
 #include "utils/verbose_flags.hpp"
 
 #include <string>
+#include <utility>
+
 #include <ctime>
-#include "utils/log.hpp"
+#include <cinttypes>
+
+#include <unistd.h>
+#include <fcntl.h>
+
 
 class KeepAlive {
     // Keep alive Variables
@@ -710,7 +712,7 @@ private:
                 return this->key_name_buf;
             }
             *m = 0;
-            return exchange(this->p, m+1);
+            return std::exchange(this->p, m+1);
         }
 
         bool is_set_value() {
@@ -747,7 +749,7 @@ private:
             if (m != this->e) {
                 *m = 0;
                 std::size_t const sz = m - this->p;
-                return {exchange(this->p, m+1), sz};
+                return {std::exchange(this->p, m+1), sz};
             }
             data_multipacket.clear();
             do {

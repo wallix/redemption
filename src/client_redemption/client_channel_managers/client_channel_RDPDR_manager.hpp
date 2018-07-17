@@ -1432,6 +1432,8 @@ public:
 
     void process_client_clipboard_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
 
+        // TODO code duplication with ClientChannelCLIPRDRManager::process_client_clipboard_out_data
+
         // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
         // Virtual channel data can span multiple Virtual Channel PDUs (section 3.1.5.2.1).
@@ -1521,7 +1523,6 @@ public:
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
                 out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
 
-                data_sent += remains_PDU;
                 InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
                 this->client->mod->send_to_mod_channel( front_channel_name

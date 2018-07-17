@@ -74,7 +74,8 @@ $(find src/ -name '*.cpp' \
 -I'projects/redemption_configs/redemption_src' \
 -I'src' \
 -I'src/system/linux' \
--I'tests/includes/'
+-I'tests/includes/' \
+-DZLIB_CONST
 
 # highlighting
 # sed "s#`pwd`/##" | colout '(^[ps][^/]+/[^:]+):([^:]+:[^:]+): (error)?(warning)?(note)?:([^[]+)(\[.*)?' c y r,o m,o c,o \#eee,o w

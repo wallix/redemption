@@ -4168,11 +4168,6 @@ test-run tests/utils/sugar/test_cast :
 :
   <covfile>src/utils/sugar/cast.hpp
 ;
-test-run tests/utils/sugar/test_exchange :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_exchange.cpp
-:
-  <covfile>src/utils/sugar/exchange.hpp
-;
 test-run tests/utils/sugar/test_finally :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_finally.cpp
 :
@@ -5199,8 +5194,6 @@ alias test_byte : tests/utils/sugar/test_byte ;
 alias test_byte.coverage : tests/utils/sugar/test_byte.coverage ;
 alias test_cast : tests/utils/sugar/test_cast ;
 alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
-alias test_exchange : tests/utils/sugar/test_exchange ;
-alias test_exchange.coverage : tests/utils/sugar/test_exchange.coverage ;
 alias test_finally : tests/utils/sugar/test_finally ;
 alias test_finally.coverage : tests/utils/sugar/test_finally.coverage ;
 alias test_iter : tests/utils/sugar/test_iter ;
@@ -5721,7 +5714,6 @@ alias tests/utils/sugar :
   tests/utils/sugar/test_buffer_t
   tests/utils/sugar/test_byte
   tests/utils/sugar/test_cast
-  tests/utils/sugar/test_exchange
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_iter
   tests/utils/sugar/test_movable_noncopyable

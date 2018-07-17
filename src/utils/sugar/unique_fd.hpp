@@ -25,9 +25,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <utility>
 #include <string>
 
-#include "utils/sugar/exchange.hpp"
 
 /// \brief close a file descriptor automatically
 struct unique_fd
@@ -38,7 +38,7 @@ struct unique_fd
     explicit unique_fd(int fd) noexcept : fd_(fd) {}
 
     unique_fd(unique_fd && other) noexcept
-    : fd_(exchange(other.fd_, -1))
+    : fd_(std::exchange(other.fd_, -1))
     {}
 
     unique_fd & operator=(unique_fd && other) noexcept
@@ -91,7 +91,7 @@ struct unique_fd
 
     int release() noexcept
     {
-        return exchange(this->fd_, -1);
+        return std::exchange(this->fd_, -1);
     }
 
     bool close()

@@ -27,7 +27,6 @@
 #include "core/app_path.hpp"
 #include "core/authid.hpp"
 
-#include "utils/sugar/exchange.hpp"
 #include "utils/log.hpp"
 #include "utils/cfgloader.hpp"
 
@@ -321,7 +320,7 @@ public:
     }
 
     bool check_from_acl() {
-        return exchange(this->new_from_acl, false);
+        return std::exchange(this->new_from_acl, false);
     }
 
     std::size_t changed_field_size() const {

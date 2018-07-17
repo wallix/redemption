@@ -331,8 +331,6 @@ namespace
 
         static constexpr char c_str[sizeof...(c)+1] = {c..., '\0'};
     };
-    template<char... c>
-    constexpr char string_literal<c...>::c_str[sizeof...(c)+1];
 
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
