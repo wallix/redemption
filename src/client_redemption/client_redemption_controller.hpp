@@ -82,14 +82,14 @@ public:
         }
     }
 
-    void wheelEvent(int  /*unused*/,  int  /*unused*/, int delta) override {
-        int flag(MOUSE_FLAG_HWHEEL);
-        if (delta < 0) {
-            flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
-        }
-        if (this->mod != nullptr) {
-            //this->mod->rdp_input_mouse(flag, e->x(), e->y(), &(this->keymap));
-        }
+    void wheelEvent(int  /*unused*/,  int  /*unused*/, int /*delta*/) override {
+        // int flag(MOUSE_FLAG_HWHEEL);
+        // if (delta < 0) {
+        //     flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
+        // }
+        // if (this->mod != nullptr) {
+        //     this->mod->rdp_input_mouse(flag, e->x(), e->y(), &(this->keymap));
+        // }
     }
 
     bool mouseMouveEvent(int x, int y) override {

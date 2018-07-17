@@ -2109,10 +2109,10 @@ private:
             this->last = VNC::Encoder::EncoderState::Ready;
         }
 
-        ~FrameBufferUpdateCtx()
-        {
+//        ~FrameBufferUpdateCtx()
+//        {
 //            inflateEnd(&this->zstrm);
-        }
+//        }
 
         void start(uint8_t bpp, uint8_t Bpp)
         {

@@ -45,16 +45,17 @@ struct RDPMetrics {
 
     const char * path_template;
 
+    // TODO unique_fd
     int fd = -1;
 
 
     // Header
     const uint32_t session_id;
-    char primary_user_sig[SslSha1::DIGEST_LENGTH*2];
-    char account_sig[SslSha1::DIGEST_LENGTH*2];
-    char hostname_sig[SslSha1::DIGEST_LENGTH*2];
-    char target_service_sig[SslSha1::DIGEST_LENGTH*2];
-    char session_info_sig[SslSha1::DIGEST_LENGTH*2];
+    char primary_user_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char account_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char hostname_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char target_service_sig[SslSha1::DIGEST_LENGTH*2+1];
+    char session_info_sig[SslSha1::DIGEST_LENGTH*2+1];
     char start_full_date_time[24];
 
 
@@ -137,19 +138,22 @@ struct RDPMetrics {
     }
 
 
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
+    void sha1_encrypt(char (&dest)[SslSha1::DIGEST_LENGTH*2+1], const char * src, const size_t src_len) {
         SslSha1 sha1;
         sha1.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha1::DIGEST_LENGTH];
         sha1.final(sig);
-        snprintf(dest, SslSha1::DIGEST_LENGTH,
-                 "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                 sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
-                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
+        snprintf(
+            dest, sizeof(dest),
+            "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+            sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7],
+            sig[8], sig[9], sig[10], sig[11], sig[12], sig[13], sig[14], sig[15],
+            sig[16], sig[17], sig[18], sig[19]);
     }
 
-    void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
+    void set_current_formated_date(char (&date)[24], bool keep_hhmmss, time_t time) {
         char current_date[24] = {'\0'};
+        // TODO strftime
         memcpy(current_date, ctime(&time), 24);
 
         date[0] = current_date[20];
@@ -226,7 +230,7 @@ struct RDPMetrics {
         const long int delta_time = time_date - this->start_time;
 
         char sentence[4096];
-        ::snprintf(sentence, sizeof(sentence), "Session_starting_time=%s delta_time(s)=%ld Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s"
+        int const len = ::snprintf(sentence, sizeof(sentence), "Session_starting_time=%s delta_time(s)=%ld Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s"
 
           " main_channel_data_from_client=%ld"
           " right_click_sent=%d left_click_sent=%d keys_sent=%d mouse_move=%d"
@@ -282,22 +286,16 @@ struct RDPMetrics {
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
-
-        } else {
-
-            struct iovec iov[1];
-            iov[0].iov_base = sentence;
-            iov[0].iov_len = std::strlen(sentence);
+        }
+        else {
+            struct iovec iov[1]{ {sentence, size_t(len)} };
 
             ssize_t nwritten = ::writev(fd, iov, 1);
             //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
 
             if (nwritten == -1) {
-                std::string file_path_template(this->path_template);
-                file_path_template += this->last_date;
-                file_path_template += ".log";
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
-                return;
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
+                    this->fd, this->path_template, this->last_date);
             }
         }
     }

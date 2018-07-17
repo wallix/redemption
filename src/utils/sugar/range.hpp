@@ -23,8 +23,8 @@
 #include <iterator>
 #include <type_traits>
 
-using std::begin;
-using std::end;
+using std::begin; /*NOLINT*/
+using std::end; /*NOLINT*/
 
 template<class It>
 struct range
