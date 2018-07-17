@@ -20,6 +20,11 @@
 
 #pragma once
 
+#include <cstdio>
+#include <cstring>
+#include <fcntl.h>
+#include <sys/uio.h>
+
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 #include "core/client_info.hpp"
@@ -27,12 +32,7 @@
 
 #include "core/RDP/clipboard.hpp"
 
-#include <cstdio>
-#include <cstring>
 
-
-#include <sys/uio.h>
-#include <fcntl.h>
 
 
 
@@ -50,11 +50,11 @@ struct RDPMetrics {
 
     // Header
     const uint32_t session_id;
-    char primary_user_sig[SslSha1::DIGEST_LENGTH];
-    char account_sig[SslSha1::DIGEST_LENGTH];
-    char hostname_sig[SslSha1::DIGEST_LENGTH];
-    char target_service_sig[SslSha1::DIGEST_LENGTH];
-    char session_info_sig[SslSha1::DIGEST_LENGTH];
+    char primary_user_sig[SslSha1::DIGEST_LENGTH*2];
+    char account_sig[SslSha1::DIGEST_LENGTH*2];
+    char hostname_sig[SslSha1::DIGEST_LENGTH*2];
+    char target_service_sig[SslSha1::DIGEST_LENGTH*2];
+    char session_info_sig[SslSha1::DIGEST_LENGTH*2];
     char start_full_date_time[24];
 
 
@@ -142,7 +142,10 @@ struct RDPMetrics {
         sha1.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha1::DIGEST_LENGTH];
         sha1.final(sig);
-        memcpy(dest, sig, SslSha1::DIGEST_LENGTH);
+        snprintf(dest, SslSha1::DIGEST_LENGTH,
+                 "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+                 sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
+                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]);
     }
 
     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
@@ -245,7 +248,8 @@ struct RDPMetrics {
           " rail_channel_data_from_serveur=%ld"
 
           " other_channel_data_from_client=%ld"
-          " other_channel_data_from_serveur=%ld",
+          " other_channel_data_from_serveur=%ld"
+          "\n",
 
             this->start_full_date_time, delta_time,
             this->session_id, this->primary_user_sig, this->account_sig, this->hostname_sig, this->target_service_sig, this->session_info_sig,
@@ -276,7 +280,7 @@ struct RDPMetrics {
             this->total_other_amount_data_rcv_from_server
         );
 
- if (this->fd == -1) {
+        if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
 
         } else {
@@ -286,7 +290,7 @@ struct RDPMetrics {
             iov[0].iov_len = std::strlen(sentence);
 
             ssize_t nwritten = ::writev(fd, iov, 1);
-            LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
+            //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
 
             if (nwritten == -1) {
                 std::string file_path_template(this->path_template);
