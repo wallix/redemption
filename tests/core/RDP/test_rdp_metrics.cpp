@@ -51,34 +51,31 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
     timeval now = tvtime();
     metrics.set_current_formated_date(current_date, false, now.tv_sec);
 
-//     char complete_file_path[4096] = {'\0'};
-//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%s-%s.log", templace_path_file, current_date);
-//     int fd = ::open(complete_file_path, O_RDONLY| O_APPEND);
-//     RED_CHECK(fd > 0);
-//
-//     remove(complete_file_path);
-//     fd = ::open(complete_file_path, O_RDONLY | O_APPEND);
-//     RED_CHECK(fd == -1);
-//
-//    // char complete_file_path[4096] {};
-//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%s%s.log", templace_path_file, current_date);
-//     RED_CHECK(unique_fd(complete_file_path, O_RDWR | O_APPEND).is_open());
-//     remove(complete_file_path);
-//
-//     RED_CHECK(!unique_fd(complete_file_path, O_RDWR | O_APPEND).is_open());
-//
-//     time_t last_date_save = metrics.last_date;
-//     metrics.last_date -= 3600*24;
-//     metrics.log();
-//     metrics.log();
-//     RED_CHECK(last_date_save <= metrics.last_date);
-//
-//
-//     fd = ::open(complete_file_path, O_RDONLY | O_APPEND);
-//     RED_CHECK(fd > 0);
-//
-//     RED_CHECK(unique_fd(complete_file_path, O_RDWR | O_APPEND).is_open());
-//     remove(complete_file_path);
+    char complete_file_path[4096] = {'\0'};
+    ::snprintf(complete_file_path, sizeof(complete_file_path), "%s-%s.log", templace_path_file, current_date);
+    int fd = ::open(complete_file_path, O_RDONLY| O_APPEND);
+    RED_CHECK(fd > 0);
+    ::close(fd);
+    remove(complete_file_path);
+
+    time_t last_date_save = metrics.last_date - 3600*24;
+    metrics.last_date = last_date_save;
+    metrics.log();
+    metrics.log();
+
+    char yesterday_date[24] {};
+    metrics.set_current_formated_date(yesterday_date, false, last_date_save);
+    char yesterday_complete_path[4096] = {'\0'};
+    ::snprintf(yesterday_complete_path, sizeof(yesterday_complete_path), "%s-%s.log", templace_path_file, yesterday_date);
+    fd = ::open(yesterday_complete_path, O_RDONLY| O_APPEND);
+    RED_CHECK(fd == -1);
+    RED_CHECK(last_date_save <= metrics.last_date);
+
+    fd = ::open(complete_file_path, O_RDONLY | O_APPEND);
+    RED_CHECK(fd > 0);
+
+    ::close(fd);
+    //remove(complete_file_path);
 }
 
 

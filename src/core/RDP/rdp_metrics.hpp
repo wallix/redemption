@@ -279,8 +279,13 @@ struct RDPMetrics {
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
         } else {
-            const iovec vec[1]{{sentence, std::strlen(sentence)}};
+            LOG(LOG_INFO, "looooooooooooooooooool");
+            iovec vec[1];
+            vec[0].iov_base = sentence;
+            vec[0].iov_len  = strlen(sentence);
+
             ssize_t nwritten = ::writev(this->fd, vec, 1); // atomic write
+            LOG(LOG_INFO, "looooooooooooooooooool %zu", nwritten);
 
             if (nwritten == -1) {
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s%ld.log\"",
