@@ -34,17 +34,186 @@
 
 
 
-
+// const char * rdp_metrics_field_name[] = {
+//             " main_channel_data_from_client",
+//             " right_click_sent=",
+//             " left_click_sent=",
+//             " keys_sent=",
+//             " mouse_move=",
+//             " main_channel_data_from_serveur=",
+//             " cliprdr_channel_data_from_server=",
+//             " nb_text_paste_server=",
+//             " nb_image_paste_server=",
+//             " nb_file_paste_server=",
+//             " nb_text_copy_server=",
+//             " nb_image_copy_server=",
+//             " nb_file_copy_server=",
+//             " cliprdr_channel_data_from_client=",
+//             " nb_text_paste_client=",
+//             " nb_image_paste_client=",
+//             " nb_file_paste_client=",
+//             " nb_text_copy_client=",
+//             " nb_image_copy_client=",
+//             " nb_file_copy_client=",
+//             " rdpdr_channel_data_from_client=",
+//             " rdpdr_channel_data_from_server=",
+//             " nb_more_1k_byte_read_file=",
+//             " nb_deleted_file_or_folder=",
+//             " nb_write_file=",
+//             " nb_rename_file=",
+//             " nb_open_folder=",
+//             " rail_channel_data_from_client=",
+//             " rail_channel_data_from_server=",
+//             " other_channel_data_from_client=",
+//             " other_channel_data_from_server="
+// };
 
 struct RDPMetrics {
 
+    enum : int {
+        total_main_amount_data_rcv_from_client,
+        total_right_clicks,
+        total_left_clicks,
+        total_keys_pressed,
+        total_mouse_move,
+        total_main_amount_data_rcv_from_server,
+
+        total_cliprdr_amount_data_rcv_from_server,
+        nb_text_paste_from_serveur,
+        nb_image_paste_from_serveur,
+        nb_file_paste_from_serveur,
+        nb_text_copy_from_serveur,
+        nb_image_copy_from_serveur,
+        nb_file_copy_from_serveu,
+        total_cliprdr_amount_data_rcv_from_client,
+        nb_text_paste_from_client,
+        nb_image_paste_from_client,
+        nb_file_paste_from_client,
+        nb_text_copy_from_client,
+        nb_image_copy_from_client,
+        nb_file_copy_from_client,
+
+        total_rdpdr_amount_data_rcv_from_client,
+        total_rdpdr_amount_data_rcv_from_server,
+        nb_more_1k_byte_read_file,
+        nb_deleted_file_or_folder,
+        nb_write_file,
+        nb_rename_file,
+        nb_open_folder,
+
+        total_rail_amount_data_rcv_from_client,
+        total_rail_amount_data_rcv_from_server,
+
+        total_other_amount_data_rcv_from_client,
+        total_other_amount_data_rcv_from_server
+    };
+
+    const char * rdp_metrics_name(int index) {
+        switch (index) {
+            case total_main_amount_data_rcv_from_client: return " main_channel_data_from_client";
+            case total_right_clicks: return " right_click_sent=";
+            case total_left_clicks: return " left_click_sent=";
+            case total_keys_pressed: return " keys_sent=";
+            case total_mouse_move: return " mouse_move=";
+            case total_main_amount_data_rcv_from_server: return " main_channel_data_from_serveur=";
+            case total_cliprdr_amount_data_rcv_from_server: return " cliprdr_channel_data_from_server=";
+            case nb_text_paste_from_serveur: return " nb_text_paste_server=";
+            case nb_image_paste_from_serveur: return " nb_image_paste_server=";
+            case nb_file_paste_from_serveur: return " nb_file_paste_server=";
+            case nb_text_copy_from_serveur: return " nb_text_copy_server=";
+            case nb_image_copy_from_serveur: return " nb_image_copy_server=";
+            case nb_file_copy_from_serveu: return " nb_file_copy_server=";
+            case total_cliprdr_amount_data_rcv_from_client: return " cliprdr_channel_data_from_client=";
+            case nb_text_paste_from_client: return " nb_text_paste_client=";
+            case nb_image_paste_from_client: return " nb_image_paste_client=";
+            case nb_file_paste_from_client: return " nb_file_paste_client=";
+            case nb_text_copy_from_client: return " nb_text_copy_client=";
+            case nb_image_copy_from_client: return " nb_image_copy_client=";
+            case nb_file_copy_from_client: return " nb_file_copy_client=";
+            case total_rdpdr_amount_data_rcv_from_client: return " rdpdr_channel_data_from_client=";
+            case total_rdpdr_amount_data_rcv_from_server: return " rdpdr_channel_data_from_server=";
+            case nb_more_1k_byte_read_file: return " nb_more_1k_byte_read_file=";
+            case nb_deleted_file_or_folder: return " nb_deleted_file_or_folder=";
+            case nb_write_file: return " nb_write_file=";
+            case nb_rename_file: return " nb_rename_file=";
+            case nb_open_folder: return " nb_open_folder=";
+            case total_rail_amount_data_rcv_from_client: return " rail_channel_data_from_client=";
+            case total_rail_amount_data_rcv_from_server: return " rail_channel_data_from_server=";
+            case total_other_amount_data_rcv_from_client: return " other_channel_data_from_client=";
+            case total_other_amount_data_rcv_from_server: return " other_channel_data_from_server=";
+        }
+    }
+
+    void server_other_channel_data(long int len) {
+        this->current_data[total_other_amount_data_rcv_from_server] += len;
+    }
+
+    void client_other_channel_data(long int len) {
+        this->current_data[total_other_amount_data_rcv_from_client] += len;
+    }
+
+    void server_rail_channel_data(long int len) {
+        this->current_data[total_rail_amount_data_rcv_from_server] += len;
+    }
+
+    void client_rail_channel_data(long int len) {
+        this->current_data[total_rail_amount_data_rcv_from_client] += len;
+    }
+
+    void set_server_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+        this->current_data[total_rdpdr_amount_data_rcv_from_server] += length;
+    }
+
+    void set_client_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+        this->current_data[total_rdpdr_amount_data_rcv_from_client] += length;
+    }
+
+    void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+        this->current_data[total_cliprdr_amount_data_rcv_from_server] += length;
+        RDPECLIP::CliprdrHeader header;
+        header.recv(chunk);
+
+        switch (header.msgType()) {
+
+        }
+    }
+
+    void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+        this->current_data[total_cliprdr_amount_data_rcv_from_client] += length;
+    }
+
+    void server_main_channel_data(long int len) {
+        this->current_data[total_main_amount_data_rcv_from_server] += len;
+    }
+
+    void mouse_mouve(int xy) {
+        this->current_data[total_mouse_move] += xy;
+    }
+
+    void key_pressed() {
+        this->current_data[total_keys_pressed]++;
+    }
+
+    void right_click() {
+        this->current_data[total_right_clicks]++;
+    }
+
+    void left_click() {
+        this->current_data[total_left_clicks]++;
+    }
+
+    void client_main_channel_data(long int len) {
+        this->current_data[total_main_amount_data_rcv_from_client] += len;
+    }
+
+
+
+
+
     time_t last_date;
     char complete_file_path[4096] = {'\0'};
-
     time_t start_time;
-
     const char * path_template;
-
     int fd = -1;
 
 
@@ -57,46 +226,12 @@ struct RDPMetrics {
     char session_info_sig[SslSha1::DIGEST_LENGTH*2];
     char start_full_date_time[24];
 
+    char header_part1[64];
+    char header_part2[1024];
 
-    long int total_main_amount_data_rcv_from_client = 0;
-    int total_right_clicks = 0;
-    int total_left_clicks = 0;
-    int total_keys_pressed = 0;
-    int total_mouse_move = 0;
-    long int total_main_amount_data_rcv_from_server = 0;
+    long int current_data[32] = { 0 };
+    long int previous_data[32] = { 0 };
 
-
-    long int total_cliprdr_amount_data_rcv_from_server = 0;
-    int nb_text_paste_from_serveur = 0;
-    int nb_image_paste_from_serveur = 0;
-    int nb_file_paste_from_serveur = 0;
-    int nb_text_copy_from_serveur = 0;
-    int nb_image_copy_from_serveur = 0;
-    int nb_file_copy_from_serveur = 0;
-    long int total_cliprdr_amount_data_rcv_from_client = 0;
-    int nb_text_paste_from_client = 0;
-    int nb_image_paste_from_client = 0;
-    int nb_file_paste_from_client = 0;
-    int nb_text_copy_from_client = 0;
-    int nb_image_copy_from_client = 0;
-    int nb_file_copy_from_client = 0;
-
-
-    long int total_rdpdr_amount_data_rcv_from_client = 0;
-    long int total_rdpdr_amount_data_rcv_from_server = 0;
-    int nb_more_1k_byte_read_file = 0;
-    int nb_deleted_file_or_folder = 0;
-    int nb_write_file = 0;
-    int nb_rename_file = 0;
-    int nb_open_folder = 0;
-
-
-    long int total_rail_amount_data_rcv_from_client = 0;
-    long int total_rail_amount_data_rcv_from_server = 0;
-
-
-    long int total_other_amount_data_rcv_from_client = 0;
-    long int total_other_amount_data_rcv_from_server = 0;
 
 
 
@@ -129,6 +264,12 @@ struct RDPMetrics {
         char session_info[64];
         ::snprintf(session_info, sizeof(session_info), "%u%s%d%u%u", sccore_version, target_host, info.bpp, info.width, info.height);
         this->sha1_encrypt(this->session_info_sig, session_info, std::strlen(session_info));
+
+//          char header[1024];
+        ::snprintf(this->header_part1, sizeof(this->header_part1), "Session_starting_time=%s delta_time(s)=",
+        this->start_full_date_time);
+
+        ::snprintf(this->header_part2, sizeof(this->header_part2), " Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s", this->session_id, this->primary_user_sig, this->account_sig, this->hostname_sig, this->target_service_sig, this->session_info_sig);
     }
 
 
@@ -192,27 +333,6 @@ struct RDPMetrics {
     }
 
 
-    void set_server_cliprdr_metrics(InStream & chunk, size_t length) {
-        this->total_cliprdr_amount_data_rcv_from_server += length;
-        RDPECLIP::CliprdrHeader header;
-        header.recv(chunk);
-
-        switch (header.msgType()) {
-
-        }
-    }
-
-    void set_client_cliprdr_metrics(InStream & chunk, size_t length) {
-        this->total_cliprdr_amount_data_rcv_from_client+= length;
-    }
-
-    void set_server_rdpdr_metrics(InStream & chunk, size_t length) {
-
-    }
-
-    void set_client_rdpdr_metrics(InStream & chunk, size_t length) {
-
-    }
 
     void log() {
 
@@ -225,69 +345,29 @@ struct RDPMetrics {
         }
         const long int delta_time = time_date - this->start_time;
 
-        char sentence[4096];
-        ::snprintf(sentence, sizeof(sentence), "Session_starting_time=%s delta_time(s)=%ld Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s"
+        char header[1024];
+        ::snprintf(header, sizeof(header), "%s%ld%s", this->header_part1, delta_time, this->header_part2);
 
-          " main_channel_data_from_client=%ld"
-          " right_click_sent=%d left_click_sent=%d keys_sent=%d mouse_move=%d"
-          " main_channel_data_from_serveur=%ld"
-
-          " cliprdr_channel_data_from_server=%ld"
-          " nb_text_paste_server=%d nb_image_paste_server=%d nb_file_paste_server=%d"
-          " nb_text_copy_server=%d nb_image_copy_server=%d nb_file_copy_server=%d"
-          " cliprdr_channel_data_from_client=%ld"
-          " nb_text_paste_client=%d nb_image_paste_client=%d nb_file_paste_client=%d"
-          " nb_text_copy_client=%d nb_image_copy_client=%d nb_file_copy_client=%d"
-
-          " rdpdr_channel_data_from_client=%ld"
-          " rdpdr_channel_data_from_server=%ld"
-          " nb_more_1k_byte_read_file=%d nb_deleted_file_or_folder=%d nb_write_file=%d nb_rename_file=%d"
-          " nb_open_folder=%d"
-
-          " rail_channel_data_from_client=%ld"
-          " rail_channel_data_from_serveur=%ld"
-
-          " other_channel_data_from_client=%ld"
-          " other_channel_data_from_serveur=%ld"
-          "\n",
-
-            this->start_full_date_time, delta_time,
-            this->session_id, this->primary_user_sig, this->account_sig, this->hostname_sig, this->target_service_sig, this->session_info_sig,
-
-            this->total_main_amount_data_rcv_from_client,
-            this->total_right_clicks, this->total_left_clicks, this->total_keys_pressed, this->total_mouse_move,
-            this->total_main_amount_data_rcv_from_server,
-
-            this->total_cliprdr_amount_data_rcv_from_server,
-            this->nb_text_paste_from_serveur, this->nb_image_paste_from_serveur, this->nb_file_paste_from_serveur,
-            this->nb_text_copy_from_serveur, this->nb_image_copy_from_serveur, this->nb_file_copy_from_serveur,
-            this->total_cliprdr_amount_data_rcv_from_client,
-            this->nb_text_paste_from_client, this->nb_image_paste_from_client, this->nb_file_paste_from_client,
-            this->nb_text_copy_from_client, this->nb_image_copy_from_client, this->nb_file_copy_from_client,
-
-            this->total_rdpdr_amount_data_rcv_from_client,
-            this->total_rdpdr_amount_data_rcv_from_server,
-            this->nb_more_1k_byte_read_file,
-            this->nb_deleted_file_or_folder,
-            this->nb_write_file,
-            this->nb_rename_file,
-            this->nb_open_folder,
-
-            this->total_rail_amount_data_rcv_from_client,
-            this->total_rail_amount_data_rcv_from_server,
-
-            this->total_other_amount_data_rcv_from_client,
-            this->total_other_amount_data_rcv_from_server
-        );
+        std::string sentence(header);
+        for (int i = 0; i < 31; i++) {
+            if (this->current_data[i] - this->previous_data[i]) {
+                char current_metrics[64];
+                ::snprintf(current_metrics, sizeof(current_metrics), "%s%ld", this->rdp_metrics_name(i), this->current_data[i]);
+                sentence += current_metrics;
+                this->previous_data[i] = this->current_data[i];
+            }
+        }
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
 
         } else {
+            struct iovec iov[1];                             // = { {sentence.c_str(), sentence.length} };
 
-            struct iovec iov[1];
-            iov[0].iov_base = sentence;
-            iov[0].iov_len = std::strlen(sentence);
+            char sentence_char[4096] = {'\0'};
+            memcpy(sentence_char, sentence.c_str(), sentence.length());
+            iov[0].iov_base = sentence_char;
+            iov[0].iov_len = sentence.length();
 
             ssize_t nwritten = ::writev(fd, iov, 1);
             //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
@@ -297,7 +377,6 @@ struct RDPMetrics {
                 file_path_template += this->last_date;
                 file_path_template += ".log";
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
-                return;
             }
         }
     }
