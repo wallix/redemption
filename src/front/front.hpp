@@ -934,15 +934,15 @@ public:
         const char * record_path = ini.get<cfg::video::record_path>().c_str();
         const CaptureFlags capture_flags = ini.get<cfg::video::capture_flags>();
 
-        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        const bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
 
-        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
-        bool capture_video = bool(capture_flags & CaptureFlags::video);
+        const bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        const bool capture_video = bool(capture_flags & CaptureFlags::video);
         // TODO missing CaptureFlags::full_video
-        bool capture_video_full = false;
+        const bool capture_video_full = false;
         // TODO missing CaptureFlags::meta
-        bool capture_meta = ini.get<cfg::globals::is_rec>() && bool(capture_flags & CaptureFlags::ocr);
-        bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
+        const bool capture_meta = false /*bool(capture_flags & CaptureFlags::meta)*/;
+        const bool capture_kbd = !bool(ini.get<cfg::video::disable_keyboard_log>() & KeyboardLogFlags::syslog)
           || ini.get<cfg::session_log::enable_session_log>()
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_kill>().c_str())
           || ::contains_kbd_pattern(ini.get<cfg::context::pattern_notify>().c_str())
@@ -986,18 +986,7 @@ public:
             this->client_info.remote_program,
             ini.get<cfg::video::rt_display>()
         };
-        bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
-
-        LOG(LOG_INFO, "Front::can_be_start_capture: Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-            capture_wrm ?"wrm ":"",
-            capture_png ?"png ":"",
-            capture_kbd ? 1 : 0,
-            capture_video ?"video ":"",
-            capture_video_full ?"video_full ":"",
-            capture_pattern_checker ?"pattern ":"",
-            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-            capture_meta?"meta ":""
-        );
+        const bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
         DrawableParams const drawable_params{
             this->client_info.width,
