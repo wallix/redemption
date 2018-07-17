@@ -148,14 +148,14 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     expected_log_header += " delta_time(s)=0 Session_id=1 user=D033E22AE348AEB5660 account=12DEA96FEC20593566A hostname=DA39A3EE5E6B4B0D325 target_service=EE5D8A196324C9649DC session_info=1709919F0A4B52AE2A7";
     RED_CHECK(fd > 0);
     char log_read[2048] = {'\0'};
-    ::read(fd, log_read, 1015);
+    ::read(fd, log_read, 1016);
     RED_CHECK(fd > 0);
     std::string str_log_read(log_read);
     RED_CHECK(fd > 0);
     std::string str_log_data = str_log_read.substr(expected_log_header.length(), str_log_read.length());
     //LOG(LOG_INFO, "%s", str_log_data);
 
-    std::string expected_log_data(" main_channel_data_from_client1 right_click_sent=2 left_click_sent=3 keys_sent=4 mouse_move=5 main_channel_data_from_serveur=6 cliprdr_channel_data_from_server=7 nb_text_paste_server=8 nb_image_paste_server=9 nb_file_paste_server=10 nb_text_copy_server=11 nb_image_copy_server=12 nb_file_copy_server=13 cliprdr_channel_data_from_client=14 nb_text_paste_client=15 nb_image_paste_client=16 nb_file_paste_client=17 nb_text_copy_client=18 nb_image_copy_client=19 nb_file_copy_client=20 rdpdr_channel_data_from_client=21 rdpdr_channel_data_from_server=22 nb_more_1k_byte_read_file=23 nb_deleted_file_or_folder=24 nb_write_file=25 nb_rename_file=26 nb_open_folder=27 rail_channel_data_from_client=28 rail_channel_data_from_server=29 other_channel_data_from_client=30 other_channel_data_from_server=31");
+    std::string expected_log_data(" main_channel_data_from_client=1 right_click_sent=2 left_click_sent=3 keys_sent=4 mouse_move=5 main_channel_data_from_serveur=6 cliprdr_channel_data_from_server=7 nb_text_paste_server=8 nb_image_paste_server=9 nb_file_paste_server=10 nb_text_copy_server=11 nb_image_copy_server=12 nb_file_copy_server=13 cliprdr_channel_data_from_client=14 nb_text_paste_client=15 nb_image_paste_client=16 nb_file_paste_client=17 nb_text_copy_client=18 nb_image_copy_client=19 nb_file_copy_client=20 rdpdr_channel_data_from_client=21 rdpdr_channel_data_from_server=22 nb_more_1k_byte_read_file=23 nb_deleted_file_or_folder=24 nb_write_file=25 nb_rename_file=26 nb_open_folder=27 rail_channel_data_from_client=28 rail_channel_data_from_server=29 other_channel_data_from_client=30 other_channel_data_from_server=31");
 
     RED_CHECK_EQUAL(expected_log_data, str_log_data);
     ::close(fd);

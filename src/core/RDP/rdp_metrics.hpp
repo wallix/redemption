@@ -77,7 +77,7 @@ struct RDPMetrics {
 
     const char * rdp_metrics_name(int index) {
         switch (index) {
-            case total_main_amount_data_rcv_from_client: return " main_channel_data_from_client";
+            case total_main_amount_data_rcv_from_client: return " main_channel_data_from_client=";
             case total_right_clicks: return " right_click_sent=";
             case total_left_clicks: return " left_click_sent=";
             case total_keys_pressed: return " keys_sent=";
