@@ -34,39 +34,6 @@
 
 
 
-// const char * rdp_metrics_field_name[] = {
-//             " main_channel_data_from_client",
-//             " right_click_sent=",
-//             " left_click_sent=",
-//             " keys_sent=",
-//             " mouse_move=",
-//             " main_channel_data_from_serveur=",
-//             " cliprdr_channel_data_from_server=",
-//             " nb_text_paste_server=",
-//             " nb_image_paste_server=",
-//             " nb_file_paste_server=",
-//             " nb_text_copy_server=",
-//             " nb_image_copy_server=",
-//             " nb_file_copy_server=",
-//             " cliprdr_channel_data_from_client=",
-//             " nb_text_paste_client=",
-//             " nb_image_paste_client=",
-//             " nb_file_paste_client=",
-//             " nb_text_copy_client=",
-//             " nb_image_copy_client=",
-//             " nb_file_copy_client=",
-//             " rdpdr_channel_data_from_client=",
-//             " rdpdr_channel_data_from_server=",
-//             " nb_more_1k_byte_read_file=",
-//             " nb_deleted_file_or_folder=",
-//             " nb_write_file=",
-//             " nb_rename_file=",
-//             " nb_open_folder=",
-//             " rail_channel_data_from_client=",
-//             " rail_channel_data_from_server=",
-//             " other_channel_data_from_client=",
-//             " other_channel_data_from_server="
-// };
 
 struct RDPMetrics {
 
