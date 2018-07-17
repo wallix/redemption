@@ -174,21 +174,25 @@ namespace cli
     Res arg_parse(int* /*unused*/, char const * s, Act act)
     {
         char* end{};
-        auto const n = static_cast<int>(std::strtol(s, &end, 0));
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
+        auto const n = std::strtol(s, &end, 0);
+        using limits = std::numeric_limits<int>;
+        return (*end || n > limits::max() || n < limits::min())
+            ? Res::BadFormat : (act(int(n)), Ok);
     }
 
     template<class Act>
     Res arg_parse(unsigned* /*unused*/, char const * s, Act act)
     {
         char* end{};
-        auto const n = static_cast<unsigned>(std::strtoul(s, &end, 0));
-        return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
+        auto const n = std::strtoul(s, &end, 0);
+        using limits = std::numeric_limits<unsigned>;
+        return (*end || n > limits::max()) ? Res::BadFormat : (act(unsigned(n)), Ok);
     }
 
     template<class Act>
     Res arg_parse(long* /*unused*/, char const * s, Act act)
     {
+        errno = 0;
         char* end{};
         auto const n = std::strtol(s, &end, 0);
         return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
@@ -197,6 +201,7 @@ namespace cli
     template<class Act>
     Res arg_parse(unsigned long* /*unused*/, char const * s, Act act)
     {
+        errno = 0;
         char* end{};
         auto const n = std::strtoul(s, &end, 0);
         return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
@@ -205,6 +210,7 @@ namespace cli
     template<class Act>
     Res arg_parse(long long* /*unused*/, char const * s, Act act)
     {
+        errno = 0;
         char* end{};
         auto const n = std::strtoll(s, &end, 0);
         return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);
@@ -213,6 +219,7 @@ namespace cli
     template<class Act>
     Res arg_parse(unsigned long long* /*unused*/, char const * s, Act act)
     {
+        errno = 0;
         char* end{};
         auto const n = std::strtoull(s, &end, 0);
         return (errno == ERANGE || *end) ? Res::BadFormat : (act(n), Ok);

@@ -98,8 +98,8 @@ SelectorMod::SelectorMod(
         vars.get<cfg::theme>(),
         language(vars))
 
-    , current_page(atoi(this->selector.current_page.get_text()))
-    , number_page(atoi(this->selector.number_page.get_text()+1))
+    , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
+    , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
@@ -205,7 +205,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
             }
         }
         else if (widget == &this->selector.current_page) {
-            int page = atoi(this->selector.current_page.get_text());
+            int page = atoi(this->selector.current_page.get_text()); /*NOLINT*/
             if (page != this->current_page) {
                 this->current_page = page;
                 this->ask_page();

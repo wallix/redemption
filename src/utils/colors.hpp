@@ -352,7 +352,9 @@ inline BGRColor color_from_cstr(const char * str)
     else if ((*str == '0') && (*(str + 1) == 'x')){
         bgr = BGRasRGBColor(BGRColor(strtol(str + 2, nullptr, 16)));
     }
-    else { bgr = BGRasRGBColor(BGRColor(atol(str))); }
+    else {
+        bgr = BGRasRGBColor(BGRColor(strtol(str, nullptr, 10)));
+    }
 
     return bgr;
 }
