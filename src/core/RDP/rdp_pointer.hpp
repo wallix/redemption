@@ -1144,12 +1144,14 @@ public:
 //    colorPtrAttr (variable): Encapsulated Color Pointer Update (section
 //      2.2.9.1.1.4.4) structure which contains information about the pointer.
 //      The Color Pointer Update fields are all used, as specified in section
-//      2.2.9.1.1.4.4; however, the XOR mask data alignment packing is slightly
-//      different. For monochrome (1 bpp) pointers the XOR data is always padded
-//      to a 4-byte boundary per scan line, while color pointer XOR data is
-//      still packed on a 2-byte boundary. Color XOR data is presented in the
+//      2.2.9.1.1.4.4; Color XOR data is presented in the
 ///     color depth described in the xorBpp field (for 8 bpp, each byte contains
 //      one palette index; for 4 bpp, there are two palette indices per byte).
+
+// ==> This part is obsolete (removed from MSRDPBCGR in 2009) : however, the XOR
+// mask data alignment packing is slightly different. For monochrome (1 bpp)
+// pointers the XOR data is always padded to a 4-byte boundary per scan line,
+// while color pointer XOR data is still packed on a 2-byte boundary.
 
 class NewPointerUpdate
 {

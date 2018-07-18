@@ -3295,20 +3295,37 @@ public:
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
-        // System Pointer Update (section 2.2.9.1.1.4.3)
+        // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
+        // ---------------------------------------------------------------
+
+        // systemPointerType (4 bytes): A 32-bit, unsigned integer.
+        //    The type of system pointer.
+
+        // +---------------------------+-----------------------------+
+        // |      Value                |      Meaning                |
+        // +---------------------------+-----------------------------+
+        // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
+        // +---------------------------+-----------------------------+
+        // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
+        // +---------------------------+-----------------------------+
+
         case RDP_POINTER_SYSTEM:
         {
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer system");
-            }
-            // TODO: actually show mouse cursor or get back to default
             int system_pointer_type = stream.in_uint32_le();
-            this->process_system_pointer_pdu(system_pointer_type, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer system::%s",
+                    (system_pointer_type == RDP_NULL_POINTER)?
+                    "RDP_NULL_POINTER":"RDP_DEFAULT_POINTER");
+            }
+            if (system_pointer_type == RDP_NULL_POINTER) {
+                drawable.set_pointer(Pointer(NullPointer{}));
+            }
+            else {
+                drawable.set_pointer(Pointer(NormalPointer{}));
             }
         }
         break;
+
         // Pointer Position Update (section 2.2.9.1.1.4.2)
 
         // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
@@ -5214,48 +5231,6 @@ public:
         }
     }
 
-    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
-    // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
-    // ---------------------------------------------------------------
-
-    // systemPointerType (4 bytes): A 32-bit, unsigned integer. The type of system pointer.
-
-    // +---------------------------+-----------------------------+
-    // |      Value                |      Meaning                |
-    // +---------------------------+-----------------------------+
-    // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
-    // +---------------------------+-----------------------------+
-    // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
-    // +---------------------------+-----------------------------+
-
-    void process_system_pointer_pdu(int system_pointer_type, gdi::GraphicApi & drawable)
-    {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
-        }
-        switch (system_pointer_type) {
-        case RDP_NULL_POINTER:
-            {
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
-                }
-                drawable.set_pointer(Pointer(NullPointer{}));
-            }
-            break;
-        default:
-            {
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
-                }
-                Pointer cursor(NormalPointer{});
-                drawable.set_pointer(cursor);
-            }
-            break;
-        }
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
-            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
-        }
-    }
 
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
