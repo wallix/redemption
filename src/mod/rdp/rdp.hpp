@@ -2160,7 +2160,8 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer color (Fast)");
                 }
-                this->process_color_pointer_pdu(stream, drawable);
+//                 this->process_color_pointer_pdu(stream, drawable);
+                this->process_new_pointer_pdu(24, stream, drawable);
                 break;
 
             case FastPath::UpdateType::CACHED:
@@ -2171,12 +2172,15 @@ public:
                 break;
 
             case FastPath::UpdateType::POINTER:
+            {
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer new (Fast)");
 
                 }
-                this->process_new_pointer_pdu(stream, drawable);
-                break;
+                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                this->process_new_pointer_pdu(data_bpp, stream, drawable);
+            }
+            break;
 
             default:
                 LOG( LOG_ERR
@@ -3278,7 +3282,8 @@ public:
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer color");
             }
-            this->process_color_pointer_pdu(stream, drawable);
+//             this->process_color_pointer_pdu(stream, drawable);
+            this->process_new_pointer_pdu(24, stream, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)){
                 LOG(LOG_INFO, "Process pointer color done");
             }
@@ -3289,7 +3294,8 @@ public:
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
-                this->process_new_pointer_pdu(stream, drawable); // Pointer with arbitrary color depth
+                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                this->process_new_pointer_pdu(data_bpp, stream, drawable);
             }
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer new done");
@@ -5112,83 +5118,6 @@ public:
         this->metrics.client_main_channel_data(tram_length);
     }
 
-    // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
-    // [referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
-    // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
-    // =============================================================
-
-    // The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
-    // color pointer, as specified in [T128] section 8.14.3. This pointer update
-    // is used for both monochrome and color pointers in RDP.
-
-    //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
-    // entry in the pointer cache in which to store the pointer image. The number
-    // of cache entries is specified using the Pointer Capability Set (section 2.2.7.1.5).
-
-    //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1 ) structure containing
-    // the x-coordinates and y-coordinates of the pointer hotspot.
-
-    //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer
-    // in pixels. The maximum allowed pointer width is 96 pixels if the client
-    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
-    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
-    // was not set, the maximum allowed pointer width is 32 pixels.
-
-    //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
-    // in pixels. The maximum allowed pointer height is 96 pixels if the client
-    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
-    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
-    // was not set, the maximum allowed pointer height is 32 pixels.
-
-    //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-    // andMaskData field.
-
-    //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
-    // xorMaskData field.
-
-    //    xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp,
-    // bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte boundary for
-    // each encoded scan-line. For example, if a 3x3 pixel cursor is being sent, then each
-    // scan-line will consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel,
-    // rounded up to the next even number of bytes).
-
-    //    andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up
-    // AND mask scan-line data. The AND mask is padded to a 2-byte boundary for each encoded scan-line.
-    // For example, if a 7x7 pixel cursor is being sent, then each scan-line will consume 2 bytes
-    // (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even number of bytes).
-
-    //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
-
-    void process_color_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
-        }
-        unsigned pointer_cache_idx = stream.in_uint16_le();
-        if (pointer_cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
-            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: index out of bounds");
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
-        }
-
-        auto hotspot_x      = stream.in_uint16_le();
-        auto hotspot_y      = stream.in_uint16_le();
-        auto width = stream.in_uint16_le();
-        auto height = stream.in_uint16_le();
-        auto mlen = stream.in_uint16_le(); /* mask length */
-        auto dlen = stream.in_uint16_le(); /* data length */
-        const uint8_t * data = stream.in_uint8p(dlen);
-        const uint8_t * mask = stream.in_uint8p(mlen);
-
-        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
-
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
-        this->cursors[pointer_cache_idx] = cursor;
-
-        drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
-        }
-    }
 
     // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
     // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
@@ -5250,7 +5179,52 @@ public:
     //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
     //  contains one palette index; for 4 bpp, there are two palette indices per byte).
 
-    void process_new_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
+    // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
+    // =============================================================
+
+    // The TS_COLORPOINTERATTRIBUTE structure represents a regular T.128 24 bpp
+    // color pointer, as specified in [T128] section 8.14.3. This pointer update
+    // is used for both monochrome and color pointers in RDP.
+
+    //    cacheIndex (2 bytes): A 16-bit, unsigned integer. The zero-based cache
+    // entry in the pointer cache in which to store the pointer image. The number
+    // of cache entries is specified using the Pointer Capability Set (section 2.2.7.1.5).
+
+    //    hotSpot (4 bytes): Point (section 2.2.9.1.1.4.1 ) structure containing
+    // the x-coordinates and y-coordinates of the pointer hotspot.
+
+    //    width (2 bytes): A 16-bit, unsigned integer. The width of the pointer
+    // in pixels. The maximum allowed pointer width is 96 pixels if the client
+    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
+    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
+    // was not set, the maximum allowed pointer width is 32 pixels.
+
+    //    height (2 bytes): A 16-bit, unsigned integer. The height of the pointer
+    // in pixels. The maximum allowed pointer height is 96 pixels if the client
+    // indicated support for large pointers by setting the LARGE_POINTER_FLAG (0x00000001)
+    // in the Large Pointer Capability Set (section 2.2.7.2.7). If the LARGE_POINTER_FLAG
+    // was not set, the maximum allowed pointer height is 32 pixels.
+
+    //    lengthAndMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+    // andMaskData field.
+
+    //    lengthXorMask (2 bytes): A 16-bit, unsigned integer. The size in bytes of the
+    // xorMaskData field.
+
+    //    xorMaskData (variable): A variable-length array of bytes. Contains the 24-bpp,
+    // bottom-up XOR mask scan-line data. The XOR mask is padded to a 2-byte boundary for
+    // each encoded scan-line. For example, if a 3x3 pixel cursor is being sent, then each
+    // scan-line will consume 10 bytes (3 pixels per scan-line multiplied by 3 bytes per pixel,
+    // rounded up to the next even number of bytes).
+
+    //    andMaskData (variable): A variable-length array of bytes. Contains the 1-bpp, bottom-up
+    // AND mask scan-line data. The AND mask is padded to a 2-byte boundary for each encoded scan-line.
+    // For example, if a 7x7 pixel cursor is being sent, then each scan-line will consume 2 bytes
+    // (7 pixels per scan-line multiplied by 1 bpp, rounded up to the next even number of bytes).
+
+    //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
+
+    void process_new_pointer_pdu(unsigned data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
@@ -5258,7 +5232,6 @@ public:
 //         InStream stream_to_log = stream.clone();
 //           ::hexdump(stream.get_data(), stream.in_remain());
 
-        unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO,
@@ -5266,7 +5239,7 @@ public:
                 data_bpp, pointer_idx);
         }
 
-        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             LOG(LOG_ERR,
                 "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%u)",
                 pointer_idx);
@@ -5280,37 +5253,25 @@ public:
 
         uint16_t mlen = stream.in_uint16_le(); /* mask length */
         uint16_t dlen = stream.in_uint16_le(); /* data length */
+
         if (!stream.in_check_rem(mlen + dlen)){
             LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
                 mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
+        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
+
+        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
 
         this->cursors[pointer_idx] = cursor;
 
-
         drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
-            const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
-            ::hexdump(cursormask, mlen);
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
-            const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
-            ::hexdump(cursordata, dlen);
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
-            ARGB32Pointer vnccursor(cursor);
-            const auto av_alpha_q = vnccursor.get_alpha_q();
-            ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height);
-        }
+
     }   // process_new_pointer_pdu
 
 private:

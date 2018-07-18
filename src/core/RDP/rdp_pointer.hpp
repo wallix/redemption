@@ -597,6 +597,7 @@ public:
         auto data = av_xor.data();
         auto mask = av_and.data();
 
+        // TODO: not all color depth are supported, just 1, 32 and default to 24
 
         if (data_bpp == 1) {
             uint8_t data_data[Pointer::MAX_WIDTH * Pointer::MAX_HEIGHT / 8];
@@ -653,6 +654,14 @@ public:
                     }
                 }
             }
+
+            unsigned Bpp = 3;
+            this->only_black_white = this->is_black_and_white(
+                    av_xor.data(),
+                    this->dimensions.width,
+                    this->dimensions.height,
+                    ::even_pad_length(this->dimensions.width * Bpp),
+                    Bpp);
         }
     }
 
@@ -748,27 +757,27 @@ public:
 
 
 
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
-        : BasePointer(d, hs)
-        , maskline_bytes(maskline_bytes)
-        , xorline_bytes(xorline_bytes)
-    {
-        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
-            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
-                "bad length for color pointer mask_len=%zu data_len=%zu",
-                av_and.size(), av_and.size());
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
-        }
-        memcpy(this->mask, av_and.data(), av_and.size());
-        memcpy(this->data, av_xor.data(), av_xor.size());
-
-        unsigned Bpp = 3;
-        this->only_black_white = this->is_black_and_white(av_xor.data(),
-                                                          this->dimensions.width,
-                                                          this->dimensions.height,
-                                                          ::even_pad_length(this->dimensions.width * Bpp),
-                                                          Bpp);
-    }
+//     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
+//         : BasePointer(d, hs)
+//         , maskline_bytes(maskline_bytes)
+//         , xorline_bytes(xorline_bytes)
+//     {
+//         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
+//             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
+//                 "bad length for color pointer mask_len=%zu data_len=%zu",
+//                 av_and.size(), av_and.size());
+//             throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
+//         }
+//         memcpy(this->mask, av_and.data(), av_and.size());
+//         memcpy(this->data, av_xor.data(), av_xor.size());
+//
+//         unsigned Bpp = 3;
+//         this->only_black_white = this->is_black_and_white(av_xor.data(),
+//                                                           this->dimensions.width,
+//                                                           this->dimensions.height,
+//                                                           ::even_pad_length(this->dimensions.width * Bpp),
+//                                                           Bpp);
+//     }
 
     explicit Pointer(const PointerLoader2 pl)
      : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
