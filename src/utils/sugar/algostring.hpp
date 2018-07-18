@@ -27,30 +27,30 @@
 #include "utils/sugar/range.hpp"
 #include "utils/sugar/array_view.hpp"
 
-struct is_blanck_fn
+struct is_blank_fn
 {
     bool operator()(char c) const noexcept
     { return c == ' ' || c == '\t'; }
 };
 
-template<class FwIt, class Pred = is_blanck_fn>
+template<class FwIt, class Pred = is_blank_fn>
 FwIt ltrim(FwIt first, FwIt last, Pred pred = Pred()) {
     return std::find_if_not(first, last, pred);
 }
 
-template<class BiIt, class Pred = is_blanck_fn>
+template<class BiIt, class Pred = is_blank_fn>
 BiIt rtrim(BiIt first, BiIt last, Pred pred = Pred()) {
     using reverse_iterator = std::reverse_iterator<BiIt>;
     return std::find_if_not(reverse_iterator(last), reverse_iterator(first), pred).base();
 }
 
-template<class BiIt, class Pred = is_blanck_fn>
+template<class BiIt, class Pred = is_blank_fn>
 range<BiIt> trim(BiIt first, BiIt last, Pred pred = Pred()) {
     first = ltrim(first, last, pred);
     return {first, rtrim(first, last, pred)};
 }
 
-template<class R, class Pred = is_blanck_fn>
+template<class R, class Pred = is_blank_fn>
 auto trim(R & r, Pred pred = Pred()) -> range<decltype(r.begin())> {
     using std::begin;
     using std::end;
