@@ -174,9 +174,6 @@ struct RDPMetrics {
     }
 
 
-
-
-
     time_t last_date;
     char complete_file_path[4096] = {'\0'};
     time_t start_time;

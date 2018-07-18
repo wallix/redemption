@@ -434,6 +434,7 @@ public:
 
                                     for (size_t j = 0; j < this->formats_list.size() && !isSharedFormat; j++) {
                                         if (this->formats_list[j].formatID == formatID) {
+                                            
                                             this->_requestedFormatId = formatID;
                                             isSharedFormat = true;
                                             formatAvailable = 0;
