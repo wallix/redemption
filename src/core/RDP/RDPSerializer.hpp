@@ -115,6 +115,8 @@
 #include "gdi/graphic_cmd_color.hpp"
 
 
+#define SERIALIZER_HEADER_SIZE 106u
+
 struct RDPSerializer
 : public gdi::GraphicApi
 {
@@ -206,6 +208,10 @@ public:
 
     ~RDPSerializer() override {}
 
+    size_t get_max_data_block_size() const {
+        return (this->max_data_block_size - SERIALIZER_HEADER_SIZE);
+    }
+
 protected:
     virtual void flush_orders() = 0;
     virtual void flush_bitmaps() = 0;
@@ -229,21 +235,22 @@ public:
                , static_cast<void*>(this)
                , this->order_count
                , asked_size, used_size
-               , max_packet_size - used_size - 106u
+               , max_packet_size - used_size - SERIALIZER_HEADER_SIZE
                );
         }
-        if (asked_size + 106 > max_packet_size) {
+        if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%zu) + 106 = %zu) > order batch capacity (%zu)"
+               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > order batch capacity (%zu)"
                , asked_size
-               , asked_size + 106u
+               , SERIALIZER_HEADER_SIZE
+               , asked_size + SERIALIZER_HEADER_SIZE
                , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         if (this->bitmap_count) { this->flush_bitmaps(); }
         const size_t max_order_batch = 4096;
         if (   (this->order_count >= max_order_batch)
-            || ((used_size + asked_size + 106) > max_packet_size)) {
+            || ((used_size + asked_size + SERIALIZER_HEADER_SIZE) > max_packet_size)) {
             this->flush_orders();
         }
         this->order_count++;
@@ -742,21 +749,22 @@ public:
                , this->bitmap_count
                , asked_size
                , used_size
-               , max_packet_size - used_size - 106u
+               , max_packet_size - used_size - SERIALIZER_HEADER_SIZE
                );
         }
-        if (asked_size + 106 > max_packet_size) {
+        if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "asked size (%zu) > image batch capacity (%zu)"
-               , asked_size + 106u
-               , max_packet_size
-               );
+               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > image batch capacity (%zu)"
+               , asked_size
+               , SERIALIZER_HEADER_SIZE
+               , asked_size + SERIALIZER_HEADER_SIZE
+               , max_packet_size);
             throw Error(ERR_STREAM_MEMORY_TOO_SMALL);
         }
         if (this->order_count) { this->flush_orders(); }
         const size_t max_image_batch = 4096;
         if (   (this->bitmap_count >= max_image_batch)
-            || ((used_size + asked_size + 106) > max_packet_size)) {
+            || ((used_size + asked_size + SERIALIZER_HEADER_SIZE) > max_packet_size)) {
             this->flush_bitmaps();
         }
         this->bitmap_count++;

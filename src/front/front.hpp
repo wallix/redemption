@@ -226,13 +226,15 @@ private:
             void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {
+                size_t const serializer_max_data_block_size = this->get_max_data_block_size();
+
+                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > serializer_max_data_block_size) {
                     const uint16_t max_image_width
                       = std::min<uint16_t>(
-                            align4(this->max_data_block_size / nbbytes(new_bmp.bpp())),
+                            ((serializer_max_data_block_size / nbbytes(new_bmp.bpp())) & ~3),
                             new_bmp.cx()
                         );
-                    const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
+                    const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
 
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
@@ -4482,12 +4484,18 @@ protected:
 
             uint8_t image_bpp = (this->capture_bpp ? this->capture_bpp : this->client_info.bpp);
 
+            size_t const serializer_max_data_block_size = [this]{
+                Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
+                return graphics_update_pdu_.get_max_data_block_size();
+            }();
+
+
             const uint16_t max_image_width =
                 std::min<uint16_t>(
-                        align4(this->max_data_block_size / nbbytes(image_bpp)),
+                        ((serializer_max_data_block_size / nbbytes(image_bpp)) & ~3),
                         image_rect.cx
                     );
-            const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(image_bpp));
+            const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nbbytes(image_bpp));
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
             RDPColor image_color = color_encode(order_color, image_bpp);
@@ -4666,7 +4674,11 @@ private:
 //            this->client_info.cache2_size,
 //            this->client_info.cache3_size,
 //            front_bitmap_size);
-        if (front_bitmap_size <= this->client_info.cache3_size
+        size_t const serializer_max_data_block_size = [this]{
+            Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
+            return graphics_update_pdu_.get_max_data_block_size();
+        }();
+        if (front_bitmap_size <= serializer_max_data_block_size
             && align4(dst_cx) < 128 && dst_cy < 128) {
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
@@ -4675,7 +4687,7 @@ private:
         }
         else {
             // if not we have to split it
-            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < serializer_max_data_block_size) ? 64 : 32);
             const uint16_t TILE_CY = TILE_CX;
 
             contiguous_sub_rect_f(CxCy{dst_cx, dst_cy}, SubCxCy{TILE_CX, TILE_CY}, [&](Rect r){
