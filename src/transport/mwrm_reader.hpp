@@ -184,6 +184,6 @@ private:
     friend class PrivateMwrmWriterBuf;
 
     static const std::size_t max_header_size = 42;
-    char mes[MwrmLineReader::line_max + max_header_size];
+    char mes[MwrmLineReader::line_max + max_header_size + 1 /*null terminator*/];
     std::size_t len = 0;
 };
