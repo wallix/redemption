@@ -734,6 +734,7 @@ class PngCaptureRT : public PngCapture
     unsigned png_limit;
 
     bool enable_rt_display;
+    bool enable_verbose;
 
     SmartVideoCropping smart_video_cropping;
 
@@ -745,6 +746,7 @@ public:
     , num_start(this->trans.get_seqno())
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
+    , enable_verbose(capture_params.verbose)
     , smart_video_cropping(capture_params.smart_video_cropping)
     {
     }
@@ -755,6 +757,9 @@ public:
 
     void update_config(bool enable_rt_display) {
         if (enable_rt_display != this->enable_rt_display){
+            if (this->enable_verbose) {
+                LOG(LOG_INFO, "PngCaptureRT::enable_rt_display=%d", enable_rt_display);
+            }
             this->enable_rt_display = enable_rt_display;
             // clear files if we go from RT to non-RT
             if (!this->enable_rt_display) {
@@ -1431,6 +1436,20 @@ Capture::Capture(
 , verbose(capture_params.verbose)
 {
    //assert(report_message ? order_bpp == capture_bpp : true);
+
+    if (capture_params.verbose) {
+        LOG(LOG_INFO,
+            "Enable capture:  wrm=%s  png=%s  kbd=%s  video=%s  video_full=%s  pattern=%s  ocr=%s  meta=%s",
+            capture_wrm ? "yes" : "no",
+            capture_png ? "yes" : "no",
+            capture_kbd ? "yes" : "no",
+            capture_video ? "yes" : "no",
+            capture_video_full ? "yes" : "no",
+            capture_pattern_checker ? "yes" : "no",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? "v2 " : "v1 ") : "no",
+            capture_meta ? "yes" : "no"
+        );
+    }
 
     if (capture_png || (capture_params.report_message && (capture_video || capture_ocr))) {
         if (recursive_create_directory(capture_params.record_tmp_path,
