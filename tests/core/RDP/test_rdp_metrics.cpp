@@ -149,9 +149,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     RED_CHECK(fd > 0);
     char log_read[2048] = {'\0'};
     ::read(fd, log_read, 1016);
-    RED_CHECK(fd > 0);
     std::string str_log_read(log_read);
-    RED_CHECK(fd > 0);
     std::string str_log_data = str_log_read.substr(expected_log_header.length(), str_log_read.length());
     //LOG(LOG_INFO, "%s", str_log_data);
 
@@ -160,6 +158,31 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     RED_CHECK_EQUAL(expected_log_data, str_log_data);
     ::close(fd);
     remove(complete_file_path);
+
+    time_t yesterday_time = metrics.last_date - 3600*24;
+    metrics.last_date = yesterday_time;
+    for (int i = 0; i < 15; i++) {
+        metrics.current_data[i] += i+1;
+    }
+    metrics.log();
+
+    fd = ::open(complete_file_path, O_RDONLY| O_APPEND);
+    RED_CHECK(fd > 0);
+
+    char log_read_2[2048] = {'\0'};
+    ::read(fd, log_read_2, 1016);
+    std::string str_log_read_2(log_read_2);
+    std::string str_log_data_2 = str_log_read_2.substr(expected_log_header.length(), str_log_read_2.length());
+
+    std::string expected_log_data_2(" main_channel_data_from_client=2 right_click_sent=4 left_click_sent=6 keys_sent=8 mouse_move=10 main_channel_data_from_serveur=12 cliprdr_channel_data_from_server=14 nb_text_paste_server=16 nb_image_paste_server=18 nb_file_paste_server=20 nb_text_copy_server=22 nb_image_copy_server=24 nb_file_copy_server=26 cliprdr_channel_data_from_client=28 nb_text_paste_client=30");
+
+    RED_CHECK_EQUAL(expected_log_data_2, str_log_data_2);
+    ::close(fd);
+    remove(complete_file_path);
+
+    //LOG(LOG_INFO, "%s !!", str_log_data_2);
+
+
 }
 
 
