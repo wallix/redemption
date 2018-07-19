@@ -5264,7 +5264,7 @@ public:
         const uint8_t * mask = stream.in_uint8p(mlen);
 
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
+        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 
         Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
 
