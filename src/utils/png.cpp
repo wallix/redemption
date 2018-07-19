@@ -95,6 +95,14 @@ namespace
     ) {
         assert(align4(rowsize) == rowsize);
 
+        std::unique_ptr<uint8_t[]> dynline;
+
+        if (setjmp(png_jmpbuf(ppng))) {
+            dynline.reset();
+            LOG(LOG_ERR, "dump_png24_impl error");
+            throw Error(ERR_RECORDER_SNAPSHOT_FAILED);
+        }
+
         png_set_IHDR(ppng, pinfo, width, height, 8,
                     PNG_COLOR_TYPE_RGB,
                     PNG_INTERLACE_NONE,
@@ -109,8 +117,7 @@ namespace
             uint8_t bgrline[8192*4];
             uint8_t * bgrtmp = bgrline;
 
-            std::unique_ptr<uint8_t[]> dynline;
-            if (sizeof(bgrtmp) < rowsize) {
+            if (sizeof(bgrline) < rowsize) {
                 dynline = std::make_unique<uint8_t[]>(rowsize);
                 bgrtmp = dynline.get();
             }
@@ -183,23 +190,36 @@ void dump_png24(
         {
             return *static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr));
         }
+
+        static NoExceptTransport& fail(png_structp png_ptr, char const* msg, Error const* err = nullptr) noexcept
+        {
+            NoExceptTransport::get(png_ptr).has_error = true;
+            if (err) {
+                LOG(LOG_ERR, "%s: %s", msg, err->errmsg());
+            } else {
+                LOG(LOG_ERR, "%s", msg);
+            }
+            png_error(png_ptr, msg);
+        }
     };
 
     auto png_write_data = [](png_structp png_ptr, png_bytep data, png_size_t length) noexcept {
         try {
             NoExceptTransport::get(png_ptr).trans.send(data, length);
+        } catch (Error const& err) {
+            NoExceptTransport::fail(png_ptr, "Exception in dump_png24 (send)", &err);
         } catch (...) {
-            NoExceptTransport::get(png_ptr).has_error = true;
-            png_error(png_ptr, "Exception in Transport::send");
+            NoExceptTransport::fail(png_ptr, "Exception in dump_png24 (send)");
         }
     };
 
     auto png_flush_data = [](png_structp png_ptr) noexcept {
         try {
             NoExceptTransport::get(png_ptr).trans.flush();
+        } catch (Error const& err) {
+            NoExceptTransport::fail(png_ptr, "Exception in dump_png24 (flush)", &err);
         } catch (...) {
-            NoExceptTransport::get(png_ptr).has_error = true;
-            png_error(png_ptr, "Exception in Transport::flush");
+            NoExceptTransport::fail(png_ptr, "Exception in dump_png24 (flush)");
         }
     };
 
