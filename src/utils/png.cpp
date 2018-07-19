@@ -152,7 +152,7 @@ namespace
                     t[10] = s[10];
                     t[11] = s[9];
                 }
-                png_write_row(ppng, const_cast<unsigned char*>(bgrtmp));
+                png_write_row(ppng, bgrtmp);
                 row += rowsize;
             }
         }
