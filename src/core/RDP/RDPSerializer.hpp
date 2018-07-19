@@ -115,11 +115,13 @@
 #include "gdi/graphic_cmd_color.hpp"
 
 
-#define SERIALIZER_HEADER_SIZE 106u
 
-struct RDPSerializer
+class RDPSerializer
 : public gdi::GraphicApi
 {
+    static constexpr std::size_t SERIALIZER_HEADER_SIZE = 106;
+
+public:
     // Packet more than 16384 bytes can cause MSTSC to crash.
     enum { MAX_ORDERS_SIZE = 16384 };
 
@@ -233,7 +235,7 @@ public:
         }
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > order batch capacity (%zu)"
+               , "(asked size (%zu) + HEADER_SIZE (%zu) = %zu) > order batch capacity (%zu)"
                , asked_size
                , SERIALIZER_HEADER_SIZE
                , asked_size + SERIALIZER_HEADER_SIZE
@@ -747,7 +749,7 @@ public:
         }
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > image batch capacity (%zu)"
+               , "(asked size (%zu) + HEADER_SIZE (%zu) = %zu) > image batch capacity (%zu)"
                , asked_size
                , SERIALIZER_HEADER_SIZE
                , asked_size + SERIALIZER_HEADER_SIZE
