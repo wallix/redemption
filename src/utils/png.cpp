@@ -110,7 +110,7 @@ namespace
             uint8_t * bgrtmp = bgrline;
 
             std::unique_ptr<uint8_t[]> dynline;
-            if (sizeof(bgrtmp) < rowsize) {
+            if (sizeof(bgrline) < rowsize) {
                 dynline = std::make_unique<uint8_t[]>(rowsize);
                 bgrtmp = dynline.get();
             }
@@ -136,13 +136,13 @@ namespace
                     t[10] = s[10];
                     t[11] = s[9];
                 }
-                png_write_row(ppng, const_cast<unsigned char*>(bgrtmp));
+                png_write_row(ppng, bgrtmp);
                 row += rowsize;
             }
         }
         else {
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
-                png_write_row(ppng, const_cast<unsigned char*>(row));
+                png_write_row(ppng, row);
                 row += rowsize;
             }
         }
