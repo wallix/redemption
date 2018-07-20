@@ -24,6 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 // [MS-NLMP]
 
@@ -518,32 +519,31 @@ struct NtlmField {
     uint16_t len{0};           /* 2 Bytes */
     uint16_t maxLen{0};        /* 2 Bytes */
     uint32_t bufferOffset{0};  /* 4 Bytes */
-    struct Buffer {
-        std::unique_ptr<uint8_t[]> dynbuf;
-        uint8_t buf[65535];
-        std::size_t sz_buf;
+    class Buffer
+    {
+        BufMaker<65535> buf_maker;
+        array_view_u8 avbuf;
+
+    public:
         OutStream ostream;
+
+    private:
         std::size_t in_sz{0};
 
+    public:
         Buffer()
-        : sz_buf(sizeof(this->buf))
-        , ostream(this->buf)
+        : avbuf(this->buf_maker.static_array())
+        , ostream(this->avbuf)
         {}
 
         Buffer(Buffer const &) = delete;
 
         void init(std::size_t sz) {
-            auto p = this->ostream.get_data();
-            if (sz > this->sz_buf) {
-                p = this->buf;
-                if (sz > sizeof(this->buf)) {
-                    this->dynbuf = std::make_unique<uint8_t[]>(sz);
-                    p = this->dynbuf.get();
-                    this->sz_buf = sz;
-                }
+            if (this->avbuf.size() < sz) {
+                this->avbuf = this->buf_maker.dyn_array(sz);
             }
             this->in_sz = 0;
-            this->ostream = OutStream(p, sz);
+            this->ostream = OutStream(this->avbuf);
         }
 
         void mark_end() {

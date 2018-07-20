@@ -21,50 +21,43 @@
 
 #pragma once
 
-#include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/utf.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 #include <new>
 #include <cstdio>
 
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
-class Array {
+class Array
+{
     enum {
         AUTOSIZE = 65536
     };
 
-    uint8_t* data{nullptr};
-    size_t capacity{0};
-    private:
-    uint8_t autobuffer[AUTOSIZE]{};
+    BufMaker<AUTOSIZE> buf_maker;
+    array_view_u8 avbuf;
 
-    public:
+public:
     explicit Array(size_t size = AUTOSIZE)
-
-    {
-        this->data = this->autobuffer;
-        this->init(size);
-    }
-
-    ~Array() {
-        // <this->data> is allocated dynamically.
-        if (this->capacity > AUTOSIZE) {
-            delete [] this->data;
-        }
-    }
+      : avbuf(this->buf_maker.dyn_array(size))
+    {}
 
 public:
     Array(Array const &) = delete;
     Array& operator=(Array const &) = delete;
 
     size_t size() const {
-        return this->capacity;
+        return this->avbuf.size();
     }
 
-    uint8_t * get_data() const {
-        return this->data;
+    uint8_t * get_data() {
+        return this->avbuf.data();
+    }
+
+    uint8_t const * get_data() const {
+        return this->avbuf.data();
     }
 
     void copy(Array const& other) {
@@ -74,30 +67,12 @@ public:
 
     // a default buffer of 65536 bytes is allocated automatically, we will only allocate dynamic memory if we need more.
     void init(size_t v) {
-        if (v != this->capacity) {
-            // <this->data> is allocated dynamically.
-            if (this->capacity > AUTOSIZE){
-                delete [] this->data;
-            }
-
-            this->capacity = v;
-            if (v > AUTOSIZE){
-                this->data = new(std::nothrow) uint8_t[v];
-                if (!this->data) {
-                    this->capacity = 0;
-                    LOG(LOG_ERR, "failed to allocate buffer : size asked = %d\n", static_cast<int>(v));
-                    throw Error(ERR_STREAM_MEMORY_ALLOCATION_ERROR);
-                }
-            }
-            else {
-                this->data = &(this->autobuffer[0]);
-            }
-        }
+        this->avbuf = this->buf_maker.dyn_array(v);
     }
 
     void copy(const uint8_t * source, size_t size, uint32_t offset = 0) {
-        assert(this->capacity >= size + offset);
-        memcpy(this->data + offset, source, size);
+        assert(this->size() >= size + offset);
+        memcpy(this->avbuf.data() + offset, source, size);
     }
 };
 

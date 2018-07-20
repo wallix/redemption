@@ -25,6 +25,7 @@
 #include "utils/drawable.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -114,13 +115,8 @@ namespace
         const uint8_t * row = data;
 
         if (bgr) {
-            uint8_t bgrline[8192*4];
-            uint8_t * bgrtmp = bgrline;
-
-            if (sizeof(bgrline) < rowsize) {
-                dynline = std::make_unique<uint8_t[]>(rowsize);
-                bgrtmp = dynline.get();
-            }
+            BufMaker<8192*4> buf_maker;
+            uint8_t * bgrtmp = buf_maker.dyn_array(rowsize).data();
 
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
                 const uint8_t * s = row;

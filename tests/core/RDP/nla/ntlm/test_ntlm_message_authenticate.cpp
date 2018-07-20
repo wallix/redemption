@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // LmChallengeResponse
     LMv2_Response lmResponse;
-    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.in_sz);
+    InStream in_stream(AuthMsg.LmChallengeResponse.buffer.ostream.get_data(), AuthMsg.LmChallengeResponse.buffer.size());
     lmResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Lm Response . Response ===========\n");
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     // NtChallengeResponse
     NTLMv2_Response ntResponse;
-    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.in_sz);
+    in_stream = InStream(AuthMsg.NtChallengeResponse.buffer.ostream.get_data(), AuthMsg.NtChallengeResponse.buffer.size());
     ntResponse.recv(in_stream);
 
     // LOG(LOG_INFO, "Nt Response . Response ===========\n");
