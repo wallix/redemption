@@ -47,7 +47,6 @@ struct Hotspot {
 };
 
 static bool is_black_and_white(const uint8_t * data, const size_t width, const size_t height, const size_t row_length, const unsigned Bpp);
-static void to_regular_mask(CursorSize dimensions, uint8_t * mask, const uint8_t * indata, unsigned mlen, uint8_t bpp);
 static void to_regular_pointer(CursorSize dimensions, uint8_t * data, const uint8_t * indata, unsigned dlen, uint8_t bpp, const BGRPalette & palette);
 
 static bool is_black_and_white(const uint8_t * data, const size_t width, const size_t height, const size_t row_length, const unsigned Bpp)
@@ -62,31 +61,6 @@ static bool is_black_and_white(const uint8_t * data, const size_t width, const s
         }
     }
     return true;
-}
-
-
-static void to_regular_mask(CursorSize dimensions, uint8_t * mask, const uint8_t * indata, unsigned mlen, uint8_t bpp) {
-    /* TODO check code below: why do we revert mask and pointer when pointer is 1 BPP
-        * and not with other color depth ? Looks fishy, a mask and pointer should always
-        * be encoded in the same way, not depending on color depth difficult to see for
-        * symmetrical pointers... check documentation it may be more efficient to revert
-        * cursor after creating it instead of doing it on the fly */
-    switch (bpp) {
-    case 1 :
-    {
-        const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
-        const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
-        for (unsigned int i = 0; i < dimensions.height; ++i) {
-            const uint8_t* src  = indata + (dimensions.height - i - 1) * and_padded_line_length_in_byte;
-            uint8_t * dest = mask + i * and_padded_line_length_in_byte;
-            ::memcpy(dest, src, and_padded_line_length_in_byte);
-        }
-    }
-    break;
-    default:
-        memcpy(mask, indata, mlen);
-    break;
-    }
 }
 
 
@@ -308,7 +282,7 @@ struct DrawableDefaultPointer : public ConstPointer {
             /* 0a80 */ "X++X............................"
             /* 0ae0 */ "X+X............................."
             /* 0b40 */ "XX.............................."
-            /* 0ba0 */ "X..............................."
+            /* 0ba0 */"X..............................."
     )
     {}
 };
@@ -351,6 +325,11 @@ struct SizeNSPointer : public ConstPointer {
     )
     {}
 };
+
+
+
+
+
 
 struct SizeNESWPointer : public ConstPointer {
     explicit SizeNESWPointer()
@@ -624,8 +603,7 @@ static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * m
 
 
 
-struct PointerLoaderNew
-{
+struct PointerLoaderNew {
     CursorSize dimensions;
     unsigned maskline_bytes;
     unsigned xorline_bytes;
@@ -690,7 +668,13 @@ struct PointerLoaderNew
                 }
             }
             ::to_regular_pointer(this->dimensions, this->data_buffer, data_data, dlen, 1, palette);
-            ::to_regular_mask(this->dimensions, this->mask_buffer, mask_data, mlen, 1);
+            const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
+            const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
+            for (unsigned int i = 0; i < this->dimensions.height; ++i) {
+                const uint8_t* src  = mask_data + (this->dimensions.height - i - 1) * and_padded_line_length_in_byte;
+                uint8_t * dest = this->mask_buffer + i * and_padded_line_length_in_byte;
+                ::memcpy(dest, src, and_padded_line_length_in_byte);
+            }
         }
         break;
         default:
@@ -700,12 +684,12 @@ struct PointerLoaderNew
         case 16:
         case 24:
             ::to_regular_pointer(this->dimensions, this->data_buffer, data, dlen, data_bpp, palette);
-            ::to_regular_mask(this->dimensions, this->mask_buffer, mask, mlen, data_bpp);
-        break;
+            memcpy(this->mask_buffer, mask, mlen);
+            break;
         case 32:
         {
             ::to_regular_pointer(this->dimensions, this->data_buffer, data, dlen, data_bpp, palette);
-            ::to_regular_mask(this->dimensions, this->mask_buffer, mask, mlen, data_bpp);
+            memcpy(this->mask_buffer, mask, mlen);
             if (clean_up_32_bpp_cursor) {
                 fix_32_bpp(this->dimensions, this->data_buffer, this->mask_buffer);
             }
