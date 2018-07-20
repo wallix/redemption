@@ -1759,7 +1759,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
                         strcat(path, "/");
                         strcpy(basename, movie_path);
-                        strcpy(extension, "");          // extension is currently ignored
+                        extension[0] = 0; // extension is currently ignored
 
                         if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
                         ) {
