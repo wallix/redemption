@@ -588,6 +588,41 @@ struct SystemDefaultPointer : public ConstPointer {
     {}
 };
 
+static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer);
+static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer)
+{
+    const unsigned int xor_line_length_in_byte = dimensions.width * 3;
+    const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
+    const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
+    const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
+    for (unsigned int i0 = 0; i0 < dimensions.height; ++i0) {
+        uint8_t* xorMask = data_buffer + (dimensions.height - i0 - 1) * xor_padded_line_length_in_byte;
+
+        const uint8_t* andMask = mask_buffer + (dimensions.height - i0 - 1) * and_padded_line_length_in_byte;
+        unsigned char and_bit_extraction_mask = 7;
+
+        // TODO: iterating on width... check scanline padding is OK
+        for (unsigned int i1 = 0; i1 < dimensions.width; ++i1) {
+            if ((*andMask) & (1 << and_bit_extraction_mask)) {
+                *xorMask         = 0;
+                *(xorMask + 1)   = 0;
+                *(xorMask + 2)   = 0;
+            }
+
+            xorMask += 3;
+            if (and_bit_extraction_mask) {
+                and_bit_extraction_mask--;
+            }
+            else {
+                and_bit_extraction_mask = 7;
+                andMask++;
+            }
+        }
+    }
+}
+
+
+
 
 struct PointerLoaderNew
 {
@@ -638,7 +673,9 @@ struct PointerLoaderNew
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        if (data_bpp == 1) {
+        switch (data_bpp) {
+        case 1:
+        {
             uint8_t data_data[DATA_SIZE];
             uint8_t mask_data[MASK_SIZE];
             ::memcpy(data_data, data, dlen);
@@ -655,40 +692,27 @@ struct PointerLoaderNew
             ::to_regular_pointer(this->dimensions, this->data_buffer, data_data, dlen, 1, palette);
             ::to_regular_mask(this->dimensions, this->mask_buffer, mask_data, mlen, 1);
         }
-        else {
+        break;
+        default:
+        case 4:
+        case 8:
+        case 15:
+        case 16:
+        case 24:
             ::to_regular_pointer(this->dimensions, this->data_buffer, data, dlen, data_bpp, palette);
             ::to_regular_mask(this->dimensions, this->mask_buffer, mask, mlen, data_bpp);
-
-            if ((data_bpp == 32) && clean_up_32_bpp_cursor) {
-                const unsigned int xor_line_length_in_byte = this->dimensions.width * 3;
-                const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);
-                const unsigned int and_line_length_in_byte = ::nbbytes(this->dimensions.width);
-                const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
-                for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
-                    uint8_t* xorMask = const_cast<uint8_t*>(this->data_buffer) + (this->dimensions.height - i0 - 1) * xor_padded_line_length_in_byte;
-
-                    const uint8_t* andMask = this->mask_buffer + (this->dimensions.height - i0 - 1) * and_padded_line_length_in_byte;
-                    unsigned char and_bit_extraction_mask = 7;
-
-                    for (unsigned int i1 = 0; i1 < this->dimensions.width; ++i1) {
-                        if ((*andMask) & (1 << and_bit_extraction_mask)) {
-                            *xorMask         = 0;
-                            *(xorMask + 1)   = 0;
-                            *(xorMask + 2)   = 0;
-                        }
-
-                        xorMask += 3;
-                        if (and_bit_extraction_mask) {
-                            and_bit_extraction_mask--;
-                        }
-                        else {
-                            and_bit_extraction_mask = 7;
-                            andMask++;
-                        }
-                    }
-                }
+        break;
+        case 32:
+        {
+            ::to_regular_pointer(this->dimensions, this->data_buffer, data, dlen, data_bpp, palette);
+            ::to_regular_mask(this->dimensions, this->mask_buffer, mask, mlen, data_bpp);
+            if (clean_up_32_bpp_cursor) {
+                fix_32_bpp(this->dimensions, this->data_buffer, this->mask_buffer);
             }
         }
+        break;
+        }
+
         this->data = make_array_view(this->data_buffer, dlen);
         this->mask = make_array_view(this->mask_buffer, mlen);
         this->maskline_bytes = mlen / height;
