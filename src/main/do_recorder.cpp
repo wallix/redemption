@@ -1111,7 +1111,7 @@ inline unsigned get_file_count(
         while (true);
     }
     catch (const Error & e) {
-        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
             throw;
         }
     };
@@ -1592,7 +1592,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             fstat, total_wrm_file_len, count_wrm_file);
     }
     catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+        if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
             std::cerr << "Asked time not found in mwrm file\n";
         }
         else {
