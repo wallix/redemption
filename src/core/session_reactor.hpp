@@ -1996,7 +1996,7 @@ namespace jln
         template<class Tuple, class... Ts, class F>
         auto create_on_timeout(GroupExecutorWithValues<Tuple, Ts...>& g, F&& f)
         {
-            if constexpr (std::is_same<Tuple, detail::tuple<>>::value) {
+            if constexpr (std::is_same<Tuple, detail::tuple<>>::value) { /*NOLINT*/
                 (void)g;
                 return [f](GroupTimerContext<Ts...> ctx, Ts... xs) mutable /*-> R*/ {
                     return f(TopTimerContext<Tuple, Ts...>{ctx}, static_cast<Ts&>(xs)...);
@@ -2577,7 +2577,7 @@ namespace jln
         auto g = std::unique_ptr<GroupExecutorDefault<Ts...>, GroupDeleter<Ts...>>(
             new GroupExecutorDefault<Ts...>);
         // TODO same in GroupExecutorWithValues
-        if constexpr (std::is_same<Tuple, detail::tuple<>>::value) {
+        if constexpr (std::is_same<Tuple, detail::tuple<>>::value) { /*NOLINT*/
             g->on_action(static_cast<F&&>(f));
         }
         else { /*NOLINT*/
@@ -2670,7 +2670,7 @@ namespace jln
     auto select_top_result(InitCtx& init_ctx)
     {
         using E = detail::BuilderInit::E;
-        if constexpr (detail::BuilderInit::has(Has, E::Action | E::Exit | E::Timer | E::Timeout)) {
+        if constexpr (detail::BuilderInit::has(Has, E::Action | E::Exit | E::Timer | E::Timeout)) { /*NOLINT*/
             return init_ctx.terminate_init();
         }
         else { /*NOLINT*/
