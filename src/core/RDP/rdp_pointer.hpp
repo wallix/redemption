@@ -582,6 +582,8 @@ struct PointerLoaderNew {
 
             if (bogus_linux_cursor == BogusLinuxCursor::enable) {
                 for (unsigned i = 0 ; i < mlen; i++) {
+                    // all white bits are cleared in mask (cleared bits are where we will draw)
+
                     uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
                     uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
                     data_data[i]    = new_data_data;
@@ -589,38 +591,28 @@ struct PointerLoaderNew {
                 }
             }
 
-            const unsigned int src_xor_line_length_in_byte = ::nbbytes(this->dimensions.width);
-            const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte        = this->dimensions.width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
+            const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
+            const unsigned int dest_line_bytes = ::even_pad_length(this->dimensions.width * 3);
+            const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width>>3));
+            const uint8_t * src_last_line       = data_data + ((this->dimensions.height-1) * src_line_bytes);
+            const uint8_t * src_last_mask_line  = mask_data + ((this->dimensions.height-1) * src_line_bytes);
 
             for (unsigned int i = 0; i < this->dimensions.height; ++i) {
-                const uint8_t* src  = data_data + (this->dimensions.height - i - 1) * src_xor_padded_line_length_in_byte;
-                        uint8_t* dest = this->data_buffer + i * dest_xor_padded_line_length_in_byte;
+                const uint8_t * src  = src_last_line     - i * src_line_bytes;
+                uint8_t *       dest = this->data_buffer + i * dest_line_bytes;
 
-                unsigned char and_bit_extraction_mask = 7;
-
-                for (unsigned int j = 0; j < this->dimensions.width; ++j) {
-                    ::out_bytes_le(dest, 3, (((*src) & (1 << and_bit_extraction_mask)) ? 0xFFFFFF : 0));
-
+                unsigned char bit_extraction_mask = 7;
+                for (unsigned int j = 0; j < this->dimensions.width ; ++j) {
+                    unsigned pixel = (((*src) & (1 << bit_extraction_mask)) ? 0xFFFFFF : 0);
+                    ::out_bytes_le(dest, 3, pixel);
                     dest += 3;
-
-                    if (and_bit_extraction_mask) {
-                        and_bit_extraction_mask--;
-                    }
-                    else {
-                        src++;
-                        and_bit_extraction_mask = 7;
-                    }
+                    src += bit_extraction_mask?0:1;
+                    bit_extraction_mask = (bit_extraction_mask - 1) & 7;
                 }
-            }
-            const unsigned int and_line_length_in_byte = ::nbbytes(dimensions.width);
-            const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
-            for (unsigned int i = 0; i < this->dimensions.height; ++i) {
-                const uint8_t* src  = mask_data + (this->dimensions.height - i - 1) * and_padded_line_length_in_byte;
-                uint8_t * dest = this->mask_buffer + i * and_padded_line_length_in_byte;
-                ::memcpy(dest, src, and_padded_line_length_in_byte);
+
+                const uint8_t* src_mask  = src_last_mask_line - i * src_line_bytes;
+                uint8_t *      dest_mask = this->mask_buffer + i * dest_mask_line_bytes;
+                ::memcpy(dest_mask, src_mask, src_line_bytes);
             }
         }
         break;
