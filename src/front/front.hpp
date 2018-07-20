@@ -2650,7 +2650,7 @@ public:
             data_writer,
             [channelId, this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
                 MCS::SendDataIndication_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header),
+                    mcs_header,
                     this->userid, channelId,
                     1, 3, packet_sz,
                     MCS::PER_ENCODING

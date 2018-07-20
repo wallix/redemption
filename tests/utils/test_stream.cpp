@@ -29,6 +29,17 @@
 #include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"
 
+RED_AUTO_TEST_CASE(TestOutStream_Create)
+{
+    // test we can create a Stream object
+    uint8_t buf[3];
+    OutStream out_per_stream(buf);
+
+    RED_CHECK_EQ(out_per_stream.get_capacity(), 3);
+    RED_CHECK(out_per_stream.get_data());
+    RED_CHECK_EQ(out_per_stream.get_data(), out_per_stream.get_current());
+}
+
 RED_AUTO_TEST_CASE(TestStream_uint8)
 {
     // test reading of 8 bits data from Stream signed or unsigned is working

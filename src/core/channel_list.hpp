@@ -398,7 +398,7 @@ namespace CHANNELS {
 
                 },
                 [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-                    MCS_SendData(static_cast<OutPerStream&>(mcs_header), userId, channelId, 1, 3, packet_size, MCS::PER_ENCODING);
+                    MCS_SendData(mcs_header, userId, channelId, 1, 3, packet_size, MCS::PER_ENCODING);
                 },
                 [&](StreamSize<256>, OutStream & x224_header, std::size_t packet_size) {
                     X224::DT_TPDU_Send(x224_header, packet_size);

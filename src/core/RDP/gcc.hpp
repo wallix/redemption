@@ -199,33 +199,33 @@ namespace GCC
 
     class Create_Request_Send {
         public:
-        Create_Request_Send(OutPerStream & stream, size_t payload_size)
+        Create_Request_Send(OutStream & stream, size_t payload_size)
         {
             // ConnectData
-            stream.out_per_choice(0); // From Key select object (0) of type OBJECT_IDENTIFIER
+            out_per_choice(stream, 0); // From Key select object (0) of type OBJECT_IDENTIFIER
             const uint8_t t124_02_98_oid[6] = { 0, 0, 20, 124, 0, 1 };
-            stream.out_per_object_identifier(t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
+            out_per_object_identifier(stream, t124_02_98_oid); // ITU-T T.124 (02/98) OBJECT_IDENTIFIER
             //  ConnectData::connectPDU (OCTET_STRING)
             // 23 = offset after mark_end()
-            stream.out_per_length(payload_size + 23 - 9); // connectPDU length
+            out_per_length(stream, payload_size + 23 - 9); // connectPDU length
 
              // ConnectGCCPDU
-            stream.out_per_choice(0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
-            stream.out_per_selection(0x08); // select optional userData from ConferenceCreateRequest
+            out_per_choice(stream, 0); // From ConnectGCCPDU select conferenceCreateRequest (0) of type ConferenceCreateRequest
+            out_per_selection(stream, 0x08); // select optional userData from ConferenceCreateRequest
 
             //  ConferenceCreateRequest::conferenceName
             stream.out_uint16_be(16);
-            stream.out_per_padding(1); /* padding */
+            out_per_padding(stream, 1); /* padding */
 
             //  UserData (SET OF SEQUENCE)
-            stream.out_per_number_of_sets(1); // one set of UserData
-            stream.out_per_choice(0xC0); // UserData::value present + select h221NonStandard (1)
+            out_per_number_of_sets(stream, 1); // one set of UserData
+            out_per_choice(stream, 0xC0); // UserData::value present + select h221NonStandard (1)
 
             //  h221NonStandard
             const uint8_t h221_cs_key[4] = {'D', 'u', 'c', 'a'};
-            stream.out_per_octet_string(h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
+            out_per_octet_string(stream, h221_cs_key, 4, 4); // h221NonStandard, client-to-server H.221 key, "Duca"
 
-            stream.out_per_length(payload_size); // user data length
+            out_per_length(stream, payload_size); // user data length
         }
     };
 

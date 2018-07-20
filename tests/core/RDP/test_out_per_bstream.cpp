@@ -24,27 +24,15 @@
 #define RED_TEST_MODULE TestOutPerStream
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "utils/stream.hpp"
 #include "core/RDP/out_per_bstream.hpp"
-
-RED_AUTO_TEST_CASE(TestOutPerStream)
-{
-    // test we can create a Stream object
-    uint8_t buf[3];
-    OutPerStream out_per_stream(buf);
-
-    RED_CHECK(out_per_stream.get_capacity() == 3);
-    RED_CHECK(out_per_stream.get_data());
-    RED_CHECK(out_per_stream.get_data() == out_per_stream.get_current());
-}
 
 
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
 {
     // test we can create a Stream object
-    StaticOutPerStream<256> stream;
-    stream.out_per_integer(0x12345678);
+    StaticOutStream<256> stream;
+    out_per_integer(stream, 0x12345678);
     RED_CHECK_EQUAL(5, stream.get_offset());
     RED_CHECK(0 == memcmp(stream.get_data(), "\x04\x12\x34\x56\x78", stream.get_offset()));
 }
@@ -52,8 +40,8 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large)
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
 {
     // test we can create a Stream object
-    StaticOutPerStream<256> stream;
-    stream.out_per_integer(0x00345678);
+    StaticOutStream<256> stream;
+    out_per_integer(stream, 0x00345678);
     RED_CHECK_EQUAL(5, stream.get_offset());
     RED_CHECK(0 == memcmp(stream.get_data(), "\x04\x00\x34\x56\x78", stream.get_offset()));
 }
@@ -62,8 +50,8 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_large2)
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
 {
     // test we can create a Stream object
-    StaticOutPerStream<256> stream;
-    stream.out_per_integer(0x1234);
+    StaticOutStream<256> stream;
+    out_per_integer(stream, 0x1234);
     RED_CHECK_EQUAL(3, stream.get_offset());
     RED_CHECK(0 == memcmp(stream.get_data(), "\x02\x12\x34", stream.get_offset()));
 }
@@ -71,8 +59,8 @@ RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_medium)
 RED_AUTO_TEST_CASE(TestOutPerStream_per_integer_small)
 {
     // test we can create a Stream object
-    StaticOutPerStream<256> stream;
-    stream.out_per_integer(0x12);
+    StaticOutStream<256> stream;
+    out_per_integer(stream, 0x12);
     RED_CHECK_EQUAL(2, stream.get_offset());
     RED_CHECK(0 == memcmp(stream.get_data(), "\x01\x12", stream.get_offset()));
 }
@@ -139,13 +127,10 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
         "", 0,
         gcc_conference_create_request_expected, sz - (sizeof(gcc_user_data) - 1));
 
-    StaticOutPerStream<65536> gcc_header;
+    StaticOutStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, sizeof(gcc_user_data)-1);
     t.send(gcc_header.get_data(), gcc_header.get_offset());
 
     InStream in_stream(gcc_conference_create_request_expected, sz);
     RED_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
-
-//    RED_CHECK(t.get_status());
 }
-

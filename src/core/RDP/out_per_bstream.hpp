@@ -27,67 +27,62 @@
 
 #include "utils/stream.hpp"
 
-class OutPerStream : public OutStream
+// =========================================================================
+// PER encoding rules support methods
+// =========================================================================
+
+inline void out_per_length(OutStream& out, uint16_t length)
 {
-public:
-    using OutStream::OutStream;
+    out.out_2BUE(length);
+}
 
-    // =========================================================================
-    // PER encoding rules support methods
-    // =========================================================================
+inline void out_per_choice(OutStream& out, uint8_t choice)
+{
+    out.out_uint8(choice);
+}
 
-    void out_per_length(uint16_t length)
-    {
-        this->out_2BUE(length);
+inline void out_per_selection(OutStream& out, uint8_t selection)
+{
+    out.out_uint8(selection);
+}
+
+inline void out_per_number_of_sets(OutStream& out, uint8_t number)
+{
+    out.out_uint8(number);
+}
+
+inline void out_per_padding(OutStream& out, uint8_t length)
+{
+    out.out_clear_bytes(length);
+}
+
+inline void out_per_integer(OutStream& out, uint32_t v)
+{
+    uint8_t length = (v & 0xFFFF0000)?4:(v & 0xFF00)?2:1;
+    out.out_uint8(length);
+    switch (length){
+    case 4:
+        out.out_uint32_be(v);
+        break;
+    case 2:
+        out.out_uint16_be(static_cast<uint16_t>(v));
+        break;
+    default:
+        out.out_uint8(static_cast<uint8_t>(v));
+        break;
     }
+}
 
-    void out_per_choice(uint8_t choice)
-    {
-        this->out_uint8(choice);
-    }
-
-    void out_per_selection(uint8_t selection)
-    {
-        this->out_uint8(selection);
-    }
-
-    void out_per_number_of_sets(uint8_t number)
-    {
-        this->out_uint8(number);
-    }
-
-    void out_per_padding(uint8_t length)
-    {
-        this->out_clear_bytes(length);
-    }
-
-    void out_per_integer(uint32_t v)
-    {
-        uint8_t length = (v & 0xFFFF0000)?4:(v & 0xFF00)?2:1;
-        this->out_uint8(length);
-        switch (length){
-        case 4:
-            this->out_uint32_be(v);
-            break;
-        case 2:
-            this->out_uint16_be(static_cast<uint16_t>(v));
-            break;
-        default:
-            this->out_uint8(static_cast<uint8_t>(v));
-            break;
-        }
-    }
-
-    void out_per_object_identifier(const uint8_t * oid)
-    {
-        const uint8_t t12 = (oid[0] << 4) & (oid[1] & 0x0F);
-        this->out_per_length(5); // length
-        this->out_uint8(t12);    // first two tuples
-        this->out_uint8(oid[2]); // tuple 3
-        this->out_uint8(oid[3]); // tuple 4
-        this->out_uint8(oid[4]); // tuple 5
-        this->out_uint8(oid[5]); // tuple 6
-    }
+inline void out_per_object_identifier(OutStream& out, const uint8_t * oid)
+{
+    const uint8_t t12 = (oid[0] << 4) & (oid[1] & 0x0F);
+    out_per_length(out, 5); // length
+    out.out_uint8(t12);    // first two tuples
+    out.out_uint8(oid[2]); // tuple 3
+    out.out_uint8(oid[3]); // tuple 4
+    out.out_uint8(oid[4]); // tuple 5
+    out.out_uint8(oid[5]); // tuple 6
+}
 
 //    16 Encoding the octetstring type
 //    ================================
@@ -145,22 +140,16 @@ public:
 
 //    NOTE – The fragmentation procedures may apply after 16K, 32K, 48K, or 64K octets.
 
-    void out_per_octet_string(const uint8_t * oct_str, uint32_t length, uint32_t min)
-    {
-        if (length >= min){
-            this->out_per_length(length - min);
-            this->out_copy_bytes(oct_str, length);
-        }
-        else {
-            // TODO Check this length, looks dubious
-            this->out_per_length(min);
-            this->out_copy_bytes(oct_str, length);
-            this->out_clear_bytes(min-length);
-        }
+inline void out_per_octet_string(OutStream& out, const uint8_t * oct_str, uint32_t length, uint32_t min)
+{
+    if (length >= min){
+        out_per_length(out, length - min);
+        out.out_copy_bytes(oct_str, length);
     }
-
-};
-
-template<std::size_t N>
-using StaticOutPerStream = BasicStaticStream<N, OutPerStream>;
-
+    else {
+        // TODO Check this length, looks dubious
+        out_per_length(out, min);
+        out.out_copy_bytes(oct_str, length);
+        out.out_clear_bytes(min-length);
+    }
+}

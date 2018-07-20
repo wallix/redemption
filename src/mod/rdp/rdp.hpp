@@ -1947,7 +1947,7 @@ private:
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
+                    mcs_header, this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
                 (void)mcs;

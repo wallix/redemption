@@ -1175,15 +1175,15 @@ namespace MCS
 
     struct ErectDomainRequest_Send
     {
-        ErectDomainRequest_Send(OutPerStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
+        ErectDomainRequest_Send(OutStream & stream, uint32_t subheight, uint32_t subinterval, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "ErectDomainRequest PER_ENCODING mandatory");
                 throw Error(ERR_MCS);
             }
             stream.out_uint8((MCSPDU_ErectDomainRequest << 2));
-            stream.out_per_integer(subheight); /* subHeight (INTEGER) */
-            stream.out_per_integer(subinterval); /* subInterval (INTEGER) */
+            out_per_integer(stream, subheight); /* subHeight (INTEGER) */
+            out_per_integer(stream, subinterval); /* subInterval (INTEGER) */
         }
     };
 
@@ -2377,7 +2377,7 @@ namespace MCS
 
     struct SendDataRequest_Send
     {
-        SendDataRequest_Send(OutPerStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataRequest_Send(OutStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataRequest PER_ENCODING mandatory");
@@ -2387,7 +2387,7 @@ namespace MCS
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
             stream.out_uint8((dataPriority << 6)|(segmentation << 4));
-            stream.out_per_length(payload_length);
+            out_per_length(stream, payload_length);
         }
     };
 
@@ -2472,7 +2472,7 @@ namespace MCS
 
     struct SendDataIndication_Send
     {
-        SendDataIndication_Send(OutPerStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
+        SendDataIndication_Send(OutStream & stream, uint16_t initiator, uint16_t channelId, uint8_t dataPriority, uint8_t segmentation, size_t payload_length, int encoding)
         {
             if (encoding != PER_ENCODING){
                 LOG(LOG_ERR, "SendDataIndication PER_ENCODING mandatory");
@@ -2482,7 +2482,7 @@ namespace MCS
             stream.out_uint16_be(initiator);
             stream.out_uint16_be(channelId);
             stream.out_uint8((dataPriority << 6)|(segmentation << 4));
-            stream.out_per_length(payload_length);
+            out_per_length(stream, payload_length);
         }
     };
 

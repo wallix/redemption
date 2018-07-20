@@ -209,7 +209,7 @@ struct RefreshRectPDU {
                 (void)sec;
             },
             [this](StreamSize<256>, OutStream & mcs_header, std::size_t pkt_size) {
-                MCS::SendDataRequest_Send mcs(static_cast<OutPerStream&>(mcs_header),
+                MCS::SendDataRequest_Send mcs(mcs_header,
                                               this->userId,
                                               GCC::MCS_GLOBAL_CHANNEL,
                                               1,
