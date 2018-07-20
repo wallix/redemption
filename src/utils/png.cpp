@@ -149,7 +149,7 @@ namespace
         }
         else {
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
-                png_write_row(ppng, row);
+                png_write_row(ppng, const_cast<uint8_t*>(row)); /* NOLINT */
                 row += rowsize;
             }
         }
@@ -191,7 +191,8 @@ void dump_png24(
             return *static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr));
         }
 
-        static NoExceptTransport& fail(png_structp png_ptr, char const* msg, Error const* err = nullptr) noexcept
+        [[noreturn]]
+        static void fail(png_structp png_ptr, char const* msg, Error const* err = nullptr) noexcept
         {
             NoExceptTransport::get(png_ptr).has_error = true;
             if (err) {
