@@ -1102,7 +1102,7 @@ inline unsigned get_file_count(
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
         next_wrm();
     }
-    unsigned const result = in_wrm_trans.get_seqno();
+    unsigned const result = in_wrm_trans.get_seqno(); /*NOLINT(clang-analyzer-deadcode.DeadStores)*/
     try {
         do {
             end_record.tv_sec = in_wrm_trans.end_chunk_time();
