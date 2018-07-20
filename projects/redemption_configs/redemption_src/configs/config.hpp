@@ -195,7 +195,7 @@ private:
         bool is_asked() const { return this->asked_; }
         virtual bool parse(configs::VariablesConfiguration & variables, array_view_const_char value) = 0;
         virtual array_view_const_char
-        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const = 0;
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const = 0;
         virtual ~FieldBase() = default;
 
     private:
@@ -218,13 +218,11 @@ private:
 
         /// \return array_view_const_char::data() guarantee with null terminal
         array_view_const_char
-        to_string_view(configs::VariablesConfiguration const & variables, Buffers const & buffers) const override final
+        to_string_view(configs::VariablesConfiguration const & variables, Buffers & buffers) const override final
         {
             return ::configs::assign_zbuf_from_cfg(
-                const_cast<configs::zstr_buffer_from<typename T::type> &>(
-                    static_cast<configs::zstr_buffer_from<typename T::type> const &>(
-                        static_cast<configs::CBuf<T> const &>(buffers)
-                    )
+                static_cast<configs::zstr_buffer_from<typename T::type>&>(
+                    static_cast<configs::CBuf<T>&>(buffers)
                 ),
                 configs::cfg_s_type<typename T::sesman_and_spec_type>{},
                 static_cast<T const &>(variables).value
@@ -275,7 +273,10 @@ public:
         }
 
         array_view_const_char to_string_view() const {
-            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
+            return this->field->to_string_view(
+                this->ini->variables,
+                const_cast<Buffers&>(this->ini->buffers) /*NOLINT*/
+            );
         }
 
         char const * c_str() const {
@@ -309,7 +310,6 @@ public:
         {}
 
         friend class Inifile;
-        friend class iterator;
     };
 
     FieldReference get_acl_field(authid_t authid) {
@@ -331,6 +331,52 @@ public:
         this->to_send_index.clear();
     }
 
+    struct FieldConstReference
+    {
+        bool is_asked() const {
+            return this->field->asked_;
+        }
+
+        array_view_const_char to_string_view() const {
+            return this->field->to_string_view(
+                this->ini->variables,
+                const_cast<Buffers&>(this->ini->buffers) /*NOLINT*/
+            );
+        }
+
+        char const * c_str() const {
+            return this->to_string_view().data();
+        }
+
+        explicit operator bool () const {
+            return this->field;
+        }
+
+        authid_t authid() const {
+            return this->id;
+        }
+
+        FieldConstReference(FieldConstReference &&) = default;
+
+        FieldConstReference() = default;
+
+        FieldConstReference(FieldConstReference const &) = delete;
+        FieldConstReference & operator=(FieldConstReference const &) = delete;
+
+    private:
+        FieldBase const * field = nullptr;
+        Inifile const * ini = nullptr;
+        authid_t id = authid_t::AUTHID_UNKNOWN;
+
+        FieldConstReference(Inifile const & ini, authid_t id)
+        : field(&ini.fields[id])
+        , ini(&ini)
+        , id(id)
+        {}
+
+        friend class Inifile;
+    };
+
     struct FieldsChanged
     {
         struct iterator
@@ -344,17 +390,17 @@ public:
                 return this->it != other.it;
             }
 
-            FieldReference operator*() const {
+            FieldConstReference operator*() const {
                 return {*this->ini, *this->it};
             }
 
         private:
             authid_t const * it;
-            Inifile * ini;
+            Inifile const * ini;
 
             friend struct FieldsChanged;
 
-            iterator(authid_t const * it, Inifile & ini)
+            iterator(authid_t const * it, Inifile const & ini)
             : it(it)
             , ini(&ini)
             {}
@@ -364,17 +410,17 @@ public:
         iterator end() const { return {this->ini->to_send_index.cend(), *this->ini}; }
 
     private:
-        Inifile * ini;
+        Inifile const * ini;
 
         friend class Inifile;
 
-        constexpr FieldsChanged(Inifile & ini)
+        constexpr FieldsChanged(Inifile const & ini)
         :ini(&ini)
         {}
     };
 
     FieldsChanged get_fields_changed() const {
-        return {*const_cast<Inifile*>(this)};
+        return {*this};
     }
 
 private:
@@ -426,7 +472,7 @@ private:
     ToSendIndexList to_send_index;
     configs::VariablesConfiguration variables;
     configs::PointerPackArray<FieldBase, Field, configs::VariablesAclPack> fields;
-    Buffers buffers;
+    mutable Buffers buffers;
     ConfigurationHolder conf_holder {variables};
     bool new_from_acl = false;
 
