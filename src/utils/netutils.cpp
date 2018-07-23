@@ -134,7 +134,7 @@ namespace
         }
 
         if (trial >= nbretry){
-            LOG(LOG_INFO, "All trials done connecting to %s", target);
+            LOG(LOG_ERR, "All trials done connecting to %s", target);
             return unique_fd{-1};
         }
 
@@ -164,7 +164,6 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
 {
     LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
 
-
     // we will try connection several time
     // the trial process include "socket opening, hostname resolution, etc
     // because some problems can come from the local endpoint,
@@ -187,14 +186,14 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     REDEMPTION_DIAGNOSTIC_POP
     int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
-        LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed\n", ip, port);
         close(sck);
         return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
-        LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
         close(sck);
         return unique_fd{-1};
     }
