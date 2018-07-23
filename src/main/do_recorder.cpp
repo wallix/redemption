@@ -2130,20 +2130,20 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     auto options = program_options::parse_command_line(argc, argv, desc);
 
-    const char * copyright_notice = "ReDemPtion " VERSION ".\n"
+    const char * copyright_notice = "\n"
         "Copyright (C) Wallix 2010-2018.\n"
         "Christophe Grosjean, Jonathan Poelen, Raphael Zhou.";
 
     if (options.count("help") > 0) {
-        std::cout << copyright_notice;
+        std::cout << redemption_info_version() << copyright_notice;
         std::cout << "\n\nUsage: redrec [options]\n\n";
         // TODO error code description
-        std::cout << desc << "\n\n";
+        std::cout << desc << "\n" << std::endl;
         return ClRes::Exit;
     }
 
     if (options.count("version") > 0) {
-        std::cout << copyright_notice << std::endl << std::endl;
+        std::cout << redemption_info_version() << copyright_notice << "\n" << std::endl;
         return ClRes::Exit;
     }
 

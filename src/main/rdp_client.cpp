@@ -99,7 +99,7 @@ int main(int argc, char** argv)
     if (options.count("help") > 0) {
         std::cout <<
             "\n"
-            "ReDemPtion stand alone RDP Client " << VERSION << ".\n"
+            "ReDemPtion stand alone RDP Client. " << redemption_info_version() << ".\n"
             "Copyright (C) Wallix 2010-2018.\n"
             "\n"
             "Usage: " << argv[0] << " [options]\n\n"
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     }
 
     if (options.count("version") > 0) {
-        std::cout << VERSION << std::endl;
+        std::cout << redemption_info_version() << std::endl;
         return 0;
     }
 

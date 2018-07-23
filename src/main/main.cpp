@@ -221,8 +221,8 @@ inline int shutdown()
 
 int main(int argc, char** argv)
 {
-    const char * const copyright_notice =
-        "Redemption " VERSION ": A Remote Desktop Protocol proxy.\n"
+    const char * const copyright_notice = "\n"
+        "A Remote Desktop Protocol proxy.\n"
         "Copyright (C) WALLIX 2010-2018.\n"
         "Christophe Grosjean, Javier Caverni, Xavier Dunat, Olivier Hervieu,\n"
         "Martin Potier, Dominique Lafages, Jonathan Poelen, Raphael Zhou,\n"
@@ -282,14 +282,14 @@ int main(int argc, char** argv)
     }
 
     if (options.count("help")) {
-        std::cout << copyright_notice << "\n\n";
+        std::cout << redemption_info_version() << copyright_notice << "\n\n";
         std::cout << "Usage: rdpproxy [options]\n\n";
         std::cout << desc << std::endl;
         return 0;
     }
 
     if (options.count("version")) {
-        std::cout << copyright_notice << std::endl;
+        std::cout << redemption_info_version() << copyright_notice << std::endl;
         return 0;
     }
 

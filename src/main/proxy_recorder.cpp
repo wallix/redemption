@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
     auto options = cli::options(
         cli::option('h', "help").help("Show help").action(cli::help),
         cli::option('v', "version").help("Show version")
-            .action(cli::quit([]{ std::cout << "Version 1, ReDemPtion " VERSION << "\n"; })),
+            .action(cli::quit([]{ std::cout << "ProxyRecorder 1.0, " << redemption_info_version() << "\n"; })),
         cli::option('s', "target-host").action(cli::arg_location("host", target_host)),
         cli::option('p', "target-port").action(cli::arg_location("port", target_port)),
         cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),

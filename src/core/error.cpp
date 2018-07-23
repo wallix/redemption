@@ -21,6 +21,8 @@
    Error exception object
 */
 
+#include "utils/pp.hpp"
+
 #define NOT_UNDEF_EACH_ERROR
 #include "core/error.hpp"
 #include "cxx/cxx.hpp"
@@ -132,8 +134,6 @@ const char * Error::errmsg(bool with_id) const noexcept
         return "The computer that you are trying to connect to is redirecting you to another computer.";
 
     default:
-        #define PP_STRINGIFY_I(x) #x
-        #define PP_STRINGIFY(x) PP_STRINGIFY_I(x)
         #define MAKE_CASE_V(e, x) case e:                 \
             return with_id                                \
                 ? "Exception " #e " no: " PP_STRINGIFY(x) \
@@ -156,8 +156,6 @@ const char * Error::errmsg(bool with_id) const noexcept
         }
         #undef MAKE_CASE
         #undef MAKE_CASE_V
-        #undef PP_STRINGIFY
-        #undef PP_STRINGIFY_I
         return "Unknown Error";
     }
 }

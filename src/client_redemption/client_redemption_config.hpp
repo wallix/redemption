@@ -143,7 +143,7 @@ public:
             .action(cli::help),
 
             cli::option('v', "version").help("Show version")
-            .action(cli::quit([]{ std::cout << " ReDemPtion Version " VERSION << "\n"; })),
+            .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
 
             cli::helper("========= Connection ========="),
 
@@ -363,7 +363,7 @@ public:
             .action(cli::help),
 
             cli::option('v', "version").help("Show version")
-            .action(cli::quit([]{ std::cout << " ReDemPtion Version " VERSION << "\n"; })),
+            .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
 
             cli::helper("========= Connection ========="),
 
