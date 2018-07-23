@@ -905,28 +905,28 @@ public:
 
         {
 //         printf("width=%u height=%u mlen=%u dlen=%u", width, height, mlen, dlen);
-        printf("Data Pointer For Cursor\n");
-        const uint8_t * src = data;
-        for (unsigned y = 0 ; y < 32 ; ++y){
-            for (unsigned x = 0 ; x < 32 ; ++x){
-                unsigned pixel = src[0]+(src[1]<<8)+(src[2]<<16);
-                putchar(pixel?'+':' ');
-                src += 3;
-            }
-            printf("\n");
-        }
-        printf("Mask Pointer For Cursor\n");
-        src = mask;
-        for (unsigned y = 0 ; y < 32 ; ++y){
-            uint8_t bit_count = 7;
-            for (unsigned x = 0 ; x < 32 ; ++x){
-                unsigned pixel = (*src & (1 << bit_count));
-                putchar(pixel?'*':' ');
-                src += (bit_count==0)&1;
-                bit_count = (bit_count - 1) & 7;
-            }
-            printf("\n");
-        }
+//         printf("Data Pointer For Cursor\n");
+//         const uint8_t * src = data;
+//         for (unsigned y = 0 ; y < 32 ; ++y){
+//             for (unsigned x = 0 ; x < 32 ; ++x){
+//                 unsigned pixel = src[0]+(src[1]<<8)+(src[2]<<16);
+//                 putchar(pixel?'+':' ');
+//                 src += 3;
+//             }
+//             printf("\n");
+//         }
+//         printf("Mask Pointer For Cursor\n");
+//         src = mask;
+//         for (unsigned y = 0 ; y < 32 ; ++y){
+//             uint8_t bit_count = 7;
+//             for (unsigned x = 0 ; x < 32 ; ++x){
+//                 unsigned pixel = (*src & (1 << bit_count));
+//                 putchar(pixel?'*':' ');
+//                 src += (bit_count==0)&1;
+//                 bit_count = (bit_count - 1) & 7;
+//             }
+//             printf("\n");
+//         }
     }
 
 
