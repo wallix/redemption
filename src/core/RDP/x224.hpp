@@ -1022,7 +1022,7 @@ namespace X224
                 this->rdp_neg_length = stream.in_uint16_le();
                 this->rdp_neg_code = stream.in_uint32_le();
 
-                LOG(LOG_INFO, "NEG_RSP_TYPE=%u NEG_RSP_FLAGS=%u NEG_RSP_LENGTH=%u NEG_RSP_SELECTED_PROTOCOL=%u\n",
+                LOG(LOG_INFO, "NEG_RSP_TYPE=%u NEG_RSP_FLAGS=%u NEG_RSP_LENGTH=%u NEG_RSP_SELECTED_PROTOCOL=%u",
                     this->rdp_neg_type, this->rdp_neg_flags, this->rdp_neg_length, this->rdp_neg_code);
 
                 switch (this->rdp_neg_type){

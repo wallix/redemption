@@ -149,7 +149,7 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
         struct addrinfo * addr_info = nullptr;
         int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
         if (result) {
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)\n",
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)",
                 ip, (result == EAI_SYSTEM) ? errno : result
                   , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
             return -1;
@@ -162,7 +162,7 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 
 unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/)
 {
-    LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
+    LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
     // we will try connection several time
     // the trial process include "socket opening, hostname resolution, etc
@@ -186,14 +186,14 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     REDEMPTION_DIAGNOSTIC_POP
     int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
-        LOG(LOG_ERR, "Connecting to %s:%d failed\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed", ip, port);
         close(sck);
         return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
-        LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size", ip, port);
         close(sck);
         return unique_fd{-1};
     }
