@@ -292,7 +292,7 @@ public:
                 switch (errno) {
                 default: {
                     // failed to open stored certificate file
-                    LOG(LOG_WARNING, "Failed to open stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "Failed to open stored certificate: \"%s\"", filename);
                     if (error_message) {
                         *error_message = "Failed to open stored certificate: \"";
                         *error_message += filename;
@@ -304,7 +304,7 @@ public:
                 break;
                 case ENOENT:
                 {
-                    LOG(LOG_WARNING, "There's no stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "There's no stored certificate: \"%s\"", filename);
                     if (error_message) {
                         *error_message = "There's no stored certificate: \"";
                         *error_message += filename;
@@ -325,7 +325,7 @@ public:
                 ::fclose(fp);
                 if (!px509Existing) {
                     // failed to read stored certificate file
-                    LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"\n", filename);
+                    LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"", filename);
                     if (error_message) {
                         *error_message = "Failed to read stored certificate: \"";
                         *error_message += filename;
@@ -357,7 +357,7 @@ public:
                     for (;;){
                         size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp2);
                         size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp2);
-                        LOG(LOG_INFO, "nb1=%zu nb2=%zu\n", nb1, nb2);
+                        LOG(LOG_INFO, "nb1=%zu nb2=%zu", nb1, nb2);
                         if ((nb1 != nb2) || (0 != memcmp(buffer1, buffer2, nb1 * sizeof(buffer1[0])))) {
                             binary_check_failed = true;
                             break;
@@ -407,7 +407,7 @@ public:
                                      ip_address, port);
                             *error_message = buff;
                         }
-                        LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"\n",
+                        LOG(LOG_WARNING, "The certificate for host %s:%d has changed Previous=\"%s\" \"%s\" \"%s\", New=\"%s\" \"%s\" \"%s\"",
                             ip_address, port,
                             issuer_existing.get(), subject_existing.get(),
                             fingerprint_existing.get(), issuer.get(),
@@ -440,16 +440,16 @@ public:
             if ((!certificate_exists || !certificate_matches) && server_cert_store) {
                 ::unlink(filename);
 
-                LOG(LOG_INFO, "Dumping X509 peer certificate: \"%s\"\n", filename);
+                LOG(LOG_INFO, "Dumping X509 peer certificate: \"%s\"", filename);
                 FILE * fp = ::fopen(filename, "w+");
                 if (fp) {
                     PEM_write_X509(fp, px509);
                     ::fclose(fp);
-                    LOG(LOG_INFO, "Dumped X509 peer certificate\n");
+                    LOG(LOG_INFO, "Dumped X509 peer certificate");
                     server_notifier.server_cert_create();
                 }
                 else {
-                    LOG(LOG_WARNING, "Failed to dump X509 peer certificate\n");
+                    LOG(LOG_WARNING, "Failed to dump X509 peer certificate");
                 }
             }
 
