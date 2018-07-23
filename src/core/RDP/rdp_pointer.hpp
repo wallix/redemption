@@ -592,10 +592,11 @@ struct PointerLoaderNew {
             }
 
             const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
+            const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
             const unsigned int dest_line_bytes = ::even_pad_length(this->dimensions.width * 3);
-            const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width>>3));
+            const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
             const uint8_t * src_last_line       = data_data + ((this->dimensions.height-1) * src_line_bytes);
-            const uint8_t * src_last_mask_line  = mask_data + ((this->dimensions.height-1) * src_line_bytes);
+            const uint8_t * src_last_mask_line  = mask_data + ((this->dimensions.height-1) * src_mask_line_bytes);
 
             for (unsigned int i = 0; i < this->dimensions.height; ++i) {
                 const uint8_t * src  = src_last_line     - i * src_line_bytes;
@@ -606,11 +607,11 @@ struct PointerLoaderNew {
                     unsigned pixel = (((*src) & (1 << bit_extraction_mask)) ? 0xFFFFFF : 0);
                     ::out_bytes_le(dest, 3, pixel);
                     dest += 3;
-                    src += bit_extraction_mask?0:1;
+                    src = src + ((bit_extraction_mask==0)?1:0);
                     bit_extraction_mask = (bit_extraction_mask - 1) & 7;
                 }
 
-                const uint8_t* src_mask  = src_last_mask_line - i * src_line_bytes;
+                const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
                 uint8_t *      dest_mask = this->mask_buffer + i * dest_mask_line_bytes;
                 ::memcpy(dest_mask, src_mask, src_line_bytes);
             }
@@ -864,17 +865,17 @@ public:
     }
 
     explicit Pointer(const PointerLoader2 pl)
-     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
     explicit Pointer(const PointerLoader32x32 pl)
-     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
     explicit Pointer(const PointerLoaderNew pl)
-     : Pointer(pl.data_bpp, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
         unsigned Bpp = 3;
         this->only_black_white = ::is_black_and_white(
@@ -901,6 +902,35 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
+
+        {
+//         printf("width=%u height=%u mlen=%u dlen=%u", width, height, mlen, dlen);
+        printf("Data Pointer For Cursor\n");
+        const uint8_t * src = data;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = src[0]+(src[1]<<8)+(src[2]<<16);
+                putchar(pixel?'+':' ');
+                src += 3;
+            }
+            printf("\n");
+        }
+        printf("Mask Pointer For Cursor\n");
+        src = mask;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            uint8_t bit_count = 7;
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = (*src & (1 << bit_count));
+                putchar(pixel?'*':' ');
+                src += (bit_count==0)&1;
+                bit_count = (bit_count - 1) & 7;
+            }
+            printf("\n");
+        }
+    }
+
+
+
     }
 
     bool operator==(const Pointer & other) const {
