@@ -25,10 +25,59 @@
 #define RED_TEST_MODULE TestPng
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "utils/png.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/fileutils.hpp"
+#include "transport/transport.hpp"
 
-RED_AUTO_TEST_CASE(TestPng)
+
+ConstImageDataView const img(
+    byte_ptr_cast("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
+    3, 3, 4, BytesPerPixel{3}, ConstImageDataView::Storage::TopToBottom);
+
+struct File
 {
-    // TODO
+    std::FILE * f;
+
+    File(const char * filename, const char * mode)
+        : f(std::fopen(filename, mode))
+    {}
+
+    ~File()
+    {
+        std::fclose(f);
+    }
+};
+
+RED_AUTO_TEST_CASE(TestPngWriteFile)
+{
+    char const* filename = "/tmp/dump_png24_1.png";
+    {
+        File f{filename, "wb"};
+        RED_REQUIRE(f.f);
+        dump_png24(f.f, img, false);
+    }
+    RED_CHECK_GT(filesize(filename), 0);
+    unlink(filename);
+}
+
+RED_AUTO_TEST_CASE(TestPngTransError)
+{
+    struct : Transport
+    {
+        int i = 0;
+        void do_send(const uint8_t * /*buffer*/, size_t /*len*/) override
+        {
+            ++i;
+        }
+
+        void flush() override
+        {
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+    } trans;
+
+    RED_CHECK_EXCEPTION_ERROR_ID(dump_png24(trans, img, false), ERR_TRANSPORT_WRITE_FAILED);
+    RED_CHECK_GT(trans.i, 0);
 }
