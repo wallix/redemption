@@ -744,6 +744,7 @@ public:
 
     void update_config(bool enable_rt_display) {
         if (enable_rt_display != this->enable_rt_display){
+            LOG(LOG_INFO, "PngCaptureRT::enable_rt_display=%d", enable_rt_display);
             this->enable_rt_display = enable_rt_display;
             // clear files if we go from RT to non-RT
             if (!this->enable_rt_display) {
