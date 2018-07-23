@@ -36,29 +36,11 @@ ConstImageDataView const img(
     byte_ptr_cast("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"),
     3, 3, 4, BytesPerPixel{3}, ConstImageDataView::Storage::TopToBottom);
 
-struct File
-{
-    std::FILE * f;
-
-    File(const char * filename, const char * mode)
-        : f(std::fopen(filename, mode))
-    {}
-
-    ~File()
-    {
-        std::fclose(f);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestPngWriteFile)
 {
     char const* filename = "/tmp/dump_png24_1.png";
-    {
-        File f{filename, "wb"};
-        RED_REQUIRE(f.f);
-        dump_png24(f.f, img, false);
-    }
-    RED_CHECK_GT(filesize(filename), 0);
+    dump_png24(filename, img, false);
+    RED_CHECK_EQ(filesize(filename), 68);
     unlink(filename);
 }
 
@@ -79,5 +61,5 @@ RED_AUTO_TEST_CASE(TestPngTransError)
     } trans;
 
     RED_CHECK_EXCEPTION_ERROR_ID(dump_png24(trans, img, false), ERR_TRANSPORT_WRITE_FAILED);
-    RED_CHECK_GT(trans.i, 0);
+    RED_CHECK_EQ(trans.i, 9);
 }
