@@ -988,18 +988,16 @@ public:
         };
         bool capture_png = bool(capture_flags & CaptureFlags::png) && (png_params.png_limit > 0);
 
-        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Front::can_be_start_capture: Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                capture_wrm ?"wrm ":"",
-                capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                capture_video ?"video ":"",
-                capture_video_full ?"video_full ":"",
-                capture_pattern_checker ?"pattern ":"",
-                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                capture_meta?"meta ":""
-            );
-        }
+        LOG(LOG_INFO, "Front::can_be_start_capture: Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            capture_wrm ?"wrm ":"",
+            capture_png ?"png ":"",
+            capture_kbd ? 1 : 0,
+            capture_video ?"video ":"",
+            capture_video_full ?"video_full ":"",
+            capture_pattern_checker ?"pattern ":"",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+            capture_meta?"meta ":""
+        );
 
         DrawableParams const drawable_params{
             this->client_info.width,
