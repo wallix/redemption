@@ -2067,13 +2067,13 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {'i', "input-file", &recorder.input_filename, "input base filename"},
 
         {'H', "hash-path",  &recorder.hash_path, "output hash dirname (if empty, use hash_path of ini)"},
-        {'M', "mwrm-path",  &recorder.mwrm_path,         "mwrm file path"       },
+        {'M', "mwrm-path",  &recorder.mwrm_path, "mwrm file path"},
 
         // verifier options
         {'Q', "quick",   "quick check only"},
-        {'S', "ignore-stat-info", "ignore stat info data mismatch" },
+        {'S', "ignore-stat-info", "ignore stat info data mismatch"},
         {'U', "update-stat-info", "update stat info data mismatch "
-                                  "(only if not checksum and no encrypted)" },
+                                  "(only if not checksum and no encrypted)"},
 
         {'b', "begin", &recorder.begin_cap, "begin capture time (in seconds), default=none"},
         {'e', "end", &recorder.end_cap, "end capture time (in seconds), default=none"},
@@ -2100,12 +2100,12 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         {'s', "statistics", "show statistics"},
 
         {'z', "compression", &wrm_compression_algorithm, "wrm compression algorithm (default=original, none, gzip, snappy)"},
-        {'d', "color-depth", &color_depth,           "wrm color depth (default=original, 16, 24)"},
-        {'y', "encryption",  &recorder.wrm_encryption,            "wrm encryption (default=original, enable, disable)"},
+        {'d', "color-depth", &color_depth, "wrm color depth (default=original, 16, 24)"},
+        {'y', "encryption",  &recorder.wrm_encryption, "wrm encryption (default=original, enable, disable)"},
 
         {"remove-input-file", "remove input file"},
 
-        {"config-file", &recorder.config_filename, "used another ini file"},
+        {"config-file", &recorder.config_filename, "use another ini file"},
 
         {'a', "video-break-interval", &recorder.video_break_interval, "number of seconds between splitting video files (by default, one video every 10 minutes)"},
 
@@ -2282,7 +2282,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     // Input path rule is as follow:
     // -----------------------------
-    //  default serach directory for mwrm is given in config file
+    //  default search directory for mwrm is given in config file
     // if --mwrm-path is provided on command line it will be preferably used as default
     // if -i has a path component it will be used instead of mwrm-path
     // if relative all command lines path are relative to current working directory
@@ -2295,15 +2295,15 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         canonical_path(recorder.input_filename.c_str(), temp_path, sizeof(temp_path), temp_basename, sizeof(temp_basename), temp_extension, sizeof(temp_extension));
 
         if (strlen(temp_path) > 0) {
-            recorder.mwrm_path       = temp_path;
+            recorder.mwrm_path = temp_path;
         }
 
         recorder.input_basename = "";
         recorder.input_filename = "";
         recorder.infile_extension = ".mwrm";
         if (strlen(temp_basename) > 0) {
-            recorder.input_basename  = temp_basename;
-            recorder.input_filename  = temp_basename;
+            recorder.input_basename = temp_basename;
+            recorder.input_filename = temp_basename;
             recorder.infile_extension = (strlen(temp_extension) > 0)?temp_extension:".mwrm";
             recorder.input_filename += recorder.infile_extension;
         }
@@ -2314,7 +2314,6 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
         if (recorder.hash_path.back() != '/'){
             recorder.hash_path.push_back('/');
         }
-
     }
     recorder.full_path = recorder.mwrm_path + recorder.input_filename;
 
