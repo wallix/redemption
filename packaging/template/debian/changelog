@@ -1,3 +1,9 @@
+redemption (1.1.49%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix bitmap fragmentation error.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Jul 2018 17:01:45 +0200
+
 redemption (1.1.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
