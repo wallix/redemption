@@ -726,7 +726,6 @@ class PngCaptureRT : public PngCapture
     unsigned png_limit;
 
     bool enable_rt_display;
-    bool enable_verbose;
 
 public:
     PngCaptureRT(
