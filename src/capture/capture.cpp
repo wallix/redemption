@@ -775,11 +775,11 @@ public:
     Microseconds periodic_snapshot(
         timeval const & now, int x, int y, bool ignore_frame_in_timeval
     ) override {
-        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
-        std::chrono::microseconds const interval = this->frame_interval;
         if (this->enable_rt_display) {
             return this->PngCapture::periodic_snapshot(now, x, y, ignore_frame_in_timeval);
         }
+        std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
+        std::chrono::microseconds const interval = this->frame_interval;
         return interval - duration % interval;
     }
 
