@@ -5360,6 +5360,11 @@ private:
                            , bmpdata.dest_bottom - bmpdata.dest_top + 1
                            );
 
+            // TODO : verify code below, why is there no check at all on BITMAP_COMPRESSION_NO_HDR flag ?
+            // CGR: both flags seems to be redundant. Was there an old version of RDP
+            // where compression header was present but compresion not enabled ?
+            // That's the only potential use I see for this flag
+
             // BITMAP_COMPRESSION 0x0001
             // Indicates that the bitmap data is compressed. This implies
             // that the bitmapComprHdr field is present if the
