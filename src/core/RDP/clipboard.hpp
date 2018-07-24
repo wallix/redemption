@@ -2641,7 +2641,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                         pdu.log();
                     }
                 } else {
-                    while (chunk.in_remain() >= 0) {
+                    while (chunk.in_remain() >= 36) {
                         FormatListPDU_ShortName pdu;
                         pdu.recv(stream);
                         pdu.log();

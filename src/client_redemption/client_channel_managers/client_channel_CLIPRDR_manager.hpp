@@ -456,7 +456,7 @@ public:
                                     }
                                     utf8_string[size-1] = 0;
                                     std::string name_string(utf8_string);
-                                    format_name = std::string(fl_ln.formatUTF16Name+1);;
+                                    format_name = std::string(reinterpret_cast<char *>(fl_ln.formatUTF16Name+1));
 
                                     formatID = fl_ln.formatID;
                                 }

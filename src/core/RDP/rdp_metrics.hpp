@@ -39,10 +39,6 @@
 struct RDPMetrics {
 
     enum : int {
-        SECOND_PER_DAY = 3600*24
-    };
-
-    enum : int {
         total_main_amount_data_rcv_from_client,
         total_right_clicks,
         total_left_clicks,
@@ -122,7 +118,72 @@ struct RDPMetrics {
         return "unknow_rdp_metrics_name";
     }
 
-    bool cliprdr_init_format_list_done = false;
+
+    const int file_interval;
+
+    time_t utc_last_date;
+    char complete_file_path[4096] = {'\0'};
+    time_t utc_stat_time;
+    const std::string path_template;
+    int fd = -1;
+
+
+
+    char header[1024];
+
+    long int current_data[34] = { 0 };
+    long int previous_data[34] = { 0 };
+
+
+
+    RDPMetrics( const std::string & path_template
+              , const uint32_t session_id
+              , const char * account
+              , const char * primary_user
+              , const char * target_host
+              , const ClientInfo & info
+              , const char * target_service
+              , const uint8_t * key_crypt
+              , const int file_interval
+      )
+      : file_interval(file_interval*3600)
+      , path_template(path_template+"rdp_metrics")
+    {
+        timeval now = tvtime();
+        time_t start_time = now.tv_sec;
+
+        if (this->path_template.c_str()) {
+            time ( &(this->utc_last_date) );
+            this->utc_stat_time = this->utc_last_date;
+            this->new_day();
+        }
+
+        char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
+        char account_sig[1+SslSha256::DIGEST_LENGTH*2];
+        char hostname_sig[1+SslSha256::DIGEST_LENGTH*2];
+        char target_service_sig[1+SslSha256::DIGEST_LENGTH*2];
+        char session_info_sig[1+SslSha256::DIGEST_LENGTH*2];
+        char start_full_date_time[24];
+
+        this->set_current_formated_date(start_full_date_time, true, start_time);
+        this->sha1_encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
+        this->sha1_encrypt(account_sig, account, std::strlen(account), key_crypt);
+        this->sha1_encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
+        this->sha1_encrypt(target_service_sig, target_service, std::strlen(target_service), key_crypt);
+
+        char session_info[64];
+        ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
+        this->sha1_encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
+
+        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
+    }
+
+
+    ~RDPMetrics() {
+          ::close(this->fd);
+    }
+
+        bool cliprdr_init_format_list_done = false;
 
     void server_other_channel_data(long int len) {
         this->current_data[total_other_amount_data_rcv_from_server] += len;
@@ -159,7 +220,7 @@ struct RDPMetrics {
             header.recv(chunk);
 
             switch (header.msgType()) {
-                
+
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
                         RDPECLIP::FormatListPDU_LongName fl_ln;
@@ -167,17 +228,20 @@ struct RDPMetrics {
 
                         switch (fl_ln.formatID) {
 
-                            case RDPECLIP::CF_TEXT:
-                            case RDPECLIP::CF_OEMTEXT:
-                            case RDPECLIP::CF_UNICODETEXT:
+                            case RDPECLIP::CF_TEXT: [[fallthrough]];
+                            case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
+                            case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                             case RDPECLIP::CF_DSPTEXT:
                                 this->current_data[nb_text_copy_from_server] += 1;
                                 break;
-                            case RDPECLIP::CF_METAFILEPICT:
+                            case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                             case RDPECLIP::CF_DSPMETAFILEPICT:
                                 this->current_data[nb_image_copy_from_server] += 1;
+                                break;
                             default:
-                                if (std::string(fl_ln.formatUTF16Name) == std::string(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE)) {
+                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF16Name));
+                                std::string file_group_desc_name(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
+                                if (format_name_string == file_group_desc_name){
                                     this->current_data[nb_file_copy_from_server] += 1;
                                 }
                                 break;
@@ -223,73 +287,8 @@ struct RDPMetrics {
     }
 
 
-    time_t utc_last_date;
-    char complete_file_path[4096] = {'\0'};
-    time_t start_time;
-    time_t utc_stat_time;
-    const char * path_template;
-    int fd = -1;
-
-
-    // Header
-    const uint32_t session_id;
-    char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
-    char account_sig[1+SslSha256::DIGEST_LENGTH*2];
-    char hostname_sig[1+SslSha256::DIGEST_LENGTH*2];
-    char target_service_sig[1+SslSha256::DIGEST_LENGTH*2];
-    char session_info_sig[1+SslSha256::DIGEST_LENGTH*2];
-    char start_full_date_time[24];
-
-    char header[1024];
-
-    long int current_data[34] = { 0 };
-    long int previous_data[34] = { 0 };
-
-
-
-
-    RDPMetrics( const char * path_template
-              , const uint32_t session_id
-              , const char * account
-              , const char * primary_user
-              , const char * target_host
-              , const ClientInfo & info
-              , const char * target_service)
-      : path_template(path_template)
-      , session_id(session_id)
-    {
-        timeval now = tvtime();
-        this->start_time = now.tv_sec;
-
-        if (this->path_template) {
-//             timeval now = tvtime();
-//             this->utc_last_date = now.tv_sec;
-            time ( &(this->utc_last_date) );
-            this->utc_stat_time = this->utc_last_date;
-            this->new_day();
-        }
-
-        this->set_current_formated_date(this->start_full_date_time, true, this->start_time);
-        this->sha1_encrypt(this->primary_user_sig, primary_user, std::strlen(primary_user));
-        this->sha1_encrypt(this->account_sig, account, std::strlen(account));
-        this->sha1_encrypt(this->hostname_sig, info.hostname, std::strlen(info.hostname));
-        this->sha1_encrypt(this->target_service_sig, target_service, std::strlen(target_service));
-
-        char session_info[64];
-        ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
-        this->sha1_encrypt(this->session_info_sig, session_info, std::strlen(session_info));
-
-        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", this->start_full_date_time, this->session_id, this->primary_user_sig, this->account_sig, this->hostname_sig, this->target_service_sig, this->session_info_sig);
-    }
-
-
-    ~RDPMetrics() {
-          ::close(this->fd);
-    }
-
-
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len) {
-        SslSha256 sha256;
+    void sha1_encrypt(char * dest, const char * src, const size_t src_len, const uint8_t * key_crypt) {
+        SslHMAC_Sha256 sha256(key_crypt, 32);
         sha256.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
         sha256.final(sig);
@@ -336,7 +335,7 @@ struct RDPMetrics {
     void new_day() {
         char utc_last_date_formated[24] = {'\0'};
         this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template, utc_last_date_formated);
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template.c_str(), utc_last_date_formated);
 
         this->fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
         if (this->fd == -1) {
@@ -353,7 +352,7 @@ struct RDPMetrics {
         time_t utc_time_date;
         time ( &utc_time_date );
 
-        if ((utc_time_date -this->utc_last_date) >= SECOND_PER_DAY) {
+        if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
             ::close(this->fd);
             this->utc_last_date = utc_time_date;
             this->new_day();
