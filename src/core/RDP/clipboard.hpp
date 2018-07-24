@@ -1171,8 +1171,8 @@ struct FormatListPDU
 
 constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
 constexpr const char * FILECONTENTS         = "FileContents";
-constexpr const char * FILEGROUPDESCRIPTORW_UNICODE = "\x00F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W";
-constexpr const char * FILECONTENTS_UNICODE         = "\x00F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s";
+constexpr const char * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
+constexpr const char * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
 
 
 

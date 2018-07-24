@@ -847,7 +847,6 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        // TODO replace nullptr with log metrics file path
         , metrics( nullptr
                  , redir_info.session_id
                  , mod_rdp_params.target_user

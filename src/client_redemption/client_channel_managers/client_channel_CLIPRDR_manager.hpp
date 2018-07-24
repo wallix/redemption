@@ -472,9 +472,9 @@ public:
                                 }
 
                                 std::string filedescunicode(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
-                                LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedesc, formatID, format_name);
+                                LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode, formatID, format_name);
 
-                                if ((format_name == filedesc) && !isSharedFormat) {
+                                if ((format_name == filedescunicode) && !isSharedFormat) {
                                     this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                                     LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatID=%u !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", formatID);
                                     isSharedFormat = true;

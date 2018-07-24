@@ -159,6 +159,7 @@ struct RDPMetrics {
             header.recv(chunk);
 
             switch (header.msgType()) {
+                
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
                         RDPECLIP::FormatListPDU_LongName fl_ln;
@@ -176,9 +177,10 @@ struct RDPMetrics {
                             case RDPECLIP::CF_DSPMETAFILEPICT:
                                 this->current_data[nb_image_copy_from_server] += 1;
                             default:
-
+                                if (std::string(fl_ln.formatUTF16Name) == std::string(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE)) {
+                                    this->current_data[nb_file_copy_from_server] += 1;
+                                }
                                 break;
-
                         }
 
                     } else {
