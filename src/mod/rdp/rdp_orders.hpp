@@ -266,8 +266,9 @@ private:
         }();
 
         switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY
-                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP)) {
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_NOTIFY     /*NOLINT*/
+                                      | RDP::RAIL::WINDOW_ORDER_TYPE_DESKTOP))  /*NOLINT*/
+        {
             case RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW:
                 this->process_window_information(stream, header, FieldsPresentFlags, gd);
                 break;
@@ -297,9 +298,9 @@ private:
         }
 
         switch (FieldsPresentFlags & (  RDP::RAIL::WINDOW_ORDER_STATE_NEW
-                                      | RDP::RAIL::WINDOW_ORDER_ICON
-                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON
-                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED))
+                                      | RDP::RAIL::WINDOW_ORDER_ICON            /*NOLINT*/
+                                      | RDP::RAIL::WINDOW_ORDER_CACHEDICON      /*NOLINT*/
+                                      | RDP::RAIL::WINDOW_ORDER_STATE_DELETED)) /*NOLINT*/
         {
             case RDP::RAIL::WINDOW_ORDER_ICON: {
                     RDP::RAIL::WindowIcon order;
