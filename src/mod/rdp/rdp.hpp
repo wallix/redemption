@@ -854,7 +854,6 @@ public:
                  , vars.get<cfg::globals::auth_user>().c_str()
                  , mod_rdp_params.target_host
                  , info
-                 , this->sc_core.version
                  , vars.get<cfg::context::target_service>().c_str())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -5311,7 +5310,7 @@ public:
             throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
         }
 
-        LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
+        //LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
@@ -5323,19 +5322,19 @@ public:
 
 
         drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
-            const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
-            ::hexdump(cursormask, mlen);
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
-            const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
-            ::hexdump(cursordata, dlen);
-            LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
-            ARGB32Pointer vnccursor(cursor);
-            const auto av_alpha_q = vnccursor.get_alpha_q();
-            ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height);
-        }
+//         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
+//             const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
+//             ::hexdump(cursormask, mlen);
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
+//             const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
+//             ::hexdump(cursordata, dlen);
+//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
+//             ARGB32Pointer vnccursor(cursor);
+//             const auto av_alpha_q = vnccursor.get_alpha_q();
+//             ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height);
+//         }
     }   // process_new_pointer_pdu
 
 private:

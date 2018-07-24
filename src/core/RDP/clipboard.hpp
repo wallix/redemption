@@ -1169,8 +1169,8 @@ struct FormatListPDU
 //
 // };
 
-constexpr const char * FILEGROUPDESCRIPTORW = "Filegroupdescriptorw";
-constexpr const char * FILECONTENTS         = "Filecontents";
+constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
+constexpr const char * FILECONTENTS         = "FileContents";
 
 
 struct FormatListPDU_LongName {
@@ -1242,9 +1242,6 @@ struct FormatListPDU_LongName {
         utf8_string[size-1] = 0;
 
         std::string name_string(utf8_string);
-
-        ::hexdump(this->formatUTF16Name, this->formatDataNameUTF16Len);
-        ::hexdump(name_string.data(), name_string.size());
 
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
         LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string.c_str(), this->formatDataNameUTF16Len);
@@ -2633,17 +2630,19 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
             case CB_FORMAT_LIST:
             {
+                header.log();
                 if (state.use_long_format_names) {
-                    header.log();
                     while (chunk.in_remain() >= 6) {
                         FormatListPDU_LongName pdu;
                         pdu.recv(chunk);
                         pdu.log();
                     }
                 } else {
-                    FormatListPDU_ShortName pdu;
-                    pdu.recv(stream);
-                    pdu.log();
+                    while (chunk.in_remain() >= 0) {
+                        FormatListPDU_ShortName pdu;
+                        pdu.recv(stream);
+                        pdu.log();
+                    }
                 }
             }
                 break;
