@@ -1102,7 +1102,7 @@ inline unsigned get_file_count(
     while (begin_cap >= in_wrm_trans.end_chunk_time()) {
         next_wrm();
     }
-    unsigned const result = in_wrm_trans.get_seqno();
+    unsigned const result = in_wrm_trans.get_seqno(); /*NOLINT(clang-analyzer-deadcode.DeadStores)*/
     try {
         do {
             end_record.tv_sec = in_wrm_trans.end_chunk_time();
@@ -1111,7 +1111,7 @@ inline unsigned get_file_count(
         while (true);
     }
     catch (const Error & e) {
-        if (e.id != static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+        if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
             throw;
         }
     };
@@ -1592,7 +1592,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             fstat, total_wrm_file_len, count_wrm_file);
     }
     catch (const Error & e) {
-        if (e.id == static_cast<unsigned>(ERR_TRANSPORT_NO_MORE_DATA)) {
+        if (e.id == ERR_TRANSPORT_NO_MORE_DATA) {
             std::cerr << "Asked time not found in mwrm file\n";
         }
         else {
@@ -1759,7 +1759,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
                         strcat(path, "/");
                         strcpy(basename, movie_path);
-                        strcpy(extension, "");          // extension is currently ignored
+                        extension[0] = 0; // extension is currently ignored
 
                         if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
                         ) {

@@ -35,6 +35,7 @@
 #include "utils/log.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/buf_maker.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
@@ -232,12 +233,12 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
         int clr_important = 0;
     } header;
 
-    uint8_t stream_data[8192];
-    std::unique_ptr<uint8_t[]> stream_dyndata;
-    InStream stream(stream_data);
+    BufMaker<8192> buf_maker;
+    InStream stream(buf_maker.static_array());
 
     // TODO reading of file and bitmap decoding should be kept appart  putting both together makes testing hard. And what if I want to read a bitmap from some network socket instead of a disk file ?
     {
+        auto* stream_data = buf_maker.static_array().data();
         /* read file size */
         // TODO define some stream aware function to read data from file (to update stream.end by itself). It should probably not be inside stream itself because read primitives are OS dependant, and there is not need to make stream OS dependant.
         if (not read_all(fd, stream_data, 4)) {
@@ -321,11 +322,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
             unsigned const padding = align4(row_size) - row_size;
             size_t const size = row_size * header.image_height;
             size_t const bufsize = size + padding;
-            auto p = stream_data;
-            if (bufsize > sizeof(stream_data)) {
-                stream_dyndata = std::make_unique<uint8_t[]>(bufsize);
-                p = stream_dyndata.get();
-            }
+            auto p = buf_maker.dyn_array(bufsize).data();
             for (unsigned y = 0; y < header.image_height; y++) {
                 if (not read_all(fd, p + y * row_size, row_size + padding)) {
                     LOG(LOG_ERR, "Bitmap: read error reading bitmap file [%s] read\n", filename);

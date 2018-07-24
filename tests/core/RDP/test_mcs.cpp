@@ -297,7 +297,7 @@ RED_AUTO_TEST_CASE(TestSend_MCSPDU_CONNECT_RESPONSE_large_payload)
 
 RED_AUTO_TEST_CASE(TestSend_ErectDomainRequest)
 {
-    StaticOutPerStream<1024> stream;
+    StaticOutStream<1024> stream;
     size_t length = 5;
     int subheight = 0;
     int subinterval = 0;
@@ -553,7 +553,7 @@ RED_AUTO_TEST_CASE(TestRecv_ChannelJoinConfirm)
 
 RED_AUTO_TEST_CASE(TestSend_SendDataRequest)
 {
-    StaticOutPerStream<1024> stream;
+    StaticOutStream<1024> stream;
     size_t length = 8;
     MCS::SendDataRequest_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     RED_CHECK_EQUAL(length, stream.get_offset());
@@ -624,7 +624,7 @@ RED_AUTO_TEST_CASE(TestRecv_SendDataRequest)
 
 RED_AUTO_TEST_CASE(TestSend_SendDataIndication)
 {
-    StaticOutPerStream<1024> stream;
+    StaticOutStream<1024> stream;
     size_t length = 8;
     MCS::SendDataIndication_Send mcs(stream, 3, 1004, 1, 3, 379, MCS::PER_ENCODING);
     RED_CHECK_EQUAL(length, stream.get_offset());

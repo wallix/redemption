@@ -1946,7 +1946,7 @@ private:
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
+                    mcs_header, this->negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
                 (void)mcs;
@@ -2159,7 +2159,8 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer color (Fast)");
                 }
-                this->process_color_pointer_pdu(stream, drawable);
+//                 this->process_color_pointer_pdu(stream, drawable);
+                this->process_new_pointer_pdu(24, stream, drawable);
                 break;
 
             case FastPath::UpdateType::CACHED:
@@ -2170,12 +2171,15 @@ public:
                 break;
 
             case FastPath::UpdateType::POINTER:
+            {
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer new (Fast)");
 
                 }
-                this->process_new_pointer_pdu(stream, drawable);
-                break;
+                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                this->process_new_pointer_pdu(data_bpp, stream, drawable);
+            }
+            break;
 
             default:
                 LOG( LOG_ERR
@@ -3277,7 +3281,8 @@ public:
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer color");
             }
-            this->process_color_pointer_pdu(stream, drawable);
+//             this->process_color_pointer_pdu(stream, drawable);
+            this->process_new_pointer_pdu(24, stream, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)){
                 LOG(LOG_INFO, "Process pointer color done");
             }
@@ -3288,26 +3293,44 @@ public:
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
-                this->process_new_pointer_pdu(stream, drawable); // Pointer with arbitrary color depth
+                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                this->process_new_pointer_pdu(data_bpp, stream, drawable);
             }
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                 LOG(LOG_INFO, "Process pointer new done");
             }
             break;
-        // System Pointer Update (section 2.2.9.1.1.4.3)
+        // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
+        // ---------------------------------------------------------------
+
+        // systemPointerType (4 bytes): A 32-bit, unsigned integer.
+        //    The type of system pointer.
+
+        // +---------------------------+-----------------------------+
+        // |      Value                |      Meaning                |
+        // +---------------------------+-----------------------------+
+        // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
+        // +---------------------------+-----------------------------+
+        // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
+        // +---------------------------+-----------------------------+
+
         case RDP_POINTER_SYSTEM:
         {
-            if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer system");
-            }
-            // TODO: actually show mouse cursor or get back to default
             int system_pointer_type = stream.in_uint32_le();
-            this->process_system_pointer_pdu(system_pointer_type, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                LOG(LOG_INFO, "Process pointer system done");
+                LOG(LOG_INFO, "Process pointer system::%s",
+                    (system_pointer_type == RDP_NULL_POINTER)?
+                    "RDP_NULL_POINTER":"RDP_DEFAULT_POINTER");
+            }
+            if (system_pointer_type == RDP_NULL_POINTER) {
+                drawable.set_pointer(Pointer(NullPointer{}));
+            }
+            else {
+                drawable.set_pointer(Pointer(NormalPointer{}));
             }
         }
         break;
+
         // Pointer Position Update (section 2.2.9.1.1.4.2)
 
         // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
@@ -5094,8 +5117,67 @@ public:
         this->metrics.client_main_channel_data(tram_length);
     }
 
-    // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]
-    // [referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
+
+    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
+    // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
+    // ---------------------------------------------------------------
+
+    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the
+    // client to change the current pointer shape to one already present
+    // in the pointer cache.
+
+    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based
+    // cache entry containing the cache index of the cached pointer to
+    // which the client's pointer MUST be changed. The pointer data MUST
+    // have already been cached using either the Color Pointer Update
+    // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
+
+    void process_cached_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
+    {
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
+        }
+
+        // TODO Add check that the idx transmitted is actually an used pointer
+        uint16_t pointer_idx = stream.in_uint16_le();
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+            LOG(LOG_ERR,
+                "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
+                pointer_idx);
+            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
+        }
+        Pointer & cursor = this->cursors[pointer_idx];
+        if (cursor.is_valid()) {
+            drawable.set_pointer(cursor);
+        }
+        else {
+            LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
+                pointer_idx);
+        }
+        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
+            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
+        }
+    }
+
+
+    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
+    // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
+    // ------------------------------------------------------
+
+    // The TS_POINTERATTRIBUTE structure is used to send pointer data at an arbitrary
+    // color depth. Support for the New Pointer Update is advertised in the Pointer
+    // Capability Set (section 2.2.7.1.5).
+
+
+    // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel
+    // of the XOR mask contained in the colorPtrAttr field.
+
+    // colorPtrAttr (variable): Encapsulated Color Pointer Update (section 2.2.9.1.1.4.4)
+    //  structure which contains information about the pointer. The Color Pointer Update
+    //  fields are all used, as specified in section 2.2.9.1.1.4.4; however color XOR data
+    //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
+    //  contains one palette index; for 4 bpp, there are two palette indices per byte).
+
     // 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
     // =============================================================
 
@@ -5141,140 +5223,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_color_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu");
-        }
-        unsigned pointer_cache_idx = stream.in_uint16_le();
-        if (pointer_cache_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
-            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: index out of bounds");
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_CACHE_NOT_OK);
-        }
-
-        auto hotspot_x      = stream.in_uint16_le();
-        auto hotspot_y      = stream.in_uint16_le();
-        auto width = stream.in_uint16_le();
-        auto height = stream.in_uint16_le();
-        auto mlen = stream.in_uint16_le(); /* mask length */
-        auto dlen = stream.in_uint16_le(); /* data length */
-        const uint8_t * data = stream.in_uint8p(dlen);
-        const uint8_t * mask = stream.in_uint8p(mlen);
-
-        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * 24)) == dlen / height);
-
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y}, {data, dlen}, {mask, mlen}, mlen / height, dlen / height);
-        this->cursors[pointer_cache_idx] = cursor;
-
-        drawable.set_pointer(cursor);
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_color_pointer_pdu done");
-        }
-    }
-
-    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
-    // 2.2.9.1.1.4.6 Cached Pointer Update (TS_CACHEDPOINTERATTRIBUTE)
-    // ---------------------------------------------------------------
-
-    // The TS_CACHEDPOINTERATTRIBUTE structure is used to instruct the
-    // client to change the current pointer shape to one already present
-    // in the pointer cache.
-
-    // cacheIndex (2 bytes): A 16-bit, unsigned integer. A zero-based
-    // cache entry containing the cache index of the cached pointer to
-    // which the client's pointer MUST be changed. The pointer data MUST
-    // have already been cached using either the Color Pointer Update
-    // (section 2.2.9.1.1.4.4) or New Pointer Update (section 2.2.9.1.1.4.5).
-
-    void process_cached_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable)
-    {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
-            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu");
-        }
-
-        // TODO Add check that the idx transmitted is actually an used pointer
-        uint16_t pointer_idx = stream.in_uint16_le();
-        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
-            LOG(LOG_ERR,
-                "mod_rdp::process_cached_pointer_pdu pointer cache idx overflow (%d)",
-                pointer_idx);
-            throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
-        }
-        Pointer & cursor = this->cursors[pointer_idx];
-        if (cursor.is_valid()) {
-            drawable.set_pointer(cursor);
-        }
-        else {
-            LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
-                pointer_idx);
-        }
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
-            LOG(LOG_INFO, "mod_rdp::process_cached_pointer_pdu done");
-        }
-    }
-
-    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
-    // 2.2.9.1.1.4.3 System Pointer Update (TS_SYSTEMPOINTERATTRIBUTE)
-    // ---------------------------------------------------------------
-
-    // systemPointerType (4 bytes): A 32-bit, unsigned integer. The type of system pointer.
-
-    // +---------------------------+-----------------------------+
-    // |      Value                |      Meaning                |
-    // +---------------------------+-----------------------------+
-    // | SYSPTR_NULL    0x00000000 | The hidden pointer.         |
-    // +---------------------------+-----------------------------+
-    // | SYSPTR_DEFAULT 0x00007F00 | The default system pointer. |
-    // +---------------------------+-----------------------------+
-
-    void process_system_pointer_pdu(int system_pointer_type, gdi::GraphicApi & drawable)
-    {
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu");
-        }
-        switch (system_pointer_type) {
-        case RDP_NULL_POINTER:
-            {
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - null");
-                }
-                drawable.set_pointer(Pointer(NullPointer{}));
-            }
-            break;
-        default:
-            {
-                if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-                    LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu - default");
-                }
-                Pointer cursor(NormalPointer{});
-                drawable.set_pointer(cursor);
-            }
-            break;
-        }
-        if (bool(this->verbose & RDPVerbose::graphics_pointer)){
-            LOG(LOG_INFO, "mod_rdp::process_system_pointer_pdu done");
-        }
-    }
-
-    // [ referenced from 3.2.5.9.2 Processing Slow-Path Pointer Update PDU]
-    // 2.2.9.1.1.4.5 New Pointer Update (TS_POINTERATTRIBUTE)
-    // ------------------------------------------------------
-
-    // The TS_POINTERATTRIBUTE structure is used to send pointer data at an arbitrary
-    // color depth. Support for the New Pointer Update is advertised in the Pointer
-    // Capability Set (section 2.2.7.1.5).
-
-
-    // xorBpp (2 bytes): A 16-bit, unsigned integer. The color depth in bits-per-pixel
-    // of the XOR mask contained in the colorPtrAttr field.
-
-    // colorPtrAttr (variable): Encapsulated Color Pointer Update (section 2.2.9.1.1.4.4)
-    //  structure which contains information about the pointer. The Color Pointer Update
-    //  fields are all used, as specified in section 2.2.9.1.1.4.4; however color XOR data
-    //  is presented in the color depth described in the xorBpp field (for 8 bpp, each byte
-    //  contains one palette index; for 4 bpp, there are two palette indices per byte).
-
-    void process_new_pointer_pdu(InStream & stream, gdi::GraphicApi & drawable) {
+    void process_new_pointer_pdu(unsigned data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
@@ -5282,7 +5231,6 @@ public:
 //         InStream stream_to_log = stream.clone();
 //           ::hexdump(stream.get_data(), stream.in_remain());
 
-        unsigned data_bpp  = stream.in_uint16_le(); /* data bpp */
         unsigned pointer_idx = stream.in_uint16_le();
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO,
@@ -5290,7 +5238,7 @@ public:
                 data_bpp, pointer_idx);
         }
 
-        if (pointer_idx >= (sizeof(this->cursors) / sizeof(Pointer))) {
+        if (pointer_idx >= (sizeof(this->cursors) / sizeof(this->cursors[0]))) {
             LOG(LOG_ERR,
                 "mod_rdp::process_new_pointer_pdu pointer cache idx overflow (%u)",
                 pointer_idx);
@@ -5318,23 +5266,12 @@ public:
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
         assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 
+        //PointerLoaderNew pl(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
+        //Pointer cursor(pl);
+
+
         this->cursors[pointer_idx] = cursor;
-
-
         drawable.set_pointer(cursor);
-//         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
-//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done");
-//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursormask");
-//             const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
-//             ::hexdump(cursormask, mlen);
-//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done cursordata");
-//             const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
-//             ::hexdump(cursordata, dlen);
-//             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu done vnccursor");
-//             ARGB32Pointer vnccursor(cursor);
-//             const auto av_alpha_q = vnccursor.get_alpha_q();
-//             ::hexdump(av_alpha_q.data(), cursor.get_dimensions().width * cursor.get_dimensions().height);
-//         }
     }   // process_new_pointer_pdu
 
 private:
@@ -5366,7 +5303,7 @@ private:
 
         // 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
         // ------------------------------------------------------------
-        // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
+//         // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
         // defines a Bitmap Update (section 2.2.9.1.1.3.1.2).
 
         // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update
@@ -5442,6 +5379,11 @@ private:
                            , bmpdata.dest_right - bmpdata.dest_left + 1
                            , bmpdata.dest_bottom - bmpdata.dest_top + 1
                            );
+
+            // TODO : verify code below, why is there no check at all on BITMAP_COMPRESSION_NO_HDR flag ?
+            // CGR: both flags seems to be redundant. Was there an old version of RDP
+            // where compression header was present but compresion not enabled ?
+            // That's the only potential use I see for this flag
 
             // BITMAP_COMPRESSION 0x0001
             // Indicates that the bitmap data is compressed. This implies

@@ -1188,15 +1188,14 @@ public:
             }
             else {
                 // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
-                char buffer[255];
-                snprintf( buffer, sizeof(buffer), "%s@%s:%s%s%s"
+                snprintf( accounts.username, sizeof(accounts.username), "%s@%s:%s%s%s"
                         , this->ini.get<cfg::globals::target_user>().c_str()
                         , this->ini.get<cfg::globals::target_device>().c_str()
                         , this->ini.get<cfg::context::target_protocol>().c_str()
                         , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
                         , this->ini.get<cfg::globals::auth_user>().c_str()
                         );
-                strcpy(accounts.username, buffer);
+                utils::back(accounts.username) = '\0';
             }
 
             this->set_mod(new FlatLoginMod(

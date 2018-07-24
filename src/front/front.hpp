@@ -227,13 +227,15 @@ private:
             void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
                 Bitmap new_bmp(this->capture_bpp, bmp);
 
-                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > this->max_data_block_size) {  /*NOLINT*/
+                size_t const serializer_max_data_block_size = this->get_max_data_block_size();
+
+                if (static_cast<size_t>(new_bmp.cx() * new_bmp.cy() * new_bmp.bpp()) > serializer_max_data_block_size) { /*NOLINT*/
                     const uint16_t max_image_width
                       = std::min<uint16_t>(
-                            align4(this->max_data_block_size / nbbytes(new_bmp.bpp())),
+                            ((serializer_max_data_block_size / nbbytes(new_bmp.bpp())) & ~3),
                             new_bmp.cx()
                         );
-                    const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
+                    const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nbbytes(new_bmp.bpp()));
 
                     contiguous_sub_rect_f(
                         CxCy{new_bmp.cx(), new_bmp.cy()},
@@ -256,7 +258,7 @@ private:
                             sub_image_data.height = subrect.cy;
 
                             sub_image_data.bits_per_pixel = sub_image.bpp();
-                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
                             sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
@@ -270,8 +272,8 @@ private:
                     RDPBitmapData target_bitmap_data = bitmap_data;
 
                     target_bitmap_data.bits_per_pixel = new_bmp.bpp();
-                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+                    target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                     GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
                 }
@@ -974,7 +976,7 @@ public:
         strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
         strcat(path, "/");
         strcpy(basename, movie_path);
-        strcpy(extension, "");          // extension is currently ignored
+        extension[0] = 0; // extension is currently ignored
 
         if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
         ) {
@@ -2648,7 +2650,7 @@ public:
             data_writer,
             [channelId, this](StreamSize<256>, OutStream & mcs_header, std::size_t packet_sz) {
                 MCS::SendDataIndication_Send mcs(
-                    static_cast<OutPerStream&>(mcs_header),
+                    mcs_header,
                     this->userid, channelId,
                     1, 3, packet_sz,
                     MCS::PER_ENCODING
@@ -4435,7 +4437,7 @@ protected:
                             rdpbd.dest_right     = rect.cx + rect.x + x - 1;
                             rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
                             rdpbd.bits_per_pixel = 24;
-                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION;
+                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
                             const Rect tile(0, 0, rect.cx, rect.cy);
@@ -4520,12 +4522,18 @@ protected:
 
             uint8_t image_bpp = (this->capture_bpp ? this->capture_bpp : this->client_info.bpp);
 
+            size_t const serializer_max_data_block_size = [this]{
+                Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
+                return graphics_update_pdu_.get_max_data_block_size();
+            }();
+
+
             const uint16_t max_image_width =
                 std::min<uint16_t>(
-                        align4(this->max_data_block_size / nbbytes(image_bpp)),
+                        ((serializer_max_data_block_size / nbbytes(image_bpp)) & ~3),
                         image_rect.cx
                     );
-            const uint16_t max_image_height = this->max_data_block_size / (max_image_width * nbbytes(image_bpp));
+            const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nbbytes(image_bpp));
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
             RDPColor image_color = color_encode(order_color, image_bpp);
@@ -4588,7 +4596,7 @@ protected:
                     sub_image_data.height = sub_image_height;
 
                     sub_image_data.bits_per_pixel = sub_image.bpp();
-                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
                     sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);
@@ -4704,7 +4712,11 @@ private:
 //            this->client_info.cache2_size,
 //            this->client_info.cache3_size,
 //            front_bitmap_size);
-        if (front_bitmap_size <= this->client_info.cache3_size
+        size_t const serializer_max_data_block_size = [this]{
+            Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
+            return graphics_update_pdu_.get_max_data_block_size();
+        }();
+        if (front_bitmap_size <= serializer_max_data_block_size
             && align4(dst_cx) < 128 && dst_cy < 128) {
             // clip dst as it can be larger than source bitmap
             const Rect dst_tile(dst_x, dst_y, dst_cx, dst_cy);
@@ -4713,7 +4725,7 @@ private:
         }
         else {
             // if not we have to split it
-            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < RDPSerializer::MAX_ORDERS_SIZE) ? 64 : 32);
+            const uint16_t TILE_CX = ((::nbbytes(this->client_info.bpp) * 64 * 64 < serializer_max_data_block_size) ? 64 : 32);
             const uint16_t TILE_CY = TILE_CX;
 
             contiguous_sub_rect_f(CxCy{dst_cx, dst_cy}, SubCxCy{TILE_CX, TILE_CY}, [&](Rect r){

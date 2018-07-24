@@ -1792,9 +1792,11 @@ test-run tests/core/RDP/test_rdp_metrics :
 :
   <covfile>src/core/RDP/rdp_metrics.hpp
   <library>crypto
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/RDP/test_rdp_pointer :
@@ -4153,6 +4155,11 @@ test-run tests/utils/sugar/test_array_view :
 :
   <covfile>src/utils/sugar/array_view.hpp
 ;
+test-run tests/utils/sugar/test_buf_maker :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_buf_maker.cpp
+:
+  <covfile>src/utils/sugar/buf_maker.hpp
+;
 test-run tests/utils/sugar/test_buffer_t :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_buffer_t.cpp
 :
@@ -4432,6 +4439,7 @@ test-run tests/utils/test_png :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <variant>debug:<library>dl <variant>san:<library>dl
@@ -5188,6 +5196,8 @@ alias test_algostring : tests/utils/sugar/test_algostring ;
 alias test_algostring.coverage : tests/utils/sugar/test_algostring.coverage ;
 alias test_array_view : tests/utils/sugar/test_array_view ;
 alias test_array_view.coverage : tests/utils/sugar/test_array_view.coverage ;
+alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
+alias test_buf_maker.coverage : tests/utils/sugar/test_buf_maker.coverage ;
 alias test_buffer_t : tests/utils/sugar/test_buffer_t ;
 alias test_buffer_t.coverage : tests/utils/sugar/test_buffer_t.coverage ;
 alias test_byte : tests/utils/sugar/test_byte ;
@@ -5711,6 +5721,7 @@ explicit tests/utils/sugar ;
 alias tests/utils/sugar :
   tests/utils/sugar/test_algostring
   tests/utils/sugar/test_array_view
+  tests/utils/sugar/test_buf_maker
   tests/utils/sugar/test_buffer_t
   tests/utils/sugar/test_byte
   tests/utils/sugar/test_cast

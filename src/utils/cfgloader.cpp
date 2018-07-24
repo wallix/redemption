@@ -51,12 +51,16 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
     unsigned num_line = 0;
     bool has_err = false;
 
+    auto is_blank_in_line = [](char c){
+        return c == ' ' || c == '\t' || c == '\r';
+    };
+
     while (inifile_stream.good()) {
         ++num_line;
         inifile_stream.getline(line, maxlen);
         if (inifile_stream.fail() && inifile_stream.gcount() == maxlen-1) {
             if (!truncated) {
-                LOG(LOG_INFO, "Line too long in configuration file at line %u", num_line);
+                LOG(LOG_ERR, "Line too long in configuration file at line %u", num_line);
                 hexdump(line, maxlen-1);
                 has_err = true;
             }
@@ -73,9 +77,9 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
         if (len <= 0) continue;
         char * last_char_ptr = line + len;
         if (*last_char_ptr) ++last_char_ptr; // line without new line char
-        char * first_char_line = ltrim(line, last_char_ptr);
+        char * first_char_line = ltrim(line, last_char_ptr, is_blank_in_line);
         if (*first_char_line == '#') continue;
-        last_char_ptr = rtrim(first_char_line, last_char_ptr);
+        last_char_ptr = rtrim(first_char_line, last_char_ptr, is_blank_in_line);
 
         array_view_const_char const line {first_char_line, last_char_ptr};
         auto err_msg = [&configuration_holder, &new_key, &new_value, &context, &line]() -> char const *
@@ -110,7 +114,7 @@ bool configuration_load(ConfigurationHolder & configuration_holder, std::istream
         }();
 
         if (err_msg) {
-            LOG(LOG_INFO, "%s in configuration file at line %u", err_msg, num_line);
+            LOG(LOG_ERR, "%s in configuration file at line %u", err_msg, num_line);
             hexdump(line.data(), line.size());
             has_err = true;
         }

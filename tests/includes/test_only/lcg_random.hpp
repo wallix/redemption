@@ -44,7 +44,7 @@ public:
             this->rand32();
             uint32_t r{this->rand32()};
 
-            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + x * 4;
+            uint8_t * p = static_cast<uint8_t*>(dest) + x * 4;
             p[0] = r >> 0;
             p[1] = r >> 8;
             p[2] = r >> 16;
@@ -53,7 +53,7 @@ public:
         // fill last bytes if size % 4 > 0
         if (size % 4){
             uint32_t r{this->rand32()};
-            uint8_t * p = reinterpret_cast<uint8_t*>(dest) + size - (size % 4);
+            uint8_t * p = static_cast<uint8_t*>(dest) + size - (size % 4);
             if (size % 4 > 2) { p[2] = r >> 16; }
             if (size % 4 > 1) { p[1] = r >> 8; }
             if (size % 4 > 0) { p[0] = r >> 0; }

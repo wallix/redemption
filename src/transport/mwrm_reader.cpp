@@ -497,6 +497,7 @@ private:
     void write_newline() noexcept
     {
         writer.mes[writer.len++] = '\n';
+        writer.mes[writer.len] = 0;
     }
 };
 

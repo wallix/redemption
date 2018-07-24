@@ -41,7 +41,7 @@ static inline void send_data_indication_ex( Transport & trans
     stream.copy_to_head(security_header);
 
     StaticOutStream<256> mcs_header;
-    MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(static_cast<OutStream &>(mcs_header))
+    MCS::SendDataIndication_Send mcs( mcs_header
                                     , initiator
                                     , GCC::MCS_GLOBAL_CHANNEL
                                     , 1 // dataPriority
@@ -69,7 +69,7 @@ void send_data_indication_ex( Transport & trans
             SEC::Sec_Send sec(security_header, data, data_sz, 0, encrypt, encryptionLevel);
         },
         [&](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-            MCS::SendDataIndication_Send mcs( static_cast<OutPerStream &>(mcs_header)
+            MCS::SendDataIndication_Send mcs( mcs_header
                                             , initiator
                                             , channelId
                                             , 1 // dataPriority

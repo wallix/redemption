@@ -116,16 +116,18 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
             if (trimmed[0] == '*') {
                 all = true;
             }
-            else switch (trimmed.size()) {
-                case 0: break;
-                case 1: ids.emplace_back(c_array<1>(trimmed.begin())); break;
-                case 2: ids.emplace_back(c_array<2>(trimmed.begin())); break;
-                case 3: ids.emplace_back(c_array<3>(trimmed.begin())); break;
-                case 4: ids.emplace_back(c_array<4>(trimmed.begin())); break;
-                case 5: ids.emplace_back(c_array<5>(trimmed.begin())); break;
-                case 6: ids.emplace_back(c_array<6>(trimmed.begin())); break;
-                case 7: ids.emplace_back(c_array<7>(trimmed.begin())); break;
-                default: large_ids.emplace_back(trimmed.begin(), trimmed.end());
+            else {
+                switch (trimmed.size()) {
+                    case 0: break;
+                    case 1: ids.emplace_back(c_array<1>(trimmed.begin())); break;
+                    case 2: ids.emplace_back(c_array<2>(trimmed.begin())); break;
+                    case 3: ids.emplace_back(c_array<3>(trimmed.begin())); break;
+                    case 4: ids.emplace_back(c_array<4>(trimmed.begin())); break;
+                    case 5: ids.emplace_back(c_array<5>(trimmed.begin())); break;
+                    case 6: ids.emplace_back(c_array<6>(trimmed.begin())); break;
+                    case 7: ids.emplace_back(c_array<7>(trimmed.begin())); break;
+                    default: large_ids.emplace_back(trimmed.begin(), trimmed.end());
+                }
             }
         }
         return all;

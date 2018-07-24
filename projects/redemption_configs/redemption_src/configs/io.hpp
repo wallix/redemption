@@ -600,6 +600,7 @@ parse(T & x, spec_type<bool> /*type*/, array_view_const_char value)
         {cstr_array_view("yes"), true},
         {cstr_array_view("true"), true},
         {cstr_array_view("0"), false},
+        {cstr_array_view("off"), false},
         {cstr_array_view("no"), false},
         {cstr_array_view("false"), false},
     };
@@ -609,7 +610,7 @@ parse(T & x, spec_type<bool> /*type*/, array_view_const_char value)
             return no_parse_error;
         }
     }
-    return parse_error{"bad format, expected 1, on, yes, true, 0, no, false"};
+    return parse_error{"bad format, expected 1, on, yes, true, 0, off, no, false"};
 }
 
 

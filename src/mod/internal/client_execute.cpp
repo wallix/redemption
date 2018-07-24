@@ -2443,8 +2443,8 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
 
             order.header.FieldsPresentFlags(
                         RDP::RAIL::WINDOW_ORDER_ICON
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
-                    | RDP::RAIL::WINDOW_ORDER_FIELD_ICON_BIG
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW    /*NOLINT*/
+                    | RDP::RAIL::WINDOW_ORDER_FIELD_ICON_BIG /*NOLINT*/
                 );
             order.header.WindowId(INTERNAL_MODULE_WINDOW_ID);
 
@@ -2609,7 +2609,7 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
 
             order.header.FieldsPresentFlags(
                         RDP::RAIL::WINDOW_ORDER_ICON
-                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW
+                    | RDP::RAIL::WINDOW_ORDER_TYPE_WINDOW /*NOLINT*/
                 );
 
             if (this->verbose) {

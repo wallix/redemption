@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
     StaticOutStream<65536> stream;
     stream.out_copy_bytes(gcc_user_data, sizeof(gcc_user_data)-1); // -1 to ignore final 0
 
-    StaticOutPerStream<65536> gcc_header;
+    StaticOutStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, stream.get_offset());
     t.send(gcc_header.get_data(), gcc_header.get_offset());
 

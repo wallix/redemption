@@ -963,7 +963,7 @@ public:
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "VNC Send KeyEvent Flag down: %d, key: 0x%x", down_flag, key);
         }
-        StaticOutPerStream<8> stream;
+        StaticOutStream<8> stream;
         stream.out_uint8(4);
         stream.out_uint8(down_flag); /* down/up flag */
         stream.out_clear_bytes(2);

@@ -29,6 +29,7 @@
 #include "utils/parse.hpp"
 #include "utils/sugar/buffer_t.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 #include <memory>
 #include <initializer_list>
@@ -875,28 +876,18 @@ using StaticInStream = BasicStaticStream<N, InStream>;
 template<std::size_t OrignalLen>
 struct StreamBufMaker
 {
-    StreamBufMaker() = default;
-
-    uint8_t * reserve(std::size_t n) {
-        uint8_t * p = this->buf_;
-        if (n > sizeof(this->buf_)) {
-            this->dyn_buf_ = std::make_unique<uint8_t[]>(n);
-            p = this->dyn_buf_.get();
-        }
-        return p;
+    OutStream reserve_out_stream(std::size_t n) &
+    {
+        return OutStream(this->buf_maker_.dyn_array(n).data(), n);
     }
 
-    OutStream reserve_out_stream(std::size_t n) {
-        return OutStream(this->reserve(n), n);
-    }
-
-    InStream reserve_in_stream(std::size_t n) {
-        return InStream(this->reserve(n), n);
+    InStream reserve_in_stream(std::size_t n) &
+    {
+        return InStream(this->buf_maker_.dyn_array(n).data(), n);
     }
 
 private:
-    uint8_t buf_[OrignalLen];
-    std::unique_ptr<uint8_t[]> dyn_buf_;
+    BufMaker<OrignalLen> buf_maker_;
 };
 
 // class DynamicOutStream;

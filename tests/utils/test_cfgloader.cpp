@@ -67,6 +67,36 @@ RED_AUTO_TEST_CASE(TestCfgloader)
                     break;
                 case 6:
                     RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "mac");
+                    RED_CHECK_EQ(value, "2");
+                    break;
+                case 7:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "mac");
+                    RED_CHECK_EQ(value, "3");
+                    break;
+                case 8:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "mac");
+                    RED_CHECK_EQ(value, "4");
+                    break;
+                case 9:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "window");
+                    RED_CHECK_EQ(value, "5");
+                    break;
+                case 10:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "window");
+                    RED_CHECK_EQ(value, "6");
+                    break;
+                case 11:
+                    RED_CHECK_EQ(section, "a  a");
+                    RED_CHECK_EQ(key, "window");
+                    RED_CHECK_EQ(value, "7");
+                    break;
+                case 12:
+                    RED_CHECK_EQ(section, "a  a");
                     RED_CHECK_EQ(key, "v3");
                     RED_CHECK_EQ(value, "x");
                     break;
@@ -99,9 +129,15 @@ RED_AUTO_TEST_CASE(TestCfgloader)
         "val2   =1\n"
         "[ a  a ]\n"
         "  v =  1 \n"
+        "  mac =  2 \n\r"
+        "  mac =  3 \n\r"
+        "  mac =  4 \n\r"
+        "  window =  5 \r\n"
+        "  window =  6 \r\n"
+        "  window =  7 \r\n"
         "v3=x"
     ;
 
     configuration_load(cfg, ss);
-    RED_CHECK_EQ(cfg.i, 7);
+    RED_CHECK_EQ(cfg.i, 13);
 }

@@ -23,6 +23,9 @@ Author(s): Jonathan Poelen
 #include "utils/rect.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 
+#include <utility>
+
+
 struct CxCy
 {
     explicit CxCy(checked_int<uint16_t> cx, checked_int<uint16_t> cy) noexcept
@@ -67,7 +70,7 @@ void contiguous_sub_rect_f(CxCy wh, SubCxCy sub_wh, F && f)
 
         for (rect.x = 0; rect.x < wh.cx ; rect.x += sub_wh.cx) {
             rect.cx = std::min(sub_wh.cx, uint16_t(wh.cx - rect.x));
-            f(const_cast<Rect const&>(rect));
+            f(std::as_const(rect));
         }
     }
 }

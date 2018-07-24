@@ -40,6 +40,7 @@
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 class SessionReactor;
 
@@ -204,25 +205,18 @@ enum {
     void draw_event(time_t now, gdi::GraphicApi & gd) override {
         (void)now;
         try{
-            uint8_t buf[32768];
+            BufMaker<32768> buf_maker;
+            auto* buf = buf_maker.static_array().data();
 
             this->t.recv_boom(buf, 8);
 
-            InStream stream(buf);
+            InStream stream(buf, 8);
             unsigned type = stream.in_uint16_le();
             unsigned num_orders = stream.in_uint16_le();
             unsigned len = stream.in_uint32_le();
             if (type == 1) {
-                std::unique_ptr<uint8_t[]> dynbuf;
-                {
-                    auto pbuf = buf;
-                    if (len > stream.get_capacity()) {
-                        dynbuf = std::make_unique<uint8_t[]>(len);
-                        pbuf = dynbuf.get();
-                    }
-                    stream = InStream(pbuf, len);
-                }
-
+                buf = buf_maker.dyn_array(len).data();
+                stream = InStream(buf, len);
                 this->t.recv_boom(buf, len);
 
                 for (unsigned index = 0; index < num_orders; index++) {

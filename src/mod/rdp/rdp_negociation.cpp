@@ -751,10 +751,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
     write_packets(
         this->trans,
         [](StreamSize<256>, OutStream & mcs_header){
-            MCS::ErectDomainRequest_Send mcs(
-                static_cast<OutPerStream&>(mcs_header),
-                0, 0, MCS::PER_ENCODING
-            );
+            MCS::ErectDomainRequest_Send mcs(mcs_header, 0, 0, MCS::PER_ENCODING);
             (void)mcs;
         },
         X224::write_x224_dt_tpdu_fn{}
@@ -1054,10 +1051,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             }
         },
         [](StreamSize<256>, OutStream & gcc_header, std::size_t packet_size) {
-            GCC::Create_Request_Send(
-                static_cast<OutPerStream&>(gcc_header),
-                packet_size
-            );
+            GCC::Create_Request_Send(gcc_header, packet_size);
         },
         [](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::CONNECT_INITIAL_Send mcs(mcs_header, packet_size, MCS::BER_ENCODING);
@@ -1501,7 +1495,7 @@ void RdpNegociation::send_data_request(uint16_t channelId, WriterData... writer_
         writer_data...,
         [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
             MCS::SendDataRequest_Send mcs(
-                static_cast<OutPerStream&>(mcs_header), this->negociation_result.userid,
+                mcs_header, this->negociation_result.userid,
                 channelId, 1, 3, packet_size, MCS::PER_ENCODING
             );
 

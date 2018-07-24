@@ -25,6 +25,7 @@
 #include "utils/drawable.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/buf_maker.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -87,33 +88,44 @@ namespace
         }
     };
 
-    template<class IsOk>
+    struct DumpPng24Error
+    {
+        [[noreturn]] void operator()() const
+        {
+            LOG(LOG_ERR, "dump_png24_impl error");
+            throw Error(ERR_RECORDER_SNAPSHOT_FAILED);
+        }
+    };
+
+    template<class IsOk, class ThrowError>
     static void dump_png24_impl(
         png_struct * ppng, png_info * pinfo,
         const uint8_t * data, const size_t width, const size_t height, const size_t rowsize,
-        const bool bgr, IsOk is_ok
+        const bool bgr, IsOk is_ok, ThrowError throw_error
     ) {
         assert(align4(rowsize) == rowsize);
 
-        png_set_IHDR(ppng, pinfo, width, height, 8,
-                    PNG_COLOR_TYPE_RGB,
-                    PNG_INTERLACE_NONE,
-                    PNG_COMPRESSION_TYPE_BASE,
-                    PNG_FILTER_TYPE_BASE);
+        std::unique_ptr<uint8_t[]> dynline;
+
+        if (setjmp(png_jmpbuf(ppng))) {
+            dynline.reset();
+            throw_error();
+        }
+
+        png_set_IHDR(
+            ppng, pinfo, width, height, 8,
+            PNG_COLOR_TYPE_RGB,
+            PNG_INTERLACE_NONE,
+            PNG_COMPRESSION_TYPE_BASE,
+            PNG_FILTER_TYPE_BASE);
         png_write_info(ppng, pinfo);
 
         // send image buffer to file, one pixel row at once
         const uint8_t * row = data;
 
         if (bgr) {
-            uint8_t bgrline[8192*4];
-            uint8_t * bgrtmp = bgrline;
-
-            std::unique_ptr<uint8_t[]> dynline;
-            if (sizeof(bgrtmp) < rowsize) {
-                dynline = std::make_unique<uint8_t[]>(rowsize);
-                bgrtmp = dynline.get();
-            }
+            BufMaker<8192*4> buf_maker;
+            uint8_t * bgrtmp = buf_maker.dyn_array(rowsize).data();
 
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
                 const uint8_t * s = row;
@@ -136,13 +148,13 @@ namespace
                     t[10] = s[10];
                     t[11] = s[9];
                 }
-                png_write_row(ppng, const_cast<unsigned char*>(bgrtmp));
+                png_write_row(ppng, bgrtmp);
                 row += rowsize;
             }
         }
         else {
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
-                png_write_row(ppng, const_cast<unsigned char*>(row));
+                png_write_row(ppng, const_cast<uint8_t*>(row)); /* NOLINT */
                 row += rowsize;
             }
         }
@@ -169,48 +181,69 @@ namespace
     }
 } // namespace
 
+struct NoExceptTransport
+{
+    Transport & trans;
+    bool        has_error;
+    Error       err;
+
+    template<class F>
+    static void exec(png_structp png_ptr, char const* name, F f) noexcept
+    {
+        auto& self = *static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr));
+        try {
+            f(self.trans);
+        } catch (Error const& err) {
+            self.fail(png_ptr, "Exception in dump_png24", name, &err);
+        } catch (...) {
+            self.fail(png_ptr, "Exception in dump_png24", name);
+        }
+    }
+
+    [[noreturn]]
+    void fail(png_structp png_ptr, char const* msg, char const* name, Error const* err = nullptr) noexcept
+    {
+        this->has_error = true;
+        if (err) {
+            this->err = *err;
+            if (this->err.id == NO_ERROR) {
+                this->err.id = ERR_RECORDER_SNAPSHOT_FAILED;
+            }
+            LOG(LOG_ERR, "%s (%s): %s", name, msg, err->errmsg());
+        }
+        else {
+            LOG(LOG_ERR, "%s (%s)", name, msg);
+        }
+        png_error(png_ptr, msg);
+    }
+};
+
 void dump_png24(
     Transport & trans, uint8_t const * data,
     const size_t width, const size_t height, const size_t rowsize,
     const bool bgr
 ) {
-    struct NoExceptTransport
-    {
-        Transport & trans;
-        bool        has_error;
-
-        static NoExceptTransport& get(png_structp png_ptr) noexcept
-        {
-            return *static_cast<NoExceptTransport*>(png_get_io_ptr(png_ptr));
-        }
-    };
-
     auto png_write_data = [](png_structp png_ptr, png_bytep data, png_size_t length) noexcept {
-        try {
-            NoExceptTransport::get(png_ptr).trans.send(data, length);
-        } catch (...) {
-            NoExceptTransport::get(png_ptr).has_error = true;
-            png_error(png_ptr, "Exception in Transport::send");
-        }
+        NoExceptTransport::exec(png_ptr, "send", [&](Transport& trans){
+            trans.send(data, length);
+        });
     };
 
     auto png_flush_data = [](png_structp png_ptr) noexcept {
-        try {
-            NoExceptTransport::get(png_ptr).trans.flush();
-        } catch (...) {
-            NoExceptTransport::get(png_ptr).has_error = true;
-            png_error(png_ptr, "Exception in Transport::flush");
-        }
+        NoExceptTransport::exec(png_ptr, "send", [](Transport& trans){
+            trans.flush();
+        });
     };
 
-    NoExceptTransport no_except_transport = { trans, false };
+    NoExceptTransport no_except_transport = { trans, false, Error(NO_ERROR) };
 
     PngWriteStruct png;
     png_set_write_fn(png.ppng, &no_except_transport, png_write_data, png_flush_data);
 
     dump_png24_impl(
         png.ppng, png.pinfo, data, width, height, rowsize, bgr,
-        [&]() noexcept { return !no_except_transport.has_error; }
+        [&]() noexcept { return !no_except_transport.has_error; },
+        [&]() { throw no_except_transport.err; }
     );
 
     if (!no_except_transport.has_error) {
@@ -229,7 +262,9 @@ void dump_png24(
     // prepare png header
     png_init_io(png.ppng, file);
 
-    dump_png24_impl(png.ppng, png.pinfo, data, width, height, rowsize, bgr, []{return true;});
+    dump_png24_impl(
+        png.ppng, png.pinfo, data, width, height, rowsize, bgr,
+        []{return true;}, DumpPng24Error{});
 
     png_write_end(png.ppng, png.pinfo);
 
@@ -264,7 +299,7 @@ void dump_png24(std::FILE * file, ConstImageDataView const & image_view, bool bg
         image_view.data(),
         image_view.width(), image_view.height(),
         image_view.line_size(),
-        bgr, []{return true;});
+        bgr, []{return true;}, DumpPng24Error{});
 
     png_write_end(png.ppng, png.pinfo);
 }
