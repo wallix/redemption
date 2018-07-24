@@ -39,6 +39,10 @@
 struct RDPMetrics {
 
     enum : int {
+        SECOND_PER_DAY = 3600*24
+    };
+
+    enum : int {
         total_main_amount_data_rcv_from_client,
         total_right_clicks,
         total_left_clicks,
@@ -47,13 +51,13 @@ struct RDPMetrics {
         total_main_amount_data_rcv_from_server,
 
         total_cliprdr_amount_data_rcv_from_server,
-        nb_text_paste_from_serveur,
-        nb_image_paste_from_serveur,
-        nb_file_paste_from_serveur,
+        nb_text_paste_from_server,
+        nb_image_paste_from_server,
+        nb_file_paste_from_server,
         total_data_past_from_server,
-        nb_text_copy_from_serveur,
-        nb_image_copy_from_serveur,
-        nb_file_copy_from_serveu,
+        nb_text_copy_from_server,
+        nb_image_copy_from_server,
+        nb_file_copy_from_server,
         total_cliprdr_amount_data_rcv_from_client,
         nb_text_paste_from_client,
         nb_image_paste_from_client,
@@ -87,13 +91,13 @@ struct RDPMetrics {
             case total_mouse_move: return " mouse_move=";
             case total_main_amount_data_rcv_from_server: return " main_channel_data_from_serveur=";
             case total_cliprdr_amount_data_rcv_from_server: return " cliprdr_channel_data_from_server=";
-            case nb_text_paste_from_serveur: return " nb_text_paste_on_server=";
-            case nb_image_paste_from_serveur: return " nb_image_paste_on_server=";
-            case nb_file_paste_from_serveur: return " nb_file_paste_on_server=";
+            case nb_text_paste_from_server: return " nb_text_paste_on_server=";
+            case nb_image_paste_from_server: return " nb_image_paste_on_server=";
+            case nb_file_paste_from_server: return " nb_file_paste_on_server=";
             case total_data_past_from_server: return " total_data_past_from_server";
-            case nb_text_copy_from_serveur: return " nb_text_copy_on_server=";
-            case nb_image_copy_from_serveur: return " nb_image_copy_on_server=";
-            case nb_file_copy_from_serveu: return " nb_file_copy_on_server=";
+            case nb_text_copy_from_server: return " nb_text_copy_on_server=";
+            case nb_image_copy_from_server: return " nb_image_copy_on_server=";
+            case nb_file_copy_from_server: return " nb_file_copy_on_server=";
             case total_cliprdr_amount_data_rcv_from_client: return " cliprdr_channel_data_from_client=";
             case nb_text_paste_from_client: return " nb_text_paste_on_client=";
             case nb_image_paste_from_client: return " nb_image_paste_on_client=";
@@ -157,7 +161,26 @@ struct RDPMetrics {
             switch (header.msgType()) {
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
-                        
+                        RDPECLIP::FormatListPDU_LongName fl_ln;
+                        fl_ln.recv(chunk);
+
+                        switch (fl_ln.formatID) {
+
+                            case RDPECLIP::CF_TEXT:
+                            case RDPECLIP::CF_OEMTEXT:
+                            case RDPECLIP::CF_UNICODETEXT:
+                            case RDPECLIP::CF_DSPTEXT:
+                                this->current_data[nb_text_copy_from_server] += 1;
+                                break;
+                            case RDPECLIP::CF_METAFILEPICT:
+                            case RDPECLIP::CF_DSPMETAFILEPICT:
+                                this->current_data[nb_image_copy_from_server] += 1;
+                            default:
+
+                                break;
+
+                        }
+
                     } else {
                         this->cliprdr_init_format_list_done = true;
                     }
@@ -201,6 +224,7 @@ struct RDPMetrics {
     time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
     time_t start_time;
+    time_t utc_stat_time;
     const char * path_template;
     int fd = -1;
 
@@ -239,6 +263,7 @@ struct RDPMetrics {
 //             timeval now = tvtime();
 //             this->utc_last_date = now.tv_sec;
             time ( &(this->utc_last_date) );
+            this->utc_stat_time = this->utc_last_date;
             this->new_day();
         }
 
@@ -320,18 +345,18 @@ struct RDPMetrics {
 
     void log() {
 
-        timeval now = tvtime();
-        time_t time_date = now.tv_sec;
+//         timeval now = tvtime();
+//         time_t time_date = now.tv_sec;
 
         time_t utc_time_date;
         time ( &utc_time_date );
 
-        if ((utc_time_date -this->utc_last_date) >= 3600*24) {
+        if ((utc_time_date -this->utc_last_date) >= SECOND_PER_DAY) {
             ::close(this->fd);
             this->utc_last_date = utc_time_date;
             this->new_day();
         }
-        const long int delta_time = time_date - this->start_time;
+        const long int delta_time = utc_time_date - this->utc_stat_time;
 
         char header_delta[1024];
         ::snprintf(header_delta, sizeof(header_delta), "%s%ld", this->header, delta_time);

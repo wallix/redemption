@@ -456,7 +456,7 @@ public:
                                     }
                                     utf8_string[size-1] = 0;
                                     std::string name_string(utf8_string);
-                                    format_name = name_string;
+                                    format_name = std::string(fl_ln.formatUTF16Name+1);;
 
                                     formatID = fl_ln.formatID;
                                 }
@@ -471,7 +471,7 @@ public:
                                     }
                                 }
 
-                                std::string filedesc(RDPECLIP::FILEGROUPDESCRIPTORW);
+                                std::string filedescunicode(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
                                 LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedesc, formatID, format_name);
 
                                 if ((format_name == filedesc) && !isSharedFormat) {
