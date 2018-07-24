@@ -258,7 +258,7 @@ private:
                             sub_image_data.height = subrect.cy;
 
                             sub_image_data.bits_per_pixel = sub_image.bpp();
-                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                            sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
                             sub_image_data.bitmap_length = bmp_stream.get_offset();
 
                             GraphicsUpdatePDU::draw(sub_image_data, sub_image);
@@ -272,8 +272,8 @@ private:
                     RDPBitmapData target_bitmap_data = bitmap_data;
 
                     target_bitmap_data.bits_per_pixel = new_bmp.bpp();
-                    target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
-                    target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
+                    target_bitmap_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
+                    target_bitmap_data.bitmap_length = bmp_stream.get_offset();
 
                     GraphicsUpdatePDU::draw(target_bitmap_data, new_bmp);
                 }
@@ -4437,7 +4437,7 @@ protected:
                             rdpbd.dest_right     = rect.cx + rect.x + x - 1;
                             rdpbd.dest_bottom    = rect.cy + rect.y + y + fc.offsety - 1;
                             rdpbd.bits_per_pixel = 24;
-                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION;
+                            rdpbd.flags          = NO_BITMAP_COMPRESSION_HDR | BITMAP_COMPRESSION; /*NOLINT*/
                             rdpbd.bitmap_length  = rect.cx * rect.cy * 3;
 
                             const Rect tile(0, 0, rect.cx, rect.cy);
@@ -4596,7 +4596,7 @@ protected:
                     sub_image_data.height = sub_image_height;
 
                     sub_image_data.bits_per_pixel = sub_image.bpp();
-                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                    sub_image_data.flags = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR; /*NOLINT*/
                     sub_image_data.bitmap_length = sub_image.data_compressed().size();
 
                     this->draw_impl(sub_image_data, sub_image);
