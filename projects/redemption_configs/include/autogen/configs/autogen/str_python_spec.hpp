@@ -543,6 +543,23 @@
 "#_advanced\n"
 "experimental_fix_too_long_cookie = boolean(default=True)\n\n"
 
+"[rdp_metrics]\n\n"
+
+"#_advanced\n"
+"log_dir_path = string(max=4096, default='" << app_path(AppPath::Record) << "')\n\n"
+
+"# (is in second)\n"
+"#_advanced\n"
+"log_interval = integer(min=0, default=5)\n\n"
+
+"# (is in hour)\n"
+"#_advanced\n"
+"log_file_turnover_interval = integer(min=0, default=24)\n\n"
+
+"# signature key to digest log metrics header info\n"
+"#_hidden\n"
+"sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"
