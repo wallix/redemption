@@ -574,22 +574,58 @@ struct PointerLoaderNew {
 
         switch (data_bpp) {
         case 1:
+        printf("Received 1bpp cursor\n");
         {
             uint8_t data_data[DATA_SIZE];
-            uint8_t mask_data[MASK_SIZE];
-            ::memcpy(data_data, data, dlen);
-            ::memcpy(mask_data, mask, mlen);
+            uint8_t mask_data[DATA_SIZE];
+            ::memcpy(data_data, mask, mlen);
+            ::memcpy(mask_data, data, dlen);
 
-            if (bogus_linux_cursor == BogusLinuxCursor::enable) {
+            if (0 && (bogus_linux_cursor == BogusLinuxCursor::enable)) {
+                printf("BogusLinuxCursor::enable\n");
                 for (unsigned i = 0 ; i < mlen; i++) {
-                    // all white bits are cleared in mask (cleared bits are where we will draw)
-
                     uint8_t new_mask_data = (mask_data[i] & (data_data[i] ^ 0xFF));
                     uint8_t new_data_data = (data_data[i] ^ mask_data[i] ^ new_mask_data);
                     data_data[i]    = new_data_data;
                     mask_data[i]    = new_mask_data;
                 }
             }
+
+
+    {
+        printf("width=%u height=%u mlen=%u dlen=%u\n", width, height, mlen, dlen);
+        printf("Mask Pointer For Cursor\n");
+        {
+        const uint8_t * src = mask_data;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            uint8_t bit_count = 7;
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = (*src & (1 << bit_count));
+                putchar(pixel?'*':' ');
+                src += (bit_count==0)&1;
+                bit_count = (bit_count - 1) & 7;
+            }
+            printf("\n");
+        }
+        }
+        printf("Data Pointer For Cursor\n");
+        {
+        const uint8_t * src = data_data;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            uint8_t bit_count = 7;
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = (*src & (1 << bit_count));
+                putchar(pixel?'*':' ');
+                src += (bit_count==0)&1;
+                bit_count = (bit_count - 1) & 7;
+            }
+            printf("\n");
+        }
+        }
+
+
+    }
+
 
             const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
             const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
@@ -608,24 +644,58 @@ struct PointerLoaderNew {
                 unsigned char mask_bit_count = 7;
                 for (unsigned int j = 0; j < this->dimensions.width ; ++j) {
                     unsigned databit = *src      & (1 << bit_count);
-                    unsigned maskbit = *src_mask & (1 << mask_bit_count);
                     unsigned pixel = databit ? 0xFFFFFF:0;
                     ::out_bytes_le(dest, 3, pixel);
                     dest += 3;
-                    uint8_t new_dest_mask = (*dest_mask & ~(1 << mask_bit_count)) | maskbit ;
-                    *dest_mask = new_dest_mask;
-
                     src            = src + ((bit_count==0)?1:0);
                     bit_count      = (bit_count - 1) & 7;
 
-                    src_mask       = src_mask  + ((mask_bit_count==0)?1:0);
-                    dest_mask      = dest_mask + ((mask_bit_count==0)?1:0);
+                    if (mask_bit_count == 0){
+                        *dest_mask = *src_mask;
+                        dest_mask++;
+                        src_mask++;
+                    }
                     mask_bit_count = (mask_bit_count - 1) & 7;
                 }
             }
+
+
+        {
+            printf("width=%u height=%u mlen=%u dlen=%u\n", width, height, mlen, dlen);
+            printf("Mask Pointer For Cursor (after)\n");
+            {
+            const uint8_t * src = this->mask_buffer;
+            for (unsigned y = 0 ; y < 32 ; ++y){
+                uint8_t bit_count = 7;
+                for (unsigned x = 0 ; x < 32 ; ++x){
+                    unsigned pixel = (*src & (1 << bit_count));
+                    putchar(pixel?'*':' ');
+                    src += (bit_count==0)&1;
+                    bit_count = (bit_count - 1) & 7;
+                }
+                printf("\n");
+            }
+            }
+            printf("Data Pointer For Cursor (after)\n");
+            {
+            const uint8_t * src = this->data_buffer;
+            for (unsigned y = 0 ; y < 32 ; ++y){
+                for (unsigned x = 0 ; x < 32 ; ++x){
+                    unsigned pixel = *src;
+                    putchar(pixel?'*':' ');
+                    src += 3;
+                }
+                printf("\n");
+            }
+            }
+
+
+        }
+
         }
         break;
         case 4:
+        printf("Received 4bpp cursor\n");
         {
             for (unsigned i = 0; i < dlen ; i++) {
                 const uint8_t px = data[i];
@@ -642,6 +712,8 @@ struct PointerLoaderNew {
         case 24:
         case 32:
         {
+            printf("Received %u bpp cursor\n", data_bpp);
+
             uint8_t BPP = nbbytes(data_bpp);
 
             const unsigned int src_xor_line_length_in_byte = this->dimensions.width * BPP;
@@ -1379,7 +1451,7 @@ struct ARGB32Pointer {
     CursorSize dimensions;
     Hotspot hotspot;
 
-    alignas(4)
+    alignas(16)
     uint8_t data[Pointer::DATA_SIZE];
 
     explicit ARGB32Pointer(Pointer const & cursor)
@@ -1390,26 +1462,51 @@ struct ARGB32Pointer {
 
         const uint8_t * cursormask = cursor.get_monochrome_and_mask().data();
         const uint8_t * cursordata = cursor.get_24bits_xor_mask().data();
-        size_t mask_offset_line = 0;
-        size_t data_offset_line = 0;
-        size_t target_data_offset_line = ((this->dimensions.height - 1) * this->dimensions.width*4);
-        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
-            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
-                const size_t mask_offset = mask_offset_line +::nbbytes(x+1)-1;
-                const size_t data_offset = data_offset_line + x*3;
-                const size_t target_data_offset = target_data_offset_line + x*4;
-                //LOG(LOG_INFO, "(x=%d/%u, y=%d/%u) mw=%zu mx=%zu, mask_offset=%zu data_offset=%zu target_offset%zu",x, this->dimensions.width, y, this->dimensions.height,
-                //            size_t(::nbbytes(this->dimensions.width)), size_t(::nbbytes(x+1)), mask_offset, data_offset, target_data_offset);
-                uint8_t mask_value = (cursormask[mask_offset]&(0x80>>(x&7)))?0x00:0xFF;
-                for (uint8_t i = 0 ; i < 3 ; i++){
-                    uint8_t value = cursordata[data_offset+i];
-                    this->data[target_data_offset+i] = (mask_value == 0)?0:value;
-                }
-                this->data[target_data_offset+3] = mask_value;
+
+
+        printf("ARGB32 Mask Pointer For Cursor\n");
+        {
+        const uint8_t * src = cursormask;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            uint8_t bit_count = 7;
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = (*src & (1 << bit_count));
+                putchar(pixel?'*':' ');
+                src += (bit_count==0)&1;
+                bit_count = (bit_count - 1) & 7;
             }
-            mask_offset_line += ::nbbytes(this->dimensions.width);
-            data_offset_line += 3 * this->dimensions.width;
-            target_data_offset_line -= this->dimensions.width*4;
+            printf("\n");
+        }
+        }
+        printf("ARGB32 Data Pointer For Cursor\n");
+        {
+        const uint8_t * src = cursordata;
+        for (unsigned y = 0 ; y < 32 ; ++y){
+            uint8_t bit_count = 7;
+            for (unsigned x = 0 ; x < 32 ; ++x){
+                unsigned pixel = (*src & (1 << bit_count));
+                putchar(pixel?'*':' ');
+                src += (bit_count==0)&1;
+                bit_count = (bit_count - 1) & 7;
+            }
+            printf("\n");
+        }
+        }
+
+        for (uint8_t y = 0 ; y < this->dimensions.height ; y++){
+            const uint8_t * src_mask = &cursormask[y * ::nbbytes(this->dimensions.width)];
+            const uint8_t * src_data = &cursordata[y * 3 * this->dimensions.width];
+            uint8_t * target_data    = &this->data[4*(this->dimensions.height-1-y)*this->dimensions.width];
+            uint8_t mask_count = 7;
+            for(uint8_t x = 0 ; x < this->dimensions.width ; x++){
+                uint8_t maskbit =  *src_mask & (1 << mask_count);
+                uint32_t posdata = 3*x;
+                uint32_t postarget = 4*x;
+                uint32_t pixel = src_data[posdata]+(src_data[posdata+1]<<8)+(src_data[posdata+2]<<16);
+                ::out_bytes_le(&target_data[postarget], 4, maskbit?strtol(getenv("PCOLOR"), nullptr, 0):0);
+                src_mask += (mask_count==0)?1:0;
+                mask_count = (mask_count-1) & 7;
+            }
         }
     }
 
