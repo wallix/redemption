@@ -600,20 +600,28 @@ struct PointerLoaderNew {
 
             for (unsigned int i = 0; i < this->dimensions.height; ++i) {
                 const uint8_t * src  = src_last_line     - i * src_line_bytes;
-                uint8_t *       dest = this->data_buffer + i * dest_line_bytes;
+                const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
+                uint8_t *      dest = this->data_buffer + i * dest_line_bytes;
+                uint8_t *      dest_mask = this->mask_buffer + i * dest_mask_line_bytes;
 
-                unsigned char bit_extraction_mask = 7;
+                unsigned char bit_count = 7;
+                unsigned char mask_bit_count = 7;
                 for (unsigned int j = 0; j < this->dimensions.width ; ++j) {
-                    unsigned pixel = (((*src) & (1 << bit_extraction_mask)) ? 0xFFFFFF : 0);
+                    unsigned databit = *src      & (1 << bit_count);
+                    unsigned maskbit = *src_mask & (1 << mask_bit_count);
+                    unsigned pixel = databit ? 0xFFFFFF:0;
                     ::out_bytes_le(dest, 3, pixel);
                     dest += 3;
-                    src = src + ((bit_extraction_mask==0)?1:0);
-                    bit_extraction_mask = (bit_extraction_mask - 1) & 7;
-                }
+                    uint8_t new_dest_mask = (*dest_mask & ~(1 << mask_bit_count)) | maskbit ;
+                    *dest_mask = new_dest_mask;
 
-                const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
-                uint8_t *      dest_mask = this->mask_buffer + i * dest_mask_line_bytes;
-                ::memcpy(dest_mask, src_mask, src_line_bytes);
+                    src            = src + ((bit_count==0)?1:0);
+                    bit_count      = (bit_count - 1) & 7;
+
+                    src_mask       = src_mask  + ((mask_bit_count==0)?1:0);
+                    dest_mask      = dest_mask + ((mask_bit_count==0)?1:0);
+                    mask_bit_count = (mask_bit_count - 1) & 7;
+                }
             }
         }
         break;
