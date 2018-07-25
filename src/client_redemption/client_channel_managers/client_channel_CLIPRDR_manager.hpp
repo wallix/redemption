@@ -376,7 +376,6 @@ public:
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
                         }
                     }
-
                 break;
 
 // 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)

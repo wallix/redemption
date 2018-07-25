@@ -229,7 +229,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
     }
     {
         StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);
         format_list_header.emit(out_stream);
         RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 2);
         format.emit(out_stream);
@@ -249,7 +249,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
     expected_log_header += start_full_date_time;
     expected_log_header += " Session_id=1 user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 hostname=B613679A0814D9EC772F95D778C35FC5FF1697C493715653C6C712144292C5AD target_service=6349A3F669CACE1E4C7AE9C48B53A3F1A240EB3910D8B16850ECBC80A4A9B807 session_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7 delta_time(s)=0";
 
-    std::string expected_log_data_2(" cliprdr_channel_data_from_server=68 nb_text_copy_on_server=1 nb_file_copy_on_server=1");
+    std::string expected_log_data_2(" cliprdr_channel_data_from_server=52 nb_text_copy_on_server=1 nb_file_copy_on_server=1");
 
     char log_read_2[2048] = {'\0'};
     ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
 
     RED_CHECK_EQUAL(expected_log_data_2, str_log_data_2);
     ::close(fd);
-    remove(complete_file_path);
+    //remove(complete_file_path);
 
 
 }
