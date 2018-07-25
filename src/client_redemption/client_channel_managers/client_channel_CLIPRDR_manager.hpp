@@ -412,11 +412,6 @@ public:
 
                             while (chunk.in_remain() && !isSharedFormat) {
 
-                                //uint32_t formatID = 0;
-
-//                                 formatID = chunk.in_uint32_le();
-                                //formatAvailable -=  4;
-
                                 if (!this->server_use_long_format_names) {
                                     formatID = chunk.in_uint32_le();
 //                                     formatAvailable -=  4;
@@ -428,33 +423,6 @@ public:
                                     RDPECLIP::FormatListPDU_LongName fl_ln;
                                     fl_ln.recv(chunk);
 
-//                                         uint16_t utf16_string[120];
-//                                         int k(0);
-//                                         bool isEndString = false;
-//                                         while (!isEndString) {
-//                                             uint16_t bit(chunk.in_uint16_le());
-//                                             if (bit == 0) {
-//                                                 isEndString = true;
-//                                             }
-//                                             utf16_string[k] = bit;
-//                                             k++;
-//
-//                                             formatAvailable -=  2;
-//                                         }
-                                    //formatAvailable -=  fl_ln.formatDataNameUTF16Len;
-                                   // std::string str_temp_name(fl_ln.formatUTF16Name);
-
-//                                     char utf8_string[500];
-//                                     size_t size = ::UTF16toUTF8(
-//                                         fl_ln.formatUTF16Name+1,
-//                                         fl_ln.formatDataNameUTF16Len,
-//                                         byte_ptr_cast(utf8_string),
-//                                         500);
-//                                     if (size > 500) {
-//                                         size = 500;
-//                                     }
-//                                     utf8_string[size-1] = 0;
-//                                     std::string name_string(utf8_string);
                                     format_name = std::string(reinterpret_cast<char *>(fl_ln.formatUTF8Name));
 
                                     formatID = fl_ln.formatID;
@@ -475,9 +443,7 @@ public:
 
                                 if ((format_name == filedescunicode) && !isSharedFormat) {
                                     this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! formatID=%u !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", formatID);
                                     isSharedFormat = true;
-//                                     formatAvailable = 0;
                                 }
                             }
 
@@ -797,10 +763,13 @@ public:
                                 LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
                             }
 
-                            if(this->_requestedFormatName == std::string(RDPECLIP::FILEGROUPDESCRIPTORW)) {
+                            if(this->_requestedFormatId == ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW) {
                                 this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
-                                this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                             }
+
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
+                            this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
+                            this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                         }
                     }
                 break;
@@ -872,7 +841,6 @@ public:
             cb_buffers.data = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
         }
 
-        LOG(LOG_INFO, "this->_requestedFormatId=%u", this->_requestedFormatId);
         switch (this->_requestedFormatId) {
 
             case RDPECLIP::CF_UNICODETEXT:
@@ -881,6 +849,7 @@ public:
                     this->send_textBuffer_to_clipboard(true);
                 }
             break;
+
             case RDPECLIP::CF_TEXT:
                 this->send_to_clipboard_Buffer(chunk);
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -889,7 +858,6 @@ public:
             break;
 
             case RDPECLIP::CF_METAFILEPICT:
-
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
@@ -911,7 +879,7 @@ public:
                     this->send_imageBuffer_to_clipboard();
 
                     std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
-                    long duration = time.count();;
+                    long duration = time.count();
                     LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 
                 }
@@ -925,7 +893,6 @@ public:
                     cb_filesList.cItems= chunk.in_uint32_le();
                     cb_filesList.lindexToRequest= 0;
                     this->emptyLocalBuffer();
-
                 }
 
                 this->send_to_clipboard_Buffer(chunk);
