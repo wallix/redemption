@@ -672,10 +672,10 @@ struct PointerLoaderNew {
             LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
         break;
         }
-        this->data = make_array_view(this->data_buffer, dlen);
+        this->data = make_array_view(this->data_buffer, ::even_pad_length(width * 3) * height);
         this->mask = make_array_view(this->mask_buffer, mlen);
         this->maskline_bytes = mlen / height;
-        this->xorline_bytes = dlen / height;
+        this->xorline_bytes = ::even_pad_length(width * 3);
     }
 };
 
@@ -817,7 +817,7 @@ public:
     // scanlines, where each scanline is padded to a whole number of
     // bytes. Within each byte the most significant bit represents
     // the leftmost pixel, with a 1-bit meaning the corresponding
-    // pixel in the cursor is valid.
+    // pixel in the cursor is valid.Pointer
 
        size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
        size_t minwidth = 32;
@@ -873,17 +873,17 @@ public:
     }
 
     explicit Pointer(const PointerLoader2 pl)
-     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
     explicit Pointer(const PointerLoader32x32 pl)
-     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
 
     explicit Pointer(const PointerLoaderNew pl)
-     : Pointer(24, pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
         unsigned Bpp = 3;
         this->only_black_white = ::is_black_and_white(
@@ -895,12 +895,11 @@ public:
     }
 
 
-    explicit Pointer(uint8_t data_bpp, CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
+    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
     : BasePointer(d, hs)
     , maskline_bytes(maskline_bytes)
     , xorline_bytes(xorline_bytes)
     {
-        (void)data_bpp;
         if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
             LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
                 "bad length for color pointer mask_len=%zu data_len=%zu",

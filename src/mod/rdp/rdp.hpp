@@ -5246,30 +5246,8 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        auto hotspot_x      = stream.in_uint16_le();
-        auto hotspot_y      = stream.in_uint16_le();
-        auto width            = stream.in_uint16_le();
-        auto height            = stream.in_uint16_le();
-
-        uint16_t mlen = stream.in_uint16_le(); /* mask length */
-        uint16_t dlen = stream.in_uint16_le(); /* data length */
-        if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
-                mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-        }
-
-        //LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu data_bpp=%u pointer_idx=%u hotspot_x=%d hotspot_y=%d width=%d height=%d mlen=%u dlen=%u square=%d", data_bpp, pointer_idx, hotspot_x, hotspot_y, width, height, mlen, dlen, height*width);
-        const uint8_t * data = stream.in_uint8p(dlen);
-        const uint8_t * mask = stream.in_uint8p(mlen);
-
-//         Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
-        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
-
         PointerLoaderNew pl(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
         Pointer cursor(pl);
-
 
         this->cursors[pointer_idx] = cursor;
         drawable.set_pointer(cursor);
