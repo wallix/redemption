@@ -564,149 +564,6 @@ static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * m
 
 
 
-struct PointerLoaderNew {
-    CursorSize dimensions;
-    unsigned maskline_bytes;
-    unsigned xorline_bytes;
-    uint8_t data_bpp;
-    Hotspot hotspot;
-    array_view_const_u8 data;
-    array_view_const_u8 mask;
-    enum {
-          MAX_WIDTH  = 96
-        , MAX_HEIGHT = 96
-        , MAX_BPP    = 32
-    };
-    enum {
-          DATA_SIZE = MAX_WIDTH * MAX_HEIGHT * MAX_BPP / 8
-        , MASK_SIZE = MAX_WIDTH * MAX_HEIGHT * 1 / 8
-    };
-
-    uint8_t data_buffer[DATA_SIZE];
-    uint8_t mask_buffer[MASK_SIZE];
-
-    explicit PointerLoaderNew(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
-        : dimensions(0, 0)
-        , data_bpp{data_bpp}
-        , hotspot(0, 0)
-    {
-        auto hotspot_x      = stream.in_uint16_le();
-        auto hotspot_y      = stream.in_uint16_le();
-        this->hotspot       = Hotspot(hotspot_x, hotspot_y);
-        auto width          = stream.in_uint16_le();
-        auto height         = stream.in_uint16_le();
-        this->dimensions    = CursorSize(width, height);
-
-        uint16_t mlen = stream.in_uint16_le(); /* mask length */
-        uint16_t dlen = stream.in_uint16_le(); /* data length */
-
-        assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-        assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
-
-        if (!stream.in_check_rem(mlen + dlen)){
-            LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
-                mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
-            throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-        }
-
-        const uint8_t * data = stream.in_uint8p(dlen);
-        const uint8_t * mask = stream.in_uint8p(mlen);
-
-        switch (data_bpp) {
-        case 1:
-        {
-            uint8_t data_data[DATA_SIZE];
-            uint8_t mask_data[DATA_SIZE];
-            ::memcpy(data_data, data, mlen);
-            ::memcpy(mask_data, mask, dlen);
-
-            const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
-            const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
-            const unsigned int dest_line_bytes = ::even_pad_length(this->dimensions.width * 3);
-            const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(this->dimensions.width));
-            const uint8_t * src_last_line       = data_data + ((this->dimensions.height-1) * src_line_bytes);
-            const uint8_t * src_last_mask_line  = mask_data + ((this->dimensions.height-1) * src_mask_line_bytes);
-
-            for (unsigned int i = 0; i < this->dimensions.height; ++i) {
-                const uint8_t * src  = src_last_line     - i * src_line_bytes;
-                const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
-                uint8_t *      dest = this->data_buffer + i * dest_line_bytes;
-                uint8_t *      dest_mask = this->mask_buffer + i * dest_mask_line_bytes;
-
-                unsigned char bit_count = 7;
-                unsigned char mask_bit_count = 7;
-                for (unsigned int j = 0; j < this->dimensions.width ; ++j) {
-                    unsigned maskbit = *src_mask & (1 << mask_bit_count);
-                    unsigned databit = *src      & (1 << bit_count);
-                    unsigned pixel = databit?(maskbit?0x3F3F0F:0xFFFFFF):0 ;
-                    ::out_bytes_le(dest, 3, pixel);
-                    dest += 3;
-                    src            = src + ((bit_count==0)?1:0);
-                    bit_count      = (bit_count - 1) & 7;
-
-                    if (mask_bit_count == 0){
-                        *dest_mask = *src_mask;
-                        dest_mask++;
-                        src_mask++;
-                    }
-                    mask_bit_count = (mask_bit_count - 1) & 7;
-                }
-            }
-        }
-        break;
-        case 4:
-        {
-            for (unsigned i = 0; i < dlen ; i++) {
-                const uint8_t px = data[i];
-                // target cursor will receive 8 bits input at once
-                ::out_bytes_le(&(this->data_buffer[6 * i]),     3, palette[(px >> 4) & 0xF].to_u32());
-                ::out_bytes_le(&(this->data_buffer[6 * i + 3]), 3, palette[ px       & 0xF].to_u32());
-            }
-            memcpy(this->mask_buffer, mask, mlen);
-        }
-        break;
-        case 8:
-        case 15:
-        case 16:
-        case 24:
-        case 32:
-        {
-            uint8_t BPP = nbbytes(data_bpp);
-
-            const unsigned int src_xor_line_length_in_byte = this->dimensions.width * BPP;
-            const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
-
-            const unsigned int dest_xor_line_length_in_byte = this->dimensions.width * 3;
-            const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
-
-            for (unsigned int i0 = 0; i0 < this->dimensions.height; ++i0) {
-                const uint8_t* src  = data + (this->dimensions.height - i0 - 1) * src_xor_padded_line_length_in_byte;
-                uint8_t* dest = this->data_buffer + (this->dimensions.height - i0 - 1) * dest_xor_padded_line_length_in_byte;
-
-                for (unsigned int i1 = 0; i1 < this->dimensions.width; ++i1) {
-                    RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
-                    src += BPP;
-                    ::out_bytes_le(dest, 3, color_decode(px, data_bpp, palette).to_u32());
-                    dest += 3;
-                }
-            }
-            memcpy(this->mask_buffer, mask, mlen);
-            if ((data_bpp == 32) && (clean_up_32_bpp_cursor)) {
-                fix_32_bpp(this->dimensions, this->data_buffer, this->mask_buffer);
-            }
-        }
-        break;
-        default:
-            // TODO : force some cursor if that happen
-            LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
-        break;
-        }
-        this->data = make_array_view(this->data_buffer, ::even_pad_length(width * 3) * height);
-        this->mask = make_array_view(this->mask_buffer, mlen);
-        this->maskline_bytes = mlen / height;
-        this->xorline_bytes = ::even_pad_length(width * 3);
-    }
-};
 
 
 
@@ -781,6 +638,7 @@ struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
+    friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor);
 
     unsigned maskline_bytes = 0;
     unsigned xorline_bytes = 0;
@@ -911,17 +769,19 @@ public:
     {
     }
 
-    explicit Pointer(const PointerLoaderNew pl)
-     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
-    {
-        unsigned Bpp = 3;
-        this->only_black_white = ::is_black_and_white(
-                pl.data.data(),
-                this->dimensions.width,
-                this->dimensions.height,
-                ::even_pad_length(this->dimensions.width * Bpp),
-                Bpp);
-    }
+//     explicit Pointer(const PointerLoaderNew pl)
+//      : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
+//     {
+//         unsigned Bpp = 3;
+//         this->only_black_white = ::is_black_and_white(
+//                 pl.data.data(),
+//                 this->dimensions.width,
+//                 this->dimensions.height,
+//                 ::even_pad_length(this->dimensions.width * Bpp),
+//                 Bpp);
+//     }
+
+
 
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
@@ -947,6 +807,12 @@ public:
              && other.dimensions.height == this->dimensions.height
              && (0 == memcmp(this->data, other.data, other.xor_data_size()))
              && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
+    }
+
+    explicit Pointer(CursorSize d, Hotspot hs) : BasePointer(d, hs)
+    , maskline_bytes(::nbbytes(d.width))
+    , xorline_bytes(even_pad_length(d.width*3))
+    {
     }
 
 
@@ -1424,5 +1290,113 @@ struct ARGB32Pointer {
     }
 };
 
+inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor)
+{
+    auto hotspot_x      = stream.in_uint16_le();
+    auto hotspot_y      = stream.in_uint16_le();
+    auto width          = stream.in_uint16_le();
+    auto height         = stream.in_uint16_le();
+
+    Pointer cursor(CursorSize(width, height), Hotspot(hotspot_x, hotspot_y));
+
+    uint16_t mlen = stream.in_uint16_le(); /* mask length */
+    uint16_t dlen = stream.in_uint16_le(); /* data length */
+
+    assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+    assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
+
+    if (!stream.in_check_rem(mlen + dlen)){
+        LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
+            mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
+        throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+    }
+
+    const uint8_t * data = stream.in_uint8p(dlen);
+    const uint8_t * mask = stream.in_uint8p(mlen);
+
+    switch (data_bpp) {
+    case 1:
+    {
+        const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
+        const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
+        const unsigned int dest_line_bytes = ::even_pad_length(width * 3);
+        const unsigned int dest_mask_line_bytes = ::even_pad_length(::nbbytes(width));
+        const uint8_t * src_last_line       = data + ((height-1) * src_line_bytes);
+        const uint8_t * src_last_mask_line  = mask + ((height-1) * src_mask_line_bytes);
+
+        for (unsigned int i = 0; i < height; ++i) {
+            const uint8_t * src  = src_last_line     - i * src_line_bytes;
+            const uint8_t* src_mask  = src_last_mask_line - i * src_mask_line_bytes;
+            uint8_t *      dest = cursor.data + i * dest_line_bytes;
+            uint8_t *      dest_mask = cursor.mask + i * dest_mask_line_bytes;
+
+            unsigned char bit_count = 7;
+            unsigned char mask_bit_count = 7;
+            for (unsigned int j = 0; j < width ; ++j) {
+                unsigned maskbit = *src_mask & (1 << mask_bit_count);
+                unsigned databit = *src      & (1 << bit_count);
+                unsigned pixel = databit?(maskbit?0x3F3F0F:0xFFFFFF):0 ;
+                ::out_bytes_le(dest, 3, pixel);
+                dest += 3;
+                src            = src + ((bit_count==0)?1:0);
+                bit_count      = (bit_count - 1) & 7;
+
+                if (mask_bit_count == 0){
+                    *dest_mask = *src_mask;
+                    dest_mask++;
+                    src_mask++;
+                }
+                mask_bit_count = (mask_bit_count - 1) & 7;
+            }
+        }
+    }
+    break;
+    case 4:
+    {
+        for (unsigned i = 0; i < dlen ; i++) {
+            const uint8_t px = data[i];
+            // target cursor will receive 8 bits input at once
+            ::out_bytes_le(&(cursor.data[6 * i]),     3, palette[(px >> 4) & 0xF].to_u32());
+            ::out_bytes_le(&(cursor.data[6 * i + 3]), 3, palette[ px       & 0xF].to_u32());
+        }
+        memcpy(cursor.mask, mask, mlen);
+    }
+    break;
+    case 8:
+    case 15:
+    case 16:
+    case 24:
+    case 32:
+    {
+        uint8_t BPP = ::nbbytes(data_bpp);
+        const unsigned int src_xor_line_length_in_byte = width * BPP;
+        const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
+        const unsigned int dest_xor_line_length_in_byte = width * 3;
+        const unsigned int dest_xor_padded_line_length_in_byte = ::even_pad_length(dest_xor_line_length_in_byte);
+
+        for (unsigned int i0 = 0; i0 < height; ++i0) {
+            const uint8_t* src  = data + (height - i0 - 1) * src_xor_padded_line_length_in_byte;
+            uint8_t* dest = cursor.data + (height - i0 - 1) * dest_xor_padded_line_length_in_byte;
+
+            for (unsigned int i1 = 0; i1 < width; ++i1) {
+                RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
+                src += BPP;
+                ::out_bytes_le(dest, 3, color_decode(px, data_bpp, palette).to_u32());
+                dest += 3;
+            }
+        }
+        memcpy(cursor.mask, mask, mlen);
+        if ((data_bpp == 32) && (clean_up_32_bpp_cursor)) {
+            fix_32_bpp(cursor.dimensions, cursor.data, cursor.mask);
+        }
+    }
+    break;
+    default:
+        // TODO : force some cursor if that happen
+        LOG(LOG_ERR, "Mouse pointer : color depth not supported %d", data_bpp);
+    break;
+    }
+    return cursor;
+}
 
 
