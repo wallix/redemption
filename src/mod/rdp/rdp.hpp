@@ -854,8 +854,8 @@ public:
                  , mod_rdp_params.target_host
                  , info
                  , vars.get<cfg::context::target_service>().c_str()
-                 , vars.get<cfg::rdp_metrics::sign_key>().to_u8p()
-                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>())
+                 , vars.get<cfg::rdp_metrics::sign_key>().data()
+                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -5263,12 +5263,12 @@ public:
         const uint8_t * data = stream.in_uint8p(dlen);
         const uint8_t * mask = stream.in_uint8p(mlen);
 
-        Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
+//         Pointer cursor(CursorSize{width, height}, Hotspot{hotspot_x, hotspot_y},{data, dlen}, {mask, mlen}, data_bpp, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor, mlen / height, dlen / height);
         assert(::even_pad_length(::nbbytes(width)) == mlen / height);
         assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
 
-        //PointerLoaderNew pl(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
-        //Pointer cursor(pl);
+        PointerLoaderNew pl(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
+        Pointer cursor(pl);
 
 
         this->cursors[pointer_idx] = cursor;

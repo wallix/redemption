@@ -36,7 +36,9 @@
 
 
 
-struct RDPMetrics {
+class RDPMetrics {
+
+
 
     enum : int {
         total_main_amount_data_rcv_from_client,
@@ -118,7 +120,7 @@ struct RDPMetrics {
         return "unknow_rdp_metrics_name";
     }
 
-
+public:
     const int file_interval;
 
     time_t utc_last_date;
@@ -134,7 +136,7 @@ struct RDPMetrics {
     long int current_data[34] = { 0 };
     long int previous_data[34] = { 0 };
 
-
+    RDPMetrics() = delete;
 
     RDPMetrics( const std::string & path_template
               , const uint32_t session_id
@@ -143,8 +145,8 @@ struct RDPMetrics {
               , const char * target_host
               , const ClientInfo & info
               , const char * target_service
-              , const uint8_t * key_crypt
-              , const int file_interval
+              , const unsigned char * key_crypt
+              , const long file_interval
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
@@ -287,8 +289,8 @@ struct RDPMetrics {
     }
 
 
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len, const uint8_t * key_crypt) {
-        SslHMAC_Sha256 sha256(key_crypt, 32);
+    void sha1_encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
+        SslHMAC_Sha256 sha256(reinterpret_cast<const uint8_t *>(key_crypt), 32);
         sha256.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
         sha256.final(sig);
