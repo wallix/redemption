@@ -59,18 +59,6 @@ namespace
 		LOG(LOG_INFO, "Expected:");
         hexdump_av(expected_data);
     }
-
-    template<class PrefetchQueue>
-    size_t prefetech_type_len(PrefetchQueue& prefetchQueue, size_t max_len, PacketType type)
-    {
-		auto const first = prefetchQueue.begin();
-		auto const last = std::find_if(
-            first, first + std::min(prefetchQueue.size(), max_len),
-            [type](auto& data){ return data.type != type; }
-        );
-        /* cleanup DataIn packets that may have been already treated */
-        return size_t(std::distance(first, last));
-    }
 } // namespace
 
 #ifdef DEBUG_PACKETS
@@ -375,12 +363,7 @@ size_t ReplayTransport::do_partial_read(uint8_t * buffer, size_t const len)
 	data_in_pos = pos + 1;
 
 	if (pos == 0) {
-		/* we've treated the first element of the prefetch queue, pop and adjust counters */
-        auto const len = prefetech_type_len(mPrefetchQueue, data_out_pos, PacketType::DataOut);
-		data_in_pos = std::min(data_in_pos, len);
-        data_out_pos -= len;
-        /* cleanup DataOut packets that may have been already treated */
-        mPrefetchQueue.erase(mPrefetchQueue.begin(), mPrefetchQueue.begin() + len);
+        cleanup_data(data_out_pos, PacketType::DataOut);
 	}
 
 	reschedule_timer();
@@ -409,12 +392,7 @@ Transport::Read ReplayTransport::do_atomic_read(uint8_t * buffer, size_t len)
 	data_in_pos = pos + 1;
 
 	if (pos == 0) {
-		/* we've treated the first element of the prefetch queue, pop and adjust counters */
-        auto const len = prefetech_type_len(mPrefetchQueue, data_out_pos, PacketType::DataOut);
-		data_in_pos = std::min(data_in_pos, len);
-        data_out_pos -= len;
-        /* cleanup DataOut packets that may have been already treated */
-        mPrefetchQueue.erase(mPrefetchQueue.begin(), mPrefetchQueue.begin() + len);
+        cleanup_data(data_out_pos, PacketType::DataOut);
 	}
 
 	reschedule_timer();
@@ -442,10 +420,18 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 	data_out_pos = pos + 1;
 
 	if (pos == 0) {
-        auto const len = prefetech_type_len(mPrefetchQueue, data_in_pos, PacketType::DataIn);
-        data_in_pos -= len;
-		data_out_pos = std::min(data_out_pos, len);
-        /* cleanup DataIn packets that may have been already treated */
-        mPrefetchQueue.erase(mPrefetchQueue.begin(), mPrefetchQueue.begin() + len);
+        cleanup_data(data_in_pos, PacketType::DataIn);
 	}
+}
+
+void ReplayTransport::cleanup_data(std::size_t len, PacketType type)
+{
+    std::size_t index = 0;
+    do {
+        ++index;
+    } while (index < mPrefetchQueue.size() && index < len && mPrefetchQueue[index].type == type);
+    /* cleanup DataIn packets that may have been already treated */
+    data_in_pos -= std::min(data_in_pos, index);
+    data_out_pos -= std::min(data_out_pos, index);
+    mPrefetchQueue.erase(mPrefetchQueue.begin(), mPrefetchQueue.begin()+index);
 }

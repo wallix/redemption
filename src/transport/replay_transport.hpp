@@ -75,6 +75,8 @@ private:
 
     void read_timer();
 
+    void cleanup_data(std::size_t len, PacketType type);
+
     std::chrono::system_clock::time_point prefetchForTimer();
 
     /** @brief a chunk of capture file */
