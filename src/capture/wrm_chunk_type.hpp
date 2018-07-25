@@ -27,12 +27,14 @@
 
 enum class WrmChunkType : uint16_t
 {
-    RDP_UPDATE_ORDERS   = ::RDP_UPDATE_ORDERS,
-    RDP_UPDATE_BITMAP   = ::RDP_UPDATE_BITMAP,
-    META_FILE           = 1006,
-    TIMESTAMP           = 1008,
-    POINTER             = 1009,
-    POINTER2            = 1010,
+    RDP_UPDATE_ORDERS   = ::RDP_UPDATE_ORDERS,  // 0
+    RDP_UPDATE_BITMAP   = ::RDP_UPDATE_BITMAP,  // 1
+
+    META_FILE           = 0x3EE,    // 1006
+    TIMESTAMP           = 0x3F0,    // 1008
+    POINTER             = 0x3F1,    // 1009
+    POINTER2            = 0x3F2,    // 1010
+
     LAST_IMAGE_CHUNK    = 0x1000,   // 4096
     PARTIAL_IMAGE_CHUNK = 0x1001,   // 4097
     SAVE_STATE          = 0x1002,   // 4098
@@ -41,6 +43,8 @@ enum class WrmChunkType : uint16_t
 
     POSSIBLE_ACTIVE_WINDOW_CHANGE = 0x2000,
     IMAGE_FRAME_RECT              = 0x2001,
+
+    // 0x5000 ~ 0x5FFF : Reserved for SSH Proxy.
 
     INVALID_CHUNK       = 0x8000
 };
