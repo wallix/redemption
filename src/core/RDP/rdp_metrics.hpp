@@ -239,7 +239,7 @@ struct RDPMetrics {
                                 this->current_data[nb_image_copy_from_server] += 1;
                                 break;
                             default:
-                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF16Name));
+                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF16Name), fl_ln.formatDataNameUTF16Len/2);
                                 std::string file_group_desc_name(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
                                 if (format_name_string == file_group_desc_name){
                                     this->current_data[nb_file_copy_from_server] += 1;
