@@ -49,17 +49,17 @@ class RDPMetrics {
         total_main_amount_data_rcv_from_server,
 
         total_cliprdr_amount_data_rcv_from_server,
-        nb_text_paste_from_server,
-        nb_image_paste_from_server,
-        nb_file_paste_from_server,
+        nb_text_paste_on_server,
+        nb_image_paste_on_server,
+        nb_file_paste_on_server,
         total_data_past_from_server,
         nb_text_copy_from_server,
         nb_image_copy_from_server,
         nb_file_copy_from_server,
         total_cliprdr_amount_data_rcv_from_client,
-        nb_text_paste_from_client,
-        nb_image_paste_from_client,
-        nb_file_paste_from_client,
+        nb_text_paste_on_client,
+        nb_image_paste_on_client,
+        nb_file_paste_on_client,
         total_data_past_from_client,
         nb_text_copy_from_client,
         nb_image_copy_from_client,
@@ -89,17 +89,17 @@ class RDPMetrics {
             case total_mouse_move: return " mouse_move=";
             case total_main_amount_data_rcv_from_server: return " main_channel_data_from_serveur=";
             case total_cliprdr_amount_data_rcv_from_server: return " cliprdr_channel_data_from_server=";
-            case nb_text_paste_from_server: return " nb_text_paste_on_server=";
-            case nb_image_paste_from_server: return " nb_image_paste_on_server=";
-            case nb_file_paste_from_server: return " nb_file_paste_on_server=";
+            case nb_text_paste_on_server: return " nb_text_paste_on_server=";
+            case nb_image_paste_on_server: return " nb_image_paste_on_server=";
+            case nb_file_paste_on_server: return " nb_file_paste_on_server=";
             case total_data_past_from_server: return " total_data_past_from_server";
             case nb_text_copy_from_server: return " nb_text_copy_on_server=";
             case nb_image_copy_from_server: return " nb_image_copy_on_server=";
             case nb_file_copy_from_server: return " nb_file_copy_on_server=";
             case total_cliprdr_amount_data_rcv_from_client: return " cliprdr_channel_data_from_client=";
-            case nb_text_paste_from_client: return " nb_text_paste_on_client=";
-            case nb_image_paste_from_client: return " nb_image_paste_on_client=";
-            case nb_file_paste_from_client: return " nb_file_paste_on_client=";
+            case nb_text_paste_on_client: return " nb_text_paste_on_client=";
+            case nb_image_paste_on_client: return " nb_image_paste_on_client=";
+            case nb_file_paste_on_client: return " nb_file_paste_on_client=";
             case total_data_past_from_client: return " total_data_past_from_client";
             case nb_text_copy_from_client: return " nb_text_copy_on_client=";
             case nb_image_copy_from_client: return " nb_image_copy_on_client=";
@@ -135,6 +135,8 @@ public:
 
     long int current_data[34] = { 0 };
     long int previous_data[34] = { 0 };
+
+    uint32_t file_contents_format_ID = 0;
 
     RDPMetrics() = delete;
 
@@ -241,9 +243,10 @@ public:
                                 this->current_data[nb_image_copy_from_server] += 1;
                                 break;
                             default:
-                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF16Name), fl_ln.formatDataNameUTF16Len/2);
-                                std::string file_group_desc_name(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
-                                if (format_name_string == file_group_desc_name){
+                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
+                                std::string file_contents_name(RDPECLIP::FILECONTENTS);
+                                if (format_name_string == file_contents_name){
+                                    this->file_contents_format_ID = fl_ln.formatID;
                                     this->current_data[nb_file_copy_from_server] += 1;
                                 }
                                 break;
@@ -254,6 +257,30 @@ public:
                     }
 
                     break;
+
+                case RDPECLIP::CB_FORMAT_DATA_REQUEST:
+
+                    const uint32_t formatID = chunk.in_uint32_le();
+
+                    switch (formatID) {
+                        case RDPECLIP::CF_TEXT: [[fallthrough]];
+                        case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
+                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                        case RDPECLIP::CF_DSPTEXT:
+                            this->current_data[nb_text_paste_on_server] += 1;
+                            break;
+                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_DSPMETAFILEPICT:
+                            this->current_data[nb_image_paste_on_server] += 1;
+                            break;
+                        default:
+                            if (this->file_contents_format_ID == formatID){
+                                this->current_data[nb_file_paste_on_server] += 1;
+                            }
+                            break;
+                    }
+                    break;
+
             }
         }
     }

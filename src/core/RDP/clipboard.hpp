@@ -1078,101 +1078,11 @@ struct FormatListPDU
 };  // struct FormatListPDU
 
 
-// struct FormatListPDU_LongName {
-//
-//     CliprdrHeader header;
-//     uint32_t    formatListIDs[FORMAT_LIST_MAX_SIZE];
-//     uint16_t    formatListName[FORMAT_LIST_MAX_SIZE][500];
-//     std::size_t formatListNameLen[FORMAT_LIST_MAX_SIZE];
-//     std::size_t       formatListSize = 0;
-//
-//
-//     explicit FormatListPDU_LongName( const uint32_t * formatListIDs
-//                                    , const uint16_t ** formatListName
-//                                    , const std::size_t * formatListNameLen
-//                                    , const std::size_t formatListSize)
-//     : header(CB_FORMAT_LIST, 0, 0)
-//     , formatListSize(formatListSize)
-//     {
-//         assert(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
-//
-//         for (std::size_t i = 0; i < this->formatListSize; i++) {
-//
-//             this->header.dataLen_ += formatListNameLen[i] + 4; /* formatId(4) + formatName(variable) */
-//
-//             this->formatListIDs[i] = formatListIDs[i];
-//
-//             assert(formatListNameLen[i] <= 500);
-//             this->formatListNameLen[i] = formatListNameLen[i];
-//
-//             std::memcpy(this->formatListName[i], formatListName[i], this->formatListNameLen[i]);
-//         }
-//
-//         assert(this->header.dataLen_ <= 1692);
-//     }
-//
-//     FormatListPDU_LongName() = default;
-//
-//     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
-//
-//         for (size_t i = 0; i < this->formatListSize; i++) {
-//             stream.out_uint32_le(this->formatListIDs[i]);
-//             stream.out_copy_bytes(byte_ptr_cast(this->formatListName[i]), this->formatListNameLen[i]);
-//         }
-//     }
-//
-//     void recv(InStream & stream) {
-//         this->header.recv(stream);
-//
-//         int i = 0;
-//         uint16_t c = -1;
-//
-//         while (stream.in_remain()) {
-//
-//             this->formatListIDs[i] = stream.in_uint32_le();
-//
-//             size_t name_len = 0;
-//             while ((c != 0x00) && (stream.in_remain() >= 2)) {
-//                 c = stream.in_uint16_le();
-//                 this->formatListName[i][name_len] = c;
-//                 name_len++;
-//             }
-//             c = -1;
-//             this->formatListNameLen[i] = name_len*2;
-//
-//             i++;
-//
-//         }
-//         this->formatListSize = i;
-//     }
-//
-//     void log() const {
-//         this->header.log();
-//         LOG(LOG_INFO, "     Format List PDU Long Name:");
-//         for (size_t i = 0; i < this->formatListSize; i++) {
-//             LOG(LOG_INFO, "         Long Format Name:");
-//             uint8_t utf8_string[500];
-//
-//             const size_t size = ::UTF16toUTF8(
-//                 byte_ptr_cast(this->formatListName[i]),
-//                 this->formatListNameLen[i],
-//                 utf8_string,
-//                 sizeof(utf8_string));
-//
-//             utf8_string[size] = 0;
-//
-//             LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatListIDs[i], get_Format_name(this->formatListIDs[i]));
-//             LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", char_ptr_cast(utf8_string), this->formatListNameLen[i]);
-//         }
-//     }
-//
-// };
 
 constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
 constexpr const char * FILECONTENTS         = "FileContents";
-constexpr const char * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
-constexpr const char * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
+// constexpr const uint16_t * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
+// constexpr const uint16_t * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
 
 
 
@@ -1182,13 +1092,17 @@ struct FormatListPDU_LongName {
 
     uint32_t    formatID = 0;
     uint8_t     formatUTF16Name[500] = {0};
+    uint8_t     formatUTF8Name[500] = {0};
+    std::size_t formatDataNameUTF8Len = 0;
     std::size_t formatDataNameUTF16Len = 0;
 
     explicit FormatListPDU_LongName( const uint32_t  formatID
                                    , const char * formatUTF8Name
                                    , const std::size_t formatNameUTF8Len)
     : formatID(formatID)
+    , formatDataNameUTF8Len(formatNameUTF8Len > 500 ? 500:formatNameUTF8Len)
     {
+         memcpy(this->formatUTF8Name, formatUTF8Name, this->formatDataNameUTF8Len);
          this->formatDataNameUTF16Len = ::UTF8toUTF16(
             byte_ptr_cast(formatUTF8Name),
             this->formatUTF16Name, formatNameUTF8Len*2);
@@ -1225,29 +1139,31 @@ struct FormatListPDU_LongName {
             name_len ++;
         }
         this->formatDataNameUTF16Len = name_len;
+
+        this->formatDataNameUTF8Len = ::UTF16toUTF8(
+        this->formatUTF16Name+1,
+        this->formatDataNameUTF16Len,
+        this->formatUTF8Name,
+        500);
+
+        if (this->formatDataNameUTF8Len  > 500) {
+            this->formatDataNameUTF8Len  = 500;
+        }
+
+        this->formatUTF8Name[this->formatDataNameUTF8Len -1] = 0;
     }
 
     void log() const {
         LOG(LOG_INFO, "     Format List PDU Long Name:");
 
-        char utf8_string[500];
+//         char utf8_string[500];
 
-        size_t size = ::UTF16toUTF8(
-            this->formatUTF16Name+1,
-            this->formatDataNameUTF16Len,
-            byte_ptr_cast(utf8_string),
-            500);
 
-        if (size > 500) {
-            size = 500;
-        }
 
-        utf8_string[size-1] = 0;
-
-        std::string name_string(utf8_string);
+//         std::string name_string(utf8_string);
 
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string.c_str(), this->formatDataNameUTF16Len);
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", this->formatUTF8Name, this->formatDataNameUTF16Len);
     }
 
 };

@@ -445,18 +445,18 @@ public:
                                     //formatAvailable -=  fl_ln.formatDataNameUTF16Len;
                                    // std::string str_temp_name(fl_ln.formatUTF16Name);
 
-                                    char utf8_string[500];
-                                    size_t size = ::UTF16toUTF8(
-                                        fl_ln.formatUTF16Name+1,
-                                        fl_ln.formatDataNameUTF16Len,
-                                        byte_ptr_cast(utf8_string),
-                                        500);
-                                    if (size > 500) {
-                                        size = 500;
-                                    }
-                                    utf8_string[size-1] = 0;
-                                    std::string name_string(utf8_string);
-                                    format_name = std::string(reinterpret_cast<char *>(fl_ln.formatUTF16Name+1));
+//                                     char utf8_string[500];
+//                                     size_t size = ::UTF16toUTF8(
+//                                         fl_ln.formatUTF16Name+1,
+//                                         fl_ln.formatDataNameUTF16Len,
+//                                         byte_ptr_cast(utf8_string),
+//                                         500);
+//                                     if (size > 500) {
+//                                         size = 500;
+//                                     }
+//                                     utf8_string[size-1] = 0;
+//                                     std::string name_string(utf8_string);
+                                    format_name = std::string(reinterpret_cast<char *>(fl_ln.formatUTF8Name));
 
                                     formatID = fl_ln.formatID;
                                 }
@@ -471,7 +471,7 @@ public:
                                     }
                                 }
 
-                                std::string filedescunicode(RDPECLIP::FILEGROUPDESCRIPTORW_UNICODE);
+                                std::string filedescunicode(RDPECLIP::FILEGROUPDESCRIPTORW);
                                 LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode, formatID, format_name);
 
                                 if ((format_name == filedescunicode) && !isSharedFormat) {
