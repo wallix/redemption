@@ -396,7 +396,7 @@ void RdpNegociation::set_program(char const* program, char const* directory) noe
     strcpy(this->directory, directory);
 }
 
-    void RdpNegociation::start_negociation()
+void RdpNegociation::start_negociation()
 {
     this->nego.send_negotiation_request(this->trans);
     this->state = State::NEGO;
