@@ -2111,7 +2111,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer default (Fast)");
                 }
-                drawable.set_pointer(Pointer(SystemDefaultPointer{}));
+                drawable.set_pointer(Pointer(SystemNormalPointer{}));
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
