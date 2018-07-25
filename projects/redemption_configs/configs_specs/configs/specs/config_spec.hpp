@@ -91,6 +91,7 @@ void config_spec_definition(Writer && W)
             "session_log",
             "client",
             "mod_rdp",
+            "rdp_metrics",
             "mod_vnc",
             "mod_replay",
             "ocr",
@@ -118,6 +119,13 @@ void config_spec_definition(Writer && W)
     sesman_io_t<sesman::io::rw>              const sesman_rw{};
 
     prefix_value disable_prefix_val{"disable"};
+
+    constexpr char default_key[] =
+        "\x00\x01\x02\x03\x04\x05\x06\x07"
+        "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+        "\x10\x11\x12\x13\x14\x15\x16\x17"
+        "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+    ;
 
     W.section("globals", [&]
     {
@@ -420,6 +428,14 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_fix_too_long_cookie", set(true));
     });
 
+    W.section("rdp_metrics", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Record))));
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "log_interval", set(5));
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
+        W.member(hidden_in_gui, no_sesman, type_<types::fixed_binary<32>>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
+    });
+
     W.section("mod_vnc", [&]
     {
         W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "clipboard_up", desc{"Enable or disable the clipboard from client (client to server)."});
@@ -516,12 +532,6 @@ void config_spec_definition(Writer && W)
 
     W.section("crypto", [&]
     {
-        constexpr char default_key[] =
-            "\x00\x01\x02\x03\x04\x05\x06\x07"
-            "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
-            "\x10\x11\x12\x13\x14\x15\x16\x17"
-            "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
-        ;
         W.member(hidden_in_gui, sesman_to_proxy, type_<types::fixed_binary<32>>(), "encryption_key",
             cpp::name{"key0"}, set(default_key));
         W.member(hidden_in_gui, sesman_to_proxy, type_<types::fixed_binary<32>>(), "sign_key",

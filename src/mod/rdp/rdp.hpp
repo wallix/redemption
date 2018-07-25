@@ -847,15 +847,15 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        // TODO replace nullptr with log metrics file path
-        , metrics( nullptr
+        , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , redir_info.session_id
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
                  , mod_rdp_params.target_host
                  , info
-                 , this->sc_core.version
-                 , vars.get<cfg::context::target_service>().c_str())
+                 , vars.get<cfg::context::target_service>().c_str()
+                 , vars.get<cfg::rdp_metrics::sign_key>().data()
+                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -5251,7 +5251,6 @@ public:
 
         this->cursors[pointer_idx] = cursor;
         drawable.set_pointer(cursor);
-
     }   // process_new_pointer_pdu
 
 private:
@@ -5283,7 +5282,7 @@ private:
 
         // 2.2.9.1.1.3.1.2.1 Bitmap Update Data (TS_UPDATE_BITMAP_DATA)
         // ------------------------------------------------------------
-        // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
+//         // The TS_UPDATE_BITMAP_DATA structure encapsulates the bitmap data that
         // defines a Bitmap Update (section 2.2.9.1.1.3.1.2).
 
         // updateType (2 bytes): A 16-bit, unsigned integer. The graphics update

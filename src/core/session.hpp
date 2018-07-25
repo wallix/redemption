@@ -99,7 +99,8 @@ class Session
         return sck.has_pending_data() || io_fd_isset(sck.sck, rfds);
     }
 
-    static const time_t log_metrics_delay = 5;              // 5 seconds
+    long int log_metrics_delay;
+
 
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
@@ -107,6 +108,7 @@ public:
         , perf_last_info_collect_time(0)
         , perf_pid(getpid())
         , perf_file(nullptr)
+        , log_metrics_delay(ini.get<cfg::rdp_metrics::log_interval>().count())
     {
         TRANSLATIONCONF.set_ini(&ini);
 
