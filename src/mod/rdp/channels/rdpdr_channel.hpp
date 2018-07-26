@@ -79,7 +79,11 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     const bool        param_dont_log_data_into_syslog;
     const bool        param_dont_log_data_into_wrm;
 
+    const char* const param_proxy_managed_drive_prefix;
+
     bool user_logged_on = false;
+
+    unsigned int enable_session_probe_drive_count = 0;
 
     class DeviceRedirectionManager
     {
@@ -913,6 +917,8 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
+        const char* proxy_managed_drive_prefix;
+
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message) {}
     };
@@ -936,6 +942,7 @@ public:
     , param_random_number(params.random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_proxy_managed_drive_prefix(params.proxy_managed_drive_prefix)
     , device_redirection_manager(
           *this,
           file_system_drive_manager,
@@ -997,7 +1004,26 @@ public:
     }
 
     void disable_session_probe_drive() {
-        this->device_redirection_manager.DisableSessionProbeDrive();
+        if (this->enable_session_probe_drive_count) {
+            this->enable_session_probe_drive_count--;
+
+            LOG(LOG_INFO, "FileSystemVirtualChannel::disable_session_probe_drive: count=%u", this->enable_session_probe_drive_count);
+
+            if (!this->enable_session_probe_drive_count) {
+                this->device_redirection_manager.DisableSessionProbeDrive();
+            }
+        }
+    }
+
+    void enable_session_probe_drive() {
+        this->enable_session_probe_drive_count++;
+
+        LOG(LOG_INFO, "FileSystemVirtualChannel::enable_session_probe_drive: count=%u", this->enable_session_probe_drive_count);
+
+        if (1 == this->enable_session_probe_drive_count) {
+            this->file_system_drive_manager.EnableSessionProbeDrive(
+                this->param_proxy_managed_drive_prefix, this->verbose);
+        }
     }
 
 protected:
