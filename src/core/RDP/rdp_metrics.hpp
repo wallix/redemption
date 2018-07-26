@@ -178,7 +178,7 @@ public:
         this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
         this->encrypt(target_service_sig, target_service, std::strlen(target_service), key_crypt);
 
-        char session_info[64];
+        char session_info[1024];
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
@@ -536,12 +536,7 @@ public:
             LOG(LOG_INFO, "sentence=%s", sentence);
 
         } else {
-            struct iovec iov[1];                             // = { {sentence.c_str(), sentence.length} };
-
-            char sentence_char[4096] = {'\0'};
-            memcpy(sentence_char, sentence.c_str(), sentence.length());
-            iov[0].iov_base = sentence_char;
-            iov[0].iov_len = sentence.length();
+            struct iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
 
             ssize_t nwritten = ::writev(fd, iov, 1);
             //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
