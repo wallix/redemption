@@ -34,7 +34,7 @@ public:
         krb5_error_code ret;
         ret = krb5_init_context(&this->ctx);
         if (ret) {
-            LOG(LOG_ERR, "ERREUR Initialisation KERBEROS 5 LIB");
+            LOG(LOG_ERR, "Initialisation KERBEROS 5 LIB");
         }
     }
 
@@ -54,26 +54,26 @@ public:
         if (cache_name) {
             ret = krb5_cc_resolve(this->ctx, cache_name, &ccache);
             if (ret) {
-                LOG(LOG_ERR, "ERREUR CC Resolve %d", ret);
+                LOG(LOG_ERR, "CC Resolve %d", ret);
             }
         }
         else {
             ret = krb5_cc_default(this->ctx, &ccache);
             if (ret) {
-                LOG(LOG_ERR, "ERREUR CC Default resolve ");
+                LOG(LOG_ERR, "CC Default resolve ");
             }
         }
         memset(&creds, 0, sizeof(creds));
         ret = krb5_parse_name(this->ctx, princname, &client_princ);
         LOG(LOG_INFO, "Parse name %s", princname);
         if (ret) {
-            LOG(LOG_ERR, "ERREUR Parse name %s", princname);
+            LOG(LOG_ERR, "Parse name %s", princname);
             goto cleanup;
         }
 
         ret = krb5_unparse_name(this->ctx, client_princ, &name);
         if (ret) {
-            LOG(LOG_ERR, "ERREUR Unparse name");
+            LOG(LOG_ERR, "Unparse name");
             goto cleanup;
         }
         LOG(LOG_INFO, "Using principal: %s", name);
@@ -90,17 +90,17 @@ public:
         }
         // ret = krb5_verify_init_creds(this->ctx, &creds, nullptr, nullptr, nullptr, nullptr);
         // if (ret) {
-        //     LOG(LOG_ERR, "ERREUR Verify creds");
+        //     LOG(LOG_ERR, "Verify creds");
         //     goto cleanup;
         // }
         ret = krb5_cc_initialize(this->ctx, ccache, client_princ);
         if (ret) {
-            LOG(LOG_ERR, "ERREUR CC INITIALIZE");
+            LOG(LOG_ERR, "CC INITIALIZE");
             goto cleanup;
         }
         ret = krb5_cc_store_cred(this->ctx, ccache, &creds);
         if (ret) {
-            LOG(LOG_ERR, "ERREUR CC Store Creds");
+            LOG(LOG_ERR, "CC Store Creds");
             goto cleanup;
         } else {
             LOG(LOG_INFO, "Credentials Cache stored in %s", cache_name?cache_name:"Default Cache");
@@ -120,20 +120,20 @@ public:
         if (cache_name) {
             ret = krb5_cc_resolve(this->ctx, cache_name, &ccache);
             if (ret) {
-                LOG(LOG_ERR, "ERREUR Resolving Cache Name");
+                LOG(LOG_ERR, "Resolving Cache Name");
             }
         }
         else {
             ret = krb5_cc_default(this->ctx, &ccache);
             if (ret) {
-                LOG(LOG_ERR, "ERREUR CC Default resolve ");
+                LOG(LOG_ERR, "CC Default resolve ");
             }
         }
 
         ret = krb5_cc_destroy(this->ctx, ccache);
         if (ret) {
             if (ret != KRB5_FCC_NOFILE) {
-                LOG(LOG_ERR, "ERREUR Destroying Cache");
+                LOG(LOG_ERR, "Destroying Cache");
             } else {
                 LOG(LOG_INFO, "No Credential cache to destroy");
             }
