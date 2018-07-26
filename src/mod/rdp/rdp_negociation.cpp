@@ -465,11 +465,12 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
             case SC_CORE:
 //                            LOG(LOG_INFO, "=================== SC_CORE =============");
                 {
-                    this->sc_core.recv(f.payload);
+                    GCC::UserData::SCCore sc_core;
+                    sc_core.recv(f.payload);
                     if (bool(this->verbose & RDPVerbose::connection)) {
-                        this->sc_core.log("Received from server");
+                        sc_core.log("Received from server");
                     }
-                    if (0x0080001 == this->sc_core.version){ // can't use rdp5
+                    if (0x0080001 == sc_core.version){ // can't use rdp5
                         this->negociation_result.use_rdp5 = false;
                     }
                 }
@@ -477,17 +478,18 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
             case SC_SECURITY:
                 LOG(LOG_INFO, "=================== SC_SECURITY =============");
                 {
-                    this->sc_sec1.recv(f.payload);
+                    GCC::UserData::SCSecurity sc_sec1;
+                    sc_sec1.recv(f.payload);
 
                     if (bool(this->verbose & RDPVerbose::security)) {
-                        this->sc_sec1.log("Received from server");
+                        sc_sec1.log("Received from server");
                     }
 
-                    this->negociation_result.encryptionLevel = this->sc_sec1.encryptionLevel;
-                    this->negociation_result.encryptionMethod = this->sc_sec1.encryptionMethod;
+                    this->negociation_result.encryptionLevel = sc_sec1.encryptionLevel;
+                    this->negociation_result.encryptionMethod = sc_sec1.encryptionMethod;
 
-                    if (this->sc_sec1.encryptionLevel == 0
-                        &&  this->sc_sec1.encryptionMethod == 0) { /* no encryption */
+                    if (sc_sec1.encryptionLevel == 0
+                        &&  sc_sec1.encryptionMethod == 0) { /* no encryption */
                         LOG(LOG_INFO, "No encryption");
                     }
                     else {
@@ -496,7 +498,7 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
                         uint8_t exponent[SEC_EXPONENT_SIZE] = {};
 
-                        memcpy(serverRandom, this->sc_sec1.serverRandom, this->sc_sec1.serverRandomLen);
+                        memcpy(serverRandom, sc_sec1.serverRandom, sc_sec1.serverRandomLen);
 //                                        LOG(LOG_INFO, "================= SC_SECURITY got random =============");
                         // serverCertificate (variable): The variable-length certificate containing the
                         //  server's public key information. The length in bytes is given by the
@@ -507,24 +509,24 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         if (sc_sec1.dwVersion == GCC::UserData::SCSecurity::CERT_CHAIN_VERSION_1) {
 //                                        LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_VERSION_1");
 
-                            memcpy(exponent, this->sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
-                            memcpy(modulus, this->sc_sec1.proprietaryCertificate.RSAPK.modulus,
-                                    this->sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
+                            memcpy(exponent, sc_sec1.proprietaryCertificate.RSAPK.pubExp, SEC_EXPONENT_SIZE);
+                            memcpy(modulus, sc_sec1.proprietaryCertificate.RSAPK.modulus,
+                                    sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE);
 
-                            this->server_public_key_len = this->sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
+                            this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
 
                         }
                         else {
                             #ifndef __EMSCRIPTEN__
 
 //                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
-                            uint32_t const certcount = this->sc_sec1.x509.certCount;
+                            uint32_t const certcount = sc_sec1.x509.certCount;
                             if (certcount < 2){
                                 LOG(LOG_ERR, "Server didn't send enough X509 certificates");
                                 throw Error(ERR_SEC);
                             }
 
-                            X509 *cert = this->sc_sec1.x509.certs[certcount - 1];
+                            X509 *cert = sc_sec1.x509.certs[certcount - 1];
 
                             // TODO CGR: Currently, we don't use the CA Certificate, we should
                             // TODO *) Verify the server certificate (server_cert) with the CA certificate.
@@ -663,8 +665,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         if (sc_sec1.encryptionMethod == 1){
                             ssl.sec_make_40bit(encrypt.sign_key);
                         }
-                        this->decrypt.generate_key(key_block.key1, this->sc_sec1.encryptionMethod);
-                        this->encrypt.generate_key(key_block.key2, this->sc_sec1.encryptionMethod);
+                        this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
+                        this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);
                     }
                 }
                 break;
@@ -885,10 +887,13 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             cs_cluster.emit(stream);
             // ------------------------------------------------------------
 
-            if (bool(this->verbose & RDPVerbose::security)) {
-                this->cs_security.log("Sending to server");
+            {
+                GCC::UserData::CSSecurity cs_security;
+                if (bool(this->verbose & RDPVerbose::security)) {
+                    cs_security.log("Sending to server");
+                }
+                cs_security.emit(stream);
             }
-            cs_security.emit(stream);
             // ------------------------------------------------------------
 
             const CHANNELS::ChannelDefArray & channel_list = this->front.get_channel_list();

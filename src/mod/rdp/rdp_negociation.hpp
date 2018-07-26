@@ -159,9 +159,6 @@ private:
     InfoPacketFlags info_packet_extra_flags;
 
     char clientAddr[512] = {};
-    GCC::UserData::SCCore sc_core;
-    GCC::UserData::SCSecurity sc_sec1;
-    GCC::UserData::CSSecurity cs_security;
     const bool has_managed_drive;
     char directory[512] = {};
     char program[512] = {};
