@@ -44,33 +44,34 @@ class RDPMetrics {
         total_right_clicks,
         total_left_clicks,
         total_keys_pressed,
-        total_mouse_move,
+        mouse_displacement,
         total_main_amount_data_rcv_from_server,
 
-        total_cliprdr_amount_data_rcv_from_server,
-        nb_text_paste_on_server,
-        nb_image_paste_on_server,
-        nb_file_paste_on_server,
+        clipboard_channel_data_from_server,
+        nb_paste_text_on_server,
+        nb_paste_image_on_server,
+        nb_paste_file_on_server,
         total_data_paste_on_server,
-        nb_text_copy_from_server,
-        nb_image_copy_from_server,
-        nb_file_copy_from_server,
-        total_cliprdr_amount_data_rcv_from_client,
-        nb_text_paste_on_client,
-        nb_image_paste_on_client,
-        nb_file_paste_on_client,
-        total_data_paste_on_client,
-        nb_text_copy_from_client,
-        nb_image_copy_from_client,
-        nb_file_copy_from_client,
+        nb_copy_text_from_server,
+        nb_copy_image_from_server,
+        nb_copy_file_from_server,
 
-        total_rdpdr_amount_data_rcv_from_client,
-        total_rdpdr_amount_data_rcv_from_server,
-        nb_more_1k_byte_read_file,
-        nb_deleted_file_or_folder,
-        nb_write_file,
-        nb_rename_file,
-        nb_open_folder,
+        clipboard_channel_data_from_client,
+        nb_paste_text_on_client,
+        nb_paste_image_on_client,
+        nb_paste_file_on_client,
+        total_data_paste_on_client,
+        nb_copy_text_from_client,
+        nb_copy_image_from_client,
+        nb_copy_file_from_client,
+
+        disk_redirection_channel_data_from_client,
+        disk_redirection_channel_data_from_server,
+        nb_files_1k_read,
+        nb_files_or_folders_deleted,
+        nb_files_write,
+        nb_files_rename,
+        //nb_open_folder,
 
         total_rail_amount_data_rcv_from_client,
         total_rail_amount_data_rcv_from_server,
@@ -85,38 +86,38 @@ class RDPMetrics {
             case total_right_clicks: return " right_click=";
             case total_left_clicks: return " left_click=";
             case total_keys_pressed: return " keys_pressed=";
-            case total_mouse_move: return " mouse_move=";
+            case mouse_displacement: return " mouse_displacement=";
             case total_main_amount_data_rcv_from_server: return " main_channel_data_from_serveur=";
-            case total_cliprdr_amount_data_rcv_from_server: return " cliprdr_channel_data_from_server=";
-            case nb_text_paste_on_server: return " nb_text_paste_on_server=";
-            case nb_image_paste_on_server: return " nb_image_paste_on_server=";
-            case nb_file_paste_on_server: return " nb_file_paste_on_server=";
+            case clipboard_channel_data_from_server: return " clipboard_channel_data_from_server=";
+            case nb_paste_text_on_server: return " nb_paste_text_on_server=";
+            case nb_paste_image_on_server: return " nb_paste_image_on_server=";
+            case nb_paste_file_on_server: return " nb_paste_file_on_server=";
             case total_data_paste_on_server: return " total_data_paste_on_server=";
-            case nb_text_copy_from_server: return " nb_text_copy_on_server=";
-            case nb_image_copy_from_server: return " nb_image_copy_on_server=";
-            case nb_file_copy_from_server: return " nb_file_copy_on_server=";
-            case total_cliprdr_amount_data_rcv_from_client: return " cliprdr_channel_data_from_client=";
-            case nb_text_paste_on_client: return " nb_text_paste_on_client=";
-            case nb_image_paste_on_client: return " nb_image_paste_on_client=";
-            case nb_file_paste_on_client: return " nb_file_paste_on_client=";
+            case nb_copy_text_from_server: return " nb_copy_text_on_server=";
+            case nb_copy_image_from_server: return " nb_copy_image_on_server=";
+            case nb_copy_file_from_server: return " nb_copy_file_on_server=";
+            case clipboard_channel_data_from_client: return " clipboard_channel_data_from_client=";
+            case nb_paste_text_on_client: return " nb_paste_text_on_client=";
+            case nb_paste_image_on_client: return " nb_paste_image_on_client=";
+            case nb_paste_file_on_client: return " nb_paste_file_on_client=";
             case total_data_paste_on_client: return " total_data_paste_on_client=";
-            case nb_text_copy_from_client: return " nb_text_copy_on_client=";
-            case nb_image_copy_from_client: return " nb_image_copy_on_client=";
-            case nb_file_copy_from_client: return " nb_file_copy_on_client=";
-            case total_rdpdr_amount_data_rcv_from_client: return " rdpdr_channel_data_from_client=";
-            case total_rdpdr_amount_data_rcv_from_server: return " rdpdr_channel_data_from_server=";
-            case nb_more_1k_byte_read_file: return " nb_more_1k_byte_read_file=";
-            case nb_deleted_file_or_folder: return " nb_deleted_file_or_folder=";
-            case nb_write_file: return " nb_write_file=";
-            case nb_rename_file: return " nb_rename_file=";
-            case nb_open_folder: return " nb_open_folder=";
+            case nb_copy_text_from_client: return " nb_copy_text_on_client=";
+            case nb_copy_image_from_client: return " nb_copy_image_on_client=";
+            case nb_copy_file_from_client: return " nb_copy_file_on_client=";
+            case disk_redirection_channel_data_from_client: return " disk_redirection_channel_data_from_client=";
+            case disk_redirection_channel_data_from_server: return " disk_redirection_channel_data_from_server=";
+            case nb_files_1k_read: return " nb_files_1k_read=";
+            case nb_files_or_folders_deleted: return " nb_files_or_folders_deleted=";
+            case nb_files_write: return " nb_files_write=";
+            case nb_files_rename: return " nb_files_rename=";
+            //case nb_open_folder: return " nb_open_folder=";
             case total_rail_amount_data_rcv_from_client: return " rail_channel_data_from_client=";
             case total_rail_amount_data_rcv_from_server: return " rail_channel_data_from_server=";
             case total_other_amount_data_rcv_from_client: return " other_channel_data_from_client=";
             case total_other_amount_data_rcv_from_server: return " other_channel_data_from_server=";
         }
 
-        return "unknow_rdp_metrics_name";
+        return " unknow_rdp_metrics_name=";
     }
 
 public:
@@ -152,6 +153,7 @@ public:
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
     {
+
         timeval now = tvtime();
         time_t start_time = now.tv_sec;
 
@@ -206,7 +208,7 @@ public:
 
     void set_server_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[total_rdpdr_amount_data_rcv_from_server] += length;
+            this->current_data[disk_redirection_channel_data_from_server] += length;
 
             rdpdr::SharedHeader header;
             header.receive(chunk);
@@ -222,13 +224,13 @@ public:
                         rdpdr::DeviceReadRequest drr;
                         drr.receive(chunk);
                         if (drr.Length() >=  1000) {
-                            this->current_data[nb_more_1k_byte_read_file] += 1;
+                            this->current_data[nb_files_1k_read] += 1;
                         }
                     }
                         break;
                     case rdpdr::IRP_MJ_WRITE:
 
-                        this->current_data[nb_write_file] += 1;
+                        this->current_data[nb_files_write] += 1;
                         break;
                     case rdpdr::IRP_MJ_SET_INFORMATION:     // delete
                     {
@@ -238,10 +240,10 @@ public:
                         switch (sdsir.FsInformationClass()) {
 
                             case rdpdr::FileRenameInformation:
-                                this->current_data[nb_rename_file] += 1;
+                                this->current_data[nb_files_rename] += 1;
                                 break;
                             case rdpdr::FileDispositionInformation:
-                                this->current_data[nb_deleted_file_or_folder] += 1;
+                                this->current_data[nb_files_or_folders_deleted] += 1;
                                 break;
                         }
                     }
@@ -253,14 +255,14 @@ public:
 
     void set_client_rdpdr_metrics(InStream & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[total_rdpdr_amount_data_rcv_from_client] += length;
+            this->current_data[disk_redirection_channel_data_from_client] += length;
 
         }
     }
 
     void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[total_cliprdr_amount_data_rcv_from_server] += length;
+            this->current_data[clipboard_channel_data_from_server] += length;
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -277,18 +279,18 @@ public:
                             case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
                             case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                             case RDPECLIP::CF_DSPTEXT:
-                                this->current_data[nb_text_copy_from_server] += 1;
+                                this->current_data[nb_copy_text_from_server] += 1;
                                 break;
                             case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                             case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->current_data[nb_image_copy_from_server] += 1;
+                                this->current_data[nb_copy_image_from_server] += 1;
                                 break;
                             default:
                                 std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
                                 std::string file_contents_name(RDPECLIP::FILECONTENTS);
                                 if (format_name_string == file_contents_name){
                                     this->file_contents_format_ID = fl_ln.formatID;
-                                    this->current_data[nb_file_copy_from_server] += 1;
+                                    this->current_data[nb_copy_file_from_server] += 1;
                                 }
                                 break;
                         }
@@ -307,15 +309,15 @@ public:
                         case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:
-                            this->current_data[nb_text_paste_on_server] += 1;
+                            this->current_data[nb_paste_text_on_server] += 1;
                             break;
                         case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[nb_image_paste_on_server] += 1;
+                            this->current_data[nb_paste_image_on_server] += 1;
                             break;
                         default:
                             if (this->file_contents_format_ID == formatID){
-                                this->current_data[nb_file_paste_on_server] += 1;
+                                this->current_data[nb_paste_file_on_server] += 1;
                             }
                             break;
                     }
@@ -341,7 +343,7 @@ public:
 
     void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[total_cliprdr_amount_data_rcv_from_client] += length;
+            this->current_data[clipboard_channel_data_from_client] += length;
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -358,18 +360,18 @@ public:
                             case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
                             case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                             case RDPECLIP::CF_DSPTEXT:
-                                this->current_data[nb_text_copy_from_client] += 1;
+                                this->current_data[nb_copy_text_from_client] += 1;
                                 break;
                             case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                             case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->current_data[nb_image_copy_from_client] += 1;
+                                this->current_data[nb_copy_image_from_client] += 1;
                                 break;
                             default:
                                 std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
                                 std::string file_contents_name(RDPECLIP::FILECONTENTS);
                                 if (format_name_string == file_contents_name){
                                     this->file_contents_format_ID = fl_ln.formatID;
-                                    this->current_data[nb_file_copy_from_client] += 1;
+                                    this->current_data[nb_copy_file_from_client] += 1;
                                 }
                                 break;
                         }
@@ -388,15 +390,15 @@ public:
                         case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:
-                            this->current_data[nb_text_paste_on_client] += 1;
+                            this->current_data[nb_paste_text_on_client] += 1;
                             break;
                         case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[nb_image_paste_on_client] += 1;
+                            this->current_data[nb_paste_image_on_client] += 1;
                             break;
                         default:
                             if (this->file_contents_format_ID == formatID){
-                                this->current_data[nb_file_paste_on_client] += 1;
+                                this->current_data[nb_paste_file_on_client] += 1;
                             }
                             break;
                     }
@@ -425,7 +427,7 @@ public:
     }
 
     void mouse_mouve(int xy) {
-        this->current_data[total_mouse_move] += xy;
+        this->current_data[mouse_displacement] += xy;
     }
 
     void key_pressed() {
@@ -518,7 +520,7 @@ public:
         ::snprintf(header_delta, sizeof(header_delta), "%s%ld", this->header, delta_time);
 
         std::string sentence(header_delta);
-        for (int i = 0; i < 33; i++) {
+        for (int i = 0; i < 32; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
                 char current_metrics[128];
                 ::snprintf(current_metrics, sizeof(current_metrics), "%s%ld", this->rdp_metrics_name(i), this->current_data[i]);
