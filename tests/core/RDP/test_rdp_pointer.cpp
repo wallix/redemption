@@ -1047,7 +1047,7 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer, sizeof(buffer));
-    PointerLoaderNew pl(1, in_stream_cursor, BGRPalette::classic_332(), true, BogusLinuxCursor::enable);
+    PointerLoaderNew pl(1, in_stream_cursor, BGRPalette::classic_332(), true, BogusLinuxCursor::disable);
 
     RED_CHECK_EQ(pl.hotspot.x, 8);
     RED_CHECK_EQ(pl.hotspot.y, 9);
