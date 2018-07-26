@@ -5579,7 +5579,7 @@ private:
         else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
-        else if (!::strcasecmp(order.c_str(), "RemoteDrive") && parameters.empty()) {
+        else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
             FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel();
             rdpdr_channel.disable_session_probe_drive();
         }
