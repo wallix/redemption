@@ -157,8 +157,8 @@ public:
                         false, ServerCertCheck::always_succeed, "/tmp", null_notifier});
                 if (not run) {
                     state = NLA_CONNECT_INITIAL_PDU;
+                    outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
                 }
-                break;
             }
             else {
                 backBuffer.load_data(this->backConn);
