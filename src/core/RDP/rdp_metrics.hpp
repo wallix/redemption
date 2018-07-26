@@ -448,12 +448,13 @@ public:
 
 
     void sha1_encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
-        SslHMAC_Sha256 sha256(reinterpret_cast<const uint8_t *>(key_crypt), 32);
+        SslHMAC_Sha256 sha256(key_crypt, 32);
         sha256.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
         sha256.final(sig);
         snprintf(dest, 1+SslSha256::DIGEST_LENGTH*2,
-                 "%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X""%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X%0.2X"
+                 "%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
+                 "%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
           ,sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
                  sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]
           ,sig[20], sig[21], sig[22], sig[23], sig[24], sig[25], sig[26], sig[27], sig[28], sig[29],

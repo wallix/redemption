@@ -115,7 +115,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader) {
     expected_log += " Session_id=1 user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 hostname=B613679A0814D9EC772F95D778C35FC5FF1697C493715653C6C712144292C5AD target_service=6349A3F669CACE1E4C7AE9C48B53A3F1A240EB3910D8B16850ECBC80A4A9B807 session_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7 delta_time(s)=0";
 
     char log_read[512] = {'\0'};
-    ::read(fd, log_read, expected_log.length());
+    auto res = ::read(fd, log_read, expected_log.length());
+    (void)res;
     std::string str_log_read(log_read);
     RED_CHECK_EQUAL(str_log_read, expected_log);
     ::close(fd);
@@ -162,7 +163,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     std::string expected_log_data(" main_channel_data_from_client=1 right_click=2 left_click=3 keys_pressed=4 mouse_displacement=5 main_channel_data_from_serveur=6 clipboard_channel_data_from_server=7 nb_paste_text_on_server=8 nb_paste_image_on_server=9 nb_paste_file_on_server=10 total_data_paste_on_server=11 nb_copy_text_on_server=12 nb_copy_image_on_server=13 nb_copy_file_on_server=14 clipboard_channel_data_from_client=15 nb_paste_text_on_client=16 nb_paste_image_on_client=17 nb_paste_file_on_client=18 total_data_paste_on_client=19 nb_copy_text_on_client=20 nb_copy_image_on_client=21 nb_copy_file_on_client=22 disk_redirection_channel_data_from_client=23 disk_redirection_channel_data_from_server=24 nb_files_1k_read=25 nb_files_or_folders_deleted=26 nb_files_write=27 nb_files_rename=28 rail_channel_data_from_client=29 rail_channel_data_from_server=30 other_channel_data_from_client=31 other_channel_data_from_server=32");
 
     char log_read[4096] = {'\0'};
-    ::read(fd, log_read, expected_log_header.length()+expected_log_data.length()+1);
+    auto res = ::read(fd, log_read, expected_log_header.length()+expected_log_data.length()+1);
+    (void)res;
     std::string str_log_read(log_read);
     std::string str_log_data = str_log_read.substr(expected_log_header.length(), str_log_read.length());
 
@@ -183,7 +185,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     std::string expected_log_data_2(" main_channel_data_from_client=2 right_click=4 left_click=6 keys_pressed=8 mouse_displacement=10 main_channel_data_from_serveur=12 clipboard_channel_data_from_server=14 nb_paste_text_on_server=16 nb_paste_image_on_server=18 nb_paste_file_on_server=20 total_data_paste_on_server=22 nb_copy_text_on_server=24 nb_copy_image_on_server=26 nb_copy_file_on_server=28 clipboard_channel_data_from_client=30 nb_paste_text_on_client=32");
 
     char log_read_2[2048] = {'\0'};
-    ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+    {
+        auto res = ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+        (void)res;
+    }
     std::string str_log_read_2(log_read_2);
     std::string str_log_data_2 = str_log_read_2.substr(expected_log_header.length(), str_log_read_2.length());
 
@@ -264,7 +269,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
     std::string expected_log_data_2(" clipboard_channel_data_from_server=84 total_data_paste_on_server=8 nb_copy_text_on_server=1 nb_copy_file_on_server=1");
 
     char log_read_2[2048] = {'\0'};
-    ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+    auto res = ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+    (void)res;
     std::string str_log_read_2(log_read_2);
     std::string str_log_data_2 = str_log_read_2.substr(expected_log_header.length(), str_log_read_2.length());
 
@@ -350,7 +356,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
     std::string expected_log_data_2(" disk_redirection_channel_data_from_server=136 nb_files_1k_read=1 nb_files_write=1 nb_files_rename=1");
 
     char log_read_2[2048] = {'\0'};
-    ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+    auto res = ::read(fd, log_read_2, expected_log_header.length()+expected_log_data_2.length()+1);
+    (void)res;
     std::string str_log_read_2(log_read_2);
     std::string str_log_data_2 = str_log_read_2.substr(expected_log_header.length(), str_log_read_2.length());
 
