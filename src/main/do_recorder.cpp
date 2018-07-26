@@ -38,6 +38,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/word_identification.hpp"
+#include "utils/redemption_info_version.hpp"
 
 
 #include <string>

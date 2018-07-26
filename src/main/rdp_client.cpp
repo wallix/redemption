@@ -38,6 +38,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/redemption_info_version.hpp"
 #include "test_only/get_file_contents.hpp"
 
 #include <iostream>

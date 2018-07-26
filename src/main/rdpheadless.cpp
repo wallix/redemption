@@ -25,6 +25,7 @@
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/cli.hpp"
+#include "utils/redemption_info_version.hpp"
 
 #include <iostream>
 

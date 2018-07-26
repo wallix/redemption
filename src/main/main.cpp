@@ -41,6 +41,7 @@
 #include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/log.hpp"
+#include "utils/redemption_info_version.hpp"
 
 #include <iostream>
 

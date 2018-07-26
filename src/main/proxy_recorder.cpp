@@ -34,6 +34,7 @@
 #include "utils/cli.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"
+#include "utils/redemption_info_version.hpp"
 
 #include <chrono>
 #include <iostream>

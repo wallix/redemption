@@ -24,6 +24,7 @@
 #include "main/version.hpp"
 #include "utils/cli.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/redemption_info_version.hpp"
 
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
