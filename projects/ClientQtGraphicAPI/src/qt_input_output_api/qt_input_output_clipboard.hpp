@@ -230,10 +230,11 @@ public:
 public Q_SLOTS:
 
     void mem_clipboard() {
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 1");
         if (this->client->mod != nullptr && this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
             mimeData->hasImage();
-
+            LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 - 1");
             if (mimeData->hasImage()){
             //==================
             //    IMAGE COPY
@@ -267,11 +268,15 @@ public Q_SLOTS:
             } else if (mimeData->hasText()){                //  File or Text copy
 
                 QString qstr = this->_clipboard->text(QClipboard::Clipboard);
+                std::string utf8_text = qstr.toUtf8().constData();
+                LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 - 2 this->_clipboard->text(QClipboard::Clipboard);=%s", utf8_text);
                 if (qstr.size() > 0) {
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 - 3");
                     this->emptyBuffer();
                     std::string str(qstr.toUtf8().constData());
 
                     if (str.at(0) == '/') {
+                        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 2 - 4");
                 //==================
                 //    FILE COPY
                 //==================
@@ -343,6 +348,7 @@ public Q_SLOTS:
                         }
 
                         this->client->send_clipboard_format();
+                        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 3");
                 //==========================================================================
 
 

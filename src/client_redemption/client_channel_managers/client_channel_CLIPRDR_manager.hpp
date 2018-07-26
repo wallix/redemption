@@ -1089,6 +1089,8 @@ public:
 
     void send_FormatListPDU() {
 
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 5");
+
         StaticOutStream<1600> out_stream;
 
         std::string format_name = this->formats_map[this->clientIOClipboardAPI->get_buffer_type_id()];

@@ -996,6 +996,7 @@ public:
 
     void send_clipboard_format() override {
         this->clientChannelCLIPRDRManager.send_FormatListPDU();
+        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 4");
     }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*unused*/, size_t chunk_size, int flags) override {

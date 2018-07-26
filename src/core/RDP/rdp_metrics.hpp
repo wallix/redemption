@@ -162,7 +162,7 @@ public:
         if (this->path_template.c_str()) {
             time ( &(this->utc_last_date) );
             this->utc_stat_time = this->utc_last_date;
-            this->new_day();
+
         }
 
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
@@ -507,10 +507,12 @@ public:
 
     void log() {
 
+        
+
         time_t utc_time_date;
         time ( &utc_time_date );
 
-        if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
+        if ((utc_time_date -this->utc_last_date) >= this->file_interval || (this->fd < 0)) {
             ::close(this->fd);
             this->utc_last_date = utc_time_date;
             this->new_day();

@@ -39,7 +39,7 @@ public:
 
     uint16_t    _bufferTypeID = 0;
     int         _bufferTypeNameIndex = 0;
-    bool        _local_clipboard_stream = false;
+    bool        _local_clipboard_stream = true;
     size_t      _cliboard_data_length = 0;
     int         _cItems = 0;
 
