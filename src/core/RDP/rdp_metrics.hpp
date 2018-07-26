@@ -338,7 +338,6 @@ public:
                     }
                 }
                     break;
-
             }
         }
     }
@@ -419,7 +418,6 @@ public:
                     }
                 }
                     break;
-
             }
         }
     }
@@ -531,6 +529,7 @@ public:
                 this->previous_data[i] = this->current_data[i];
             }
         }
+        sentence +=  "\n";
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
@@ -539,7 +538,6 @@ public:
             struct iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
 
             ssize_t nwritten = ::writev(fd, iov, 1);
-            //LOG(LOG_INFO, "nwritten=%zu sentence=%s ", nwritten, sentence);
 
             if (nwritten == -1) {
                 std::string file_path_template(this->path_template);
