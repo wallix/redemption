@@ -628,7 +628,8 @@ public:
             LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
             ReplayTransport *transport = new ReplayTransport(
                 this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port,
-                ReplayTransport::FdType::Timer, ReplayTransport::UncheckedPacket::Send);
+                ReplayTransport::FdType::Timer, ReplayTransport::FirstPacket::DisableTimer,
+                ReplayTransport::UncheckedPacket::Send);
             this->socket = transport;
             this->client_sck = transport->get_fd();
             return true;

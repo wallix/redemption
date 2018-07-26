@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
 
     {
         ReplayTransport trans(filename, "ip", 0/*port*/, ReplayTransport::FdType::AlwaysReady,
-        		ReplayTransport::UncheckedPacket::Send);
+            ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
 

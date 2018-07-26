@@ -91,6 +91,7 @@ public:
                         X224::RDP_NEG_RSP, /*X224::RDP_NEG_FAILURE if PROTOCOL_RDP*/
                         RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
                         X224::PROTOCOL_TLS);
+                    outFile.write_packet(PacketType::DataIn, stream_to_avu8(x224_stream));
                     frontConn.send(stream_to_avu8(x224_stream));
                     frontConn.enable_server_tls("inquisition", nullptr);
                 }
@@ -113,9 +114,10 @@ public:
                 GCC::UserData::CSCore cs_core;
                 cs_core.recv(f.payload);
 
+                outFile.write_packet(PacketType::DataOut, currentPacket);
+
                 currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
 
-                outFile.write_packet(PacketType::DataOut, currentPacket);
                 backConn.send(currentPacket);
 
                 this->state = FORWARD;

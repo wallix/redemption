@@ -38,10 +38,12 @@ class ReplayTransport : public Transport
 public:
     enum class FdType : bool { Timer, AlwaysReady };
     enum class UncheckedPacket : uint8_t { None, Send };
+    enum class FirstPacket : bool { DisableTimer, EnableTimer };
 
     ReplayTransport(
         const char* fname, const char *ip_address, int port,
         FdType fd_type = FdType::Timer,
+        FirstPacket fitst_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
     ~ReplayTransport();
@@ -101,6 +103,7 @@ private:
     InFileTransport in_file;
     const unique_fd fd;
     const FdType fd_type;
+    FdType fd_current_type;
     const UncheckedPacket unchecked_packet;
 
     std::vector<Data> mPrefetchQueue;

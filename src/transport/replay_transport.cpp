@@ -88,7 +88,7 @@ static const char *PacketTypeToString(PacketType t) {
 
 ReplayTransport::ReplayTransport(
     const char* fname, const char *ip_address, int port,
-    FdType fd_type, UncheckedPacket unchecked_packet)
+    FdType fd_type, FirstPacket first_packet, UncheckedPacket unchecked_packet)
 : start_time(std::chrono::system_clock::now())
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
@@ -103,6 +103,9 @@ ReplayTransport::ReplayTransport(
     return fd;
 }())
 , fd_type(fd_type)
+, fd_current_type(
+    (first_packet == FirstPacket::EnableTimer && FdType::Timer == fd_type)
+    ? FdType::Timer : FdType::AlwaysReady)
 , unchecked_packet(unchecked_packet)
 , data_in_pos(0)
 , data_out_pos(0)
@@ -110,7 +113,20 @@ ReplayTransport::ReplayTransport(
     (void)ip_address;
     (void)port;
 
-   	reschedule_timer();
+    if (FdType::Timer == fd_type) {
+        if (FirstPacket::EnableTimer == first_packet) {
+            reschedule_timer();
+        }
+        else {
+            prefetchForTimer();
+            itimerspec timeout {};
+            timeout.it_value.tv_sec = 10;
+            if (timerfd_settime(this->fd.fd(), 0, &timeout, nullptr) < 0) {
+                LOG(LOG_ERR, "unable to set the timer time");
+                throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+            }
+        }
+    }
 }
 
 
@@ -146,41 +162,35 @@ void ReplayTransport::reschedule_timer()
 }
 
 
-ReplayTransport::Data *ReplayTransport::read_single_chunk() {
-	RecorderTransportHeader header;
-
-	do {
-		header = read_recorder_transport_header(this->in_file);
+ReplayTransport::Data *ReplayTransport::read_single_chunk()
+{
+	for (;;) {
+		RecorderTransportHeader const header = read_recorder_transport_header(this->in_file);
 
 		switch (header.type) {
+		case PacketType::Info:
+			this->infos.emplace_back();
+			this->infos.back().resize(header.data_size);
+			this->in_file.recv_boom(this->infos.back());
+			continue;
 		case PacketType::DataIn:
 		case PacketType::DataOut:
 		case PacketType::ClientCert:
 		case PacketType::ServerCert:
 		case PacketType::Eof:
 		case PacketType::Disconnect:
-		case PacketType::Connect: {
-				ReplayTransport::Data *ret = &mPrefetchQueue.emplace_back();
-				ret->type = header.type;
-				ret->time = this->start_time + header.record_duration;
-				ret->data = std::make_unique<uint8_t[]>(header.data_size);
-				ret->size = header.data_size;
-				in_file.recv_boom(ret->data.get(), header.data_size);
-				return ret;
-			}
-		case PacketType::Info:
-			this->infos.emplace_back();
-			this->infos.back().resize(header.data_size);
-			this->in_file.recv_boom(this->infos.back());
-			break;
-		default:
-			LOG(LOG_ERR, "unknown packet type %d", header.type);
-			break;
+		case PacketType::Connect:
+            ReplayTransport::Data *ret = &mPrefetchQueue.emplace_back();
+            ret->type = header.type;
+            ret->time = this->start_time + header.record_duration;
+            ret->data = std::make_unique<uint8_t[]>(header.data_size);
+            ret->size = header.data_size;
+            in_file.recv_boom(ret->data.get(), header.data_size);
+            return ret;
 		}
-	} while (header.type == PacketType::Info);
 
-	/* never reached */
-	return nullptr;
+		LOG(LOG_ERR, "unknown packet type %d", header.type);
+	}
 }
 
 
@@ -308,6 +318,7 @@ std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
 size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)
 {
 	++this->count_packet;
+    //LOG(LOG_DEBUG, "pck_num=%lld", this->count_packet);
 
 	size_t counter;
 
@@ -422,6 +433,12 @@ void ReplayTransport::do_send(const uint8_t * const buffer, size_t len)
 	if (pos == 0) {
         cleanup_data(data_in_pos, PacketType::DataIn);
 	}
+
+    if (fd_type != fd_current_type) {
+        assert(fd_type == FdType::Timer);
+        fd_current_type = fd_type;
+        reschedule_timer();
+    }
 }
 
 void ReplayTransport::cleanup_data(std::size_t len, PacketType type)
