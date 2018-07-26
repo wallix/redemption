@@ -273,10 +273,7 @@ public:
         }
 
         array_view_const_char to_string_view() const {
-            return this->field->to_string_view(
-                this->ini->variables,
-                const_cast<Buffers&>(this->ini->buffers) /*NOLINT*/
-            );
+            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
         char const * c_str() const {
@@ -338,10 +335,7 @@ public:
         }
 
         array_view_const_char to_string_view() const {
-            return this->field->to_string_view(
-                this->ini->variables,
-                const_cast<Buffers&>(this->ini->buffers) /*NOLINT*/
-            );
+            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
         char const * c_str() const {
