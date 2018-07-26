@@ -141,13 +141,7 @@ public:
 
     void treat_back_activity()
     {
-        struct : NullServerNotifier
-        {
-            void server_cert_error(const char * str_error) override
-            {
-                LOG(LOG_ERR, "server_cert_error: %s", str_error);
-            }
-        } null_notifier;
+        NullServerNotifier null_notifier;
 
         switch (state) {
         case NEGOCIATING_BACK_STEP1: {
@@ -175,9 +169,7 @@ public:
 
                     frontConn.send(currentPacket);
 
-                    int rdp_neg_code = X224::PROTOCOL_TLS;
-
-                    switch (rdp_neg_code) {
+                    switch (x224.rdp_neg_code) {
                     case X224::PROTOCOL_TLS:
                     case X224::PROTOCOL_HYBRID:
                     case X224::PROTOCOL_HYBRID_EX: {
@@ -251,7 +243,12 @@ public:
                 }
             }
         } catch(Error const& e) {
-            LOG(LOG_ERR, "Recording front connection ending: %s ; %s", e.errmsg(), strerror(errno));
+            if (errno) {
+                LOG(LOG_ERR, "Recording front connection ending: %s ; %s", e.errmsg(), strerror(errno));
+            }
+            else {
+                LOG(LOG_ERR, "Recording front connection ending: %s", e.errmsg());
+            }
         }
     }
 
