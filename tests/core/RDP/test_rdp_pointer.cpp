@@ -1058,16 +1058,15 @@ Mask For Cursor
     ARGB32Pointer vnccursor(cursor);
     const auto av_alpha_q = vnccursor.get_alpha_q();
 
-    size_t i=0;
-    for (auto x: av_alpha_q){
-        if (x) {printf("%02X", x);} else {printf("  ");}
-        i++;
-//         if ((i % 24) == 23) { printf("\n"); }
-        if ((i % 128) == 127) { printf("\n"); }
-    }
+//     size_t i=0;
+//     for (auto x: av_alpha_q){
+//         if (x) {printf("%02X", x);} else {printf("  ");}
+//         i++;
+// //         if ((i % 24) == 23) { printf("\n"); }
+//         if ((i % 128) == 127) { printf("\n"); }
+//     }
 
     const char * sig = "\x40\xcc\x56\x2e\x92\xfb\x36\x03\x65\x43\x3f\x40\xb1\x7d\x27\x8e\x20\xef\x09\x8f";
-    //"\x87\x96\xcb\x13\x84\xa1\xef\xee\x6a\x81\xec\xcf\xae\xe7\x64\xd8\x3b\xaa\x11\x73";
 
     RED_CHECK_SIG2(av_alpha_q.data(), av_alpha_q.size(), sig);
 }
