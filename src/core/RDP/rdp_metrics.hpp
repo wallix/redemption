@@ -115,6 +115,8 @@ class RDPMetrics {
             case total_rail_amount_data_rcv_from_server: return " rail_channel_data_from_server=";
             case total_other_amount_data_rcv_from_client: return " other_channel_data_from_client=";
             case total_other_amount_data_rcv_from_server: return " other_channel_data_from_server=";
+            default:
+                break;
         }
 
         return " unknow_rdp_metrics_name=";
@@ -171,14 +173,14 @@ public:
         char start_full_date_time[24];
 
         this->set_current_formated_date(start_full_date_time, true, start_time);
-        this->sha1_encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
-        this->sha1_encrypt(account_sig, account, std::strlen(account), key_crypt);
-        this->sha1_encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
-        this->sha1_encrypt(target_service_sig, target_service, std::strlen(target_service), key_crypt);
+        this->encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
+        this->encrypt(account_sig, account, std::strlen(account), key_crypt);
+        this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
+        this->encrypt(target_service_sig, target_service, std::strlen(target_service), key_crypt);
 
         char session_info[64];
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
-        this->sha1_encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
+        this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
         ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
     }
@@ -447,7 +449,7 @@ public:
     }
 
 
-    void sha1_encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
+    void encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
         SslHMAC_Sha256 sha256(key_crypt, 32);
         sha256.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
