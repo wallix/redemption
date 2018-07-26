@@ -35,10 +35,8 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 
-class RDPMetrics {
-
-
-
+class RDPMetrics
+{
     enum : int {
         total_main_amount_data_rcv_from_client,
         total_right_clicks,
@@ -122,14 +120,72 @@ class RDPMetrics {
         return " unknow_rdp_metrics_name=";
     }
 
+    /*
+                     o8o                            .
+                     `"'                          .o8
+oo.ooooo.  oooo d8b oooo  oooo    ooo  .oooo.   .o888oo  .ooooo.
+ 888' `88b `888""8P `888   `88.  .8'  `P  )88b    888   d88' `88b
+ 888   888  888      888    `88..8'    .oP"888    888   888ooo888
+ 888   888  888      888     `888'    d8(  888    888 . 888    .o
+ 888bod8P' d888b    o888o     `8'     `Y888""8o   "888" `Y8bod8P'
+ 888
+o888o
+
+
+ˇˇˇˇˇˇ
+     */
 public:
+    /*
+^^^^^^
+
+                     o8o                            .
+                     `"'                          .o8
+oo.ooooo.  oooo d8b oooo  oooo    ooo  .oooo.   .o888oo  .ooooo.
+ 888' `88b `888""8P `888   `88.  .8'  `P  )88b    888   d88' `88b
+ 888   888  888      888    `88..8'    .oP"888    888   888ooo888
+ 888   888  888      888     `888'    d8(  888    888 . 888    .o
+ 888bod8P' d888b    o888o     `8'     `Y888""8o   "888" `Y8bod8P'
+ 888
+o888o
+
+     */
     const int file_interval;
 
     time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
     time_t utc_stat_time;
     const std::string path_template;
+
+    /*
+     *
+ .o88o.       .o8                                       o8o
+ 888 `"      "888                                       `"'
+o888oo   .oooo888              oooo  oooo  ooo. .oo.   oooo   .ooooo oo oooo  oooo   .ooooo.
+ 888    d88' `888              `888  `888  `888P"Y88b  `888  d88' `888  `888  `888  d88' `88b
+ 888    888   888               888   888   888   888   888  888   888   888   888  888ooo888
+ 888    888   888               888   888   888   888   888  888   888   888   888  888    .o
+o888o   `Y8bod88P" ooooooooooo  `V88V"V8P' o888o o888o o888o `V8bod888   `V88V"V8P' `Y8bod8P'
+                                                                   888.
+                                                                   8P'
+                                                                   "
+
+    ˇˇˇˇˇˇˇˇˇˇˇ
+     */
     int fd = -1;
+    /*
+    ^^^^^^^^^^^
+
+ .o88o.       .o8                                       o8o
+ 888 `"      "888                                       `"'
+o888oo   .oooo888              oooo  oooo  ooo. .oo.   oooo   .ooooo oo oooo  oooo   .ooooo.
+ 888    d88' `888              `888  `888  `888P"Y88b  `888  d88' `888  `888  `888  d88' `88b
+ 888    888   888               888   888   888   888   888  888   888   888   888  888ooo888
+ 888    888   888               888   888   888   888   888  888   888   888   888  888    .o
+o888o   `Y8bod88P" ooooooooooo  `V88V"V8P' o888o o888o o888o `V8bod888   `V88V"V8P' `Y8bod8P'
+                                                                   888.
+                                                                   8P'
+                                                                   "
+     */
 
 
 
@@ -140,9 +196,8 @@ public:
 
     uint32_t file_contents_format_ID = 0;
 
-    RDPMetrics() = delete;
-
-    RDPMetrics( const std::string & path_template
+    RDPMetrics( const time_t start_time
+              , const std::string & path_template
               , const uint32_t session_id
               , const char * account
               , const char * primary_user
@@ -150,19 +205,73 @@ public:
               , const ClientInfo & info
               , const char * target_service
               , const unsigned char * key_crypt
+              /**
+               *
+             .         .o8
+           .o8        "888
+ .oooo.o .o888oo  .oooo888
+d88(  "8   888   d88' `888
+`"Y88b.    888   888   888  o8o o8o
+o.  )88b   888 . 888   888  `"' `"'
+8""888P'   "888" `Y8bod88P" o8o o8o
+                            `"' `"'
+
+          `888
+ .ooooo.   888 .oo.   oooo d8b  .ooooo.  ooo. .oo.    .ooooo.
+d88' `"Y8  888P"Y88b  `888""8P d88' `88b `888P"Y88b  d88' `88b
+888        888   888   888     888   888  888   888  888   888 o8o o8o
+888   .o8  888   888   888     888   888  888   888  888   888 `"' `"'
+`Y8bod8P' o888o o888o d888b    `Y8bod8P' o888o o888o `Y8bod8P' o8o o8o
+                                                               `"' `"'
+
+      .o8                                     .    o8o
+     "888                                   .o8    `"'
+ .oooo888  oooo  oooo  oooo d8b  .oooo.   .o888oo oooo   .ooooo.  ooo. .oo.
+d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
+888   888   888   888   888      .oP"888    888    888  888   888  888   888
+888   888   888   888   888     d8(  888    888 .  888  888   888  888   888
+`Y8bod88P"  `V88V"V8P' d888b    `Y888""8o   "888" o888o `Y8bod8P' o888o o888o
+
+
+                ˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇ
+               */
               , const long file_interval
+              /**
+               *
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+
+             .         .o8
+           .o8        "888
+ .oooo.o .o888oo  .oooo888
+d88(  "8   888   d88' `888
+`"Y88b.    888   888   888  o8o o8o
+o.  )88b   888 . 888   888  `"' `"'
+8""888P'   "888" `Y8bod88P" o8o o8o
+                            `"' `"'
+
+          `888
+ .ooooo.   888 .oo.   oooo d8b  .ooooo.  ooo. .oo.    .ooooo.
+d88' `"Y8  888P"Y88b  `888""8P d88' `88b `888P"Y88b  d88' `88b
+888        888   888   888     888   888  888   888  888   888 o8o o8o
+888   .o8  888   888   888     888   888  888   888  888   888 `"' `"'
+`Y8bod8P' o888o o888o d888b    `Y8bod8P' o888o o888o `Y8bod8P' o8o o8o
+                                                               `"' `"'
+
+      .o8                                     .    o8o
+     "888                                   .o8    `"'
+ .oooo888  oooo  oooo  oooo d8b  .oooo.   .o888oo oooo   .ooooo.  ooo. .oo.
+d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
+888   888   888   888   888      .oP"888    888    888  888   888  888   888
+888   888   888   888   888     d8(  888    888 .  888  888   888  888   888
+`Y8bod88P"  `V88V"V8P' d888b    `Y888""8o   "888" o888o `Y8bod8P' o888o o888o
+
+               */
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
     {
-
-        timeval now = tvtime();
-        time_t start_time = now.tv_sec;
-
         if (this->path_template.c_str()) {
-            time ( &(this->utc_last_date) );
-            this->utc_stat_time = this->utc_last_date;
-
+            this->utc_stat_time = start_time;
         }
 
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
@@ -277,13 +386,13 @@ public:
 
                         switch (fl_ln.formatID) {
 
-                            case RDPECLIP::CF_TEXT: [[fallthrough]];
-                            case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
-                            case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                            case RDPECLIP::CF_TEXT:
+                            case RDPECLIP::CF_OEMTEXT:
+                            case RDPECLIP::CF_UNICODETEXT:
                             case RDPECLIP::CF_DSPTEXT:
                                 this->current_data[nb_copy_text_from_server] += 1;
                                 break;
-                            case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                            case RDPECLIP::CF_METAFILEPICT:
                             case RDPECLIP::CF_DSPMETAFILEPICT:
                                 this->current_data[nb_copy_image_from_server] += 1;
                                 break;
@@ -307,13 +416,13 @@ public:
                     const uint32_t formatID = chunk.in_uint32_le();
 
                     switch (formatID) {
-                        case RDPECLIP::CF_TEXT: [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
                         case RDPECLIP::CF_DSPTEXT:
                             this->current_data[nb_paste_text_on_server] += 1;
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->current_data[nb_paste_image_on_server] += 1;
                             break;
@@ -357,13 +466,13 @@ public:
 
                         switch (fl_ln.formatID) {
 
-                            case RDPECLIP::CF_TEXT: [[fallthrough]];
-                            case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
-                            case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                            case RDPECLIP::CF_TEXT:
+                            case RDPECLIP::CF_OEMTEXT:
+                            case RDPECLIP::CF_UNICODETEXT:
                             case RDPECLIP::CF_DSPTEXT:
                                 this->current_data[nb_copy_text_from_client] += 1;
                                 break;
-                            case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                            case RDPECLIP::CF_METAFILEPICT:
                             case RDPECLIP::CF_DSPMETAFILEPICT:
                                 this->current_data[nb_copy_image_from_client] += 1;
                                 break;
@@ -387,13 +496,13 @@ public:
                     const uint32_t formatID = chunk.in_uint32_le();
 
                     switch (formatID) {
-                        case RDPECLIP::CF_TEXT: [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT: [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
                         case RDPECLIP::CF_DSPTEXT:
                             this->current_data[nb_paste_text_on_client] += 1;
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->current_data[nb_paste_image_on_client] += 1;
                             break;
@@ -505,14 +614,15 @@ public:
     }
 
 
-    void log() {
+    // TODO not default value
+    void log(time_t utc_time_date = 0)
+    {
+        // TODO NoooooooOOOOOOOoooooooooooN
+        if (!utc_time_date) {
+            time(&utc_time_date);
+        }
 
-        
-
-        time_t utc_time_date;
-        time ( &utc_time_date );
-
-        if ((utc_time_date -this->utc_last_date) >= this->file_interval || (this->fd < 0)) {
+        if ((utc_time_date - this->utc_last_date) >= this->file_interval || (this->fd < 0)) {
             ::close(this->fd);
             this->utc_last_date = utc_time_date;
             this->new_day();
@@ -522,6 +632,7 @@ public:
         char header_delta[2048];
         ::snprintf(header_delta, sizeof(header_delta), "%s%ld", this->header, delta_time);
 
+        // TODO sentence -> iovec
         std::string sentence(header_delta);
         for (int i = 0; i < 32; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
@@ -535,17 +646,15 @@ public:
 
         if (this->fd == -1) {
             LOG(LOG_INFO, "sentence=%s", sentence);
-
-        } else {
-            struct iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+        }
+        else {
+            iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
 
             ssize_t nwritten = ::writev(fd, iov, 1);
 
             if (nwritten == -1) {
-                std::string file_path_template(this->path_template);
-                file_path_template += this->utc_last_date;
-                file_path_template += ".log";
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, file_path_template);
+                // TODO bad filename
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
             }
         }
     }

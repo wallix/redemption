@@ -849,6 +849,7 @@ public:
         , font(mod_rdp_params.font)
         , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
+        , beginning(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -864,7 +865,8 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( beginning
+                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , redir_info.session_id
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
@@ -894,8 +896,6 @@ public:
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
-
-        this->beginning = timeobj.get_time().tv_sec;
 
         if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
             this->bogus_linux_cursor =
