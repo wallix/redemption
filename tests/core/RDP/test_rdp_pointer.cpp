@@ -1047,32 +1047,27 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer, sizeof(buffer));
-    PointerLoaderNew pl(1, in_stream_cursor, BGRPalette::classic_332(), true, BogusLinuxCursor::disable);
+    Pointer cursor = pointer_loader_new(1, in_stream_cursor, BGRPalette::classic_332(), true, BogusLinuxCursor::disable);
 
-    RED_CHECK_EQ(pl.hotspot.x, 8);
-    RED_CHECK_EQ(pl.hotspot.y, 9);
-    RED_CHECK_EQ(pl.dimensions.width, 32);
-    RED_CHECK_EQ(pl.dimensions.height, 32);
+    RED_CHECK_EQ(cursor.get_hotspot().x, 8);
+    RED_CHECK_EQ(cursor.get_hotspot().y, 9);
+    RED_CHECK_EQ(cursor.get_dimensions().width, 32);
+    RED_CHECK_EQ(cursor.get_dimensions().height, 32);
+//     cursor.is_black_and_white = true;
 
-    const uint8_t * src = buffer + 0x8C;
-
-//    printf("\n");
-//    for (unsigned y = 0 ; y < 32 ; ++y){
-//        uint8_t bit_count = 7;
-//        for (unsigned x = 0 ; x < 32 ; ++x){
-//            unsigned pixel = (*src & (1 << bit_count));
-//            putchar(pixel?'*':' ');
-//            src += (bit_count==0)&1;
-//            bit_count = (bit_count - 1) & 7;
-//        }
-//        printf("\n");
-//    }
-
-    Pointer cursor(pl);
     ARGB32Pointer vnccursor(cursor);
     const auto av_alpha_q = vnccursor.get_alpha_q();
 
-    const char * sig = "\x87\x96\xcb\x13\x84\xa1\xef\xee\x6a\x81\xec\xcf\xae\xe7\x64\xd8\x3b\xaa\x11\x73";
+    size_t i=0;
+    for (auto x: av_alpha_q){
+        if (x) {printf("%02X", x);} else {printf("  ");}
+        i++;
+//         if ((i % 24) == 23) { printf("\n"); }
+        if ((i % 128) == 127) { printf("\n"); }
+    }
+
+    const char * sig = "\x40\xcc\x56\x2e\x92\xfb\x36\x03\x65\x43\x3f\x40\xb1\x7d\x27\x8e\x20\xef\x09\x8f";
+    //"\x87\x96\xcb\x13\x84\xa1\xef\xee\x6a\x81\xec\xcf\xae\xe7\x64\xd8\x3b\xaa\x11\x73";
 
     RED_CHECK_SIG2(av_alpha_q.data(), av_alpha_q.size(), sig);
 }

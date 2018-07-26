@@ -798,6 +798,16 @@ public:
 
         memcpy(this->mask, av_and.data(), av_and.size());
         memcpy(this->data, av_xor.data(), av_xor.size());
+
+         unsigned Bpp = 3;
+        this->only_black_white = ::is_black_and_white(
+                this->data,
+                this->dimensions.width,
+                this->dimensions.height,
+                ::even_pad_length(this->dimensions.width * Bpp),
+                Bpp);
+
+
     }
 
     bool operator==(const Pointer & other) const {
@@ -821,7 +831,6 @@ public:
     , maskline_bytes(::nbbytes(p.get_dimensions().width))
     , xorline_bytes(p.get_dimensions().width*3)
     {
-        printf("Building Pointer from ConstPointer\n");
         this->only_black_white = false;
         const char * cursor = p.data;
         uint8_t * tmp = this->data;
