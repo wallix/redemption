@@ -560,6 +560,9 @@
 "#_hidden\n"
 "sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')\n\n"
 
+"#_advanced\n"
+"activate_log_metrics = boolean(default=False)\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"

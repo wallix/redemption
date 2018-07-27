@@ -2168,6 +2168,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct rdp_metrics::activate_log_metrics {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "rdp_metrics";
+        static constexpr char const * name = "activate_log_metrics";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
@@ -4685,6 +4697,7 @@ struct rdp_metrics
 , cfg::rdp_metrics::log_interval
 , cfg::rdp_metrics::log_file_turnover_interval
 , cfg::rdp_metrics::sign_key
+, cfg::rdp_metrics::activate_log_metrics
 { static constexpr bool is_section = true; };
 
 struct mod_vnc

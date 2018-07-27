@@ -1631,6 +1631,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::rdp_metrics::sign_key&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "activate_log_metrics")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

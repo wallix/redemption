@@ -168,6 +168,7 @@ namespace cfg {
         struct log_interval;
         struct log_file_turnover_interval;
         struct sign_key;
+        struct activate_log_metrics;
     };
 
     struct mod_vnc {
