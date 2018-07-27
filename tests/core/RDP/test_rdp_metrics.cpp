@@ -109,10 +109,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader)
     metrics.log();
 
     std::string expected_log;
-//     char start_full_date_time[24];
-//     metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
-//     expected_log += start_full_date_time;
-//     expected_log += " Session_id=1 user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n";
 
     int fd = ::open(complete_file_path, O_RDONLY);
     char buff[4096] = {'\0'};
