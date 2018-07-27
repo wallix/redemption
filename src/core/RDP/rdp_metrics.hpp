@@ -206,7 +206,7 @@ public:
 
 
     ~RDPMetrics() {
-          ::close(this->fd);
+          ::close(this->fd.fd());
     }
 
     void disconnect() {
@@ -225,10 +225,10 @@ public:
 
         if (nwritten == -1) {
             // TODO bad filename
-            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
+            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd.fd(), this->complete_file_path);
         }
 
-        ::close(this->fd);
+        ::close(this->fd.fd());
         this->fd.release();
     }
 
@@ -541,8 +541,8 @@ public:
 
         int fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
         this->fd.reset(fd);
-        if (this->fd == -1) {
-            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, this->complete_file_path);
+        if (this->fd.fd() == -1) {
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd.fd(), this->complete_file_path);
         }
     }
 
@@ -553,7 +553,7 @@ public:
         time ( &utc_time_date );
 
         if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-            ::close(this->fd);
+            ::close(this->fd.fd());
             this->fd.release();
             this->utc_last_date = utc_time_date;
             this->new_day();
