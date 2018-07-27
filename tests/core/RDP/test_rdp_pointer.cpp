@@ -41,53 +41,9 @@ RED_AUTO_TEST_CASE(TestDataSize)
     RED_CHECK_EQUAL(p.xor_data_size(), 32 * 32 * 3);
 }
 
-RED_AUTO_TEST_CASE(TestNormalPointer)
-{
-    NormalPointer cursor;
-    RED_CHECK_EQUAL(cursor.get_dimensions().width, 32);
-    RED_CHECK_EQUAL(cursor.get_dimensions().height, 32);
-    RED_CHECK_MEM(make_array_view(cursor.data, cursor.get_dimensions().width*cursor.get_dimensions().height),
-                 make_array_view(
-                /* 0000 */ "................................"
-                /* 0060 */ "................................"
-                /* 00c0 */ "................................"
-                /* 0120 */ "................................"
-                /* 0180 */ "................................"
-                /* 01e0 */ "................................"
-                /* 0240 */ "................................"
-                /* 02a0 */ "................................"
-                /* 0300 */ "................................"
-                /* 0360 */ "................................"
-                /* 03c0 */ "................................"
-                /* 0420 */ "................................"
-                /* 0480 */ "................................"
-                /* 04e0 */ ".......XX......................."
-                /* 0540 */ "......X++X......................"
-                /* 05a0 */ "......X++X......................"
-                /* 0600 */ ".....X++X......................."
-                /* 0660 */ "X....X++X......................."
-                /* 06c0 */ "XX..X++X........................"
-                /* 0720 */ "X+X.X++X........................"
-                /* 0780 */ "X++X++X........................."
-                /* 07e0 */ "X+++++XXXXX....................."
-                /* 0840 */ "X++++++++X......................"
-                /* 08a0 */ "X+++++++X......................."
-                /* 0900 */ "X++++++X........................"
-                /* 0960 */ "X+++++X........................."
-                /* 09c0 */ "X++++X.........................."
-                /* 0a20 */ "X+++X..........................."
-                /* 0a80 */ "X++X............................"
-                /* 0ae0 */ "X+X............................."
-                /* 0b40 */ "XX.............................."
-                /* 0ba0 */ "X...............................",
-                32*32));
-}
-
 RED_AUTO_TEST_CASE(TestPointerNormal)
 {
     Pointer p = normal_pointer();
-    //Pointer p(NormalPointer{});
-
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
     uint8_t expected[] = {
@@ -137,7 +93,7 @@ RED_AUTO_TEST_CASE(TestPointerNormal)
 
 RED_AUTO_TEST_CASE(TestPointerEdit)
 {
-    Pointer p(EditPointer{});
+    Pointer p = edit_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -183,7 +139,7 @@ RED_AUTO_TEST_CASE(TestPointerEdit)
 
 RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
 {
-    Pointer p(DrawableDefaultPointer{});
+    Pointer p = drawable_default_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -229,8 +185,7 @@ RED_AUTO_TEST_CASE(TestPointerDrawableDefault)
 
 RED_AUTO_TEST_CASE(TestPointerSystemDefault)
 {
-
-    Pointer p(SystemDefaultPointer{});
+    Pointer p = system_default_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -276,8 +231,7 @@ RED_AUTO_TEST_CASE(TestPointerSystemDefault)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNS)
 {
-
-    Pointer p(SizeNSPointer{});
+    Pointer p = size_NS_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -323,7 +277,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNS)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 {
-    Pointer p(SizeNESWPointer{});
+    Pointer p = size_NESW_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -370,7 +324,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNESW)
 
 RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 {
-    Pointer p(SizeNWSEPointer{});
+    Pointer p = size_NWSE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -417,7 +371,7 @@ RED_AUTO_TEST_CASE(TestPointerSizeNWSE)
 
 RED_AUTO_TEST_CASE(TestPointerSizeWE)
 {
-    Pointer p(SizeWEPointer{});
+    Pointer p = size_WE_pointer();
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
@@ -919,7 +873,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 RED_AUTO_TEST_CASE(TestPointerIO)
 {
         StaticOutStream<32+108*96> stream;
-        Pointer cursor(EditPointer{});
+        Pointer cursor = edit_pointer();
 
         uint16_t width = cursor.get_dimensions().width;
         uint16_t height = cursor.get_dimensions().height;

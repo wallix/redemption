@@ -34,8 +34,8 @@ WidgetScreen::WidgetScreen(
     , theme(std::move(theme))
     , tooltip(nullptr)
     , current_over(nullptr)
-    , normal_pointer(NormalPointer{})
-    , edit_pointer(EditPointer{})
+    , normal_pointer(::normal_pointer())
+    , edit_pointer(::edit_pointer())
     , font(font)
 {
     this->impl = &composite_array;
@@ -173,13 +173,13 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
                     :(w->pointer_flag == Pointer::POINTER_CUSTOM ? (w->get_pointer() ? Pointer::POINTER_CUSTOM:Pointer::POINTER_NORMAL)
                     : w->pointer_flag) ){
             case Pointer::POINTER_EDIT:
-                this->drawable.set_pointer(Pointer(EditPointer{}));
+                this->drawable.set_pointer(::edit_pointer());
             break;
             case Pointer::POINTER_CUSTOM:
                 this->drawable.set_pointer(*w->get_pointer());
             break;
             default:
-                this->drawable.set_pointer(Pointer(NormalPointer{}));
+                this->drawable.set_pointer(::normal_pointer());
             }
         }
         this->current_over = w;

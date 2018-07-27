@@ -280,7 +280,7 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 RED_AUTO_TEST_CASE(TestAddMouse)
 {
 
-    Pointer p(DrawableDefaultPointer{}, true);
+    Pointer p = drawable_default_pointer(true);
     auto av     = p.get_24bits_xor_mask();
     auto avmask = p.get_monochrome_and_mask();
 
@@ -315,7 +315,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
 
 RED_AUTO_TEST_CASE(TestAddMouse2)
 {
-    Pointer p(DrawableDefaultPointer{}, true);
+    Pointer p = drawable_default_pointer(true);
     auto av     = p.get_24bits_xor_mask();
     auto avmask = p.get_monochrome_and_mask();
 
@@ -345,7 +345,7 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
 
 RED_AUTO_TEST_CASE(TestAddMouse3)
 {
-    Pointer p(DrawableDefaultPointer{}, true);
+    Pointer p = drawable_default_pointer(true);
     auto av     = p.get_24bits_xor_mask();
     auto avmask = p.get_monochrome_and_mask();
 
@@ -787,7 +787,7 @@ RED_AUTO_TEST_CASE(TestMemblt3)
 
 //RED_AUTO_TEST_CASE(test_BitArray2D)
 //{
-//    Pointer p(DrawableDefaultPointer{}, false);
+//    Pointer p = drawable_default_pointer(false);
 ////    auto av     = p.get_24bits_xor_mask();
 //    auto avmask = p.get_monochrome_and_mask();
 //

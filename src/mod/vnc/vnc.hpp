@@ -787,7 +787,7 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        drawable.set_pointer(Pointer(DotPointer{}));
+        drawable.set_pointer(dot_pointer());
 
         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
 

@@ -658,7 +658,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
         ||  this->south.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
-                    this->front_->set_pointer(Pointer(SizeNSPointer{}));
+                    this->front_->set_pointer(size_NS_pointer());
             }
         }
         else if (this->north_west_north.contains_pt(xPos, yPos)
@@ -667,14 +667,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->south_east_east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
-                    this->front_->set_pointer(Pointer(SizeNESWPointer{}));
+                    this->front_->set_pointer(size_NESW_pointer());
             }
         }
         else if (this->west.contains_pt(xPos, yPos)
              ||  this->east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
-                    this->front_->set_pointer(Pointer(SizeWEPointer{}));
+                    this->front_->set_pointer(size_WE_pointer());
             }
         }
         else if (this->south_west_west.contains_pt(xPos, yPos)
@@ -683,7 +683,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->north_east_north.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
-                    this->front_->set_pointer(Pointer(SizeNESWPointer{}));
+                    this->front_->set_pointer(size_NESW_pointer());
             }
         }
         else if ((this->title_bar_rect.contains_pt(xPos, yPos))
@@ -693,7 +693,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
             if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
                 this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
-                this->front_->set_pointer(Pointer(NormalPointer{}));
+                this->front_->set_pointer(normal_pointer());
             }
         }
         else {

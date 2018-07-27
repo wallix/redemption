@@ -95,7 +95,7 @@ public:
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
-        Pointer p(DrawableDefaultPointer{}, true);
+        Pointer p = drawable_default_pointer(true);
         auto av     = p.get_24bits_xor_mask();
         auto avmask = p.get_monochrome_and_mask();
         this->default_pointer.initialize(32, 32, av.data(), avmask.data());

@@ -433,7 +433,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
                    , Rect()
                    );
     auto const color_cxt = gdi::ColorCtx::depth16();
-    capture.set_pointer(Pointer(EditPointer{}));
+    capture.set_pointer(edit_pointer());
 
     bool ignore_frame_in_timeval = true;
 
