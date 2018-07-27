@@ -466,7 +466,7 @@ public:
         this->current_data[total_main_amount_data_rcv_from_server] += len;
     }
 
-    void mouse_mouve(int x, int y) {
+    void mouse_mouve(const int x, const int y) {
         if (this->last_x < 0 || this->last_y < 0) {
             this->last_x = x;
             this->last_y = y;
@@ -481,6 +481,9 @@ public:
                 y_shift *=  -1;
             }
             this->current_data[mouse_displacement] += x_shift + y_shift;
+
+            this->last_x = x;
+            this->last_y = y;
         }
     }
 
