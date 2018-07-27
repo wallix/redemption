@@ -198,7 +198,6 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
 
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
-    mod_rdp_params.bogus_linux_cursor                  = ini.get<cfg::mod_rdp::bogus_linux_cursor>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
 
     mod_rdp_params.proxy_managed_drives                = ini.get<cfg::mod_rdp::proxy_managed_drives>().c_str();

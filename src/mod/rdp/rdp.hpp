@@ -439,8 +439,6 @@ protected:
 
     const bool bogus_refresh_rect;
 
-    BogusLinuxCursor bogus_linux_cursor;
-
     std::string real_alternate_shell;
     std::string real_working_dir;
 
@@ -843,7 +841,6 @@ public:
         , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , bogus_linux_cursor(mod_rdp_params.bogus_linux_cursor)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
@@ -897,12 +894,6 @@ public:
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
-
-        if (this->bogus_linux_cursor == BogusLinuxCursor::smart) {
-            this->bogus_linux_cursor =
-                ((this->client_general_caps.os_major == OSMAJORTYPE_UNIX) ?
-                 BogusLinuxCursor::enable : BogusLinuxCursor::disable);
-        }
 
         if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
             this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives,
@@ -5262,7 +5253,7 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor, this->bogus_linux_cursor);
+        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
 
         this->cursors[pointer_idx] = cursor;
         drawable.set_pointer(cursor);
