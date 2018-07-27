@@ -873,8 +873,8 @@ public:
                  , info
                  , vars.get<cfg::context::target_service>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
-                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count())
-                 , false
+                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
+                 , false)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
