@@ -872,7 +872,7 @@ public:
                  , vars.get<cfg::globals::target_device>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , /*vars.get<cfg::rdp_metrics::activate_log_metrics>())*/false)
+                 , vars.get<cfg::rdp_metrics::activate_log_metrics>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {

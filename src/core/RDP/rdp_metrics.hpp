@@ -26,6 +26,7 @@
 #include <fcntl.h>
 #include <sys/uio.h>
 
+#include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 #include "core/client_info.hpp"
@@ -130,9 +131,7 @@ private:
     time_t utc_stat_time;
     const std::string path_template;
 
-    //TODO  fd unique
-    std::unique_ptr<int> unique_fd;
-    int fd = -1;
+    unique_fd fd;
 
     char header[1024];
 
@@ -174,6 +173,7 @@ public:
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
+      , fd(-1)
     {
         if (this->path_template.c_str() && activate) {
 
@@ -221,7 +221,7 @@ public:
 
         iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
 
-        ssize_t nwritten = ::writev(fd, iov, 1);
+        ssize_t nwritten = ::writev(fd.fd(), iov, 1);
 
         if (nwritten == -1) {
             // TODO bad filename
@@ -229,6 +229,7 @@ public:
         }
 
         ::close(this->fd);
+        this->fd.release();
     }
 
     bool cliprdr_init_format_list_done = false;
@@ -538,7 +539,8 @@ public:
         this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template.c_str(), utc_last_date_formated);
 
-        this->fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        int fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        this->fd.reset(fd);
         if (this->fd == -1) {
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd, this->complete_file_path);
         }
@@ -551,8 +553,8 @@ public:
         time ( &utc_time_date );
 
         if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-
             ::close(this->fd);
+            this->fd.release();
             this->utc_last_date = utc_time_date;
             this->new_day();
         }
@@ -579,17 +581,17 @@ public:
             std::string sentence(header_delta+sentence_data);
             sentence += "\n";
 
-            if (this->fd == -1) {
+            if (this->fd.fd() == -1) {
                 LOG(LOG_INFO, "sentence=%s", sentence);
             }
             else {
                 iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
 
-                ssize_t nwritten = ::writev(fd, iov, 1);
+                ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
 
                 if (nwritten == -1) {
                     // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd.fd(), this->complete_file_path);
                 }
             }
         }
