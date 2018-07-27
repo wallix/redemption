@@ -872,6 +872,7 @@ public:
                  , mod_rdp_params.target_host
                  , info
                  , vars.get<cfg::context::target_service>().c_str()
+                 , vars.get<cfg::globals::target_device>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
                  , /*vars.get<cfg::rdp_metrics::activate_log_metrics>())*/false)
@@ -1217,6 +1218,8 @@ public:
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
         }
+
+        this->metrics.disconnect();
     }
 
 protected:
@@ -1658,7 +1661,7 @@ public:
 
             if (bool(this->verbose & RDPVerbose::export_metrics)) {
                 if (device_flags & MOUSE_FLAG_MOVE) {
-                    this->metrics.mouse_mouve(x + y);
+                    this->metrics.mouse_mouve(x, y);
                 }
 
                 if (device_flags & MOUSE_FLAG_DOWN) {

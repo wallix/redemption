@@ -122,7 +122,8 @@ private:
         return " unknow_rdp_metrics_name=";
     }
 
-
+    int last_x = -1;
+    int last_y = -1;
 
     const int file_interval;
     char complete_file_path[4096] = {'\0'};
@@ -130,7 +131,7 @@ private:
     const std::string path_template;
 
     //TODO  fd unique
-    //std::unique_ptr<int, unique_fd_deleter> unique_fd;
+    std::unique_ptr<int> unique_fd;
     int fd = -1;
 
     char header[1024];
@@ -154,7 +155,7 @@ private:
                  sig[30], sig[31]);
     }
 
-    // TODO public/pricvate and stuff but test in process you know..
+    // TODO public/private and stuff but test in process you know..
 public:
     time_t utc_last_date;
     long int current_data[34] = { 0 };
@@ -165,7 +166,8 @@ public:
               , const char * primary_user
               , const char * target_host
               , const ClientInfo & info
-              , const char * target_service
+              , const std::string & target_service
+              , const std::string & target_device
               , const unsigned char * key_crypt
               , const long file_interval
               , const bool activate
@@ -182,22 +184,24 @@ public:
 
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
         char account_sig[1+SslSha256::DIGEST_LENGTH*2];
-        char hostname_sig[1+SslSha256::DIGEST_LENGTH*2];
+        //char hostname_sig[1+SslSha256::DIGEST_LENGTH*2];
         char target_service_sig[1+SslSha256::DIGEST_LENGTH*2];
         char session_info_sig[1+SslSha256::DIGEST_LENGTH*2];
-        char start_full_date_time[24];
 
-        this->set_current_formated_date(start_full_date_time, true, utc_stat_time);
+
+        std::string target_device_and_service(target_service+" "+target_device);
+
+
         this->encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
         this->encrypt(account_sig, account, std::strlen(account), key_crypt);
-        this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
-        this->encrypt(target_service_sig, target_service, std::strlen(target_service), key_crypt);
+        //this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
+        this->encrypt(target_service_sig, target_device_and_service.c_str(), target_device_and_service.length(), key_crypt);
 
         char session_info[1024];
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
-        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%s user=%s account=%s hostname=%s target_service=%s client_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
+        ::snprintf(this->header, sizeof(this->header), " Session_id=%s user=%s account=%s target_service_device=%s client_info=%s", session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
     }
 
 
@@ -205,7 +209,29 @@ public:
           ::close(this->fd);
     }
 
-        bool cliprdr_init_format_list_done = false;
+    void disconnect() {
+        char start_full_date_time[24];
+        timeval local_time = tvtime();
+        this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+
+        char header_delta[2048];
+        ::snprintf(header_delta, sizeof(header_delta), "%s%s", start_full_date_time, this->header);
+        std::string sentence(header_delta);
+        sentence += "disconnection\n";
+
+        iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+
+        ssize_t nwritten = ::writev(fd, iov, 1);
+
+        if (nwritten == -1) {
+            // TODO bad filename
+            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
+        }
+
+        ::close(this->fd);
+    }
+
+    bool cliprdr_init_format_list_done = false;
 
     void server_other_channel_data(long int len) {
         this->current_data[total_other_amount_data_rcv_from_server] += len;
@@ -273,7 +299,6 @@ public:
     void set_client_rdpdr_metrics(InStream & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             this->current_data[disk_redirection_channel_data_from_client] += length;
-
         }
     }
 
@@ -441,8 +466,22 @@ public:
         this->current_data[total_main_amount_data_rcv_from_server] += len;
     }
 
-    void mouse_mouve(int xy) {
-        this->current_data[mouse_displacement] += xy;
+    void mouse_mouve(int x, int y) {
+        if (this->last_x < 0 || this->last_y < 0) {
+            this->last_x = x;
+            this->last_y = y;
+        } else {
+
+            int x_shift = x - this->last_x;
+            if (x_shift < 0) {
+                x_shift *=  -1;
+            }
+            int y_shift = y - this->last_y;
+            if (y_shift < 0) {
+                y_shift *=  -1;
+            }
+            this->current_data[mouse_displacement] += x_shift + y_shift;
+        }
     }
 
     void key_pressed() {
@@ -519,34 +558,41 @@ public:
             this->utc_last_date = utc_time_date;
             this->new_day();
         }
-        const long int delta_time = utc_time_date - this->utc_stat_time;
-
-        char header_delta[2048];
-        ::snprintf(header_delta, sizeof(header_delta), "%s%ld", this->header, delta_time);
 
         // TODO sentence -> iovec
-        std::string sentence(header_delta);
+        std::string sentence_data;
         for (int i = 0; i < 32; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
                 char current_metrics[128];
                 ::snprintf(current_metrics, sizeof(current_metrics), "%s%ld", this->rdp_metrics_name(i), this->current_data[i]);
-                sentence += current_metrics;
+                sentence_data += current_metrics;
                 this->previous_data[i] = this->current_data[i];
             }
         }
-        sentence +=  "\n";
 
-        if (this->fd == -1) {
-            LOG(LOG_INFO, "sentence=%s", sentence);
-        }
-        else {
-            iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+        if (!sentence_data.empty()) {
 
-            ssize_t nwritten = ::writev(fd, iov, 1);
+            char start_full_date_time[24];
+            timeval local_time = tvtime();
+            this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
 
-            if (nwritten == -1) {
-                // TODO bad filename
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
+            char header_delta[2048];
+            ::snprintf(header_delta, sizeof(header_delta), "%s%s", start_full_date_time, this->header);
+            std::string sentence(header_delta+sentence_data);
+            sentence += "\n";
+
+            if (this->fd == -1) {
+                LOG(LOG_INFO, "sentence=%s", sentence);
+            }
+            else {
+                iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+
+                ssize_t nwritten = ::writev(fd, iov, 1);
+
+                if (nwritten == -1) {
+                    // TODO bad filename
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd, this->complete_file_path);
+                }
             }
         }
     }
