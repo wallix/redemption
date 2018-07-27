@@ -872,7 +872,7 @@ public:
                  , vars.get<cfg::globals::target_device>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , true)
+                 , vars.get<cfg::rdp_metrics::activate_log_metrics>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1210,7 +1210,9 @@ public:
             this->redir_info = RedirectionInfo();
         }
 
-        this->metrics.disconnect();
+        if (this->metrics.active()) {
+            this->metrics.disconnect();
+        }
     }
 
 protected:
@@ -1619,7 +1621,9 @@ public:
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
-            this->metrics.key_pressed();
+            if (this->metrics.active()) {
+                this->metrics.key_pressed();
+            }
 
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
@@ -1630,7 +1634,9 @@ public:
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
-            this->metrics.key_pressed();
+            if (this->metrics.active()) {
+                this->metrics.key_pressed();
+            }
         }
     }
 
@@ -1650,7 +1656,7 @@ public:
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
 
-            if (bool(this->verbose & RDPVerbose::export_metrics)) {
+            if (this->metrics.active()) {
                 if (device_flags & MOUSE_FLAG_MOVE) {
                     this->metrics.mouse_mouve(x, y);
                 }
@@ -1697,33 +1703,33 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     InStream metrics_stream = chunk.clone();
                     this->metrics.set_client_cliprdr_metrics(metrics_stream, length, flags);
                 }
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.client_rail_channel_data(length);
                 }
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     InStream metrics_stream = chunk.clone();
                     this->metrics.set_client_rdpdr_metrics(metrics_stream, length, flags);
                 }
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.client_other_channel_data(length);
                 }
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.client_other_channel_data(length);
                 }
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
@@ -1731,7 +1737,7 @@ public:
     }
 
     void log_metrics() override {
-        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+        if (this->metrics.active()) {
             this->metrics.log();
         }
     }
@@ -2026,7 +2032,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
-        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+        if (this->metrics.active()) {
             this->metrics.server_main_channel_data(stream.in_remain());
         }
 
@@ -2207,7 +2213,7 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
-        if (bool(this->verbose & RDPVerbose::export_metrics)) {
+        if (this->metrics.active()) {
             this->metrics.server_main_channel_data(stream.in_remain());
         }
 
@@ -2288,33 +2294,33 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     InStream metrics_stream = sec.payload.clone();
                     this->metrics.set_server_cliprdr_metrics(metrics_stream, length, flags);
                 }
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.server_rail_channel_data(length);
                 }
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     InStream metrics_stream = sec.payload.clone();
                     this->metrics.set_server_rdpdr_metrics(metrics_stream, length, flags);
                 }
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.server_other_channel_data(length);
                 }
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
-                if (bool(this->verbose & RDPVerbose::export_metrics)) {
+                if (this->metrics.active()) {
                     this->metrics.server_other_channel_data(length);
                 }
 
@@ -5122,7 +5128,9 @@ public:
     }
 
     void set_last_tram_len(size_t tram_length) override {
-        this->metrics.client_main_channel_data(tram_length);
+        if (this->metrics.active()) {
+            this->metrics.client_main_channel_data(tram_length);
+        }
     }
 
 

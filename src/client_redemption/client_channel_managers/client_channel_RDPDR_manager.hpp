@@ -750,7 +750,7 @@ public:
                                 rdpdr::DeviceReadResponse deviceReadResponse(portion_length);
                                 deviceReadResponse.emit(out_stream);
 
-                                this->process_client_clipboard_out_data( channel_names::rdpdr
+                                this->process_client_channel_out_data( channel_names::rdpdr
                                                                     , 20 + portion_length
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20

@@ -140,6 +140,9 @@ private:
 
     uint32_t file_contents_format_ID = 0;
 
+    const bool active_;
+
+
     void encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
         SslHMAC_Sha256 sha256(key_crypt, 32);
         sha256.update(byte_ptr_cast(src), src_len);
@@ -159,6 +162,11 @@ public:
     time_t utc_last_date;
     long int current_data[34] = { 0 };
 
+public:
+    bool active() {
+        return this->active_;
+    }
+
     RDPMetrics( const std::string & path_template
               , const char * session_id
               , const char * account
@@ -174,6 +182,7 @@ public:
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
       , fd(-1)
+      , active_(activate)
     {
         if (this->path_template.c_str() && activate) {
 
@@ -591,7 +600,7 @@ public:
 
                 if (nwritten == -1) {
                     // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd.fd(), this->complete_file_path);
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), this->complete_file_path);
                 }
             }
         }

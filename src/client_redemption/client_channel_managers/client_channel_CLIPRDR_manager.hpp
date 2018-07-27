@@ -173,7 +173,6 @@ public:
       : ClientChannelManager(client)
       , verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
-      //, client(client)
       , _waiting_for_data(false)
       , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)
       , arbitrary_scale(config.arbitrary_scale)
@@ -476,7 +475,6 @@ public:
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
                             }
 
-                            uint32_t format_id_to_use = 0;
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
                             StaticOutStream<256> out_streamRequest;
                             formatDataRequestPDU.emit(out_streamRequest);
@@ -567,7 +565,7 @@ public:
                                     );
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_clipboard_out_data(
+                                    this->process_client_channel_out_data(
                                             channel_names::cliprdr
                                         , total_length
                                         , out_stream_first_part
@@ -591,7 +589,7 @@ public:
 
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_clipboard_out_data(
+                                    this->process_client_channel_out_data(
                                         channel_names::cliprdr
                                         , total_length
                                         , out_stream_first_part
@@ -735,7 +733,7 @@ public:
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-                                this->process_client_clipboard_out_data(
+                                this->process_client_channel_out_data(
                                     channel_names::cliprdr
                                     , total_length
                                     , out_stream_first_part

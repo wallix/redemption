@@ -52,7 +52,6 @@ public:
     // CONTROLLER
     virtual void connexionReleased() {
         this->client->connect();
-
     }
 
     virtual void disconnexionReleased() {
