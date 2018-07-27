@@ -33,8 +33,8 @@
 
 #include "core/RDP/rdp_metrics.hpp"
 
-//constexpr const char * templace_path_file = "/tmp/test_metrics-";
-constexpr const char * templace_path_file = "tests/core/RDP/";
+constexpr const char * templace_path_file = "/tmp/test_metrics-";
+//constexpr const char * templace_path_file = "tests/core/RDP/";
 
 RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver)
 {

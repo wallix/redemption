@@ -197,7 +197,7 @@ public:
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
-        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%s user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
+        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%s user=%s account=%s hostname=%s target_service=%s client_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
     }
 
 
