@@ -120,6 +120,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader)
     std::string file_content(buff);
 
     RED_CHECK_EQUAL(file_content, expected_log);
+    ::close(fd);
     remove(complete_file_path);
 }
 
@@ -170,6 +171,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
         std::string file_content(buff);
 
         RED_CHECK_EQUAL(file_content, expected_log_data);
+        ::close(fd);
     }
 
     remove(complete_file_path);
@@ -192,6 +194,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
         std::string file_content(buff);
 
         RED_CHECK_EQUAL(expected_log_data_2, file_content);
+        ::close(fd);
     }
 
     remove(complete_file_path);
@@ -275,6 +278,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
     std::string file_content(buff);
 
     RED_CHECK_EQUAL(file_content, expected_log_data_2);
+    ::close(fd);
 
     remove(complete_file_path);
 }
@@ -358,5 +362,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
     std::string file_content(buff);
 
     RED_CHECK_EQUAL(expected_log, file_content);
+    ::close(fd);
     remove(complete_file_path);
 }

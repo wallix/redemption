@@ -403,10 +403,12 @@ public:
                                 LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
                             }
 
-                            int formatAvailable = chunk.in_uint32_le();
+                            int data_len = chunk.in_uint32_le();
+                            if (data_len > chunk.in_remain()) {
+                                LOG(LOG_WARNING, "Server Format List PDU data length(%d) longer than chunk(%zu)", data_len, chunk.in_remain());
+                            }
 
                             bool isSharedFormat = false;
-
                             uint32_t formatID = 0;
                             std::string format_name;
 
@@ -1088,8 +1090,6 @@ public:
     }
 
     void send_FormatListPDU() {
-
-        LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 5");
 
         StaticOutStream<1600> out_stream;
 

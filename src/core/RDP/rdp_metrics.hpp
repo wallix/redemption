@@ -179,7 +179,7 @@ public:
 
             time ( &(this->utc_last_date) );
             this->utc_stat_time = this->utc_last_date;
-            this->new_day();
+            this->new_day(this->utc_stat_time);
         }
 
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
@@ -188,13 +188,10 @@ public:
         char target_service_sig[1+SslSha256::DIGEST_LENGTH*2];
         char session_info_sig[1+SslSha256::DIGEST_LENGTH*2];
 
-
         std::string target_device_and_service(target_service+" "+target_device);
-
 
         this->encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
         this->encrypt(account_sig, account, std::strlen(account), key_crypt);
-        //this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
         this->encrypt(target_service_sig, target_device_and_service.c_str(), target_device_and_service.length(), key_crypt);
 
         char session_info[1024];
@@ -534,7 +531,12 @@ public:
     }
 
 
-    void new_day() {
+    void new_day(time_t utc_time_date) {
+        if (this->fd.fd() !=  -1) {
+            ::close(this->fd.fd());
+            this->fd.release();
+        }
+        this->utc_last_date = utc_time_date;
         char utc_last_date_formated[24] = {'\0'};
         this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template.c_str(), utc_last_date_formated);
@@ -553,9 +555,7 @@ public:
         time ( &utc_time_date );
 
         if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-            ::close(this->fd.fd());
-            this->fd.release();
-            this->utc_last_date = utc_time_date;
+
             this->new_day();
         }
 
