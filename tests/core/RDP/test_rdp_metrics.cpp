@@ -227,7 +227,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 26+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, "1"3);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, 13);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -237,7 +237,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", "1");
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
