@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::close, lang),             std::string("Close"));
     RED_CHECK_EQUAL(TR(trkeys::refused, lang),           std::string("Refused"));
     RED_CHECK_EQUAL(TR(trkeys::username, lang),          std::string("Username"));
-    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),   std::string("Your password will expire soon. Please change it."));
+    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),   std::string("Your Bastion password will expire soon. Please change it."));
     RED_CHECK_EQUAL(TR(trkeys::protocol, lang),          std::string("Protocol"));
     RED_CHECK_EQUAL(TR(trkeys::target, lang),            std::string("Target"));
     RED_CHECK_EQUAL(TR(trkeys::close_time, lang),        std::string("Close Time"));
@@ -88,7 +88,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::close, lang),              std::string("Fermer"));
     RED_CHECK_EQUAL(TR(trkeys::refused, lang),            std::string("Refuser"));
     RED_CHECK_EQUAL(TR(trkeys::username, lang),           std::string("Nom d'utilisateur"));
-    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    std::string("Votre mot de passe va bientôt expirer. Veuillez le changer."));
+    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    std::string("Votre mot de passe Bastion va bientôt expirer. Veuillez le changer."));
     RED_CHECK_EQUAL(TR(trkeys::protocol, lang),           std::string("Protocole"));
     RED_CHECK_EQUAL(TR(trkeys::target, lang),             std::string("Cible"));
     RED_CHECK_EQUAL(TR(trkeys::close_time, lang),         std::string("Date de clôture"));
