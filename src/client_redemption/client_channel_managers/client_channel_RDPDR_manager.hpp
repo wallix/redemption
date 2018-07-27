@@ -32,7 +32,6 @@
 #include "utils/log.hpp"
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
-#include "core/channel_list.hpp"
 
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
@@ -108,10 +107,10 @@
 
 
 
-class ClientChannelRDPDRManager {
+class ClientChannelRDPDRManager : public ClientChannelManager{
 
     RDPVerbose verbose;
-    ClientRedemptionAPI * client;
+//     ClientRedemptionAPI * client;
 
     ClientIODiskAPI * impl_io_disk;
 
@@ -170,8 +169,9 @@ public:
 
 
     ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
-      : verbose(verbose)
-      , client(client)
+      : ClientChannelManager(client)
+      , verbose(verbose)
+//       , client(client)
       , impl_io_disk(impl_io_disk)
       , ioCode1(config.ioCode1)
       , extendedPDU(config.extendedPDU)

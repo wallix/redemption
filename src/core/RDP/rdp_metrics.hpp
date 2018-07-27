@@ -556,7 +556,7 @@ public:
 
         if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
 
-            this->new_day();
+            this->new_day(utc_time_date);
         }
 
         // TODO sentence -> iovec
