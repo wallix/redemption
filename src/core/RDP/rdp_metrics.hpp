@@ -37,6 +37,8 @@
 
 class RDPMetrics
 {
+
+private:
     enum : int {
         total_main_amount_data_rcv_from_client,
         total_right_clicks,
@@ -120,84 +122,29 @@ class RDPMetrics
         return " unknow_rdp_metrics_name=";
     }
 
-    /*
-                     o8o                            .
-                     `"'                          .o8
-oo.ooooo.  oooo d8b oooo  oooo    ooo  .oooo.   .o888oo  .ooooo.
- 888' `88b `888""8P `888   `88.  .8'  `P  )88b    888   d88' `88b
- 888   888  888      888    `88..8'    .oP"888    888   888ooo888
- 888   888  888      888     `888'    d8(  888    888 . 888    .o
- 888bod8P' d888b    o888o     `8'     `Y888""8o   "888" `Y8bod8P'
- 888
-o888o
 
 
-ˇˇˇˇˇˇ
-     */
-public:
-    /*
-^^^^^^
-
-                     o8o                            .
-                     `"'                          .o8
-oo.ooooo.  oooo d8b oooo  oooo    ooo  .oooo.   .o888oo  .ooooo.
- 888' `88b `888""8P `888   `88.  .8'  `P  )88b    888   d88' `88b
- 888   888  888      888    `88..8'    .oP"888    888   888ooo888
- 888   888  888      888     `888'    d8(  888    888 . 888    .o
- 888bod8P' d888b    o888o     `8'     `Y888""8o   "888" `Y8bod8P'
- 888
-o888o
-
-     */
     const int file_interval;
-
-    time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
     time_t utc_stat_time;
     const std::string path_template;
 
-    /*
-     *
- .o88o.       .o8                                       o8o
- 888 `"      "888                                       `"'
-o888oo   .oooo888              oooo  oooo  ooo. .oo.   oooo   .ooooo oo oooo  oooo   .ooooo.
- 888    d88' `888              `888  `888  `888P"Y88b  `888  d88' `888  `888  `888  d88' `88b
- 888    888   888               888   888   888   888   888  888   888   888   888  888ooo888
- 888    888   888               888   888   888   888   888  888   888   888   888  888    .o
-o888o   `Y8bod88P" ooooooooooo  `V88V"V8P' o888o o888o o888o `V8bod888   `V88V"V8P' `Y8bod8P'
-                                                                   888.
-                                                                   8P'
-                                                                   "
-
-    ˇˇˇˇˇˇˇˇˇˇˇ
-     */
+    //TODO  fd unique
     int fd = -1;
-    /*
-    ^^^^^^^^^^^
-
- .o88o.       .o8                                       o8o
- 888 `"      "888                                       `"'
-o888oo   .oooo888              oooo  oooo  ooo. .oo.   oooo   .ooooo oo oooo  oooo   .ooooo.
- 888    d88' `888              `888  `888  `888P"Y88b  `888  d88' `888  `888  `888  d88' `88b
- 888    888   888               888   888   888   888   888  888   888   888   888  888ooo888
- 888    888   888               888   888   888   888   888  888   888   888   888  888    .o
-o888o   `Y8bod88P" ooooooooooo  `V88V"V8P' o888o o888o o888o `V8bod888   `V88V"V8P' `Y8bod8P'
-                                                                   888.
-                                                                   8P'
-                                                                   "
-     */
-
-
 
     char header[1024];
 
-    long int current_data[34] = { 0 };
+
     long int previous_data[34] = { 0 };
 
     uint32_t file_contents_format_ID = 0;
 
-    RDPMetrics( const time_t start_time
-              , const std::string & path_template
+    // TODO public/pricvate and stuff but test in process you know..
+public:
+    time_t utc_last_date;
+    long int current_data[34] = { 0 };
+
+    RDPMetrics( const std::string & path_template
               , const uint32_t session_id
               , const char * account
               , const char * primary_user
@@ -205,73 +152,17 @@ o888o   `Y8bod88P" ooooooooooo  `V88V"V8P' o888o o888o o888o `V8bod888   `V88V"V
               , const ClientInfo & info
               , const char * target_service
               , const unsigned char * key_crypt
-              /**
-               *
-             .         .o8
-           .o8        "888
- .oooo.o .o888oo  .oooo888
-d88(  "8   888   d88' `888
-`"Y88b.    888   888   888  o8o o8o
-o.  )88b   888 . 888   888  `"' `"'
-8""888P'   "888" `Y8bod88P" o8o o8o
-                            `"' `"'
-
-          `888
- .ooooo.   888 .oo.   oooo d8b  .ooooo.  ooo. .oo.    .ooooo.
-d88' `"Y8  888P"Y88b  `888""8P d88' `88b `888P"Y88b  d88' `88b
-888        888   888   888     888   888  888   888  888   888 o8o o8o
-888   .o8  888   888   888     888   888  888   888  888   888 `"' `"'
-`Y8bod8P' o888o o888o d888b    `Y8bod8P' o888o o888o `Y8bod8P' o8o o8o
-                                                               `"' `"'
-
-      .o8                                     .    o8o
-     "888                                   .o8    `"'
- .oooo888  oooo  oooo  oooo d8b  .oooo.   .o888oo oooo   .ooooo.  ooo. .oo.
-d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
-888   888   888   888   888      .oP"888    888    888  888   888  888   888
-888   888   888   888   888     d8(  888    888 .  888  888   888  888   888
-`Y8bod88P"  `V88V"V8P' d888b    `Y888""8o   "888" o888o `Y8bod8P' o888o o888o
-
-
-                ˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇˇ
-               */
               , const long file_interval
-              /**
-               *
-                ^^^^^^^^^^^^^^^^^^^^^^^^
-
-             .         .o8
-           .o8        "888
- .oooo.o .o888oo  .oooo888
-d88(  "8   888   d88' `888
-`"Y88b.    888   888   888  o8o o8o
-o.  )88b   888 . 888   888  `"' `"'
-8""888P'   "888" `Y8bod88P" o8o o8o
-                            `"' `"'
-
-          `888
- .ooooo.   888 .oo.   oooo d8b  .ooooo.  ooo. .oo.    .ooooo.
-d88' `"Y8  888P"Y88b  `888""8P d88' `88b `888P"Y88b  d88' `88b
-888        888   888   888     888   888  888   888  888   888 o8o o8o
-888   .o8  888   888   888     888   888  888   888  888   888 `"' `"'
-`Y8bod8P' o888o o888o d888b    `Y8bod8P' o888o o888o `Y8bod8P' o8o o8o
-                                                               `"' `"'
-
-      .o8                                     .    o8o
-     "888                                   .o8    `"'
- .oooo888  oooo  oooo  oooo d8b  .oooo.   .o888oo oooo   .ooooo.  ooo. .oo.
-d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
-888   888   888   888   888      .oP"888    888    888  888   888  888   888
-888   888   888   888   888     d8(  888    888 .  888  888   888  888   888
-`Y8bod88P"  `V88V"V8P' d888b    `Y888""8o   "888" o888o `Y8bod8P' o888o o888o
-
-               */
+              , const bool activate
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
     {
-        if (this->path_template.c_str()) {
-            this->utc_stat_time = start_time;
+        if (this->path_template.c_str() && activate) {
+
+            time ( &(this->utc_last_date) );
+            this->utc_stat_time = this->utc_last_date;
+            this->new_day();
         }
 
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2];
@@ -281,7 +172,7 @@ d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
         char session_info_sig[1+SslSha256::DIGEST_LENGTH*2];
         char start_full_date_time[24];
 
-        this->set_current_formated_date(start_full_date_time, true, start_time);
+        this->set_current_formated_date(start_full_date_time, true, utc_stat_time);
         this->encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
         this->encrypt(account_sig, account, std::strlen(account), key_crypt);
         this->encrypt(hostname_sig, info.hostname, std::strlen(info.hostname), key_crypt);
@@ -614,15 +505,13 @@ d88' `888  `888  `888  `888""8P `P  )88b    888   `888  d88' `88b `888P"Y88b
     }
 
 
-    // TODO not default value
-    void log(time_t utc_time_date = 0)
-    {
-        // TODO NoooooooOOOOOOOoooooooooooN
-        if (!utc_time_date) {
-            time(&utc_time_date);
-        }
+    void log() {
 
-        if ((utc_time_date - this->utc_last_date) >= this->file_interval || (this->fd < 0)) {
+        time_t utc_time_date;
+        time ( &utc_time_date );
+
+        if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
+
             ::close(this->fd);
             this->utc_last_date = utc_time_date;
             this->new_day();

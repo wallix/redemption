@@ -865,8 +865,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( beginning
-                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , redir_info.session_id
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
