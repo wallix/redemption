@@ -639,7 +639,7 @@ struct Pointer : public BasePointer {
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
     friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor, BogusLinuxCursor bogus_linux_cursor);
-    friend Pointer normal_pointer(void);
+    friend Pointer predefined_pointer(const char *);
 
     unsigned maskline_bytes = 0;
     unsigned xorline_bytes = 0;
@@ -1409,14 +1409,44 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
     return cursor;
 }
 
-inline Pointer normal_pointer(void)
+inline Pointer predefined_pointer(const char * def)
 {
     const unsigned inverted = 0;
     const unsigned width = 32;
     const unsigned height = 32;
     Pointer cursor(CursorSize(width, height), Hotspot(0, 0));
+    uint8_t * dest      = cursor.data;
+    uint8_t * dest_mask = cursor.mask;
+    const char    * src = def;
+    for (size_t y = 0 ; y < height ; y++){
+        unsigned bit_count = 7;
+        uint8_t res_mask = 0;
+        for (size_t x = 0 ; x < width ; x++){
+            const char c = *src;
+            uint8_t v = (((c == 'X')||(c == '-'))^inverted);
+            ::out_bytes_le(dest, 3, v?0xFFFFFF:0);
+            dest += 3;
+            res_mask |= ((c == '.')||(c == '-'))?(1 << bit_count):0;
+            if (bit_count == 0){
+                *dest_mask =  res_mask;
+                dest_mask++;
+                res_mask = 0;
+                bit_count = 8;
+            }
+            bit_count--;
+            src++;
+        }
+        if (bit_count != 7){
+            *dest_mask = res_mask;
+        }
+    }
 
-    const char * def =
+    return cursor;
+}
+
+inline Pointer normal_pointer(void)
+{
+    return predefined_pointer(
     /* 0000 */ "................................"
     /* 0060 */ "................................"
     /* 00c0 */ "................................"
@@ -1448,33 +1478,81 @@ inline Pointer normal_pointer(void)
     /* 0a80 */ "X++X............................"
     /* 0ae0 */ "X+X............................."
     /* 0b40 */ "XX.............................."
-    /* 0ba0 */ "X...............................";
-
-    uint8_t * dest      = cursor.data;
-    uint8_t * dest_mask = cursor.mask;
-    const char    * src = def;
-    for (size_t y = 0 ; y < height ; y++){
-        unsigned bit_count = 7;
-        uint8_t res_mask = 0;
-        for (size_t x = 0 ; x < width ; x++){
-            const char c = *src;
-            uint8_t v = (((c == 'X')||(c == '-'))^inverted);
-            ::out_bytes_le(dest, 3, v?0xFFFFFF:0);
-            dest += 3;
-            res_mask |= ((c == '.')||(c == '-'))?(1 << bit_count):0;
-            if (bit_count == 0){
-                *dest_mask =  res_mask;
-                dest_mask++;
-                res_mask = 0;
-                bit_count = 8;
-            }
-            bit_count--;
-            src++;
-        }
-        if (bit_count != 7){
-            *dest_mask = res_mask;
-        }
-    }
-
-    return cursor;
+    /* 0ba0 */ "X..............................."
+    );
 }
+
+
+// template <const char * def>
+// inline Pointer const_pointer(void)
+// {
+//     const unsigned inverted = 0;
+//     const unsigned width = 32;
+//     const unsigned height = 32;
+//     Pointer cursor(CursorSize(width, height), Hotspot(0, 0));
+//
+//     uint8_t * dest      = cursor.data;
+//     uint8_t * dest_mask = cursor.mask;
+//     const char    * src = def;
+//     for (size_t y = 0 ; y < height ; y++){
+//         unsigned bit_count = 7;
+//         uint8_t res_mask = 0;
+//         for (size_t x = 0 ; x < width ; x++){
+//             const char c = *src;
+//             uint8_t v = (((c == 'X')||(c == '-'))^inverted);
+//             ::out_bytes_le(dest, 3, v?0xFFFFFF:0);
+//             dest += 3;
+//             res_mask |= ((c == '.')||(c == '-'))?(1 << bit_count):0;
+//             if (bit_count == 0){
+//                 *dest_mask =  res_mask;
+//                 dest_mask++;
+//                 res_mask = 0;
+//                 bit_count = 8;
+//             }
+//             bit_count--;
+//             src++;
+//         }
+//         if (bit_count != 7){
+//             *dest_mask = res_mask;
+//         }
+//     }
+//
+//     return cursor;
+// }
+//
+// inline Pointer normal_pointer(void){
+//     return const_pointer<
+//     /* 0000 */ "................................"
+//     /* 0060 */ "................................"
+//     /* 00c0 */ "................................"
+//     /* 0120 */ "................................"
+//     /* 0180 */ "................................"
+//     /* 01e0 */ "................................"
+//     /* 0240 */ "................................"
+//     /* 02a0 */ "................................"
+//     /* 0300 */ "................................"
+//     /* 0360 */ "................................"
+//     /* 03c0 */ "................................"
+//     /* 0420 */ "................................"
+//     /* 0480 */ "................................"
+//     /* 04e0 */ ".......XX......................."
+//     /* 0540 */ "......X++X......................"
+//     /* 05a0 */ "......X++X......................"
+//     /* 0600 */ ".....X++X......................."
+//     /* 0660 */ "X....X++X......................."
+//     /* 06c0 */ "XX..X++X........................"
+//     /* 0720 */ "X+X.X++X........................"
+//     /* 0780 */ "X++X++X........................."
+//     /* 07e0 */ "X+++++XXXXX....................."
+//     /* 0840 */ "X++++++++X......................"
+//     /* 08a0 */ "X+++++++X......................."
+//     /* 0900 */ "X++++++X........................"
+//     /* 0960 */ "X+++++X........................."
+//     /* 09c0 */ "X++++X.........................."
+//     /* 0a20 */ "X+++X..........................."
+//     /* 0a80 */ "X++X............................"
+//     /* 0ae0 */ "X+X............................."
+//     /* 0b40 */ "XX.............................."
+//     /* 0ba0 */ "X..............................."
+//     >();
+// }
