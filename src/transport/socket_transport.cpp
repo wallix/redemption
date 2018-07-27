@@ -171,16 +171,16 @@ bool SocketTransport::disconnect()
     this->tls.reset();
     shutdown(this->sck, 2); // 2 = SHUT_RDWR
     close(this->sck);
-    this->sck = 0;
+    this->sck = INVALID_SOCKET;
     return true;
 }
 
 bool SocketTransport::connect()
 {
-    if (this->sck <= 0){
+    if (this->sck <= INVALID_SOCKET){
         this->sck = ip_connect(this->ip_address, this->port, 3, 1000).release();
     }
-    return this->sck > 0;
+    return this->sck > INVALID_SOCKET;
 }
 
 size_t SocketTransport::do_partial_read(uint8_t * buffer, size_t len)
