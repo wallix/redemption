@@ -762,7 +762,7 @@ void FileToGraphic::interpret_order()
         this->mouse_x = this->stream.in_uint16_le();
         this->mouse_y = this->stream.in_uint16_le();
         uint8_t cache_idx     = this->stream.in_uint8();
-        const Pointer cursor(PointerLoader2(this->stream));
+        const Pointer cursor = pointer_loader_2(this->stream));
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
         for (gdi::GraphicApi * gd : this->graphic_consumers){

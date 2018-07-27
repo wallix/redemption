@@ -83,16 +83,6 @@ public:
     {}
 };
 
-struct ConstPointer : public BasePointer {
-    const char * data;
-    explicit ConstPointer(const CursorSize & d, const Hotspot & hs, const char * data)
-        : BasePointer(d, hs)
-        , data(data)
-    {}
-};
-
-
-
 static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer);
 static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer)
 {
@@ -126,42 +116,6 @@ static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * m
     }
 }
 
-
-struct PointerLoader2
-{
-    CursorSize dimensions;
-    unsigned maskline_bytes;
-    unsigned xorline_bytes;
-    uint8_t data_bpp;
-    Hotspot hotspot;
-    array_view_const_u8 data;
-    array_view_const_u8 mask;
-
-    explicit PointerLoader2(InStream & stream)
-        : dimensions(0, 0)
-        , data_bpp{0}
-        , hotspot(0, 0)
-    {
-        uint8_t width    = stream.in_uint8();
-        uint8_t height   = stream.in_uint8();
-        this->dimensions = CursorSize(width, height);
-        this->data_bpp = stream.in_uint8();
-        uint8_t hotspot_x = stream.in_uint8();
-        uint8_t hotspot_y = stream.in_uint8();
-        this->hotspot = Hotspot(hotspot_x, hotspot_y);
-        uint16_t dlen = stream.in_uint16_le();
-        uint16_t mlen = stream.in_uint16_le();
-        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
-        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT * 1 / 8);
-        auto data = stream.in_uint8p(dlen);
-        auto mask = stream.in_uint8p(mlen);
-        this->data = make_array_view(data, dlen);
-        this->mask = make_array_view(mask, mlen);
-        this->maskline_bytes = mlen / height;
-        this->xorline_bytes = dlen / height;
-
-    }
-};
 
 struct PointerLoader32x32
 {
@@ -198,6 +152,12 @@ struct Pointer : public BasePointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
+    friend Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
+                           uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
+                           uint16_t dlen, const uint8_t * data,
+                           uint16_t mlen, const uint8_t * mask,
+                           bool clean_up_32_bpp_cursor);
+    inline Pointer pointer_loader_2(InStream & stream);
     friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
@@ -239,10 +199,7 @@ public:
     };
 
 private:
-//    unsigned bpp;
-
     uint8_t data[DATA_SIZE];
-
     uint8_t mask[MASK_SIZE];
 
     bool only_black_white = false;
@@ -329,30 +286,10 @@ public:
        LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
     }
 
-    explicit Pointer(const PointerLoader2 pl)
-     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
-    {
-    }
-
     explicit Pointer(const PointerLoader32x32 pl)
      : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
     {
     }
-
-//     explicit Pointer(const PointerLoaderNew pl)
-//      : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
-//     {
-//         unsigned Bpp = 3;
-//         this->only_black_white = ::is_black_and_white(
-//                 pl.data.data(),
-//                 this->dimensions.width,
-//                 this->dimensions.height,
-//                 ::even_pad_length(this->dimensions.width * Bpp),
-//                 Bpp);
-//     }
-
-
-
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
     : BasePointer(d, hs)
@@ -849,29 +786,14 @@ struct ARGB32Pointer {
     }
 };
 
-inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor)
+
+inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
+                           uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
+                           uint16_t dlen, const uint8_t * data,
+                           uint16_t mlen, const uint8_t * mask,
+                           bool clean_up_32_bpp_cursor)
 {
-    auto hotspot_x      = stream.in_uint16_le();
-    auto hotspot_y      = stream.in_uint16_le();
-    auto width          = stream.in_uint16_le();
-    auto height         = stream.in_uint16_le();
-
-    Pointer cursor(CursorSize(width, height), Hotspot(hotspot_x, hotspot_y));
-
-    uint16_t mlen = stream.in_uint16_le(); /* mask length */
-    uint16_t dlen = stream.in_uint16_le(); /* data length */
-
-    assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-    assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
-
-    if (!stream.in_check_rem(mlen + dlen)){
-        LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
-            mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
-        throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
-    }
-
-    const uint8_t * data = stream.in_uint8p(dlen);
-    const uint8_t * mask = stream.in_uint8p(mlen);
+    Pointer cursor(CursorSize(width, height), Hotspot(hsx, hsy));
 
     switch (data_bpp) {
     case 1:
@@ -957,6 +879,56 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
     }
     return cursor;
 }
+
+inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor)
+{
+    auto hsx      = stream.in_uint16_le();
+    auto hsy      = stream.in_uint16_le();
+    auto width    = stream.in_uint16_le();
+    auto height   = stream.in_uint16_le();
+
+    uint16_t mlen = stream.in_uint16_le(); /* mask length */
+    uint16_t dlen = stream.in_uint16_le(); /* data length */
+
+    assert(::even_pad_length(::nbbytes(width)) == mlen / height);
+    assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
+
+    if (!stream.in_check_rem(mlen + dlen)){
+        LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
+            mlen, dlen, static_cast<uint16_t>(mlen+dlen), stream.in_remain());
+        throw Error(ERR_RDP_PROCESS_NEW_POINTER_LEN_NOT_OK);
+    }
+
+    const uint8_t * data = stream.in_uint8p(dlen);
+    const uint8_t * mask = stream.in_uint8p(mlen);
+
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
+}
+
+
+inline Pointer pointer_loader_2(InStream & stream)
+{
+    uint8_t width     = stream.in_uint8();
+    uint8_t height    = stream.in_uint8();
+    uint8_t data_bpp  = stream.in_uint8();
+    uint8_t hsx       = stream.in_uint8();
+    uint8_t hsy       = stream.in_uint8();
+    uint16_t dlen     = stream.in_uint16_le();
+    uint16_t mlen     = stream.in_uint16_le();
+
+    if (dlen > Pointer::DATA_SIZE){
+        LOG(LOG_ERR, "Corrupted recording: recorded mouse data length too large");
+    }
+
+    if (mlen > Pointer::MASK_SIZE){
+        LOG(LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
+    }
+    auto data = stream.in_uint8p(dlen);
+    auto mask = stream.in_uint8p(mlen);
+    const BGRPalette palette = BGRPalette::classic_332();
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true);
+}
+
 
 inline Pointer predefined_pointer(const unsigned width, const unsigned height,
                                   const char * def,
