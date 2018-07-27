@@ -85,7 +85,8 @@ RED_AUTO_TEST_CASE(TestNormalPointer)
 
 RED_AUTO_TEST_CASE(TestPointerNormal)
 {
-    Pointer p(NormalPointer{});
+    Pointer p = normal_pointer();
+    //Pointer p(NormalPointer{});
 
     RED_CHECK_EQUAL(p.bit_mask_size(), 32*4);
 
