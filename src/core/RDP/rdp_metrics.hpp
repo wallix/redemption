@@ -467,11 +467,7 @@ public:
     }
 
     void mouse_mouve(const int x, const int y) {
-        if (this->last_x < 0 || this->last_y < 0) {
-            this->last_x = x;
-            this->last_y = y;
-        } else {
-
+        if (this->last_x >= 0 && this->last_y >= 0) {
             int x_shift = x - this->last_x;
             if (x_shift < 0) {
                 x_shift *=  -1;
@@ -481,10 +477,9 @@ public:
                 y_shift *=  -1;
             }
             this->current_data[mouse_displacement] += x_shift + y_shift;
-
-            this->last_x = x;
-            this->last_y = y;
         }
+        this->last_x = x;
+        this->last_y = y;
     }
 
     void key_pressed() {

@@ -489,8 +489,7 @@ public:
                 if (mm.get_mod()) {
                     timeval wait_log_metrics = ::how_long_to_wait(alarm_log_metrics, tvtime());
                     if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-                        mm.get_mod()->log_metrics();
-                        //alarm_log_metrics = tvtime();
+                        mm.get_mod()->log_metrics();;
                         alarm_log_metrics.tv_sec += this->log_metrics_delay;
                     }
                 }
