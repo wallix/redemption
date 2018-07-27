@@ -63,7 +63,7 @@ SocketTransport::SocketTransport(
 
 SocketTransport::~SocketTransport()
 {
-    if (this->sck <= 0){
+    if (this->sck > INVALID_SOCKET){
         this->disconnect(); /*NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)*/
     }
 
