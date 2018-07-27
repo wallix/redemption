@@ -160,7 +160,7 @@ public:
     long int current_data[34] = { 0 };
 
     RDPMetrics( const std::string & path_template
-              , const uint32_t session_id
+              , const char * session_id
               , const char * account
               , const char * primary_user
               , const char * target_host
@@ -197,7 +197,7 @@ public:
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
-        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%u user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
+        ::snprintf(this->header, sizeof(this->header), "Session_starting_time=%s Session_id=%s user=%s account=%s hostname=%s target_service=%s session_info=%s delta_time(s)=", start_full_date_time, session_id, primary_user_sig, account_sig, hostname_sig, target_service_sig, session_info_sig);
     }
 
 

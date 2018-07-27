@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver)
     ClientInfo info;
     uint8_t key[32] = {0};
     RDPMetrics metrics( templace_path_file
-                      , 1
+                      , "1"
                       , "user"
                       , "admin"
                       , "10.10.13.12"
@@ -85,7 +85,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader)
     ClientInfo info;
     uint8_t key[32] = {0};
     RDPMetrics metrics( templace_path_file
-                      , 1
+                      , "1"
                       , "user"
                       , "admin"
                       , "10.10.13.12"
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
     ClientInfo info;
     uint8_t key[32] = {0};
     RDPMetrics metrics( templace_path_file
-                      , 1
+                      , "1"
                       , "user"
                       , "admin"
                       , "10.10.13.12"
@@ -200,7 +200,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
     ClientInfo info;
     uint8_t key[32] = {0};
     RDPMetrics metrics( templace_path_file
-                      , 1
+                      , "1"
                       , "user"
                       , "admin"
                       , "10.10.13.12"
@@ -227,7 +227,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 26+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, 13);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, "1"3);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -237,7 +237,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", "1");
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -280,7 +280,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
     ClientInfo info;
     uint8_t key[32] = {0};
     RDPMetrics metrics( templace_path_file
-                      , 1
+                      , "1"
                       , "user"
                       , "admin"
                       , "10.10.13.12"

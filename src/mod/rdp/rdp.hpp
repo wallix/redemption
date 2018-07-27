@@ -866,7 +866,7 @@ public:
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
         , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
-                 , redir_info.session_id
+                 , vars.get<cfg::context::session_id>().c_str()
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
                  , mod_rdp_params.target_host
@@ -874,7 +874,7 @@ public:
                  , vars.get<cfg::context::target_service>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , false)
+                 , /*vars.get<cfg::rdp_metrics::activate_log_metrics>())*/false)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
