@@ -727,7 +727,7 @@ void FileToGraphic::interpret_order()
 
         if (  chunk_size - 8 /*header(8)*/ > 5 /*mouse_x(2) + mouse_y(2) + cache_idx(1)*/) {
             size_t start_offset = this->stream.get_offset();
-            const Pointer cursor(PointerLoader32x32(this->stream));
+            const Pointer cursor = pointer_loader_32x32(this->stream);
 
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
             for (gdi::GraphicApi * gd : this->graphic_consumers){

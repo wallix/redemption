@@ -117,36 +117,6 @@ static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * m
 }
 
 
-struct PointerLoader32x32
-{
-    CursorSize dimensions;
-    unsigned maskline_bytes;
-    unsigned xorline_bytes;
-    uint8_t data_bpp;
-    Hotspot hotspot;
-    array_view_const_u8 data;
-    array_view_const_u8 mask;
-
-    explicit PointerLoader32x32(InStream & stream)
-        : dimensions(32, 32)
-        , maskline_bytes(4)
-        , xorline_bytes(96)
-        , data_bpp{24}
-        , hotspot(0, 0)
-    {
-        uint8_t hotspot_x = stream.in_uint8();
-        uint8_t hotspot_y = stream.in_uint8();
-        this->hotspot = Hotspot(hotspot_x, hotspot_y);
-        uint16_t dlen = 32*32*::nbbytes(24);
-        uint16_t mlen = 32*::nbbytes(32);
-        // TODO: assert(dlen <= MAX_WIDTH * MAX_HEIGHT * 3);
-        // TODO: assert(mlen <= MAX_WIDTH * MAX_HEIGHT / 8);
-        auto data = stream.in_uint8p(dlen);
-        auto mask = stream.in_uint8p(mlen);
-        this->data = make_array_view(data, dlen);
-        this->mask = make_array_view(mask, mlen);
-    }
-};
 
 struct Pointer : public BasePointer {
 
@@ -284,11 +254,6 @@ public:
        }
        this->dimensions.width = 32;
        LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
-    }
-
-    explicit Pointer(const PointerLoader32x32 pl)
-     : Pointer(pl.dimensions, pl.hotspot, pl.data, pl.mask, pl.maskline_bytes, pl.xorline_bytes)
-    {
     }
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
@@ -905,7 +870,6 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
     return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
 }
 
-
 inline Pointer pointer_loader_2(InStream & stream)
 {
     uint8_t width     = stream.in_uint8();
@@ -915,6 +879,29 @@ inline Pointer pointer_loader_2(InStream & stream)
     uint8_t hsy       = stream.in_uint8();
     uint16_t dlen     = stream.in_uint16_le();
     uint16_t mlen     = stream.in_uint16_le();
+
+    if (dlen > Pointer::DATA_SIZE){
+        LOG(LOG_ERR, "Corrupted recording: recorded mouse data length too large");
+    }
+
+    if (mlen > Pointer::MASK_SIZE){
+        LOG(LOG_ERR, "Corrupted recording: recorded mouse data mask too large");
+    }
+    auto data = stream.in_uint8p(dlen);
+    auto mask = stream.in_uint8p(mlen);
+    const BGRPalette palette = BGRPalette::classic_332();
+    return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, true);
+}
+
+inline Pointer pointer_loader_32x32(InStream & stream)
+{
+    const uint8_t width     = 32;
+    const uint8_t height    = 32;
+    const uint8_t data_bpp  = 24;
+    const uint8_t hsx       = stream.in_uint8();
+    const uint8_t hsy       = stream.in_uint8();
+    const uint16_t dlen     = 32 * 32 *::nbbytes(data_bpp);
+    uint16_t mlen           = 32 * ::nbbytes(32);
 
     if (dlen > Pointer::DATA_SIZE){
         LOG(LOG_ERR, "Corrupted recording: recorded mouse data length too large");
