@@ -59,32 +59,36 @@ namespace
 		LOG(LOG_INFO, "Expected:");
         hexdump_av(expected_data);
     }
-} // namespace
 
-#ifdef DEBUG_PACKETS
-static const char *PacketTypeToString(PacketType t) {
-	switch(t) {
-	case PacketType::DataIn:
-		return "dataIn";
-	case PacketType::DataOut:
-		return "dataOut";
-	case PacketType::ClientCert:
-		return "clientCert";
-	case PacketType::ServerCert:
-		return "serverCert";
-	case PacketType::Eof:
-		return "EOF";
-	case PacketType::Disconnect:
-		return "disconnect";
-	case PacketType::Connect:
-		return "connect";
-	case PacketType::Info:
-		return "info";
-	default:
-		return "unknown";
-	}
-}
-#endif
+    #ifdef DEBUG_PACKETS
+    const char *PacketTypeToString(PacketType t) noexcept
+    {
+        switch(t) {
+        case PacketType::DataIn:
+            return "dataIn";
+        case PacketType::DataOut:
+            return "dataOut";
+        case PacketType::ClientCert:
+            return "clientCert";
+        case PacketType::ServerCert:
+            return "serverCert";
+        case PacketType::Eof:
+            return "EOF";
+        case PacketType::Disconnect:
+            return "disconnect";
+        case PacketType::Connect:
+            return "connect";
+        case PacketType::Info:
+            return "info";
+        case PacketType::NlaIn:
+            return "nlaIn";
+        case PacketType::NlaOut:
+            return "nlaOut";
+        }
+        return "unknown";
+    }
+    #endif
+} // namespace
 
 ReplayTransport::ReplayTransport(
     const char* fname, const char *ip_address, int port,
@@ -173,6 +177,14 @@ ReplayTransport::Data *ReplayTransport::read_single_chunk()
 			this->infos.back().resize(header.data_size);
 			this->in_file.recv_boom(this->infos.back());
 			continue;
+
+		case PacketType::NlaIn:
+		case PacketType::NlaOut:
+            this->in_file.recv_boom(
+                std::make_unique<uint8_t[]>(header.data_size).get(),
+                header.data_size);
+			continue;
+
 		case PacketType::DataIn:
 		case PacketType::DataOut:
 		case PacketType::ClientCert:
@@ -185,7 +197,7 @@ ReplayTransport::Data *ReplayTransport::read_single_chunk()
             ret->time = this->start_time + header.record_duration;
             ret->data = std::make_unique<uint8_t[]>(header.data_size);
             ret->size = header.data_size;
-            in_file.recv_boom(ret->data.get(), header.data_size);
+            this->in_file.recv_boom(ret->data.get(), header.data_size);
             return ret;
 		}
 

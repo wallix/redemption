@@ -42,6 +42,8 @@ public:
 		Disconnect,
 		Connect,
 		Info,
+		NlaIn,
+		NlaOut,
 	};
 
 	explicit RecorderFile(char const* filename);

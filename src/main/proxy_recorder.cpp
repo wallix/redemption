@@ -20,14 +20,13 @@
    A proxy that will capture all the traffic to the target
 */
 
+#include "core/RDP/gcc.hpp"
+#include "core/RDP/mcs.hpp"
+#include "core/RDP/nego.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
-//#include "core/RDP/nego.hpp"
 #include "core/listen.hpp"
 #include "core/server_notifier_api.hpp"
 #include "core/session_reactor.hpp"
-#include "core/RDP/nego.hpp"
-#include "core/RDP/gcc.hpp"
-#include "core/RDP/mcs.hpp"
 #include "main/version.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
@@ -78,18 +77,22 @@ public:
                 InStream new_x224_stream(currentPacket);
                 X224::CR_TPDU_Recv x224(new_x224_stream, true);
                 if (x224._header_size != new_x224_stream.get_capacity()) {
-                    LOG(LOG_WARNING, "Front::incoming: connection request : all data should have been consumed,"
-                                 " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
+                    LOG(LOG_WARNING,
+                        "Front::incoming: connection request: all data should have been consumed,"
+                        " %zu bytes remains",
+                        new_x224_stream.get_capacity() - x224._header_size);
                 }
 
                 if (!nla_password.empty()) {
                     nla_password.push_back('\0');
-                    nego = std::make_unique<Nego>(this->host.c_str(), nla_username.c_str(), nla_password.c_str());
-                    nego->send_negotiation_request(backConn);
+                    nego = std::make_unique<Nego>(
+                        this->backConn, this->outFile,
+                        this->host.c_str(), nla_username.c_str(), nla_password.c_str());
+                    nego->send_negotiation_request();
                     StaticOutStream<256> x224_stream;
                     X224::CC_TPDU_Send(
                         x224_stream,
-                        X224::RDP_NEG_RSP, /*X224::RDP_NEG_FAILURE if PROTOCOL_RDP*/
+                        X224::RDP_NEG_RSP,
                         RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
                         X224::PROTOCOL_TLS);
                     outFile.write_packet(PacketType::DataIn, stream_to_avu8(x224_stream));
@@ -149,10 +152,9 @@ public:
         switch (state) {
         case NEGOCIATING_BACK_STEP1: {
             if (this->nego) {
-                bool const run = nego->recv_next_data(
-                    backBuffer, backConn, RdpNego::ServerCert{
-                        false, ServerCertCheck::always_succeed, "/tmp", null_notifier});
+                bool const run = nego->recv_next_data(backBuffer, null_notifier);
                 if (not run) {
+                    this->nego.reset();
                     state = NLA_CONNECT_INITIAL_PDU;
                     outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
                 }
@@ -275,15 +277,82 @@ private:
 
     std::string host;
 
-    struct Nego : RdpNego
+    class Nego
     {
         LCGTime timeobj;
         FixedRandom random;
         std::string extra_message;
+        RdpNego nego;
 
-        Nego(char const* host, char const* target_user, char const* password)
-        : RdpNego(true, target_user, true, false, host, false,
+        struct TeeTransport : Transport
+        {
+            TeeTransport(Transport& trans, RecorderFile& outFile)
+            : trans(trans)
+            , outFile(outFile)
+            {}
+
+            TlsResult enable_client_tls(
+                bool server_cert_store,
+                ServerCertCheck server_cert_check,
+                ServerNotifier & server_notifier,
+                const char * certif_path
+            ) override
+            {
+                return this->trans.enable_client_tls(
+                    server_cert_store, server_cert_check, server_notifier, certif_path);
+            }
+
+            array_view_const_u8 get_public_key() const override
+            {
+                return this->trans.get_public_key();
+            }
+
+            bool disconnect() override
+            {
+                return this->trans.disconnect();
+            }
+
+            bool connect() override
+            {
+                return this->trans.connect();
+            }
+
+        private:
+            Read do_atomic_read(uint8_t * buffer, size_t len) override
+            {
+                auto r = this->trans.atomic_read(buffer, len);
+                outFile.write_packet(PacketType::NlaIn, {buffer, len});
+                return r;
+            }
+
+            size_t do_partial_read(uint8_t * buffer, size_t len) override
+            {
+                len = this->trans.partial_read(buffer, len);
+                outFile.write_packet(PacketType::NlaIn, {buffer, len});
+                return len;
+            }
+
+            void do_send(const uint8_t * buffer, size_t len) override
+            {
+                outFile.write_packet(PacketType::NlaOut, {buffer, len});
+                this->trans.send(buffer, len);
+            }
+
+        private:
+            Transport& trans;
+            RecorderFile& outFile;
+        };
+
+        TeeTransport trans;
+
+    public:
+        Nego(
+            Transport& trans, RecorderFile& outFile,
+            char const* host, char const* target_user, char const* password
+        )
+        : nego(true, target_user, true, false, host, false,
             this->random, this->timeobj, this->extra_message, Translation::EN)
+        , trans(trans, outFile)
         {
             char const* separator = strchr(target_user, '\\');
             std::string username;
@@ -302,9 +371,23 @@ private:
                     username = target_user;
                 }
             }
-            this->set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");
+            nego.set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");
             // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions";
-            // this->set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);
+            // nego.set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);
+        }
+
+        void send_negotiation_request()
+        {
+            this->nego.send_negotiation_request(this->trans);
+        }
+
+        bool recv_next_data(TpduBuffer& tpdu_buffer, ServerNotifier& notifier)
+        {
+            return this->nego.recv_next_data(
+                tpdu_buffer, this->trans,
+                RdpNego::ServerCert{
+                    false, ServerCertCheck::always_succeed, "/tmp", notifier}
+            );
         }
     };
 
