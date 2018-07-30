@@ -127,6 +127,11 @@ if ($x509){
         if (not $!){
             chown $uid, $gid, $pkey;
         }
+        # key file is only user readable
+        my $mode = (stat $pkey)[2];
+        if ($mode != 0600){
+            chmod 0600, $pkey;
+        }
     }
 }
 
