@@ -401,7 +401,7 @@ public:
                                 LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
                             }
 
-                            int data_len = chunk.in_uint32_le();
+                            uint32_t const data_len = chunk.in_uint32_le();
                             if (data_len > chunk.in_remain()) {
                                 LOG(LOG_WARNING, "Server Format List PDU data length(%d) longer than chunk(%zu)", data_len, chunk.in_remain());
                             }

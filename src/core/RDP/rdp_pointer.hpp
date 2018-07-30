@@ -210,7 +210,7 @@ public:
     {
         memset(this->mask, 0, sizeof(this->mask));
         memset(this->data, 0, sizeof(this->data));
-    };
+    }
 
     explicit Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
