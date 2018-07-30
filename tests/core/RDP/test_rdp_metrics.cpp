@@ -23,10 +23,6 @@
 #define RED_TEST_MODULE TestRDPMetrics
 #include "system/redemption_unit_tests.hpp"
 
-#include <sys/ioctl.h>
-#include <sys/statvfs.h>
-#include <linux/hdreg.h>
-
 #include "utils/fileutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "test_only/get_file_contents.hpp"
