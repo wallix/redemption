@@ -1305,18 +1305,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// type: BogusLinuxCursor <br/>
-    /// value = static_cast<type>(2) <br/>
-    struct mod_rdp::bogus_linux_cursor {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "mod_rdp";
-        static constexpr char const * name = "bogus_linux_cursor";
-        using type = BogusLinuxCursor;
-        using sesman_and_spec_type = BogusLinuxCursor;
-        using mapped_type = sesman_and_spec_type;
-        type value = static_cast<type>(2);
-    };
     /// AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
@@ -4640,7 +4628,6 @@ struct mod_rdp
 , cfg::mod_rdp::redir_info
 , cfg::mod_rdp::load_balance_info
 , cfg::mod_rdp::bogus_sc_net_size
-, cfg::mod_rdp::bogus_linux_cursor
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel

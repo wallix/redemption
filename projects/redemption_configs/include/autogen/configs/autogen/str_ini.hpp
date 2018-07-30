@@ -322,13 +322,6 @@
 "#_advanced\n"
 "#bogus_sc_net_size = 1\n\n"
 
-"# Needed to get the old behavior of cursor rendering.\n"
-"#   0: More compatible with MSTSC.\n"
-"#   1: The old behavior of cursor rendering.\n"
-"#   2: Depend on platform RDP client.\n"
-"#_advanced\n"
-"#bogus_linux_cursor = 2\n\n"
-
 "#_advanced\n"
 "#proxy_managed_drives = \n\n"
 
@@ -557,7 +550,7 @@
 "#log_file_turnover_interval = 24\n\n"
 
 "# signature key to digest log metrics header info\n"
-"#_hidden\n"
+"#_advanced\n"
 "#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\n\n"
 
 "#_advanced\n"

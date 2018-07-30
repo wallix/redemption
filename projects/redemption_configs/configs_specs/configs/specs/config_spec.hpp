@@ -318,7 +318,6 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));
         W.sep();
-        W.member(advanced_in_gui, no_sesman, type_<BogusLinuxCursor>(), "bogus_linux_cursor", set(BogusLinuxCursor::smart));
         W.member(advanced_in_gui, sesman_to_proxy, type_<types::list<std::string>>(), "proxy_managed_drives");
         W.sep();
         W.sep();

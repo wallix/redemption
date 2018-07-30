@@ -111,7 +111,6 @@ namespace cfg {
         struct redir_info;
         struct load_balance_info;
         struct bogus_sc_net_size;
-        struct bogus_linux_cursor;
         struct proxy_managed_drives;
         struct ignore_auth_channel;
         struct auth_channel;

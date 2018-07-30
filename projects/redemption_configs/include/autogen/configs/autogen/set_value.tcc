@@ -976,18 +976,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables)
             );
         }
-        else if (0 == strcmp(key, "bogus_linux_cursor")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::mod_rdp::bogus_linux_cursor&>(this->variables).value,
-                ::configs::spec_type<BogusLinuxCursor>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::bogus_linux_cursor&>(this->variables)
-            );
-        }
         else if (0 == strcmp(key, "proxy_managed_drives")) {
             ::configs::parse_and_log(
                 context, key,
