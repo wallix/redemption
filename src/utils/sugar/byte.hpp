@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 
 
@@ -28,14 +29,14 @@ struct byte_ptr
     byte_ptr() = default;
 
     byte_ptr(char * data) noexcept
-    : data_(reinterpret_cast<uint8_t*>(data))
+    : data_(byte_ptr_cast(data))
     {}
 
     constexpr byte_ptr(uint8_t * data) noexcept
     : data_(data)
     {}
 
-    char * to_charp() const noexcept { return reinterpret_cast<char *>(this->data_); }
+    char * to_charp() const noexcept { return char_ptr_cast(this->data_); }
     constexpr uint8_t * to_u8p() const noexcept { return this->data_; }
 
     operator char * () const noexcept { return to_charp(); }
@@ -55,7 +56,7 @@ struct const_byte_ptr
     constexpr const_byte_ptr() = default;
 
     const_byte_ptr(char const * data) noexcept
-    : data_(reinterpret_cast<uint8_t const *>(data))
+    : data_(byte_ptr_cast(data))
     {}
 
     constexpr const_byte_ptr(uint8_t const * data) noexcept
@@ -66,7 +67,7 @@ struct const_byte_ptr
     : data_(bytes)
     {}
 
-    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data_); }
+    char const * to_charp() const noexcept { return char_ptr_cast(this->data_); }
     constexpr uint8_t const * to_u8p() const noexcept { return this->data_; }
 
     operator char const * () const noexcept { return to_charp(); }
@@ -112,7 +113,7 @@ struct byte_array : array_view<uint8_t>
     {}
 
     byte_array(array_view<char> av) noexcept
-    : array_view<uint8_t>(reinterpret_cast<uint8_t *>(av.data()), av.size())
+    : array_view<uint8_t>(byte_ptr_cast(av.data()), av.size())
     {}
 
     template<class U, typename std::enable_if<
@@ -130,8 +131,8 @@ struct byte_array : array_view<uint8_t>
     {}
 
 
-    char       * to_charp() noexcept { return reinterpret_cast<char *>(this->data()); }
-    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
+    char       * to_charp() noexcept { return char_ptr_cast(this->data()); }
+    char const * to_charp() const noexcept { return char_ptr_cast(this->data()); }
     uint8_t       * to_u8p() noexcept { return this->data(); }
     constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
 };
@@ -166,7 +167,7 @@ struct const_byte_array : array_view<const uint8_t>
     {}
 
     const_byte_array(array_view<const char> const av) noexcept
-    : array_view<const uint8_t>(reinterpret_cast<const uint8_t *>(av.data()), av.size())
+    : array_view<const uint8_t>(byte_ptr_cast(av.data()), av.size())
     {}
 
     template<class U, typename std::enable_if<
@@ -184,7 +185,7 @@ struct const_byte_array : array_view<const uint8_t>
     {}
 
 
-    char const * to_charp() const noexcept { return reinterpret_cast<char const *>(this->data()); }
+    char const * to_charp() const noexcept { return char_ptr_cast(this->data()); }
     constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
 };
 
