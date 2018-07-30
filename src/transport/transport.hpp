@@ -121,12 +121,14 @@ public:
         return this->do_atomic_read(buffer.to_u8p(), buffer.size());
     }
 
+    // TODO returns byte_array
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.to_u8p(), len);
     }
 
+    // TODO returns byte_array
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_array buffer)
     {

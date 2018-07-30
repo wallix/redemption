@@ -116,8 +116,6 @@ private:
             case total_rail_amount_data_rcv_from_server: return " rail_channel_data_from_server=";
             case total_other_amount_data_rcv_from_client: return " other_channel_data_from_client=";
             case total_other_amount_data_rcv_from_server: return " other_channel_data_from_server=";
-            default:
-                break;
         }
 
         return " unknow_rdp_metrics_name=";
@@ -131,7 +129,7 @@ private:
     time_t utc_stat_time;
     const std::string path_template;
 
-    unique_fd fd;
+    unique_fd fd = invalid_fd();
 
     char header[1024];
 
@@ -181,7 +179,6 @@ public:
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
-      , fd(-1)
       , active_(activate)
     {
         if (this->path_template.c_str() && activate) {
@@ -210,10 +207,7 @@ public:
         ::snprintf(this->header, sizeof(this->header), " Session_id=%s user=%s account=%s target_service_device=%s client_info=%s", session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
     }
 
-
-    ~RDPMetrics() {
-          ::close(this->fd.fd());
-    }
+    ~RDPMetrics() = default;
 
     void disconnect() {
         char start_full_date_time[24];
@@ -231,11 +225,10 @@ public:
 
         if (nwritten == -1) {
             // TODO bad filename
-            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"",this->fd.fd(), this->complete_file_path);
+            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->fd.fd(), this->complete_file_path);
         }
 
-        ::close(this->fd.fd());
-        this->fd.release();
+        this->fd.close();
     }
 
     bool cliprdr_init_format_list_done = false;
@@ -541,18 +534,13 @@ public:
 
 
     void new_day(time_t utc_time_date) {
-        if (this->fd.fd() !=  -1) {
-            ::close(this->fd.fd());
-            this->fd.release();
-        }
         this->utc_last_date = utc_time_date;
         char utc_last_date_formated[24] = {'\0'};
         this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template.c_str(), utc_last_date_formated);
 
-        int fd = ::open(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
-        this->fd.reset(fd);
-        if (this->fd.fd() == -1) {
+        this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (!this->fd.is_open()) {
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd.fd(), this->complete_file_path);
         }
     }
@@ -568,7 +556,7 @@ public:
             this->new_day(utc_time_date);
         }
 
-        // TODO sentence -> iovec
+        // TODO PERF sentence_data -> iovec
         std::string sentence_data;
         for (int i = 0; i < 32; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
@@ -585,22 +573,26 @@ public:
             timeval local_time = tvtime();
             this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
 
+            // TODO PERF start_full_date_time, this->header in iovec
             char header_delta[2048];
-            ::snprintf(header_delta, sizeof(header_delta), "%s%s", start_full_date_time, this->header);
-            std::string sentence(header_delta+sentence_data);
-            sentence += "\n";
+            const int len = ::snprintf(header_delta, sizeof(header_delta), "%s%s", start_full_date_time, this->header);
 
-            if (this->fd.fd() == -1) {
-                LOG(LOG_INFO, "sentence=%s", sentence);
+            if (!this->fd.is_open()) {
+                LOG(LOG_INFO, "sentence=%s%s\n", header_delta, sentence_data);
             }
             else {
-                iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+                char newline[]{'\n'};
+                iovec iov[] = {
+                    {header_delta, size_t(len)},
+                    {sentence_data.data(), sentence_data.size()},
+                    {newline, size_t(1)},
+                };
 
-                ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
+                ssize_t nwritten = ::writev(this->fd.fd(), iov, std::size(iov));
 
                 if (nwritten == -1) {
                     // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), this->complete_file_path);
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
                 }
             }
         }
