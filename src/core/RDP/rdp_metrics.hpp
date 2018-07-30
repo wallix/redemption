@@ -78,7 +78,9 @@ private:
         total_rail_amount_data_rcv_from_server,
 
         total_other_amount_data_rcv_from_client,
-        total_other_amount_data_rcv_from_server
+        total_other_amount_data_rcv_from_server,
+
+        COUNT_FIELD
     };
 
     const char * rdp_metrics_name(int index) {
@@ -116,6 +118,7 @@ private:
             case total_rail_amount_data_rcv_from_server: return " rail_channel_data_from_server=";
             case total_other_amount_data_rcv_from_client: return " other_channel_data_from_client=";
             case total_other_amount_data_rcv_from_server: return " other_channel_data_from_server=";
+            case COUNT_FIELD: break;
         }
 
         return " unknow_rdp_metrics_name=";
@@ -134,7 +137,7 @@ private:
     char header[1024];
 
 
-    long int previous_data[34] = { 0 };
+    long int previous_data[COUNT_FIELD] = { 0 };
 
     uint32_t file_contents_format_ID = 0;
 
@@ -158,7 +161,7 @@ private:
     // TODO public/private and stuff but test in process you know..
 public:
     time_t utc_last_date;
-    long int current_data[34] = { 0 };
+    long int current_data[COUNT_FIELD] = { 0 };
 
 public:
     bool active() {
@@ -558,7 +561,7 @@ public:
 
         // TODO PERF sentence_data -> iovec
         std::string sentence_data;
-        for (int i = 0; i < 32; i++) {
+        for (int i = 0; i < COUNT_FIELD; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
                 char current_metrics[128];
                 ::snprintf(current_metrics, sizeof(current_metrics), "%s%ld", this->rdp_metrics_name(i), this->current_data[i]);
@@ -573,7 +576,7 @@ public:
             timeval local_time = tvtime();
             this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
 
-            // TODO PERF start_full_date_time, this->header in iovec
+            // TODO PERF start_full_date_time and this->header inner iovec
             char header_delta[2048];
             const int len = ::snprintf(header_delta, sizeof(header_delta), "%s%s", start_full_date_time, this->header);
 
