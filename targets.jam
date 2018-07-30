@@ -3960,18 +3960,6 @@ test-run tests/test_bitmap_perf :
   <library>src/utils/rle.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-test-run tests/test_libpng :
-  $(REDEMPTION_TEST_PATH)/test_libpng.cpp
-:
-  <covflag>nocover $(GCOV_NO_BUILD)
-  <library>png
-;
-test-run tests/test_ssl :
-  $(REDEMPTION_TEST_PATH)/test_ssl.cpp
-:
-  <covflag>nocover $(GCOV_NO_BUILD)
-  <library>crypto
-;
 test-run tests/transport/test_crypto_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_crypto_transport.cpp
 :
@@ -5159,8 +5147,6 @@ alias test_ssl_sha256.coverage : tests/system/linux/system/test_ssl_sha256.cover
 alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
 alias test_ssl_sha512.coverage : tests/system/linux/system/test_ssl_sha512.coverage ;
 alias test_bitmap_perf : tests/test_bitmap_perf ;
-alias test_libpng : tests/test_libpng ;
-alias test_ssl : tests/test_ssl ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
 alias test_crypto_transport.coverage : tests/transport/test_crypto_transport.coverage ;
 alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
@@ -5696,8 +5682,6 @@ alias tests/system/linux/system :
 explicit tests ;
 alias tests :
   tests/test_bitmap_perf
-  tests/test_libpng
-  tests/test_ssl
 ;
 explicit tests/transport ;
 alias tests/transport :
