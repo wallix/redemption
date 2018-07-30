@@ -476,7 +476,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
 
     // r31 rs<<11 g63 gs<<5 b31 bs<<0
 
-    Pointer vnccursor(2, CursorSize{12, 19}, Hotspot{0, 0}, vncdata, vncmask, 11, 31, 5, 63, 0, 31, 2, 36);
+    Pointer vnccursor = pointer_loader_vnc(2, 12, 19, 0, 0, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 19);
@@ -839,7 +839,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
     std::vector<uint8_t> vncdata(data, sizeof(data) + data);
     std::vector<uint8_t> vncmask(mask, sizeof(mask) + mask);
 
-    Pointer vnccursor(2, CursorSize{23, 27}, Hotspot{0, 8}, vncdata, vncmask, 11, 31, 5, 63, 0, 31, 3, 69);
+    Pointer vnccursor = pointer_loader_vnc(2, 23, 27, 0, 8, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
     // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);

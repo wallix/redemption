@@ -127,6 +127,7 @@ struct Pointer : public BasePointer {
                            uint16_t dlen, const uint8_t * data,
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor);
+    friend Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
     inline Pointer pointer_loader_2(InStream & stream);
     friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
@@ -182,79 +183,79 @@ public:
         memset(this->data, 0, sizeof(this->data));
     }
 
-    explicit Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
-                   int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
-        : BasePointer(CursorSize(32,d.height), hs)
-        , maskline_bytes(maskline_bytes)
-        , xorline_bytes(xorline_bytes)
-    {
-    // VNC Pointer format
-    // ==================
-
-    // The data consists of width * height pixel values followed by
-    // a bitmask.
-
-    // PIXEL array : width * height * bytesPerPixel
-    // bitmask     : floor((width + 7) / 8) * height
-
-    // The bitmask consists of left-to-right, top-to-bottom
-    // scanlines, where each scanline is padded to a whole number of
-    // bytes. Within each byte the most significant bit represents
-    // the leftmost pixel, with a 1-bit meaning the corresponding
-    // pixel in the cursor is valid.Pointer
-
-       size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
-       size_t minwidth = 32;
-
-       size_t target_offset_line = 0;
-       size_t target_mask_offset_line = 0;
-       size_t source_offset_line = (minheight-1) * d.width * Bpp;
-       size_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width);
-       memset(this->data, 0xAA, sizeof(this->data));
-
-//       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
-       for (size_t y = 0 ; y < minheight ; y++){
-            for (size_t x = 0 ; x < 32 ; x++){
-                const size_t target_offset = target_offset_line +x*3;
-                const size_t source_offset = source_offset_line + x*Bpp;
-                unsigned pixel = 0;
-                if (x < d.width) {
-                    for(size_t i = 0 ; i < Bpp ; i++){
-    //                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
-                        pixel = (pixel<<8) + vncdata[source_offset+i];
-                    }
-                }
-                else {
-                    pixel = 0;
-                }
-                const unsigned red = (pixel >> red_shift) & red_max;
-                const unsigned green = (pixel >> green_shift) & green_max;
-                const unsigned blue = (pixel >> blue_shift) & blue_max;
-//               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
-                this->data[target_offset] = (red << 3) | (red >> 2);
-                this->data[target_offset+1] = (green << 2) | (green >> 4);
-                this->data[target_offset+2] = (blue << 3) | (blue >> 2);
-            }
-            for (size_t xx = 0 ; xx < 4 ; xx++){
-//                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
-                if (xx < ::nbbytes(d.width)){
-                    this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
-                }
-                else {
-                    this->mask[target_mask_offset_line+xx] = 0xFF;
-                }
-            }
-            if ((minwidth % 8) != 0){
-                this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
-            }
-            target_offset_line += 32*3;
-            target_mask_offset_line += 4;
-            source_offset_line -= d.width*Bpp;
-            source_mask_offset_line -= ::nbbytes(d.width);
-       }
-       this->dimensions.width = 32;
-       LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
-    }
+//     explicit Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
+//                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
+//         : BasePointer(CursorSize(32,d.height), hs)
+//         , maskline_bytes(maskline_bytes)
+//         , xorline_bytes(xorline_bytes)
+//     {
+//     // VNC Pointer format
+//     // ==================
+//
+//     // The data consists of width * height pixel values followed by
+//     // a bitmask.
+//
+//     // PIXEL array : width * height * bytesPerPixel
+//     // bitmask     : floor((width + 7) / 8) * height
+//
+//     // The bitmask consists of left-to-right, top-to-bottom
+//     // scanlines, where each scanline is padded to a whole number of
+//     // bytes. Within each byte the most significant bit represents
+//     // the leftmost pixel, with a 1-bit meaning the corresponding
+//     // pixel in the cursor is valid.Pointer
+//
+//        size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
+//        size_t minwidth = 32;
+//
+//        size_t target_offset_line = 0;
+//        size_t target_mask_offset_line = 0;
+//        size_t source_offset_line = (minheight-1) * d.width * Bpp;
+//        size_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width);
+//        memset(this->data, 0xAA, sizeof(this->data));
+//
+// //       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
+//        for (size_t y = 0 ; y < minheight ; y++){
+//             for (size_t x = 0 ; x < 32 ; x++){
+//                 const size_t target_offset = target_offset_line +x*3;
+//                 const size_t source_offset = source_offset_line + x*Bpp;
+//                 unsigned pixel = 0;
+//                 if (x < d.width) {
+//                     for(size_t i = 0 ; i < Bpp ; i++){
+//     //                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
+//                         pixel = (pixel<<8) + vncdata[source_offset+i];
+//                     }
+//                 }
+//                 else {
+//                     pixel = 0;
+//                 }
+//                 const unsigned red = (pixel >> red_shift) & red_max;
+//                 const unsigned green = (pixel >> green_shift) & green_max;
+//                 const unsigned blue = (pixel >> blue_shift) & blue_max;
+// //               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
+//                 this->data[target_offset] = (red << 3) | (red >> 2);
+//                 this->data[target_offset+1] = (green << 2) | (green >> 4);
+//                 this->data[target_offset+2] = (blue << 3) | (blue >> 2);
+//             }
+//             for (size_t xx = 0 ; xx < 4 ; xx++){
+// //                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
+//                 if (xx < ::nbbytes(d.width)){
+//                     this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
+//                 }
+//                 else {
+//                     this->mask[target_mask_offset_line+xx] = 0xFF;
+//                 }
+//             }
+//             if ((minwidth % 8) != 0){
+//                 this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
+//             }
+//             target_offset_line += 32*3;
+//             target_mask_offset_line += 4;
+//             source_offset_line -= d.width*Bpp;
+//             source_mask_offset_line -= ::nbbytes(d.width);
+//        }
+//        this->dimensions.width = 32;
+//        LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
+//     }
 
     explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
     : BasePointer(d, hs)
@@ -869,6 +870,80 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
 
     return decode_pointer(data_bpp, palette, width, height, hsx, hsy, dlen, data, mlen, mask, clean_up_32_bpp_cursor);
 }
+
+
+inline Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+{
+// VNC Pointer format
+// ==================
+
+// The data consists of width * height pixel values followed by
+// a bitmask.
+
+// PIXEL array : width * height * bytesPerPixel
+// bitmask     : floor((width + 7) / 8) * height
+
+// The bitmask consists of left-to-right, top-to-bottom
+// scanlines, where each scanline is padded to a whole number of
+// bytes. Within each byte the most significant bit represents
+// the leftmost pixel, with a 1-bit meaning the corresponding
+// pixel in the cursor is valid.Pointer
+
+    size_t minheight = std::min<size_t>(size_t(height), size_t(32));
+    size_t minwidth = 32;
+
+    Pointer cursor(CursorSize(minwidth, minheight), Hotspot(hsx, hsy));
+
+    size_t target_offset_line = 0;
+    size_t target_mask_offset_line = 0;
+    size_t source_offset_line = (minheight-1) * width * Bpp;
+    size_t source_mask_offset_line = (minheight-1) * ::nbbytes(width);
+    memset(cursor.data, 0xAA, sizeof(cursor.data));
+
+//       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
+    for (size_t y = 0 ; y < minheight ; y++){
+        for (size_t x = 0 ; x < 32 ; x++){
+            const size_t target_offset = target_offset_line +x*3;
+            const size_t source_offset = source_offset_line + x*Bpp;
+            unsigned pixel = 0;
+            if (x < width) {
+                for(size_t i = 0 ; i < Bpp ; i++){
+//                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
+                    pixel = (pixel<<8) + vncdata[source_offset+i];
+                }
+            }
+            else {
+                pixel = 0;
+            }
+            const unsigned red = (pixel >> red_shift) & red_max;
+            const unsigned green = (pixel >> green_shift) & green_max;
+            const unsigned blue = (pixel >> blue_shift) & blue_max;
+//               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
+            cursor.data[target_offset] = (red << 3) | (red >> 2);
+            cursor.data[target_offset+1] = (green << 2) | (green >> 4);
+            cursor.data[target_offset+2] = (blue << 3) | (blue >> 2);
+        }
+        for (size_t xx = 0 ; xx < 4 ; xx++){
+//                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
+            if (xx < ::nbbytes(width)){
+                cursor.mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
+            }
+            else {
+                cursor.mask[target_mask_offset_line+xx] = 0xFF;
+            }
+        }
+        if ((minwidth % 8) != 0){
+            cursor.mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
+        }
+        target_offset_line += 32*3;
+        target_mask_offset_line += 4;
+        source_offset_line -= width*Bpp;
+        source_mask_offset_line -= ::nbbytes(width);
+    }
+    return cursor;
+}
+
+
 
 inline Pointer pointer_loader_2(InStream & stream)
 {

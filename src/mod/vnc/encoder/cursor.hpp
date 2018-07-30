@@ -133,12 +133,10 @@ namespace VNC {
                     hexdump_d(data.data(), data.size());
                     hexdump_d(mask.data(), mask.size());
                 }
-                Pointer cursor(this->Bpp,
-                                CursorSize{static_cast<unsigned>(this->cx), static_cast<unsigned>(this->cy)},
-                                Hotspot{static_cast<unsigned>(this->x), static_cast<unsigned>(this->y)},
+                Pointer cursor = pointer_loader_vnc(this->Bpp,
+                                this->cx, this->cy, this->x, this->y,
                                 data, mask,
-                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max,
-                                mask.size() / this->cy, data.size() / this->cy);
+                                this->red_shift, this->red_max, this->green_shift, this->green_max, this->blue_shift, this->blue_max);
                 drawable.begin_update();
                 drawable.set_pointer(cursor);
                 drawable.end_update();
