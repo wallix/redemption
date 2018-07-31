@@ -126,8 +126,6 @@ private:
         return " unknow_rdp_metrics_name";
     }
 
-    int last_x = -1;
-    int last_y = -1;
 
     const int file_interval;
     char complete_file_path[4096] = {'\0'};
@@ -136,18 +134,19 @@ private:
 
     unique_fd fd = invalid_fd();
 
-//     char header[1024];
     const char * session_id;
-
+    const bool active_ = false;
+    
 
     long int previous_data[COUNT_FIELD] = { 0 };
     long int current_data[COUNT_FIELD] = { 0 };
 
 
+
+    // Context Info
+    int last_x = -1;
+    int last_y = -1;
     uint32_t file_contents_format_ID = 0;
-
-    const bool active_ = false;
-
     uint32_t last_formatID = 0;
 
 
@@ -190,7 +189,6 @@ public:
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
-      , fd(-1)
       , session_id(session_id_)
       , active_(activate)
     {
