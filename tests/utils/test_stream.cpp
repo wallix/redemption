@@ -328,89 +328,26 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 
 RED_AUTO_TEST_CASE(TestStream_sint32)
 {
-    const int32_t const_min_val = -2147483648;
+    {
+        const uint8_t tmp[4] = {0xFE, 0xFD, 0xFC, 0xFF};
+        InStream ss_min_val(tmp);
+        RED_CHECK_EQUAL(0xFFFCFDFE, ss_min_val.in_sint32_le());
+        uint8_t vartmp[4] = {};
+        OutStream fs_min_val(vartmp);
+        fs_min_val.out_sint32_le(0xFFFCFDFE);
+        RED_CHECK_MEM_AA(vartmp, tmp);
+    }
 
-    InStream ss_min_val(reinterpret_cast<const uint8_t *>(&const_min_val), sizeof(const_min_val));
+    {
+        const uint8_t tmp[4] = {0xFC, 0xFD, 0xFE, 0x7F};
+        InStream ss_max_val(tmp);
+        RED_CHECK_EQUAL(0x7FFEFDFC, ss_max_val.in_sint32_le());
+        uint8_t vartmp[4] = {};
+        OutStream fs_max_val(vartmp);
+        fs_max_val.out_sint32_le(0x7FFEFDFC);
+        RED_CHECK_MEM_AA(tmp, vartmp);
+    }
 
-    RED_CHECK_EQUAL(const_min_val, ss_min_val.in_sint32_le());
-
-
-    int32_t min_val = 0;
-
-    OutStream fs_min_val(reinterpret_cast<uint8_t *>(&min_val), sizeof(min_val));
-
-    fs_min_val.out_sint32_le(const_min_val);
-
-    RED_CHECK_EQUAL(const_min_val, min_val);
-
-
-
-    const int32_t const_max_val = 2147483647;
-
-    InStream ss_max_val(reinterpret_cast<const uint8_t *>(&const_max_val), sizeof(const_max_val));
-
-    RED_CHECK_EQUAL(const_max_val, ss_max_val.in_sint32_le());
-
-
-    int32_t max_val = 0;
-
-    OutStream fs_max_val(reinterpret_cast<uint8_t *>(&max_val), sizeof(max_val));
-
-    fs_max_val.out_sint32_le(const_max_val);
-
-    RED_CHECK_EQUAL(const_max_val, max_val);
-
-
-
-
-    const int32_t const_null_val = 0;
-
-    InStream ss_null_val(reinterpret_cast<const uint8_t *>(&const_null_val), sizeof(const_null_val));
-
-    RED_CHECK_EQUAL(const_null_val, ss_null_val.in_sint32_le());
-
-
-    int32_t null_val = 0;
-
-    OutStream fs_null_val(reinterpret_cast<uint8_t *>(&null_val), sizeof(null_val));
-
-    fs_null_val.out_sint32_le(const_null_val);
-
-    RED_CHECK_EQUAL(const_null_val, null_val);
-
-
-
-    const int32_t const_negative_val = -32768;
-
-    InStream ss_negative_val(reinterpret_cast<const uint8_t *>(&const_negative_val), sizeof(const_negative_val));
-
-    RED_CHECK_EQUAL(const_negative_val, ss_negative_val.in_sint32_le());
-
-
-    int32_t negative_val = 0;
-
-    OutStream fs_negative_val(reinterpret_cast<uint8_t *>(&negative_val), sizeof(negative_val));
-
-    fs_negative_val.out_sint32_le(const_negative_val);
-
-    RED_CHECK_EQUAL(const_negative_val, negative_val);
-
-
-
-    const int32_t const_positive_val = 32767;
-
-    InStream ss_positive_val(reinterpret_cast<const uint8_t *>(&const_positive_val), sizeof(const_positive_val));
-
-    RED_CHECK_EQUAL(const_positive_val, ss_positive_val.in_sint32_le());
-
-
-    int32_t positive_val = 0;
-
-    OutStream fs_positive_val(reinterpret_cast<uint8_t *>(&positive_val), sizeof(positive_val));
-
-    fs_positive_val.out_sint32_le(const_positive_val);
-
-    RED_CHECK_EQUAL(const_positive_val, positive_val);
 }
 
 RED_AUTO_TEST_CASE(TestOutSInt64Le)

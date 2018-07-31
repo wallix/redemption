@@ -46,15 +46,12 @@ public:
             total_length, flags, chunk_data_length);
 
         const uint32_t dest = 0;    // Client
-        this->transport.send(reinterpret_cast<const uint8_t*>(&dest),
-            sizeof(dest));
-        this->transport.send(reinterpret_cast<uint8_t*>(&total_length),
-            sizeof(total_length));
-        this->transport.send(reinterpret_cast<uint8_t*>(&flags),
-            sizeof(flags));
-        this->transport.send(reinterpret_cast<uint8_t*>(&chunk_data_length),
-            sizeof(chunk_data_length));
-
+        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
+        ::out_bytes_be(tmp, sizeof(dest), dest);
+        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
+        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
+        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
+        this->transport.send(tmp,sizeof(tmp));
         this->transport.send(chunk_data, chunk_data_length);
     }
 };
@@ -73,15 +70,12 @@ public:
             total_length, flags, chunk_data_length);
 
         const uint32_t dest = 1;    // Server
-        this->transport.send(reinterpret_cast<const uint8_t*>(&dest),
-            sizeof(dest));
-        this->transport.send(reinterpret_cast<uint8_t*>(&total_length),
-            sizeof(total_length));
-        this->transport.send(reinterpret_cast<uint8_t*>(&flags),
-            sizeof(flags));
-        this->transport.send(reinterpret_cast<uint8_t*>(&chunk_data_length),
-            sizeof(chunk_data_length));
-
+        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
+        ::out_bytes_be(tmp, sizeof(dest), dest);
+        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
+        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
+        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
+        this->transport.send(tmp,sizeof(tmp));
         this->transport.send(chunk_data, chunk_data_length);
     }
 };
