@@ -312,7 +312,7 @@ public:
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         SslHMAC_Md5 hmac_md5(this->context->SendSigningKey, 16);
-        hmac_md5.update(reinterpret_cast<uint8_t const*>(&SeqNo), 4);
+        hmac_md5.update(byte_ptr_cast(&SeqNo), 4);
         hmac_md5.update(data, length);
         hmac_md5.final(digest);
 
@@ -416,7 +416,7 @@ public:
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(this->context->RecvSigningKey, 16);
-        hmac_md5.update(reinterpret_cast<uint8_t const*>(&SeqNo), 4);
+        hmac_md5.update(byte_ptr_cast(&SeqNo), 4);
         hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
         hmac_md5.final(digest);
 
