@@ -91,6 +91,8 @@ RED_AUTO_TEST_CASE(Test_Array)
 
     Array array_5;
     test_equal = false;
+    array_5.get_data()[0] = 42;
+    array_5.get_data()[4] = 42;
     RED_CHECK_EQUAL(array_5.size(), 65536);
     if (array_5.get_data() != nullptr) {
         test_equal = true;
@@ -104,9 +106,11 @@ RED_AUTO_TEST_CASE(Test_Array)
         test_equal = true;
     }
     RED_CHECK_EQUAL(test_equal, true);
-    RED_CHECK_EQUAL(array_5.get_data()[0], 0);
+    RED_CHECK_EQUAL(array_5.get_data()[0], 42);
     RED_CHECK_EQUAL(array_5.get_data()[1], 0);
     RED_CHECK_EQUAL(array_5.get_data()[2], 1);
+    RED_CHECK_EQUAL(array_5.get_data()[3], 2);
+    RED_CHECK_EQUAL(array_5.get_data()[4], 42);
 
 }
 
