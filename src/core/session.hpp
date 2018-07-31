@@ -242,18 +242,62 @@ public:
                     this->write_performance_log(now);
                 }
 
+                auto check_exception = [this, &session_reactor, &authentifier, &acl](Error const& e) {
+                    if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
+                        (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
+                        (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
+                        (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
+                        (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
+                        if (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
+                            SessionProbeOnLaunchFailure::retry_without_session_probe) {
+                            this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
+
+                            session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+                        }
+                        else if (acl) {
+                            this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
+
+                            authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
+                        }
+                        else {
+                            throw;
+                        }
+                    }
+                    else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
+                             (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)) {
+                        if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
+                            this->ini.set<cfg::context::perform_automatic_reconnection>(true);
+                        }
+
+                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+                    }
+                    else if (e.id == ERR_RAIL_NOT_ENABLED) {
+                        this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
+
+                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
+                    }
+                    else if ((e.id == ERR_RDP_SERVER_REDIR) &&
+                             this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
+                        set_server_redirection_target(this->ini, authentifier);
+                        session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
+                    }
+                    else {
+                        throw;
+                    }
+                };
+
                 try {
                     session_reactor.execute_timers(enable_graphics, [&]() -> gdi::GraphicApi& {
                         return mm.get_graphic_wrapper();
                     });
                 } catch (Error const& e) {
-                    if (ERR_AUTOMATIC_RECONNECTION_REQUIRED == e.id) {
-                        this->ini.set<cfg::context::perform_automatic_reconnection>(true);
-                        session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                    }
-                    else {
-                        throw;
-                    }
+                    check_exception(e);
                 }
 
                 session_reactor.execute_events([&rfds](int fd, auto& /*e*/){
@@ -312,53 +356,7 @@ public:
                             }
                         }
                         catch (Error const & e) {
-                            if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
-                                (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
-                                (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
-                                (e.id == ERR_SESSION_PROBE_ASBL_UNKNOWN_REASON) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_FSVC_UNAVAILABLE) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_CBVC_UNAVAILABLE) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_DRIVE_NOT_READY_YET) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_MAYBE_SOMETHING_BLOCKS) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_LAUNCH_CYCLE_INTERRUPTED) ||
-                                (e.id == ERR_SESSION_PROBE_CBBL_UNKNOWN_REASON_REFER_TO_SYSLOG) ||
-                                (e.id == ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG)) {
-                                if (this->ini.get<cfg::mod_rdp::session_probe_on_launch_failure>() ==
-                                    SessionProbeOnLaunchFailure::retry_without_session_probe) {
-                                    this->ini.get_ref<cfg::mod_rdp::enable_session_probe>() = false;
-
-                                    session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                                }
-                                else if (acl) {
-                                    this->ini.set_acl<cfg::context::session_probe_launch_error_message>(local_err_msg(e, language(this->ini)));
-
-                                    authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
-                                }
-                                else {
-                                    throw;
-                                }
-                            }
-                            else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
-                                     (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED)) {
-                                if (e.id == ERR_AUTOMATIC_RECONNECTION_REQUIRED) {
-                                    this->ini.set<cfg::context::perform_automatic_reconnection>(true);
-                                }
-
-                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                            }
-                            else if (e.id == ERR_RAIL_NOT_ENABLED) {
-                                this->ini.get_ref<cfg::mod_rdp::use_native_remoteapp_capability>() = false;
-
-                                session_reactor.set_event_next(BACK_EVENT_RETRY_CURRENT);
-                            }
-                            else if ((e.id == ERR_RDP_SERVER_REDIR) &&
-                                     this->ini.get<cfg::mod_rdp::server_redirection_support>()) {
-                                set_server_redirection_target(this->ini, authentifier);
-                                session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
-                            }
-                            else {
-                                throw;
-                            }
+                            check_exception(e);
                         }
 
                         // Incoming data from ACL, or opening authentifier
