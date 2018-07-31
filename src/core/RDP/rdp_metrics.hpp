@@ -141,6 +141,7 @@ private:
 
 
     long int previous_data[COUNT_FIELD] = { 0 };
+    long int current_data[COUNT_FIELD] = { 0 };
 
 
     uint32_t file_contents_format_ID = 0;
@@ -168,7 +169,7 @@ private:
 public:
     time_t utc_last_date;
 
-    long int current_data[COUNT_FIELD] = { 0 };
+
 
 public:
     bool active() {
