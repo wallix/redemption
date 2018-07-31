@@ -26,7 +26,6 @@
 
 
 
-// #include "client_redemption/client_redemption_api.hpp"
 #include "keymaps/qt_scancode_keymap.hpp"
 
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
@@ -1091,7 +1090,7 @@ private:
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
+        //std::cout << "RDPMemBlt (" << std::hex << static_cast<int>(cmd.rop) << ")" <<  std::dec <<  std::endl;
         const Rect drect = clip.intersect(cmd.rect);
         if (drect.isempty()){
             return ;

@@ -862,7 +862,8 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( /*vars.get<cfg::rdp_metrics::log_dir_path>().to_string()*/
+                 "/home/cmoroldo/Bureau/redemption/"
                  , vars.get<cfg::context::session_id>().c_str()
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
@@ -872,7 +873,7 @@ public:
                  , vars.get<cfg::globals::target_device>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , vars.get<cfg::rdp_metrics::activate_log_metrics>())
+                 , /*ars.get<cfg::rdp_metrics::activate_log_metrics>()*/true)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1208,10 +1209,6 @@ public:
 
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
-        }
-
-        if (this->metrics.active()) {
-            this->metrics.disconnect();
         }
     }
 
