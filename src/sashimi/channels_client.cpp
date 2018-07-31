@@ -27,6 +27,7 @@
 #include "cxx/cxx.hpp"
 
 #include <sys/time.h>
+#include "utils/sugar/byte.hpp"
 
 
 // les cibles devraient toutes avoir une session cible, même celles gérées par FD => remplace fd_poll
@@ -2551,8 +2552,8 @@ inline int ssh_auth_reply_denied_client(SshClientSession * client_session)
 //         size_t q = 0;
 //         size_t j = 0;
 //         for (q = 0; q < supported->elements[q].length; q++) {
-//             const uint8_t cl = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] >> 4;
-//             const uint8_t ch = reinterpret_cast<uint8_t *>(supported->elements[q].elements)[q] & 0x0F;
+//             const uint8_t cl = byte_ptr_cast(supported->elements[q].elements)[q] >> 4;
+//             const uint8_t ch = byte_ptr_cast(supported->elements[q].elements)[q] & 0x0F;
 //             hexa[j] = (ch < 10?'0':'a')+ch;
 //             hexa[j+1] = (cl < 10?'0':'a')+cl;
 //             hexa[j+2] = ':';
@@ -2865,7 +2866,7 @@ static int ssh_gssapi_send_mic_client(SshClientSession * client_session){
 
     client_session->out_buffer->out_uint32_be(mic_token_buf.length);
 
-    client_session->out_buffer->out_blob(reinterpret_cast<const uint8_t *>(mic_token_buf.value), mic_token_buf.length);
+    client_session->out_buffer->out_blob(byte_ptr_cast(mic_token_buf.value), mic_token_buf.length);
     delete mic_buffer;
 
     client_session->packet_send();
@@ -2963,8 +2964,8 @@ static inline int ssh_packet_userauth_gssapi_token_client(SshClientSession * cli
         size_t q = 0;
         size_t j = 0;
         for (q = 0; q < output_token.length; q++) {
-            const uint8_t cl = reinterpret_cast<uint8_t *>(output_token.value)[q] >> 4;
-            const uint8_t ch = reinterpret_cast<uint8_t *>(output_token.value)[q] & 0x0F;
+            const uint8_t cl = byte_ptr_cast(output_token.value)[q] >> 4;
+            const uint8_t ch = byte_ptr_cast(output_token.value)[q] & 0x0F;
             hexa[j] = (ch < 10?'0':'a')+ch;
             hexa[j+1] = (cl < 10?'0':'a')+cl;
             hexa[j+2] = ':';
@@ -3646,8 +3647,8 @@ inline int ssh_packet_userauth_gssapi_response_client(SshClientSession * client_
         size_t q = 0;
         size_t j = 0;
         for (q = 0; q < output_token.length; q++) {
-            const uint8_t cl = reinterpret_cast<uint8_t *>(output_token.value)[q] >> 4;
-            const uint8_t ch = reinterpret_cast<uint8_t *>(output_token.value)[q] & 0x0F;
+            const uint8_t cl = byte_ptr_cast(output_token.value)[q] >> 4;
+            const uint8_t ch = byte_ptr_cast(output_token.value)[q] & 0x0F;
             hexa[j] = (ch < 10?'0':'a')+ch;
             hexa[j+1] = (cl < 10?'0':'a')+cl;
             hexa[j+2] = ':';
@@ -4163,7 +4164,7 @@ int SshClientSession::handle_received_data_client(const void *data, size_t recei
               }
             }
             {
-                Parse p(reinterpret_cast<uint8_t *>(buffer));
+                Parse p(byte_ptr_cast(buffer));
                 this->in_packet_len = p.in_uint32_be();
             }
 
@@ -5822,8 +5823,8 @@ static int ssh_gssapi_match_client(SshClientSession * client_session, gss_OID_se
             size_t q = 0;
             size_t j = 0;
             for (q = 0; q < oid->length; q++) {
-                const uint8_t cl = reinterpret_cast<uint8_t *>(oid->elements)[q] >> 4;
-                const uint8_t ch = reinterpret_cast<uint8_t *>(oid->elements)[q] & 0x0F;
+                const uint8_t cl = byte_ptr_cast(oid->elements)[q] >> 4;
+                const uint8_t ch = byte_ptr_cast(oid->elements)[q] & 0x0F;
                 hexa[j] = (ch < 10?'0':'a')+ch;
                 hexa[j+1] = (cl < 10?'0':'a')+cl;
                 hexa[j+2] = ':';

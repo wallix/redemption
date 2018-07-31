@@ -29,6 +29,7 @@
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 #include "core/error.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include <memory>
 #include <cstring>
@@ -125,7 +126,7 @@ struct rdp_mppc_enc_hash_table_manager
     {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
-        hexdump_d(byte_ptr_cast(this->hash_table.get()), (mini_dump ? 16 : get_table_size()));
+        hexdump_d(reinterpret_cast<uint8_t const *>(&this->hash_table.get()[0]), (mini_dump ? 16 : get_table_size()));
     }
 
     inline T get_offset(hash_type hash) const

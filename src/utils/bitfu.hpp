@@ -58,6 +58,14 @@ static inline void out_bytes_le(uint8_t * ptr, const uint8_t nb, const unsigned 
     }
 }
 
+static inline void out_bytes_be(uint8_t * ptr, const uint8_t nb, const unsigned value) noexcept
+{
+    for (uint8_t b = nb-1 ; b != 0 ; --b){
+        ptr[b] = static_cast<uint8_t>(value >> (8 * b));
+    }
+    ptr[0] = value & 0xFF;
+}
+
 // Output a uint32 into a buffer (little-endian)
 static inline void buf_out_uint32(uint8_t* buffer, int value) noexcept
 {
