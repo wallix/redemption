@@ -21,6 +21,7 @@
 #pragma once
 
 #include "system/redemption_unit_tests.hpp"
+#include "utils/sugar/byte.hpp"
 
 RED_AUTO_TEST_CASE(TestModExp)
 {
@@ -34,9 +35,9 @@ RED_AUTO_TEST_CASE(TestModExp)
     // 12^4 % 3 = 48 % 3 = 0
     size_t len = mod_exp(
         out, sizeof(out)
-      , reinterpret_cast<uint8_t const *>(inr), sizeof(inr)-1
-      , reinterpret_cast<uint8_t const *>(modulus), sizeof(modulus)-1
-      , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
+      , byte_ptr_cast(inr), sizeof(inr)-1
+      , byte_ptr_cast(modulus), sizeof(modulus)-1
+      , byte_ptr_cast(exponent), sizeof(exponent)-1
     );
 
     RED_CHECK_EQUAL(len, 0);
@@ -46,9 +47,9 @@ RED_AUTO_TEST_CASE(TestModExp)
     modulus[0] = '\x5';
     len = mod_exp(
         out, sizeof(out)
-      , reinterpret_cast<uint8_t const *>(inr), sizeof(inr)-1
-      , reinterpret_cast<uint8_t const *>(modulus), sizeof(modulus)-1
-      , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
+      , byte_ptr_cast(inr), sizeof(inr)-1
+      , byte_ptr_cast(modulus), sizeof(modulus)-1
+      , byte_ptr_cast(exponent), sizeof(exponent)-1
     );
 
     RED_CHECK_EQUAL(len, 1);
@@ -59,9 +60,9 @@ RED_AUTO_TEST_CASE(TestModExp)
     char modulus2[] = "\x11";
     len = mod_exp(
         out, sizeof(out)
-      , reinterpret_cast<uint8_t const *>(inr), sizeof(inr)-1
-      , reinterpret_cast<uint8_t const *>(modulus2), sizeof(modulus2)-1
-      , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
+      , byte_ptr_cast(inr), sizeof(inr)-1
+      , byte_ptr_cast(modulus2), sizeof(modulus2)-1
+      , byte_ptr_cast(exponent), sizeof(exponent)-1
     );
 
     RED_CHECK_EQUAL(len, 1);
@@ -78,9 +79,9 @@ RED_AUTO_TEST_CASE(TestBigModExp)
 
     size_t len = mod_exp(
         out, sizeof(out)
-      , reinterpret_cast<uint8_t const *>(inr), sizeof(inr)-1
-      , reinterpret_cast<uint8_t const *>(modulus), sizeof(modulus)-1
-      , reinterpret_cast<uint8_t const *>(exponent), sizeof(exponent)-1
+      , byte_ptr_cast(inr), sizeof(inr)-1
+      , byte_ptr_cast(modulus), sizeof(modulus)-1
+      , byte_ptr_cast(exponent), sizeof(exponent)-1
     );
 
     RED_CHECK_EQUAL(len, sizeof(modulus)-1);
