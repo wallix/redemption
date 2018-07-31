@@ -170,166 +170,166 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader)
 // }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
-
-    ClientInfo info;
-    uint8_t key[32] = {0};
-    RDPMetrics metrics( templace_path_file
-                      , "1"
-                      , "user"
-                      , "admin"
-                      , "10.10.13.12"
-                      , info
-                      , "RDP1"
-                      , "device1"
-                      , key
-                      , 24
-                      , true);
-
-    char current_date[24] = {'\0'};
-
-    timeval now = tvtime();
-    metrics.set_current_formated_date(current_date, false, now.tv_sec);
-
-    char complete_file_path[4096] = {'\0'};
-    ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", templace_path_file, current_date);
-
-    RED_CHECK(file_exist(complete_file_path));
-
-    RED_REQUIRE(file_exist(complete_file_path));
-
-    metrics.cliprdr_init_format_list_done = true;
-    {
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 26+4);
-        format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, 13);
-        format.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-    {
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);
-        format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
-        format.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-    {
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::FileContentsRequestPDU fileContentsRequest( 0
-                                                            , RDPECLIP::FILECONTENTS_RANGE
-                                                            , 0
-                                                            , 8);
-        fileContentsRequest.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-
-    metrics.log();
-
-    std::string expected_log_header;
-    char start_full_date_time[24];
-    metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
-    expected_log_header += start_full_date_time;
-
-    expected_log_header += " 1";
-//         "user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7";
-
-    std::string expected_log_data_2(expected_log_header+" clipboard_channel_data_from_server=84 total_data_paste_on_server=8 nb_copy_text_on_server=1 nb_copy_file_on_server=1\n");
-
-    int fd = ::open(complete_file_path, O_RDONLY);
-    char buff[4096] = {'\0'};
-    ::read(fd, buff, 4096);
-    std::string file_content(buff);
-
-    RED_CHECK_EQUAL(file_content, expected_log_data_2);
-    ::close(fd);
-
-    RED_CHECK_EQUAL(get_file_contents(complete_file_path), expected_log_header);
-    remove(complete_file_path);
-}
-
-RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
-
-    ClientInfo info;
-    uint8_t key[32] = {0};
-    RDPMetrics metrics( templace_path_file
-                      , "1"
-                      , "user"
-                      , "admin"
-                      , "10.10.13.12"
-                      , info
-                      , "RDP1"
-                      , "device1"
-                      , key
-                      , 24
-                      , true);
-
-    char current_date[24] = {'\0'};
-
-    timeval now = tvtime();
-    metrics.set_current_formated_date(current_date, false, now.tv_sec);
-
-    char complete_file_path[4096] = {'\0'};
-    ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", templace_path_file, current_date);;
-
-    RED_REQUIRE(file_exist(complete_file_path));
-
-    metrics.cliprdr_init_format_list_done = true;
-    {
-        StaticOutStream<1600> out_stream;
-        rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
-        header.emit(out_stream);
-        rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_READ, 0);
-        dior.emit(out_stream);
-
-        rdpdr::DeviceReadRequest drr(1001, 0);
-        drr.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-    {
-        StaticOutStream<1600> out_stream;
-        rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
-        header.emit(out_stream);
-        rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_SET_INFORMATION, 0);
-        dior.emit(out_stream);
-
-        rdpdr::ServerDriveSetInformationRequest sdsir(rdpdr::FileRenameInformation, 0);
-        sdsir.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-    {
-        StaticOutStream<1600> out_stream;
-        rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
-        header.emit(out_stream);
-        rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_WRITE, 0);
-        dior.emit(out_stream);
-
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-    }
-
-    metrics.log();
-
-    std::string expected_log;
-    char start_full_date_time[24];
-    metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
-    expected_log += start_full_date_time;
-    expected_log += " 1  disk_redirection_channel_data_from_server=136 nb_files_1k_read=1 nb_files_write=1 nb_files_rename=1\n";
-
-    //"user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7""
-
-    RED_CHECK_EQUAL(get_file_contents(complete_file_path), expected_log);
-    remove(complete_file_path);
-}
+// RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
+//
+//     ClientInfo info;
+//     uint8_t key[32] = {0};
+//     RDPMetrics metrics( templace_path_file
+//                       , "1"
+//                       , "user"
+//                       , "admin"
+//                       , "10.10.13.12"
+//                       , info
+//                       , "RDP1"
+//                       , "device1"
+//                       , key
+//                       , 24
+//                       , true);
+//
+//     char current_date[24] = {'\0'};
+//
+//     timeval now = tvtime();
+//     metrics.set_current_formated_date(current_date, false, now.tv_sec);
+//
+//     char complete_file_path[4096] = {'\0'};
+//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", templace_path_file, current_date);
+//
+//     RED_CHECK(file_exist(complete_file_path));
+//
+//     RED_REQUIRE(file_exist(complete_file_path));
+//
+//     metrics.cliprdr_init_format_list_done = true;
+//     {
+//         StaticOutStream<1600> out_stream;
+//         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 26+4);
+//         format_list_header.emit(out_stream);
+//         RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILECONTENTS, 13);
+//         format.emit(out_stream);
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//     {
+//         StaticOutStream<1600> out_stream;
+//         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);
+//         format_list_header.emit(out_stream);
+//         RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
+//         format.emit(out_stream);
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//     {
+//         StaticOutStream<1600> out_stream;
+//         RDPECLIP::FileContentsRequestPDU fileContentsRequest( 0
+//                                                             , RDPECLIP::FILECONTENTS_RANGE
+//                                                             , 0
+//                                                             , 8);
+//         fileContentsRequest.emit(out_stream);
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//
+//     metrics.log();
+//
+//     std::string expected_log_header;
+//     char start_full_date_time[24];
+//     metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
+//     expected_log_header += start_full_date_time;
+//
+//     expected_log_header += " 1";
+// //         "user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7";
+//
+//     std::string expected_log_data_2(expected_log_header+" clipboard_channel_data_from_server=84 total_data_paste_on_server=8 nb_copy_text_on_server=1 nb_copy_file_on_server=1\n");
+//
+//     int fd = ::open(complete_file_path, O_RDONLY);
+//     char buff[4096] = {'\0'};
+//     ::read(fd, buff, 4096);
+//     std::string file_content(buff);
+//
+//     RED_CHECK_EQUAL(file_content, expected_log_data_2);
+//     ::close(fd);
+//
+//     RED_CHECK_EQUAL(get_file_contents(complete_file_path), expected_log_header);
+//     remove(complete_file_path);
+// }
+//
+// RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
+//
+//     ClientInfo info;
+//     uint8_t key[32] = {0};
+//     RDPMetrics metrics( templace_path_file
+//                       , "1"
+//                       , "user"
+//                       , "admin"
+//                       , "10.10.13.12"
+//                       , info
+//                       , "RDP1"
+//                       , "device1"
+//                       , key
+//                       , 24
+//                       , true);
+//
+//     char current_date[24] = {'\0'};
+//
+//     timeval now = tvtime();
+//     metrics.set_current_formated_date(current_date, false, now.tv_sec);
+//
+//     char complete_file_path[4096] = {'\0'};
+//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", templace_path_file, current_date);;
+//
+//     RED_REQUIRE(file_exist(complete_file_path));
+//
+//     metrics.cliprdr_init_format_list_done = true;
+//     {
+//         StaticOutStream<1600> out_stream;
+//         rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
+//         header.emit(out_stream);
+//         rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_READ, 0);
+//         dior.emit(out_stream);
+//
+//         rdpdr::DeviceReadRequest drr(1001, 0);
+//         drr.emit(out_stream);
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//     {
+//         StaticOutStream<1600> out_stream;
+//         rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
+//         header.emit(out_stream);
+//         rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_SET_INFORMATION, 0);
+//         dior.emit(out_stream);
+//
+//         rdpdr::ServerDriveSetInformationRequest sdsir(rdpdr::FileRenameInformation, 0);
+//         sdsir.emit(out_stream);
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//     {
+//         StaticOutStream<1600> out_stream;
+//         rdpdr::SharedHeader header(rdpdr::RDPDR_CTYP_CORE, rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION);
+//         header.emit(out_stream);
+//         rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_WRITE, 0);
+//         dior.emit(out_stream);
+//
+//         InStream chunk(out_stream.get_data(), out_stream.get_offset());
+//
+//         metrics.set_server_rdpdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+//     }
+//
+//     metrics.log();
+//
+//     std::string expected_log;
+//     char start_full_date_time[24];
+//     metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
+//     expected_log += start_full_date_time;
+//     expected_log += " 1  disk_redirection_channel_data_from_server=136 nb_files_1k_read=1 nb_files_write=1 nb_files_rename=1\n";
+//
+//     //"user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080 account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7""
+//
+//     RED_CHECK_EQUAL(get_file_contents(complete_file_path), expected_log);
+//     remove(complete_file_path);
+// }
