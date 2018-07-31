@@ -40,110 +40,116 @@ class RDPMetrics
 {
 
 private:
+
+    const char * version = "v1.0";                  // field version
+
     enum : int {
-        total_main_amount_data_rcv_from_client,
-        total_right_clicks,
-        total_left_clicks,
-        total_keys_pressed,
-        mouse_displacement,
-        total_main_amount_data_rcv_from_server,
 
-        clipboard_channel_data_from_server,
-        nb_paste_text_on_server,
-        nb_paste_image_on_server,
-        nb_paste_file_on_server,
-        total_data_paste_on_server,
-        nb_copy_text_from_server,
-        nb_copy_image_from_server,
-        nb_copy_file_from_server,
+        main_channel_data_from_client,              // number of byte sent from client to main channel.
+        right_click,                                // number of right click.
+        left_click,                                 // number of left click.
+        keys_pressed,                               // number of keys pressed.
+        mouse_displacement,                         // total mouse move cumulated on x and y axis.
+        main_channel_data_from_server,              // number of byte sent from server to main channel.
 
-        clipboard_channel_data_from_client,
-        nb_paste_text_on_client,
-        nb_paste_image_on_client,
-        nb_paste_file_on_client,
-        total_data_paste_on_client,
-        nb_copy_text_from_client,
-        nb_copy_image_from_client,
-        nb_copy_file_from_client,
+        clipboard_channel_data_from_server,         // number of byte sent from server to clipboard channel.
+        nb_paste_text_on_server,                    // number of times a text is pasted on server from client clipboard data.
+        nb_paste_image_on_server,                   // number of times a image is pasted on server from client clipboard data.
+        nb_paste_file_on_server,                    // number of times a file is pasted on server from client clipboard data.
+        total_data_paste_on_server,                 // number of byte sent from server to clipboard channel.
+        nb_copy_text_from_server,                   // number of copy text local copy from server data.
+        nb_copy_image_from_server,                  // number of copy image local copy from server data.
+        nb_copy_file_from_server,                   // number of copy file local copy from server data.
 
-        disk_redirection_channel_data_from_client,
-        disk_redirection_channel_data_from_server,
-        nb_files_1k_read,
-        nb_files_or_folders_deleted,
-        nb_files_write,
-        nb_files_rename,
-        total_files_data_read,
-        total_files_data_write,
+        clipboard_channel_data_from_client,         // number of byte sent from client, to clipboard channel.
+        nb_paste_text_on_client,                    // number of times a text is pasted on client, from server clipboard data.
+        nb_paste_image_on_client,                   // number of times a image is pasted on client, from server clipboard data.
+        nb_paste_file_on_client,                    // number of times a file is pasted on client, from server clipboard data.
+        total_data_paste_on_client,                 // number of byte sent from client to clipboard channel.
+        nb_copy_text_from_client,                   // number of copy text local copy from client data.
+        nb_copy_image_from_client,                  // number of copy image local copy from client data.
+        nb_copy_file_from_client,                   // number of copy file local copy from client data.
 
-        total_rail_amount_data_rcv_from_client,
-        total_rail_amount_data_rcv_from_server,
+        disk_redirection_channel_data_from_client,  // number of byte sent from client to shared disk channel.
+        disk_redirection_channel_data_from_server,  // number of byte sent from server to shared disk channel.
+        nb_files_read,                              // number of files read on shared disk channel.
+        nb_files_or_folders_deleted,                // number of files or folders delete on shared disk channel.
+        nb_files_write,                             // number of files write on shared disk channel.
+        nb_files_rename,                            // number of files rename on shared disk channel.
+        total_files_data_read,                      // number bytes read from files on shared disk channel.
+        total_files_data_write,                     // number of bytes written from files on shared disk channel.
 
-        total_other_amount_data_rcv_from_client,
-        total_other_amount_data_rcv_from_server,
+        total_rail_amount_data_rcv_from_client,     // number of byte sent from client to remote app channel.
+        total_rail_amount_data_rcv_from_server,     // number of byte sent from server to remote app channel.
+
+        total_other_amount_data_rcv_from_client,    // number of byte sent from client to others channels.
+        total_other_amount_data_rcv_from_server,    // number of byte sent from server to others channels.
 
         COUNT_FIELD
     };
 
-    const char * rdp_metrics_name(int index) {
-        switch (index) {
-            case total_main_amount_data_rcv_from_client: return "main_channel_data_from_client";
-            case total_right_clicks: return "right_click";
-            case total_left_clicks: return "left_click";
-            case total_keys_pressed: return "keys_pressed";
-            case mouse_displacement: return "mouse_displacement";
-            case total_main_amount_data_rcv_from_server: return "main_channel_data_from_serveur";
-            case clipboard_channel_data_from_server: return "clipboard_channel_data_from_server";
-            case nb_paste_text_on_server: return "nb_paste_text_on_server";
-            case nb_paste_image_on_server: return "nb_paste_image_on_server";
-            case nb_paste_file_on_server: return "nb_paste_file_on_server";
-            case total_data_paste_on_server: return "total_data_paste_on_server";
-            case nb_copy_text_from_server: return "nb_copy_text_on_server";
-            case nb_copy_image_from_server: return "nb_copy_image_on_server";
-            case nb_copy_file_from_server: return "nb_copy_file_on_server";
-            case clipboard_channel_data_from_client: return "clipboard_channel_data_from_client";
-            case nb_paste_text_on_client: return "nb_paste_text_on_client";
-            case nb_paste_image_on_client: return "nb_paste_image_on_client";
-            case nb_paste_file_on_client: return "nb_paste_file_on_client";
-            case total_data_paste_on_client: return "total_data_paste_on_client";
-            case nb_copy_text_from_client: return "nb_copy_text_on_client";
-            case nb_copy_image_from_client: return "nb_copy_image_on_client";
-            case nb_copy_file_from_client: return "nb_copy_file_on_client";
-            case disk_redirection_channel_data_from_client: return "disk_redirection_channel_data_from_client";
-            case disk_redirection_channel_data_from_server: return "disk_redirection_channel_data_from_server";
-            case nb_files_1k_read: return "nb_files_1k_read";
-            case nb_files_or_folders_deleted: return "nb_files_or_folders_deleted";
-            case nb_files_write: return "nb_files_write";
-            case nb_files_rename: return "nb_files_rename";
-            case total_files_data_write: return "total_files_data_write";
-            case total_files_data_read: return "total_files_data_read";
-            case total_rail_amount_data_rcv_from_client: return "rail_channel_data_from_client";
-            case total_rail_amount_data_rcv_from_server: return "rail_channel_data_from_server";
-            case total_other_amount_data_rcv_from_client: return "other_channel_data_from_client";
-            case total_other_amount_data_rcv_from_server: return "other_channel_data_from_server";
-            case COUNT_FIELD: break;
-        }
+//     const char * rdp_metrics_name(int index) {
+//
+//         switch (index) {
+//             case main_channel_data_from_client:             return "main_channel_data_from_client";
+//             case right_click:                               return "right_click";
+//             case left_click:                                return "left_click";
+//             case keys_pressed:                              return "keys_pressed";
+//             case mouse_displacement:                        return "mouse_displacement";
+//             case main_channel_data_from_server:            return "main_channel_data_from_server";
+//             case clipboard_channel_data_from_server:        return "clipboard_channel_data_from_server";
+//             case nb_paste_text_on_server:                   return "nb_paste_text_on_server";
+//             case nb_paste_image_on_server:                  return "nb_paste_image_on_server";
+//             case nb_paste_file_on_server:                   return "nb_paste_file_on_server";
+//             case total_data_paste_on_server:                return "total_data_paste_on_server";
+//             case nb_copy_text_from_server:                  return "nb_copy_text_on_server";
+//             case nb_copy_image_from_server:                 return "nb_copy_image_on_server";
+//             case nb_copy_file_from_server:                  return "nb_copy_file_on_server";
+//             case clipboard_channel_data_from_client:        return "clipboard_channel_data_from_client";
+//             case nb_paste_text_on_client:                   return "nb_paste_text_on_client";
+//             case nb_paste_image_on_client:                  return "nb_paste_image_on_client";
+//             case nb_paste_file_on_client:                   return "nb_paste_file_on_client";
+//             case total_data_paste_on_client:                return "total_data_paste_on_client";
+//             case nb_copy_text_from_client:                  return "nb_copy_text_on_client";
+//             case nb_copy_image_from_client:                 return "nb_copy_image_on_client";
+//             case nb_copy_file_from_client:                  return "nb_copy_file_on_client";
+//             case disk_redirection_channel_data_from_client: return "disk_redirection_channel_data_from_client";
+//             case disk_redirection_channel_data_from_server: return "disk_redirection_channel_data_from_server";
+//             case nb_files_read:                          return "nb_files_read";
+//             case nb_files_or_folders_deleted:               return "nb_files_or_folders_deleted";
+//             case nb_files_write:                            return "nb_files_write";
+//             case nb_files_rename:                           return "nb_files_rename";
+//             case total_files_data_write:                    return "total_files_data_write";
+//             case total_files_data_read:                     return "total_files_data_read";
+//             case total_rail_amount_data_rcv_from_client:    return "rail_channel_data_from_client";
+//             case total_rail_amount_data_rcv_from_server:    return "rail_channel_data_from_server";
+//             case total_other_amount_data_rcv_from_client:   return "other_channel_data_from_client";
+//             case total_other_amount_data_rcv_from_server:   return "other_channel_data_from_server";
+//             case COUNT_FIELD: break;
+//         }
+//
+//         return " unknow_rdp_metrics_name";
+//     }
 
-        return " unknow_rdp_metrics_name";
-    }
 
-
+    //  output file info
     const int file_interval;
+    time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
-    time_t utc_stat_time;
+    //time_t utc_stat_time;
     const std::string path_template;
-
     unique_fd fd = invalid_fd();
 
+    // LOG info
     const char * session_id;
     const bool active_ = false;
-    
-
-    long int previous_data[COUNT_FIELD] = { 0 };
+//     long int previous_data[COUNT_FIELD] = { 0 };
     long int current_data[COUNT_FIELD] = { 0 };
 
+    timeval local_next_log_time;
+    const time_t log_delay;
 
-
-    // Context Info
+    // RDP context Info
     int last_x = -1;
     int last_y = -1;
     uint32_t file_contents_format_ID = 0;
@@ -164,13 +170,16 @@ private:
                  sig[30], sig[31]);
     }
 
-    // TODO public/private and stuff but test in process you know..
-public:
-    time_t utc_last_date;
-
-
 
 public:
+    void set_utc_last_date(time_t date) {
+        this->utc_last_date = date;
+    }
+
+    time_t get_utc_last_date() {
+        return this->utc_last_date;
+    }
+
     bool active() {
         return this->active_;
     }
@@ -186,11 +195,13 @@ public:
               , const unsigned char * key_crypt
               , const long file_interval
               , const bool activate
+              , const time_t log_delay
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
       , session_id(session_id_)
       , active_(activate)
+      , log_delay(log_delay)
     {
         char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
         char account_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
@@ -208,8 +219,9 @@ public:
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
         char start_full_date_time[24];
-        timeval local_time = tvtime();
-        this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+        this->local_next_log_time = tvtime();
+        this->set_current_formated_date(start_full_date_time, true, this->local_next_log_time.tv_sec);
+        local_next_log_time.tv_sec += this->log_delay;
 
         char header[1024];
         ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", start_full_date_time, this->session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
@@ -217,9 +229,8 @@ public:
         if (this->path_template.c_str() && activate) {
 
             time ( &(this->utc_last_date) );
-            this->utc_stat_time = this->utc_last_date;
-            this->new_day(this->utc_stat_time);
-
+            //this->utc_stat_time = this->utc_last_date;
+            this->new_day(this->utc_last_date);
 
             char utc_last_date_formated[24] = {'\0'};
             char complete_header_file_path[1024];
@@ -241,7 +252,8 @@ public:
                 } else {
                   ::close(fd_header.fd());
                 }
-
+            } else {
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), complete_header_file_path);
             }
         }
 
@@ -311,7 +323,7 @@ public:
                         rdpdr::DeviceReadRequest drr;
                         drr.receive(chunk);
                         if (drr.Offset() == 0) {
-                            this->current_data[nb_files_1k_read] += 1;
+                            this->current_data[nb_files_read] += 1;
                         }
                         this->current_data[total_files_data_read] += drr.Length();
                     }
@@ -563,7 +575,7 @@ public:
     }
 
     void server_main_channel_data(long int len) {
-        this->current_data[total_main_amount_data_rcv_from_server] += len;
+        this->current_data[main_channel_data_from_server] += len;
     }
 
     void mouse_mouve(const int x, const int y) {
@@ -583,19 +595,19 @@ public:
     }
 
     void key_pressed() {
-        this->current_data[total_keys_pressed]++;
+        this->current_data[keys_pressed]++;
     }
 
-    void right_click() {
-        this->current_data[total_right_clicks]++;
+    void right_click_pressed() {
+        this->current_data[right_click]++;
     }
 
-    void left_click() {
-        this->current_data[total_left_clicks]++;
+    void left_click_pressed() {
+        this->current_data[left_click]++;
     }
 
     void client_main_channel_data(long int len) {
-        this->current_data[total_main_amount_data_rcv_from_client] += len;
+        this->current_data[main_channel_data_from_client] += len;
     }
 
 
@@ -637,7 +649,7 @@ public:
         this->utc_last_date = utc_time_date;
         char utc_last_date_formated[24] = {'\0'};
         this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s.log", this->path_template.c_str(), utc_last_date_formated);
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s-%s.log", this->path_template.c_str(), this->version, utc_last_date_formated);
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
@@ -647,53 +659,74 @@ public:
 
 
     void log() {
+        timeval local_time = tvtime();
+        timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, local_time);
+        if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+            local_next_log_time.tv_sec += this->log_delay;
 
-        time_t utc_time_date;
-        time ( &utc_time_date );
+            time_t utc_time_date;
+            time ( &utc_time_date );
 
-        if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-
-            this->new_day(utc_time_date);
-        }
-
-        iovec iov[COUNT_FIELD+2];
-        char sentence_data[COUNT_FIELD+2][128];
-        int nb_elem = 0;
-        // TODO PERF sentence_data -> iovec
-        for (int i = 0; i < COUNT_FIELD; i++) {
-            if (this->current_data[i] - this->previous_data[i]) {
-                nb_elem++;
-                ::snprintf(sentence_data[nb_elem], sizeof(sentence_data[nb_elem]), " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
-                iov[nb_elem].iov_base = sentence_data[nb_elem];
-                iov[nb_elem].iov_len  = strlen(sentence_data[nb_elem]);
-                this->previous_data[i] = this->current_data[i];
+            if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
+                this->new_day(utc_time_date);
             }
-        }
 
-        if (nb_elem) {
-            if (this->fd.fd() != -1) {
-                char start_full_date_time[24];
-                timeval local_time = tvtime();
-                this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+            char start_full_date_time[24];
 
-                // TODO PERF start_full_date_time and this->header inner iovec
-                ::snprintf(sentence_data[0], sizeof(sentence_data[0]), "%s %s", start_full_date_time, this->session_id);
-                iov[0].iov_base = sentence_data[0];
-                iov[0].iov_len = strlen(sentence_data[0]);
+            this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
 
-                char end[] = {'\n', '\0'};
-                iov[nb_elem+1].iov_base = end;
-                iov[nb_elem+1].iov_len = strlen(end);
+            char sentence[4096];
+            ::snprintf(sentence, sizeof(sentence), "%s %s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", start_full_date_time, this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
 
-                ssize_t nwritten = ::writev(this->fd.fd(), iov, nb_elem+2);
+            iovec iov[] = { {sentence, strlen(sentence)} };
 
-                if (nwritten == -1) {
-                    // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
-                }
-            } else {
+            ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
+
+            if (nwritten == -1) {
+                // TODO bad filename
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
             }
         }
+
+
+//         iovec iov[COUNT_FIELD+2];
+//         char sentence_data[COUNT_FIELD+2][128];
+//         int nb_elem = 0;
+//         for (int i = 0; i < COUNT_FIELD; i++) {
+//             if (this->current_data[i] - this->previous_data[i]) {
+//                 nb_elem++;
+//                 ::snprintf(sentence_data[nb_elem], sizeof(sentence_data[nb_elem]), " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
+//                 iov[nb_elem].iov_base = sentence_data[nb_elem];
+//                 iov[nb_elem].iov_len  = strlen(sentence_data[nb_elem]);
+//                 this->previous_data[i] = this->current_data[i];
+//             }
+//         }
+
+//         if (nb_elem) {
+//             if (this->fd.fd() != -1) {
+//                 char start_full_date_time[24];
+//                 timeval local_time = tvtime();
+//                 this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+//
+//                 ::snprintf(sentence_data[0], sizeof(sentence_data[0]), "%s %s", start_full_date_time, this->session_id);
+//                 iov[0].iov_base = sentence_data[0];
+//                 iov[0].iov_len = strlen(sentence_data[0]);
+//
+//                 char end[] = {'\n', '\0'};
+//                 iov[nb_elem+1].iov_base = end;
+//                 iov[nb_elem+1].iov_len = strlen(end);
+
+//                 ssize_t nwritten = ::writev(this->fd.fd(), iov, nb_elem+2);
+
+//                 if (nwritten == -1) {
+//                     // TODO bad filename
+//                     LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
+//                 }
+//             } else {
+//                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
+//             }
+//         }
+
+
     }
 };

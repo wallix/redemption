@@ -872,7 +872,8 @@ public:
                  , vars.get<cfg::globals::target_device>().c_str()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , vars.get<cfg::rdp_metrics::activate_log_metrics>())
+                 , vars.get<cfg::rdp_metrics::activate_log_metrics>()
+                 , vars.get<cfg::rdp_metrics::log_interval>().count())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1659,9 +1660,9 @@ public:
 
                 if (device_flags & MOUSE_FLAG_DOWN) {
                     if (device_flags & MOUSE_FLAG_BUTTON2) {
-                        this->metrics.right_click();
+                        this->metrics.right_click_pressed();
                     } else if (device_flags & MOUSE_FLAG_BUTTON1) {
-                        this->metrics.left_click();
+                        this->metrics.left_click_pressed();
                     }
                 }
             }

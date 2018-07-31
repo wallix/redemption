@@ -47,7 +47,8 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::rdp_metrics::sign_key,                      vcfg::accessmode::get>,
     vcfg::var<cfg::context::session_id,                        vcfg::accessmode::get>,
     vcfg::var<cfg::globals::target_device,                     vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::activate_log_metrics,          vcfg::accessmode::get>
+    vcfg::var<cfg::rdp_metrics::activate_log_metrics,          vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::log_interval,                  vcfg::accessmode::get>
 >;
 
 struct ModRDPParams {

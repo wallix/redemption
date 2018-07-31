@@ -99,8 +99,6 @@ class Session
         return sck.has_pending_data() || io_fd_isset(sck.sck, rfds);
     }
 
-    long int log_metrics_delay;
-
 
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
@@ -108,7 +106,6 @@ public:
         , perf_last_info_collect_time(0)
         , perf_pid(getpid())
         , perf_file(nullptr)
-        , log_metrics_delay(ini.get<cfg::rdp_metrics::log_interval>().count())
     {
         TRANSLATIONCONF.set_ini(&ini);
 
@@ -158,8 +155,6 @@ public:
             unsigned osd_state = OSD_STATE_NOT_YET_COMPUTED;
             const bool enable_osd = this->ini.get<cfg::globals::enable_osd>();
 
-            timeval alarm_log_metrics = tvtime();
-            alarm_log_metrics.tv_sec += this->log_metrics_delay;
 
             // TODO: we should define some select object to wrap rfds, wfds and timeouts
             // and hide events inside modules managing sockets (or timers)
@@ -485,11 +480,7 @@ public:
                 };
 
                 if (mm.get_mod()) {
-                    timeval wait_log_metrics = ::how_long_to_wait(alarm_log_metrics, tvtime());
-                    if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-                        mm.get_mod()->log_metrics();;
-                        alarm_log_metrics.tv_sec += this->log_metrics_delay;
-                    }
+                    mm.get_mod()->log_metrics();
                 }
             }
             if (mm.get_mod()) {
