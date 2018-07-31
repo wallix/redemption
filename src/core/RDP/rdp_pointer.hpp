@@ -46,43 +46,6 @@ struct Hotspot {
     explicit Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
 };
 
-static bool is_black_and_white(const uint8_t * data, const size_t width, const size_t height, const size_t row_length, const unsigned Bpp);
-static bool is_black_and_white(const uint8_t * data, const size_t width, const size_t height, const size_t row_length, const unsigned Bpp)
-{
-    for (unsigned int h = 0; h < height; ++h) {
-        const uint8_t * row = data + h * row_length;
-        for (unsigned int w = 0; w < width; ++w) {
-            unsigned pixel = ::in_uint32_from_nb_bytes_le(Bpp, row + w*Bpp);
-            if ((pixel != 0) and (pixel != 0xFFFFFF)){
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-
-struct BasePointer {
-protected:
-    CursorSize dimensions;
-    Hotspot hotspot;
-public:
-    const CursorSize get_dimensions() const
-    {
-        return this->dimensions;
-    }
-
-    const Hotspot get_hotspot() const
-    {
-        return this->hotspot;
-    }
-
-    explicit BasePointer(CursorSize dimensions, Hotspot hotspot)
-        : dimensions(dimensions)
-        , hotspot(hotspot)
-    {}
-};
-
 static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer);
 static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer)
 {
@@ -116,9 +79,7 @@ static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * m
     }
 }
 
-
-
-struct Pointer : public BasePointer {
+struct Pointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
@@ -128,20 +89,11 @@ struct Pointer : public BasePointer {
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor);
     friend Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
-    inline Pointer pointer_loader_2(InStream & stream);
     friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
                                       const unsigned hsx, const unsigned hsy,
                                       const unsigned inverted);
-
-    unsigned maskline_bytes = 0;
-    unsigned xorline_bytes = 0;
-
-
-// TODO: in TS_SYSTEMPOINTERATTRIBUTE, POINTER_NULL and POINTER_NORMAL are attributed specific values
-// we could directly provide these to Pointer constructor instead of defining a switch on call site (rdp.hpp)
-
     enum  {
         POINTER_NULL             ,
         POINTER_NORMAL           ,
@@ -175,112 +127,17 @@ private:
 
     bool only_black_white = false;
 
+    CursorSize dimensions;
+    Hotspot hotspot;
+
 public:
 
-    explicit Pointer(void) : BasePointer(CursorSize(32,32), Hotspot(0, 0))
+    explicit Pointer(void)
+        : dimensions(CursorSize(32,32))
+        , hotspot(Hotspot(0, 0))
     {
         memset(this->mask, 0, sizeof(this->mask));
         memset(this->data, 0, sizeof(this->data));
-    }
-
-//     explicit Pointer(uint8_t Bpp, CursorSize d, Hotspot hs, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask,
-//                    int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max, unsigned maskline_bytes, unsigned xorline_bytes)
-//         : BasePointer(CursorSize(32,d.height), hs)
-//         , maskline_bytes(maskline_bytes)
-//         , xorline_bytes(xorline_bytes)
-//     {
-//     // VNC Pointer format
-//     // ==================
-//
-//     // The data consists of width * height pixel values followed by
-//     // a bitmask.
-//
-//     // PIXEL array : width * height * bytesPerPixel
-//     // bitmask     : floor((width + 7) / 8) * height
-//
-//     // The bitmask consists of left-to-right, top-to-bottom
-//     // scanlines, where each scanline is padded to a whole number of
-//     // bytes. Within each byte the most significant bit represents
-//     // the leftmost pixel, with a 1-bit meaning the corresponding
-//     // pixel in the cursor is valid.Pointer
-//
-//        size_t minheight = std::min<size_t>(size_t(d.height), size_t(32));
-//        size_t minwidth = 32;
-//
-//        size_t target_offset_line = 0;
-//        size_t target_mask_offset_line = 0;
-//        size_t source_offset_line = (minheight-1) * d.width * Bpp;
-//        size_t source_mask_offset_line = (minheight-1) * ::nbbytes(d.width);
-//        memset(this->data, 0xAA, sizeof(this->data));
-//
-// //       LOG(LOG_INFO, "r%u rs<<%u g%u gs<<%u b%u bs<<%u", red_max, red_shift, green_max, green_shift, blue_max, blue_shift);
-//        for (size_t y = 0 ; y < minheight ; y++){
-//             for (size_t x = 0 ; x < 32 ; x++){
-//                 const size_t target_offset = target_offset_line +x*3;
-//                 const size_t source_offset = source_offset_line + x*Bpp;
-//                 unsigned pixel = 0;
-//                 if (x < d.width) {
-//                     for(size_t i = 0 ; i < Bpp ; i++){
-//     //                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
-//                         pixel = (pixel<<8) + vncdata[source_offset+i];
-//                     }
-//                 }
-//                 else {
-//                     pixel = 0;
-//                 }
-//                 const unsigned red = (pixel >> red_shift) & red_max;
-//                 const unsigned green = (pixel >> green_shift) & green_max;
-//                 const unsigned blue = (pixel >> blue_shift) & blue_max;
-// //               LOG(LOG_INFO, "pixel=%.2X (%.1X, %.1X, %.1X)", pixel, red, green, blue);
-//                 this->data[target_offset] = (red << 3) | (red >> 2);
-//                 this->data[target_offset+1] = (green << 2) | (green >> 4);
-//                 this->data[target_offset+2] = (blue << 3) | (blue >> 2);
-//             }
-//             for (size_t xx = 0 ; xx < 4 ; xx++){
-// //                LOG(LOG_INFO, "y=%u xx=%u source_mask_offset=%u target_mask_offset=%u")";
-//                 if (xx < ::nbbytes(d.width)){
-//                     this->mask[target_mask_offset_line+xx] = 0xFF ^ vncmask[source_mask_offset_line+xx];
-//                 }
-//                 else {
-//                     this->mask[target_mask_offset_line+xx] = 0xFF;
-//                 }
-//             }
-//             if ((minwidth % 8) != 0){
-//                 this->mask[target_mask_offset_line+::nbbytes(minwidth)-1] |= (0xFF>>(minwidth % 8));
-//             }
-//             target_offset_line += 32*3;
-//             target_mask_offset_line += 4;
-//             source_offset_line -= d.width*Bpp;
-//             source_mask_offset_line -= ::nbbytes(d.width);
-//        }
-//        this->dimensions.width = 32;
-//        LOG(LOG_INFO, "width=%u height=%u", d.width, d.height);
-//     }
-
-    explicit Pointer(CursorSize d, Hotspot hs, array_view_const_u8 av_xor, array_view_const_u8 av_and, unsigned maskline_bytes, unsigned xorline_bytes)
-    : BasePointer(d, hs)
-    , maskline_bytes(maskline_bytes)
-    , xorline_bytes(xorline_bytes)
-    {
-        if ((av_and.size() > this->bit_mask_size()) || (av_xor.size() > this->xor_data_size())) {
-            LOG(LOG_ERR, "mod_rdp::process_color_pointer_pdu: "
-                "bad length for color pointer mask_len=%zu data_len=%zu",
-                av_and.size(), av_and.size());
-            throw Error(ERR_RDP_PROCESS_COLOR_POINTER_LEN_NOT_OK);
-        }
-
-        memcpy(this->mask, av_and.data(), av_and.size());
-        memcpy(this->data, av_xor.data(), av_xor.size());
-
-         unsigned Bpp = 3;
-        this->only_black_white = ::is_black_and_white(
-                this->data,
-                this->dimensions.width,
-                this->dimensions.height,
-                ::even_pad_length(this->dimensions.width * Bpp),
-                Bpp);
-
-
     }
 
     bool operator==(const Pointer & other) const {
@@ -292,10 +149,20 @@ public:
              && (0 == memcmp(this->mask, other.mask, this->bit_mask_size())));
     }
 
-    explicit Pointer(CursorSize d, Hotspot hs) : BasePointer(d, hs)
-    , maskline_bytes(::nbbytes(d.width))
-    , xorline_bytes(even_pad_length(d.width*3))
+    explicit Pointer(CursorSize d, Hotspot hs)
+        : dimensions(d)
+        , hotspot(hs)
     {
+    }
+
+    const CursorSize get_dimensions() const
+    {
+        return this->dimensions;
+    }
+
+    const Hotspot get_hotspot() const
+    {
+        return this->hotspot;
     }
 
     void set_mask_to_FF(){
@@ -1451,76 +1318,3 @@ inline Pointer system_default_pointer(void)
     , 10, 10);
 }
 
-// template <const char * def>
-// inline Pointer const_pointer(void)
-// {
-//     const unsigned inverted = 0;
-//     const unsigned width = 32;
-//     const unsigned height = 32;
-//     Pointer cursor(CursorSize(width, height), Hotspot(0, 0));
-//
-//     uint8_t * dest      = cursor.data;
-//     uint8_t * dest_mask = cursor.mask;
-//     const char    * src = def;
-//     for (size_t y = 0 ; y < height ; y++){
-//         unsigned bit_count = 7;
-//         uint8_t res_mask = 0;
-//         for (size_t x = 0 ; x < width ; x++){
-//             const char c = *src;
-//             uint8_t v = (((c == 'X')||(c == '-'))^inverted);
-//             ::out_bytes_le(dest, 3, v?0xFFFFFF:0);
-//             dest += 3;
-//             res_mask |= ((c == '.')||(c == '-'))?(1 << bit_count):0;
-//             if (bit_count == 0){
-//                 *dest_mask =  res_mask;
-//                 dest_mask++;
-//                 res_mask = 0;
-//                 bit_count = 8;
-//             }
-//             bit_count--;
-//             src++;
-//         }
-//         if (bit_count != 7){
-//             *dest_mask = res_mask;
-//         }
-//     }
-//
-//     return cursor;
-// }
-//
-// inline Pointer normal_pointer(void){
-//     return const_pointer<
-//     /* 0000 */ "................................"
-//     /* 0060 */ "................................"
-//     /* 00c0 */ "................................"
-//     /* 0120 */ "................................"
-//     /* 0180 */ "................................"
-//     /* 01e0 */ "................................"
-//     /* 0240 */ "................................"
-//     /* 02a0 */ "................................"
-//     /* 0300 */ "................................"
-//     /* 0360 */ "................................"
-//     /* 03c0 */ "................................"
-//     /* 0420 */ "................................"
-//     /* 0480 */ "................................"
-//     /* 04e0 */ ".......XX......................."
-//     /* 0540 */ "......X++X......................"
-//     /* 05a0 */ "......X++X......................"
-//     /* 0600 */ ".....X++X......................."
-//     /* 0660 */ "X....X++X......................."
-//     /* 06c0 */ "XX..X++X........................"
-//     /* 0720 */ "X+X.X++X........................"
-//     /* 0780 */ "X++X++X........................."
-//     /* 07e0 */ "X+++++XXXXX....................."
-//     /* 0840 */ "X++++++++X......................"
-//     /* 08a0 */ "X+++++++X......................."
-//     /* 0900 */ "X++++++X........................"
-//     /* 0960 */ "X+++++X........................."
-//     /* 09c0 */ "X++++X.........................."
-//     /* 0a20 */ "X+++X..........................."
-//     /* 0a80 */ "X++X............................"
-//     /* 0ae0 */ "X+X............................."
-//     /* 0b40 */ "XX.............................."
-//     /* 0ba0 */ "X..............................."
-//     >();
-// }
