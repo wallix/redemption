@@ -136,7 +136,7 @@ private:
 
     unique_fd fd = invalid_fd();
 
-    char header[1024];
+//     char header[1024];
     const char * session_id;
 
 
@@ -658,35 +658,46 @@ public:
             this->new_day(utc_time_date);
         }
 
+        iovec iov[COUNT_FIELD+2];
+        char sentence_data[COUNT_FIELD+2][128];
+        int nb_elem = 0;
         // TODO PERF sentence_data -> iovec
-        std::string sentence_data;
+//         std::string sentence_data;
         for (int i = 0; i < COUNT_FIELD; i++) {
             if (this->current_data[i] - this->previous_data[i]) {
+                nb_elem++;
                 char current_metrics[128];
-                ::snprintf(current_metrics, sizeof(current_metrics), " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
-                sentence_data += current_metrics;
+                ::snprintf(sentence_data[nb_elem], sizeof(sentence_data[nb_elem]), " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
+                iov[nb_elem].iov_base = sentence_data[nb_elem];
+                iov[nb_elem].iov_len  = strlen(sentence_data[nb_elem]);
+//                 sentence_data += current_metrics;
                 this->previous_data[i] = this->current_data[i];
             }
         }
 
-        if (!sentence_data.empty()) {
-
-            char start_full_date_time[24];
-            timeval local_time = tvtime();
-            this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
-
-            // TODO PERF start_full_date_time and this->header inner iovec
-            char header_delta[2048];
-            ::snprintf(header_delta, sizeof(header_delta), "%s %s", start_full_date_time, this->session_id);
-            std::string sentence(header_delta+sentence_data);
+        if (nb_elem) {
 
             if (this->fd.fd() != -1) {
-                char end[] = {'\n', '\0'};
-                iovec iov[3] = { {header_delta, strlen(header_delta)}
-                               , {const_cast<char *>(sentence_data.c_str()), sentence_data.length()}
-                               , {end, strlen(end)} };
+                char start_full_date_time[24];
+                timeval local_time = tvtime();
+                this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
 
-                ssize_t nwritten = ::writev(this->fd.fd(), iov, std::size(iov));
+                // TODO PERF start_full_date_time and this->header inner iovec
+                //char sentence_data[128];
+                ::snprintf(sentence_data[0], sizeof(sentence_data[0]), "%s %s", start_full_date_time, this->session_id);
+                //std::string sentence(header_delta+sentence_data);
+                iov[0].iov_base = sentence_data[0];
+                iov[0].iov_len = strlen(sentence_data[0]);
+
+                char end[] = {'\n', '\0'};
+
+                iov[nb_elem+1].iov_base = end;
+                iov[nb_elem+1].iov_len = strlen(end);
+//                 iovec iov[3] = { {header_delta, strlen(header_delta)}
+//                                , {const_cast<char *>(sentence_data.c_str()), sentence_data.length()}
+//                                , {end, strlen(end)} };
+
+                ssize_t nwritten = ::writev(this->fd.fd(), iov, nb_elem+2);
 
                 if (nwritten == -1) {
                     // TODO bad filename
