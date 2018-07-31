@@ -23,6 +23,15 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 
+struct Uint32_le {
+    uint8_t array[4];
+    Uint32_le(uint32_t v){
+        this->array[0] = static_cast<uint8_t>(v);
+        this->array[1] = static_cast<uint8_t>(v >> 8);
+        this->array[2] = static_cast<uint8_t>(v >> 16);
+        this->array[3] = static_cast<uint8_t>(v << 24);
+    }
+};
 
 struct byte_ptr
 {
