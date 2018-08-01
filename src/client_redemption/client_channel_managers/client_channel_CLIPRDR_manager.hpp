@@ -423,7 +423,7 @@ public:
                                     RDPECLIP::FormatListPDU_LongName fl_ln;
                                     fl_ln.recv(chunk);
 
-                                    format_name = std::string(reinterpret_cast<char *>(fl_ln.formatUTF8Name));
+                                    format_name = std::string(char_ptr_cast(fl_ln.formatUTF8Name));
 
                                     formatID = fl_ln.formatID;
                                 }
