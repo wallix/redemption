@@ -835,22 +835,24 @@ static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_l
 }
 
 static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
-        uint8_t * utf16_target_, size_t utf16_len) {
-    uint16_t * utf16_target = reinterpret_cast<uint16_t *>(utf16_target_);
+        uint8_t * utf16_target, size_t utf16_len) {
 
-    auto converter = [](uint8_t src, uint16_t *& dst, size_t & remaining_dst_len) -> bool {
+    auto converter = [](uint8_t src, uint8_t * & dst, size_t & remaining_dst_len) -> bool {
         if ((src < 0x80) || (src > 0x9F)) {
             if (src == 0x0A) {
                 if (remaining_dst_len > 1) {
                     *dst++ = 0x0D;
+                    remaining_dst_len--;
+                    *dst++ = 0x00;
                     remaining_dst_len--;
                 }
                 else {
                     return false;
                 }
             }
-
             *dst++ = src;
+            remaining_dst_len--;
+            *dst++ = 0x00;
             remaining_dst_len--;
             return true;
         }
@@ -866,23 +868,26 @@ static inline size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_
             0x0153, 0x009D, 0x017E, 0x0178
         };
 
-        *dst++ = Latin1ToUTF16LUT[src - 0x80];
+        uint16_t value = Latin1ToUTF16LUT[src - 0x80];
+        *dst++ = static_cast<uint8_t>(value & 0xFF);
         remaining_dst_len--;
-
+        *dst++ = static_cast<uint8_t>((value >> 8) & 0xFF);
+        remaining_dst_len--;
         return true;
     };
 
     const uint8_t  * current_latin1_source = latin1_source;
-          uint16_t * current_utf16_target  = utf16_target;
-    for (size_t remaining_latin1_len = latin1_len, remaining_utf16_len = utf16_len / 2;
-         remaining_latin1_len && remaining_utf16_len;
+          uint8_t * current_utf16_target  = utf16_target;
+
+    for (size_t remaining_latin1_len = latin1_len, remaining_utf16_len = utf16_len;
+         (remaining_latin1_len != 0) && (remaining_utf16_len > 1);
          current_latin1_source++, remaining_latin1_len--) {
         if (!converter(*current_latin1_source, current_utf16_target, remaining_utf16_len)) {
             break;
         }
     }
 
-    return (current_utf16_target - utf16_target) * 2;
+    return (current_utf16_target - utf16_target);
 }
 
 static inline size_t Latin1toUTF8(
