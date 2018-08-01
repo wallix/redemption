@@ -154,7 +154,7 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
                   , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
             return -1;
         }
-        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
+        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr; /*NOLINT*/
         freeaddrinfo(addr_info);
     }
     return 0;

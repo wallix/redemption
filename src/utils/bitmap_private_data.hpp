@@ -29,6 +29,7 @@
 
 #pragma once
 
+#include "utils/sugar/byte.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 #include "utils/bitfu.hpp"
@@ -121,8 +122,8 @@ public:
                 sha1.update(this->data_palette(), sizeof(BGRPalette));
             }
             sha1.update(&this->bpp_, sizeof(this->bpp_));
-            sha1.update(reinterpret_cast<const uint8_t *>(&this->cx_), sizeof(this->cx_));
-            sha1.update(reinterpret_cast<const uint8_t *>(&this->cy_), sizeof(this->cy_));
+            sha1.update(Uint16_le(this->cx_).array, sizeof(this->cx_));
+            sha1.update(Uint16_le(this->cy_).array, sizeof(this->cy_));
             const uint8_t * first = this->get();
             const uint8_t * last = first + this->cy_ * this->line_size_;
             for (; first != last; first += this->line_size_) {

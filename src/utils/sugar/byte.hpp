@@ -25,13 +25,22 @@
 
 struct Uint32_le {
     uint8_t array[4];
-    Uint32_le(uint32_t v){
+    Uint32_le(uint16_t v){
         this->array[0] = static_cast<uint8_t>(v);
         this->array[1] = static_cast<uint8_t>(v >> 8);
         this->array[2] = static_cast<uint8_t>(v >> 16);
         this->array[3] = static_cast<uint8_t>(v << 24);
     }
 };
+
+struct Uint16_le {
+    uint8_t array[2];
+    Uint16_le(uint16_t v){
+        this->array[0] = static_cast<uint8_t>(v);
+        this->array[1] = static_cast<uint8_t>(v >> 8);
+    }
+};
+
 
 struct byte_ptr
 {
