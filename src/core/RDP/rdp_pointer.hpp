@@ -132,7 +132,7 @@ private:
 
 public:
 
-    explicit Pointer(void)
+    explicit Pointer()
         : dimensions(CursorSize(32,32))
         , hotspot(Hotspot(0, 0))
     {
@@ -894,7 +894,7 @@ inline Pointer predefined_pointer(const unsigned width, const unsigned height,
     return cursor;
 }
 
-inline Pointer normal_pointer(void)
+inline Pointer normal_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -933,7 +933,7 @@ inline Pointer normal_pointer(void)
 }
 
 
-inline Pointer edit_pointer(void)
+inline Pointer edit_pointer()
 {
     return predefined_pointer(32, 32,
             /* 0000 */ "................................"
@@ -1010,7 +1010,7 @@ inline Pointer drawable_default_pointer(bool inverted = false)
     );
 }
 
-inline Pointer size_NS_pointer(void)
+inline Pointer size_NS_pointer()
 {
     return predefined_pointer(32, 32,
         /* 0000 */ "................................"
@@ -1049,7 +1049,7 @@ inline Pointer size_NS_pointer(void)
 }
 
 
-inline Pointer size_NESW_pointer(void)
+inline Pointer size_NESW_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1088,7 +1088,7 @@ inline Pointer size_NESW_pointer(void)
 }
 
 
-inline Pointer size_NWSE_pointer(void)
+inline Pointer size_NWSE_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1127,7 +1127,7 @@ inline Pointer size_NWSE_pointer(void)
 }
 
 
-inline Pointer size_WE_pointer(void)
+inline Pointer size_WE_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1165,7 +1165,7 @@ inline Pointer size_WE_pointer(void)
     , 10, 10);
 }
 
-inline Pointer dot_pointer(void)
+inline Pointer dot_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1203,7 +1203,7 @@ inline Pointer dot_pointer(void)
     , 2, 2);
 }
 
-inline Pointer null_pointer(void)
+inline Pointer null_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1241,7 +1241,7 @@ inline Pointer null_pointer(void)
     , 2, 2);
 }
 
-inline Pointer system_normal_pointer(void)
+inline Pointer system_normal_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "................................"
@@ -1280,7 +1280,7 @@ inline Pointer system_normal_pointer(void)
 }
 
 
-inline Pointer system_default_pointer(void)
+inline Pointer system_default_pointer()
 {
     return predefined_pointer(32, 32,
     /* 0000 */ "--------------------------------"
