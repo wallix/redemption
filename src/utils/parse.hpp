@@ -43,7 +43,7 @@ public:
     }
 
     int8_t in_sint8() {
-        return *(reinterpret_cast<int8_t const *>(this->p++));
+        return *(reinterpret_cast<int8_t const *>(this->p++)); /*NOLINT*/
     }
 
     uint8_t in_uint8() {
@@ -100,7 +100,7 @@ public:
 
     int64_t in_sint64_le() {
         int64_t res;
-        *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le();
+        *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le(); /*NOLINT*/
         return res;
     }
 
