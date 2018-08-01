@@ -48,24 +48,24 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 //         {"percentage":0,"eta":-1,"videos":0}
 //         {"percentage":10,"eta":0,"videos":0}
 
         p(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":0})");
 
         p(start_time + 100);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":0})");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":1})");
 
     {
@@ -80,22 +80,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p(start_time + 100);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":99,"eta":0,"videos":1})");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, R"({"percentage":100,"eta":0,"videos":2})");
 
     {
@@ -110,23 +110,23 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":0,"eta":-1,"videos":0})");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":10,"eta":0,"videos":0})");
 
         p.next_video(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1})");
 
         p.raise_error(2, "plouf");
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents,
             R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, R"({"percentage":90,"eta":0,"videos":1,"error":{"code":2,"message":"plouf"}})");
 
     {
@@ -141,22 +141,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "99 0");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, "100 0");
 
     {
@@ -171,22 +171,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p(start_time + 100);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "99 0");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, "100 0");
 
     {
@@ -201,22 +201,22 @@ RED_AUTO_TEST_CASE(TestRecordingProgress)
 
         RED_REQUIRE(p.is_valid());
 
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "0 -1");
 
         p(start_time + 10);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "10 0");
 
         p.next_video(start_time + 90);
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "90 0");
 
         p.raise_error(2, "plouf");
-        RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+        append_file_contents(contents, filename);
         RED_CHECK_EQUAL(contents, "-1 plouf (2)");
     }
-    RED_CHECK_EQUAL(0, get_file_contents(contents, filename));
+    append_file_contents(contents, filename);
     RED_CHECK_EQUAL(contents, "-1 plouf (2)");
 
     unlink(filename);

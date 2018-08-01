@@ -21,9 +21,10 @@
 #pragma once
 
 #include <fstream>
+#include "core/error.hpp"
 
 template<class String>
-int get_file_contents(String& s, const char * name)
+void append_file_contents(String& s, const char * name)
 {
     using char_type = typename String::value_type;
     using traits_type = typename String::traits_type;
@@ -34,24 +35,26 @@ int get_file_contents(String& s, const char * name)
     buf.pubsetbuf(&c, 1);
 
     if (!buf.open(name, std::ios::in)) {
-        return errno;
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     const std::streamsize sz = buf.in_avail();
     if (sz == std::streamsize(-1)) {
-        return errno;
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     s.resize(std::size_t(sz));
     const std::streamsize n = buf.sgetn(&s[0], std::streamsize(s.size()));
-    return (sz != n) ? s.resize(std::size_t(n)), errno : 0;
+    if (sz != n) {
+        throw Error(ERR_TRANSPORT_READ_FAILED, errno);
+    }
 }
 
 template<class String = std::string>
 String get_file_contents(const char * name)
 {
     String s;
-    get_file_contents(s, name);
+    append_file_contents(s, name);
     return s;
 }
 

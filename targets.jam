@@ -4456,6 +4456,8 @@ test-run tests/utils/test_recording_progress :
   $(REDEMPTION_TEST_PATH)/utils/test_recording_progress.cpp
 :
   <covfile>src/utils/recording_progress.hpp
+  <library>src/core/error.o
+  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/utils/test_rect :
   $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp
