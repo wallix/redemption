@@ -29,6 +29,7 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/texttime.hpp"
 #include "core/client_info.hpp"
 #include "system/linux/system/ssl_sha256.hpp"
 
@@ -92,10 +93,11 @@ private:
     const int file_interval;
     time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
-    const std::string path_template;
+    const std::string path;
     unique_fd fd = invalid_fd();
 
     // LOG info
+    char header[1024];
     const char * session_id;
     const bool active_ = false;
     long int current_data[COUNT_FIELD] = { 0 };
@@ -139,7 +141,8 @@ public:
         return this->active_;
     }
 
-    RDPMetrics( const std::string & path_template
+    RDPMetrics( const time_t now
+              , const std::string & path
               , const char * session_id
               , const char * account               // secondary account
               , const char * primary_user          // clear primary user account
@@ -153,7 +156,7 @@ public:
               , const time_t log_delay             // delay between 2 logs
       )
       : file_interval(file_interval*3600)
-      , path_template(path_template+"rdp_metrics")
+      , path(path)
       , session_id(session_id)
       , active_(activate)
       , log_delay(log_delay)
@@ -173,43 +176,12 @@ public:
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
-        char start_full_date_time[24];
-        this->local_next_log_time = tvtime();
-        this->set_current_formated_date(start_full_date_time, true, this->local_next_log_time.tv_sec);
-        local_next_log_time.tv_sec += this->log_delay;
 
-        char header[1024];
-        ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", start_full_date_time, this->session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
+        ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", "", this->session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
 
-        if (this->path_template.c_str() && activate) {
+        if (this->path.c_str() && activate) {
 
-            time ( &(this->utc_last_date) );
-            //this->utc_stat_time = this->utc_last_date;
-            this->new_day(this->utc_last_date);
-
-            char utc_last_date_formated[24] = {'\0'};
-            char complete_header_file_path[1024];
-            this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
-            ::snprintf(complete_header_file_path, sizeof(complete_header_file_path), "%sindex_rdp_metrics-%s.log", path_template.c_str(), utc_last_date_formated);
-
-            int fd = ::open(complete_header_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
-
-            unique_fd fd_header(fd);
-
-             if (fd_header.fd() != -1) {
-                iovec iov[1] = { {header, strlen(header)} };
-
-                ssize_t nwritten = ::writev(fd_header.fd(), iov, 1);
-
-                if (nwritten == -1) {
-                    // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), complete_header_file_path);
-                } else {
-                  ::close(fd_header.fd());
-                }
-            } else {
-                LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), complete_header_file_path);
-            }
+            this->new_day(now);
         }
     }
 
@@ -602,15 +574,37 @@ public:
     }
 
 
-    void new_day(time_t utc_time_date) {
-        this->utc_last_date = utc_time_date;
-        char utc_last_date_formated[24] = {'\0'};
-        this->set_current_formated_date(utc_last_date_formated, false, this->utc_last_date);
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s-%s-%s.log", this->path_template.c_str(), this->version, utc_last_date_formated);
+    void new_day(time_t now) {
+
+        std::string text_date( text_gmdate(now));
+
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%srdp_metrics-%s-%s.logmetrics", this->path.c_str(), this->version, text_date.c_str());
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"", this->fd.fd(), this->complete_file_path);
+        }
+
+        char index_file_path[1024];
+        ::snprintf(index_file_path, sizeof(index_file_path), "%srdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
+
+        int fd = ::open(index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+
+        unique_fd fd_header(fd);
+
+            if (fd_header.fd() != -1) {
+            iovec iov[1] = { {this->header, strlen(this->header)} };
+
+            ssize_t nwritten = ::writev(fd_header.fd(), iov, 1);
+
+            if (nwritten == -1) {
+                // TODO bad filename
+                LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), index_file_path);
+            } else {
+                ::close(fd_header.fd());
+            }
+        } else {
+            LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), index_file_path);
         }
     }
 

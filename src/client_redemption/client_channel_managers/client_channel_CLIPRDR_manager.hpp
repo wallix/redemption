@@ -403,7 +403,7 @@ public:
 
                             uint32_t const data_len = chunk.in_uint32_le();
                             if (data_len > chunk.in_remain()) {
-                                LOG(LOG_WARNING, "Server Format List PDU data length(%d) longer than chunk(%zu)", data_len, chunk.in_remain());
+                                LOG(LOG_WARNING, "Server Format List PDU data length(%u) longer than chunk(%zu)", data_len, chunk.in_remain());
                             }
 
                             bool isSharedFormat = false;

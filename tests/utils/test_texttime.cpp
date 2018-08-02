@@ -36,7 +36,8 @@ RED_AUTO_TEST_CASE(TestTextdate)
 //     struct timeval tv;
 //     struct timezone tz;
 //     gettimeofday(&tv,&tz);
-//     BOOST_CHECK_EQUAL(std::string("2018-08-02"), text_gmdate(tv.tv_sec));
+//     LOG(LOG_INFO, "tv.sec = %d", tv.tv_sec);
+    BOOST_CHECK_EQUAL(std::string("2018-08-02"), text_gmdate(1533211681));
 
     BOOST_CHECK_EQUAL(std::string("1970-01-01 00:00:00"), text_gmdatetime(0));
 

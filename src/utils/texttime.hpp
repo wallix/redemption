@@ -44,6 +44,7 @@ std::string text_gmdatetime(const time_t time) {
     return std::string(buf, 19);
 }
 
+
 extern std::string filename_gmdatetime(const time_t time);
 
 std::string filename_gmdatetime(const time_t time) {
