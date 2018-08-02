@@ -46,8 +46,7 @@ struct Hotspot {
     explicit Hotspot(unsigned x, unsigned y) : x(x), y(y) {}
 };
 
-static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer);
-static void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t * mask_buffer)
+inline void fix_32_bpp(CursorSize dimensions, uint8_t * data_buffer, uint8_t const * mask_buffer)
 {
     const unsigned int xor_line_length_in_byte = dimensions.width * 3;
     const unsigned int xor_padded_line_length_in_byte = ::even_pad_length(xor_line_length_in_byte);

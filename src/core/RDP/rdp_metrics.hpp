@@ -21,7 +21,7 @@
 #pragma once
 
 #include <cstdio>
-#include <time.h>
+#include <ctime>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/uio.h>

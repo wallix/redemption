@@ -43,7 +43,7 @@ public:
     ReplayTransport(
         const char* fname, const char *ip_address, int port,
         FdType fd_type = FdType::Timer,
-        FirstPacket fitst_packet = FirstPacket::DisableTimer,
+        FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
     ~ReplayTransport();

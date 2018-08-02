@@ -563,13 +563,13 @@ SequencedVideoCaptureImpl::VideoCapture::VideoCapture(
     SequenceTransport & trans,
     RDPDrawable & drawable,
     gdi::ImageFrameApi & imageFrameApi,
-    VideoParams video_params)
+    VideoParams const& video_params)
 : video_cap_ctx(now,
     video_params.no_timestamp ? TraceTimestamp::No : TraceTimestamp::Yes,
     video_params.bogus_vlc_frame_rate ? ImageByInterval::One : ImageByInterval::ZeroOrOne,
     video_params.frame_rate, drawable, imageFrameApi)
 , trans(trans)
-, video_params(std::move(video_params))
+, video_params(video_params)
 , image_frame_api(imageFrameApi)
 {
     if (video_params.verbosity) {
@@ -718,13 +718,13 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     unsigned image_zoom,
     /* const */RDPDrawable & drawable,
     gdi::ImageFrameApi & imageFrameApi,
-    VideoParams video_params,
+    VideoParams const& video_params,
     NotifyNextVideo & next_video_notifier)
 : first_image(capture_params.now, *this)
 , vc_trans(
     capture_params.record_path, capture_params.basename, ("." + video_params.codec).c_str(),
     capture_params.groupid, capture_params.report_message)
-, vc(capture_params.now, this->vc_trans, drawable, imageFrameApi, std::move(video_params))
+, vc(capture_params.now, this->vc_trans, drawable, imageFrameApi, video_params)
 , ic_trans(
     capture_params.record_path, capture_params.basename, ".png",
     capture_params.groupid, capture_params.report_message)

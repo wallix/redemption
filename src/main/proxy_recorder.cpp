@@ -631,7 +631,7 @@ struct CliPassword
 };
 
 template<class Output, class Opt>
-void print_action(Output&& out, Opt const& /*unused*/, CliPassword const&)
+void print_action(Output&& out, Opt const& /*unused*/, CliPassword const& /*clipass*/)
 {
     out << " [password]";
 }
@@ -642,8 +642,8 @@ int main(int argc, char *argv[])
     int target_port = 3389;
     int listen_port = 3389;
     char const* capture_file = nullptr;
-    char const* nla_username = "";
-    std::string nla_password = "";
+    std::string nla_username;
+    std::string nla_password;
     bool forkable = true;
 
     auto options = cli::options(
@@ -694,10 +694,12 @@ int main(int argc, char *argv[])
 
     SSL_library_init();
 
-    FrontServer front(target_host, target_port, capture_file, nla_username, nla_password);
+    FrontServer front(
+        target_host, target_port, capture_file,
+        std::move(nla_username), std::move(nla_password));
     Listen listener(front, inet_addr("0.0.0.0"), listen_port);
     if (listener.sck <= 0) {
-        return 1;
+        return 2;
     }
     listener.run(forkable);
 }

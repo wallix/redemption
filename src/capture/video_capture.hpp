@@ -241,7 +241,7 @@ public:
             SequenceTransport & trans,
             RDPDrawable & drawable,
             gdi::ImageFrameApi & imageFrameApi,
-            VideoParams video_params
+            VideoParams const& video_params
         );
 
         ~VideoCapture();
@@ -268,7 +268,7 @@ public:
         VideoCaptureCtx video_cap_ctx;
         std::unique_ptr<video_recorder> recorder;
         SequenceTransport & trans;
-        VideoParams video_params;
+        const VideoParams video_params;
         gdi::ImageFrameApi & image_frame_api;
     } vc;
 
@@ -339,7 +339,7 @@ public:
         unsigned image_zoom,
         /* const */RDPDrawable & drawable,
         gdi::ImageFrameApi & imageFrameApi,
-        VideoParams video_params,
+        VideoParams const& video_params,
         NotifyNextVideo & next_video_notifier);
 
     void next_video(const timeval& now);

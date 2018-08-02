@@ -49,14 +49,14 @@ struct CaptureApi : private noncopyable
     {
         Microseconds() = default;
 
-        Microseconds(std::chrono::microseconds const & ms)
+        Microseconds(std::chrono::microseconds const& ms)
           : ms_(ms)
         {
             assert(ms_.count() >= 0);
         }
 
         template<class Rep, class Period>
-        Microseconds(std::chrono::duration<Rep, Period> const & duration)
+        Microseconds(std::chrono::duration<Rep, Period> const& duration)
           : Microseconds(std::chrono::microseconds{duration})
         {}
 

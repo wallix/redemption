@@ -2752,7 +2752,7 @@ namespace jln
     auto select_timer_result(InitCtx& init_ctx)
     {
         using E = detail::BuilderInit::E;
-        if constexpr (detail::BuilderInit::has(Has, E::Timer | E::Timeout)) {
+        if constexpr (detail::BuilderInit::has(Has, E::Timer | E::Timeout)) { /*NOLINT*/
             return init_ctx.terminate_init();
         }
         else { /*NOLINT*/

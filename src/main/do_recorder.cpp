@@ -1757,6 +1757,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         char path[1024];
                         char basename[1024];
                         char extension[128];
+                        path[sizeof(path)-1] = 0;
+                        path[sizeof(path)-2] = 0;
                         strncpy(path, app_path(AppPath::Wrm), sizeof(path)-2);
                         strncat(path, "/", sizeof(path)-1);
                         strncpy(basename, movie_path, sizeof(basename));
@@ -1815,7 +1817,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 Capture capture;
 
                                 U() : dummy(){}
-                                ~U() {}
+                                ~U() {} /*NOLINT*/
                             } u;
                             bool is_loaded = false;
 

@@ -868,8 +868,8 @@ public:
                  , vars.get<cfg::globals::auth_user>().c_str()
                  , mod_rdp_params.target_host
                  , info
-                 , vars.get<cfg::context::target_service>().c_str()
-                 , vars.get<cfg::globals::target_device>().c_str()
+                 , vars.get<cfg::context::target_service>()
+                 , vars.get<cfg::globals::target_device>()
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
                  , vars.get<cfg::rdp_metrics::activate_log_metrics>()

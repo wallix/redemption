@@ -50,7 +50,7 @@ namespace
 
         ~File()
         {
-            std::fclose(f);
+            std::fclose(f); /*NOLINT*/
         }
     };
 
@@ -215,6 +215,7 @@ struct NoExceptTransport
             LOG(LOG_ERR, "%s (%s)", name, msg);
         }
         png_error(png_ptr, msg);
+        REDEMPTION_UNREACHABLE();
     }
 };
 
