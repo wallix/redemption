@@ -80,7 +80,7 @@ namespace cli
     }
 
     template<class Act>
-    auto apply_option_impl(ParseResult& /*unused*/, Act && act, char /*unused*/)
+    auto apply_option_impl(ParseResult& /*pr*/, Act && act, char /*unused*/)
     -> decltype(act())
     {
         return act();
@@ -587,7 +587,11 @@ namespace cli
                         }
                     }
                     else {
+                        auto const old_opti = r.opti;
                         res = parse_short_option(s+1, r, opts...);
+                        while (res == Res::Ok && old_opti == r.opti && r.str) {
+                            res = parse_short_option(r.str, r, opts...);
+                        }
                     }
                 }
                 if (res != Res::Ok) {
