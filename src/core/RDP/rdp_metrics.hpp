@@ -179,13 +179,6 @@ private:
 
 
 public:
-//     void set_utc_last_date(time_t date) {
-//         this->utc_last_date = date;
-//     }
-
-//     time_t get_utc_last_date() {
-//         return this->utc_last_date;
-//     }
 
     bool active() {
         return this->active_;
@@ -201,13 +194,10 @@ public:
     RDPMetrics( const time_t now
               , const std::string & path
               , const char * session_id
-              , const char * account               // secondary account
-              , const char * primary_user          // clear primary user account
-              , const char * target_host           // target_host
-              , const ClientInfo & info
-              , const std::string & target_service // clear target service name
-              , const std::string & target_device  // clear device name
-              , const unsigned char * key_crypt    // salt for HMAC
+              , const std::string & primary_user_sig        // clear primary user account
+              , const std::string & account_sig            // secondary account
+              , const std::string & target_service_sig     // clear target service name + clear device name
+              , const std::string & session_info_sig       // target_host + client info
               , const long file_interval           // daily rotation of filename (hours)
               , const bool activate                // do nothing if false
               , const time_t log_delay             // delay between 2 logs
@@ -219,25 +209,11 @@ public:
       , active_(activate)
       , log_delay(log_delay)
     {
-        char primary_user_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
-        char account_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
-        char target_service_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
-        char session_info_sig[1+SslSha256::DIGEST_LENGTH*2] = {'\0'};
+        std::string text_datetime(text_gmdatetime(now));
 
-        std::string target_device_and_service(target_service+" "+target_device);
-
-        this->encrypt(primary_user_sig, primary_user, std::strlen(primary_user), key_crypt);
-        this->encrypt(account_sig, account, std::strlen(account), key_crypt);
-        this->encrypt(target_service_sig, target_device_and_service.c_str(), target_device_and_service.length(), key_crypt);
-
-        char session_info[1024];
-        ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
-        this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
-
-        ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", "", this->session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
+        ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", text_datetime.c_str(), this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
 
         if (this->path.c_str() && activate) {
-
             this->new_day(this->current_file_date);
         }
     }
@@ -249,16 +225,15 @@ public:
     }
 
     void disconnect() {
-        char start_full_date_time[24];
-        timeval local_time = tvtime();
-        this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+        timeval now = tvtime();
+        std::string text_datetime(text_gmdatetime(now.tv_sec));
 
         char header_delta[2048];
-        ::snprintf(header_delta, sizeof(header_delta), "%s %s", start_full_date_time, this->session_id);
-        std::string sentence(header_delta);
-        sentence += " disconnection\n";
+        ::snprintf(header_delta, sizeof(header_delta), "%s %s disconnection\n", text_datetime.c_str(), this->session_id);
+//         std::string sentence(header_delta);
+//         sentence += " disconnection\n";
 
-        iovec iov[1] = { {const_cast<char *>(sentence.c_str()), sentence.length()} };
+        iovec iov[1] = { {header_delta, strlen(header_delta)} };
 
         ssize_t nwritten = ::writev(fd.fd(), iov, 1);
 
@@ -599,36 +574,36 @@ public:
 //     }
 
 
-    void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
-        char current_date[24] = {'\0'};
-        memcpy(current_date, ctime(&time), 24);
-
-        date[0] = current_date[20];
-        date[1] = current_date[21];
-        date[2] = current_date[22];
-        date[3] = current_date[23];
-        date[4] = '-';
-        date[5] =  current_date[4];
-        date[6] =  current_date[5];
-        date[7] =  current_date[6];
-        date[8] = '-';
-        date[9] = current_date[8];
-        date[10] = current_date[9];
-        date[11] = '\0';
-
-        if (keep_hhmmss) {
-            date[11] = '-';
-            date[12] = current_date[11];
-            date[13] = current_date[12];
-            date[14] = current_date[13];
-            date[15] = current_date[14];
-            date[16] = current_date[15];
-            date[17] = current_date[16];
-            date[18] = current_date[17];
-            date[19] = current_date[18];
-            date[20] = '\0';
-        }
-    }
+//     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
+//         char current_date[24] = {'\0'};
+//         memcpy(current_date, ctime(&time), 24);
+//
+//         date[0] = current_date[20];
+//         date[1] = current_date[21];
+//         date[2] = current_date[22];
+//         date[3] = current_date[23];
+//         date[4] = '-';
+//         date[5] =  current_date[4];
+//         date[6] =  current_date[5];
+//         date[7] =  current_date[6];
+//         date[8] = '-';
+//         date[9] = current_date[8];
+//         date[10] = current_date[9];
+//         date[11] = '\0';
+//
+//         if (keep_hhmmss) {
+//             date[11] = '-';
+//             date[12] = current_date[11];
+//             date[13] = current_date[12];
+//             date[14] = current_date[13];
+//             date[15] = current_date[14];
+//             date[16] = current_date[15];
+//             date[17] = current_date[16];
+//             date[18] = current_date[17];
+//             date[19] = current_date[18];
+//             date[20] = '\0';
+//         }
+//     }
 
 
     void new_day(time_t now) {
@@ -678,24 +653,17 @@ public:
 
 
     void log() {
-        timeval local_time = tvtime();
-           timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, local_time);
+        timeval now = tvtime();
+        timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, now);
         if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
             local_next_log_time.tv_sec += this->log_delay;
 
-//             time_t utc_time_date;
-//             time ( &utc_time_date );
-//
-//             if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-//                 this->new_day(utc_time_date);
-//             }
+            this->rotate(now.tv_sec);
 
-            char start_full_date_time[24];
-
-            this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
+            std::string text_datetime(text_gmdatetime(now.tv_sec));
 
             char sentence[4096];
-            ::snprintf(sentence, sizeof(sentence), "%s %s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", start_full_date_time, this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
+            ::snprintf(sentence, sizeof(sentence), "%s %s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", text_datetime.c_str(), this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
 
             iovec iov[] = { {sentence, strlen(sentence)} };
 
