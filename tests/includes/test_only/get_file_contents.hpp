@@ -22,6 +22,8 @@
 
 #include <fstream>
 #include "core/error.hpp"
+#include "utils/log.hpp"
+#include "utils/fileutils.hpp"
 
 template<class String>
 void append_file_contents(String& s, const char * name)
@@ -31,21 +33,24 @@ void append_file_contents(String& s, const char * name)
 
     std::basic_filebuf<char_type, traits_type> buf;
 
+    const std::streamsize sz = filesize(name);
+    if (sz == std::streamsize(-1)) {
+        LOG(LOG_ERR, "failed to stat file size for %s : %s", name, strerror(errno));
+        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
+    }
+
     char_type c;
     buf.pubsetbuf(&c, 1);
 
     if (!buf.open(name, std::ios::in)) {
-        throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
-    }
-
-    const std::streamsize sz = buf.in_avail();
-    if (sz == std::streamsize(-1)) {
+        LOG(LOG_ERR, "failed to open file %s : %s", name, strerror(errno));
         throw Error(ERR_TRANSPORT_OPEN_FAILED, errno);
     }
 
     s.resize(std::size_t(sz));
     const std::streamsize n = buf.sgetn(&s[0], std::streamsize(s.size()));
     if (sz != n) {
+        LOG(LOG_ERR, "failed to read file into buffer %s : %s", name, strerror(errno));
         throw Error(ERR_TRANSPORT_READ_FAILED, errno);
     }
 }

@@ -3439,6 +3439,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
@@ -4039,6 +4040,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/core/error.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
@@ -4445,6 +4447,7 @@ test-run tests/utils/test_recording_progress :
 :
   <covfile>src/utils/recording_progress.hpp
   <library>src/core/error.o
+  <library>src/utils/fileutils.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/utils/test_rect :
