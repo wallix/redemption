@@ -360,7 +360,7 @@ public:
       : client(client) {}
 
 
-    void process_client_channel_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  uint8_t const * data, const size_t data_len, uint32_t flags){
+    void process_client_channel_out_data(const CHANNELS::ChannelNameId & front_channel_name, const uint64_t total_length, OutStream & out_stream_first_part, const size_t first_part_data_size,  const_byte_array data, uint32_t flags){
 
         // 3.1.5.2.2.1 Reassembly of Chunked Virtual Channel Dat
 
@@ -407,15 +407,15 @@ public:
         // copied into the reassembly buffer in the order in which they are received. Upon receiving the
         // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
-        if (data_len > first_part_data_size ) {
+        if (data.size() > first_part_data_size ) {
 
-            int real_total = data_len - first_part_data_size;
+            int real_total = data.size() - first_part_data_size;
             const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
             const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
             int data_sent(0);
 
             // First Part
-                out_stream_first_part.out_copy_bytes(data, first_part_data_size);
+                out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
 
                 data_sent += first_part_data_size;
                 InStream chunk_first(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
@@ -433,7 +433,7 @@ public:
 
             // Next Part
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
-                out_stream_next_part.out_copy_bytes(data + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
+                out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
 
                 data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
                 InStream chunk_next(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
@@ -449,7 +449,7 @@ public:
 
             // Last part
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
-                out_stream_last_part.out_copy_bytes(data + data_sent, remains_PDU);
+                out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
 
                 InStream chunk_last(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
@@ -463,7 +463,7 @@ public:
 
         } else {
 
-            out_stream_first_part.out_copy_bytes(data, data_len);
+            out_stream_first_part.out_copy_bytes(data.data(), data.size());
             InStream chunk(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
             this->client->mod->send_to_mod_channel( front_channel_name

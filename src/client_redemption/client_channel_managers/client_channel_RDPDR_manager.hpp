@@ -604,11 +604,11 @@ public:
 
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                        this->client->mod->send_to_mod_channel( channel_names::rdpdr
-                                                                            , chunk_to_send
-                                                                            , out_stream.get_offset()
-                                                                            , this->channel_flags
-                                                                            );
+                                        this->client->mod->send_to_mod_channel(
+                                            channel_names::rdpdr,
+                                            chunk_to_send,
+                                            out_stream.get_offset(),
+                                            this->channel_flags);
                                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                             LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Basic Query Information Response");
                                         }
@@ -754,8 +754,7 @@ public:
                                                                     , 20 + portion_length
                                                                     , out_stream
                                                                     , out_stream.get_capacity() - 20
-                                                                    , ReadData.get()
-                                                                    , portion_length
+                                                                    , {ReadData.get(), size_t(portion_length)}
                                                                     , 0);
                                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                                     LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Read Response");

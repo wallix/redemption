@@ -113,7 +113,8 @@
 
 
 
-class ClientChannelCLIPRDRManager : public ClientChannelManager{
+class ClientChannelCLIPRDRManager : public ClientChannelManager
+{
 
 public:
     RDPVerbose verbose;
@@ -570,8 +571,10 @@ public:
                                         , total_length
                                         , out_stream_first_part
                                         , first_part_data_size
-                                        , image.data()
-                                        , this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
+                                        , {
+                                            image.data(),
+                                            this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
+                                        }
                                         , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                     );
                                 }
@@ -594,8 +597,8 @@ public:
                                         , total_length
                                         , out_stream_first_part
                                         , first_part_data_size
-                                        , this->clientIOClipboardAPI->get_text()
-                                        , this->clientIOClipboardAPI->get_cliboard_data_length()
+                                        , {this->clientIOClipboardAPI->get_text()
+                                        , this->clientIOClipboardAPI->get_cliboard_data_length()}
                                         , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                     );
                                 }
@@ -613,7 +616,7 @@ public:
 
                                     RDPECLIP::FileDescriptor fdf(
                                         this->clientIOClipboardAPI->get_file_item_name(0)
-                                        , this->clientIOClipboardAPI->get_file_item_size(0)
+                                        , this->clientIOClipboardAPI->get_file_item(0).size()
                                         , fscc::FILE_ATTRIBUTE_ARCHIVE
                                     );
                                     fdf.emit(out_stream_first_part);
@@ -643,7 +646,7 @@ public:
                                         //file = this->clientIOClipboardAPI->_items_list[i];
                                         RDPECLIP::FileDescriptor fdn(
                                             this->clientIOClipboardAPI->get_file_item_name(i)
-                                            , this->clientIOClipboardAPI->get_file_item_size(i)
+                                            , this->clientIOClipboardAPI->get_file_item(i).size()
                                             , fscc::FILE_ATTRIBUTE_ARCHIVE
                                             );
                                         int flag_next(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
@@ -701,7 +704,7 @@ public:
                                 StaticOutStream<32> out_stream;
                                 RDPECLIP::FileContentsResponse_Size fileSize(
                                     streamID
-                                    , this->clientIOClipboardAPI->get_file_item_size(lindex)
+                                    , this->clientIOClipboardAPI->get_file_item(lindex).size()
                                     );
                                 fileSize.emit(out_stream);
 
@@ -723,11 +726,11 @@ public:
                                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
                                 RDPECLIP::FileContentsResponse_Range fileRange(
                                     streamID
-                                    , this->clientIOClipboardAPI->get_file_item_size(lindex));
+                                    , this->clientIOClipboardAPI->get_file_item(lindex).size());
 
-                                //this->clientIOClipboardAPI->get_cliboard_data_length() = this->clientIOClipboardAPI->get_file_item_size(lindex);
-                                int total_length(this->clientIOClipboardAPI->get_file_item_size(lindex) + 12);
-                                int first_part_data_size(this->clientIOClipboardAPI->get_file_item_size(lindex));
+                                //this->clientIOClipboardAPI->get_cliboard_data_length() = this->clientIOClipboardAPI->get_file_item(lindex).size();
+                                int first_part_data_size(this->clientIOClipboardAPI->get_file_item(lindex).size());
+                                int total_length(first_part_data_size + 12);
                                 if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
                                     first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
                                 }
@@ -738,9 +741,7 @@ public:
                                     , total_length
                                     , out_stream_first_part
                                     , first_part_data_size
-                                    , byte_ptr_cast(
-                                    this->clientIOClipboardAPI->get_file_item_data(lindex))
-                                    , this->clientIOClipboardAPI->get_file_item_size(lindex)
+                                    , this->clientIOClipboardAPI->get_file_item(lindex)
                                     , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                                 );
 

@@ -392,16 +392,12 @@ public Q_SLOTS:
         return this->_chunk.get();
     }
 
-    int get_file_item_size(int index) override {
-        return this->_items_list[index]->size;
-    }
-
     std::string get_file_item_name(int index) override {
         return this->_items_list[index]->nameUTF8;
     }
 
-    char * get_file_item_data(int index) override {
-        return this->_items_list[index]->chunk;
+    array_view_char get_file_item(int index) override {
+        return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 
     QImage::Format bpp_to_QFormat(int bpp, bool alpha) {

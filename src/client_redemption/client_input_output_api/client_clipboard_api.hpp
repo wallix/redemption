@@ -88,14 +88,14 @@ public:
         );
     }
 
+    // TODO should be `array_view_const_u8 (get_text + get_cliboard_data_length)`
     virtual uint8_t * get_text() = 0;
 
     // files data (file index to identify a file among a files group descriptor)
     virtual std::string get_file_item_name(int index) {(void)index; return {};}
 
     // TODO should be `array_view_const_char get_file_item_size(int index)`
-    virtual  int get_file_item_size(int index) {(void) index; return 0;}
-    virtual char * get_file_item_data(int index) {(void) index; /*TODO char const/string_view*/ return const_cast<char*>("");}
+    virtual array_view_char get_file_item(int index) { (void)index; return {}; }
 
     int get_citems_number() {
         return this->_cItems;
