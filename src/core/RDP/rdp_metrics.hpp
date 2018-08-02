@@ -91,7 +91,7 @@ private:
 
     //  output file info
     const int file_interval;
-    time_t utc_last_date;
+    time_t current_file_date;
     char complete_file_path[4096] = {'\0'};
     const std::string path;
     unique_fd fd = invalid_fd();
@@ -129,9 +129,9 @@ private:
 
 
 public:
-    void set_utc_last_date(time_t date) {
-        this->utc_last_date = date;
-    }
+//     void set_utc_last_date(time_t date) {
+//         this->utc_last_date = date;
+//     }
 
 //     time_t get_utc_last_date() {
 //         return this->utc_last_date;
@@ -163,6 +163,7 @@ public:
               , const time_t log_delay             // delay between 2 logs
       )
       : file_interval(file_interval*3600)
+      , current_file_date(now-now%(this->file_interval))
       , path(path)
       , session_id(session_id)
       , active_(activate)
@@ -183,12 +184,11 @@ public:
         ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
         this->encrypt(session_info_sig, session_info, std::strlen(session_info), key_crypt);
 
-
         ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", "", this->session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
 
         if (this->path.c_str() && activate) {
 
-            this->new_day(now);
+            this->new_day(this->current_file_date);
         }
     }
 
@@ -615,19 +615,30 @@ public:
         }
     }
 
+    void rotate(time_t now) {
+
+        time_t next_file_date = now - now%(this->file_interval);
+        if (this->current_file_date != next_file_date) {
+            this->current_file_date = next_file_date;
+
+            this->new_day(next_file_date);
+        }
+
+    }
+
 
     void log() {
         timeval local_time = tvtime();
-        timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, local_time);
+           timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, local_time);
         if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
             local_next_log_time.tv_sec += this->log_delay;
 
-            time_t utc_time_date;
-            time ( &utc_time_date );
-
-            if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
-                this->new_day(utc_time_date);
-            }
+//             time_t utc_time_date;
+//             time ( &utc_time_date );
+//
+//             if ((utc_time_date -this->utc_last_date) >= this->file_interval) {
+//                 this->new_day(utc_time_date);
+//             }
 
             char start_full_date_time[24];
 

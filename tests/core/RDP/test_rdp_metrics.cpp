@@ -37,6 +37,12 @@ constexpr const char * rdp_metrics_path_file = "/tmp/";
 
 RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
 {
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
+
     // Should create rdp_metrics files if they do not exist
     ClientInfo info;
     uint8_t key[32] = {0};
@@ -55,8 +61,26 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
                       , true
                       , 5
                       );
+
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
+
+    metrics.rotate(epoch + (3600*2));
+
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
+
+    metrics.rotate(epoch + (3600*24));
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
+
 }
 
 
