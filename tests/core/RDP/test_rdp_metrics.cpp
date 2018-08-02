@@ -70,15 +70,35 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
 
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
+//     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+//     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+//
+//     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
+//     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
 
 }
 
+RED_AUTO_TEST_CASE(TestRDPMetricsH)
+{
+    uint8_t key[32] = {0};
 
+    RED_CHECK_EQUAL(std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"),
+    hmac_user("primaryuser", key));
+
+    RED_CHECK_EQUAL(std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"),
+    hmac_account("secondaryuser", key));
+
+    RED_CHECK_EQUAL(std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"),
+    hmac_device_service("device1", "service1", key));
+
+    ClientInfo info;
+    RED_CHECK_EQUAL(std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"),
+    hmac_client_info("10.10.13.12", info, key));
+
+
+//     user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7
+
+}
 
 //constexpr const char * rdp_metrics_path_file = "tests/core/RDP/";
 

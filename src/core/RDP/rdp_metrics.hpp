@@ -36,6 +36,56 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 
+extern std::string metrics_encrypt(const char * src, const size_t src_len, const unsigned char * key_crypt);
+
+
+extern std::string hmac_user(const std::string & user, const unsigned char * key);
+
+inline std::string hmac_user(const std::string & user, const unsigned char * key) {
+    return metrics_encrypt(user.c_str(), user.length(), key);
+}
+
+extern std::string hmac_account(const std::string & account, const unsigned char * key);
+
+inline std::string hmac_account(const std::string & account, const unsigned char * key) {
+    return metrics_encrypt(account.c_str(), account.length(), key);
+}
+
+extern std::string hmac_device_service(const std::string & account, const std::string & service, const unsigned char * key);
+
+inline std::string hmac_device_service(const std::string & device, const std::string & service, const unsigned char * key) {
+    std::string target_device_and_service(service+" "+device);
+    return metrics_encrypt(target_device_and_service.c_str(), target_device_and_service.length(), key);
+}
+
+extern std::string hmac_client_info(const char * target_host, const ClientInfo & info, const unsigned char * key);
+
+inline std::string hmac_client_info(const char * target_host, const ClientInfo & info, const unsigned char * key) {
+    char session_info[1024];
+    ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
+    return metrics_encrypt(session_info, strlen(session_info), key);
+}
+
+
+inline std::string metrics_encrypt(const char * src, const size_t src_len, const unsigned char * key_crypt) {
+    char res[SslSha256::DIGEST_LENGTH*2];
+    char * dest = res;
+    SslHMAC_Sha256 sha256(key_crypt, 32);
+    sha256.update(byte_ptr_cast(src), src_len);
+    uint8_t sig[SslSha256::DIGEST_LENGTH];
+    sha256.final(sig);
+
+    unsigned char * pin = sig;
+    const char * hex = "0123456789ABCDEF";
+    for(; pin < &sig[32]; dest+=2, pin++){
+        dest[0] = hex[(*pin>>4) & 0xF];
+        dest[1] = hex[ *pin     & 0xF];
+    }
+    //dest[64] = 0;
+
+    return std::string (res, 64);
+}
+
 
 class RDPMetrics
 {
