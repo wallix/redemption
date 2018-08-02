@@ -14,7 +14,7 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *1324
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2017
+*   Copyright (C) Wallix 2018
 *   Author(s): Clément Moroldo
 */
 
@@ -94,6 +94,66 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
     RED_CHECK_EQUAL(std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"),
     hmac_client_info("10.10.13.12", info, key));
 
+}
+
+RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
+
+    ClientInfo info;
+    uint8_t key[32] = {0};
+    time_t epoch = 1533211681 - (24*3600);
+    RDPMetrics metrics( epoch
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , hmac_user("primaryuser", key)
+                      , hmac_account("secondaryuser", key)
+                      , hmac_device_service("device1", "service1", key)
+                      , hmac_client_info("10.10.13.12", info, key)
+                      , 24
+                      , true
+                      , 5
+                      );
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-01.logindex"));
+
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
+
+    timeval now;
+    now.tv_sec = 1533211681;
+    metrics.log(now);
+
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
+
+    timeval next;
+    next.tv_sec = 1533211681+(24*3600);
+    metrics.log(next);
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
+
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
 }
 
 //constexpr const char * rdp_metrics_path_file = "tests/core/RDP/";

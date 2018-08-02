@@ -81,7 +81,6 @@ inline std::string metrics_encrypt(const char * src, const size_t src_len, const
         dest[0] = hex[(*pin>>4) & 0xF];
         dest[1] = hex[ *pin     & 0xF];
     }
-    //dest[64] = 0;
 
     return std::string (res, 64);
 }
@@ -152,8 +151,8 @@ private:
     const bool active_ = false;
     long int current_data[COUNT_FIELD] = { 0 };
 
-    timeval local_next_log_time;
     const time_t log_delay;
+    timeval next_log_time;
 
     // RDP context Info
     int last_x = -1;
@@ -209,6 +208,7 @@ public:
       , active_(activate)
       , log_delay(log_delay)
     {
+        this->next_log_time.tv_sec = this->log_delay+now;
         std::string text_datetime(text_gmdatetime(now));
 
         ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", text_datetime.c_str(), this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
@@ -569,43 +569,6 @@ public:
     }
 
 
-//     std::string metrics_filename()
-//     {
-//     }
-
-
-//     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
-//         char current_date[24] = {'\0'};
-//         memcpy(current_date, ctime(&time), 24);
-//
-//         date[0] = current_date[20];
-//         date[1] = current_date[21];
-//         date[2] = current_date[22];
-//         date[3] = current_date[23];
-//         date[4] = '-';
-//         date[5] =  current_date[4];
-//         date[6] =  current_date[5];
-//         date[7] =  current_date[6];
-//         date[8] = '-';
-//         date[9] = current_date[8];
-//         date[10] = current_date[9];
-//         date[11] = '\0';
-//
-//         if (keep_hhmmss) {
-//             date[11] = '-';
-//             date[12] = current_date[11];
-//             date[13] = current_date[12];
-//             date[14] = current_date[13];
-//             date[15] = current_date[14];
-//             date[16] = current_date[15];
-//             date[17] = current_date[16];
-//             date[18] = current_date[17];
-//             date[19] = current_date[18];
-//             date[20] = '\0';
-//         }
-//     }
-
-
     void new_day(time_t now) {
 
         std::string text_date( text_gmdate(now));
@@ -648,15 +611,14 @@ public:
 
             this->new_day(next_file_date);
         }
-
     }
 
 
-    void log() {
-        timeval now = tvtime();
-        timeval wait_log_metrics = ::how_long_to_wait(this->local_next_log_time, now);
+    void log(timeval & now) {
+
+        timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
         if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-            local_next_log_time.tv_sec += this->log_delay;
+            next_log_time.tv_sec += this->log_delay;
 
             this->rotate(now.tv_sec);
 
