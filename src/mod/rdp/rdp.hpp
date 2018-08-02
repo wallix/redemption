@@ -1169,16 +1169,11 @@ public:
                 );
         }
 
-        LOG(LOG_INFO, "RDP mod built 1");
-
         this->negociation_result.front_width = info.width;
         this->negociation_result.front_height = info.height;
 
-        LOG(LOG_INFO, "RDP mod built 2");
-
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
 
-        LOG(LOG_INFO, "RDP mod built 3");
     }   // mod_rdp
 
     ~mod_rdp() override {

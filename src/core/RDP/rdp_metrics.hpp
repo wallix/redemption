@@ -92,7 +92,7 @@ class RDPMetrics
 
 private:
 
-    const char * version = "v1.0";                  // field version
+    const char * version = "v1.0";                  // fields version
 
     enum : int {
 
