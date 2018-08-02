@@ -72,7 +72,9 @@ public:
 
     void copy(const uint8_t * source, size_t size, uint32_t offset = 0) {
         assert(this->size() >= size + offset);
-        memcpy(this->avbuf.data() + offset, source, size);
+        if (size) {
+            memcpy(this->avbuf.data() + offset, source, size);
+        }
     }
 };
 
@@ -260,34 +262,10 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
                                 const uint8_t * password) {
-       this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
-       if (user) {
-           size_t user_len = UTF8Len(user);
-           this->User.init(user_len * 2);
-           UTF8toUTF16(user, this->User.get_data(), user_len * 2);
-       }
-       else {
-           this->User.init(0);
-       }
-
-       if (domain) {
-           size_t domain_len = UTF8Len(domain);
-           this->Domain.init(domain_len * 2);
-           UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
-       }
-       else {
-           this->Domain.init(0);
-       }
-
-       if (password) {
-           size_t password_len = UTF8Len(password);
-           this->Password.init(password_len * 2);
-           UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
-       }
-       else {
-           this->Password.init(0);
-       }
-
+        this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+        this->SetUserFromUtf8(user);
+        this->SetDomainFromUtf8(domain);
+        this->SetPasswordFromUtf8(password);
     }
 
     void clear() {

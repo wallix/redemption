@@ -864,6 +864,34 @@ public:
         SSL * ssl = SSL_new(ctx);
         this->allocated_ssl = ssl;
 
+        // get public_key
+        {
+            X509 * px509 = SSL_get_certificate(this->allocated_ssl);
+            LOG(LOG_INFO, "TLSContext::X509_get_pubkey()");
+            // extract the public key
+            EVP_PKEY* pkey = X509_get_pubkey(px509);
+            if (!pkey)
+            {
+                LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
+                exit(132);
+            }
+
+            LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
+
+            // export the public key to DER format
+            this->public_key_length = i2d_PublicKey(pkey, nullptr);
+            this->public_key = std::make_unique<uint8_t[]>(this->public_key_length);
+            LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
+            // hexdump_c(this->public_key, this->public_key_length);
+
+            {
+                uint8_t * tmp = this->public_key.get();
+                i2d_PublicKey(pkey, &tmp);
+            }
+
+            EVP_PKEY_free(pkey);
+        }
+
         // TODO I should probably not be doing that here ? Is it really necessary
         int flags = fcntl(sck, F_GETFL);
         fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
@@ -875,7 +903,7 @@ public:
         {
             BIO_printf(bio_err, "SSL accept error\n");
             ERR_print_errors(bio_err);
-            exit(132);
+            exit(133);
         }
 
         this->io = ssl;

@@ -33,7 +33,7 @@ struct BlockTransport : Transport
       , n_by_bloc(n_by_bloc)
     {}
 
-    size_t do_partial_read(uint8_t* buffer, size_t len) override
+    size_t operator()(uint8_t* buffer, size_t len)
     {
         std::size_t const n = std::min({len, this->data.size(), this->n_by_bloc});
         if (!n) {
@@ -42,11 +42,6 @@ struct BlockTransport : Transport
         memcpy(buffer, this->data.to_u8p(), n);
         this->data = this->data.subarray(n);
         return n;
-    }
-
-    std::size_t remaining() const
-    {
-        return this->data.size();
     }
 
 private:
@@ -68,14 +63,14 @@ RED_AUTO_TEST_CASE(Test1Read1)
     {
         BlockTransport t(data, 1);
         for (unsigned i = 0; i < k64; ++i) {
-            buf.read_from(t);
+            buf.read_with(t);
         }
         RED_CHECK_EQ(k64, buf.remaining());
         RED_CHECK_MEM(make_array_view(data, k64), buf.av());
-        RED_CHECK_EXCEPTION_ERROR_ID(buf.read_from(t), ERR_TRANSPORT_NO_MORE_DATA);
+        RED_CHECK_EXCEPTION_ERROR_ID(buf.read_with(t), ERR_TRANSPORT_NO_MORE_DATA);
         RED_CHECK_EQ(k64, buf.remaining());
         buf.advance(k64);
-        buf.read_from(t);
+        buf.read_with(t);
         RED_CHECK_EQ(1, buf.remaining());
         RED_CHECK_MEM(const_byte_array(data+k64, 1), buf.av());
     }
@@ -84,13 +79,13 @@ RED_AUTO_TEST_CASE(Test1Read1)
 
     {
         BlockTransport t(data, 24000);
-        buf.read_from(t);
-        buf.read_from(t);
+        buf.read_with(t);
+        buf.read_with(t);
         RED_CHECK_EQ(48000, buf.remaining());
-        buf.read_from(t);
+        buf.read_with(t);
         RED_CHECK_EQ(k64, buf.remaining());
         buf.advance(1000);
-        buf.read_from(t);
+        buf.read_with(t);
         RED_CHECK_EQ(k64, buf.remaining());
         RED_CHECK_MEM(const_byte_array(data+1000, k64), buf.av());
     }

@@ -28,6 +28,10 @@ namespace redemption_unit_test__
                 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
             #endif
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
+                if (e.errnum) {
+                    throw std::runtime_error{prefix_msg_error + e.errmsg() +
+                        ", errno=" + std::to_string(e.errnum)};
+                }
                 throw std::runtime_error{prefix_msg_error + e.errmsg()};
             });
             REDEMPTION_DIAGNOSTIC_POP

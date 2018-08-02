@@ -63,28 +63,22 @@ namespace
     #ifdef DEBUG_PACKETS
     const char *PacketTypeToString(PacketType t) noexcept
     {
+        # define CASE(name) case PacketType::name: return #name
         switch(t) {
-        case PacketType::DataIn:
-            return "dataIn";
-        case PacketType::DataOut:
-            return "dataOut";
-        case PacketType::ClientCert:
-            return "clientCert";
-        case PacketType::ServerCert:
-            return "serverCert";
-        case PacketType::Eof:
-            return "EOF";
-        case PacketType::Disconnect:
-            return "disconnect";
-        case PacketType::Connect:
-            return "connect";
-        case PacketType::Info:
-            return "info";
-        case PacketType::NlaIn:
-            return "nlaIn";
-        case PacketType::NlaOut:
-            return "nlaOut";
+            CASE(DataIn);
+            CASE(DataOut);
+            CASE(ClientCert);
+            CASE(ServerCert);
+            CASE(Eof);
+            CASE(Disconnect);
+            CASE(Connect);
+            CASE(Info);
+            CASE(NlaClientIn);
+            CASE(NlaClientOut);
+            CASE(NlaServerIn);
+            CASE(NlaServerOut);
         }
+        # undef
         return "unknown";
     }
     #endif
@@ -178,8 +172,10 @@ ReplayTransport::Data *ReplayTransport::read_single_chunk()
 			this->in_file.recv_boom(this->infos.back());
 			continue;
 
-		case PacketType::NlaIn:
-		case PacketType::NlaOut:
+		case PacketType::NlaClientIn:
+		case PacketType::NlaClientOut:
+		case PacketType::NlaServerIn:
+		case PacketType::NlaServerOut:
             this->in_file.recv_boom(
                 std::make_unique<uint8_t[]>(header.data_size).get(),
                 header.data_size);

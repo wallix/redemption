@@ -80,6 +80,7 @@ protected:
 private:
     Transport & trans;
     char const* class_name_log;
+    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
 public:
     bool hardcoded_tests = false;
@@ -98,6 +99,7 @@ public:
         Translation::language_t lang,
         Transport & trans,
         char const* class_name_log,
+        std::function<bool(SEC_WINNT_AUTH_IDENTITY&)>&& set_password_cb,
         const bool verbose = false
     )
         : server(false)
@@ -120,6 +122,7 @@ public:
         , verbose(verbose)
         , trans(trans)
         , class_name_log(class_name_log)
+        , set_password_cb(std::move(set_password_cb))
     {
         if (this->verbose) {
             LOG(LOG_INFO, "%s:: Initialization", this->class_name_log);
@@ -155,7 +158,7 @@ protected:
         this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
     }
 
-private:
+protected:
     void set_credentials(uint8_t const* user, uint8_t const* domain,
                          uint8_t const* pass, uint8_t const* hostname) {
         if (this->verbose) {
@@ -172,8 +175,9 @@ private:
         this->identity.SetKrbAuthIdentity(user, pass);
     }
 
+private:
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
-        size_t length = pszTargetName ? strlen(char_ptr_cast(pszTargetName)) : 0;
+        size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
         this->ServicePrincipalName.copy(pszTargetName, length);
         this->ServicePrincipalName.get_data()[length] = 0;
@@ -191,7 +195,7 @@ protected:
             case NTLM_Interface:
                 LOG(LOG_INFO, "Credssp: NTLM Authentication");
                 {
-                    auto table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj);
+                    auto table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
                     if (this->hardcoded_tests) {
                         table->hardcoded_tests = true;
                     }
@@ -469,7 +473,7 @@ public:
         : rdpCredsspBase(
             user, domain, pass, hostname, target_host, krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
-            transport.get_transport(), "rdpCredsspClient", verbose)
+            transport.get_transport(), "rdpCredsspClient", {}, verbose)
         , trans(transport)
     {
     }
@@ -798,23 +802,22 @@ class rdpCredsspServer : public rdpCredsspBase
 {
 public:
     rdpCredsspServer(Transport & transport,
-               uint8_t * user,
-               uint8_t * domain,
-               uint8_t * pass,
-               uint8_t * hostname,
                const bool krb,
                const bool restricted_admin_mode,
                Random & rand,
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
+               std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
         : rdpCredsspBase(
-            user, domain, pass, hostname, "", krb,
+            nullptr, nullptr, nullptr, nullptr, "", krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
-            transport, "rdpCredsspServer", verbose)
+            transport, "rdpCredsspServer", std::move(set_password_cb), verbose)
     {
     }
+
+    using rdpCredsspBase::set_credentials;
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
         int length;

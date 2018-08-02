@@ -839,6 +839,23 @@ namespace X224
     // | 0x04 RDP_NEGRSP_RESERVED            | An unused flag that is reserved for   |
     // |                                     | future use.                           |
     // +-------------------------------------+---------------------------------------+
+    // | 0x08 RESTRICTED_ADMIN_MODE_SUPPORTED| Indicates that the server supports    |
+    // |                                     | credential-less logon over CredSSP    |
+    // |                                     | (also known as "restricted admin      |
+    // |                                     | mode") and it is acceptable for the   |
+    // |                                     | client to send empty credentials in   |
+    // |                                     | the TSPasswordCreds structure defined |
+    // |                                     | in [MS-CSSP] section 2.2.1.2.1.<3>    |
+    // +-------------------------------------+---------------------------------------+
+    // | 0x10 REDIRECTED_AUTHENTICATION_MODE_SUPPORTED | Indicates that the server   |
+    // |                                     +---------+ supports credential-less    |
+    // |                                     | logon over CredSSP with credential    |
+    // |                                     | redirection (also known as "Remote    |
+    // |                                     | Credential Guard"). The client can    |
+    // |                                     | send a redirected logon buffer in the |
+    // |                                     | TSRemoteGuardCreds structure defined  |
+    // |                                     | in [MS-CSSP] section 2.2.1.2.3.       |
+    // +-------------------------------------+---------------------------------------+
 
     // length (2 bytes): A 16-bit, unsigned integer. Indicates the packet size. This
     //   field MUST be set to 0x0008 (8 bytes)
@@ -852,6 +869,8 @@ namespace X224
     // | 0x00000001 PROTOCOL_SSL       | TLS 1.0 (section 5.4.5.1)                    |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000002 PROTOCOL_HYBRID    | CredSSP (section 5.4.5.2)                    |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000004 PROTOCOL_RDSTLS    | RDSTLS protocol (section 5.4.5.3).           |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000008 PROTOCOL_HYBRID_EX | Credential Security Support Provider protocol|
     // |                               | (CredSSP) (section 5.4.5.2) coupled with the |

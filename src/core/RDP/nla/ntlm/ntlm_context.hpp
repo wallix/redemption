@@ -1197,9 +1197,12 @@ public:
             LOG(LOG_ERR, "ANONYMOUS User not allowed");
             return SEC_E_LOGON_DENIED;
         }
+        return SEC_I_CONTINUE_NEEDED;
+    }
+
+    SEC_STATUS check_authenticate() {
         uint8_t hash[16];
         this->ntlm_server_fetch_hash(hash);
-        SEC_STATUS status = this->ntlm_server_proceed_authenticate(hash);
-        return status;
+        return this->ntlm_server_proceed_authenticate(hash);
     }
 };

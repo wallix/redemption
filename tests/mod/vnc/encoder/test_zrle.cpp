@@ -6607,7 +6607,7 @@ constexpr uint8_t z2_block1[] = {
 // Remaining in buffer : 0
 
 
-class BlockRead : public PartialReaderAPI
+class BlockRead
 {
     uint8_t const* pbuff;
     size_t buffer_size;
@@ -6615,7 +6615,7 @@ class BlockRead : public PartialReaderAPI
 public:
     BlockRead(uint8_t const buffer[], size_t buffer_size) : pbuff(buffer), buffer_size(buffer_size), pos(0) {}
 
-    size_t partial_read(byte_ptr buffer, size_t len) override
+    size_t operator()(byte_ptr buffer, size_t len)
     {
         if (this->pos < this->buffer_size){
             const size_t available = this->buffer_size - this->pos;
@@ -6647,13 +6647,13 @@ RED_AUTO_TEST_CASE(TestZrle)
         VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 1898, 19), zd, VNCVerbose::none);
 
         BlockRead z0b0(z0_block0, sizeof(z0_block0));
-        buf.read_from(z0b0);
+        buf.read_with(z0b0);
         RED_CHECK(z0b0.empty());
         RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
         RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder.consume(buf, drawable));
 
         BlockRead z0b1(z0_block1, sizeof(z0_block1));
-        buf.read_from(z0b1);
+        buf.read_with(z0b1);
         RED_CHECK(z0b1.empty());
         RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
     }
@@ -6663,7 +6663,7 @@ RED_AUTO_TEST_CASE(TestZrle)
         VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(1910, 0, 10, 19), zd, VNCVerbose::none);
 
         BlockRead z1b0(z1_block0, sizeof(z1_block0));
-        buf.read_from(z1b0);
+        buf.read_with(z1b0);
         RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
         RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
     }
@@ -6673,12 +6673,12 @@ RED_AUTO_TEST_CASE(TestZrle)
         VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 19, 1920, 34), zd, VNCVerbose::none);
 
         BlockRead z2b0(z2_block0, sizeof(z2_block0));
-        buf.read_from(z2b0);
+        buf.read_with(z2b0);
         RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
         RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder.consume(buf, drawable));
 
         BlockRead z2b1(z2_block1, sizeof(z2_block1));
-        buf.read_from(z2b1);
+        buf.read_with(z2b1);
         RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
     }
 
@@ -6951,7 +6951,7 @@ RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
 constexpr uint8_t PackedPalette5[] = {
   /* 0000 */ 0x05,
   /* 0000 */ 0xff, 0xff, 0x00, 0x00, 0x87, 0xdc, 0xd2, 0x01, 0xff, 0xdf,
-             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

@@ -31,8 +31,9 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
+    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb = [](auto&){ return true; };
 
-    Ntlm_SecurityFunctionTable table(rand, timeobj);
+    Ntlm_SecurityFunctionTable table(rand, timeobj, set_password_cb);
     SEC_STATUS status;
     uint8_t name[] = "Ménélas";
     uint8_t dom[] = "Sparte";
@@ -63,9 +64,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
+    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb = [](auto&){ return true; };
 
-    Ntlm_SecurityFunctionTable server_table(rand, timeobj);
-    Ntlm_SecurityFunctionTable client_table(rand, timeobj);
+    Ntlm_SecurityFunctionTable server_table(rand, timeobj, set_password_cb);
+    Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);
     SEC_STATUS server_status;
     SEC_STATUS client_status;
     uint8_t const name[] = "Ménélas";

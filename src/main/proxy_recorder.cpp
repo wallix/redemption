@@ -20,6 +20,7 @@
    A proxy that will capture all the traffic to the target
 */
 
+#include "core/RDP/nla/nla.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/nego.hpp"
@@ -34,12 +35,15 @@
 #include "utils/fixed_random.hpp"
 #include "utils/netutils.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/utf.hpp"
 
+#include <vector>
 #include <chrono>
 #include <iostream>
 
 #include <cerrno>
 #include <cstring>
+#include <csignal>
 
 #include <netinet/tcp.h>
 #include <sys/select.h>
@@ -47,6 +51,78 @@
 
 
 using PacketType = RecorderFile::PacketType;
+
+
+/// @brief Wrap a Transport and a RecorderFile for a nla negociation
+struct NlaTeeTransport : Transport
+{
+    enum class Type : bool { Client, Server };
+
+    NlaTeeTransport(Transport& trans, RecorderFile& outFile, Type type)
+    : trans(trans)
+    , outFile(outFile)
+    , is_server(type == Type::Server)
+    {}
+
+    TlsResult enable_client_tls(
+        bool server_cert_store,
+        ServerCertCheck server_cert_check,
+        ServerNotifier & server_notifier,
+        const char * certif_path
+    ) override
+    {
+        return this->trans.enable_client_tls(
+            server_cert_store, server_cert_check, server_notifier, certif_path);
+    }
+
+    array_view_const_u8 get_public_key() const override
+    {
+        return this->trans.get_public_key();
+    }
+
+    bool disconnect() override
+    {
+        return this->trans.disconnect();
+    }
+
+    bool connect() override
+    {
+        return this->trans.connect();
+    }
+
+private:
+    Read do_atomic_read(uint8_t * buffer, size_t len) override
+    {
+        auto r = this->trans.atomic_read(buffer, len);
+        outFile.write_packet(
+            this->is_server ? PacketType::NlaServerIn : PacketType::NlaClientIn,
+            {buffer, len});
+        return r;
+    }
+
+    size_t do_partial_read(uint8_t * buffer, size_t len) override
+    {
+        len = this->trans.partial_read(buffer, len);
+        outFile.write_packet(
+            this->is_server ? PacketType::NlaServerIn : PacketType::NlaClientIn,
+            {buffer, len});
+        return len;
+    }
+
+    void do_send(const uint8_t * buffer, size_t len) override
+    {
+        outFile.write_packet(
+            this->is_server ? PacketType::NlaServerOut : PacketType::NlaClientOut,
+            {buffer, len});
+        this->trans.send(buffer, len);
+    }
+
+private:
+    Transport& trans;
+    RecorderFile& outFile;
+    bool is_server;
+};
+
 
 /** @brief a front connection with a RDP client */
 class FrontConnection
@@ -72,41 +148,92 @@ public:
             frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-                outFile.write_packet(PacketType::DataOut, currentPacket);
-
-                InStream new_x224_stream(currentPacket);
-                X224::CR_TPDU_Recv x224(new_x224_stream, true);
-                if (x224._header_size != new_x224_stream.get_capacity()) {
+                InStream x224_stream(currentPacket);
+                X224::CR_TPDU_Recv x224(x224_stream, true);
+                if (x224._header_size != x224_stream.get_capacity()) {
                     LOG(LOG_WARNING,
                         "Front::incoming: connection request: all data should have been consumed,"
                         " %zu bytes remains",
-                        new_x224_stream.get_capacity() - x224._header_size);
+                        x224_stream.get_capacity() - x224._header_size);
                 }
 
-                if (!nla_password.empty()) {
-                    nla_password.push_back('\0');
-                    nego = std::make_unique<Nego>(
-                        this->backConn, this->outFile,
-                        this->host.c_str(), nla_username.c_str(), nla_password.c_str());
-                    nego->send_negotiation_request();
-                    StaticOutStream<256> x224_stream;
+                bool const is_nla
+                  = (x224.rdp_neg_requestedProtocols & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX));
+
+                if (is_nla || !nla_password.empty()) {
+                    StaticOutStream<256> new_x224_stream;
                     X224::CC_TPDU_Send(
-                        x224_stream,
+                        new_x224_stream,
                         X224::RDP_NEG_RSP,
                         RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-                        X224::PROTOCOL_TLS);
-                    outFile.write_packet(PacketType::DataIn, stream_to_avu8(x224_stream));
-                    frontConn.send(stream_to_avu8(x224_stream));
+                        is_nla ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
+                    outFile.write_packet(PacketType::DataIn, stream_to_avu8(new_x224_stream));
+                    frontConn.send(stream_to_avu8(new_x224_stream));
                     frontConn.enable_server_tls("inquisition", nullptr);
                 }
-                else {
-                    backConn.send(currentPacket);
-                }
 
-                state = NEGOCIATING_BACK_STEP1;
+                if (is_nla) {
+                    nego_server = std::make_unique<NegoServer>(
+                        frontConn, outFile, nla_username, nla_password);
+                    nego_server->credssp.credssp_server_authenticate_init();
+
+                    rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+                    while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
+                        InStream in_stream(frontBuffer.current_pdu_buffer());
+                        st = nego_server->credssp.credssp_server_authenticate_next(in_stream);
+                    }
+
+                    if (rdpCredsspServer::State::Err == st) {
+                        throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+                    }
+
+                    state = NEGOCIATING_FRONT_NLA;
+                }
+                else if (!nla_password.empty()) {
+                    nla_password.push_back('\0');
+                    nego_client = std::make_unique<NegoClient>(
+                        backConn, outFile,
+                        host.c_str(), nla_username.c_str(), nla_password.c_str());
+                    nego_client->send_negotiation_request();
+
+                    state = NEGOCIATING_BACK_NLA;
+                }
+                else {
+                    outFile.write_packet(PacketType::DataOut, currentPacket);
+                    backConn.send(currentPacket);
+
+                    state = NEGOCIATING_BACK_STEP1;
+                }
             }
             break;
-        case NLA_CONNECT_INITIAL_PDU:
+
+        case NEGOCIATING_FRONT_NLA: {
+            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+            frontBuffer.load_data(this->frontConn);
+            while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
+                InStream in_stream(frontBuffer.current_pdu_buffer());
+                st = nego_server->credssp.credssp_server_authenticate_next(in_stream);
+            }
+
+            switch (st) {
+            case rdpCredsspServer::State::Err:
+                throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+            case rdpCredsspServer::State::Cont:
+                break;
+            case rdpCredsspServer::State::Finish:
+                nego_client = std::make_unique<NegoClient>(
+                    this->backConn, this->outFile,
+                    this->host.c_str(), nla_username.c_str(), nla_password.c_str());
+                nego_client->send_negotiation_request();
+                state = NEGOCIATING_BACK_STEP1;
+                break;
+            }
+
+            break;
+        }
+
+        // force X224::PROTOCOL_HYBRID
+        case NEGOCIATING_FRONT_INITIAL_PDU:
             frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
@@ -132,74 +259,73 @@ public:
                 }
             }
             break;
-        case NEGOCIATING_BACK_STEP1:
-            assert(false);
-            break;
-        case FORWARD:
+        case FORWARD: {
             size_t ret = frontConn.partial_read(make_array_view(tmpBuffer));
             if (ret > 0) {
                 outFile.write_packet(PacketType::DataOut, {tmpBuffer, ret});
                 backConn.send(tmpBuffer, ret);
             }
-        break;
+            break;
+        }
+        case NEGOCIATING_BACK_STEP1:
+        case NEGOCIATING_BACK_NLA:
+            REDEMPTION_UNREACHABLE();
         }
     }
 
     void treat_back_activity()
     {
-        NullServerNotifier null_notifier;
-
         switch (state) {
-        case NEGOCIATING_BACK_STEP1: {
-            if (this->nego) {
-                bool const run = nego->recv_next_data(backBuffer, null_notifier);
-                if (not run) {
-                    this->nego.reset();
-                    state = NLA_CONNECT_INITIAL_PDU;
-                    outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
-                }
-            }
-            else {
-                backBuffer.load_data(this->backConn);
-                if (backBuffer.next_pdu()) {
-                    array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
-                    outFile.write_packet(PacketType::DataIn, currentPacket);
-
-                    InStream x224_stream(currentPacket);
-                    X224::CC_TPDU_Recv x224(x224_stream);
-
-                    if (x224.rdp_neg_type == X224::RDP_NEG_NONE) {
-                        LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
-                    }
-
-                    frontConn.send(currentPacket);
-
-                    switch (x224.rdp_neg_code) {
-                    case X224::PROTOCOL_TLS:
-                    case X224::PROTOCOL_HYBRID:
-                    case X224::PROTOCOL_HYBRID_EX: {
-                        frontConn.enable_server_tls("inquisition", nullptr);
-
-                        switch(backConn.enable_client_tls(false, ServerCertCheck::always_succeed, null_notifier, "/tmp")) {
-                        case Transport::TlsResult::Ok:
-                            outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
-                            break;
-                        case Transport::TlsResult::Fail:
-                            break;
-                        case Transport::TlsResult::Want:
-                            break;
-                        }
-                        break;
-                    }
-                    case X224::PROTOCOL_RDP: break;
-                    }
-
-                    state = FORWARD;
-                }
+        case NEGOCIATING_BACK_NLA: {
+            NullServerNotifier null_notifier;
+            if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
+                this->nego_client.reset();
+                state = NEGOCIATING_FRONT_INITIAL_PDU;
+                outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
             }
             break;
         }
-        default:
+        case NEGOCIATING_BACK_STEP1: {
+            backBuffer.load_data(this->backConn);
+            if (backBuffer.next_pdu()) {
+                array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+                outFile.write_packet(PacketType::DataIn, currentPacket);
+
+                InStream x224_stream(currentPacket);
+                X224::CC_TPDU_Recv x224(x224_stream);
+
+                if (x224.rdp_neg_type == X224::RDP_NEG_NONE) {
+                    LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
+                }
+
+                frontConn.send(currentPacket);
+
+                switch (x224.rdp_neg_code) {
+                case X224::PROTOCOL_TLS:
+                case X224::PROTOCOL_HYBRID:
+                case X224::PROTOCOL_HYBRID_EX: {
+                    frontConn.enable_server_tls("inquisition", nullptr);
+                    NullServerNotifier null_notifier;
+
+                    switch(backConn.enable_client_tls(false, ServerCertCheck::always_succeed, null_notifier, "/tmp")) {
+                    case Transport::TlsResult::Ok:
+                        outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
+                        break;
+                    case Transport::TlsResult::Fail:
+                        break;
+                    case Transport::TlsResult::Want:
+                        break;
+                    }
+                    break;
+                }
+                case X224::PROTOCOL_RDP: break;
+                }
+
+                state = FORWARD;
+            }
+            break;
+        }
+        case FORWARD: {
             size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
             if (ret > 0) {
                 frontConn.send(tmpBuffer, ret);
@@ -207,8 +333,12 @@ public:
             }
             break;
         }
+        case NEGOCIATING_FRONT_NLA:
+        case NEGOCIATING_FRONT_INITIAL_PDU:
+        case NEGOCIATING_FRONT_STEP1:
+            REDEMPTION_UNREACHABLE();
+        }
     }
-
 
     void run()
     {
@@ -222,10 +352,12 @@ public:
 
                 switch(state) {
                 case NEGOCIATING_FRONT_STEP1:
-                case NLA_CONNECT_INITIAL_PDU:
+                case NEGOCIATING_FRONT_INITIAL_PDU:
+                case NEGOCIATING_FRONT_NLA:
                     FD_SET(front_fd, &rset);
                     break;
                 case NEGOCIATING_BACK_STEP1:
+                case NEGOCIATING_BACK_NLA:
                     FD_SET(back_fd, &rset);
                     break;
                 case FORWARD:
@@ -258,101 +390,59 @@ public:
     }
 
 private:
-    SocketTransport frontConn;
-    TpduBuffer frontBuffer;
+    struct NegoServer
+    {
+        FixedRandom rand;
+        LCGTime timeobj;
+        std::string extra_message;
+        NlaTeeTransport trans;
+        rdpCredsspServer credssp;
 
-    SocketTransport backConn;
-    TpduBuffer backBuffer;
+        NegoServer(
+            Transport& trans, RecorderFile& outFile,
+            std::string const& user, std::string const& password)
+        : trans(trans, outFile, NlaTeeTransport::Type::Server)
+        , credssp(
+            this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
+            [&](SEC_WINNT_AUTH_IDENTITY& identity){
+                auto check = [vec = std::vector<uint8_t>{}](
+                    std::string const& str, Array& arr
+                ) mutable {
+                    vec.resize(str.size() * 2);
+                    UTF8toUTF16(byte_ptr_cast(str.data()), vec.data(), vec.size());
+                    return vec.size() == arr.size()
+                        && 0 == memcmp(vec.data(), arr.get_data(), vec.size());
+                };
 
-    uint8_t tmpBuffer[0xffff];
+                if (check(user, identity.User)
+                 && check({}, identity.Domain)
+                ) {
+                    identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
+                    return true;
+                }
 
-    enum {
-        NEGOCIATING_FRONT_STEP1,
-        NEGOCIATING_BACK_STEP1,
-        NLA_CONNECT_INITIAL_PDU,
-        FORWARD
-    } state = NEGOCIATING_FRONT_STEP1;
+                LOG(LOG_ERR, "Ntlm: bad identity");
+                return false;
+            })
+        {}
+    };
 
-    RecorderFile outFile;
-
-    std::string host;
-
-    class Nego
+    class NegoClient
     {
         LCGTime timeobj;
         FixedRandom random;
         std::string extra_message;
         RdpNego nego;
-
-        struct TeeTransport : Transport
-        {
-            TeeTransport(Transport& trans, RecorderFile& outFile)
-            : trans(trans)
-            , outFile(outFile)
-            {}
-
-            TlsResult enable_client_tls(
-                bool server_cert_store,
-                ServerCertCheck server_cert_check,
-                ServerNotifier & server_notifier,
-                const char * certif_path
-            ) override
-            {
-                return this->trans.enable_client_tls(
-                    server_cert_store, server_cert_check, server_notifier, certif_path);
-            }
-
-            array_view_const_u8 get_public_key() const override
-            {
-                return this->trans.get_public_key();
-            }
-
-            bool disconnect() override
-            {
-                return this->trans.disconnect();
-            }
-
-            bool connect() override
-            {
-                return this->trans.connect();
-            }
-
-        private:
-            Read do_atomic_read(uint8_t * buffer, size_t len) override
-            {
-                auto r = this->trans.atomic_read(buffer, len);
-                outFile.write_packet(PacketType::NlaIn, {buffer, len});
-                return r;
-            }
-
-            size_t do_partial_read(uint8_t * buffer, size_t len) override
-            {
-                len = this->trans.partial_read(buffer, len);
-                outFile.write_packet(PacketType::NlaIn, {buffer, len});
-                return len;
-            }
-
-            void do_send(const uint8_t * buffer, size_t len) override
-            {
-                outFile.write_packet(PacketType::NlaOut, {buffer, len});
-                this->trans.send(buffer, len);
-            }
-
-        private:
-            Transport& trans;
-            RecorderFile& outFile;
-        };
-
-        TeeTransport trans;
+        NlaTeeTransport trans;
 
     public:
-        Nego(
+        NegoClient(
             Transport& trans, RecorderFile& outFile,
             char const* host, char const* target_user, char const* password
         )
         : nego(true, target_user, true, false, host, false,
             this->random, this->timeobj, this->extra_message, Translation::EN)
-        , trans(trans, outFile)
+        , trans(trans, outFile, NlaTeeTransport::Type::Client)
         {
             char const* separator = strchr(target_user, '\\');
             std::string username;
@@ -391,7 +481,29 @@ private:
         }
     };
 
-    std::unique_ptr<Nego> nego;
+    enum {
+        NEGOCIATING_FRONT_STEP1,
+        NEGOCIATING_BACK_STEP1,
+        NEGOCIATING_BACK_NLA,
+        NEGOCIATING_FRONT_INITIAL_PDU,
+        NEGOCIATING_FRONT_NLA,
+        FORWARD
+    } state = NEGOCIATING_FRONT_STEP1;
+
+    SocketTransport frontConn;
+    SocketTransport backConn;
+
+    RecorderFile outFile;
+
+    uint8_t tmpBuffer[0xffff];
+
+    TpduBuffer frontBuffer;
+    TpduBuffer backBuffer;
+
+    std::unique_ptr<NegoClient> nego_client;
+    std::unique_ptr<NegoServer> nego_server;
+
+    std::string host;
     std::string nla_username;
     std::string nla_password;
 };
@@ -407,6 +519,12 @@ public:
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
     {
+        // just ignore this signal because there is no child termination management yet.
+        struct sigaction sa;
+        sa.sa_flags = 0;
+        sigaddset(&sa.sa_mask, SIGCHLD);
+        sa.sa_handler = SIG_IGN; /*NOLINT*/
+        sigaction(SIGCHLD, &sa, nullptr);
     }
 
     Server::Server_status start(int sck, bool forkable) override {

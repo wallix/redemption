@@ -114,7 +114,7 @@ struct TSRequest final {
     /* TSRequest */
 
     /* [0] version */
-    uint32_t version{6};
+    uint32_t version;
     uint32_t use_version;
 
     /* [1] negoTokens (NegoData) */
@@ -132,18 +132,7 @@ struct TSRequest final {
     Array clientNonce;
 
 
-    TSRequest()
-        :
-         use_version(this->version)
-        , negoTokens(0)
-        , authInfo(0)
-        , pubKeyAuth(0)
-        ,
-         clientNonce(0)
-    {
-    }
-
-    TSRequest(uint32_t version)
+    TSRequest(uint32_t version = 6)
         : version(version)
         , use_version(this->version)
         , negoTokens(0)
@@ -370,9 +359,7 @@ struct TSPasswordCreds {
     uint8_t password[256];
     size_t password_length{0};
 
-    TSPasswordCreds()
-
-    = default;
+    TSPasswordCreds() = default;
 
     TSPasswordCreds(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length) {
         this->domainName_length = (domain_length < sizeof(this->domainName))
@@ -819,9 +806,7 @@ struct TSCredentials
     TSSmartCardCreds smartcardCreds;
     // For now, TSCredentials can only contains TSPasswordCreds (not TSSmartCardCreds)
 
-    TSCredentials()
-
-    = default;
+    TSCredentials() = default;
 
     TSCredentials(const uint8_t * domain, size_t domain_length, const uint8_t * user, size_t user_length, const uint8_t * pass, size_t pass_length)
         : credType(1)

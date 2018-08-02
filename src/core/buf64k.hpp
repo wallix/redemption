@@ -20,16 +20,10 @@
 
 #pragma once
 
-#include "cxx/cxx.hpp"
 #include "transport/transport.hpp" // InTransport
 
 #include <cstring>
 
-class PartialReaderAPI {
-public:
-    virtual size_t partial_read(byte_ptr buffer, size_t len) = 0;
-    virtual ~PartialReaderAPI() = default;
-};
 
 struct Buf64k
 {
@@ -90,24 +84,16 @@ struct Buf64k
     // (because of asynchronous access). And should we find a way to lock len and idx ?
     void read_from(InTransport trans)
     {
-        if (this->idx == this->len) {
-            this->len = trans.partial_read(this->buf, max_len);
-            this->idx = 0;
-        }
-        else {
-            if (this->idx) {
-                std::memmove(this->buf, this->buf + this->idx, this->remaining());
-                this->len -= this->idx;
-                this->idx = 0;
-            }
-            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
-        }
+        read_with([&](uint8_t* data, size_t n){
+            return trans.partial_read(data, n);
+        });
     }
 
-    void read_from(PartialReaderAPI & trans)
+    template<class PartialReader>
+    void read_with(PartialReader && partial_read)
     {
         if (this->idx == this->len) {
-            this->len = trans.partial_read(this->buf, max_len);
+            this->len = partial_read(this->buf, max_len);
             this->idx = 0;
         }
         else {
@@ -116,7 +102,7 @@ struct Buf64k
                 this->len -= this->idx;
                 this->idx = 0;
             }
-            this->len += trans.partial_read(this->buf + this->len, max_len - this->len);
+            this->len += partial_read(this->buf + this->len, max_len - this->len);
         }
     }
 

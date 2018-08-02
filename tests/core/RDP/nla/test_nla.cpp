@@ -187,7 +187,22 @@ RED_AUTO_TEST_CASE(TestNlaserver)
     LCGTime timeobj;
     std::string extra_message;
     Translation::language_t lang = Translation::EN;
-    rdpCredsspServer credssp(logtrans, user, domain, pass, host, false, false, rand, timeobj, extra_message, lang);
+    rdpCredsspServer credssp(
+        logtrans, false, false, rand, timeobj, extra_message, lang,
+        [&](SEC_WINNT_AUTH_IDENTITY& identity){
+            auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
+            std::vector<uint8_t> vec;
+            vec.resize((std::size(user) - 1) * 2);
+            UTF8toUTF16(user, vec.data(), vec.size());
+            RED_CHECK_MEM_AA(arr2av(identity.User), vec);
+            vec.resize((std::size(domain) - 1) * 2);
+            UTF8toUTF16(domain, vec.data(), vec.size());
+            RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
+            identity.SetPasswordFromUtf8(pass);
+            return true;
+        }
+    );
+    credssp.set_credentials(user, domain, pass, host);
     credssp.hardcoded_tests = true;
     RED_CHECK(credssp.credssp_server_authenticate_init());
 

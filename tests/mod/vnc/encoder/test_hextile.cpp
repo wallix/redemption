@@ -31,14 +31,14 @@
 #include "mod/vnc/encoder/hextile.hpp"
 
 
-class BlockWrap : public PartialReaderAPI
+class BlockWrap
 {
     const_byte_array & t;
     size_t pos;
 public:
     BlockWrap(const_byte_array & t) : t(t), pos(0) {}
-    
-    size_t partial_read(byte_ptr buffer, size_t len) override
+
+    size_t operator()(byte_ptr buffer, size_t len)
     {
         const size_t available = this->t.size() - this->pos;
         if (len >= available){
@@ -50,15 +50,11 @@ public:
         this->pos += len;
         return len;
     }
-    bool empty() const {
-        return this->t.size() == this->pos;
-    }
 };
 
 
 RED_AUTO_TEST_CASE(TestHextile1)
 {
-
     VNC::Encoder::Hextile encoder(16, 2, 0, 0, 44, 19, VNCVerbose::basic_trace);
     RED_CHECK_EQUAL(Rect( 0,  0, 16, 16), encoder.current_tile());
     RED_CHECK_EQUAL(true, encoder.next_tile());
@@ -89,8 +85,8 @@ RED_AUTO_TEST_CASE(TestHextile2)
     RED_CHECK_EQUAL(true, encoder.next_tile());
     RED_CHECK_EQUAL(Rect(32, 16, 16, 3), encoder.current_tile());
     RED_CHECK_EQUAL(false, encoder.next_tile());
-    
-    
+
+
 //    encoder->consume(buf, drawable);
 
 }
@@ -117,7 +113,7 @@ RED_AUTO_TEST_CASE(TestHextile2)
 //Smalltile (4,0,1,1) done
 //SubrectsColoured
 
-//0000 1a : 16 + 8 + 2 = 
+//0000 1a : 16 + 8 + 2 =
 //      2   BackgroundSpecified
 //      8   AnySubrects
 //      16  SubrectsColoured
@@ -260,10 +256,10 @@ RED_AUTO_TEST_CASE(TestHextile2)
 // Subrect Colored = e4 10 Rect(13, 15, 1, 1) df 00
 // Subrect Colored = 49 42 Rect(15, 15, 1, 1) ff 00
 
-// 01 
-// a3 08 e4 10 e8 31 4a 42 49 42 0c 5b 6a 4a 4d 63 
-// 8e 6b 71 8c 51 84 71 8c b2 94 b2 8c d2 94 50 84 
-// c3 08 25 19 29 3a 49 42 8a 4a 2d 5b ab 52 4d 63 
+// 01
+// a3 08 e4 10 e8 31 4a 42 49 42 0c 5b 6a 4a 4d 63
+// 8e 6b 71 8c 51 84 71 8c b2 94 b2 8c d2 94 50 84
+// c3 08 25 19 29 3a 49 42 8a 4a 2d 5b ab 52 4d 63
 // cf 73 72 8c 51 84 71 8c b2 8c 92 8c d3 94 92 8c
 // a3 08 25 19 49 42 29 3a 8a 4a 0c 5b cb 52 2d 63
 // af 73 51 84 51 84 92 8c b2 94 91 8c 91 8c 71 84
@@ -292,7 +288,7 @@ RED_AUTO_TEST_CASE(TestHextile2)
 // ab 52 cb 52 0c 5b 2c 5b 8e 6b 6d 63 8e 6b cf 73
 // 51 84 ef 7b 10 7c 30 84 b2 94 71 8c 71 8c b2 94
 // ec 5a eb 5a aa 52 6d 63 6d 6b ae 6b ae 6b 71 8c
-// 71 84 91 8c b2 94 30 84 b2 94 92 94 b2 9c 14 a5 
+// 71 84 91 8c b2 94 30 84 b2 94 92 94 b2 9c 14 a5
 
 // 01 d2 8c
 //03f0 f3 94 14 9d f3 94 b2 8c f3 94 55 a5 75 a5 96 ad
@@ -725,11 +721,11 @@ RED_AUTO_TEST_CASE(TestHextile)
     BlockWrap bw(datas[0]);
 
     Buf64k buf;
-    buf.read_from(bw);
+    buf.read_with(bw);
 
     VNC::Encoder::Hextile encoder(16, 2, 0, 0, 44, 19, VNCVerbose::basic_trace);
-    
-    
+
+
 //    encoder->consume(buf, drawable);
 
 }

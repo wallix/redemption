@@ -25,6 +25,7 @@
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
 
 #include <memory>
+#include <functional>
 
 
 // TODO: constants below are still globals,
@@ -50,6 +51,7 @@ private:
     TimeObj & timeobj;
     std::unique_ptr<CREDENTIALS> credentials;
     std::unique_ptr<NTLMContext> context;
+    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
 
 public:
     bool hardcoded_tests = false;
@@ -65,8 +67,11 @@ public:
     }
 
 public:
-    explicit Ntlm_SecurityFunctionTable(Random & rand, TimeObj & timeobj)
-        : rand(rand), timeobj(timeobj)
+    explicit Ntlm_SecurityFunctionTable(
+        Random & rand, TimeObj & timeobj,
+        std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
+    )
+        : rand(rand), timeobj(timeobj), set_password_cb(set_password_cb)
     {}
 
     ~Ntlm_SecurityFunctionTable() = default;
@@ -241,6 +246,7 @@ public:
                 if (output_buffer->Buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
+
                 return this->context->write_challenge(output_buffer);
             }
 
@@ -261,6 +267,13 @@ public:
                 this->context->identity.SetPasswordFromUtf8(byte_ptr_cast("Pénélope"));
             }
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
+
+            if (status == SEC_I_CONTINUE_NEEDED) {
+                if (!set_password_cb || !set_password_cb(this->context->identity)) {
+                    return SEC_E_LOGON_DENIED;
+                }
+                status = this->context->check_authenticate();
+            }
 
             size_t i;
             for (i = 0; i < output.cBuffers; i++) {

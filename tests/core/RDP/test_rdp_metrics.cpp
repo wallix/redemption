@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/fileutils.hpp"
-#include "utils/sugar/unique_fd.hpp"
 #include "test_only/get_file_contents.hpp"
 
 #include "core/RDP/rdp_metrics.hpp"

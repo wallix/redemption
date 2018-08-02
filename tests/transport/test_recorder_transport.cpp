@@ -79,8 +79,10 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::ServerCert: trans.enable_server_tls("", ""); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
-                case Pck::NlaIn:
-                case Pck::NlaOut:
+                case Pck::NlaClientIn:
+                case Pck::NlaClientOut:
+                case Pck::NlaServerIn:
+                case Pck::NlaServerOut:
                 case Pck::ClientCert:
                 case Pck::Info:
                 case Pck::Eof:
@@ -159,8 +161,10 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::ServerCert: trans.enable_server_tls("", ""); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
-                case Pck::NlaIn:
-                case Pck::NlaOut:
+                case Pck::NlaClientIn:
+                case Pck::NlaClientOut:
+                case Pck::NlaServerIn:
+                case Pck::NlaServerOut:
                 case Pck::ClientCert:
                 case Pck::Info:
                 case Pck::Eof:
@@ -193,8 +197,10 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                 case Pck::ServerCert: trans.enable_server_tls("", ""); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
-                case Pck::NlaIn:
-                case Pck::NlaOut:
+                case Pck::NlaClientIn:
+                case Pck::NlaClientOut:
+                case Pck::NlaServerIn:
+                case Pck::NlaServerOut:
                 case Pck::ClientCert:
                 case Pck::Info:
                 case Pck::Eof:
