@@ -1,3 +1,16 @@
+redemption (1.2.51%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Change password expiration message.
+  * Fix buffer overflow in Selector mod.
+  * Fix showing SP launch failure message in CloseBox mod.
+  * Fix closing socket handle.
+  * Fix SessionReactor.
+  * Fix max data block size of RDP Bulk Compressor.
+  * Fix typo error in SP launch failure message.
+  * Fix disabling keyboard input log in Session data of Recorded Session Viewer.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 02 Aug 2018 17:59:54 +0200
+
 redemption (1.2.45%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix mode of meta file.
