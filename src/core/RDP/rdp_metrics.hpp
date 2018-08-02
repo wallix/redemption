@@ -133,13 +133,20 @@ public:
         this->utc_last_date = date;
     }
 
-    time_t get_utc_last_date() {
-        return this->utc_last_date;
-    }
+//     time_t get_utc_last_date() {
+//         return this->utc_last_date;
+//     }
 
     bool active() {
         return this->active_;
     }
+
+    RDPMetrics() : file_interval(0*3600)
+                 , path("")
+                 , session_id("")
+                 , active_(false)
+                 , log_delay(0) {}
+
 
     RDPMetrics( const time_t now
               , const std::string & path

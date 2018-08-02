@@ -24,7 +24,7 @@
 
 extern std::string text_gmdate(const time_t time, char sep);
 
-std::string text_gmdate(const time_t time, char sep='-')
+inline std::string text_gmdate(const time_t time, char sep='-')
 {
     struct tm t;
     gmtime_r(&time, &t);
@@ -36,7 +36,7 @@ std::string text_gmdate(const time_t time, char sep='-')
 
 extern std::string text_gmdatetime(const time_t time);
 
-std::string text_gmdatetime(const time_t time) {
+inline std::string text_gmdatetime(const time_t time) {
     struct tm t;
     gmtime_r(&time, &t);
     char buf[20] = {};
@@ -47,7 +47,7 @@ std::string text_gmdatetime(const time_t time) {
 
 extern std::string filename_gmdatetime(const time_t time);
 
-std::string filename_gmdatetime(const time_t time) {
+inline std::string filename_gmdatetime(const time_t time) {
     struct tm t;
     gmtime_r(&time, &t);
     char buf[20] = {};

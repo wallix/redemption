@@ -761,7 +761,7 @@ public:
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO_INITIATE)
         , gen(gen)
-        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
+        , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
@@ -862,7 +862,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( /*vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>().c_str()
                  , mod_rdp_params.target_user
                  , vars.get<cfg::globals::auth_user>().c_str()
@@ -873,7 +873,7 @@ public:
                  , vars.get<cfg::rdp_metrics::sign_key>().data()
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
                  , vars.get<cfg::rdp_metrics::activate_log_metrics>()
-                 , vars.get<cfg::rdp_metrics::log_interval>().count())
+                 , vars.get<cfg::rdp_metrics::log_interval>().count()*/)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
