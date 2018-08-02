@@ -673,7 +673,7 @@ private:
         if (this->screen) {
             QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
 
-            LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%u y=%u bpp=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y, bitmap.bpp());
+            LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%d y=%d bpp=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y, bitmap.bpp());
             QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
             if (bitmap.bpp() == 24) {
                 srcBitmap = srcBitmap.rgbSwapped();
@@ -1452,6 +1452,7 @@ private:
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
+    using ClientOutputGraphicAPI::draw;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
