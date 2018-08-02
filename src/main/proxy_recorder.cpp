@@ -173,6 +173,7 @@ public:
                 }
 
                 if (is_nla) {
+                    LOG(LOG_INFO, "start NegoServer");
                     nego_server = std::make_unique<NegoServer>(
                         frontConn, outFile, nla_username, nla_password);
                     nego_server->credssp.credssp_server_authenticate_init();
@@ -190,6 +191,7 @@ public:
                     state = NEGOCIATING_FRONT_NLA;
                 }
                 else if (!nla_password.empty()) {
+                    LOG(LOG_INFO, "start NegoClient");
                     nla_password.push_back('\0');
                     nego_client = std::make_unique<NegoClient>(
                         backConn, outFile,
@@ -221,6 +223,10 @@ public:
             case rdpCredsspServer::State::Cont:
                 break;
             case rdpCredsspServer::State::Finish:
+                LOG(LOG_INFO, "stop NegoServer");
+                LOG(LOG_INFO, "start NegoClient");
+                nego_server.reset();
+                nla_password.push_back('\0');
                 nego_client = std::make_unique<NegoClient>(
                     this->backConn, this->outFile,
                     this->host.c_str(), nla_username.c_str(), nla_password.c_str());
@@ -279,6 +285,7 @@ public:
         case NEGOCIATING_BACK_NLA: {
             NullServerNotifier null_notifier;
             if (not nego_client->recv_next_data(backBuffer, null_notifier)) {
+                LOG(LOG_INFO, "stop NegoClient");
                 this->nego_client.reset();
                 state = NEGOCIATING_FRONT_INITIAL_PDU;
                 outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
@@ -343,48 +350,39 @@ public:
     void run()
     {
         fd_set rset;
-        int front_fd = frontConn.get_fd();
-        int back_fd = backConn.get_fd();
+        int const front_fd = frontConn.get_fd();
+        int const back_fd = backConn.get_fd();
 
-        try {
-            for (;;) {
-                FD_ZERO(&rset);
+        for (;;) {
+            FD_ZERO(&rset);
 
-                switch(state) {
-                case NEGOCIATING_FRONT_STEP1:
-                case NEGOCIATING_FRONT_INITIAL_PDU:
-                case NEGOCIATING_FRONT_NLA:
-                    FD_SET(front_fd, &rset);
-                    break;
-                case NEGOCIATING_BACK_STEP1:
-                case NEGOCIATING_BACK_NLA:
-                    FD_SET(back_fd, &rset);
-                    break;
-                case FORWARD:
-                    FD_SET(front_fd, &rset);
-                    FD_SET(back_fd, &rset);
-                    break;
-                }
-
-                int status = select(std::max(front_fd, back_fd) + 1, &rset, nullptr, nullptr, nullptr);
-                if (status < 0) {
-                    break;
-                }
-
-                if (FD_ISSET(front_fd, &rset)) {
-                    treat_front_activity();
-                }
-
-                if (FD_ISSET(back_fd, &rset)) {
-                    treat_back_activity();
-                }
+            switch(state) {
+            case NEGOCIATING_FRONT_STEP1:
+            case NEGOCIATING_FRONT_INITIAL_PDU:
+            case NEGOCIATING_FRONT_NLA:
+                FD_SET(front_fd, &rset);
+                break;
+            case NEGOCIATING_BACK_STEP1:
+            case NEGOCIATING_BACK_NLA:
+                FD_SET(back_fd, &rset);
+                break;
+            case FORWARD:
+                FD_SET(front_fd, &rset);
+                FD_SET(back_fd, &rset);
+                break;
             }
-        } catch(Error const& e) {
-            if (errno) {
-                LOG(LOG_ERR, "Recording front connection ending: %s ; %s", e.errmsg(), strerror(errno));
+
+            int status = select(std::max(front_fd, back_fd) + 1, &rset, nullptr, nullptr, nullptr);
+            if (status < 0) {
+                break;
             }
-            else {
-                LOG(LOG_ERR, "Recording front connection ending: %s", e.errmsg());
+
+            if (FD_ISSET(front_fd, &rset)) {
+                treat_front_activity();
+            }
+
+            if (FD_ISSET(back_fd, &rset)) {
+                treat_back_activity();
             }
         }
     }
@@ -538,7 +536,6 @@ public:
         connection_counter++;
 
         if(pid == 0) {
-            openlog("FrontConnection", LOG_CONS | LOG_PERROR, LOG_USER);
             close(sck);
 
             int nodelay = 1;
@@ -554,8 +551,21 @@ public:
             FrontConnection conn(
                 std::move(sck_in), targetHost, targetPort, finalPath,
                 nla_username, nla_password);
-            conn.run();
+            try {
+                conn.run();
+            } catch(Error const& e) {
+                if (errno) {
+                    LOG(LOG_ERR, "Recording front connection ending: %s ; %s", e.errmsg(), strerror(errno));
+                }
+                else {
+                    LOG(LOG_ERR, "Recording front connection ending: %s", e.errmsg());
+                }
+                exit(1);
+            }
             exit(0);
+        }
+        else if (!forkable) {
+            return Server::START_FAILED;
         }
 
         return Server::START_OK;
@@ -693,6 +703,8 @@ int main(int argc, char *argv[])
     }
 
     SSL_library_init();
+
+    openlog("FrontConnection", LOG_CONS | LOG_PERROR, LOG_USER);
 
     FrontServer front(
         target_host, target_port, capture_file,
