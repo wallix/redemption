@@ -4493,6 +4493,11 @@ test-run tests/utils/test_stream :
   <library>src/utils/hexdump.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
+test-run tests/utils/test_texttime :
+  $(REDEMPTION_TEST_PATH)/utils/test_texttime.cpp
+:
+  <covfile>src/utils/texttime.hpp
+;
 test-run tests/utils/test_theme :
   $(REDEMPTION_TEST_PATH)/utils/test_theme.cpp
 :
@@ -5300,6 +5305,8 @@ alias test_rle : tests/utils/test_rle ;
 alias test_rle.coverage : tests/utils/test_rle.coverage ;
 alias test_stream : tests/utils/test_stream ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
+alias test_texttime : tests/utils/test_texttime ;
+alias test_texttime.coverage : tests/utils/test_texttime.coverage ;
 alias test_theme : tests/utils/test_theme ;
 alias test_theme.coverage : tests/utils/test_theme.coverage ;
 alias test_timeval_ops : tests/utils/test_timeval_ops ;
@@ -5779,6 +5786,7 @@ alias tests/utils :
   tests/utils/test_region
   tests/utils/test_rle
   tests/utils/test_stream
+  tests/utils/test_texttime
   tests/utils/test_theme
   tests/utils/test_timeval_ops
   tests/utils/test_translation

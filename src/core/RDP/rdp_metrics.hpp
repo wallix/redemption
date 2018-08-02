@@ -14,7 +14,7 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2017
+*   Copyright (C) Wallix 2018
 *   Author(s): Clément Moroldo
 */
 
@@ -88,62 +88,16 @@ private:
         COUNT_FIELD
     };
 
-//     const char * rdp_metrics_name(int index) {
-//
-//         switch (index) {
-//             case main_channel_data_from_client:             return "main_channel_data_from_client";
-//             case right_click:                               return "right_click";
-//             case left_click:                                return "left_click";
-//             case keys_pressed:                              return "keys_pressed";
-//             case mouse_displacement:                        return "mouse_displacement";
-//             case main_channel_data_from_server:            return "main_channel_data_from_server";
-//             case clipboard_channel_data_from_server:        return "clipboard_channel_data_from_server";
-//             case nb_paste_text_on_server:                   return "nb_paste_text_on_server";
-//             case nb_paste_image_on_server:                  return "nb_paste_image_on_server";
-//             case nb_paste_file_on_server:                   return "nb_paste_file_on_server";
-//             case total_data_paste_on_server:                return "total_data_paste_on_server";
-//             case nb_copy_text_from_server:                  return "nb_copy_text_on_server";
-//             case nb_copy_image_from_server:                 return "nb_copy_image_on_server";
-//             case nb_copy_file_from_server:                  return "nb_copy_file_on_server";
-//             case clipboard_channel_data_from_client:        return "clipboard_channel_data_from_client";
-//             case nb_paste_text_on_client:                   return "nb_paste_text_on_client";
-//             case nb_paste_image_on_client:                  return "nb_paste_image_on_client";
-//             case nb_paste_file_on_client:                   return "nb_paste_file_on_client";
-//             case total_data_paste_on_client:                return "total_data_paste_on_client";
-//             case nb_copy_text_from_client:                  return "nb_copy_text_on_client";
-//             case nb_copy_image_from_client:                 return "nb_copy_image_on_client";
-//             case nb_copy_file_from_client:                  return "nb_copy_file_on_client";
-//             case disk_redirection_channel_data_from_client: return "disk_redirection_channel_data_from_client";
-//             case disk_redirection_channel_data_from_server: return "disk_redirection_channel_data_from_server";
-//             case nb_files_read:                          return "nb_files_read";
-//             case nb_files_or_folders_deleted:               return "nb_files_or_folders_deleted";
-//             case nb_files_write:                            return "nb_files_write";
-//             case nb_files_rename:                           return "nb_files_rename";
-//             case total_files_data_write:                    return "total_files_data_write";
-//             case total_files_data_read:                     return "total_files_data_read";
-//             case total_rail_amount_data_rcv_from_client:    return "rail_channel_data_from_client";
-//             case total_rail_amount_data_rcv_from_server:    return "rail_channel_data_from_server";
-//             case total_other_amount_data_rcv_from_client:   return "other_channel_data_from_client";
-//             case total_other_amount_data_rcv_from_server:   return "other_channel_data_from_server";
-//             case COUNT_FIELD: break;
-//         }
-//
-//         return " unknow_rdp_metrics_name";
-//     }
-
-
     //  output file info
     const int file_interval;
     time_t utc_last_date;
     char complete_file_path[4096] = {'\0'};
-    //time_t utc_stat_time;
     const std::string path_template;
     unique_fd fd = invalid_fd();
 
     // LOG info
     const char * session_id;
     const bool active_ = false;
-//     long int previous_data[COUNT_FIELD] = { 0 };
     long int current_data[COUNT_FIELD] = { 0 };
 
     timeval local_next_log_time;
@@ -161,13 +115,14 @@ private:
         sha256.update(byte_ptr_cast(src), src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
         sha256.final(sig);
-        snprintf(dest, 1+SslSha256::DIGEST_LENGTH*2,
-                 "%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
-                 "%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X%.2X"
-          ,sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9],
-                 sig[10], sig[11], sig[12], sig[13], sig[14], sig[15], sig[16], sig[17], sig[18], sig[19]
-          ,sig[20], sig[21], sig[22], sig[23], sig[24], sig[25], sig[26], sig[27], sig[28], sig[29],
-                 sig[30], sig[31]);
+
+        unsigned char * pin = sig;
+        const char * hex = "0123456789ABCDEF";
+        for(; pin < &sig[32]; dest+=2, pin++){
+            dest[0] = hex[(*pin>>4) & 0xF];
+            dest[1] = hex[ *pin     & 0xF];
+        }
+        dest[64] = 0;
     }
 
 
@@ -185,21 +140,21 @@ public:
     }
 
     RDPMetrics( const std::string & path_template
-              , const char * session_id_
-              , const char * account
-              , const char * primary_user
-              , const char * target_host
+              , const char * session_id
+              , const char * account               // secondary account
+              , const char * primary_user          // clear primary user account
+              , const char * target_host           // target_host
               , const ClientInfo & info
-              , const std::string & target_service
-              , const std::string & target_device
-              , const unsigned char * key_crypt
-              , const long file_interval
-              , const bool activate
-              , const time_t log_delay
+              , const std::string & target_service // clear target service name
+              , const std::string & target_device  // clear device name
+              , const unsigned char * key_crypt    // salt for HMAC
+              , const long file_interval           // daily rotation of filename (hours)
+              , const bool activate                // do nothing if false
+              , const time_t log_delay             // delay between 2 logs
       )
       : file_interval(file_interval*3600)
       , path_template(path_template+"rdp_metrics")
-      , session_id(session_id_)
+      , session_id(session_id)
       , active_(activate)
       , log_delay(log_delay)
     {
@@ -256,7 +211,6 @@ public:
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), complete_header_file_path);
             }
         }
-
     }
 
 
@@ -611,6 +565,9 @@ public:
     }
 
 
+//     std::string metrics_filename()
+//     {
+//     }
 
 
     void set_current_formated_date(char * date, bool keep_hhmmss, time_t time) {
@@ -687,46 +644,5 @@ public:
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
             }
         }
-
-
-//         iovec iov[COUNT_FIELD+2];
-//         char sentence_data[COUNT_FIELD+2][128];
-//         int nb_elem = 0;
-//         for (int i = 0; i < COUNT_FIELD; i++) {
-//             if (this->current_data[i] - this->previous_data[i]) {
-//                 nb_elem++;
-//                 ::snprintf(sentence_data[nb_elem], sizeof(sentence_data[nb_elem]), " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
-//                 iov[nb_elem].iov_base = sentence_data[nb_elem];
-//                 iov[nb_elem].iov_len  = strlen(sentence_data[nb_elem]);
-//                 this->previous_data[i] = this->current_data[i];
-//             }
-//         }
-
-//         if (nb_elem) {
-//             if (this->fd.fd() != -1) {
-//                 char start_full_date_time[24];
-//                 timeval local_time = tvtime();
-//                 this->set_current_formated_date(start_full_date_time, true, local_time.tv_sec);
-//
-//                 ::snprintf(sentence_data[0], sizeof(sentence_data[0]), "%s %s", start_full_date_time, this->session_id);
-//                 iov[0].iov_base = sentence_data[0];
-//                 iov[0].iov_len = strlen(sentence_data[0]);
-//
-//                 char end[] = {'\n', '\0'};
-//                 iov[nb_elem+1].iov_base = end;
-//                 iov[nb_elem+1].iov_len = strlen(end);
-
-//                 ssize_t nwritten = ::writev(this->fd.fd(), iov, nb_elem+2);
-
-//                 if (nwritten == -1) {
-//                     // TODO bad filename
-//                     LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
-//                 }
-//             } else {
-//                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->fd.fd(), this->complete_file_path);
-//             }
-//         }
-
-
     }
 };

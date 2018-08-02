@@ -12,7 +12,7 @@
 *   You should have received a copy of the GNU General Public License
 *   along with this program; if not, write to the Free Software
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-*
+*1324
 *   Product name: redemption, a FLOSS RDP proxy
 *   Copyright (C) Wallix 2010-2017
 *   Author(s): Clément Moroldo
@@ -34,23 +34,35 @@
 #include "core/RDP/rdp_metrics.hpp"
 
 constexpr const char * rdp_metrics_path_file = "/tmp/";
+
+RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
+{
+    // Should create rdp_metrics files if they do not exist
+    ClientInfo info;
+    uint8_t key[32] = {0};
+    RDPMetrics metrics( rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , "secondaryuser"
+                      , "primaryuser"
+                      , "10.10.13.12"
+                      , info
+                      , "service1"
+                      , "device1"
+                      , key
+                      , 24
+                      , true
+                      , 5
+                      );
+//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
+//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
+}
+
+
+
 //constexpr const char * rdp_metrics_path_file = "tests/core/RDP/";
 
 // RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver)
 // {
-//     ClientInfo info;
-//     uint8_t key[32] = {0};
-//     RDPMetrics metrics( rdp_metrics_path_file
-//                       , "1"
-//                       , "user"
-//                       , "admin"
-//                       , "10.10.13.12"
-//                       , info
-//                       , "RDP1"
-//                       , "device1"
-//                       , key
-//                       , 24
-//                       , true);
 //
 //     char current_date[24] {};
 //     timeval now = tvtime();
