@@ -165,66 +165,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
 
 }
 
-RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logindex");
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
-
-    ClientInfo info;
-    uint8_t key[32] = {0};
-    time_t epoch = 1533211681 - (24*3600);
-    RDPMetrics metrics( epoch
-                      , rdp_metrics_path_file
-                      , "164d89c1a56957b752540093e178"
-                      , hmac_user("primaryuser", key)
-                      , hmac_account("secondaryuser", key)
-                      , hmac_device_service("device1", "service1", key)
-                      , hmac_client_info("10.10.13.12", info, key)
-                      , 24
-                      , true
-                      , 5
-                      );
-
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics"));
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-01.logindex"));
-
-    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
-    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
-
-    timeval now;
-    now.tv_sec = 1533211681;
-    metrics.log(now);
-
-    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
-    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
-
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
-
-    timeval next;
-    next.tv_sec = 1533211681+(24*3600);
-    metrics.log(next);
-
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
-    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
-
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-01.logindex");
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
-    unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
-}
-
 
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle) {
@@ -242,7 +182,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle) {
                       , hmac_account("secondaryuser", key)
                       , hmac_device_service("device1", "service1", key)
                       , hmac_client_info("10.10.13.12", info, key)
-                      , 24
+                      , std::chrono::hours{24}
                       , true
                       , 5
                       );
