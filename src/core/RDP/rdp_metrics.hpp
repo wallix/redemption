@@ -58,11 +58,11 @@ inline std::string hmac_device_service(const std::string & device, const std::st
     return metrics_encrypt(target_device_and_service.c_str(), target_device_and_service.length(), key);
 }
 
-extern std::string hmac_client_info(const char * target_host, const ClientInfo & info, const unsigned char * key);
+extern std::string hmac_client_info(const char * client_host, const ClientInfo & info, const unsigned char * key);
 
-inline std::string hmac_client_info(const char * target_host, const ClientInfo & info, const unsigned char * key) {
+inline std::string hmac_client_info(const char * client_host, const ClientInfo & info, const unsigned char * key) {
     char session_info[1024];
-    ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", target_host, info.bpp, info.width, info.height);
+    ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", client_host, info.bpp, info.width, info.height);
     return metrics_encrypt(session_info, strlen(session_info), key);
 }
 

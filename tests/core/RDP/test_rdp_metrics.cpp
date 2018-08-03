@@ -143,7 +143,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     unlink("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex");
     unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
-
 }
 
 
