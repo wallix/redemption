@@ -43,7 +43,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     // Should create rdp_metrics files if they do not exist
     ClientInfo info;
     uint8_t key[32] = {0};
-    time_t epoch = 1533211681;
+    time_t epoch = 1533211681; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
+//     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
+
     RDPMetrics metrics( epoch
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
@@ -51,7 +53,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
                       , hmac_account("secondaryuser", key)
                       , hmac_device_service("device1", "service1", key)
                       , hmac_client_info("10.10.13.12", info, key)
-                      , 24
+                      , std::chrono::hours{24}
                       , true
                       , 5
                       );
@@ -59,7 +61,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
 
+    metrics.rotate(epoch + (3600*1));
     metrics.rotate(epoch + (3600*2));
+    metrics.rotate(epoch + (3600*3));
+    metrics.rotate(epoch + (3600*4));
+    metrics.rotate(epoch + (3600*5));
+    metrics.rotate(epoch + (3600*6));
 
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
@@ -78,6 +85,67 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
 
 }
+
+RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
+{
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01.logindex");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
+
+    // Should create rdp_metrics files if they do not exist
+    ClientInfo info;
+    uint8_t key[32] = {0};
+    time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
+//     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
+
+    RDPMetrics metrics( epoch
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , hmac_user("primaryuser", key)
+                      , hmac_account("secondaryuser", key)
+                      , hmac_device_service("device1", "service1", key)
+                      , hmac_client_info("10.10.13.12", info, key)
+                      , std::chrono::hours{7}
+                      , true
+                      , 5
+                      );
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01.logindex"));
+
+    metrics.rotate(epoch + (3600*1));
+    metrics.rotate(epoch + (3600*2));
+    metrics.rotate(epoch + (3600*3));
+    metrics.rotate(epoch + (3600*4));
+    metrics.rotate(epoch + (3600*5));
+    metrics.rotate(epoch + (3600*6));
+    metrics.rotate(epoch + (3600*6)+3599);
+
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics"));
+    RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex"));
+
+    metrics.rotate(epoch + (3600*7));
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex"));
+
+    metrics.rotate(epoch + (24*3600*3));
+
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex"));
+
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01.logindex");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
+
+}
+
 
 RED_AUTO_TEST_CASE(TestRDPMetricsH)
 {
@@ -244,7 +312,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle) {
 //         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 //
 //         metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-//     }
+//     }https://mail.google.com/mail/u/0/#inbox/164fc2580bb76585
 //     {
 //         StaticOutStream<1600> out_stream;
 //         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 4+2);

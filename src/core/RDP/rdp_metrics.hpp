@@ -139,7 +139,7 @@ private:
     };
 
     //  output file info
-    const int file_interval;
+    const std::chrono::seconds file_interval;
     time_t current_file_date;
     char complete_file_path[4096] = {'\0'};
     const std::string path;
@@ -194,16 +194,16 @@ public:
     RDPMetrics( const time_t now
               , const std::string & path
               , const char * session_id
-              , const std::string & primary_user_sig        // clear primary user account
+              , const std::string & primary_user_sig       // clear primary user account
               , const std::string & account_sig            // secondary account
               , const std::string & target_service_sig     // clear target service name + clear device name
-              , const std::string & session_info_sig       // target_host + client info
-              , const long file_interval           // daily rotation of filename (hours)
+              , const std::string & session_info_sig       // source_host + client info
+              , const std::chrono::hours file_interval     // daily rotation of filename (hours)
               , const bool activate                // do nothing if false
               , const time_t log_delay             // delay between 2 logs
       )
-      : file_interval(file_interval*3600)
-      , current_file_date(now-now%(this->file_interval))
+      : file_interval{file_interval}
+      , current_file_date(now-now%(this->file_interval.count()))
       , path(path)
       , session_id(session_id)
       , active_(activate)
@@ -571,8 +571,7 @@ public:
 
 
     void new_day(time_t now) {
-
-        std::string text_date( text_gmdate(now));
+        std::string text_date = ((now % (24*3600)) == 0)?text_gmdate(now):filename_gmdatetime(now);
 
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%srdp_metrics-%s-%s.logmetrics", this->path.c_str(), this->version, text_date.c_str());
 
@@ -606,7 +605,7 @@ public:
 
     void rotate(time_t now) {
 
-        time_t next_file_date = now - now%(this->file_interval);
+        time_t next_file_date = now - now%(this->file_interval.count());
         if (this->current_file_date != next_file_date) {
             this->current_file_date = next_file_date;
 
