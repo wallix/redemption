@@ -1,3 +1,9 @@
+redemption (1.2.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix toggling Num Lock in VNC session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 03 Aug 2018 10:38:16 +0200
+
 redemption (1.2.51%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Change password expiration message.
