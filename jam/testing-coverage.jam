@@ -12,6 +12,10 @@ toolset.flags cover COVERFILE : <covfile> ;
 feature.feature <covflag> : : free ;
 toolset.flags cover COVERFLAG : <covflag> ;
 
+feature.feature <covbin> : : free ;
+toolset.flags cover COVERBIN : <covbin> ;
+
+
 actions cover
 {
     echo "Computing coverage for $(COVERFILE) "
@@ -22,6 +26,8 @@ actions cover
 
     raise () { echo "$1" ; rm *gcov ; exit 1 ; }
 
+    COVERBIN=$(COVERBIN)
+    [ -z "$(COVERBIN)" ] && COVERBIN=gcov
     COVER_PATH="$(<).dir"
     TAGS="$COVER_PATH/TAGS"
     mkdir -p "$COVER_PATH"
@@ -42,7 +48,7 @@ actions cover
         esac
         [ -e "$COVER_GCNO" ] || raise "coverage file \"$COVER_GCNO\" does not exist"
 
-        gcov \
+        "$COVERBIN" \
             --unconditional-branches \
             --all-blocks \
             --branch-count \
