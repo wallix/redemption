@@ -151,7 +151,7 @@ private:
     const bool active_ = false;
     long int current_data[COUNT_FIELD] = { 0 };
 
-    const time_t log_delay;
+    const std::chrono::seconds log_delay;
     timeval next_log_time;
 
     // RDP context Info
@@ -191,16 +191,16 @@ public:
                  , log_delay(0) {}
 
 
-    RDPMetrics( const time_t now
+    RDPMetrics( const bool activate                        // do nothing if false
               , const std::string & path
               , const char * session_id
               , const std::string & primary_user_sig       // clear primary user account
               , const std::string & account_sig            // secondary account
               , const std::string & target_service_sig     // clear target service name + clear device name
               , const std::string & session_info_sig       // source_host + client info
+              , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
-              , const bool activate                // do nothing if false
-              , const time_t log_delay             // delay between 2 logs
+              , const std::chrono::seconds log_delay        // delay between 2 logs
       )
       : file_interval{file_interval}
       , current_file_date(now-now%(this->file_interval.count()))
@@ -209,7 +209,7 @@ public:
       , active_(activate)
       , log_delay(log_delay)
     {
-        this->next_log_time.tv_sec = this->log_delay+now;
+        this->next_log_time.tv_sec = this->log_delay.count()+now;
         std::string text_datetime(text_gmdatetime(now));
 
         ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", text_datetime.c_str(), this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
@@ -618,7 +618,7 @@ public:
 
         timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
         if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-            next_log_time.tv_sec += this->log_delay;
+            next_log_time.tv_sec += this->log_delay.count();
 
             this->rotate(now.tv_sec);
 

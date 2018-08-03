@@ -862,7 +862,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( tvtime().tv_sec
+        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
                  , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>().c_str()
                  , hmac_user(vars.get<cfg::globals::auth_user>(), vars.get<cfg::rdp_metrics::sign_key>().data())
@@ -871,9 +871,9 @@ public:
                                        vars.get<cfg::context::target_service>(),
                                        vars.get<cfg::rdp_metrics::sign_key>().data())
                  , hmac_client_info(vars.get<cfg::globals::host>().c_str(), info, vars.get<cfg::rdp_metrics::sign_key>().data())
-                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
-                 , vars.get<cfg::rdp_metrics::activate_log_metrics>()
-                 , vars.get<cfg::rdp_metrics::log_interval>().count())
+                 , tvtime().tv_sec
+                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>()
+                 , vars.get<cfg::rdp_metrics::log_interval>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {

@@ -29,6 +29,25 @@
 #include "core/RDP/rdp_metrics.hpp"
 
 
+RED_AUTO_TEST_CASE(TestRDPMetricsH)
+{
+    uint8_t key[32] = {0};
+
+    RED_CHECK_EQUAL(std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"),
+    hmac_user("primaryuser", key));
+
+    RED_CHECK_EQUAL(std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"),
+    hmac_account("secondaryuser", key));
+
+    RED_CHECK_EQUAL(std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"),
+    hmac_device_service("device1", "service1", key));
+
+    ClientInfo info;
+    RED_CHECK_EQUAL(std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"),
+    hmac_client_info("10.10.13.12", info, key));
+
+}
+
 
 constexpr const char * rdp_metrics_path_file = "/tmp/";
 
@@ -41,21 +60,19 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
 
     // Should create rdp_metrics files if they do not exist
-    ClientInfo info;
-    uint8_t key[32] = {0};
     time_t epoch = 1533211681; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 //     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
-    RDPMetrics metrics( epoch
+    RDPMetrics metrics( true
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
-                      , hmac_user("primaryuser", key)
-                      , hmac_account("secondaryuser", key)
-                      , hmac_device_service("device1", "service1", key)
-                      , hmac_client_info("10.10.13.12", info, key)
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
                       , std::chrono::hours{24}
-                      , true
-                      , 5
+                      , std::chrono::seconds{5}
                       );
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
@@ -96,21 +113,19 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
 
     // Should create rdp_metrics files if they do not exist
-    ClientInfo info;
-    uint8_t key[32] = {0};
     time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 //     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
-    RDPMetrics metrics( epoch
+    RDPMetrics metrics( true
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
-                      , hmac_user("primaryuser", key)
-                      , hmac_account("secondaryuser", key)
-                      , hmac_device_service("device1", "service1", key)
-                      , hmac_client_info("10.10.13.12", info, key)
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
                       , std::chrono::hours{7}
-                      , true
-                      , 5
+                      , std::chrono::seconds{5}
                       );
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01.logmetrics"));
@@ -145,46 +160,22 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     unlink("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
 }
 
-
-RED_AUTO_TEST_CASE(TestRDPMetricsH)
-{
-    uint8_t key[32] = {0};
-
-    RED_CHECK_EQUAL(std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"),
-    hmac_user("primaryuser", key));
-
-    RED_CHECK_EQUAL(std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"),
-    hmac_account("secondaryuser", key));
-
-    RED_CHECK_EQUAL(std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"),
-    hmac_device_service("device1", "service1", key));
-
-    ClientInfo info;
-    RED_CHECK_EQUAL(std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"),
-    hmac_client_info("10.10.13.12", info, key));
-
-}
-
-
-
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle) {
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    ClientInfo info;
-    uint8_t key[32] = {0};
     time_t epoch = 1533211681-6;
-    RDPMetrics metrics( epoch
+    RDPMetrics metrics( true
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
-                      , hmac_user("primaryuser", key)
-                      , hmac_account("secondaryuser", key)
-                      , hmac_device_service("device1", "service1", key)
-                      , hmac_client_info("10.10.13.12", info, key)
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
                       , std::chrono::hours{24}
-                      , true
-                      , 5
+                      , std::chrono::seconds{5}
                       );
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
