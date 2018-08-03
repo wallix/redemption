@@ -43,7 +43,7 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::context::target_service,                    vcfg::accessmode::get>,
     vcfg::var<cfg::context::session_id,                        vcfg::accessmode::get>,
     vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>,
-    vcfg::var<cfg::globals::host,                              vcfg::accessmode::get>
+    vcfg::var<cfg::globals::host,                              vcfg::accessmode::get>,
     vcfg::var<cfg::globals::target_device,                     vcfg::accessmode::get>,
     vcfg::var<cfg::rdp_metrics::log_dir_path,                  vcfg::accessmode::get>,
     vcfg::var<cfg::rdp_metrics::log_file_turnover_interval,    vcfg::accessmode::get>,

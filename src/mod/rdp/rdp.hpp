@@ -870,7 +870,7 @@ public:
                  , hmac_device_service(vars.get<cfg::globals::target_device>(),
                                        vars.get<cfg::context::target_service>(),
                                        vars.get<cfg::rdp_metrics::sign_key>().data())
-                 , hmac_client_info(vars.get<cfg::globals::host>(), info, vars.get<cfg::rdp_metrics::sign_key>().data())
+                 , hmac_client_info(vars.get<cfg::globals::host>().c_str(), info, vars.get<cfg::rdp_metrics::sign_key>().data())
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>().count()
                  , vars.get<cfg::rdp_metrics::activate_log_metrics>()
                  , vars.get<cfg::rdp_metrics::log_interval>().count())
