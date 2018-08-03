@@ -159,6 +159,7 @@ private:
     int last_y = -1;
     uint32_t file_contents_format_ID = 0;
     uint32_t last_formatID = 0;
+    bool cliprdr_init_format_list_done = false;
 
 
     void encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
@@ -245,7 +246,7 @@ public:
         this->fd.close();
     }
 
-    bool cliprdr_init_format_list_done = false;
+
 
     void server_other_channel_data(long int len) {
         this->current_data[total_other_amount_data_rcv_from_server] += len;

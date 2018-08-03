@@ -1728,7 +1728,8 @@ public:
 
     void log_metrics() override {
         if (this->metrics.active()) {
-            this->metrics.log(tvtime());
+            timeval now = tvtime();
+            this->metrics.log(now);
         }
     }
 

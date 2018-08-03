@@ -64,6 +64,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
 
+
+
     metrics.rotate(epoch + (3600*24));
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
@@ -156,130 +158,52 @@ RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
 }
 
-//constexpr const char * rdp_metrics_path_file = "tests/core/RDP/";
 
-// RED_AUTO_TEST_CASE(TestRDPMetricsOutputFileTurnOver)
-// {
-//
-//     char current_date[24] {};
-//     timeval now = tvtime();
-//     metrics.set_current_formated_date(current_date, false, now.tv_sec);
-//
-//     char complete_file_path[4096] = {'\0'};
-//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", rdp_metrics_path_file, current_date);
-//     RED_CHECK(file_exist(complete_file_path));
-//     remove(complete_file_path);
-//
-//     time_t yesterday_time = metrics.utc_last_date - 3600*24;
-//     metrics.utc_last_date = yesterday_time;
-//     char yesterday_date[24] = {};
-//     metrics.set_current_formated_date(yesterday_date, false, yesterday_time);
-//     char yesterday_complete_path[4096] = {'\0'};
-//     ::snprintf(yesterday_complete_path, sizeof(yesterday_complete_path), "%srdp_metrics-%s.log", rdp_metrics_path_file, yesterday_date);
-//     //remove(yesterday_complete_path);
-//
-//     metrics.log();
-//     metrics.log();
-//
-//     RED_CHECK(yesterday_time <= metrics.utc_last_date);
-//     RED_CHECK(!file_exist(yesterday_complete_path));
-//
-//     RED_CHECK(file_exist(complete_file_path));
-//     remove(complete_file_path);
-// }
-/*
-RED_AUTO_TEST_CASE(TestRDPMetricsOutputLogHeader)
-{
+
+RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle) {
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
     ClientInfo info;
     uint8_t key[32] = {0};
-    RDPMetrics metrics( rdp_metrics_path_file
-                      , "1"
-                      , "user"
-                      , "admin"
-                      , "10.10.13.12"
-                      , info
-                      , "RDP1"
-                      , "device1"
-                      , key
+    time_t epoch = 1533211681-6;
+    RDPMetrics metrics( epoch
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , hmac_user("primaryuser", key)
+                      , hmac_account("secondaryuser", key)
+                      , hmac_device_service("device1", "service1", key)
+                      , hmac_client_info("10.10.13.12", info, key)
                       , 24
                       , true
-                      , 1);
+                      , 5
+                      );
 
-    char current_date[24] = {'\0'};
-
-    timeval now = {0, 0};
-    metrics.set_current_formated_date(current_date, false, now.tv_sec);
-
-    char complete_file_path[4096] = {'\0'};
-    ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", rdp_metrics_path_file, current_date);
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
+    RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
 
 
-    printf("complete_file_path=%s\n", complete_file_path);
-//     RED_CHECK(file_exist(complete_file_path));
-    metrics.log();
 
-//     RED_CHECK_EQUAL(get_file_contents(complete_file_path), "");
-//     remove(complete_file_path);
-}*/
+    {
+        metrics.right_click_pressed();
 
+        timeval now;
+        now.tv_sec = 1533211681;
+        now.tv_usec = 0;
+        metrics.log(now);
 
-// RED_AUTO_TEST_CASE(TestRDPMetricsOutputData) {
-//
-//     ClientInfo info;
-//     uint8_t key[32] = {0};
-//     RDPMetrics metrics( rdp_metrics_path_file
-//                       , "1"
-//                       , "user"
-//                       , "admin"tests/core/RDP/test_rdp_metrics.cpp
-//                       , "10.10.13.12"
-//                       , info
-//                       , "RDP1"
-//                       , "device1"
-//                       , key
-//                       , 24
-//                       , true);
-//
-//     char current_date[24] = {'\0'};
-//
-//     timeval now = tvtime();
-//     metrics.set_current_formated_date(current_date, false, now.tv_sec);
-//
-//     char complete_file_path[4096] = {'\0'};
-//     ::snprintf(complete_file_path, sizeof(complete_file_path), "%srdp_metrics-%s.log", rdp_metrics_path_file, current_date);
-//
-//     RED_REQUIRE(file_exist(complete_file_path));
-//
-//     for (int i = 0; i < 33; i++) {
-//         metrics.current_data[i] = i+1;
-//     }
-//     metrics.log();
-//
-//     std::string expected_log_header;
-//         char start_full_date_time[24];
-//     metrics.set_current_formated_date(start_full_date_time, true, now.tv_sec);
-//     expected_log_header += start_full_date_time;
-//     expected_log_header += " 1";
-//     // "account=5544E527C72AAE51DF22438F3EBA7B8A545F2D2391E64C4CC706EFFACA99D3C1 target_service_device=567475896AE7361D47721A8D430BEC617DF225B9A253FA97FFB09906FB9D3A4E client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7 user=8D5F8AEEB64E3CE20B537D04C486407EAF489646617CFCF493E76F5B794FA080"
-//
-//     std::string expected_log_data(expected_log_header+" main_channel_data_from_client=1 right_click=2 left_click=3 keys_pressed=4 mouse_displacement=5 main_channel_data_from_serveur=6 clipboard_channel_data_from_server=7 nb_paste_text_on_server=8 nb_paste_image_on_server=9 nb_paste_file_on_server=10 total_data_paste_on_server=11 nb_copy_text_on_server=12 nb_copy_image_on_server=13 nb_copy_file_on_server=14 clipboard_channel_data_from_client=15 nb_paste_text_on_client=16 nb_paste_image_on_client=17 nb_paste_file_on_client=18 total_data_paste_on_client=19 nb_copy_text_on_client=20 nb_copy_image_on_client=21 nb_copy_file_on_client=22 disk_redirection_channel_data_from_client=23 disk_redirection_channel_data_from_server=24 nb_files_1k_read=25 nb_files_or_folders_deleted=26 nb_files_write=27 nb_files_rename=28 rail_channel_data_from_client=29 rail_channel_data_from_server=30 other_channel_data_from_client=31 other_channel_data_from_server=32\n");
-//
-//     RED_CHECK_EQUAL(get_file_contents(content, complete_file_path), expected_log_data);
-//     remove(complete_file_path);
-//
-//     time_t yesterday_time = metrics.utc_last_date - 3600*24;
-//     metrics.utc_last_date = yesterday_time;
-//     for (int i = 0; i < 16; i++) {
-//         metrics.current_data[i] += i+1;
-//     }
-//     metrics.log();
-//
-//     RED_CHECK(file_exist(complete_file_path));
-//
-//     std::string expected_log_data_2(expected_log_header+" main_channel_data_from_client=2 right_click=4 left_click=6 keys_pressed=8 mouse_displacement=10 main_channel_data_from_serveur=12 clipboard_channel_data_from_server=14 nb_paste_text_on_server=16 nb_paste_image_on_server=18 nb_paste_file_on_server=20 total_data_paste_on_server=22 nb_copy_text_on_server=24 nb_copy_image_on_server=26 nb_copy_file_on_server=28 clipboard_channel_data_from_client=30 nb_paste_text_on_client=32\n");
-//
-//     RED_CHECK_EQUAL(get_file_contents(complete_file_path), expected_log_data_2);
-//     remove(complete_file_path);
-// }
+        std::string expected_log_index("2018-08-02 12:07:55 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
+
+        std::string expected_log_metrics("2018-08-02 12:08:01 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
+    }
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+}
 
 
 // RED_AUTO_TEST_CASE(TestRDPMetricsCLIPRDRReadChunk) {
