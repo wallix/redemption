@@ -339,7 +339,7 @@ public:
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
                         RDPECLIP::FormatListPDU_LongName fl_ln;
-                        fl_ln.recv(chunk);
+                        fl_ln.recv(chunk);;
 
                         switch (fl_ln.formatID) {
 
