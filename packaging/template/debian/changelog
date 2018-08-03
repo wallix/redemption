@@ -1,3 +1,17 @@
+redemption (1.3.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix toggling Num Lock in VNC session.
+  * Change password expiration message.
+  * Fix buffer overflow in Selector mod.
+  * Fix showing SP launch failure message in CloseBox mod.
+  * Fix closing socket handle.
+  * Fix SessionReactor.
+  * Fix max data block size of RDP Bulk Compressor.
+  * Fix typo error in SP launch failure message.
+  * Fix disabling keyboard input log in Session data of Recorded Session Viewer.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 03 Aug 2018 11:37:40 +0200
+
 redemption (1.2.49%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
