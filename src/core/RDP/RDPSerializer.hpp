@@ -240,7 +240,7 @@ public:
         }
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > order batch capacity (%zu)"
+               , "(asked size (%zu) + HEADER_SIZE (%u) = %zu) > order batch capacity (%zu)"
                , asked_size
                , SERIALIZER_HEADER_SIZE
                , asked_size + SERIALIZER_HEADER_SIZE
@@ -754,7 +754,7 @@ public:
         }
         if (asked_size + SERIALIZER_HEADER_SIZE > max_packet_size) {
             LOG( LOG_ERR
-               , "(asked size (%zu) + HEADER_SIZE (%d) = %zu) > image batch capacity (%zu)"
+               , "(asked size (%zu) + HEADER_SIZE (%u) = %zu) > image batch capacity (%zu)"
                , asked_size
                , SERIALIZER_HEADER_SIZE
                , asked_size + SERIALIZER_HEADER_SIZE
