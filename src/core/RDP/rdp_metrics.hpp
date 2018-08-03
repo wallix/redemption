@@ -151,6 +151,8 @@ private:
     const bool active_ = false;
     long int current_data[COUNT_FIELD] = { 0 };
 
+    const time_t connection_time;
+
     const std::chrono::seconds log_delay;
     timeval next_log_time;
 
@@ -160,6 +162,8 @@ private:
     uint32_t file_contents_format_ID = 0;
     uint32_t last_formatID = 0;
     bool cliprdr_init_format_list_done = false;
+
+    bool modified_var_since_last_log = false;
 
 
     void encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
@@ -184,13 +188,6 @@ public:
         return this->active_;
     }
 
-    RDPMetrics() : file_interval(0*3600)
-                 , path("")
-                 , session_id("")
-                 , active_(false)
-                 , log_delay(0) {}
-
-
     RDPMetrics( const bool activate                        // do nothing if false
               , const std::string & path
               , const char * session_id
@@ -207,12 +204,11 @@ public:
       , path(path)
       , session_id(session_id)
       , active_(activate)
+      , connection_time(now)
       , log_delay(log_delay)
+      , next_log_time{ this->log_delay.count()+now, 0}
     {
-        this->next_log_time.tv_sec = this->log_delay.count()+now;
-        std::string text_datetime(text_gmdatetime(now));
-
-        ::snprintf(header, sizeof(header), "%s %s user=%s account=%s target_service_device=%s client_info=%s\n", text_datetime.c_str(), this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
+        ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
 
         if (this->path.c_str() && activate) {
             this->new_day(this->current_file_date);
@@ -222,51 +218,56 @@ public:
 
     ~RDPMetrics() {
          this->disconnect();
-        ::close(this->fd.fd());
     }
 
     void disconnect() {
-        timeval now = tvtime();
-        std::string text_datetime(text_gmdatetime(now.tv_sec));
 
-        char header_delta[2048];
-        ::snprintf(header_delta, sizeof(header_delta), "%s %s disconnection\n", text_datetime.c_str(), this->session_id);
-//         std::string sentence(header_delta);
-//         sentence += " disconnection\n";
+        this->rotate(this->next_log_time.tv_sec);
 
-        iovec iov[1] = { {header_delta, strlen(header_delta)} };
+        std::string text_date = ((this->current_file_date % (24*3600)) == 0)?text_gmdate(this->current_file_date):filename_gmdatetime(this->current_file_date);
 
-        ssize_t nwritten = ::writev(fd.fd(), iov, 1);
+        char index_file_path[1024];
+        ::snprintf(index_file_path, sizeof(index_file_path), "%srdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
+
+        char header_disconnection[2048];
+        ::snprintf(header_disconnection, sizeof(header_disconnection), "%s disconnection %s", text_gmdatetime(this->next_log_time.tv_sec).c_str(), this->header);
+
+        unique_fd fd_header(index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+
+        iovec iov[1] = { {header_disconnection, strlen(header_disconnection)} };
+
+        ssize_t nwritten = ::writev(fd_header.fd(), iov, 1);
 
         if (nwritten == -1) {
             // TODO bad filename
-            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->fd.fd(), this->complete_file_path);
+            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", fd_header.fd(), this->complete_file_path);
         }
-
-        this->fd.close();
     }
 
-
+    void add_to_current_data(int index, long int value) {
+        this->current_data[index] += value;
+        this->modified_var_since_last_log = true;
+    }
 
     void server_other_channel_data(long int len) {
-        this->current_data[total_other_amount_data_rcv_from_server] += len;
+        this->add_to_current_data(total_other_amount_data_rcv_from_server, len);
     }
 
     void client_other_channel_data(long int len) {
-        this->current_data[total_other_amount_data_rcv_from_client] += len;
+        this->add_to_current_data(total_other_amount_data_rcv_from_client, len);
     }
 
     void server_rail_channel_data(long int len) {
-        this->current_data[total_rail_amount_data_rcv_from_server] += len;
+        this->add_to_current_data(total_rail_amount_data_rcv_from_server, len);
     }
 
     void client_rail_channel_data(long int len) {
-        this->current_data[total_rail_amount_data_rcv_from_client] += len;
+        this->add_to_current_data(total_rail_amount_data_rcv_from_client, len);
     }
 
     void set_server_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[disk_redirection_channel_data_from_server] += length;
+            this->add_to_current_data(disk_redirection_channel_data_from_server, length);
 
             rdpdr::SharedHeader header;
             header.receive(chunk);
@@ -282,9 +283,9 @@ public:
                         rdpdr::DeviceReadRequest drr;
                         drr.receive(chunk);
                         if (drr.Offset() == 0) {
-                            this->current_data[nb_files_read] += 1;
+                            this->add_to_current_data(nb_files_read, 1);
                         }
-                        this->current_data[total_files_data_read] += drr.Length();
+                        this->add_to_current_data(total_files_data_read, drr.Length());
                     }
                         break;
 
@@ -294,9 +295,9 @@ public:
                         dwr.receive(chunk);
 
                         if (dwr.Offset == 0) {
-                            this->current_data[nb_files_write] += 1;
+                            this->add_to_current_data(nb_files_write, 1);
                         }
-                        this->current_data[total_files_data_write] += dwr.Length;
+                        this->add_to_current_data(total_files_data_write, dwr.Length);
                     }
                         break;
 
@@ -308,10 +309,10 @@ public:
                         switch (sdsir.FsInformationClass()) {
 
                             case rdpdr::FileRenameInformation:
-                                this->current_data[nb_files_rename] += 1;
+                                this->add_to_current_data(nb_files_rename, 1);
                                 break;
                             case rdpdr::FileDispositionInformation:
-                                this->current_data[nb_files_or_folders_deleted] += 1;
+                                this->add_to_current_data(nb_files_or_folders_deleted, 1);
                                 break;
                         }
                     }
@@ -323,13 +324,13 @@ public:
 
     void set_client_rdpdr_metrics(InStream & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[disk_redirection_channel_data_from_client] += length;
+            this->add_to_current_data(disk_redirection_channel_data_from_client, length);
         }
     }
 
     void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[clipboard_channel_data_from_server] += length;
+            this->add_to_current_data(clipboard_channel_data_from_server, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -347,11 +348,11 @@ public:
                             case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                             case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                             case RDPECLIP::CF_LOCALE:
-                                this->current_data[nb_copy_text_from_server] += 1;
+                                this->add_to_current_data(nb_copy_text_from_server, 1);
                                 break;
                             case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                             case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->current_data[nb_copy_image_from_server] += 1;
+                                this->add_to_current_data(nb_copy_image_from_server, 1);
                                 break;
                             default:
                                 std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
@@ -359,7 +360,7 @@ public:
                                 std::string file_contents_name(RDPECLIP::FILECONTENTS);
                                 if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
                                     this->file_contents_format_ID = fl_ln.formatID;
-                                    this->current_data[nb_copy_file_from_server] += 1;
+                                    this->add_to_current_data(nb_copy_file_from_server, 1);
                                 }
                                 break;
                         }
@@ -379,15 +380,15 @@ public:
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                         case RDPECLIP::CF_LOCALE:
-                            this->current_data[nb_paste_text_on_server] += 1;
+                            this->add_to_current_data(nb_paste_text_on_server, 1);
                             break;
                         case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[nb_paste_image_on_server] += 1;
+                            this->add_to_current_data(nb_paste_image_on_server, 1);
                             break;
                         default:
                             if (this->file_contents_format_ID == this->last_formatID){
-                                this->current_data[nb_paste_file_on_server] += 1;
+                                this->add_to_current_data(nb_paste_file_on_server, 1);
                             }
                             break;
                     }
@@ -402,11 +403,11 @@ public:
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                         case RDPECLIP::CF_LOCALE:
-                            this->current_data[total_data_paste_on_client] += header.dataLen();
+                            this->add_to_current_data(total_data_paste_on_client, header.dataLen());
                             break;
                         case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[total_data_paste_on_client] += header.dataLen();
+                            this->add_to_current_data(total_data_paste_on_client, header.dataLen());
                             break;
                         default:
                             break;
@@ -422,7 +423,7 @@ public:
                         long int size = chunk.in_uint32_le();
                         size = size << 32;
                         size += chunk.in_uint32_le();
-                        this->current_data[total_data_paste_on_server] += size;
+                        this->add_to_current_data(total_data_paste_on_server, size);
                     }
                 }
                     break;
@@ -432,7 +433,7 @@ public:
 
     void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->current_data[clipboard_channel_data_from_client] += length;
+            this->add_to_current_data(clipboard_channel_data_from_client, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -450,11 +451,11 @@ public:
                             case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                             case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                             case RDPECLIP::CF_LOCALE:
-                                this->current_data[nb_copy_text_from_client] += 1;
+                                this->add_to_current_data(nb_copy_text_from_client, 1);
                                 break;
                             case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                             case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->current_data[nb_copy_image_from_client] += 1;
+                                this->add_to_current_data(nb_copy_image_from_client, 1);
                                 break;
                             default:
                                 std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
@@ -462,7 +463,7 @@ public:
                                 std::string file_contents_name(RDPECLIP::FILECONTENTS);
                                 if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
                                     this->file_contents_format_ID = fl_ln.formatID;
-                                    this->current_data[nb_copy_file_from_client] += 1;
+                                    this->add_to_current_data(nb_copy_file_from_client, 1);
                                 }
                                 break;
                         }
@@ -482,15 +483,15 @@ public:
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                         case RDPECLIP::CF_LOCALE:
-                            this->current_data[nb_paste_text_on_client] += 1;
+                            this->add_to_current_data(nb_paste_text_on_client, 1);
                             break;
                         case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[nb_paste_image_on_client] += 1;
+                            this->add_to_current_data(nb_paste_image_on_client, 1);
                             break;
                         default:
                             if (this->file_contents_format_ID == this->last_formatID){
-                                this->current_data[nb_paste_file_on_client] += 1;
+                                this->add_to_current_data(nb_paste_file_on_client, 1);
                             }
                             break;
                     }
@@ -505,11 +506,11 @@ public:
                         case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
                         case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
                         case RDPECLIP::CF_LOCALE:
-                            this->current_data[total_data_paste_on_server] += header.dataLen();
+                            this->add_to_current_data(total_data_paste_on_server, header.dataLen());
                             break;
                         case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->current_data[total_data_paste_on_server] += header.dataLen();
+                            this->add_to_current_data(total_data_paste_on_server, header.dataLen());
                             break;
                         default:
                             break;
@@ -525,7 +526,7 @@ public:
                         long int size = chunk.in_uint32_le();
                         size = size << 32;
                         size += chunk.in_uint32_le();
-                        this->current_data[total_data_paste_on_client] += size;
+                        this->add_to_current_data(total_data_paste_on_client, size);
                     }
                 }
                     break;
@@ -534,7 +535,7 @@ public:
     }
 
     void server_main_channel_data(long int len) {
-        this->current_data[main_channel_data_from_server] += len;
+        this->add_to_current_data(main_channel_data_from_server, len);
     }
 
     void mouse_mouve(const int x, const int y) {
@@ -547,26 +548,26 @@ public:
             if (y_shift < 0) {
                 y_shift *=  -1;
             }
-            this->current_data[mouse_displacement] += x_shift + y_shift;
+            this->add_to_current_data(mouse_displacement, x_shift + y_shift);
         }
         this->last_x = x;
         this->last_y = y;
     }
 
     void key_pressed() {
-        this->current_data[keys_pressed]++;
+        this->add_to_current_data(keys_pressed, 1);
     }
 
     void right_click_pressed() {
-        this->current_data[right_click]++;
+        this->add_to_current_data(right_click, 1);
     }
 
     void left_click_pressed() {
-        this->current_data[left_click]++;
+        this->add_to_current_data(left_click, 1);
     }
 
     void client_main_channel_data(long int len) {
-        this->current_data[main_channel_data_from_client] += len;
+        this->add_to_current_data(main_channel_data_from_client, len);
     }
 
 
@@ -583,20 +584,19 @@ public:
         char index_file_path[1024];
         ::snprintf(index_file_path, sizeof(index_file_path), "%srdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
 
-        int fd = ::open(index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
+        char connection_header[1036];
+        ::snprintf(connection_header, sizeof(connection_header), "%s connection %s", text_gmdatetime(this->connection_time).c_str(), this->header);
 
-        unique_fd fd_header(fd);
+        unique_fd fd_header(index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO );
 
             if (fd_header.fd() != -1) {
-            iovec iov[1] = { {this->header, strlen(this->header)} };
+                iovec iov[1] = { {connection_header, strlen(connection_header)} };
 
-            ssize_t nwritten = ::writev(fd_header.fd(), iov, 1);
+                ssize_t nwritten = ::writev(fd_header.fd(), iov, 1);
 
             if (nwritten == -1) {
                 // TODO bad filename
                 LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), index_file_path);
-            } else {
-                ::close(fd_header.fd());
             }
         } else {
             LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"",this->fd.fd(), index_file_path);
@@ -617,7 +617,7 @@ public:
     void log(timeval & now) {
 
         timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
-        if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+        if (this->modified_var_since_last_log && !wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
             next_log_time.tv_sec += this->log_delay.count();
 
             this->rotate(now.tv_sec);
@@ -630,6 +630,7 @@ public:
             iovec iov[] = { {sentence, strlen(sentence)} };
 
             ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
+            this->modified_var_since_last_log = false;
 
             if (nwritten == -1) {
                 // TODO bad filename
