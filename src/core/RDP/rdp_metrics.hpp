@@ -138,6 +138,49 @@ private:
         COUNT_FIELD
     };
 
+        const char * rdp_metrics_name(int index) {
+
+        switch (index) {
+            case main_channel_data_from_client:             return "main_channel_data_from_client";
+            case right_click:                               return "right_click";
+            case left_click:                                return "left_click";
+            case keys_pressed:                              return "keys_pressed";
+            case mouse_displacement:                        return "mouse_displacement";
+            case main_channel_data_from_server:            return "main_channel_data_from_server";
+            case clipboard_channel_data_from_server:        return "clipboard_channel_data_from_server";
+            case nb_paste_text_on_server:                   return "nb_paste_text_on_server";
+            case nb_paste_image_on_server:                  return "nb_paste_image_on_server";
+            case nb_paste_file_on_server:                   return "nb_paste_file_on_server";
+            case total_data_paste_on_server:                return "total_data_paste_on_server";
+            case nb_copy_text_from_server:                  return "nb_copy_text_on_server";
+            case nb_copy_image_from_server:                 return "nb_copy_image_on_server";
+            case nb_copy_file_from_server:                  return "nb_copy_file_on_server";
+            case clipboard_channel_data_from_client:        return "clipboard_channel_data_from_client";
+            case nb_paste_text_on_client:                   return "nb_paste_text_on_client";
+            case nb_paste_image_on_client:                  return "nb_paste_image_on_client";
+            case nb_paste_file_on_client:                   return "nb_paste_file_on_client";
+            case total_data_paste_on_client:                return "total_data_paste_on_client";
+            case nb_copy_text_from_client:                  return "nb_copy_text_on_client";
+            case nb_copy_image_from_client:                 return "nb_copy_image_on_client";
+            case nb_copy_file_from_client:                  return "nb_copy_file_on_client";
+            case disk_redirection_channel_data_from_client: return "disk_redirection_channel_data_from_client";
+            case disk_redirection_channel_data_from_server: return "disk_redirection_channel_data_from_server";
+            case nb_files_read:                          return "nb_files_read";
+            case nb_files_or_folders_deleted:               return "nb_files_or_folders_deleted";
+            case nb_files_write:                            return "nb_files_write";
+            case nb_files_rename:                           return "nb_files_rename";
+            case total_files_data_write:                    return "total_files_data_write";
+            case total_files_data_read:                     return "total_files_data_read";
+            case total_rail_amount_data_rcv_from_client:    return "rail_channel_data_from_client";
+            case total_rail_amount_data_rcv_from_server:    return "rail_channel_data_from_server";
+            case total_other_amount_data_rcv_from_client:   return "other_channel_data_from_client";
+            case total_other_amount_data_rcv_from_server:   return "other_channel_data_from_server";
+            case COUNT_FIELD: break;
+        }
+
+        return " unknow_rdp_metrics_name";
+    }
+
     //  output file info
     const std::chrono::seconds file_interval;
     time_t current_file_date;
@@ -304,7 +347,7 @@ public:
             rdpdr::SharedHeader header;
             header.receive(chunk);
 
-            if (header.component == rdpdr::RDPDR_CTYP_CORE && (header.packet_id == rdpdr::PAKID_CORE_DEVICE_IOCOMPLETION || header.packet_id == rdpdr::PAKID_CORE_DEVICE_IOREQUEST)) {
+            if (header.component == rdpdr::RDPDR_CTYP_CORE &&  header.packet_id == rdpdr::PAKID_CORE_DEVICE_IOREQUEST) {
                 rdpdr::DeviceIORequest dior;
                 dior.receive(chunk);
 
@@ -660,6 +703,20 @@ public:
 
             if (debug) {
 
+                std::string debug_sentence;
+                char debug_header[128];
+                ::snprintf(debug_header, sizeof(debug_header), "%s %s", text_datetime.c_str(), this->session_id);
+                debug_sentence += debug_header;
+
+                for (int i = 0; i < COUNT_FIELD; i++) {
+                    if (this->current_data[i]) {
+                        char elem[128];
+                        ::snprintf(elem, sizeof(elem),  " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
+                        debug_sentence += elem;
+                    }
+                }
+
+                LOG(LOG_INFO, "%s", debug_sentence);
             }
 
             char sentence[4096];
