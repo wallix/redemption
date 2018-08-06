@@ -2213,6 +2213,8 @@ private:
     void process_remoteapp_bypass_legal_notice_delay_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
         this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
 
+        LOG(LOG_INFO, "RDP::process_remoteapp_bypass_legal_notice_delay_event: One-shut bypass Windows's Legal Notice");
+
         this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
         this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
