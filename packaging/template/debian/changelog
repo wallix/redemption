@@ -1,3 +1,8 @@
+redemption (1.2.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 06 Aug 2018 16:45:29 +0200
+
 redemption (1.2.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * (RemoteApp) Automatically bypass Legal Notice screen of Windows.
