@@ -165,6 +165,8 @@ private:
 
     bool modified_var_since_last_log = false;
 
+   const bool debug;
+
 
     void encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
         SslHMAC_Sha256 sha256(key_crypt, 32);
@@ -198,6 +200,7 @@ public:
               , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay        // delay between 2 logs
+              , const bool debug
       )
       : file_interval{file_interval}
       , current_file_date(now-now%(this->file_interval.count()))
@@ -207,6 +210,35 @@ public:
       , connection_time(now)
       , log_delay(log_delay)
       , next_log_time{ this->log_delay.count()+now, 0}
+      , debug(debug)
+    {
+        ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
+
+        if (this->path.c_str() && activate) {
+            this->new_day(this->current_file_date);
+        }
+    }
+
+    RDPMetrics( const bool activate                        // do nothing if false
+              , const std::string & path
+              , const char * session_id
+              , const std::string & primary_user_sig       // clear primary user account
+              , const std::string & account_sig            // secondary account
+              , const std::string & target_service_sig     // clear target service name + clear device name
+              , const std::string & session_info_sig       // source_host + client info
+              , const time_t now                           // time at beginning of metrics
+              , const std::chrono::hours file_interval     // daily rotation of filename (hours)
+              , const std::chrono::seconds log_delay        // delay between 2 logs
+      )
+      : file_interval{file_interval}
+      , current_file_date(now-now%(this->file_interval.count()))
+      , path(path)
+      , session_id(session_id)
+      , active_(activate)
+      , connection_time(now)
+      , log_delay(log_delay)
+      , next_log_time{ this->log_delay.count()+now, 0}
+      , debug(false)
     {
         ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
 
@@ -475,7 +507,9 @@ public:
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 {
+//                   ::hexdump(chunk.get_data(), chunk.get_offset());
                     this->last_formatID = chunk.in_uint32_le();
+//                     LOG(LOG_INFO, "this->last_formatID=%u this->file_contents_format_ID=%u", this->last_formatID, this->file_contents_format_ID);
 
                     switch (this->last_formatID) {
                         case RDPECLIP::CF_TEXT:        [[fallthrough]];
@@ -624,12 +658,17 @@ public:
 
             std::string text_datetime(text_gmdatetime(now.tv_sec));
 
+            if (debug) {
+
+            }
+
             char sentence[4096];
             ::snprintf(sentence, sizeof(sentence), "%s %s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", text_datetime.c_str(), this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
 
             iovec iov[] = { {sentence, strlen(sentence)} };
 
             ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
+
             this->modified_var_since_last_log = false;
 
             if (nwritten == -1) {
