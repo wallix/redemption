@@ -250,6 +250,10 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.enable_rdpdr_data_analysis          = ini.get<cfg::mod_rdp::enable_rdpdr_data_analysis>();
 
+    mod_rdp_params.remoteapp_bypass_legal_notice_delay = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay>();
+    mod_rdp_params.remoteapp_bypass_legal_notice_timeout
+                                                       = ini.get<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout>();
+
     mod_rdp_params.experimental_fix_input_event_sync   = ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
     mod_rdp_params.experimental_fix_too_long_cookie    = ini.get<cfg::mod_rdp::experimental_fix_too_long_cookie>();
 

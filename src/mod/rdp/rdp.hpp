@@ -384,6 +384,9 @@ protected:
 
     const bool                        enable_rdpdr_data_analysis;
 
+    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_delay;
+    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_timeout;
+
     const bool                        experimental_fix_input_event_sync;
     const bool                        experimental_fix_too_long_cookie;
 
@@ -406,6 +409,8 @@ protected:
 
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
+
+    SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_lecalnotice;
 
     std::string output_filename;
 
@@ -796,6 +801,8 @@ public:
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
+        , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
+        , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
@@ -4341,13 +4348,37 @@ public:
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
                     (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
                     this->remote_program) {
-                    LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
+                    if ((0 != lei.ErrorNotificationType) ||
+                        (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
+                        this->remoteapp_one_shot_bypass_window_lecalnotice ||
+                        (!this->remoteapp_bypass_legal_notice_delay.count())) {
+                            this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
+                    }
+                    else {
+                        this->remoteapp_one_shot_bypass_window_lecalnotice = this->session_reactor.create_timer()
+                            .on_action(jln::sequencer(
+                                    [this](JLN_TIMER_CTX ctx) {
+                                        LOG(LOG_INFO, "RDP::process_save_session_info: One-shut bypass Windows's Legal Notice");
+                                        this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+                                        this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
-                    std::string errmsg = "(RemoteApp) ";
+                                        if (this->remoteapp_bypass_legal_notice_delay.count()) {
+                                            ctx.set_delay(this->remoteapp_bypass_legal_notice_delay);
 
-                    errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
-                    this->authentifier.set_auth_error_message(errmsg.c_str());
-                    throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
+                                            return ctx.next();
+                                        }
+                                        else {
+                                            return ctx.terminate();
+                                        }
+                                    },
+                                    [this](JLN_TIMER_CTX ctx) {
+                                        this->on_remoteapp_redirect_user_screen(this->authentifier, RDP::LOGON_FAILED_OTHER);
+
+                                        return ctx.terminate();
+                                    }
+                                ))
+                            .set_delay(this->remoteapp_bypass_legal_notice_delay);
+                    }
                 }
             }
         }
@@ -4355,6 +4386,16 @@ public:
         }
 
         stream.in_skip_bytes(stream.in_remain());
+    }
+
+    static void on_remoteapp_redirect_user_screen(AuthApi& authentifier, uint32_t ErrorNotificationData) {
+        LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
+
+        std::string errmsg = "(RemoteApp) ";
+
+        errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(ErrorNotificationData);
+        authentifier.set_auth_error_message(errmsg.c_str());
+        throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
     }
 
     // TODO CGR: this can probably be unified with process_confirm_active in front

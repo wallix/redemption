@@ -159,6 +159,8 @@ namespace cfg {
         struct clean_up_32_bpp_cursor;
         struct bogus_ios_rdpdr_virtual_channel;
         struct enable_rdpdr_data_analysis;
+        struct remoteapp_bypass_legal_notice_delay;
+        struct remoteapp_bypass_legal_notice_timeout;
         struct experimental_fix_input_event_sync;
         struct experimental_fix_too_long_cookie;
     };
