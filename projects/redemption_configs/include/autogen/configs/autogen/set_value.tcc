@@ -1552,6 +1552,30 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::enable_rdpdr_data_analysis&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "remoteapp_bypass_legal_notice_delay")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "remoteapp_bypass_legal_notice_timeout")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout&>(this->variables).value,
+                ::configs::spec_type<std::chrono::milliseconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "experimental_fix_input_event_sync")) {
             ::configs::parse_and_log(
                 context, key,

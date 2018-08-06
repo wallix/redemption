@@ -200,6 +200,9 @@ struct ModRDPParams {
 
     bool enable_rdpdr_data_analysis = true;
 
+    std::chrono::milliseconds remoteapp_bypass_legal_notice_delay {};
+    std::chrono::milliseconds remoteapp_bypass_legal_notice_timeout {};
+
     bool experimental_fix_input_event_sync = true;
 
     RDPVerbose verbose;
@@ -392,6 +395,9 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("%s",     yes_or_no,             bogus_ios_rdpdr_virtual_channel);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_rdpdr_data_analysis);
+
+        RDP_PARAMS_LOG("%u",     from_millisec,         remoteapp_bypass_legal_notice_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         remoteapp_bypass_legal_notice_timeout);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
 

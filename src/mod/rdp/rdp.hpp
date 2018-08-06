@@ -394,6 +394,9 @@ protected:
 
     const bool                        enable_rdpdr_data_analysis;
 
+    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_delay;
+    const std::chrono::milliseconds   remoteapp_bypass_legal_notice_timeout;
+
     const bool                        experimental_fix_input_event_sync;
 
     std::string session_probe_target_informations;
@@ -414,6 +417,9 @@ protected:
     const std::chrono::seconds open_session_timeout;
 
     Timeout open_session_timeout_checker;
+
+    wait_obj remoteapp_bypass_legal_notice_delay_event;
+    wait_obj remoteapp_bypass_legal_notice_timeout_event;
 
     std::string output_filename;
 
@@ -852,6 +858,32 @@ protected:
         }
     } file_system_virtual_channel_event_handler;
 
+    class RemoteAppBypassLegalNoticeDelayEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        RemoteAppBypassLegalNoticeDelayEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_remoteapp_bypass_legal_notice_delay_event(now, event, drawable);
+        }
+    } remoteapp_bypass_legal_notice_delay_event_handler;
+
+    class RemoteAppBypassLegalNoticeTimeoutEventHandler : public EventHandler::CB {
+        mod_rdp& mod_;
+
+    public:
+        RemoteAppBypassLegalNoticeTimeoutEventHandler(mod_rdp& mod)
+        : mod_(mod)
+        {}
+
+        void operator()(time_t now, wait_obj& event, gdi::GraphicApi& drawable) override {
+            this->mod_.process_remoteapp_bypass_legal_notice_timeout_event(now, event, drawable);
+        }
+    } remoteapp_bypass_legal_notice_timeout_event_handler;
+
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
@@ -993,6 +1025,8 @@ public:
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
+        , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
+        , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
@@ -1057,6 +1091,8 @@ public:
         , session_probe_virtual_channel_event_handler(*this)
         , remote_program_session_manager_event_handler(*this)
         , file_system_virtual_channel_event_handler(*this)
+        , remoteapp_bypass_legal_notice_delay_event_handler(*this)
+        , remoteapp_bypass_legal_notice_timeout_event_handler(*this)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
         , client_large_pointer_caps(info.large_pointer_caps)
@@ -2174,6 +2210,25 @@ private:
         }
     }
 
+    void process_remoteapp_bypass_legal_notice_delay_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
+        this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
+
+        this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
+        this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
+
+        this->remoteapp_bypass_legal_notice_timeout_event.set_trigger_time(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                        this->remoteapp_bypass_legal_notice_timeout
+                    ).count()
+            );
+    }
+
+    void process_remoteapp_bypass_legal_notice_timeout_event(time_t, wait_obj& /*event*/, gdi::GraphicApi&) {
+        this->remoteapp_bypass_legal_notice_timeout_event.reset_trigger_time();
+
+        this->on_remoteapp_redirect_user_screen(this->authentifier, RDP::LOGON_FAILED_OTHER);
+    }
+
 public:
     void get_event_handlers(std::vector<EventHandler>& out_event_handlers) override {
         mod_api::get_event_handlers(out_event_handlers);
@@ -2224,6 +2279,21 @@ public:
                     INVALID_SOCKET
                 );
             }
+        }
+
+        if (this->remoteapp_bypass_legal_notice_delay_event.is_trigger_time_set()) {
+            out_event_handlers.emplace_back(
+                &this->remoteapp_bypass_legal_notice_delay_event,
+                &this->remoteapp_bypass_legal_notice_delay_event_handler,
+                INVALID_SOCKET
+            );
+        }
+        if (this->remoteapp_bypass_legal_notice_timeout_event.is_trigger_time_set()) {
+            out_event_handlers.emplace_back(
+                &this->remoteapp_bypass_legal_notice_timeout_event,
+                &this->remoteapp_bypass_legal_notice_timeout_event_handler,
+                INVALID_SOCKET
+            );
         }
     }
 
@@ -6050,6 +6120,9 @@ public:
                 reinterpret_cast<char *>(liv1.UserName));
 
             this->front.send_savesessioninfo();
+
+            this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
+            this->remoteapp_bypass_legal_notice_timeout_event.reset_trigger_time();
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -6061,6 +6134,9 @@ public:
                 reinterpret_cast<char *>(liv2.UserName));
 
             this->front.send_savesessioninfo();
+
+            this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
+            this->remoteapp_bypass_legal_notice_timeout_event.reset_trigger_time();
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
@@ -6103,6 +6179,9 @@ public:
                 auto_reconnect.emit(stream);
 
                 this->is_server_auto_reconnec_packet_received = true;
+
+                this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
+                this->remoteapp_bypass_legal_notice_timeout_event.reset_trigger_time();
             }
 
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
@@ -6113,13 +6192,22 @@ public:
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
                     (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
                     this->remote_program) {
-                    LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
-
-                    std::string errmsg = "(RemoteApp) ";
-
-                    errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(lei.ErrorNotificationData);
-                    this->authentifier.set_auth_error_message(errmsg.c_str());
-                    throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
+                    if ((0 != lei.ErrorNotificationType) ||
+                        (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
+                        (!this->remoteapp_bypass_legal_notice_delay.count())) {
+                            this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
+                    }
+                    else {
+                        this->remoteapp_bypass_legal_notice_delay_event.set_trigger_time(
+                                std::chrono::duration_cast<std::chrono::microseconds>(
+                                        this->remoteapp_bypass_legal_notice_delay
+                                    ).count()
+                            );
+                    }
+                }
+                else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
+                    this->remoteapp_bypass_legal_notice_delay_event.reset_trigger_time();
+                    this->remoteapp_bypass_legal_notice_timeout_event.reset_trigger_time();
                 }
             }
         }
@@ -6127,6 +6215,16 @@ public:
         }
 
         stream.in_skip_bytes(stream.in_remain());
+    }
+
+    static void on_remoteapp_redirect_user_screen(AuthApi& authentifier, uint32_t ErrorNotificationData) {
+        LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
+
+        std::string errmsg = "(RemoteApp) ";
+
+        errmsg += RDP::LogonErrorsInfo_Recv::ErrorNotificationDataToShortMessage(ErrorNotificationData);
+        authentifier.set_auth_error_message(errmsg.c_str());
+        throw Error(ERR_RAIL_LOGON_FAILED_OR_WARNING);
     }
 
     // TODO CGR: this can probably be unified with process_confirm_active in front

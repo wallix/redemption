@@ -440,7 +440,10 @@ public:
                 } catch (Error const& e) {
                     LOG(LOG_INFO, "Session::Session exception = %s\n", e.errmsg());
                     time_t now = time(nullptr);
-                    mm.invoke_close_box(local_err_msg(e, language(this->ini)), signal, now, authentifier, authentifier);
+
+                    const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
+
+                    mm.invoke_close_box(auth_error_message, signal, now, authentifier, authentifier);
                 };
             }
             if (mm.mod) {

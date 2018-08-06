@@ -414,6 +414,16 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "enable_rdpdr_data_analysis", set(true));
         W.sep();
 
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::milliseconds>(), "remoteapp_bypass_legal_notice_delay", desc{
+            "Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Set to 0 to disable this feature."
+        }, set(0));
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::milliseconds>(), "remoteapp_bypass_legal_notice_timeout", desc{
+            "Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+            "Set to 0 to disable this feature."
+        }, set(20000));
+        W.sep();
+
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_fix_input_event_sync", set(true));
     });
 
