@@ -4285,6 +4285,8 @@ public:
                 reinterpret_cast<char *>(liv1.UserName));
 
             this->front.send_savesessioninfo();
+
+            this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -4296,6 +4298,8 @@ public:
                 reinterpret_cast<char *>(liv2.UserName));
 
             this->front.send_savesessioninfo();
+
+            this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
@@ -4338,6 +4342,8 @@ public:
                 auto_reconnect.emit(stream);
 
                 this->is_server_auto_reconnec_packet_received = true;
+
+                this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
             }
 
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
@@ -4379,6 +4385,9 @@ public:
                                 ))
                             .set_delay(this->remoteapp_bypass_legal_notice_delay);
                     }
+                }
+                else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
+                    this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
                 }
             }
         }
