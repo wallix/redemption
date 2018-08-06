@@ -1,3 +1,9 @@
+redemption (1.2.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * (RemoteApp) Automatically bypass Legal Notice screen of Windows.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 06 Aug 2018 15:08:42 +0200
+
 redemption (1.2.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix toggling Num Lock in VNC session.
