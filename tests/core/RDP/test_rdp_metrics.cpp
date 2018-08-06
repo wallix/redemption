@@ -772,7 +772,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
         header.emit(out_stream);
         rdpdr::DeviceIORequest dior(0, 0, 0, rdpdr::IRP_MJ_WRITE, 0);
         dior.emit(out_stream);
-        const uint8_t data[32] = { 0 };
+        const uint8_t data[42] = { 0 };
         rdpdr::DeviceWriteRequest dwr(42, 0, data);
         dwr.emit(out_stream);
 
