@@ -2082,6 +2082,34 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Set to 0 to disable this feature. <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// value{0} <br/>
+    struct mod_rdp::remoteapp_bypass_legal_notice_delay {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "remoteapp_bypass_legal_notice_delay";
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = std::chrono::milliseconds;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
+    /// Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode. <br/>
+    /// Set to 0 to disable this feature. <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// value{20000} <br/>
+    struct mod_rdp::remoteapp_bypass_legal_notice_timeout {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "remoteapp_bypass_legal_notice_timeout";
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = std::chrono::milliseconds;
+        using mapped_type = sesman_and_spec_type;
+        type value{20000};
+    };
     /// type: bool <br/>
     /// value{true} <br/>
     struct mod_rdp::experimental_fix_input_event_sync {
@@ -4675,6 +4703,8 @@ struct mod_rdp
 , cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::experimental_fix_input_event_sync
 , cfg::mod_rdp::experimental_fix_too_long_cookie
 { static constexpr bool is_section = true; };

@@ -530,6 +530,18 @@
 "#_advanced\n"
 "enable_rdpdr_data_analysis = boolean(default=True)\n\n"
 
+"# Delay before automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+"# Set to 0 to disable this feature.\n"
+"# (is in millisecond)\n"
+"#_advanced\n"
+"remoteapp_bypass_legal_notice_delay = integer(min=0, default=0)\n\n"
+
+"# Time limit to automatically bypass Windows's Legal Notice screen in RemoteApp mode.\n"
+"# Set to 0 to disable this feature.\n"
+"# (is in millisecond)\n"
+"#_advanced\n"
+"remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)\n\n"
+
 "#_advanced\n"
 "experimental_fix_input_event_sync = boolean(default=True)\n\n"
 
