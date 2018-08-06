@@ -242,7 +242,7 @@ public:
               , const std::string & session_info_sig       // source_host + client info
               , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
-              , const std::chrono::seconds log_delay        // delay between 2 logs
+              , const std::chrono::seconds log_delay       // delay between 2 logs
               , const bool debug
       )
       : file_interval{file_interval}
@@ -271,7 +271,7 @@ public:
               , const std::string & session_info_sig       // source_host + client info
               , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
-              , const std::chrono::seconds log_delay        // delay between 2 logs
+              , const std::chrono::seconds log_delay       // delay between 2 logs
       )
       : file_interval{file_interval}
       , current_file_date(now-now%(this->file_interval.count()))
@@ -412,7 +412,8 @@ public:
             switch (header.msgType()) {
 
                 case RDPECLIP::CB_FORMAT_LIST:
-                    if (this->cliprdr_init_format_list_done) {
+                {
+//                     if (this->cliprdr_init_format_list_done) {
                         RDPECLIP::FormatListPDU_LongName fl_ln;
                         fl_ln.recv(chunk);;
 
@@ -439,10 +440,11 @@ public:
                                 }
                                 break;
                         }
+                }
 
-                    } else {
-                        this->cliprdr_init_format_list_done = true;
-                    }
+//                     } else {
+//                         this->cliprdr_init_format_list_done = true;
+//                     }
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:

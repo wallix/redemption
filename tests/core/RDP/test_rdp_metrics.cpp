@@ -479,27 +479,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
                       , true
                       );
 
-   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
-
-    { // FORMAT LIST INITIALISATION
-        epoch += 5;
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-        format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
-        format.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-
-        timeval now = {epoch, 0};
-        metrics.log(now);
-
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-    }
+   std::string expected_log_metrics;
 
     {  // FORMAT LIST TEXT COPY ON SERVER
-        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 68 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -518,7 +501,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
     }
 
     {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 68 0 0 0 0 0 1 0 12 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 0 1 0 12 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -535,7 +518,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
     }
 
     {  // FORMAT TEXT DATA RESPONSE FROM SERVER
-        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 118 0 0 0 0 0 1 0 12 0 1 0 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 64 0 0 0 0 0 1 0 12 0 1 0 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -553,7 +536,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
     }
 }
-
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
 
@@ -576,27 +558,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
                       , true
                       );
 
-   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
-
-    { // FORMAT LIST INITIALISATION
-        epoch += 5;
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-        format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
-        format.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-
-        timeval now = {epoch, 0};
-        metrics.log(now);
-
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-    }
+   std::string expected_log_metrics;
 
     {  // FORMAT LIST FILE COPY ON SERVER
-        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -615,7 +580,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
     }
 
     {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 108 0 0 0 0 0 0 1 12 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 12 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -632,7 +597,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
     }
 
     {  // FILE CONTENT REQUEST FROM CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 108 0 0 0 0 0 0 1 44 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 44 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;                                                    //
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -672,27 +637,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient) {
                       , true
                       );
 
-   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
-
-    { // FORMAT LIST INITIALISATION
-        epoch += 5;
-        StaticOutStream<1600> out_stream;
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-        format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
-        format.emit(out_stream);
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
-
-        timeval now = {epoch, 0};
-        metrics.log(now);
-
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-    }
+   std::string expected_log_metrics;
 
     {  // FORMAT LIST TEXT COPY ON SERVER
-        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 68 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -711,7 +659,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient) {
     }
 
     {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 68 0 0 0 0 1 0 0 12 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 14 0 0 0 0 1 0 0 12 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -728,7 +676,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient) {
     }
 
     {  // FORMAT TEXT DATA RESPONSE FROM SERVER
-        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 118 0 0 0 0 1 0 0 12 1 0 0 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 64 0 0 0 0 1 0 0 12 1 0 0 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5;
         StaticOutStream<1600> out_stream;
@@ -775,7 +723,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 
     std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 0 0 0\n");
 
-     {                                                      // CLIENT PDU
+     { // CLIENT PDU
         epoch += 5;
         StaticOutStream<1600> out_stream;
         rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
@@ -885,4 +833,298 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 }
 
 
+RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer) {
 
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer");
+
+    time_t epoch = 1533211681;
+    RDPMetrics metrics( true
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
+                      , std::chrono::hours{24}
+                      , std::chrono::seconds{5}
+                      , true
+                      );
+
+   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+
+    { // FORMAT LIST INITIALISATION
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT LIST IMAGE COPY ON SERVER
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_METAFILEPICT, "\0", 1);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT IMAGE DATA REQUEST PASTE ON CLIENT
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 12 0 1 0 0 0 0 0 68 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_METAFILEPICT);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT IMAGE DATA RESPONSE FROM SERVER
+        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 12 0 1 0 42 0 0 0 118 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        size_t size = 42;
+        RDPECLIP::FormatDataResponsePDU format(size);
+        const uint8_t data[42] = { 0 };
+        format.emit(out_stream, data, size);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+}
+
+RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer");
+
+    time_t epoch = 1533211681;
+    RDPMetrics metrics( true
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
+                      , std::chrono::hours{24}
+                      , std::chrono::seconds{5}
+                      , true
+                      );
+
+   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+
+    {  // FORMAT LIST INITIALISATION
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT LIST FILE COPY ON CLIENT
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 12 0 0 1 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::FormatDataRequestPDU format(49562);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FILE CONTENT REQUEST FROM CLIENT
+        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 44 0 0 1 42 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;                                                    //
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::FileContentsRequestPDU format(0, RDPECLIP::FILECONTENTS_RANGE, 0, 42);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+}
+
+
+RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer) {
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+
+    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer");
+
+    time_t epoch = 1533211681;
+    RDPMetrics metrics( true
+                      , rdp_metrics_path_file
+                      , "164d89c1a56957b752540093e178"
+                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
+                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
+                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
+                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , epoch
+                      , std::chrono::hours{24}
+                      , std::chrono::seconds{5}
+                      , true
+                      );
+
+   std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+
+    {  // FORMAT LIST INITIALISATION
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT LIST TEXT COPY ON SERVER
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 68 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
+        format_list_header.emit(out_stream);
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_UNICODETEXT, "\0", 1);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT TEXT DATA REQUEST PASTE ON CLIENT
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 12 1 0 0 0 0 0 0 68 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_OEMTEXT);
+        format.emit(out_stream);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    {  // FORMAT TEXT DATA RESPONSE FROM SERVER
+        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 12 1 0 0 42 0 0 0 118 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5;
+        StaticOutStream<1600> out_stream;
+        size_t size = 42;
+        RDPECLIP::FormatDataResponsePDU format(size);
+        const uint8_t data[42] = { 0 };
+        format.emit(out_stream, data, size);
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+
+        timeval now = {epoch, 0};
+        metrics.log(now);
+
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
+    }
+
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
+    unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
+}
