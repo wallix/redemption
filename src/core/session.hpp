@@ -239,7 +239,7 @@ public:
                     this->write_performance_log(now);
                 }
 
-                auto check_exception = [this, &session_reactor, &authentifier, &acl](Error const& e) {
+                auto check_exception = [this, &session_reactor, &authentifier, &acl, &signal, &mm](Error const& e) {
                     if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
                         (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
                         (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
@@ -263,7 +263,16 @@ public:
                             authentifier.report("SESSION_PROBE_LAUNCH_FAILED", "");
                         }
                         else {
-                            throw;
+                            LOG(LOG_ERR, "Session::Session exception (1) = %s\n", e.errmsg());
+                            time_t now = time(nullptr);
+                            signal = BackEvent_t(session_reactor.signal);
+
+                            const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
+
+                            mm.invoke_close_box(
+                                auth_error_message,
+                                signal, now, authentifier, authentifier);
+                            session_reactor.signal = signal;
                         }
                     }
                     else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
@@ -285,7 +294,16 @@ public:
                         session_reactor.set_next_event(BACK_EVENT_RETRY_CURRENT);
                     }
                     else {
-                        throw;
+                        LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
+                        time_t now = time(nullptr);
+                        signal = BackEvent_t(session_reactor.signal);
+
+                        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
+
+                        mm.invoke_close_box(
+                            auth_error_message,
+                            signal, now, authentifier, authentifier);
+                        session_reactor.signal = signal;
                     }
                 };
 
@@ -470,7 +488,7 @@ public:
                         }
                     }
                 } catch (Error const& e) {
-                    LOG(LOG_ERR, "Session::Session exception = %s\n", e.errmsg());
+                    LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
                     time_t now = time(nullptr);
                     signal = BackEvent_t(session_reactor.signal);
                     mm.invoke_close_box(
@@ -492,7 +510,7 @@ public:
             LOG(LOG_INFO, "Session::Session Init exception = %s!\n", e.errmsg());
         }
         catch (const std::exception & e) {
-            LOG(LOG_ERR, "Session::Session exception = %s!\n", e.what());
+            LOG(LOG_ERR, "Session::Session exception (3) = %s!\n", e.what());
         }
         catch(...) {
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
