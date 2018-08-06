@@ -158,7 +158,7 @@ namespace
         }
         else {
             for (size_t k = 0 ; k < height && is_ok(); ++k) {
-                png_write_row(ppng, row);
+                png_write_row(ppng, const_cast<uint8_t*>(row));
                 row += rowsize;
             }
         }
