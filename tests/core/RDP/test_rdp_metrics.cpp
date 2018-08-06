@@ -763,6 +763,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
     }
+
     {  // WRITE FILE
         std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 154 1 0 1 0 42 42 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
@@ -785,6 +786,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
     }
+
     {  // RENAME FILE
         std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 210 1 0 1 1 42 42 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
@@ -806,6 +808,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
     }
+    
     {  // DELETE FILE
         std::string expected_log_metrics_next("2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 266 1 1 1 1 42 42 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
