@@ -1468,8 +1468,8 @@ struct FileContentsRequestPDU     // Resquest RANGE
         stream.out_uint32_le(this->streamID);
         stream.out_uint32_le(this->lindex);
         stream.out_uint32_le(this->flag);
-        stream.out_uint32_le(this->sizeRequested >> 32);
         stream.out_uint32_le(this->sizeRequested);
+        stream.out_uint32_le(this->sizeRequested >> 32);
         if (flag & FILECONTENTS_SIZE) {
             stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
         } else {
@@ -1482,9 +1482,9 @@ struct FileContentsRequestPDU     // Resquest RANGE
         this->streamID = stream.in_uint32_le();
         this->lindex = stream.in_uint32_le();
         this->flag = stream.in_uint32_le();
-        this->sizeRequested = stream.in_uint32_le();
-        this->sizeRequested = this->sizeRequested << 32;
-        this->sizeRequested += stream.in_uint32_le();
+        uint64_t low = stream.in_uint32_le();
+        uint64_t high = stream.in_uint32_le();
+        this->sizeRequested = low + (high << 32);
     }
 
     void log() const {

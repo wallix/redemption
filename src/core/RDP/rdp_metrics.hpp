@@ -192,7 +192,7 @@ private:
     char header[1024];
     const char * session_id;
     const bool active_ = false;
-    long int current_data[COUNT_FIELD] = { 0 };
+    uint64_t current_data[COUNT_FIELD] = { 0 };
 
     const time_t connection_time;
 
@@ -319,7 +319,7 @@ public:
         }
     }
 
-    void add_to_current_data(int index, long int value) {
+    void add_to_current_data(int index, uint64_t value) {
         this->current_data[index] += value;
         this->modified_var_since_last_log = true;
     }
@@ -497,10 +497,9 @@ public:
                     chunk.in_skip_bytes(8);
                     uint32_t flag_filecontents = chunk.in_uint32_le();
                     if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        long int size = chunk.in_uint32_le();
-                        size = size << 32;
-                        size += chunk.in_uint32_le();
-                        this->add_to_current_data(total_data_paste_on_server, size);
+                        uint64_t nPositionLow = chunk.in_uint32_le();
+                        uint64_t nPositionHigh = chunk.in_uint32_le();
+                        this->add_to_current_data(total_data_paste_on_server, nPositionLow + (nPositionHigh << 32));
                     }
                 }
                     break;
@@ -602,9 +601,7 @@ public:
                     chunk.in_skip_bytes(8);
                     uint32_t flag_filecontents = chunk.in_uint32_le();
                     if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        long int size = chunk.in_uint32_le();
-                        size = size << 32;
-                        size += chunk.in_uint32_le();
+                        uint64_t size = chunk.in_uint64_le();
                         this->add_to_current_data(total_data_paste_on_client, size);
                     }
                 }
@@ -713,7 +710,7 @@ public:
                 for (int i = 0; i < COUNT_FIELD; i++) {
                     if (this->current_data[i]) {
                         char elem[128];
-                        ::snprintf(elem, sizeof(elem),  " %s=%ld", this->rdp_metrics_name(i), this->current_data[i]);
+                        ::snprintf(elem, sizeof(elem),  " %s=%lu", this->rdp_metrics_name(i), this->current_data[i]);
                         debug_sentence += elem;
                     }
                 }
@@ -722,7 +719,7 @@ public:
             }
 
             char sentence[4096];
-            ::snprintf(sentence, sizeof(sentence), "%s %s %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld %ld\n", text_datetime.c_str(), this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
+            ::snprintf(sentence, sizeof(sentence), "%s %s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n", text_datetime.c_str(), this->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
 
             iovec iov[] = { {sentence, strlen(sentence)} };
 

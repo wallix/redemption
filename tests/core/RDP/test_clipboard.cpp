@@ -405,8 +405,8 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
     OutStream out_stream(out_data, sizeof(out_data));
 
     file_descriptor.emit(out_stream);
-    //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+//     LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
+//     hexdump(out_stream.get_data(), out_stream.get_offset());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -498,10 +498,11 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     const char exp_data[] =
         "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x07\x00\x00\x00";
+        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00";
 
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
+    hexdump(out_stream.get_data(), out_stream.get_offset());
 
     RED_CHECK_EQUAL(expected, out_data);
     }
@@ -516,7 +517,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     const char data[] =
         "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x07\x00\x00\x00";
+        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
@@ -544,7 +545,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     const char exp_data[] =
         "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00";
+        "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00";
 
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
@@ -562,7 +563,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     const char data[] =
         "\x08\x00\x01\x00\x18\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x01\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00";
+        "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
