@@ -4439,7 +4439,6 @@ public:
                     this->remote_program) {
                     if ((0 != lei.ErrorNotificationType) ||
                         (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
-                        this->remoteapp_one_shot_bypass_window_lecalnotice ||
                         (!this->remoteapp_bypass_legal_notice_delay.count())) {
                             this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
