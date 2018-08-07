@@ -325,7 +325,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
 
         acl.log5("type=\"SESSION_CREATION_FAILED\"");
         std::string expected5("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_CREATION_FAILED\"\n");
-        RED_CHECK_EQ(logbuf.buf().length(), expected5.length());
+        //RED_CHECK_EQ(logbuf.buf().length(), expected5.length());
         RED_CHECK_EQ(logbuf.buf(), expected5);
         logbuf.clear();
 
@@ -336,7 +336,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
         acl.log6("type=\"SESSION_CREATION_FAILED\"", arc_info);
         std::string undated_buf(logbuf.buf().substr(date_length+expected5.length(), logbuf.buf().length()));
         std::string expected6("host message CEF:1|Wallix|Bastion|"+red_version+"|0|SESSION_CREATION|5|suser=admin duser=user1 WallixBastionSession_id= WallixBastionSessionType=Neutral src=10.10.13.12 dst=  app=vnc WallixBastionStatus=FAIL\n");
-        RED_CHECK_EQ(undated_buf.length(), expected6.length());
+        //RED_CHECK_EQ(undated_buf.length(), expected6.length());
         RED_CHECK_EQ(undated_buf, expected6);
     }
 

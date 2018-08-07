@@ -27,6 +27,7 @@
 #include "acl/mm_api.hpp"
 #include "acl/module_manager.hpp" // TODO only for MODULE_*
 #include "configs/config.hpp"
+#include "main/version.hpp"
 #include "core/authid.hpp"
 #include "core/date_dir_from_filename.hpp"
 #include "core/set_server_redirection_target.hpp"
@@ -286,7 +287,7 @@ public:
         variable = 0x2,
         buffer   = 0x40,
         state    = 0x10,
-        log_arcsight  = 0x20, 
+        log_arcsight  = 0x20,
     };
 
 public:

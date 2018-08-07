@@ -45,6 +45,8 @@ struct ReportMessageApi : noncopyable
 
     virtual void log5(const std::string & info) = 0;
 
+    virtual void log6(const std::string & info, const ArcsightLogInfo & asl_info) = 0;
+
     virtual void update_inactivity_timeout() = 0;
 
     virtual time_t get_inactivity_timeout() = 0;
