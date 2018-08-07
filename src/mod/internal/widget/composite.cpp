@@ -179,7 +179,6 @@ Widget * WidgetParent::get_next_focus(Widget * w)
 {
     CompositeContainer::iterator iter;
     if (!w) {
-        assert(!loop);
         if ((iter = this->impl->get_first()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             return nullptr;
         }
@@ -215,7 +214,6 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
 {
     CompositeContainer::iterator iter;
     if (!w) {
-        assert(!loop);
         if ((iter = this->impl->get_last()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
             return nullptr;
         }
