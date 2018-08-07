@@ -94,9 +94,9 @@ bool WidgetScreen::next_focus()
             return true;
         }
 
-        Widget * future_focus_w = this->get_next_focus(this->current_focus, false);
+        Widget * future_focus_w = this->get_next_focus(this->current_focus);
         if (!future_focus_w) {
-            future_focus_w = this->get_next_focus(nullptr, false);
+            future_focus_w = this->get_next_focus(nullptr);
         }
         assert(this->current_focus);
         this->set_widget_focus(future_focus_w, focus_reason_tabkey);
