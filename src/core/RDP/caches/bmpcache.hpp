@@ -291,10 +291,8 @@ private:
         #ifndef NDEBUG
         void check_uniq_bmp(uint8_t const * sig, Bitmap const & bmp) const {
             auto pred = [sig, &bmp](const T & e) {
-                return e
-                    && (*reinterpret_cast<uint64_t const *>(&sig[0]) == *reinterpret_cast<uint64_t const *>(&e.sha1[0]))
-                    ? (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || 0 != memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()))
-                    : false;
+                return (e && (0 == memcmp(&sig[0], &e.sha1[0], 8)))
+                    && (bmp.cx() != e.bmp.cx() || bmp.cy() != e.bmp.cy() || 0 != memcmp(bmp.data(), e.bmp.data(), bmp.bmp_size()));
             };
             if (std::count_if(this->first, this->last, pred) > 1) {
                 assert(false && "bitmap duplicated");
