@@ -1760,7 +1760,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         path[sizeof(path)-1] = 0;
                         path[sizeof(path)-2] = 0;
                         strncpy(path, app_path(AppPath::Wrm), sizeof(path)-2);
-                        strncat(path, "/", sizeof(path)-1);
+                        strncat(path, "/", sizeof(path)-strlen(path)-1);
                         strncpy(basename, movie_path, sizeof(basename));
                         extension[0] = 0; // extension is currently ignored
 
