@@ -120,3 +120,45 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         va_end(ap);
     }
 }
+
+void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+{
+    if (enable_buf_log) {
+# ifndef NDEBUG
+        // see LOG_FILENAME
+        if (priority != LOG_INFO && priority != LOG_DEBUG) {
+            if (!previous_is_line_marker) {
+                previous_is_line_marker = true;
+                return ;
+            }
+            previous_is_line_marker = false;
+        }
+# endif
+        va_list ap;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        va_start(ap, format);
+        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1;
+        va_end(ap);
+        log_buf.resize(log_buf.size() + sz);
+        va_start(ap, format);
+        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
+        va_end(ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        log_buf.back() = '\n';
+    }
+    else if (LOG__REDEMPTION__AS__LOGPRINT())
+    {
+        (void)priority;
+        va_list ap;
+        va_start(ap, format);
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        std::vprintf(format, ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        std::puts("");
+        std::fflush(stdout);
+        va_end(ap);
+    }
+}
+
