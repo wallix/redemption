@@ -114,9 +114,9 @@ bool WidgetScreen::previous_focus()
             return true;
         }
 
-        Widget * future_focus_w = this->get_previous_focus(this->current_focus, false);
+        Widget * future_focus_w = this->get_previous_focus(this->current_focus);
         if (!future_focus_w) {
-            future_focus_w = this->get_previous_focus(nullptr, false);
+            future_focus_w = this->get_previous_focus(nullptr);
         }
         assert(this->current_focus);
         this->set_widget_focus(future_focus_w, focus_reason_backtabkey);

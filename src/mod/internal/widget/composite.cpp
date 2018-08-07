@@ -81,15 +81,9 @@ CompositeArray::iterator CompositeArray::get_last()
     return static_cast<iterator>(&this->child_table[this->children_count - 1]);
 }
 
-CompositeArray::iterator CompositeArray::get_previous(iterator iter, bool loop)
+CompositeArray::iterator CompositeArray::get_previous(iterator iter)
 {
     if (iter == this->get_first()) {
-        if (loop) {
-            iterator last;
-            if ((last = this->get_last()) != iter) {
-                return last;
-            }
-        }
         return reinterpret_cast<iterator>(invalid_iterator);
     }
 
@@ -158,7 +152,7 @@ void WidgetParent::focus(int reason)
             this->current_focus = this->get_next_focus(nullptr);
         }
         else if (reason == focus_reason_backtabkey) {
-            this->current_focus = this->get_previous_focus(nullptr, false);
+            this->current_focus = this->get_previous_focus(nullptr);
         }
     }
     if (this->current_focus) {
@@ -217,7 +211,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
     return nullptr;
 }
 
-Widget * WidgetParent::get_previous_focus(Widget * w, bool loop)
+Widget * WidgetParent::get_previous_focus(Widget * w)
 {
     CompositeContainer::iterator iter;
     if (!w) {
@@ -237,7 +231,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w, bool loop)
     }
 
     CompositeContainer::iterator future_focus_iter;
-    while ((future_focus_iter = this->impl->get_previous(iter, loop)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+    while ((future_focus_iter = this->impl->get_previous(iter)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
         Widget * future_focus_w = this->impl->get(future_focus_iter);
         if ((future_focus_w->tab_flag != Widget::IGNORE_TAB) && (future_focus_w->focus_flag != Widget::IGNORE_FOCUS)) {
             return future_focus_w;
@@ -270,7 +264,7 @@ void WidgetParent::remove_widget(Widget * w)
         if ((future_focus_w = this->get_next_focus(w)) != nullptr) {
             this->current_focus = future_focus_w;
         }
-        else if ((future_focus_w = this->get_previous_focus(w, false)) != nullptr) {
+        else if ((future_focus_w = this->get_previous_focus(w)) != nullptr) {
             this->current_focus = future_focus_w;
         }
         else {
@@ -418,7 +412,7 @@ bool WidgetParent::previous_focus()
             return true;
         }
 
-        Widget * future_focus_w = this->get_previous_focus(this->current_focus, false);
+        Widget * future_focus_w = this->get_previous_focus(this->current_focus);
 
         if (future_focus_w) {
             this->set_widget_focus(future_focus_w, focus_reason_backtabkey);
@@ -427,7 +421,7 @@ bool WidgetParent::previous_focus()
         }
 
         this->current_focus->blur();
-        this->current_focus = this->get_previous_focus(nullptr, false);
+        this->current_focus = this->get_previous_focus(nullptr);
         assert(this->current_focus);
     }
 

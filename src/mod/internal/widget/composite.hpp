@@ -46,7 +46,7 @@ public:
     virtual iterator get_first() = 0;
     virtual iterator get_last() = 0;
 
-    virtual iterator get_previous(iterator iter, bool loop = false) = 0;
+    virtual iterator get_previous(iterator iter) = 0;
     virtual iterator get_next(iterator iter) = 0;
 
     virtual iterator find(const Widget * w) = 0;
@@ -75,7 +75,7 @@ public:
     iterator get_first() override;
     iterator get_last() override;
 
-    iterator get_previous(iterator iter, bool loop = false) override;
+    iterator get_previous(iterator iter) override;
     iterator get_next(iterator iter) override;
 
     iterator find(const Widget * w) override;
@@ -110,7 +110,7 @@ public:
     void blur() override;
 
     Widget * get_next_focus(Widget * w);
-    Widget * get_previous_focus(Widget * w, bool loop);
+    Widget * get_previous_focus(Widget * w);
 
     virtual void add_widget(Widget * w);
     virtual void remove_widget(Widget * w);
