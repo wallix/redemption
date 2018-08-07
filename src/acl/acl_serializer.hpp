@@ -396,6 +396,74 @@ public:
         }
     }
 
+    void log6(const std::string & info, const ArcsightLogInfo & asl_info) override
+    {
+        this->log_file.write_line(std::time(nullptr), info);
+
+        /* Log to SIEM (redirected syslog) */
+        if (this->ini.get<cfg::session_log::enable_session_log>()) {
+            auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+                ? this->ini.get<cfg::context::target_host>()
+                : this->ini.get<cfg::context::ip_target>());
+
+            auto session_info = key_qvalue_pairs({
+                {"session_id", this->ini.get<cfg::context::session_id>()},
+                {"client_ip",  this->ini.get<cfg::globals::host>()},
+                {"target_ip",  target_ip},
+                {"user",       this->ini.get<cfg::globals::auth_user>()},
+                {"device",     this->ini.get<cfg::globals::target_device>()},
+                {"service",    this->ini.get<cfg::context::target_service>()},
+                {"account",    this->ini.get<cfg::globals::target_user>()},
+            });
+
+            LOG_SIEM(
+                LOG_INFO
+              , "[%s Session] %s %s"
+              , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
+              , session_info.c_str()
+              , info.c_str());
+
+            if (bool(this->verbose & Verbose::log_arcsight)) {
+                timeval now = tvtime();
+                time_t time_now = now.tv_sec;
+
+                std::string suser = this->ini.get<cfg::globals::auth_user>();
+                std::string duser = this->ini.get<cfg::globals::target_user>();
+                std::string session_id = this->ini.get<cfg::context::session_id>();
+                std::string host = this->ini.get<cfg::globals::host>();
+                std::string device = this->ini.get<cfg::globals::target_device>();
+
+                std::string extension;
+                if (asl_info.ApplicationProtocol.size() != 0) {
+                    extension += " app="+this->arcsight_text_formating(asl_info.ApplicationProtocol);
+                }
+                if (asl_info.WallixBastionStatus.size() != 0) {
+                    extension += " WallixBastionStatus="+this->arcsight_text_formating(asl_info.WallixBastionStatus);
+                }
+                if (asl_info.message.size() != 0) {
+                    extension += " msg=\""+this->arcsight_text_formating(asl_info.message)+"\"";
+                }
+                if (asl_info.oldFilePath.size() != 0) {
+                    extension += " oldFilePath="+this->arcsight_text_formating(asl_info.oldFilePath);
+                }
+                if (asl_info.filePath.size() != 0) {
+                    extension += " filePath="+this->arcsight_text_formating(asl_info.filePath);
+                }
+                if (asl_info.fileSize.size() != 0) {
+                    extension += " fsize="+this->arcsight_text_formating(asl_info.fileSize);
+                }
+
+                std::string current_date(ctime(&time_now));
+                std::string mmm_dd(current_date.substr(4, 6));
+                std::string hhmmss(current_date.substr(11, 8));
+                std::string yyyy(current_date.substr(20, 4));
+                std::string formted_date(mmm_dd+" "+yyyy+" "+hhmmss);
+
+                LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|suser=%s duser=%s WallixBastionSession_id=%s WallixBastionSessionType=%s src=%s dst=%s %s", formted_date.c_str(), "1", "Wallix", "Bastion", VERSION, asl_info.signatureID, asl_info.name.c_str(), asl_info.severity, suser.c_str(), duser.c_str(), session_id.c_str(), (this->session_type.empty() ? "Neutral" : this->session_type.c_str()), host.c_str(), target_ip.c_str(), /*device.c_str(),*/ extension.c_str());
+            }
+        }
+    }
+
     void start_session_log()
     {
         auto& log_path = this->ini.get<cfg::session_log::log_path>();
