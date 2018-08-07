@@ -312,7 +312,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     const std::string red_version(VERSION);
 
     GeneratorTransport trans(s.data(), s.size());
-    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x80));
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, AclSerializer::Verbose::log_arcsight);
 
     const size_t date_length(21);
 
@@ -326,6 +326,8 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
         acl.log5("type=\"SESSION_CREATION_FAILED\"");
         std::string expected5("[Neutral Session] session_id=\"\" client_ip=\"10.10.13.12\" target_ip=\"\" user=\"admin\" device=\"\" service=\"\" account=\"user1\" type=\"SESSION_CREATION_FAILED\"\n");
         //RED_CHECK_EQ(logbuf.buf().length(), expected5.length());
+
+        //LOG(LOG_INFO, "logbuf.buf=%s", logbuf.buf());
         RED_CHECK_EQ(logbuf.buf(), expected5);
         logbuf.clear();
 

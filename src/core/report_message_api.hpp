@@ -67,6 +67,13 @@ struct NullReportMessage : ReportMessageApi
         (void)info;
     }
 
+    void log6(const std::string & info, const ArcsightLogInfo & asl_info) override
+    {
+        (void)info;
+        (void)asl_info;
+    }
+
+
     void update_inactivity_timeout() override { }
 
     time_t get_inactivity_timeout() override {
