@@ -286,6 +286,7 @@ public:
         variable = 0x2,
         buffer   = 0x40,
         state    = 0x10,
+        log_arcsight  = 0x20, 
     };
 
 public:
@@ -462,6 +463,24 @@ public:
                 LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|suser=%s duser=%s WallixBastionSession_id=%s WallixBastionSessionType=%s src=%s dst=%s %s", formted_date.c_str(), "1", "Wallix", "Bastion", VERSION, asl_info.signatureID, asl_info.name.c_str(), asl_info.severity, suser.c_str(), duser.c_str(), session_id.c_str(), (this->session_type.empty() ? "Neutral" : this->session_type.c_str()), host.c_str(), target_ip.c_str(), /*device.c_str(),*/ extension.c_str());
             }
         }
+    }
+
+    std::string arcsight_text_formating(const std::string & text) {
+        std::string temp(text);
+        size_t i = 0;
+        while (i < temp.length()) {
+            if (temp[i] == '\\' || temp[i] == '=' || temp[i] == '|') {
+                temp = temp.substr(0, i) + "\\" + temp.substr(i, temp.length());
+                i++;
+            }
+            if (temp[i] == ' ') {
+                temp = temp.substr(0, i) + "<space>" + temp.substr(i+1, temp.length());
+                i += 7;
+            }
+            i++;
+        }
+
+        return temp;
     }
 
     void start_session_log()
