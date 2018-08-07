@@ -55,7 +55,7 @@
 //       |                                                             |
 //       +--------------Client Clipboard Capabilities PDU------------> |
 //       |                                                             |
-//       +------------------Temporary Directroy PDU------------------> | (optional)
+//       +------------------Temporary Directory PDU------------------> | (optional)
 //       |                                                             |
 //       +---------------------Format List PDU-----------------------> |
 //       |                                                             |

@@ -413,38 +413,33 @@ public:
 
                 case RDPECLIP::CB_FORMAT_LIST:
                 {
-//                     if (this->cliprdr_init_format_list_done) {
-                        RDPECLIP::FormatListPDU_LongName fl_ln;
-                        fl_ln.recv(chunk);;
+                    RDPECLIP::FormatListPDU_LongName fl_ln;
+                    fl_ln.recv(chunk);;
 
-                        switch (fl_ln.formatID) {
+                    switch (fl_ln.formatID) {
 
-                            case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                            case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                            case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                            case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
-                            case RDPECLIP::CF_LOCALE:
-                                this->add_to_current_data(nb_copy_text_from_server, 1);
-                                break;
-                            case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
-                            case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->add_to_current_data(nb_copy_image_from_server, 1);
-                                break;
-                            default:
-                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
-                                std::string file_desciptor_name(RDPECLIP::FILEGROUPDESCRIPTORW);
-                                std::string file_contents_name(RDPECLIP::FILECONTENTS);
-                                if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
-                                    this->file_contents_format_ID = fl_ln.formatID;
-                                    this->add_to_current_data(nb_copy_file_from_server, 1);
-                                }
-                                break;
-                        }
+                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
+                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
+                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_LOCALE:
+                            this->add_to_current_data(nb_copy_text_from_server, 1);
+                            break;
+                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_DSPMETAFILEPICT:
+                            this->add_to_current_data(nb_copy_image_from_server, 1);
+                            break;
+                        default:
+                            std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
+                            std::string file_desciptor_name(RDPECLIP::FILEGROUPDESCRIPTORW);
+                            std::string file_contents_name(RDPECLIP::FILECONTENTS);
+                            if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
+                                this->file_contents_format_ID = fl_ln.formatID;
+                                this->add_to_current_data(nb_copy_file_from_server, 1);
+                            }
+                            break;
+                    }
                 }
-
-//                     } else {
-//                         this->cliprdr_init_format_list_done = true;
-//                     }
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
@@ -494,7 +489,7 @@ public:
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
-                    chunk.in_skip_bytes(8);
+                    chunk.in_skip_bytes(8); // streamId(4 bytes) + lindex(4 bytes)
                     uint32_t flag_filecontents = chunk.in_uint32_le();
                     if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
                         uint64_t nPositionLow = chunk.in_uint32_le();
@@ -551,9 +546,7 @@ public:
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 {
-//                   ::hexdump(chunk.get_data(), chunk.get_offset());
                     this->last_formatID = chunk.in_uint32_le();
-//                     LOG(LOG_INFO, "this->last_formatID=%u this->file_contents_format_ID=%u", this->last_formatID, this->file_contents_format_ID);
 
                     switch (this->last_formatID) {
                         case RDPECLIP::CF_TEXT:        [[fallthrough]];
@@ -598,7 +591,7 @@ public:
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
-                    chunk.in_skip_bytes(8);
+                    chunk.in_skip_bytes(8);    // streamId(4 bytes) + lindex(4 bytes)
                     uint32_t flag_filecontents = chunk.in_uint32_le();
                     if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
                         uint64_t size = chunk.in_uint64_le();
