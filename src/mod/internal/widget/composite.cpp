@@ -36,12 +36,12 @@ void fill_region(gdi::GraphicApi & drawable, const SubRegion & region, BGRColor 
 
 CompositeArray::CompositeArray() = default;
 
-CompositeArray::iterator CompositeArray::add(Widget * w)
+int CompositeArray::add(Widget * w)
 {
     assert(w);
     assert(this->children_count < MAX_CHILDREN_COUNT);
     this->child_table[this->children_count] = w;
-    return static_cast<iterator>(&this->child_table[this->children_count++]);
+    return this->children_count++;
 }
 
 void CompositeArray::remove(const Widget * w)
@@ -58,56 +58,56 @@ void CompositeArray::remove(const Widget * w)
     }
 }
 
-Widget * CompositeArray::get(iterator iter) const
+Widget * CompositeArray::get(int index) const
 {
-    return *(static_cast<Widget **>(iter));
+    return this->child_table[index];
 }
 
-CompositeArray::iterator CompositeArray::get_first()
-{
-    if (!this->children_count) {
-        return reinterpret_cast<iterator>(invalid_iterator);
-    }
-
-    return static_cast<iterator>(&this->child_table[0]);
-}
-
-CompositeArray::iterator CompositeArray::get_last()
+int CompositeArray::get_first()
 {
     if (!this->children_count) {
-        return reinterpret_cast<iterator>(invalid_iterator);
+        return -1;
     }
 
-    return static_cast<iterator>(&this->child_table[this->children_count - 1]);
+    return 0;
 }
 
-CompositeArray::iterator CompositeArray::get_previous(iterator iter)
+int CompositeArray::get_last()
 {
-    if (iter == this->get_first()) {
-        return reinterpret_cast<iterator>(invalid_iterator);
+    if (!this->children_count) {
+        return -1;
     }
 
-    return (static_cast<Widget **>(iter)) - 1;
+    return this->children_count - 1;
 }
 
-CompositeArray::iterator CompositeArray::get_next(iterator iter)
+int CompositeArray::get_previous(int index)
 {
-    if (iter == this->get_last()) {
-        return reinterpret_cast<iterator>(invalid_iterator);
+    if (index == this->get_first()) {
+        return -1;
     }
 
-    return (static_cast<Widget **>(iter)) + 1;
+    return index - 1;
 }
 
-CompositeArray::iterator CompositeArray::find(const Widget * w)
+int CompositeArray::get_next(int index)
+{
+    if (index == this->get_last()) {
+        return -1;
+    }
+
+    return index + 1;
+}
+
+int CompositeArray::find(const Widget * w)
 {
     for (size_t i = 0; i < this->children_count; i++) {
         if (this->child_table[i] == w) {
-            return static_cast<iterator>(&this->child_table[i]);
+            return i;
         }
     }
 
-    return reinterpret_cast<iterator>(invalid_iterator);
+    return -1;
 }
 
 void CompositeArray::clear()
@@ -177,25 +177,25 @@ void WidgetParent::blur()
 
 Widget * WidgetParent::get_next_focus(Widget * w)
 {
-    CompositeContainer::iterator iter;
+    int index;
     if (!w) {
-        if ((iter = this->impl->get_first()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+        if ((index = this->impl->get_first()) == -1) {
             return nullptr;
         }
 
-        w = this->impl->get(iter);
+        w = this->impl->get(index);
         if ((w->tab_flag != Widget::IGNORE_TAB) && (w->focus_flag != Widget::IGNORE_FOCUS)) {
             return w;
         }
     }
     else {
-        iter = this->impl->find(w);
-        assert(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        index = this->impl->find(w);
+        assert(index != -1);
     }
 
-    CompositeContainer::iterator future_focus_iter;
-    while ((future_focus_iter = this->impl->get_next(iter)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * future_focus_w = this->impl->get(future_focus_iter);
+    int future_focus_index;
+    while ((future_focus_index = this->impl->get_next(index)) != -1) {
+        Widget * future_focus_w = this->impl->get(future_focus_index);
         if ((future_focus_w->tab_flag != Widget::IGNORE_TAB) && (future_focus_w->focus_flag != Widget::IGNORE_FOCUS)) {
             return future_focus_w;
         }
@@ -204,7 +204,7 @@ Widget * WidgetParent::get_next_focus(Widget * w)
             break;
         }
 
-        iter = future_focus_iter;
+        index = future_focus_index;
     }
 
     return nullptr;
@@ -212,25 +212,25 @@ Widget * WidgetParent::get_next_focus(Widget * w)
 
 Widget * WidgetParent::get_previous_focus(Widget * w)
 {
-    CompositeContainer::iterator iter;
+    int index;
     if (!w) {
-        if ((iter = this->impl->get_last()) == reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
+        if ((index = this->impl->get_last()) == -1) {
             return nullptr;
         }
 
-        w = this->impl->get(iter);
+        w = this->impl->get(index);
         if ((w->tab_flag != Widget::IGNORE_TAB) && (w->focus_flag != Widget::IGNORE_FOCUS)) {
             return w;
         }
     }
     else {
-        iter = this->impl->find(w);
-        assert(iter != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator));
+        index = this->impl->find(w);
+        assert(index != -1);
     }
 
-    CompositeContainer::iterator future_focus_iter;
-    while ((future_focus_iter = this->impl->get_previous(iter)) != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * future_focus_w = this->impl->get(future_focus_iter);
+    int future_focus_index;
+    while ((future_focus_index = this->impl->get_previous(index)) != -1) {
+        Widget * future_focus_w = this->impl->get(future_focus_index);
         if ((future_focus_w->tab_flag != Widget::IGNORE_TAB) && (future_focus_w->focus_flag != Widget::IGNORE_FOCUS)) {
             return future_focus_w;
         }
@@ -239,7 +239,7 @@ Widget * WidgetParent::get_previous_focus(Widget * w)
             break;
         }
 
-        iter = future_focus_iter;
+        index = future_focus_index;
     }
 
     return nullptr;
@@ -282,9 +282,9 @@ void WidgetParent::clear()
 
 void WidgetParent::invalidate_children(Rect clip)
 {
-    CompositeContainer::iterator iter_w_current = this->impl->get_first();
-    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * w = this->impl->get(iter_w_current);
+    int index_w_current = this->impl->get_first();
+    while (index_w_current != -1) {
+        Widget * w = this->impl->get(index_w_current);
         assert(w);
 
         Rect newr = clip.intersect(w->get_rect());
@@ -293,15 +293,15 @@ void WidgetParent::invalidate_children(Rect clip)
             w->rdp_input_invalidate(newr);
         }
 
-        iter_w_current = this->impl->get_next(iter_w_current);
+        index_w_current = this->impl->get_next(index_w_current);
     }
 }
 
 void WidgetParent::refresh_children(Rect clip)
 {
-    CompositeContainer::iterator iter_w_current = this->impl->get_first();
-    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * w = this->impl->get(iter_w_current);
+    int index_w_current = this->impl->get_first();
+    while (index_w_current != -1) {
+        Widget * w = this->impl->get(index_w_current);
         assert(w);
 
         Rect newr = clip.intersect(w->get_rect());
@@ -310,7 +310,7 @@ void WidgetParent::refresh_children(Rect clip)
             w->refresh(newr);
         }
 
-        iter_w_current = this->impl->get_next(iter_w_current);
+        index_w_current = this->impl->get_next(index_w_current);
     }
 }
 
@@ -319,9 +319,9 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
     SubRegion region;
     region.add_rect(clip.intersect(this->get_rect()));
 
-    CompositeContainer::iterator iter_w_current = this->impl->get_first();
-    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * w = this->impl->get(iter_w_current);
+    int index_w_current = this->impl->get_first();
+    while (index_w_current != -1) {
+        Widget * w = this->impl->get(index_w_current);
         assert(w);
 
         Rect rect_widget = clip.intersect(w->get_rect());
@@ -329,7 +329,7 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
             region.subtract_rect(rect_widget);
         }
 
-        iter_w_current = this->impl->get_next(iter_w_current);
+        index_w_current = this->impl->get_next(index_w_current);
     }
 
     ::fill_region(this->drawable, region, bg_color);
@@ -338,9 +338,9 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
 //void hide_child(Rect clip, BGRColor bg_color) {
 //    SubRegion region;
 //
-//    CompositeContainer::iterator iter_w_current = this->impl->get_first();
-//    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-//        Widget * w = this->impl->get(iter_w_current);
+//    int index_w_current = this->impl->get_first();
+//    while (index_w_current != -1) {
+//        Widget * w = this->impl->get(index_w_current);
 //        assert(w);
 //
 //        Rect rect_widget = clip.intersect(w->rect);
@@ -348,7 +348,7 @@ void WidgetParent::draw_inner_free(Rect clip, BGRColor bg_color)
 //            region.add_rect(rect_widget);
 //        }
 //
-//        iter_w_current = this->impl->get_next(iter_w_current);
+//        index_w_current = this->impl->get_next(index_w_current);
 //    }
 //
 //    if (!region.rects.empty()) {
@@ -365,18 +365,18 @@ void WidgetParent::move_xy(int16_t x, int16_t y)
 
 void WidgetParent::move_children_xy(int16_t x, int16_t y)
 {
-    CompositeContainer::iterator iter_w_first = this->impl->get_first();
-    if (iter_w_first != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        CompositeContainer::iterator iter_w_current = iter_w_first;
+    int index_w_first = this->impl->get_first();
+    if (index_w_first != -1) {
+        int index_w_current = index_w_first;
         do {
-            Widget * w = this->impl->get(iter_w_current);
+            Widget * w = this->impl->get(index_w_current);
             assert(w);
             w->move_xy(x, y);
 
-            iter_w_current = this->impl->get_next(iter_w_current);
+            index_w_current = this->impl->get_next(index_w_current);
         }
-        while ((iter_w_current != iter_w_first) &&
-                (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)));
+        while ((index_w_current != index_w_first) &&
+                (index_w_current != -1));
     }
 }
 
@@ -437,15 +437,15 @@ Widget * WidgetParent::widget_at_pos(int16_t x, int16_t y)
         }
     }
     // Foreground widget is the last in the list.
-    CompositeContainer::iterator iter_w_current = this->impl->get_last();
-    while (iter_w_current != reinterpret_cast<CompositeContainer::iterator>(CompositeContainer::invalid_iterator)) {
-        Widget * w = this->impl->get(iter_w_current);
+    int index_w_current = this->impl->get_last();
+    while (index_w_current != -1) {
+        Widget * w = this->impl->get(index_w_current);
         assert(w);
         if (w->get_rect().contains_pt(x, y)) {
             return w;
         }
 
-        iter_w_current = this->impl->get_previous(iter_w_current);
+        index_w_current = this->impl->get_previous(index_w_current);
     }
 
     return nullptr;

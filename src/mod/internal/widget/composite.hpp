@@ -34,22 +34,19 @@ class CompositeContainer
 public:
     virtual ~CompositeContainer() = default;
 
-    enum { invalid_iterator = 0 };
 
-    using iterator = void *;
-
-    virtual iterator add(Widget * w) = 0;
+    virtual int add(Widget * w) = 0;
     virtual void remove(const Widget * w) = 0;
 
-    virtual Widget * get(iterator iter) const = 0;
+    virtual Widget * get(int index) const = 0;
 
-    virtual iterator get_first() = 0;
-    virtual iterator get_last() = 0;
+    virtual int get_first() = 0;
+    virtual int get_last() = 0;
 
-    virtual iterator get_previous(iterator iter) = 0;
-    virtual iterator get_next(iterator iter) = 0;
+    virtual int get_previous(int index) = 0;
+    virtual int get_next(int index) = 0;
 
-    virtual iterator find(const Widget * w) = 0;
+    virtual int find(const Widget * w) = 0;
 
     virtual void clear() = 0;
 };
@@ -67,18 +64,18 @@ class CompositeArray : public CompositeContainer
 public:
     CompositeArray();
 
-    iterator add(Widget * w) override;
+    int add(Widget * w) override;
     void remove(const Widget * w) override;
 
-    Widget * get(iterator iter) const override;
+    Widget * get(int index) const override;
 
-    iterator get_first() override;
-    iterator get_last() override;
+    int get_first() override;
+    int get_last() override;
 
-    iterator get_previous(iterator iter) override;
-    iterator get_next(iterator iter) override;
+    int get_previous(int index) override;
+    int get_next(int index) override;
 
-    iterator find(const Widget * w) override;
+    int find(const Widget * w) override;
 
     void clear()  override;
 };  // class CompositeArray
