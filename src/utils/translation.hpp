@@ -50,8 +50,8 @@ namespace trkeys
     TR_KV(refused, "Refused", "Refuser");
     TR_KV(username, "Username", "Nom d'utilisateur");
     TR_KV(password_expire,
-        "Your password will expire soon. Please change it.",
-        "Votre mot de passe va bientôt expirer. Veuillez le changer.");
+        "Your Bastion password will expire soon. Please change it.",
+        "Votre mot de passe Bastion va bientôt expirer. Veuillez le changer.");
     TR_KV(protocol, "Protocol", "Protocole");
     TR_KV(target_group, "Target Group", "Groupe");
     TR_KV(authorization, "Authorization", "Autorisation");
