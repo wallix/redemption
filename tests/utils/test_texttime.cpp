@@ -18,8 +18,6 @@
 *   Author(s): Clément Moroldo, Christophe Grosjean
 */
 
-#include "utils/log.hpp"
-
 #define RED_TEST_MODULE TestTexttime
 #include "system/redemption_unit_tests.hpp"
 
