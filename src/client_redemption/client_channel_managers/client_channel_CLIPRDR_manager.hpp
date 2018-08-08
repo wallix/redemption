@@ -439,10 +439,10 @@ public:
                                     }
                                 }
 
-                                std::string filedescunicode(RDPECLIP::FILEGROUPDESCRIPTORW);
-                                LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode, formatID, format_name);
+                                auto const filedescunicode = RDPECLIP::FILEGROUPDESCRIPTORW;
+                                LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode.data(), formatID, format_name);
 
-                                if ((format_name == filedescunicode) && !isSharedFormat) {
+                                if ((format_name == filedescunicode.data()) && !isSharedFormat) {
                                     this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                                     isSharedFormat = true;
                                 }
@@ -508,7 +508,7 @@ public:
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    if(this->_requestedFormatName == std::string(RDPECLIP::FILEGROUPDESCRIPTORW)) {
+                    if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                         this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                     }
 
@@ -878,7 +878,7 @@ public:
                 if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
                     this->send_imageBuffer_to_clipboard();
 
-                    std::chrono::microseconds time  = difftimeval(tvtime(), this->paste_data_request_time);
+                    std::chrono::microseconds time = difftimeval(tvtime(), this->paste_data_request_time);
                     long duration = time.count();
                     LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
 

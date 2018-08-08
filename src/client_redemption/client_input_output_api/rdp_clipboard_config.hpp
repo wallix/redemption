@@ -51,8 +51,8 @@ struct RDPClipboardConfig {
 
 
     struct ClipboardFormat {
-        const uint32_t ID;
-        const std::string name;
+        uint32_t ID;
+        std::string name;
 
         ClipboardFormat(const uint32_t ID, std::string name)
           : ID(ID)

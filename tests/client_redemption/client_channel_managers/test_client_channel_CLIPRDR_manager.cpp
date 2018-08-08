@@ -39,10 +39,10 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.arbitrary_scale = 40;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
-    conf.add_format(RDPECLIP::CF_TEXT, std::string(""));
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+    conf.add_format(RDPECLIP::CF_TEXT, {});
+    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
     ClientChannelCLIPRDRManager manager(/*to_verbose_flags(0x0)*/RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump, &client, &clip_io, conf);
 
 
@@ -124,10 +124,10 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    FakeClientIOClipboard clip_io;
    RDPClipboardConfig conf;
    conf.arbitrary_scale = 40;
-   conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
-   conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
-   conf.add_format(RDPECLIP::CF_TEXT, std::string(""));
-   conf.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+   conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+   conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+   conf.add_format(RDPECLIP::CF_TEXT, {});
+   conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io, conf);
 
    StaticOutStream<512> out_FormatListPDU;
@@ -203,10 +203,10 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromClientToServer)
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.arbitrary_scale = 40;
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
-    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
-    conf.add_format(RDPECLIP::CF_TEXT, std::string(""));
-    conf.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+    conf.add_format(RDPECLIP::CF_TEXT, {});
+    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io, conf);
 
     clip_io._bufferTypeID = RDPECLIP::CF_TEXT;

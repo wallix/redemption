@@ -373,6 +373,7 @@ public:
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
+            // TODO code duplicated
             switch (header.msgType()) {
 
                 case RDPECLIP::CB_FORMAT_LIST:
@@ -382,21 +383,22 @@ public:
 
                     switch (fl_ln.formatID) {
 
-                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
+                        case RDPECLIP::CF_DSPTEXT:
                         case RDPECLIP::CF_LOCALE:
                             this->add_to_current_data(nb_copy_text_from_server, 1);
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->add_to_current_data(nb_copy_image_from_server, 1);
                             break;
                         default:
-                            std::string_view format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
-                            if (format_name_string == RDPECLIP::FILECONTENTS
-                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
+                            // TODO string_view
+                            std::string format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
+                            if (format_name_string == RDPECLIP::FILECONTENTS.data()
+                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW.data()
                             ) {
                                 this->file_contents_format_ID = fl_ln.formatID;
                                 this->add_to_current_data(nb_copy_file_from_server, 1);
@@ -411,14 +413,14 @@ public:
                     this->last_formatID = chunk.in_uint32_le();
 
                     switch (this->last_formatID) {
-                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
+                        case RDPECLIP::CF_DSPTEXT:
                         case RDPECLIP::CF_LOCALE:
                             this->add_to_current_data(nb_paste_text_on_server, 1);
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->add_to_current_data(nb_paste_image_on_server, 1);
                             break;
@@ -434,14 +436,14 @@ public:
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
                 {
                     switch (this->last_formatID) {
-                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
+                        case RDPECLIP::CF_DSPTEXT:
                         case RDPECLIP::CF_LOCALE:
                             this->add_to_current_data(total_data_paste_on_client, header.dataLen());
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->add_to_current_data(total_data_paste_on_client, header.dataLen());
                             break;
@@ -472,6 +474,7 @@ public:
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
+            // TODO code duplicated
             switch (header.msgType()) {
 
                 case RDPECLIP::CB_FORMAT_LIST:
@@ -481,21 +484,22 @@ public:
 
                         switch (fl_ln.formatID) {
 
-                            case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                            case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                            case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                            case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                            case RDPECLIP::CF_TEXT:
+                            case RDPECLIP::CF_OEMTEXT:
+                            case RDPECLIP::CF_UNICODETEXT:
+                            case RDPECLIP::CF_DSPTEXT:
                             case RDPECLIP::CF_LOCALE:
                                 this->add_to_current_data(nb_copy_text_from_client, 1);
                                 break;
-                            case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                            case RDPECLIP::CF_METAFILEPICT:
                             case RDPECLIP::CF_DSPMETAFILEPICT:
                                 this->add_to_current_data(nb_copy_image_from_client, 1);
                                 break;
                             default:
-                                std::string_view format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
-                                if (format_name_string == RDPECLIP::FILECONTENTS
-                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
+                                // TODO string_view
+                                std::string format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
+                                if (format_name_string == RDPECLIP::FILECONTENTS.data()
+                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW.data()
                                 ) {
                                     this->file_contents_format_ID = fl_ln.formatID;
                                     this->add_to_current_data(nb_copy_file_from_client, 1);
@@ -513,14 +517,14 @@ public:
                     this->last_formatID = chunk.in_uint32_le();
 
                     switch (this->last_formatID) {
-                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
+                        case RDPECLIP::CF_DSPTEXT:
                         case RDPECLIP::CF_LOCALE:
                             this->add_to_current_data(nb_paste_text_on_client, 1);
                             break;
-                        case RDPECLIP::CF_METAFILEPICT: [[fallthrough]];
+                        case RDPECLIP::CF_METAFILEPICT:
                         case RDPECLIP::CF_DSPMETAFILEPICT:
                             this->add_to_current_data(nb_paste_image_on_client, 1);
                             break;
@@ -536,10 +540,10 @@ public:
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
                 {
                     switch (this->last_formatID) {
-                        case RDPECLIP::CF_TEXT:        [[fallthrough]];
-                        case RDPECLIP::CF_OEMTEXT:     [[fallthrough]];
-                        case RDPECLIP::CF_UNICODETEXT: [[fallthrough]];
-                        case RDPECLIP::CF_DSPTEXT:     [[fallthrough]];
+                        case RDPECLIP::CF_TEXT:
+                        case RDPECLIP::CF_OEMTEXT:
+                        case RDPECLIP::CF_UNICODETEXT:
+                        case RDPECLIP::CF_DSPTEXT:
                         case RDPECLIP::CF_LOCALE:
                             this->add_to_current_data(total_data_paste_on_server, header.dataLen());
                             break;

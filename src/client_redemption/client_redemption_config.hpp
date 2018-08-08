@@ -101,10 +101,10 @@ public:
         this->rDPClipboardConfig.server_use_long_format_names = true;
         this->rDPClipboardConfig.cCapabilitiesSets = 1;
         this->rDPClipboardConfig.generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
-        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, std::string(RDPECLIP::FILEGROUPDESCRIPTORW));
-        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, std::string(RDPECLIP::FILECONTENTS));
-        this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, std::string(""));
-        this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, std::string(""));
+        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+        this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+        this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, {});
+        this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, {});
 
 
         // Set RDP RDPDR config
