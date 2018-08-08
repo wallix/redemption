@@ -919,9 +919,9 @@ class Sesman():
             notify, days = self.engine.password_expiration_date()
             if notify:
                 if days == 0:
-                    message = TR(u'Your password will expire soon. Please change it.')
+                    message = TR(u'Your Bastion password will expire soon. Please change it.')
                 else:
-                    message = TR(u'Your password will expire in %s days. Please change it.') % days
+                    message = TR(u'Your Bastion password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             if DEBUG:

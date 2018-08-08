@@ -108,8 +108,8 @@ class SesmanConfig(object):
             , u'not_accept_message': u"Message de confirmation refusé."
             , u'selected_target': u'Cible sélectionnée'
             , u'Username_parse_error %s': u"Erreur de parsing du nom d'utilisateur %s"
-            , u'Your password will expire in %s days. Please change it.': u'Votre mot de passe expirera dans %s jours. Vous devriez le changer.'
-            , u'Your password will expire soon. Please change it.': u"L'expiration de votre mot de passe est imminente. Saisissez un nouveau mot de passe."
+            , u'Your Bastion password will expire in %s days. Please change it.': u'Votre mot de passe Bastion expirera dans %s jours. Vous devriez le changer.'
+            , u'Your Bastion password will expire soon. Please change it.': u"L'expiration de votre mot de passe Bastion est imminente. Saisissez un nouveau mot de passe."
             , u'passthrough_auth_failed_wab %s' : u"Echec de l'authentification passthrough pour l'utilisateur %s."
             , u'in_subnet %s'           : u"dans le sous-réseau %s."
             , u'no_match_subnet %s %s'  : u"%s n'appartient pas au sous-réseau %s."
@@ -199,8 +199,8 @@ class SesmanConfig(object):
             , u'not_accept_message': u'Confirmation message refused.'
             , u'selected_target': u'Selected target'
             , u'Username_parse_error %s': u'Username_parse_error %s'
-            , u'Your password will expire in %s days. Please change it.': u'Your password will expire in %s days. Please change it.'
-            , u'Your password will expire soon. Please change it.': u'Your password will expire soon. Please change it.'
+            , u'Your Bastion password will expire in %s days. Please change it.': u'Your Bastion password will expire in %s days. Please change it.'
+            , u'Your Bastion password will expire soon. Please change it.': u'Your Bastion password will expire soon. Please change it.'
             , u'passthrough_auth_failed_wab %s' : u'Passthrough authentication failed for user %s.'
             , u'in_subnet %s'           : u"in %s subnet."
             , u'no_match_subnet %s %s'  : u"%s not in %s subnet."
