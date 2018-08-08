@@ -60,7 +60,7 @@
 //    traffic.
 
 enum {
-    CAPLEN_SURFACE_COMMANDS = 8
+    CAPLEN_SURFACE_COMMANDS = 12
 };
 
 enum {
@@ -82,6 +82,7 @@ struct SurfaceCommandsCaps : public Capability {
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
+
         stream.out_uint32_le(this->cmdFlags);
         stream.out_uint32_le(this->reserved);
     }

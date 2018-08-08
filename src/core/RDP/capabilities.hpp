@@ -27,7 +27,7 @@
 
 #include "core/RDP/capabilities/activate.hpp"
 #include "core/RDP/capabilities/cap_bitmap.hpp"
-// include "core/RDP/capabilities/bitmapcodecs.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "core/RDP/capabilities/cap_bmpcache.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
 #include "core/RDP/capabilities/cap_brushcache.hpp"

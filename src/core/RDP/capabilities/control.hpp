@@ -75,6 +75,7 @@ struct ControlCaps : public Capability {
     {
         stream.out_uint16_le(this->capabilityType);
         stream.out_uint16_le(this->len);
+
         stream.out_uint16_le(this->controlFlags);
         stream.out_uint16_le(this->remoteDetachFlag);
         stream.out_uint16_le(this->controlInterest);

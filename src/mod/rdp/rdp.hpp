@@ -4563,7 +4563,7 @@ public:
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
                 {
-                    BitmapCodecCaps caps;
+                    BitmapCodecCaps caps(false);
                     caps.recv(stream, capset_length);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         caps.log("Receiving from server");
