@@ -40,6 +40,7 @@ enum NtlmState {
     NTLM_STATE_NEGOTIATE,
     NTLM_STATE_CHALLENGE,
     NTLM_STATE_AUTHENTICATE,
+    NTLM_STATE_WAIT_PASSWORD,
     NTLM_STATE_FINAL
 };
 //static const uint8_t lm_magic[] = "KGS!@#$%";

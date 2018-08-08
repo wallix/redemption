@@ -46,16 +46,21 @@ namespace {
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 {
+    enum class PasswordCallback
+    {
+        Error,
+        Ok,
+        Wait,
+    };
+
 private:
     Random & rand;
     TimeObj & timeobj;
     std::unique_ptr<CREDENTIALS> credentials;
     std::unique_ptr<NTLMContext> context;
-    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
+    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
 
 public:
-    bool hardcoded_tests = false;
-
     CREDENTIALS const * getCredentialHandle() const
     {
         return this->credentials.get();
@@ -69,7 +74,7 @@ public:
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
+        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
     )
         : rand(rand), timeobj(timeobj), set_password_cb(set_password_cb)
     {}
@@ -263,20 +268,32 @@ public:
                 return SEC_E_INVALID_TOKEN;
             }
 
-            if (this->hardcoded_tests) {
-                this->context->identity.SetPasswordFromUtf8(byte_ptr_cast("Pénélope"));
-            }
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
-                if (!set_password_cb || !set_password_cb(this->context->identity)) {
+                if (!set_password_cb) {
                     return SEC_E_LOGON_DENIED;
                 }
-                status = this->context->check_authenticate();
+                switch (set_password_cb(this->context->identity)) {
+                    case PasswordCallback::Error:
+                        return SEC_E_LOGON_DENIED;
+                    case PasswordCallback::Ok:
+                        this->context->state = NTLM_STATE_WAIT_PASSWORD;
+                        break;
+                    case PasswordCallback::Wait:
+                        this->context->state = NTLM_STATE_WAIT_PASSWORD;
+                        return SEC_I_LOCAL_LOGON;
+                }
+            }
+        }
+
+        if (this->context->state == NTLM_STATE_WAIT_PASSWORD) {
+            SEC_STATUS status = this->context->check_authenticate();
+            if (status != SEC_I_CONTINUE_NEEDED && status != SEC_I_COMPLETE_NEEDED) {
+                return status;
             }
 
-            size_t i;
-            for (i = 0; i < output.cBuffers; i++) {
+            for (size_t i = 0; i < output.cBuffers; i++) {
                 output.pBuffers[i].Buffer.init(0);
                 output.pBuffers[i].BufferType = SECBUFFER_TOKEN;
             }

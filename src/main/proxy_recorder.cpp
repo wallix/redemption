@@ -259,9 +259,10 @@ public:
 
                 this->state = FORWARD;
 
-                if (frontBuffer.next_pdu() || frontBuffer.remaining()) {
-                    LOG(LOG_ERR, "frontBuffer isn't empty");
-                    throw Error(ERR_RDP_INTERNAL);
+                frontBuffer.consume_current_packet();
+                if (frontBuffer.remaining()) {
+                    outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
+                    backConn.send(frontBuffer.remaining_data());
                 }
             }
             break;
@@ -388,6 +389,31 @@ public:
     }
 
 private:
+    static std::pair<std::string, std::string>
+    extract_user_domain(char const* target_user)
+    {
+        std::pair<std::string, std::string> ret;
+        auto& [username, domain] = ret;
+
+        char const* separator = strchr(target_user, '\\');
+        if (separator) {
+            username = separator+1;
+            domain.assign(target_user, separator-target_user);
+        }
+        else {
+            separator = strchr(target_user, '@');
+            if (separator) {
+                username.assign(target_user, separator-target_user);
+                domain = separator+1;
+            }
+            else {
+                username = target_user;
+            }
+        }
+
+        return ret;
+    }
+
     struct NegoServer
     {
         FixedRandom rand;
@@ -412,15 +438,17 @@ private:
                         && 0 == memcmp(vec.data(), arr.get_data(), vec.size());
                 };
 
-                if (check(user, identity.User)
-                 && check({}, identity.Domain)
+                auto [username, domain] = extract_user_domain(user.c_str());
+                if (check(username, identity.User)
+                 // domain is empty
+                 && check(domain, identity.Domain)
                 ) {
                     identity.SetPasswordFromUtf8(byte_ptr_cast(password.c_str()));
-                    return true;
+                    return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
                 }
 
                 LOG(LOG_ERR, "Ntlm: bad identity");
-                return false;
+                return Ntlm_SecurityFunctionTable::PasswordCallback::Error;
             })
         {}
     };
@@ -442,23 +470,7 @@ private:
             this->random, this->timeobj, this->extra_message, Translation::EN)
         , trans(trans, outFile, NlaTeeTransport::Type::Client)
         {
-            char const* separator = strchr(target_user, '\\');
-            std::string username;
-            std::string domain;
-            if (separator) {
-                username = separator+1;
-                domain.assign(target_user, separator-target_user);
-            }
-            else {
-                separator = strchr(target_user, '@');
-                if (separator) {
-                    username.assign(target_user, separator-target_user);
-                    domain = separator+1;
-                }
-                else {
-                    username = target_user;
-                }
-            }
+            auto [username, domain] = extract_user_domain(target_user);
             nego.set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");
             // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions";
             // nego.set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);

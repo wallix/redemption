@@ -187,6 +187,11 @@ struct TpduBuffer
         return this->buf.remaining();
     }
 
+    array_view_u8 remaining_data() noexcept
+    {
+        return this->buf.av();
+    }
+
     bool next_pdu()
     {
         return this->extract(this->extractors.x224);

@@ -80,11 +80,9 @@ protected:
 private:
     Transport & trans;
     char const* class_name_log;
-    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
+    std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb;
 
 public:
-    bool hardcoded_tests = false;
-
     rdpCredsspBase(
         uint8_t const* user,
         uint8_t const* domain,
@@ -99,7 +97,7 @@ public:
         Translation::language_t lang,
         Transport & trans,
         char const* class_name_log,
-        std::function<bool(SEC_WINNT_AUTH_IDENTITY&)>&& set_password_cb,
+        std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>&& set_password_cb,
         const bool verbose = false
     )
         : server(false)
@@ -195,11 +193,7 @@ protected:
             case NTLM_Interface:
                 LOG(LOG_INFO, "Credssp: NTLM Authentication");
                 {
-                    auto table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-                    if (this->hardcoded_tests) {
-                        table->hardcoded_tests = true;
-                    }
-                    this->table = std::move(table);
+                    this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
                 }
                 break;
             case Kerberos_Interface:
@@ -808,7 +802,7 @@ public:
                TimeObj & timeobj,
                std::string& extra_message,
                Translation::language_t lang,
-               std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
+               std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
         : rdpCredsspBase(
             nullptr, nullptr, nullptr, nullptr, "", krb,
@@ -912,10 +906,16 @@ private:
         return Res::Ok;
     }
 
+private:
+    SEC_STATUS state_accept_security_context = SEC_I_INCOMPLETE_CREDENTIALS;
+
+public:
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
-        /* receive authentication token */
-        this->ts_request.recv(in_stream);
+        if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
+            /* receive authentication token */
+            this->ts_request.recv(in_stream);
+        }
 
         SecBuffer input_buffer;
         SecBuffer output_buffer;
@@ -953,6 +953,10 @@ private:
         SEC_STATUS status = this->table->AcceptSecurityContext(
             input_buffer_desc, fContextReq,
             output_buffer_desc);
+        this->state_accept_security_context = status;
+        if (status == SEC_I_LOCAL_LOGON) {
+            return Res::Ok;
+        }
 
         this->negoToken.copy(output_buffer.Buffer);
 

@@ -1172,7 +1172,7 @@ public:
         case MODULE_INTERNAL_WIDGET_LOGIN:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
             if (this->ini.is_asked<cfg::globals::target_user>()
-                ||  this->ini.is_asked<cfg::globals::target_device>()){
+             || this->ini.is_asked<cfg::globals::target_device>()){
                 if (this->ini.is_asked<cfg::globals::auth_user>()){
                     accounts.username[0] = 0;
                 }

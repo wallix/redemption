@@ -199,11 +199,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             UTF8toUTF16(domain, vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
             identity.SetPasswordFromUtf8(pass);
-            return true;
+            return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
         }
     );
     credssp.set_credentials(user, domain, pass, host);
-    credssp.hardcoded_tests = true;
     RED_CHECK(credssp.credssp_server_authenticate_init());
 
     rdpCredsspServer::State st = rdpCredsspServer::State::Cont;

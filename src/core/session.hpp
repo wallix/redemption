@@ -173,7 +173,8 @@ public:
                 io_fd_zero(rfds);
                 timeval timeout = time_mark;
 
-                if (mm.get_mod()->is_up_and_running() || !front.up_and_running) {
+                if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)
+                 && !front.wait_ntlm_password) {
                     wait_on_sck(front_trans, rfds, max);
                 }
 
@@ -318,6 +319,18 @@ public:
                 session_reactor.execute_events([&rfds](int fd, auto& /*e*/){
                     return io_fd_isset(fd, rfds);
                 });
+
+                if (front.wait_ntlm_password) {
+                    if (sck_is_set(acl->auth_trans, rfds)) {
+                        // authentifier received updated values
+                        acl->acl_serial.receive();
+                    }
+
+                    if (!ini.changed_field_size()) {
+                        session_reactor.execute_sesman(ini);
+                    }
+                }
+
                 bool const front_is_set = sck_is_set(front_trans, rfds);
                 if (session_reactor.has_front_event() || front_is_set) {
                     try {
@@ -326,6 +339,15 @@ public:
                         }
                         if (front_is_set) {
                             front.incoming(mm.get_callback(), now);
+                            if (front.wait_ntlm_password && !acl) {
+                                // now is authentifier start time
+                                acl = std::make_unique<Acl>(
+                                    ini, this->acl_connect(), now, cctx, rnd, fstat
+                                );
+                                authentifier.set_acl_serial(&acl->acl_serial);
+                                session_reactor.set_next_event(BACK_EVENT_NEXT);
+                                acl->acl_serial.send_acl_data();
+                            }
                         }
                     } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {
@@ -379,30 +401,9 @@ public:
                             if (!mm.last_module) {
                                 // authentifier never opened or closed by me (close box)
                                 try {
-                                    std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
-                                    size_t const pos = authtarget.find(':');
-                                    unique_fd client_sck = (pos == std::string::npos)
-                                        ? local_connect(authtarget.c_str(), 30, 1000)
-                                        : [&](){
-                                            // TODO: add some explicit error checking
-                                            char* end;
-                                            char const* ip = authtarget.c_str() + pos + 1;
-                                            long port = std::strtol(ip, &end, 10);
-                                            if (port > std::numeric_limits<int>::max()) {
-                                                return unique_fd{-1};
-                                            }
-                                            return ip_connect(ip, int(port), 30, 1000);
-                                        }();
-                                    if (!client_sck.is_open()) {
-                                        LOG(LOG_ERR,
-                                            "Failed to connect to authentifier (%s)",
-                                            this->ini.get<cfg::globals::authfile>().c_str());
-                                        throw Error(ERR_SOCKET_CONNECT_FAILED);
-                                    }
-
                                     // now is authentifier start time
                                     acl = std::make_unique<Acl>(
-                                        ini, std::move(client_sck), now, cctx, rnd, fstat
+                                        ini, this->acl_connect(), now, cctx, rnd, fstat
                                     );
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     session_reactor.set_next_event(BACK_EVENT_NEXT);
@@ -618,5 +619,32 @@ private:
             ::fflush(this->perf_file);
         }
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
+    }
+
+    unique_fd acl_connect()
+    {
+        std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
+        size_t const pos = authtarget.find(':');
+        unique_fd client_sck = (pos == std::string::npos)
+            ? local_connect(authtarget.c_str(), 30, 1000)
+            : [&](){
+                // TODO: add some explicit error checking
+                char* end;
+                char const* ip = authtarget.c_str() + pos + 1;
+                long port = std::strtol(ip, &end, 10);
+                if (port > std::numeric_limits<int>::max()) {
+                    return unique_fd{-1};
+                }
+                return ip_connect(ip, int(port), 30, 1000);
+            }();
+
+        if (!client_sck.is_open()) {
+            LOG(LOG_ERR,
+                "Failed to connect to authentifier (%s)",
+                this->ini.get<cfg::globals::authfile>().c_str());
+            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        }
+
+        return client_sck;
     }
 };

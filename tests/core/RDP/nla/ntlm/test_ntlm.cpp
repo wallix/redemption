@@ -26,12 +26,14 @@
 
 #include "test_only/lcg_random.hpp"
 
+using PasswordCallback = Ntlm_SecurityFunctionTable::PasswordCallback;
 
 RED_AUTO_TEST_CASE(TestAcquireCredentials)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
-    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb = [](auto&){ return true; };
+    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb
+      = [](auto&){ return PasswordCallback::Ok; };
 
     Ntlm_SecurityFunctionTable table(rand, timeobj, set_password_cb);
     SEC_STATUS status;
@@ -64,7 +66,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 {
     LCGRandom rand(0);
     LCGTime timeobj;
-    std::function<bool(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb = [](auto&){ return true; };
+    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb
+      = [](auto&){ return PasswordCallback::Ok; };
 
     Ntlm_SecurityFunctionTable server_table(rand, timeobj, set_password_cb);
     Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);

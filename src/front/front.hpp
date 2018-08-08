@@ -62,6 +62,9 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
+#include "core/RDP/nla/nla.hpp"
+#include "core/RDP/nla/ntlm/ntlm.hpp"
+
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
@@ -545,6 +548,7 @@ protected:
 
 public:
     bool up_and_running;
+    bool wait_ntlm_password = false;
 
 private:
     int share_id;
@@ -580,6 +584,7 @@ private:
 
     enum {
         CONNECTION_INITIATION,
+        CONNECTION_INITIATION_NLA,
         BASIC_SETTINGS_EXCHANGE,
         CHANNEL_ATTACH_USER,
         CHANNEL_JOIN_REQUEST,
@@ -594,10 +599,91 @@ private:
     Random & gen;
     Fstat fstat;
 
+    struct CredsspServer
+    {
+        CredsspServer(Front& front)
+        : front(front)
+        , credssp_server(
+            front.trans, false, false, front.gen, this->timeobj, this->extra_message,
+            language(this->front.ini.get<cfg::translation::language>()),
+            [this](SEC_WINNT_AUTH_IDENTITY& identity){
+                // LOG(LOG_DEBUG, "nla");
+                // LOG(LOG_DEBUG, "user=%s", identity.User.get_data());
+                // LOG(LOG_DEBUG, "pass=%s", identity.Password.get_data());
+                // LOG(LOG_DEBUG, "domain=%s", identity.Domain.get_data());
+                // this->front.ini.set_acl<cfg::globals::auth_user>(char_ptr_cast(identity.User.get_data()));
+                // this->front.ini.ask<cfg::context::selector>();
+                // this->front.ini.ask<cfg::globals::target_user>();
+                // this->front.ini.ask<cfg::globals::target_device>();
+                // this->front.ini.ask<cfg::context::target_protocol>();
+
+                this->front.wait_ntlm_password = true;
+                this->identity = &identity;
+
+                this->front.sesman_credssp_server = this->front.session_reactor.create_sesman_event()
+                .on_action(jln::one_shot([this](Inifile& /*ini*/){
+                    this->front.wait_ntlm_password = false;
+                    if (!this->set_password("x")) {
+                        this->front.state = BASIC_SETTINGS_EXCHANGE;
+                        this->front.sesman_credssp_server.reset();
+                    }
+                }));
+
+                return Ntlm_SecurityFunctionTable::PasswordCallback::Wait;
+            }, true)
+        {
+            this->credssp_server.credssp_server_authenticate_init();
+            this->run(this->front.buf);
+        }
+
+        bool run(TpduBuffer& tpdu_buffer)
+        {
+            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+            while (tpdu_buffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
+                InStream in_stream(tpdu_buffer.current_pdu_buffer());
+                st = this->credssp_server.credssp_server_authenticate_next(in_stream);
+            }
+            return check_continue(st);
+        }
+
+    private:
+        bool set_password(char const* password)
+        {
+            assert(this->identity);
+            this->identity->SetPasswordFromUtf8(byte_ptr_cast(password));
+            InStream in_stream;
+            return check_continue(
+                    this->credssp_server.credssp_server_authenticate_next(in_stream))
+                && this->run(this->front.buf);
+        }
+
+        static bool check_continue(rdpCredsspServer::State st)
+        {
+            switch (st) {
+            case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+            case rdpCredsspServer::State::Cont: return true;
+            case rdpCredsspServer::State::Finish: return false;
+            }
+
+            REDEMPTION_UNREACHABLE();
+        }
+
+        Front& front;
+        // TODO should be front parameter
+        TimeSystem timeobj;
+        std::string extra_message;
+        rdpCredsspServer credssp_server;
+        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
+    };
+
+    std::unique_ptr<CredsspServer> credssp_server;
+    SessionReactor::SesmanEventPtr sesman_credssp_server;
+
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
+    bool nla_client_active = false;
     bool mem3blt_support;
     int clientRequestedProtocols;
 
@@ -1255,6 +1341,16 @@ public:
             LOG(LOG_INFO, "Front::incoming");
         }
 
+        if (this->state == CONNECTION_INITIATION_NLA) {
+            buf.load_data(this->trans);
+            if (this->credssp_server->run(buf)) {
+                return ;
+            }
+            this->wait_ntlm_password = false;
+            this->sesman_credssp_server.reset();
+            this->state = BASIC_SETTINGS_EXCHANGE;
+        }
+
         buf.load_data(this->trans);
         while (buf.next_pdu())
         {
@@ -1262,6 +1358,8 @@ public:
             cb.set_last_tram_len(new_x224_stream.in_remain());
 
             switch (this->state) {
+            case CONNECTION_INITIATION_NLA:
+                REDEMPTION_UNREACHABLE();
             case CONNECTION_INITIATION:
             {
                 // Connection Initiation
@@ -1288,32 +1386,46 @@ public:
                                      " %zu bytes remains", new_x224_stream.get_capacity() - x224._header_size);
                     }
                     this->clientRequestedProtocols = x224.rdp_neg_requestedProtocols;
+                }
 
-                    if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                        LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
-                    }
+                if (!this->ini.get<cfg::client::tls_support>() && !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
+                }
 
-                    if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
-                        (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
-                        // Fallback to legacy security protocol (RDP) is allowed.
-                        && this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                        LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
-                        this->tls_client_active = false;
-                    }
-                    else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
-                             !this->ini.get<cfg::client::tls_fallback_legacy>()) {
-                        LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
-                    }
+                if ((bool(this->clientRequestedProtocols
+                    & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX)))
+                    && this->ini.get<cfg::client::nla_support>()
+                ) {
+                    this->nla_client_active = true;
+                }
+                else if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                    (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
+                    // Fallback to legacy security protocol (RDP) is allowed.
+                    && this->ini.get<cfg::client::tls_fallback_legacy>()
+                ) {
+                    LOG(LOG_INFO, "Front::incoming: Fallback to legacy security protocol");
+                    this->tls_client_active = false;
+                }
+                else if ((0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS)) &&
+                            !this->ini.get<cfg::client::tls_fallback_legacy>()) {
+                    LOG(LOG_WARNING, "Front::incoming: TLS security protocol is not supported by client. Allow falling back to legacy security protocol is probably necessary");
                 }
 
                 if (bool(this->verbose & Verbose::basic_trace)) {
                     LOG(LOG_INFO, "Front::incoming: sending x224 connection confirm PDU");
                 }
+
                 {
                     uint8_t rdp_neg_type = 0;
                     uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                     uint32_t rdp_neg_code = 0;
-                    if (this->tls_client_active) {
+                    if (this->nla_client_active) {
+                        LOG(LOG_INFO, "-----------------> Front::incoming: NLA Support Enabled");
+                        rdp_neg_type = X224::RDP_NEG_RSP;
+                        rdp_neg_code = X224::PROTOCOL_HYBRID;
+                        this->encryptionLevel = 0;
+                    }
+                    else if (this->tls_client_active) {
                         LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
                         if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                             rdp_neg_type = X224::RDP_NEG_RSP;
@@ -1332,10 +1444,21 @@ public:
                     StaticOutStream<256> stream;
                     X224::CC_TPDU_Send x224(stream, rdp_neg_type, rdp_neg_flags, rdp_neg_code);
                     this->trans.send(stream.get_data(), stream.get_offset());
+                }
 
-                    if (this->tls_client_active) {
-                        this->trans.enable_server_tls(this->ini.get<cfg::globals::certificate_password>(),
-                            this->ini.get<cfg::client::ssl_cipher_list>().c_str());
+                if (this->tls_client_active) {
+                    this->trans.enable_server_tls(
+                        this->ini.get<cfg::globals::certificate_password>(),
+                        this->ini.get<cfg::client::ssl_cipher_list>().c_str());
+                }
+
+                if (this->nla_client_active) {
+                    this->credssp_server = std::make_unique<CredsspServer>(*this);
+                }
+
+                this->state = this->nla_client_active
+                  ? CONNECTION_INITIATION_NLA
+                  : BASIC_SETTINGS_EXCHANGE;
 
                 // 2.2.10.2 Early User Authorization Result PDU
                 // ============================================
@@ -1353,11 +1476,7 @@ public:
                 // +---------------------------------+--------------------------------------------------------+
                 // | AUTHZ_ACCESS_DENIED 0x0000052E | The user does not have permission to access the server.|
                 // +---------------------------------+--------------------------------------------------------+
-
-                    }
-                }
             }
-            this->state = BASIC_SETTINGS_EXCHANGE;
             break;
             case BASIC_SETTINGS_EXCHANGE:
             {
@@ -1543,7 +1662,7 @@ public:
                         {
                             GCC::UserData::SCCore sc_core;
                             sc_core.version = 0x00080004;
-                            if (this->tls_client_active) {
+                            if (this->tls_client_active || this->nla_client_active) {
                                 sc_core.length = 12;
                                 sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
                             }
@@ -1566,7 +1685,7 @@ public:
                             sc_net.emit(stream);
                         }
                         // ------------------------------------------------------------------
-                        if (this->tls_client_active) {
+                        if (this->tls_client_active || this->nla_client_active) {
                             GCC::UserData::SCSecurity sc_sec1;
                             sc_sec1.encryptionMethod = 0;
                             sc_sec1.encryptionLevel = 0;
@@ -1816,7 +1935,7 @@ public:
 
                 // Client                                                     Server
                 //    |------Security Exchange PDU ---------------------------> |
-                if (!this->tls_client_active) {
+                if (!this->tls_client_active && !this->nla_client_active) {
                     LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
                     X224::DT_TPDU_Recv x224(new_x224_stream);
 
@@ -1893,14 +2012,15 @@ public:
                 }
 
                 /* this is the first test that the decrypt is working */
-                this->client_info.process_logon_info( sec.payload
-                                                    , ini.get<cfg::client::ignore_logon_password>()
-                                                    , ini.get<cfg::client::performance_flags_default>()
-                                                    , ini.get<cfg::client::performance_flags_force_present>()
-                                                    , ini.get<cfg::client::performance_flags_force_not_present>()
-                                                    , ini.get<cfg::debug::password>()
-                                                    , bool(this->verbose & Verbose::basic_trace)
-                                                    );
+                this->client_info.process_logon_info(
+                    sec.payload
+                  , ini.get<cfg::client::ignore_logon_password>()
+                  , ini.get<cfg::client::performance_flags_default>()
+                  , ini.get<cfg::client::performance_flags_force_present>()
+                  , ini.get<cfg::client::performance_flags_force_not_present>()
+                  , ini.get<cfg::debug::password>()
+                  , bool(this->verbose & Verbose::basic_trace)
+                );
 
                 if (sec.payload.in_remain()) {
                     LOG(LOG_ERR, "Front::incoming: process_logon all data should have been consumed %zu bytes trailing",
@@ -4033,9 +4153,10 @@ private:
                     else {
                         username = this->client_info.username;
                     }
-                    this->ini.ask<cfg::context::selector>();
+
                     LOG(LOG_INFO, "Front::process_data: asking for selector");
                     this->ini.set_acl<cfg::globals::auth_user>(username);
+                    this->ini.ask<cfg::context::selector>();
                     this->ini.ask<cfg::globals::target_user>();
                     this->ini.ask<cfg::globals::target_device>();
                     this->ini.ask<cfg::context::target_protocol>();
