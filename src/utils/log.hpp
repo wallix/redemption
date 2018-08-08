@@ -258,7 +258,9 @@ struct LOG__REDEMPTION__BUFFERED
 };
 #endif
 
-
+#ifdef __GNUC__
+__attribute__ ((format (printf, 2, 3)))
+#endif
 void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
 namespace
