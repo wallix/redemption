@@ -27,18 +27,17 @@
 
 RED_AUTO_TEST_CASE(TestTextdate)
 {
-    BOOST_CHECK_EQUAL(std::string("1970-01-01"), text_gmdate(0));
+    RED_CHECK_EQ("1970-01-01", text_gmdate(0));
 
-    BOOST_CHECK_EQUAL(std::string("1970 01 01"), text_gmdate(0, ' '));
+    RED_CHECK_EQ("1970 01 01", text_gmdate(0, ' '));
 
 //     struct timeval tv;
 //     struct timezone tz;
 //     gettimeofday(&tv,&tz);
 //     LOG(LOG_INFO, "tv.sec = %d", tv.tv_sec);
-    BOOST_CHECK_EQUAL(std::string("2018-08-02"), text_gmdate(1533211681));
+    RED_CHECK_EQ("2018-08-02", text_gmdate(1533211681));
 
-    BOOST_CHECK_EQUAL(std::string("1970-01-01 00:00:00"), text_gmdatetime(0));
+    RED_CHECK_EQ("1970-01-01 00:00:00", text_gmdatetime(0));
 
-    BOOST_CHECK_EQUAL(std::string("1970-01-01_00-00-00"), filename_gmdatetime(0));
-
+    RED_CHECK_EQ("1970-01-01_00-00-00", filename_gmdatetime(0));
 }

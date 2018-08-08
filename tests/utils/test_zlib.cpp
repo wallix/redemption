@@ -161,7 +161,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
         memcpy(&all_out[total_size], strm.next_out - last_avail_out + strm.avail_out, last_avail_out - strm.avail_out);
         total_size += last_avail_out - strm.avail_out;
     } while (CHUNK != strm.avail_out);
-    BOOST_CHECK_EQUAL(ret, Z_STREAM_END);
+    RED_CHECK_EQUAL(ret, Z_STREAM_END);
 
     ret = deflateEnd(&strm);
 

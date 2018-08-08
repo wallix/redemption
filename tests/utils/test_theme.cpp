@@ -81,7 +81,7 @@ RED_AUTO_TEST_CASE(TestColorFromFile)
     RED_CHECK_EQUAL((WHITE),              colors.selector_label.fgcolor);
 }
 
-BOOST_AUTO_TEST_CASE(TestConfigDefault)
+RED_AUTO_TEST_CASE(TestConfigDefault)
 {
     std::stringstream   oss("");
     Theme          colors;

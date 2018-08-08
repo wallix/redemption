@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TestEncryption2)
         ::unlink("./tmp.enc");
         int fd = open("./tmp.enc", O_CREAT|O_TRUNC|O_WRONLY, S_IRWXU);
         int res = write(fd, &result[0], offset);
-        BOOST_CHECK_EQUAL(res, 68);
+        RED_CHECK_EQUAL(res, 68);
         close(fd);
     }
 
@@ -215,9 +215,9 @@ RED_AUTO_TEST_CASE(TestEncryption2)
 
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Auto, fstat);
     decrypter.open("./tmp.enc", { derivator, sizeof(derivator)});
-    BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
-    BOOST_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
-    BOOST_CHECK_EQUAL(decrypter.is_encrypted(), true);
+    RED_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, 4));
+    RED_CHECK_EQUAL(decrypter.partial_read(clear+4, 1), 0);
+    RED_CHECK_EQUAL(decrypter.is_encrypted(), true);
     decrypter.close();
 
 //    RED_CHECK_EQUAL(res2, 4);
@@ -259,8 +259,8 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
             "-192304,wab-4-2-4.yourdomain,5560.mwrm"
         ));
 
-        BOOST_CHECK_EQUAL(cctx.old_encryption_scheme, false);
-        BOOST_CHECK_EQUAL(
+        RED_CHECK_EQUAL(cctx.old_encryption_scheme, false);
+        RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/verifier/recorded/"
             "cgrosjean@10.10.43.13,proxyuser@win2008,20161025"
@@ -304,7 +304,7 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
             "20160218-183009,wab-5-0-0.yourdomain,7335.mwrm"
         ));
 
-        BOOST_CHECK_EQUAL(
+        RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/verifier/recorded/"
             "toto@10.10.43.13,Administrateur@QA@cible,"
@@ -313,18 +313,18 @@ RED_AUTO_TEST_CASE(testSetEncryptionSchemeType)
     }
     {
         CryptoContext cctx;
-        BOOST_CHECK_EQUAL(
+        RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/sample.txt"),
             EncryptionSchemeTypeResult::NoEncrypted);
     }
     {
         CryptoContext cctx;
-        BOOST_CHECK_EQUAL(
+        RED_CHECK_EQUAL(
             get_encryption_scheme_type(cctx,
             FIXTURES_PATH "/blogiblounga"),
             EncryptionSchemeTypeResult::Error);
-        BOOST_CHECK_EQUAL(errno, ENOENT);
+        RED_CHECK_EQUAL(errno, ENOENT);
     }
 }
 
@@ -403,7 +403,7 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
         ::unlink("./tmp1.enc");
         int fd = open("./tmp1.enc", O_CREAT|O_TRUNC|O_WRONLY,S_IRWXU);
         int res = write(fd, &result[0], offset);
-        BOOST_CHECK_EQUAL(res, 8660);
+        RED_CHECK_EQUAL(res, 8660);
         close(fd);
     }
 
@@ -411,8 +411,8 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
 
     InCryptoTransport decrypter(cctx, InCryptoTransport::EncryptionMode::Encrypted, fstat);
     decrypter.open("./tmp1.enc", { derivator, sizeof(derivator)});
-    BOOST_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, sizeof(clear)));
-    BOOST_CHECK_EQUAL(0, decrypter.partial_read(clear, 1));
+    RED_CHECK_EQUAL(Transport::Read::Ok, decrypter.atomic_read(clear, sizeof(clear)));
+    RED_CHECK_EQUAL(0, decrypter.partial_read(clear, 1));
     decrypter.close();
 
 
@@ -991,7 +991,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigCrypted)
     char tmpname[256];
     {
         cctx.set_trace_type(TraceType::cryptofile);
-    
+
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(finalname, hash_finalname, 0);
         ::strcpy(tmpname, ct.get_tmp());
@@ -1290,7 +1290,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
 
     {
         cctx.set_trace_type(TraceType::localfile);
-    
+
         OutCryptoTransport ct(cctx, rnd, fstat);
         ct.open(encrypted_file, hash_encrypted_file, 0);
         ct.send(original_contents.data(), original_contents.size());
@@ -1341,7 +1341,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     uint8_t qhash[MD_HASH::DIGEST_LENGTH] = {};
     uint8_t fhash[MD_HASH::DIGEST_LENGTH] = {};
     {
-    
+
         cctx.set_trace_type(TraceType::cryptofile);
 
         OutCryptoTransport ct(cctx, rnd, fstat);
