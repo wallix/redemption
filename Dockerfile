@@ -1,5 +1,7 @@
 FROM ubuntu:17.10
 
+# clang: RUN echo -e "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-6.0 main\ndeb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-6.0 main" | tee -a /etc/apt/sources.list
+
 # Install
 RUN apt-get -qq update
 RUN apt-get install -y g++
