@@ -1,6 +1,6 @@
 FROM ubuntu:17.10
 
-# clang: RUN echo -e "deb http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main\ndeb-src http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main" | tee -a /etc/apt/sources.list
+# clang: RUN echo "deb http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main\ndeb-src http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main" | tee -a /etc/apt/sources.list
 
 # Install
 RUN apt-get -qq update
