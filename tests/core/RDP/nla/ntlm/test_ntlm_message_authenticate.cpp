@@ -106,14 +106,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    LOG(LOG_INFO, "=================================\n");
-    StaticOutStream<sizeof(packet3)> s;
-    s.out_copy_bytes(packet3, sizeof(packet3));
-
-    uint8_t sig[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig);
-
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(packet3);
     TSRequest ts_req3(3);
     ts_req3.recv(in_s);
 
@@ -130,7 +123,7 @@ RED_AUTO_TEST_CASE(TestAuthenticate)
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    RED_CHECK_SIG(to_send3, sig);
+    RED_CHECK_SIG_FROM(to_send3, packet3);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 

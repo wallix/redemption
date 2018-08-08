@@ -283,3 +283,8 @@ FakeGraphic::FakeGraphic(uint8_t bpp, size_t width, size_t height, uint32_t verb
        LOG(LOG_ERR, "FakeGraphic only support image width that are multiple of 4 (drawable limitation)");
     }
 }
+
+FakeGraphic::operator ConstImageDataView () const
+{
+    return this->gd;
+}

@@ -3580,43 +3580,30 @@ test-run tests/mod/vnc/encoder/test_hextile :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
 :
   <covfile>src/mod/vnc/encoder/hextile.hpp
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
   <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
-  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
 :
   <covfile>src/mod/vnc/encoder/zrle.hpp
-  <library>app_path_test.o
   <library>crypto
   <library>png
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
   <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o

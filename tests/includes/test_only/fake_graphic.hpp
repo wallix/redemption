@@ -103,6 +103,8 @@ public:
 
     void save_to_png(const char * filename);
 
+    operator ConstImageDataView () const;
+
 private:
     uint32_t                    verbose;
 public:

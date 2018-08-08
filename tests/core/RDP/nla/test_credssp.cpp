@@ -41,14 +41,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0x0f
     };
 
-    StaticOutStream<65536> s;
-
-    s.out_copy_bytes(packet, sizeof(packet));
-
-    uint8_t sig1[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig1);
-
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(packet);
     TSRequest ts_req(3);
     ts_req.recv(in_s);
 
@@ -64,7 +57,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    RED_CHECK_SIG(to_send, sig1);
+    RED_CHECK_SIG_FROM(to_send, packet);
 
     // hexdump_c(to_send.get_data(), to_send.size());
 
@@ -91,15 +84,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-
-    LOG(LOG_INFO, "=================================\n");
-    s.rewind();
-    s.out_copy_bytes(packet2, sizeof(packet2));
-
-    uint8_t sig2[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig2);
-
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(packet2);
     TSRequest ts_req2(3);
     ts_req2.recv(in_s);
 
@@ -116,7 +101,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    RED_CHECK_SIG(to_send2, sig2);
+    RED_CHECK_SIG_FROM(to_send2, packet2);
 
     // hexdump_c(to_send2.get_data(), to_send2.size());
 
@@ -197,16 +182,9 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0x34, 0x4a, 0xe0, 0x03, 0xe5
     };
 
-    LOG(LOG_INFO, "=================================\n");
-    s.rewind();
-    s.out_copy_bytes(packet3, sizeof(packet3));
-
-    uint8_t sig3[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig3);
-
     TSRequest ts_req3(3);
 
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(packet3);
     ts_req3.recv(in_s);
 
     RED_CHECK_EQUAL(ts_req3.version, 3);
@@ -222,7 +200,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_EQUAL(to_send3.get_offset(), 0x241 + 4);
 
-    RED_CHECK_SIG(to_send3, sig3);
+    RED_CHECK_SIG_FROM(to_send3, packet3);
 
     // hexdump_c(to_send3.get_data(), to_send3.size());
 
@@ -268,13 +246,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
         0xac, 0xc0, 0xfd, 0x1b, 0xb5, 0xa2, 0xd3
     };
 
-    LOG(LOG_INFO, "=================================\n");
-    s.rewind();
-    s.out_copy_bytes(packet4, sizeof(packet4));
-    uint8_t sig4[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig4);
-
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(packet4);
     TSRequest ts_req4(3);
     ts_req4.recv(in_s);
 
@@ -291,7 +263,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_EQUAL(to_send4.get_offset(), 0x12b + 4);
 
-    RED_CHECK_SIG(to_send4, sig4);
+    RED_CHECK_SIG_FROM(to_send4, packet4);
 
     // hexdump_c(to_send4.get_data(), to_send4.size());
 
@@ -329,14 +301,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 //    "\x24\x0d\x8f\x8f\xf4\x92\xfe\x49\x2a\x13\x52\xa6"
 //    "\x52\x75\x50\x8d\x3e\xe9\x6b\x57"
 
-
-    LOG(LOG_INFO, "=================================\n");
-    s.rewind();
-    s.out_copy_bytes(packet5, sizeof(packet5));
-    uint8_t sig5[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig5);
-
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(packet5);
     TSRequest ts_req5(3);
     ts_req5.recv(in_s);
 
@@ -353,7 +318,7 @@ RED_AUTO_TEST_CASE(TestTSRequest)
 
     RED_CHECK_EQUAL(to_send5.get_offset(), 0x5c);
 
-    RED_CHECK_SIG(to_send5, sig5);
+    RED_CHECK_SIG_FROM(to_send5, packet5);
 
 //    auto av = make_array_view(to_send5.get_data(), sizeof(packet5));
 //    RED_CHECK_MEM_AA(av, packet5);

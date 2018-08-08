@@ -444,10 +444,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     const char * filename = "./capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
-    RED_CHECK_SIG2(
-        reinterpret_cast<const uint8_t*>(s.data()), s.size(),
-        "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37"
-    );
+    RED_CHECK_SIG(
+        s, "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37");
     ::unlink(filename);
 }
 

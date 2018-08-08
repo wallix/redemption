@@ -29,7 +29,6 @@
 
 RED_AUTO_TEST_CASE(TestChallenge)
 {
-    StaticOutStream<65536> s;
     // ===== NTLMSSP_CHALLENGE =====
     constexpr static uint8_t packet2[] = {
         0x30, 0x81, 0x94, 0xa0, 0x03, 0x02, 0x01, 0x03,
@@ -53,14 +52,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
         0xb0, 0xcb, 0x01, 0x00, 0x00, 0x00, 0x00
     };
 
-
-    LOG(LOG_INFO, "=================================\n");
-    s.out_copy_bytes(packet2, sizeof(packet2));
-
-    uint8_t sig[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig);
-
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(packet2);
     TSRequest ts_req2(3);
     ts_req2.recv(in_s);
 
@@ -77,7 +69,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     RED_CHECK_EQUAL(to_send2.get_offset(), 0x94 + 3);
 
-    RED_CHECK_SIG(to_send2, sig);
+    RED_CHECK_SIG_FROM(to_send2, packet2);
 
     NTLMChallengeMessage ChallengeMsg;
 

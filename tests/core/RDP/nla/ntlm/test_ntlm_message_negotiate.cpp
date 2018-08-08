@@ -41,14 +41,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
         0x0f
     };
 
-    StaticOutStream<65536> s;
-
-    s.out_copy_bytes(packet, sizeof(packet));
-
-    uint8_t sig[SslSha1::DIGEST_LENGTH];
-    get_sig(s, sig);
-
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(packet);
     TSRequest ts_req(3);
     ts_req.recv(in_s);
 
@@ -65,7 +58,7 @@ RED_AUTO_TEST_CASE(TestNegotiate)
 
     RED_CHECK_EQUAL(to_send.get_offset(), 0x37 + 2);
 
-    RED_CHECK_SIG(to_send, sig);
+    RED_CHECK_SIG_FROM(to_send, packet);
 
     NTLMNegotiateMessage NegoMsg;
 

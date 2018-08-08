@@ -24,87 +24,77 @@
 #include <cstring>
 
 #include "system/ssl_sha1.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/sugar/byte.hpp"
 
 // fix tests with:
 // bjam test_flat_wab_close | grep ^tests/ | while IFS='()"' read f l e n E s ; do sed $l,$(($l+1))'s/RED_CHECK_SIG(drawable.gd, .*/RED_CHECK_SIG(drawable.gd, "'${s//x/\\\\x}');/' -i "$f" ; done
 
-#define RED_CHECK_SIG(obj, sig)                                      \
-    do {                                                             \
-        char message[1024];                                          \
-        if (!redemption_unit_test__::check_sig(obj, message, sig)) { \
-            RED_CHECK_MESSAGE(false, message);                       \
-        }                                                            \
+#define RED_CHECK_SIG(obj, expected_sig)                           \
+    do {                                                           \
+        uint8_t obj_sig__[SslSha1::DIGEST_LENGTH];                 \
+        ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
+        RED_CHECK_MEM_AC(obj_sig__, expected_sig);                 \
     } while (0)
 
-#define RED_CHECK_SIG2(buf, sz, sig)                                        \
-    do {                                                                    \
-        char message[1024];                                                 \
-        if (!redemption_unit_test__::check_sig(buf, 1, sz, message, sig)) { \
-            RED_CHECK_MESSAGE(false, message);                              \
-        }                                                                   \
+#define RED_CHECK_SIG_FROM(obj, array_for_sig)                     \
+    do {                                                           \
+        uint8_t obj_sig__[SslSha1::DIGEST_LENGTH];                 \
+        uint8_t expected_sig__[SslSha1::DIGEST_LENGTH];            \
+        ::redemption_unit_test__::compute_av_sig(expected_sig__,   \
+            make_array_view(array_for_sig));                       \
+        ::redemption_unit_test__::compute_obj_sig(obj_sig__, obj); \
+        RED_CHECK_MEM_AA(obj_sig__, expected_sig__);               \
     } while (0)
 
-
-inline void get_sig(const uint8_t * data, size_t length, uint8_t (&sig)[SslSha1::DIGEST_LENGTH])
-{
-   SslSha1 sha1;
-   sha1.update(data, length);
-   sha1.final(sig);
-}
-
-template<class Stream>
-inline void get_sig(Stream const & stream, uint8_t (&sig)[SslSha1::DIGEST_LENGTH])
-{
-   SslSha1 sha1;
-   sha1.update(stream.get_data(), stream.get_offset());
-   sha1.final(sig);
-}
-
+class InStream;
+class OutStream;
 
 namespace redemption_unit_test__
 {
-    bool check_sig(const uint8_t* data, std::size_t height, uint32_t len, char * message, const void * shasig);
+    using SigArray = uint8_t[SslSha1::DIGEST_LENGTH];
 
-    template<class Drawable>
-    auto check_sig(Drawable const & data, char * message, const void * shasig)
-    -> decltype(redemption_unit_test__::check_sig(data.data(), data.height(), data.rowsize(), message, shasig))
-    {  return redemption_unit_test__::check_sig(data.data(), data.height(), data.rowsize(), message, shasig); }
-
-    template<class Bitmap>
-    auto check_sig(Bitmap const & data, char * message, const void * shasig)
-    -> decltype(redemption_unit_test__::check_sig(data.data(), data.cy(), data.line_size(), message, shasig))
-    {  return redemption_unit_test__::check_sig(data.data(), data.cy(), data.line_size(), message, shasig); }
-
-    template<class Stream>
-    auto check_sig(Stream const & stream, char * message, const void * shasig)
-    -> decltype(redemption_unit_test__::check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig))
-    {  return redemption_unit_test__::check_sig(stream.get_data(), 1, stream.get_offset(), message, shasig); }
-
-
-    inline
-    bool check_sig(const uint8_t* data, std::size_t height, uint32_t len, char * message, const void * shasig)
+    inline void compute_av_sig(SigArray& sig, const_byte_array av)
     {
-        uint8_t sig[SslSha1::DIGEST_LENGTH];
+        SslSha1 sha1;
+        sha1.update(av.data(), av.size());
+        sha1.final(sig);
+    }
+
+    inline void compute_av_sig2(SigArray& sig, uint8_t const* p, size_t height, size_t rowsize)
+    {
         SslSha1 sha1;
         for (size_t y = 0; y < height; y++){
-            sha1.update(data + y * len, len);
+            sha1.update(p + y * rowsize, rowsize);
         }
         sha1.final(sig);
+    }
 
-        if (memcmp(shasig, sig, sizeof(sig))){
-            sprintf(message, "Expected signature: \""
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x"
-            "\\x%.2x\\x%.2x\\x%.2x\\x%.2x\"",
-            unsigned(sig[ 0]), unsigned(sig[ 1]), unsigned(sig[ 2]), unsigned(sig[ 3]),
-            unsigned(sig[ 4]), unsigned(sig[ 5]), unsigned(sig[ 6]), unsigned(sig[ 7]),
-            unsigned(sig[ 8]), unsigned(sig[ 9]), unsigned(sig[10]), unsigned(sig[11]),
-            unsigned(sig[12]), unsigned(sig[13]), unsigned(sig[14]), unsigned(sig[15]),
-            unsigned(sig[16]), unsigned(sig[17]), unsigned(sig[18]), unsigned(sig[19]));
-            return false;
+    // authorize incomplete type in compute_obj_sig
+    template<class Stream>
+    inline void compute_stream_sig(SigArray& sig, Stream const& stream)
+    {
+        ::redemption_unit_test__::compute_av_sig(sig, {stream.get_data(), stream.get_offset()});
+    }
+
+    template<class T>
+    void compute_obj_sig(SigArray& sig, T const& obj)
+    {
+        if constexpr (std::is_convertible<T const&, ConstImageDataView>::value)
+        {
+            ConstImageDataView image = obj;
+            ::redemption_unit_test__::compute_av_sig2(
+                sig, image.data(), image.height(), image.line_size());
         }
-        return true;
+        else if constexpr (std::is_convertible<T const&, InStream const&>::value
+                        || std::is_convertible<T const&, OutStream const&>::value)
+        {
+          ::redemption_unit_test__::compute_stream_sig(sig, obj);
+        }
+        else
+        {
+            const_byte_array ar = obj;
+            ::redemption_unit_test__::compute_av_sig2(sig, ar.data(), 1, ar.size());
+        }
     }
 }

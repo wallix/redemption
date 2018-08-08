@@ -23,9 +23,6 @@
 #include "test_only/fake_graphic.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "core/client_info.hpp"
-#include "core/font.hpp"
-#include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 
@@ -6683,12 +6680,8 @@ RED_AUTO_TEST_CASE(TestZrle)
     }
 
 //    drawable.save_to_png("vnc_first_len.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x0b\x2e\x54\x86\x8d\x54\x43\x45\x0e\x8d\xcf\xc6\xe5\x72\x34\x83\xdb\x03\x63\xfb")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\x0b\x2e\x54\x86\x8d\x54\x43\x45\x0e\x8d\xcf\xc6\xe5\x72\x34\x83\xdb\x03\x63\xfb");
 }
 
 
@@ -6729,12 +6722,8 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
     InStream buffer(raw0, sizeof(raw0));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x47\x03\x30\x8a\x6b\x2c\xb5\x3c\xe1\x8e\xef\xff\x60\x2a\x85\x12\x78\x74\x77\x04")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\x47\x03\x30\x8a\x6b\x2c\xb5\x3c\xe1\x8e\xef\xff\x60\x2a\x85\x12\x78\x74\x77\x04");
 }
 
 
@@ -6760,13 +6749,8 @@ RED_AUTO_TEST_CASE(TestZrleSolid)
     InStream buffer(solid0, sizeof(solid0));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
-
+    RED_CHECK_SIG(drawable,
+        "\x29\xac\x8d\xfe\xc3\x40\x90\xce\xbd\x3b\xf5\x0b\xd8\xdd\x2e\x7c\xd6\x6b\x0e\x95");
 }
 
 constexpr uint8_t palette2[] = {
@@ -6799,12 +6783,8 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
     InStream buffer(palette2, sizeof(palette2));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc0.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x9e\x96\xf8\x4c\x03\xed\xdd\x2f\x08\xd1\xe3\x08\x7a\x73\xe1\xed\x8f\xc9\x96\x7a")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\x9e\x96\xf8\x4c\x03\xed\xdd\x2f\x08\xd1\xe3\x08\x7a\x73\xe1\xed\x8f\xc9\x96\x7a");
 }
 
 constexpr uint8_t palette13[] = {
@@ -6858,12 +6838,8 @@ RED_AUTO_TEST_CASE(TestZrlePalette13)
     InStream buffer(palette13, sizeof(palette13));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\xb3\x68\xe5\x39\xf4\x4c\xbd\xa5\x1c\x4f\x4f\xda\x2b\xcb\x62\xa3\x57\x61\x23\xdf")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\xb3\x68\xe5\x39\xf4\x4c\xbd\xa5\x1c\x4f\x4f\xda\x2b\xcb\x62\xa3\x57\x61\x23\xdf");
 }
 
 constexpr uint8_t plainrle[] = {
@@ -6892,12 +6868,8 @@ RED_AUTO_TEST_CASE(TestZrlePlainRLE)
     InStream buffer(plainrle, sizeof(plainrle));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc2.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x34\x00\xe0\x80\x92\x39\xf7\x99\xfa\x07\xb8\x35\x42\xa1\x06\x19\xc3\x36\xb9\x0f")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\x34\x00\xe0\x80\x92\x39\xf7\x99\xfa\x07\xb8\x35\x42\xa1\x06\x19\xc3\x36\xb9\x0f");
 }
 
 constexpr uint8_t paletteRLE[] = {
@@ -6940,12 +6912,8 @@ RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
     InStream buffer(paletteRLE, sizeof(paletteRLE));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc3.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\x98\xa8\x92\x83\x48\x50\x2e\x26\xbe\x4b\x1f\xcb\x53\x7a\xe9\x2b\x3c\x63\x2d\xc4")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\x98\xa8\x92\x83\x48\x50\x2e\x26\xbe\x4b\x1f\xcb\x53\x7a\xe9\x2b\x3c\x63\x2d\xc4");
 }
 
 constexpr uint8_t PackedPalette5[] = {
@@ -6978,11 +6946,7 @@ RED_AUTO_TEST_CASE(TestZrlePackedPalette5)
     encoder.rle_test_bypass(buffer, drawable);
     RED_CHECK_EQUAL(0, buffer.in_remain());
 //    drawable.save_to_png("vnc5.png");
-    char message[4096] = {};
-    if (!redemption_unit_test__::check_sig(drawable.gd, message,
-        "\xd7\x7d\xbb\xa7\xcb\xed\x89\x3d\xa8\x61\xa6\xeb\x90\xd8\xee\x03\xa5\x3b\x0b\x4a")){
-        LOG(LOG_INFO, "signature mismatch: %s", message);
-        BOOST_CHECK(false);
-    }
+    RED_CHECK_SIG(drawable,
+        "\xd7\x7d\xbb\xa7\xcb\xed\x89\x3d\xa8\x61\xa6\xeb\x90\xd8\xee\x03\xa5\x3b\x0b\x4a");
 }
 
