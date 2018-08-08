@@ -4479,6 +4479,7 @@ public:
         stream.in_skip_bytes(stream.in_remain());
     }
 
+    [[noreturn]]
     static void on_remoteapp_redirect_user_screen(AuthApi& authentifier, uint32_t ErrorNotificationData) {
         LOG(LOG_ERR, "Can not redirect user's focus to the WinLogon screen in RemoteApp mode!");
 
