@@ -36,29 +36,21 @@
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 
-extern std::string metrics_encrypt(const char * src, const size_t src_len, const unsigned char * key_crypt);
+std::string metrics_encrypt(const char * src, const size_t src_len, const unsigned char * key_crypt);
 
-
-extern std::string hmac_user(const std::string & user, const unsigned char * key);
 
 inline std::string hmac_user(const std::string & user, const unsigned char * key) {
     return metrics_encrypt(user.c_str(), user.length(), key);
 }
 
-extern std::string hmac_account(const std::string & account, const unsigned char * key);
-
 inline std::string hmac_account(const std::string & account, const unsigned char * key) {
     return metrics_encrypt(account.c_str(), account.length(), key);
 }
-
-extern std::string hmac_device_service(const std::string & account, const std::string & service, const unsigned char * key);
 
 inline std::string hmac_device_service(const std::string & device, const std::string & service, const unsigned char * key) {
     std::string target_device_and_service(service+" "+device);
     return metrics_encrypt(target_device_and_service.c_str(), target_device_and_service.length(), key);
 }
-
-extern std::string hmac_client_info(const char * client_host, const ClientInfo & info, const unsigned char * key);
 
 inline std::string hmac_client_info(const char * client_host, const ClientInfo & info, const unsigned char * key) {
     char session_info[1024];
@@ -234,7 +226,7 @@ public:
     }
 
     RDPMetrics( const bool activate                        // do nothing if false
-              , const std::string & path
+              , std::string path
               , const char * session_id
               , const std::string & primary_user_sig       // clear primary user account
               , const std::string & account_sig            // secondary account
@@ -243,45 +235,17 @@ public:
               , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay       // delay between 2 logs
-              , const bool debug
+              , const bool debug = false
       )
       : file_interval{file_interval}
       , current_file_date(now-now%(this->file_interval.count()))
-      , path(path)
+      , path(std::move(path))
       , session_id(session_id)
       , active_(activate)
       , connection_time(now)
       , log_delay(log_delay)
       , next_log_time{ this->log_delay.count()+now, 0}
       , debug(debug)
-    {
-        ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
-
-        if (this->path.c_str() && activate) {
-            this->new_day(this->current_file_date);
-        }
-    }
-
-    RDPMetrics( const bool activate                        // do nothing if false
-              , const std::string & path
-              , const char * session_id
-              , const std::string & primary_user_sig       // clear primary user account
-              , const std::string & account_sig            // secondary account
-              , const std::string & target_service_sig     // clear target service name + clear device name
-              , const std::string & session_info_sig       // source_host + client info
-              , const time_t now                           // time at beginning of metrics
-              , const std::chrono::hours file_interval     // daily rotation of filename (hours)
-              , const std::chrono::seconds log_delay       // delay between 2 logs
-      )
-      : file_interval{file_interval}
-      , current_file_date(now-now%(this->file_interval.count()))
-      , path(path)
-      , session_id(session_id)
-      , active_(activate)
-      , connection_time(now)
-      , log_delay(log_delay)
-      , next_log_time{ this->log_delay.count()+now, 0}
-      , debug(false)
     {
         ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
 

@@ -549,9 +549,6 @@ public:
     }
 
 private:
-
-
-
     void write_performance_log(time_t now) {
         if (!this->perf_last_info_collect_time) {
             assert(!this->perf_file);

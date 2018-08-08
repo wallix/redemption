@@ -4455,9 +4455,7 @@ public:
 
                                             return ctx.next();
                                         }
-                                        else {
-                                            return ctx.terminate();
-                                        }
+                                        return ctx.terminate();
                                     },
                                     [this](JLN_TIMER_CTX ctx) {
                                         this->on_remoteapp_redirect_user_screen(this->authentifier, RDP::LOGON_FAILED_OTHER);

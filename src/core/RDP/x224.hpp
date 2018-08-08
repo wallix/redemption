@@ -1445,7 +1445,7 @@ namespace X224
 
             uint8_t eot = stream.in_uint8();
             if (eot != EOT_EOT){
-                LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", this->tpdu_hdr.eot);
+                LOG(LOG_ERR, "DT TPDU should say EOT, got=%x", eot);
                 throw Error(ERR_X224);
             }
             return DT_Header{LI, code, eot};

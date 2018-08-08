@@ -436,25 +436,26 @@ public:
                 std::string device = this->ini.get<cfg::globals::target_device>();
 
                 std::string extension;
-                if (asl_info.ApplicationProtocol.size() != 0) {
+                if (!asl_info.ApplicationProtocol.empty()) {
                     extension += " app="+this->arcsight_text_formating(asl_info.ApplicationProtocol);
                 }
-                if (asl_info.WallixBastionStatus.size() != 0) {
+                if (!asl_info.WallixBastionStatus.empty()) {
                     extension += " WallixBastionStatus="+this->arcsight_text_formating(asl_info.WallixBastionStatus);
                 }
-                if (asl_info.message.size() != 0) {
+                if (!asl_info.message.empty()) {
                     extension += " msg=\""+this->arcsight_text_formating(asl_info.message)+"\"";
                 }
-                if (asl_info.oldFilePath.size() != 0) {
+                if (!asl_info.oldFilePath.empty()) {
                     extension += " oldFilePath="+this->arcsight_text_formating(asl_info.oldFilePath);
                 }
-                if (asl_info.filePath.size() != 0) {
+                if (!asl_info.filePath.empty()) {
                     extension += " filePath="+this->arcsight_text_formating(asl_info.filePath);
                 }
-                if (asl_info.fileSize.size() != 0) {
+                if (!asl_info.fileSize.empty()) {
                     extension += " fsize="+this->arcsight_text_formating(asl_info.fileSize);
                 }
 
+                // TODO string_view + %.*s format
                 std::string current_date(ctime(&time_now));
                 std::string mmm_dd(current_date.substr(4, 6));
                 std::string hhmmss(current_date.substr(11, 8));

@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <time.h>
+#include <ctime>
 
 extern std::string text_gmdate(const time_t time, char sep);
 
