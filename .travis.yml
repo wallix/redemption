@@ -8,9 +8,9 @@ if: tag IS blank
 
 matrix:
   include:
-  # Clang 5.0
+  # Clang 6.0
   - compiler: clang
-    env: DIST=ubuntu:17.10 INSTALL='clang-5.0 lldb-5.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
+    env: DIST=ubuntu:17.10 INSTALL='clang-6.0 lldb-6.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
   # GCC 7
   - compiler: gcc
     env: DIST=ubuntu:17.10 INSTALL=g++ BJAM_COMPILER=gcc
@@ -26,7 +26,7 @@ before_install:
         -e '4iCOPY llvm-snapshot.gpg.key .\nRUN apt-key add llvm-snapshot.gpg.key' \
         -e '/mkdir/iRUN sed -i -e "s/__GLIBC__) || defined(//" /usr/include/c++/v1/__locale' \
         $BJAM_COMPILER.dockerfile
-      echo -e 'using clang : : clang++-5.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
+      echo -e 'using clang : : clang++-6.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
     else
       echo -e 'using gcc : : g++-7 : <cxxflags>-fdiagnostics-color=always ;' > project-config.jam
     fi
