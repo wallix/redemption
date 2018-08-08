@@ -10,7 +10,7 @@ matrix:
   include:
   # Clang 6.0
   - compiler: clang
-    env: DIST=ubuntu:17.10 INSTALL='clang-6.0 lldb-6.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
+    env: DIST=ubuntu:17.10 INSTALL='clang-6.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
   # GCC 7
   - compiler: gcc
     env: DIST=ubuntu:17.10 INSTALL=g++ BJAM_COMPILER=gcc
