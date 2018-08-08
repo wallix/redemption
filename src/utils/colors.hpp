@@ -223,7 +223,7 @@ struct BGRPalette
     { this->palette[i] = c; }
 
     const char * data() const noexcept
-    { return reinterpret_cast<char const*>(this->palette); }
+    { return reinterpret_cast<char const*>(this->palette); } /*NOLINT*/
 
     static constexpr std::size_t data_size() noexcept
     { return sizeof(palette); }

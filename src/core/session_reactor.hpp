@@ -106,7 +106,7 @@ namespace jln
             "F must be an empty class or a lambda expression convertible to pointer of function");
         // big hack for a lambda not default constructible before C++20 :)
         alignas(F) char const f[sizeof(F)]{}; // same as `char f`
-        return reinterpret_cast<F const&>(f);
+        return reinterpret_cast<F const&>(f); /*NOLINT*/
     }
 
     namespace detail

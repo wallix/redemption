@@ -567,7 +567,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -808,7 +808,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
     }
-    
+
     {  // DELETE FILE
         std::string expected_log_metrics_next("2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 266 1 1 1 1 42 42 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;
@@ -864,7 +864,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -963,7 +963,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -982,7 +982,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -1061,7 +1061,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer) {
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW, 21);
+        RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 

@@ -143,20 +143,20 @@ protected:
     uint8_t const * data_palette() const noexcept
     {
         //assert(this->bpp() == 8);
-        return reinterpret_cast<uint8_t const*>(this) + palette_index;
+        return reinterpret_cast<uint8_t const*>(this) + palette_index; /*NOLINT*/
     }
 
 public:
     BGRPalette & palette() noexcept
     {
         //assert(this->bpp() == 8);
-        return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]);
+        return reinterpret_cast<BGRPalette &>(reinterpret_cast<uint8_t*>(this)[palette_index]); /*NOLINT*/
     }
 
     const BGRPalette & palette() const noexcept
     {
         //assert(this->bpp() == 8);
-        return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]);
+        return reinterpret_cast<const BGRPalette &>(reinterpret_cast<const uint8_t*>(this)[palette_index]); /*NOLINT*/
     }
 
     uint16_t cx() const noexcept

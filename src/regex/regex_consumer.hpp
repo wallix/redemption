@@ -88,7 +88,7 @@ namespace re {
     {
     public:
         explicit utf8_consumer(const char * str)
-        : s(reinterpret_cast<const unsigned char *>(str))
+        : s(reinterpret_cast<const unsigned char *>(str)) /*NOLINT*/
         {}
 
         char_int bumpc()
@@ -141,12 +141,12 @@ namespace re {
 
         const char * str() const
         {
-            return reinterpret_cast<const char *>(s);
+            return reinterpret_cast<const char *>(s); /*NOLINT*/
         }
 
         void str(const char * str)
         {
-            s = reinterpret_cast<const unsigned char *>(str);
+            s = reinterpret_cast<const unsigned char *>(str); /*NOLINT*/
         }
 
         const unsigned char * s;

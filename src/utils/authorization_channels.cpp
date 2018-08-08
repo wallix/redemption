@@ -37,7 +37,7 @@ namespace
     template<std::size_t n>
     auto c_array(char const * p) -> char const(&)[n]
     {
-        return reinterpret_cast<char const(&)[n]>(*p);
+        return reinterpret_cast<char const(&)[n]>(*p); /*NOLINT*/
     }
 
     template<class Cont>

@@ -174,7 +174,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
         struct sockaddr_in s4;
         struct sockaddr_in6 s6;
     } u;
-    int sock_len = sizeof(u);
+    socklen_t sock_len = sizeof(u);
 
     Inifile ini;
     configuration_load(ini.configuration_holder(), config_filename);
@@ -182,7 +182,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     init_signals();
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));
 
-    getpeername(0, &u.s, reinterpret_cast<socklen_t *>(&sock_len));
+    getpeername(0, &u.s, &sock_len);
     strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
 
     union
@@ -225,7 +225,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     }
 
     int nodelay = 1;
-    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char*>(&nodelay), sizeof(nodelay))){
+    if (0 == setsockopt(sck, IPPROTO_TCP, TCP_NODELAY, &nodelay, sizeof(nodelay))){
         Session session(unique_fd{sck}, ini, cctx, rnd, fstat);
 
         if (ini.get<cfg::debug::session>()){

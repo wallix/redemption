@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cinttypes>
+#include <string_view>
 
 #include "utils/stream.hpp"
 #include "core/error.hpp"
@@ -1079,8 +1080,8 @@ struct FormatListPDU
 
 
 
-constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
-constexpr const char * FILECONTENTS         = "FileContents";
+constexpr std::string_view FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
+constexpr std::string_view FILECONTENTS         = "FileContents";
 // constexpr const uint16_t * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
 // constexpr const uint16_t * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
 

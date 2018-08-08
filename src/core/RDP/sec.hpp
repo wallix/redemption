@@ -848,7 +848,7 @@ enum {
             }
             if (flags & SEC_ENCRYPT){
                 size_t const sig_sz = 8;
-                auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current());
+                auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current()); /*NOLINT*/
                 crypt.sign(data, len, signature);
                 stream.out_skip_bytes(sig_sz);
                 crypt.decrypt(data, len);

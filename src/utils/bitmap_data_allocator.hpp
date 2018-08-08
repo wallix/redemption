@@ -132,7 +132,7 @@ namespace aux_ {
                 const size_t ntotal = (m1.cel + m2.cel + m3.cel + m4.cel + m5.cel);
                 this->data = ::operator new(mem_size + ntotal * sizeof(void*));
                 char * p = static_cast<char*>(this->data);
-                char * * pp = reinterpret_cast<char * *>(p + mem_size);
+                char * * pp = reinterpret_cast<char * *>(p + mem_size); /*NOLINT*/
                 const size_t cels[] = {m1.cel, m2.cel, m3.cel, m4.cel, m5.cel};
                 const size_t szs[] = {m1.sz, m2.sz, m3.sz, m4.sz, m5.sz};
                 for (unsigned i = 0; i < sizeof(this->mems)/sizeof(this->mems[0]); ++i) {

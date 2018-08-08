@@ -430,10 +430,10 @@ public:
                             this->add_to_current_data(nb_copy_image_from_server, 1);
                             break;
                         default:
-                            std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
-                            std::string file_desciptor_name(RDPECLIP::FILEGROUPDESCRIPTORW);
-                            std::string file_contents_name(RDPECLIP::FILECONTENTS);
-                            if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
+                            std::string_view format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
+                            if (format_name_string == RDPECLIP::FILECONTENTS
+                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
+                            ) {
                                 this->file_contents_format_ID = fl_ln.formatID;
                                 this->add_to_current_data(nb_copy_file_from_server, 1);
                             }
@@ -529,10 +529,10 @@ public:
                                 this->add_to_current_data(nb_copy_image_from_client, 1);
                                 break;
                             default:
-                                std::string format_name_string(reinterpret_cast<const char *>(fl_ln.formatUTF8Name));
-                                std::string file_desciptor_name(RDPECLIP::FILEGROUPDESCRIPTORW);
-                                std::string file_contents_name(RDPECLIP::FILECONTENTS);
-                                if (format_name_string == file_contents_name || format_name_string == file_desciptor_name) {
+                                std::string_view format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
+                                if (format_name_string == RDPECLIP::FILECONTENTS
+                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
+                                ) {
                                     this->file_contents_format_ID = fl_ln.formatID;
                                     this->add_to_current_data(nb_copy_file_from_client, 1);
                                 }

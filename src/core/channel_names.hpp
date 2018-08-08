@@ -68,8 +68,8 @@ namespace CHANNELS
         auto c_str() const noexcept
           -> char const (&)[8]
         {
-            return reinterpret_cast<char const (&)[8]>(
-                *reinterpret_cast<char const*>(&this->id)
+            return reinterpret_cast<char const (&)[8]>( /*NOLINT*/
+                *reinterpret_cast<char const*>(&this->id) /*NOLINT*/
             );
         }
 

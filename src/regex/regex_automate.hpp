@@ -97,25 +97,25 @@ namespace re {
                 + nb_cap_type + byte_mini_sts + byte_mini_sts_seq
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem);
+            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
             mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem);
+            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
             mem += nb_st_range_list;
-            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
             mem += nb_step_range_list;
-            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
             mem += nb_step_range_list;
-            this->traces = reinterpret_cast<const char**>(mem);
+            this->traces = reinterpret_cast<const char**>(mem); /*NOLINT*/
             mem += nb_traces;
-            this->idx_trace_free = reinterpret_cast<unsigned*>(mem);
+            this->idx_trace_free = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
             mem += nb_idx_trace_free;
-            this->reindex_trace = reinterpret_cast<unsigned*>(mem);
+            this->reindex_trace = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
             mem += nb_reindex_trace;
-            this->nums = reinterpret_cast<unsigned*>(mem);
+            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
             mem += nb_nums;
-            this->caps_type = reinterpret_cast<bool*>(mem);
+            this->caps_type = reinterpret_cast<bool*>(mem); /*NOLINT*/
             mem += nb_cap_type;
-            this->mini_sts = reinterpret_cast<MinimalState*>(mem);
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem); /*NOLINT*/
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -145,17 +145,17 @@ namespace re {
                 + nb_nums + byte_mini_sts + byte_mini_sts_seq
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem);
+            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
             mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem);
+            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
             mem += nb_st_range_list;
-            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            this->l1.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
             mem += nb_step_range_list;
-            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem));
+            this->l2.set_array(reinterpret_cast<StepRangeList::StepRange*>(mem)); /*NOLINT*/
             mem += nb_step_range_list;
-            this->nums = reinterpret_cast<unsigned*>(mem);
+            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
             mem += nb_nums;
-            this->mini_sts = reinterpret_cast<MinimalState*>(mem);
+            this->mini_sts = reinterpret_cast<MinimalState*>(mem); /*NOLINT*/
 
 #ifndef NDEBUG
             this->l1.nodes = this->nodes;
@@ -177,11 +177,11 @@ namespace re {
                 nb_st_list + nb_st_range_list + nb_nums
             ));
 
-            this->st_list = reinterpret_cast<StateList*>(mem);
+            this->st_list = reinterpret_cast<StateList*>(mem); /*NOLINT*/
             mem += nb_st_list;
-            this->st_range_list = reinterpret_cast<RangeList*>(mem);
+            this->st_range_list = reinterpret_cast<RangeList*>(mem); /*NOLINT*/
             mem += nb_st_range_list;
-            this->nums = reinterpret_cast<unsigned*>(mem);
+            this->nums = reinterpret_cast<unsigned*>(mem); /*NOLINT*/
         }
 
         void initialize_memory(size_t nb_st_list, size_t nb_st_range_list,
@@ -292,7 +292,7 @@ namespace re {
                 StateList * firstdest = this->st_list + matrix_size;
                 for (; first != last; ++first) {
                     using tab2_st_t = StateList*[2];
-                    tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first);
+                    tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*first); /*NOLINT*/
                     //overlap
                     StateList * cpfirst = tab[0];
                     StateList * cplast = tab[1];
@@ -369,7 +369,7 @@ namespace re {
                     if (copy_states) {
                         void * const mem = ::operator new(sizeof(MinimalState) + this->nb_states * sizeof * this->nums);
                         this->st_list = static_cast<StateList*>(mem);
-                        this->nums = reinterpret_cast<unsigned*>(static_cast<MinimalState*>(mem) + 1);
+                        this->nums = reinterpret_cast<unsigned*>(static_cast<MinimalState*>(mem) + 1); /*NOLINT*/
                         this->root = static_cast<State*>(mem);
                         this->mini_sts = static_cast<MinimalState*>(mem);
                         this->mini_sts->type = 0;
@@ -489,7 +489,7 @@ namespace re {
             }
 
             if (copy_states && -1u == this->st_range_beginning.st_num) {
-                this->root = reinterpret_cast<State*>(this->mini_sts);
+                this->root = reinterpret_cast<State*>(this->mini_sts); /*NOLINT*/
                 this->mini_sts->type = 0;
                 this->mini_sts->num = 0;
                 this->mini_sts_last = this->mini_sts + 1;
@@ -497,8 +497,8 @@ namespace re {
             else if (copy_states) {
                 {
                     const size_t size_mini_sts = (this->nb_states - this->nb_capture) * sizeof(MinimalState);
-                    char_int * str = reinterpret_cast<char_int*>(
-                        reinterpret_cast<char*>(this->mini_sts) + size_mini_sts
+                    char_int * str = reinterpret_cast<char_int*>(  /*NOLINT*/
+                        reinterpret_cast<char*>(this->mini_sts) + size_mini_sts  /*NOLINT*/
                         + size_mini_sts % sizeof(intmax_t)
                     );
                     state_list_t::const_iterator first = sts.begin();
@@ -506,7 +506,7 @@ namespace re {
                     MinimalState * first2 = this->mini_sts;
                     for (; first != last; ++first) {
                         if (*first == this->root) {
-                            this->root = reinterpret_cast<State*>(first2);
+                            this->root = reinterpret_cast<State*>(first2); /*NOLINT*/
                         }
                         State & st = **first;
                         first2->type = st.type;
@@ -536,7 +536,7 @@ namespace re {
                         while (msts->num != l->st->num) {
                             ++msts;
                         }
-                        l->st = reinterpret_cast<State*>(msts);
+                        l->st = reinterpret_cast<State*>(msts); /*NOLINT*/
                     }
                 }
 
@@ -547,7 +547,7 @@ namespace re {
                     while (msts->num != l->st->num) {
                         ++msts;
                     }
-                    l->st = reinterpret_cast<State*>(msts);
+                    l->st = reinterpret_cast<State*>(msts); /*NOLINT*/
                 }
             }
             this->first_last = true;
@@ -715,7 +715,7 @@ namespace re {
                         StateList * tmpstl = l->last;
                         push_state(l, st->out1, num_open, 1);
                         using tab2_st_t = StateList*[2];
-                        tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last);
+                        tab2_st_t& tab = reinterpret_cast<tab2_st_t&>(*this->st_range_beginning.last); /*NOLINT*/
                         tab[0] = tmpstl;
                         tab[1] = l->last;
                         --this->st_range_beginning.last;
