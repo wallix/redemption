@@ -375,7 +375,7 @@ public:
 
         /* Log to SIEM (redirected syslog) */
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
-            auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+            auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
                 ? this->ini.get<cfg::context::target_host>()
                 : this->ini.get<cfg::context::ip_target>());
 
@@ -404,7 +404,8 @@ public:
 
         /* Log to SIEM (redirected syslog) */
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
-            auto target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+            // TODO duplicated with log5
+            auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
                 ? this->ini.get<cfg::context::target_host>()
                 : this->ini.get<cfg::context::ip_target>());
 
@@ -429,30 +430,36 @@ public:
                 timeval now = tvtime();
                 time_t time_now = now.tv_sec;
 
-                std::string suser = this->ini.get<cfg::globals::auth_user>();
-                std::string duser = this->ini.get<cfg::globals::target_user>();
-                std::string session_id = this->ini.get<cfg::context::session_id>();
-                std::string host = this->ini.get<cfg::globals::host>();
-                std::string device = this->ini.get<cfg::globals::target_device>();
+                auto const& suser = this->ini.get<cfg::globals::auth_user>();
+                auto const& duser = this->ini.get<cfg::globals::target_user>();
+                auto const& session_id = this->ini.get<cfg::context::session_id>();
+                auto const& host = this->ini.get<cfg::globals::host>();
+                // auto const& device = this->ini.get<cfg::globals::target_device>();
 
                 std::string extension;
                 if (!asl_info.ApplicationProtocol.empty()) {
-                    extension += " app="+this->arcsight_text_formating(asl_info.ApplicationProtocol);
+                    extension += " app=";
+                    extension += this->arcsight_text_formating(asl_info.ApplicationProtocol);
                 }
                 if (!asl_info.WallixBastionStatus.empty()) {
-                    extension += " WallixBastionStatus="+this->arcsight_text_formating(asl_info.WallixBastionStatus);
+                    extension += " WallixBastionStatus=";
+                    extension += this->arcsight_text_formating(asl_info.WallixBastionStatus);
                 }
                 if (!asl_info.message.empty()) {
-                    extension += " msg=\""+this->arcsight_text_formating(asl_info.message)+"\"";
+                    extension += " msg=\"";
+                    extension += this->arcsight_text_formating(asl_info.message)+"\"";
                 }
                 if (!asl_info.oldFilePath.empty()) {
-                    extension += " oldFilePath="+this->arcsight_text_formating(asl_info.oldFilePath);
+                    extension += " oldFilePath=";
+                    extension += this->arcsight_text_formating(asl_info.oldFilePath);
                 }
                 if (!asl_info.filePath.empty()) {
-                    extension += " filePath="+this->arcsight_text_formating(asl_info.filePath);
+                    extension += " filePath=";
+                    extension += this->arcsight_text_formating(asl_info.filePath);
                 }
                 if (!asl_info.fileSize.empty()) {
-                    extension += " fsize="+this->arcsight_text_formating(asl_info.fileSize);
+                    extension += " fsize=";
+                    extension += this->arcsight_text_formating(asl_info.fileSize);
                 }
 
                 // TODO string_view + %.*s format
