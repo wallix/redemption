@@ -83,8 +83,6 @@ public:
 
 struct SecBuffer : Array {};
 
-using PSecBuffer = SecBuffer *;
-
 struct TimeStamp {
     uint32_t LowPart;
     int32_t HighPart;

@@ -1062,7 +1062,7 @@ public:
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(PSecBuffer output_buffer) {
+    SEC_STATUS write_negotiate(SecBuffer* output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
@@ -1078,7 +1078,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_negotiate(PSecBuffer input_buffer) {
+    SEC_STATUS read_negotiate(SecBuffer* input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
@@ -1095,7 +1095,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_challenge(PSecBuffer output_buffer) {
+    SEC_STATUS write_challenge(SecBuffer* output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
@@ -1112,7 +1112,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_challenge(PSecBuffer input_buffer) {
+    SEC_STATUS read_challenge(SecBuffer* input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
@@ -1125,7 +1125,7 @@ public:
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
-    SEC_STATUS write_authenticate(PSecBuffer output_buffer) {
+    SEC_STATUS write_authenticate(SecBuffer* output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }
@@ -1162,7 +1162,7 @@ public:
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    SEC_STATUS read_authenticate(PSecBuffer input_buffer) {
+    SEC_STATUS read_authenticate(SecBuffer* input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }

@@ -236,26 +236,21 @@ protected:
 
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce,
-                          CLIENT_NONCE_LENTH);
+        this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
         LOG(LOG_DEBUG, "credssp get client nonce");
         if (this->clientNonce.size() == CLIENT_NONCE_LENTH) {
-            memcpy(this->SavedClientNonce,
-                   this->clientNonce.get_data(),
-                   CLIENT_NONCE_LENTH);
+            memcpy(this->SavedClientNonce, this->clientNonce.get_data(), CLIENT_NONCE_LENTH);
         }
     }
     void credssp_set_client_nonce() {
         LOG(LOG_DEBUG, "credssp set client nonce");
         if (this->clientNonce.size() == 0) {
             this->clientNonce.init(CLIENT_NONCE_LENTH);
-            memcpy(this->clientNonce.get_data(),
-                   this->SavedClientNonce,
-                   CLIENT_NONCE_LENTH);
+            memcpy(this->clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENTH);
         }
     }
 
@@ -285,15 +280,12 @@ protected:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         }
-        SEC_STATUS status;
-        int public_key_length;
-        uint8_t * public_key;
         uint32_t version = this->ts_request.use_version;
 
-        public_key_length = this->PublicKey.size();
-        public_key = this->PublicKey.get_data();
+        int public_key_length = this->PublicKey.size();
+        uint8_t * public_key = this->PublicKey.get_data();
         if (version >= 5) {
-            bool client_to_server = !this->server;
+            const bool client_to_server = !this->server;
             if (client_to_server) {
                 this->credssp_generate_client_nonce();
             } else {
@@ -321,7 +313,8 @@ protected:
             this->ap_integer_increment_le(Buffers[1].get_data(), Buffers[1].size());
         }
 
-        status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
+        SEC_STATUS const status = this->table->EncryptMessage(
+            Buffers[1], Buffers[0], this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "EncryptMessage status: 0x%08X", status);
@@ -330,22 +323,13 @@ protected:
 
         // this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
         this->pubKeyAuth.init(Buffers[0].size() + Buffers[1].size());
-        this->pubKeyAuth.copy(Buffers[0].get_data(),
-                              Buffers[0].size());
-        this->pubKeyAuth.copy(Buffers[1].get_data(),
-                              Buffers[1].size(),
+        this->pubKeyAuth.copy(Buffers[0].get_data(), Buffers[0].size());
+        this->pubKeyAuth.copy(Buffers[1].get_data(), Buffers[1].size(),
                               this->ContextSizes.cbMaxSignature);
         return status;
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
-        int length = 0;
-        uint8_t* public_key1 = nullptr;
-        uint8_t* public_key2 = nullptr;
-        unsigned int public_key_length = 0;
-        SEC_STATUS status;
-        uint32_t version = this->ts_request.use_version;
-
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
         }
@@ -360,27 +344,29 @@ protected:
             }
             return SEC_E_INVALID_TOKEN;
         }
-        length = this->pubKeyAuth.size();
+        int const length = this->pubKeyAuth.size();
 
         SecBuffer Buffers[2]; /* Signature, Encrypted TLS Public Key */
 
         Buffers[0].init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].copy(this->pubKeyAuth.get_data(),
-                               this->ContextSizes.cbMaxSignature);
+        Buffers[0].copy(this->pubKeyAuth.get_data(), this->ContextSizes.cbMaxSignature);
 
         Buffers[1].init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
-                               Buffers[1].size());
+                        Buffers[1].size());
 
-        status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
+        SEC_STATUS const status = this->table->DecryptMessage(
+            Buffers[1], Buffers[0], this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
             return status;
         }
 
-        public_key_length = this->PublicKey.size();
-        public_key1 = this->PublicKey.get_data();
+        const uint32_t version = this->ts_request.use_version;
+
+        unsigned int public_key_length = this->PublicKey.size();
+        uint8_t* public_key1 = this->PublicKey.get_data();
         if (version >= 5) {
             bool client_to_server = this->server;
             this->credssp_get_client_nonce();
@@ -393,7 +379,7 @@ protected:
                 : this->ServerClientHash.get_data();
         }
 
-        public_key2 = Buffers[1].get_data();
+        uint8_t* public_key2 = Buffers[1].get_data();
 
         if (Buffers[1].size() != public_key_length) {
             LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].size(), size_t(public_key_length));
