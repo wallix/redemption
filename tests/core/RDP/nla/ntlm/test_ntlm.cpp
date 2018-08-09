@@ -109,9 +109,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
-    input_buffer.setzero();
-    output_buffer.setzero();
-    output_buffer.Buffer.init(client_packageInfo.cbMaxToken);
+    input_buffer.init(0);
+    output_buffer.init(0);
+    output_buffer.init(client_packageInfo.cbMaxToken);
 
     unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
@@ -127,8 +127,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     RED_CHECK_EQUAL(client_status, SEC_I_CONTINUE_NEEDED);
 
-    RED_CHECK_EQUAL(output_buffer.Buffer.size(), 40);
-    // hexdump_c(output_buffer.Buffer.get_data(), 40);
+    RED_CHECK_EQUAL(output_buffer.size(), 40);
+    // hexdump_c(output_buffer.get_data(), 40);
 
     unsigned long fsContextReq = 0;
     fsContextReq |= ASC_REQ_MUTUAL_AUTH;
@@ -142,7 +142,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     fsContextReq |= ASC_REQ_EXTENDED_ERROR;
 
-    input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
+    input_buffer.init(client_packageInfo.cbMaxToken);
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
@@ -150,10 +150,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
         output_buffer, fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
-    RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
-    // hexdump_c(input_buffer.Buffer.get_data(), 120);
+    RED_CHECK_EQUAL(input_buffer.size(), 120);
+    // hexdump_c(input_buffer.get_data(), 120);
 
-    output_buffer.Buffer.init(server_packageInfo.cbMaxToken);
+    output_buffer.init(server_packageInfo.cbMaxToken);
 
     // client second call, got context
     // got input buffer: challenge message
@@ -166,11 +166,11 @@ RED_AUTO_TEST_CASE(TestInitialize)
     );
 
     RED_CHECK_EQUAL(client_status, SEC_I_COMPLETE_NEEDED);
-    RED_CHECK_EQUAL(output_buffer.Buffer.size(), 266);
-    // hexdump_c(output_buffer.Buffer.get_data(), 266);
+    RED_CHECK_EQUAL(output_buffer.size(), 266);
+    // hexdump_c(output_buffer.get_data(), 266);
 
 
-    input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
+    input_buffer.init(client_packageInfo.cbMaxToken);
 
 
 
@@ -180,7 +180,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
         output_buffer, fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
-    RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);
+    RED_CHECK_EQUAL(input_buffer.size(), 0);
 
     // Check contexts
     NTLMContext const * client = client_table.getContextHandle();
@@ -250,31 +250,26 @@ RED_AUTO_TEST_CASE(TestInitialize)
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
     Array Result;
     SecBuffer Buffers[2]; /* Signature, TLS Public Key */
-    Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
-    Buffers[1].Buffer.init(sizeof(message));
-    Buffers[1].Buffer.copy(message,
-                           Buffers[1].Buffer.size());
+    Buffers[0].init(ContextSizes.cbMaxSignature);
+    Buffers[1].init(sizeof(message));
+    Buffers[1].copy(message,
+                           Buffers[1].size());
     server_status = server_table.EncryptMessage(Buffers[1], Buffers[0], 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 
-    Result.copy(Buffers[0].Buffer.get_data(),
-                Buffers[0].Buffer.size());
-    Result.copy(Buffers[1].Buffer.get_data(),
-                Buffers[1].Buffer.size(),
-                ContextSizes.cbMaxSignature);
+    Result.copy(Buffers[0].get_data(), Buffers[0].size());
+    Result.copy(Buffers[1].get_data(), Buffers[1].size(), ContextSizes.cbMaxSignature);
 
     // LOG(LOG_INFO, "=== ENCRYPTION RESULT: size: %u, token: %u, data %u",
     //     Result.size(), ContextSizes.cbMaxSignature, sizeof(message));
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
-    Buffers[0].Buffer.copy(Result.get_data(),
-                           ContextSizes.cbMaxSignature);
-    Buffers[1].Buffer.init(Result.size() - ContextSizes.cbMaxSignature);
-    Buffers[1].Buffer.copy(Result.get_data() + ContextSizes.cbMaxSignature,
-                           Buffers[1].Buffer.size());
+    Buffers[0].init(ContextSizes.cbMaxSignature);
+    Buffers[0].copy(Result.get_data(), ContextSizes.cbMaxSignature);
+    Buffers[1].init(Result.size() - ContextSizes.cbMaxSignature);
+    Buffers[1].copy(Result.get_data() + ContextSizes.cbMaxSignature, Buffers[1].size());
     client_status = client_table.DecryptMessage(Buffers[1], Buffers[0], 0);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);

@@ -310,15 +310,15 @@ protected:
 
         SecBuffer Buffers[2]; /* Signature, TLS Public Key */
 
-        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
+        Buffers[0].init(this->ContextSizes.cbMaxSignature);
 
-        Buffers[1].Buffer.init(public_key_length);
-        Buffers[1].Buffer.copy(public_key, public_key_length);
+        Buffers[1].init(public_key_length);
+        Buffers[1].copy(public_key, public_key_length);
 
         if (this->server && version < 5) {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
+            this->ap_integer_increment_le(Buffers[1].get_data(), Buffers[1].size());
         }
 
         status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
@@ -329,11 +329,11 @@ protected:
         }
 
         // this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
-        this->pubKeyAuth.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
-        this->pubKeyAuth.copy(Buffers[0].Buffer.get_data(),
-                              Buffers[0].Buffer.size());
-        this->pubKeyAuth.copy(Buffers[1].Buffer.get_data(),
-                              Buffers[1].Buffer.size(),
+        this->pubKeyAuth.init(Buffers[0].size() + Buffers[1].size());
+        this->pubKeyAuth.copy(Buffers[0].get_data(),
+                              Buffers[0].size());
+        this->pubKeyAuth.copy(Buffers[1].get_data(),
+                              Buffers[1].size(),
                               this->ContextSizes.cbMaxSignature);
         return status;
     }
@@ -364,13 +364,13 @@ protected:
 
         SecBuffer Buffers[2]; /* Signature, Encrypted TLS Public Key */
 
-        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
+        Buffers[0].init(this->ContextSizes.cbMaxSignature);
+        Buffers[0].copy(this->pubKeyAuth.get_data(),
                                this->ContextSizes.cbMaxSignature);
 
-        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].Buffer.copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
-                               Buffers[1].Buffer.size());
+        Buffers[1].init(length - this->ContextSizes.cbMaxSignature);
+        Buffers[1].copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
+                               Buffers[1].size());
 
         status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
 
@@ -393,10 +393,10 @@ protected:
                 : this->ServerClientHash.get_data();
         }
 
-        public_key2 = Buffers[1].Buffer.get_data();
+        public_key2 = Buffers[1].get_data();
 
-        if (Buffers[1].Buffer.size() != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].Buffer.size(), size_t(public_key_length));
+        if (Buffers[1].size() != public_key_length) {
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].size(), size_t(public_key_length));
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
@@ -490,11 +490,11 @@ public:
 
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.get_offset());
 
-        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        memset(Buffers[0].Buffer.get_data(), 0, Buffers[0].Buffer.size());
+        Buffers[0].init(this->ContextSizes.cbMaxSignature);
+        memset(Buffers[0].get_data(), 0, Buffers[0].size());
 
-        Buffers[1].Buffer.init(ts_credentials_send.get_offset());
-        Buffers[1].Buffer.copy(ts_credentials_send.get_data(),
+        Buffers[1].init(ts_credentials_send.get_offset());
+        Buffers[1].copy(ts_credentials_send.get_data(),
                                ts_credentials_send.get_offset());
 
         status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
@@ -504,12 +504,12 @@ public:
         }
 
         // this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
-        this->authInfo.init(Buffers[0].Buffer.size() + Buffers[1].Buffer.size());
+        this->authInfo.init(Buffers[0].size() + Buffers[1].size());
 
-        this->authInfo.copy(Buffers[0].Buffer.get_data(),
-                            Buffers[0].Buffer.size());
-        this->authInfo.copy(Buffers[1].Buffer.get_data(),
-                            Buffers[1].Buffer.size(),
+        this->authInfo.copy(Buffers[0].get_data(),
+                            Buffers[0].size());
+        this->authInfo.copy(Buffers[1].get_data(),
+                            Buffers[1].size(),
                             this->ContextSizes.cbMaxSignature);
         return SEC_E_OK;
     }
@@ -557,7 +557,7 @@ private:
         }
 
         this->client_auth_data.cbMaxToken = packageInfo.cbMaxToken;
-        this->client_auth_data.input_buffer.setzero();
+        this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.have_input_buffer = false;
         this->ContextSizes = {};
 
@@ -586,7 +586,7 @@ private:
         unsigned long const fContextReq
           = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        output_buffer.Buffer.init(this->client_auth_data.cbMaxToken);
+        output_buffer.init(this->client_auth_data.cbMaxToken);
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
             char_ptr_cast(this->ServicePrincipalName.get_data()),
@@ -605,8 +605,8 @@ private:
         }
 
         if (this->client_auth_data.have_input_buffer
-         && this->client_auth_data.input_buffer.Buffer.size() > 0) {
-            this->client_auth_data.input_buffer.Buffer.init(0);
+         && this->client_auth_data.input_buffer.size() > 0) {
+            this->client_auth_data.input_buffer.init(0);
         }
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
@@ -628,9 +628,9 @@ private:
 
         /* send authentication token to server */
 
-        if (output_buffer.Buffer.size() > 0) {
+        if (output_buffer.size() > 0) {
             // copy or set reference ? BStream
-            this->negoToken.copy(output_buffer.Buffer);
+            this->negoToken.copy(output_buffer);
 
             // #ifdef WITH_DEBUG_CREDSSP
             //             LOG(LOG_ERR, "Sending Authentication Token");
@@ -673,7 +673,7 @@ private:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
         }
-        this->client_auth_data.input_buffer.Buffer.copy(this->negoToken);
+        this->client_auth_data.input_buffer.copy(this->negoToken);
 
         this->client_auth_data.have_input_buffer = true;
 
@@ -795,11 +795,11 @@ public:
 
         length = this->authInfo.size();
 
-        Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].Buffer.copy(this->authInfo.get_data(), Buffers[0].Buffer.size());
+        Buffers[0].init(this->ContextSizes.cbMaxSignature);
+        Buffers[0].copy(this->authInfo.get_data(), Buffers[0].size());
 
-        Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].Buffer.size());
+        Buffers[1].init(length - this->ContextSizes.cbMaxSignature);
+        Buffers[1].copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].size());
 
         status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
 
@@ -807,7 +807,7 @@ public:
             return status;
         }
 
-        InStream decrypted_creds(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
+        InStream decrypted_creds(Buffers[1].get_data(), Buffers[1].size());
         this->ts_credentials.recv(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,
@@ -880,17 +880,17 @@ public:
         SecBuffer input_buffer;
         SecBuffer output_buffer;
 
-        input_buffer.setzero();
-        output_buffer.setzero();
+        input_buffer.init(0);
+        output_buffer.init(0);
 
-        input_buffer.Buffer.copy(this->negoToken);
+        input_buffer.copy(this->negoToken);
 
         if (this->negoToken.size() < 1) {
             LOG(LOG_ERR, "CredSSP: invalid negoToken!");
             return Res::Err;
         }
 
-        output_buffer.Buffer.init(this->server_auth_data.cbMaxToken);
+        output_buffer.init(this->server_auth_data.cbMaxToken);
 
         unsigned long const fContextReq = 0
             | ASC_REQ_MUTUAL_AUTH
@@ -907,7 +907,7 @@ public:
             return Res::Ok;
         }
 
-        this->negoToken.copy(output_buffer.Buffer);
+        this->negoToken.copy(output_buffer);
 
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
             this->table->CompleteAuthToken(output_buffer);

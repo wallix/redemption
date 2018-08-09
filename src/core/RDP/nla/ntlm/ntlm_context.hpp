@@ -1069,8 +1069,8 @@ public:
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.get_offset());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer->init(out_stream.get_offset());
+        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
 
         this->SavedNegotiateMessage.init(out_stream.get_offset());
         this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.get_offset());
@@ -1082,8 +1082,7 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
-        InStream in_stream(input_buffer->Buffer.get_data(),
-                           input_buffer->Buffer.size());
+        InStream in_stream(input_buffer->get_data(), input_buffer->size());
         this->NEGOTIATE_MESSAGE.recv(in_stream);
         if (!this->ntlm_check_nego()) {
             return SEC_E_INVALID_TOKEN;
@@ -1103,8 +1102,8 @@ public:
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.get_offset());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer->init(out_stream.get_offset());
+        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
 
         this->SavedChallengeMessage.init(out_stream.get_offset());
         this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.get_offset());
@@ -1117,8 +1116,8 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
-        InStream in_stream(input_buffer->Buffer.get_data(),
-                           input_buffer->Buffer.size());
+        InStream in_stream(input_buffer->get_data(),
+                           input_buffer->size());
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
         this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());
@@ -1155,8 +1154,8 @@ public:
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
-        output_buffer->Buffer.init(out_stream.get_offset());
-        output_buffer->Buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer->init(out_stream.get_offset());
+        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
         if (this->verbose) {
             this->AUTHENTICATE_MESSAGE.log();
         }
@@ -1167,7 +1166,7 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }
-        InStream in_stream(input_buffer->Buffer.get_data(), input_buffer->Buffer.size());
+        InStream in_stream(input_buffer->get_data(), input_buffer->size());
         this->AUTHENTICATE_MESSAGE.recv(in_stream);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;

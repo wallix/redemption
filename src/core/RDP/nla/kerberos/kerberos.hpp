@@ -217,8 +217,8 @@ public:
         if (pinput_buffer) {
             // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
             //     input_buffer->Buffer.size());
-            input_tok.length = pinput_buffer->Buffer.size();
-            input_tok.value = pinput_buffer->Buffer.get_data();
+            input_tok.length = pinput_buffer->size();
+            input_tok.value = pinput_buffer->get_data();
         }
         else {
             // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
@@ -269,11 +269,11 @@ public:
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
-            output_buffer.Buffer.init(0);
+            output_buffer.init(0);
         }
         else {
-            output_buffer.Buffer.init(output_tok.length);
-            output_buffer.Buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
+            output_buffer.init(output_tok.length);
+            output_buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -312,8 +312,8 @@ public:
 
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
-        input_tok.length = input_buffer.Buffer.size();
-        input_tok.value = input_buffer.Buffer.get_data();
+        input_tok.length = input_buffer.size();
+        input_tok.value = input_buffer.get_data();
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
@@ -360,11 +360,11 @@ public:
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
-            output_buffer.Buffer.init(0);
+            output_buffer.init(0);
         }
         else {
-            output_buffer.Buffer.init(output_tok.length);
-            output_buffer.Buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
+            output_buffer.init(output_tok.length);
+            output_buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -400,8 +400,8 @@ public:
         }
         gss_buffer_desc inbuf, outbuf;
 
-        inbuf.value = data_buffer.Buffer.get_data();
-        inbuf.length = data_buffer.Buffer.size();
+        inbuf.value = data_buffer.get_data();
+        inbuf.length = data_buffer.size();
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
         major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
@@ -412,8 +412,8 @@ public:
             return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
-        data_buffer.Buffer.init(outbuf.length);
-        data_buffer.Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_buffer.init(outbuf.length);
+        data_buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -441,8 +441,8 @@ public:
             return SEC_E_NO_CONTEXT;
         }
         gss_buffer_desc inbuf, outbuf;
-        inbuf.value = data_buffer.Buffer.get_data();
-        inbuf.length = data_buffer.Buffer.size();
+        inbuf.value = data_buffer.get_data();
+        inbuf.length = data_buffer.size();
         // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
         major_status = gss_unwrap(&minor_status, this->krb_ctx->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
@@ -453,8 +453,8 @@ public:
             return SEC_E_DECRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
-        data_buffer.Buffer.init(outbuf.length);
-        data_buffer.Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_buffer.init(outbuf.length);
+        data_buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }

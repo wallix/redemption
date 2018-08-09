@@ -81,13 +81,7 @@ public:
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION 0
 
-struct SecBuffer {
-    Array         Buffer;
-
-    void setzero() {
-        this->Buffer.init(0);
-    }
-};
+struct SecBuffer : Array {};
 
 using PSecBuffer = SecBuffer *;
 

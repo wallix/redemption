@@ -153,7 +153,7 @@ public:
         }
 
         if ((!pinput_buffer) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
-            if (output_buffer.Buffer.size() < 1) {
+            if (output_buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
             if (this->context->state == NTLM_STATE_INITIAL) {
@@ -165,7 +165,7 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        if (pinput_buffer->Buffer.size() < 1) {
+        if (pinput_buffer->size() < 1) {
             return SEC_E_INVALID_TOKEN;
         }
         // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
@@ -178,7 +178,7 @@ public:
         if (this->context->state == NTLM_STATE_CHALLENGE) {
             this->context->read_challenge(pinput_buffer);
 
-            if (output_buffer.Buffer.size() < 1) {
+            if (output_buffer.size() < 1) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
             if (this->context->state == NTLM_STATE_AUTHENTICATE) {
@@ -211,13 +211,13 @@ public:
 
         if (this->context->state == NTLM_STATE_INITIAL) {
             this->context->state = NTLM_STATE_NEGOTIATE;
-            if (input_buffer.Buffer.size() < 1) {
+            if (input_buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
             /*SEC_STATUS status = */this->context->read_negotiate(&input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
-                if (output_buffer.Buffer.size() < 1) {
+                if (output_buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
 
@@ -228,7 +228,7 @@ public:
         }
 
         if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-            if (input_buffer.Buffer.size() < 1) {
+            if (input_buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
 
@@ -257,7 +257,7 @@ public:
                 return status;
             }
 
-            output_buffer.Buffer.init(0);
+            output_buffer.init(0);
 
             return status;
         }
@@ -280,10 +280,10 @@ public:
         }
 
         /* Copy original data buffer */
-        size_t const length = data_buffer.Buffer.size();
+        size_t const length = data_buffer.size();
         auto unique_data = std::make_unique<uint8_t[]>(length);
         auto* data = unique_data.get();
-        memcpy(data, data_buffer.Buffer.get_data(), length);
+        memcpy(data, data_buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
@@ -297,10 +297,10 @@ public:
         /* Encrypt message using with RC4, result overwrites original buffer */
 
         if (this->context->confidentiality) {
-            this->context->SendRc4Seal.crypt(length, data, data_buffer.Buffer.get_data());
+            this->context->SendRc4Seal.crypt(length, data, data_buffer.get_data());
         }
         else {
-            data_buffer.Buffer.copy(data, length);
+            data_buffer.copy(data, length);
         }
 
 
@@ -328,7 +328,7 @@ public:
         /* RC4-encrypt first 8 bytes of digest */
         this->context->SendRc4Seal.crypt(8, digest, checksum);
 
-        signature = signature_buffer.Buffer.get_data();
+        signature = signature_buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
         memcpy(signature, &version, 4);
@@ -361,18 +361,18 @@ public:
         }
 
         /* Copy original data buffer */
-        size_t const length = data_buffer.Buffer.size();
+        size_t const length = data_buffer.size();
         auto unique_data = std::make_unique<uint8_t[]>(length);
         auto* data = unique_data.get();
-        memcpy(data, data_buffer.Buffer.get_data(), length);
+        memcpy(data, data_buffer.get_data(), length);
 
         /* Decrypt message using with RC4, result overwrites original buffer */
 
         if (this->context->confidentiality) {
-            this->context->RecvRc4Seal.crypt(length, data, data_buffer.Buffer.get_data());
+            this->context->RecvRc4Seal.crypt(length, data, data_buffer.get_data());
         }
         else {
-            data_buffer.Buffer.copy(data, length);
+            data_buffer.copy(data, length);
         }
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
@@ -380,7 +380,7 @@ public:
         uint8_t tmp[sizeof(SeqNo)];
         ::out_bytes_le(tmp, sizeof(SeqNo), SeqNo);
         hmac_md5.update(tmp, sizeof(tmp));
-        hmac_md5.update(data_buffer.Buffer.get_data(), data_buffer.Buffer.size());
+        hmac_md5.update(data_buffer.get_data(), data_buffer.size());
         hmac_md5.final(digest);
 
 // #ifdef WITH_DEBUG_NTLM
@@ -413,13 +413,13 @@ public:
         memcpy(&expected_signature[12], &SeqNo, 4);
         this->context->RecvSeqNum++;
 
-        if (memcmp(signature_buffer.Buffer.get_data(), expected_signature, 16) != 0) {
+        if (memcmp(signature_buffer.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
             hexdump_c(expected_signature, 16);
             LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(signature_buffer.Buffer.get_data(), 16);
+            hexdump_c(signature_buffer.get_data(), 16);
 
             return SEC_E_MESSAGE_ALTERED;
         }

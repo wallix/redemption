@@ -114,13 +114,6 @@ RED_AUTO_TEST_CASE(Test_Array)
 
 }
 
-RED_AUTO_TEST_CASE(TestSecBuffer)
-{
-    SecBuffer a;
-    a.setzero();
-    RED_CHECK_EQUAL(a.Buffer.size(), 0);
-}
-
 RED_AUTO_TEST_CASE(TestSecIdentity)
 {
     uint8_t name[] = "Ménélas";
