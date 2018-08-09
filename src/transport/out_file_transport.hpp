@@ -151,7 +151,7 @@ inline ReportError report_error_from_reporter(ReportMessageApi * reporter)
 
 struct OutFileTransport : Transport
 {
-    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept
+    explicit OutFileTransport(unique_fd fd, ReportError report_error = ReportError()) noexcept /*NOLINT*/
     : file(std::move(fd))
     , report_error(std::move(report_error))
     {}

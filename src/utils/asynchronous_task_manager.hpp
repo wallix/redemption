@@ -39,7 +39,7 @@ public:
         : data(p)
         , f([](void* data, AsynchronousTask& t) noexcept {
             char f[1]{};
-            reinterpret_cast<F&>(f)(static_cast<T*>(data), t);
+            reinterpret_cast<F&>(f)(static_cast<T*>(data), t); /*NOLINT*/
         })
         {}
 
