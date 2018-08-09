@@ -271,39 +271,23 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
         uint32_t SeqNo(MessageSeqNo);
         uint8_t checksum[8];
         uint8_t* signature;
         uint32_t version = 1;
-        PSecBuffer data_buffer = nullptr;
-        PSecBuffer signature_buffer = nullptr;
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
         if (this->context->verbose & 0x400) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
-        for (unsigned long index = 0; index < Message.cBuffers; index++) {
-            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &Message.pBuffers[index];
-            }
-            else if (Message.pBuffers[index].BufferType == SECBUFFER_TOKEN) {
-                signature_buffer = &Message.pBuffers[index];
-            }
-        }
 
-        if (!data_buffer) {
-            return SEC_E_INVALID_TOKEN;
-        }
-        if (!signature_buffer) {
-            return SEC_E_INVALID_TOKEN;
-        }
         /* Copy original data buffer */
-        size_t const length = data_buffer->Buffer.size();
+        size_t const length = data_buffer.Buffer.size();
         auto unique_data = std::make_unique<uint8_t[]>(length);
         auto* data = unique_data.get();
-        memcpy(data, data_buffer->Buffer.get_data(), length);
+        memcpy(data, data_buffer.Buffer.get_data(), length);
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
@@ -317,10 +301,10 @@ public:
         /* Encrypt message using with RC4, result overwrites original buffer */
 
         if (this->context->confidentiality) {
-            this->context->SendRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
+            this->context->SendRc4Seal.crypt(length, data, data_buffer.Buffer.get_data());
         }
         else {
-            data_buffer->Buffer.copy(data, length);
+            data_buffer.Buffer.copy(data, length);
         }
 
 
@@ -348,7 +332,7 @@ public:
         /* RC4-encrypt first 8 bytes of digest */
         this->context->SendRc4Seal.crypt(8, digest, checksum);
 
-        signature = signature_buffer->Buffer.get_data();
+        signature = signature_buffer.Buffer.get_data();
 
         /* Concatenate version, ciphertext and sequence number to build signature */
         memcpy(signature, &version, 4);

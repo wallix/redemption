@@ -380,7 +380,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& /*signature_buffer*/, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -398,20 +398,10 @@ public:
         if (!this->krb_ctx) {
             return SEC_E_NO_CONTEXT;
         }
-        PSecBuffer data_buffer = nullptr;
         gss_buffer_desc inbuf, outbuf;
-        for (unsigned long index = 0; index < Message.cBuffers; index++) {
-            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &Message.pBuffers[index];
-            }
-        }
-        if (data_buffer) {
-            inbuf.value = data_buffer->Buffer.get_data();
-            inbuf.length = data_buffer->Buffer.size();
-        }
-        else {
-            return SEC_E_INVALID_TOKEN;
-        }
+
+        inbuf.value = data_buffer.Buffer.get_data();
+        inbuf.length = data_buffer.Buffer.size();
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
         major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
@@ -422,8 +412,8 @@ public:
             return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
-        data_buffer->Buffer.init(outbuf.length);
-        data_buffer->Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_buffer.Buffer.init(outbuf.length);
+        data_buffer.Buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;

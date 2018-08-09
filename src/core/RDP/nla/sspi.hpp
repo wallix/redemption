@@ -672,9 +672,10 @@ struct SecurityFunctionTable
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) {
-        (void)Message;
-        (void)MessageSeqNo;
+    virtual SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long messageSeqNo) {
+        (void)data_buffer;
+        (void)signature_buffer;
+        (void)messageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 

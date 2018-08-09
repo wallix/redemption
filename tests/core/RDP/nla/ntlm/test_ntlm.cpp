@@ -261,10 +261,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Buffers[1].Buffer.init(sizeof(message));
     Buffers[1].Buffer.copy(message,
                            Buffers[1].Buffer.size());
-    Message.cBuffers = 2;
-    Message.ulVersion = SECBUFFER_VERSION;
-    Message.pBuffers = Buffers;
-    server_status = server_table.EncryptMessage(Message, 0);
+    server_status = server_table.EncryptMessage(Buffers[1], Buffers[0], 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
 

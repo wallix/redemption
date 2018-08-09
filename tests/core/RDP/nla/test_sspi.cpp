@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     SecBufferDesc Message;
-    status = table.EncryptMessage(Message, 0);
+    status = table.EncryptMessage(buffer, buffer, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     status = table.DecryptMessage(Message, 0);

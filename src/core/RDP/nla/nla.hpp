@@ -286,7 +286,6 @@ protected:
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         }
         SecBuffer Buffers[2];
-        SecBufferDesc Message;
         SEC_STATUS status;
         int public_key_length;
         uint8_t * public_key;
@@ -324,11 +323,7 @@ protected:
             this->ap_integer_increment_le(Buffers[1].Buffer.get_data(), Buffers[1].Buffer.size());
         }
 
-        Message.cBuffers = 2;
-        Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = Buffers;
-
-        status = this->table->EncryptMessage(Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "EncryptMessage status: 0x%08X", status);
@@ -492,7 +487,6 @@ public:
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
         SecBuffer Buffers[2];
-        SecBufferDesc Message;
         SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
@@ -514,12 +508,7 @@ public:
         Buffers[1].Buffer.copy(ts_credentials_send.get_data(),
                                ts_credentials_send.get_offset());
 
-
-        Message.cBuffers = 2;
-        Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = Buffers;
-
-        status = this->table->EncryptMessage(Message, this->send_seq_num++);
+        status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
