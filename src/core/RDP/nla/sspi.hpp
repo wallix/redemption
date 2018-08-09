@@ -681,9 +681,10 @@ struct SecurityFunctionTable
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) {
-        (void)Message;
-        (void)MessageSeqNo;
+    virtual SEC_STATUS DecryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long messageSeqNo) {
+        (void)data_buffer;
+        (void)signature_buffer;
+        (void)messageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 

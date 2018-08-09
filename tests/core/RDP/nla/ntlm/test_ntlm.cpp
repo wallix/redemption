@@ -253,7 +253,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
     SecBuffer Buffers[2];
-    SecBufferDesc Message;
     Array Result;
     Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
     Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
@@ -284,10 +283,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Buffers[1].Buffer.init(Result.size() - ContextSizes.cbMaxSignature);
     Buffers[1].Buffer.copy(Result.get_data() + ContextSizes.cbMaxSignature,
                            Buffers[1].Buffer.size());
-    Message.cBuffers = 2;
-    Message.ulVersion = SECBUFFER_VERSION;
-    Message.pBuffers = Buffers;
-    client_status = client_table.DecryptMessage(Message, 0);
+    client_status = client_table.DecryptMessage(Buffers[1], Buffers[0], 0);
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 

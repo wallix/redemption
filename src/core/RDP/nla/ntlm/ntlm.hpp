@@ -351,14 +351,12 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(SecBufferDesc& Message, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
         uint32_t SeqNo(MessageSeqNo);
         uint8_t digest[SslMd5::DIGEST_LENGTH] = {};
         uint8_t checksum[8] = {};
         uint32_t version = 1;
         uint8_t expected_signature[16] = {};
-        PSecBuffer data_buffer = nullptr;
-        PSecBuffer signature_buffer = nullptr;
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -366,34 +364,19 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
-        for (unsigned long index = 0; index < Message.cBuffers; index++) {
-            if (Message.pBuffers[index].BufferType == SECBUFFER_DATA) {
-                data_buffer = &Message.pBuffers[index];
-            }
-            else if (Message.pBuffers[index].BufferType == SECBUFFER_TOKEN) {
-                signature_buffer = &Message.pBuffers[index];
-            }
-        }
-
-        if (!data_buffer) {
-            return SEC_E_INVALID_TOKEN;
-        }
-        if (!signature_buffer) {
-            return SEC_E_INVALID_TOKEN;
-        }
         /* Copy original data buffer */
-        size_t const length = data_buffer->Buffer.size();
+        size_t const length = data_buffer.Buffer.size();
         auto unique_data = std::make_unique<uint8_t[]>(length);
         auto* data = unique_data.get();
-        memcpy(data, data_buffer->Buffer.get_data(), length);
+        memcpy(data, data_buffer.Buffer.get_data(), length);
 
         /* Decrypt message using with RC4, result overwrites original buffer */
 
         if (this->context->confidentiality) {
-            this->context->RecvRc4Seal.crypt(length, data, data_buffer->Buffer.get_data());
+            this->context->RecvRc4Seal.crypt(length, data, data_buffer.Buffer.get_data());
         }
         else {
-            data_buffer->Buffer.copy(data, length);
+            data_buffer.Buffer.copy(data, length);
         }
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
@@ -401,7 +384,7 @@ public:
         uint8_t tmp[sizeof(SeqNo)];
         ::out_bytes_le(tmp, sizeof(SeqNo), SeqNo);
         hmac_md5.update(tmp, sizeof(tmp));
-        hmac_md5.update(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
+        hmac_md5.update(data_buffer.Buffer.get_data(), data_buffer.Buffer.size());
         hmac_md5.final(digest);
 
 // #ifdef WITH_DEBUG_NTLM
@@ -434,13 +417,13 @@ public:
         memcpy(&expected_signature[12], &SeqNo, 4);
         this->context->RecvSeqNum++;
 
-        if (memcmp(signature_buffer->Buffer.get_data(), expected_signature, 16) != 0) {
+        if (memcmp(signature_buffer.Buffer.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
             hexdump_c(expected_signature, 16);
             LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(signature_buffer->Buffer.get_data(), 16);
+            hexdump_c(signature_buffer.Buffer.get_data(), 16);
 
             return SEC_E_MESSAGE_ALTERED;
         }

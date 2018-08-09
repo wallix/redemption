@@ -272,11 +272,10 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.QuerySecurityContextToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    SecBufferDesc Message;
     status = table.EncryptMessage(buffer, buffer, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.DecryptMessage(Message, 0);
+    status = table.DecryptMessage(buffer, buffer, 0);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);

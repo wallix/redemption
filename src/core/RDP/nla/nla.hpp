@@ -346,7 +346,6 @@ protected:
         uint8_t* public_key2 = nullptr;
         unsigned int public_key_length = 0;
         SecBuffer Buffers[2];
-        SecBufferDesc Message;
         SEC_STATUS status;
         uint32_t version = this->ts_request.use_version;
 
@@ -377,11 +376,7 @@ protected:
         Buffers[1].Buffer.copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
                                Buffers[1].Buffer.size());
 
-        Message.cBuffers = 2;
-        Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = Buffers;
-
-        status = this->table->DecryptMessage(Message, this->recv_seq_num++);
+        status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
@@ -796,7 +791,6 @@ public:
     SEC_STATUS credssp_decrypt_ts_credentials() {
         int length;
         SecBuffer Buffers[2];
-        SecBufferDesc Message;
         SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
@@ -817,11 +811,7 @@ public:
         Buffers[1].Buffer.init(length - this->ContextSizes.cbMaxSignature);
         Buffers[1].Buffer.copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].Buffer.size());
 
-        Message.cBuffers = 2;
-        Message.ulVersion = SECBUFFER_VERSION;
-        Message.pBuffers = Buffers;
-
-        status = this->table->DecryptMessage(Message, this->recv_seq_num++);
+        status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
