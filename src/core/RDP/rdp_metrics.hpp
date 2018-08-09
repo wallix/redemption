@@ -654,8 +654,8 @@ public:
     void log(timeval & now) {
 
         timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
-        if (this->modified_var_since_last_log && !wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-            next_log_time.tv_sec += this->log_delay.count();
+        if (/*this->modified_var_since_last_log && */!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+            this->next_log_time.tv_sec += this->log_delay.count();
 
             this->rotate(now.tv_sec);
 

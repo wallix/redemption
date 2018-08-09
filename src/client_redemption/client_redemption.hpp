@@ -61,6 +61,8 @@
 
 #include "utils/fixed_random.hpp"
 
+#include "front/execute_events.hpp"
+
 
 
 class ClientRedemption : public ClientRedemptionController
@@ -201,6 +203,9 @@ public:
 
     std::string       local_IP;
 
+    int keep_alive_freq;
+    timeval start_win_session_time;
+
 
 
 public:
@@ -229,6 +234,8 @@ public:
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
         , local_IP("unknow_local_IP")
+        , keep_alive_freq(100)
+        , start_win_session_time(tvtime())
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -286,6 +293,30 @@ public:
     }
 
     ~ClientRedemption() = default;
+
+    int wait_and_draw_event(timeval timeout)
+    {
+        if (ExecuteEventsResult::Error == execute_events(
+            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+            *this->mod, *this
+        )) {
+
+            LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
+            return 9;
+        }
+        return 0;
+    }
+
+    void send_key_to_keep_alive() {
+        if (this->keep_alive_freq) {
+            std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+
+            if ( ((duration.count() / 1000000) % this->keep_alive_freq) == 0) {
+                this->send_rdp_scanCode(0x1e, KBD_FLAG_UP);
+                this->send_rdp_scanCode(0x1e, 0);
+            }
+        }
+    }
 
     virtual void update_keylayout() override {
         if (this->impl_mouse_keyboard) {
