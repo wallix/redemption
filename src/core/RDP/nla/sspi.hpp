@@ -558,33 +558,33 @@ struct SecurityFunctionTable
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 SecBufferDesc * pInput,
+                                                 SecBuffer* pinput_buffer,
                                                  unsigned long Reserved2,
-                                                 SecBufferDesc * pOutput) {
+                                                 SecBuffer& output_buffer) {
 
         (void)pszTargetName;
         (void)fContextReq;
-        (void)pInput;
+        (void)pinput_buffer;
         (void)Reserved2;
-        (void)pOutput;
+        (void)output_buffer;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecBufferDesc& pInput,
+    virtual SEC_STATUS AcceptSecurityContext(SecBuffer& input_buffer,
                                              unsigned long fContextReq,
-                                             SecBufferDesc& pOutput) {
-        (void)pInput;
+                                             SecBuffer& output_buffer) {
+        (void)input_buffer;
         (void)fContextReq;
-        (void)pOutput;
+        (void)output_buffer;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
 
     // GSS_Process_context_token ?
     // COMPLETE_AUTH_TOKEN CompleteAuthToken;
-    virtual SEC_STATUS CompleteAuthToken(SecBufferDesc& Token) {
+    virtual SEC_STATUS CompleteAuthToken(SecBuffer& Token) {
         (void)Token;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }

@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
 RED_AUTO_TEST_CASE(TestSecFunctionTable)
 {
     SecurityFunctionTable table;
-    SecBufferDesc buffer_desc;
+    SecBuffer buffer;
     SEC_STATUS status;
     //status = table.EnumerateSecurityPackages(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
@@ -231,13 +231,13 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.AcquireCredentialsHandle(nullptr, 0, nullptr, nullptr);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, nullptr);
+    status = table.InitializeSecurityContext(nullptr, 0, nullptr, 0, buffer);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.AcceptSecurityContext(buffer_desc, 0, buffer_desc);
+    status = table.AcceptSecurityContext(buffer, 0, buffer);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.CompleteAuthToken(buffer_desc);
+    status = table.CompleteAuthToken(buffer);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
     //status = table.DeleteSecurityContext(nullptr);

@@ -316,7 +316,7 @@ protected:
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
 
         Buffers[1].Buffer.init(public_key_length);
-        Buffers[1].Buffer.copy(public_key, Buffers[1].Buffer.size());
+        Buffers[1].Buffer.copy(public_key, public_key_length);
 
         if (this->server && version < 5) {
             // if we are server and protocol is 2,3,4
@@ -581,7 +581,6 @@ private:
         this->client_auth_data.cbMaxToken = packageInfo.cbMaxToken;
         this->client_auth_data.input_buffer.setzero();
         this->client_auth_data.have_input_buffer = false;
-        this->client_auth_data.input_buffer_desc = {0,0,nullptr};
         this->ContextSizes = {};
 
         return Res::Ok;
@@ -593,7 +592,6 @@ private:
         unsigned long cbMaxToken;
         bool have_input_buffer;
         SecBuffer input_buffer;
-        SecBufferDesc input_buffer_desc;
     };
     ClientAuthenticateData client_auth_data;
 
@@ -607,13 +605,9 @@ private:
          * ISC_REQ_ALLOCATE_MEMORY
          */
         SecBuffer output_buffer;
-        SecBufferDesc output_buffer_desc;
         unsigned long const fContextReq
           = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        output_buffer_desc.ulVersion = SECBUFFER_VERSION;
-        output_buffer_desc.cBuffers = 1;
-        output_buffer_desc.pBuffers = &output_buffer;
         output_buffer.BufferType = SECBUFFER_TOKEN;
         output_buffer.Buffer.init(this->client_auth_data.cbMaxToken);
 
@@ -621,10 +615,10 @@ private:
             char_ptr_cast(this->ServicePrincipalName.get_data()),
             fContextReq,
             this->client_auth_data.have_input_buffer
-                ? &this->client_auth_data.input_buffer_desc
+                ? &this->client_auth_data.input_buffer
                 : nullptr,
             this->verbose,
-            &output_buffer_desc);
+            output_buffer);
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&
@@ -642,7 +636,7 @@ private:
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status == SEC_I_COMPLETE_NEEDED) ||
             (status == SEC_E_OK)) {
-            this->table->CompleteAuthToken(output_buffer_desc);
+            this->table->CompleteAuthToken(output_buffer);
 
             // have_pub_key_auth = true;
             this->ContextSizes = this->table->QueryContextSizes();
@@ -688,9 +682,6 @@ private:
         }
         /* receive server response and place in input buffer */
 
-        this->client_auth_data.input_buffer_desc.ulVersion = SECBUFFER_VERSION;
-        this->client_auth_data.input_buffer_desc.cBuffers = 1;
-        this->client_auth_data.input_buffer_desc.pBuffers = &this->client_auth_data.input_buffer;
         this->client_auth_data.input_buffer.BufferType = SECBUFFER_TOKEN;
 
         return Res::Ok;
@@ -919,15 +910,10 @@ public:
 
         SecBuffer input_buffer;
         SecBuffer output_buffer;
-        SecBufferDesc input_buffer_desc;
-        SecBufferDesc output_buffer_desc;
 
         input_buffer.setzero();
         output_buffer.setzero();
 
-        input_buffer_desc.ulVersion = SECBUFFER_VERSION;
-        input_buffer_desc.cBuffers = 1;
-        input_buffer_desc.pBuffers = &input_buffer;
         input_buffer.BufferType = SECBUFFER_TOKEN;
         input_buffer.Buffer.copy(this->negoToken);
 
@@ -936,9 +922,6 @@ public:
             return Res::Err;
         }
 
-        output_buffer_desc.ulVersion = SECBUFFER_VERSION;
-        output_buffer_desc.cBuffers = 1;
-        output_buffer_desc.pBuffers = &output_buffer;
         output_buffer.BufferType = SECBUFFER_TOKEN;
         output_buffer.Buffer.init(this->server_auth_data.cbMaxToken);
 
@@ -951,8 +934,7 @@ public:
             | ASC_REQ_SEQUENCE_DETECT
             | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
-            input_buffer_desc, fContextReq,
-            output_buffer_desc);
+            input_buffer, fContextReq, output_buffer);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
@@ -961,7 +943,7 @@ public:
         this->negoToken.copy(output_buffer.Buffer);
 
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-            this->table->CompleteAuthToken(output_buffer_desc);
+            this->table->CompleteAuthToken(output_buffer);
 
             if (status == SEC_I_COMPLETE_NEEDED) {
                 status = SEC_E_OK;

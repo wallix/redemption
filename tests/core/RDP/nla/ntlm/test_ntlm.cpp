@@ -109,13 +109,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     SecBuffer input_buffer;
     SecBuffer output_buffer;
-    SecBufferDesc input_buffer_desc;
-    SecBufferDesc output_buffer_desc;
     input_buffer.setzero();
     output_buffer.setzero();
-    output_buffer_desc.ulVersion = SECBUFFER_VERSION;
-    output_buffer_desc.cBuffers = 1;
-    output_buffer_desc.pBuffers = &output_buffer;
     output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
@@ -128,7 +123,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
         fContextReq,
         nullptr, // input buffer desc
         0,
-        &output_buffer_desc // output buffer desc
+        output_buffer // output buffer desc
     );
 
     RED_CHECK_EQUAL(client_status, SEC_I_CONTINUE_NEEDED);
@@ -148,24 +143,18 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     fsContextReq |= ASC_REQ_EXTENDED_ERROR;
 
-    input_buffer_desc.ulVersion = SECBUFFER_VERSION;
-    input_buffer_desc.cBuffers = 1;
-    input_buffer_desc.pBuffers = &input_buffer;
     input_buffer.BufferType = SECBUFFER_TOKEN;
     input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
     server_status = server_table.AcceptSecurityContext(
-        output_buffer_desc, fsContextReq, input_buffer_desc);
+        output_buffer, fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
     // hexdump_c(input_buffer.Buffer.get_data(), 120);
 
-    output_buffer_desc.ulVersion = SECBUFFER_VERSION;
-    output_buffer_desc.cBuffers = 1;
-    output_buffer_desc.pBuffers = &output_buffer;
     output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(server_packageInfo.cbMaxToken);
 
@@ -174,9 +163,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
         fContextReq,
-        &input_buffer_desc, // input buffer desc
+        &input_buffer, // input buffer desc
         0,
-        &output_buffer_desc // output buffer desc
+        output_buffer // output buffer desc
     );
 
     RED_CHECK_EQUAL(client_status, SEC_I_COMPLETE_NEEDED);
@@ -184,9 +173,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
 
-    input_buffer_desc.ulVersion = SECBUFFER_VERSION;
-    input_buffer_desc.cBuffers = 1;
-    input_buffer_desc.pBuffers = &input_buffer;
     input_buffer.BufferType = SECBUFFER_TOKEN;
     input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
@@ -195,7 +181,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
     server_status = server_table.AcceptSecurityContext(
-        output_buffer_desc, fsContextReq, input_buffer_desc);
+        output_buffer, fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 0);

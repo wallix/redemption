@@ -4520,7 +4520,7 @@ protected:
     void draw_impl(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache)
     {
         if (this->client_info.glyph_cache_caps.GlyphSupportLevel == GlyphCacheCaps::GLYPH_SUPPORT_NONE) {
-            bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
+            const bool has_delta_bytes = (!cmd.ui_charinc && !(cmd.fl_accel & 0x20));
             const BGRColor color_fore = color_decode(cmd.fore_color, color_ctx);
             const BGRColor color_back = color_decode(cmd.back_color, color_ctx);
 

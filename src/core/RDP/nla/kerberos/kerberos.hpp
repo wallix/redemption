@@ -188,8 +188,8 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        SecBufferDesc * pInput, unsigned long Reserved2,
-        SecBufferDesc * pOutput
+        SecBuffer* pinput_buffer, unsigned long Reserved2,
+        SecBuffer& output_buffer
     ) override
     {
         (void)fContextReq;
@@ -214,21 +214,14 @@ public:
         // Token Buffer
         gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
-        if (pInput) {
-            PSecBuffer input_buffer = pInput->FindSecBuffer(SECBUFFER_TOKEN);
-            if (input_buffer) {
-                // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-                //     input_buffer->Buffer.size());
-                input_tok.length = input_buffer->Buffer.size();
-                input_tok.value = input_buffer->Buffer.get_data();
-            }
-            else {
-                // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
-                input_tok.length = 0;
-            }
+        if (pinput_buffer) {
+            // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+            //     input_buffer->Buffer.size());
+            input_tok.length = pinput_buffer->Buffer.size();
+            input_tok.value = pinput_buffer->Buffer.get_data();
         }
         else {
-            // LOG(LOG_INFO, "NO INPUT BUFFER DESC");
+            // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
             input_tok.length = 0;
         }
 
@@ -274,15 +267,13 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        PSecBuffer output_buffer = pOutput->FindSecBuffer(SECBUFFER_TOKEN);
-
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
-            output_buffer->Buffer.init(0);
+            output_buffer.Buffer.init(0);
         }
         else {
-            output_buffer->Buffer.init(output_tok.length);
-            output_buffer->Buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
+            output_buffer.Buffer.init(output_tok.length);
+            output_buffer.Buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
@@ -299,8 +290,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBufferDesc& input, unsigned long fContextReq,
-        SecBufferDesc& output
+        SecBuffer& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
     ) override
     {
         (void)fContextReq;
@@ -319,17 +309,11 @@ public:
         // Token Buffer
         gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
-        PSecBuffer input_buffer = input.FindSecBuffer(SECBUFFER_TOKEN);
-        if (input_buffer) {
-            // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-            //     input_buffer->Buffer.size());
-            input_tok.length = input_buffer->Buffer.size();
-            input_tok.value = input_buffer->Buffer.get_data();
-        }
-        else {
-            // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
-            input_tok.length = 0;
-        }
+
+        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+        //     input_buffer->Buffer.size());
+        input_tok.length = input_buffer.Buffer.size();
+        input_tok.value = input_buffer.Buffer.get_data();
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
@@ -374,15 +358,13 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        PSecBuffer output_buffer = output.FindSecBuffer(SECBUFFER_TOKEN);
-
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         if (output_tok.length < 1) {
-            output_buffer->Buffer.init(0);
+            output_buffer.Buffer.init(0);
         }
         else {
-            output_buffer->Buffer.init(output_tok.length);
-            output_buffer->Buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
+            output_buffer.Buffer.init(output_tok.length);
+            output_buffer.Buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
         }
 
         (void) gss_release_buffer(&minor_status, &output_tok);
