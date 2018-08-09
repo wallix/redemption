@@ -673,6 +673,7 @@ test-run tests/capture/test_capture :
   <library>ffmpeg
   <library>png
   <library>ppocr
+  <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
@@ -686,6 +687,7 @@ test-run tests/capture/test_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/main/do_recorder.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o

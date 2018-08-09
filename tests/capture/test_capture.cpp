@@ -2542,4 +2542,343 @@ RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     unlink(fnt.seqgen()->get(1));
 }
 
+struct CoutBuf
+{
+    CoutBuf()
+    : oldbuf(std::cout.rdbuf(&sbuf))
+    , oldbuf_cerr(LOG__REDEMPTION__AS__LOGPRINT() ? std::cerr.rdbuf(nullptr) : nullptr)
+    {
+    }
 
+    ~CoutBuf()
+    {
+        std::cout.rdbuf(oldbuf);
+        if (oldbuf_cerr) {
+            std::cerr.rdbuf(oldbuf_cerr);
+        }
+    }
+
+    std::string str() const
+    {
+        std::cout.rdbuf(oldbuf);
+        return sbuf.str();
+    }
+
+private:
+    std::stringbuf sbuf;
+    std::streambuf * oldbuf;
+    std::streambuf * oldbuf_cerr;
+};
+
+extern "C" {
+    inline int hmac_fn(uint8_t * buffer)
+    {
+        // E38DA15E501E4F6A01EFDE6CD9B33A3F2B4172131E975B4C3954231443AE22AE
+        uint8_t hmac_key[] = {
+            0xe3, 0x8d, 0xa1, 0x5e, 0x50, 0x1e, 0x4f, 0x6a,
+            0x01, 0xef, 0xde, 0x6c, 0xd9, 0xb3, 0x3a, 0x3f,
+            0x2b, 0x41, 0x72, 0x13, 0x1e, 0x97, 0x5b, 0x4c,
+            0x39, 0x54, 0x23, 0x14, 0x43, 0xae, 0x22, 0xae };
+        static_assert(sizeof(hmac_key) == MD_HASH::DIGEST_LENGTH, "");
+        memcpy(buffer, hmac_key, sizeof(hmac_key));
+        return 0;
+    }
+
+    inline int trace_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
+    {
+        // in real uses actual trace_key is derived from base and some master key
+        (void)base;
+        (void)len;
+        (void)oldscheme;
+        // 563EB6E8158F0EED2E5FB6BC2893BC15270D7E7815FA804A723EF4FB315FF4B2
+        uint8_t trace_key[] = {
+            0x56, 0x3e, 0xb6, 0xe8, 0x15, 0x8f, 0x0e, 0xed,
+            0x2e, 0x5f, 0xb6, 0xbc, 0x28, 0x93, 0xbc, 0x15,
+            0x27, 0x0d, 0x7e, 0x78, 0x15, 0xfa, 0x80, 0x4a,
+            0x72, 0x3e, 0xf4, 0xfb, 0x31, 0x5f, 0xf4, 0xb2 };
+        static_assert(sizeof(trace_key) == MD_HASH::DIGEST_LENGTH, "");
+        memcpy(buffer, trace_key, sizeof(trace_key));
+        return 0;
+    }
+}
+
+#include "main/do_recorder.hpp"
+
+RED_AUTO_TEST_CASE(TestMetaCapture)
+{
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo1[] = {
+        {"./capture-000000.wrm", 226},
+        {"./capture-000001.wrm", 174},
+        {"./capture.mwrm", 198},
+    };
+
+    const struct CheckFiles fileinfo2[] = {
+        {"/tmp/capture-000000.mp4", 3565},
+        {"/tmp/capture-000000.png", 244},
+        {"/tmp/capture-000000.wrm", 80},
+        {"/tmp/capture-000001.wrm", 80},
+        {"/tmp/capture.mwrm", 74},
+        {"/tmp/capture.pgs", 37},
+    };
+
+    for (auto & f : fileinfo1) {
+        ::unlink(f.filename);
+    }
+    for (auto & f : fileinfo2) {
+        ::unlink(f.filename);
+    }
+
+    Inifile ini;
+    ini.set<cfg::video::rt_display>(1);
+
+    // Timestamps are applied only when flushing
+    timeval now;
+    now.tv_usec = 0;
+    now.tv_sec = 1000;
+
+    ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+    ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
+
+    ini.set<cfg::video::png_limit>(10); // one snapshot by second
+    ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
+
+    ini.set<cfg::video::capture_flags>(CaptureFlags::wrm);
+    CaptureFlags capture_flags = CaptureFlags::wrm;
+
+    ini.set<cfg::globals::trace_type>(TraceType::localfile);
+
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+
+    ini.set<cfg::video::record_tmp_path>("./");
+    ini.set<cfg::video::record_path>("./");
+    ini.set<cfg::video::hash_path>("/tmp");
+    ini.set<cfg::globals::movie_path>("capture");
+
+    LCGRandom rnd(0);
+    Fstat fstat;
+    CryptoContext cctx;
+
+    // TODO remove this after unifying capture interface
+    bool full_video = false;
+    // TODO remove this after unifying capture interface
+    bool no_timestamp = false;
+
+    Rect scr(0, 0, 100, 100);
+
+    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
+        std::chrono::seconds::zero(), ini);
+    video_params.no_timestamp = no_timestamp;
+    const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+    const char * record_path = record_tmp_path;
+    bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+    bool capture_png = bool(capture_flags & CaptureFlags::png);
+    bool capture_pattern_checker = false;
+
+    bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+    bool capture_video = bool(capture_flags & CaptureFlags::video);
+    bool capture_video_full = full_video;
+    bool capture_meta = capture_ocr;
+    bool capture_kbd = true;
+
+    OcrParams const ocr_params = ocr_params_from_ini(ini);
+
+    if (ini.get<cfg::debug::capture>()) {
+        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            capture_wrm ?"wrm ":"",
+            capture_png ?"png ":"",
+            capture_kbd ? 1 : 0,
+            capture_video ?"video ":"",
+            capture_video_full ?"video_full ":"",
+            capture_pattern_checker ?"pattern ":"",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+            capture_meta?"meta ":""
+        );
+    }
+
+    const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+    const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+    const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+    char path[1024];
+    char basename[1024];
+    char extension[128];
+    strcpy(path, app_path(AppPath::Wrm));     // default value, actual one should come from movie_path
+    strcat(path, "/");
+    strcpy(basename, movie_path);
+    strcpy(extension, "");          // extension is currently ignored
+
+    if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+    ) {
+        LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+        throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+    }
+
+    PngParams png_params = {
+        0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+        false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+
+    DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
+
+    MetaParams meta_params{
+        MetaParams::EnableSessionLog::No,
+        MetaParams::HideNonPrintable::No
+    };
+
+    KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+    kbd_log_params.wrm_keyboard_log = true;
+    kbd_log_params.session_log_enabled = false;
+
+    PatternParams const pattern_params = pattern_params_from_ini(ini);
+
+    SequencedVideoParams sequenced_video_params;
+    FullVideoParams full_video_params;
+
+    cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+    WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+
+    CaptureParams capture_params{
+        now,
+        basename,
+        record_tmp_path,
+        record_path,
+        groupid,
+        nullptr,
+        SmartVideoCropping::disable,
+        0
+    };
+
+    {
+        Capture capture(
+                         capture_params
+                       , drawable_params
+                       , capture_wrm, wrm_params
+                       , capture_png, png_params
+                       , capture_pattern_checker, pattern_params
+                       , capture_ocr, ocr_params
+                       , capture_video, sequenced_video_params
+                       , capture_video_full, full_video_params
+                       , capture_meta, meta_params
+                       , capture_kbd, kbd_log_params
+                       , video_params
+                       , nullptr
+                       , Rect()
+                       );
+    //    auto const color_cxt = gdi::ColorCtx::depth16();
+    //    capture.set_pointer(edit_pointer());
+
+        now.tv_sec += 10;
+
+        bool ignore_frame_in_timeval = true;
+        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+
+        capture.session_update(now, cstr_array_view("NEW_PROCESS=def")); now.tv_sec++;
+
+        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=def")); now.tv_sec++;
+
+        capture.kbd_input(now, 'W');
+        capture.kbd_input(now, 'a');
+        capture.kbd_input(now, 'l'); now.tv_sec++;
+
+        capture.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec++;
+
+        capture.kbd_input(now, 'l');
+        capture.kbd_input(now, 'i');
+        capture.kbd_input(now, 'x'); now.tv_sec++;
+
+        capture.session_update(now, cstr_array_view("COMPLETED_PROCESS=abc")); now.tv_sec++;
+
+        //bool ignore_frame_in_timeval = true;
+
+    //    capture.draw(RDPOpaqueRect(scr, encode_color16()(BLUE)), scr, color_cxt);
+
+
+//        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
+
+    //    const char * filename = "./capture-000000.png";
+
+    //    auto s = get_file_contents<std::string>(filename);
+    //    RED_CHECK_SIG2(
+    //        reinterpret_cast<const uint8_t*>(s.data()), s.size(),
+    //        "\xbd\x6a\x84\x08\x3e\xe7\x19\xab\xb0\x67\xeb\x72\x94\x1f\xea\x26\xc4\x69\xe1\x37"
+    //    );
+    //    ::unlink(filename);
+    }
+
+
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+
+    {
+        char const * argv[] {
+            "recorder.py",
+            "redrec",
+            "-i",
+                "./capture.mwrm",
+            "--mwrm-path", FIXTURES_PATH,
+            "-o",
+                "/tmp/capture",
+            "--chunk",
+            "--video-codec", "mp4",
+            "--json-pgs",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        CoutBuf cout_buf;
+        int res = do_main(argc, argv, hmac_fn, trace_fn);
+        EVP_cleanup();
+        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/capture.mwrm\".\n\n");
+        RED_CHECK_EQUAL(0, res);
+
+        RED_CHECK_FILE_CONTENTS("/tmp/capture.meta",
+            "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
+            "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
+            "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+            "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n"
+            "1970-01-01 01:16:55 - type=\"KBD_INPUT\" data=\"Wallix\"\n");
+
+        for (auto & f : fileinfo2) {
+            ::unlink(f.filename);
+        }
+    }
+
+    {
+        char const * argv[] {
+            "recorder.py",
+            "redrec",
+            "-i",
+                "./capture.mwrm",
+            "--config-file",
+                FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
+            "--mwrm-path", FIXTURES_PATH,
+            "-o",
+                "/tmp/capture",
+            "--chunk",
+            "--video-codec", "mp4",
+            "--json-pgs",
+        };
+        int argc = sizeof(argv)/sizeof(char*);
+
+        CoutBuf cout_buf;
+        int res = do_main(argc, argv, hmac_fn, trace_fn);
+        EVP_cleanup();
+        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/capture.mwrm\".\n\n");
+        RED_CHECK_EQUAL(0, res);
+
+        RED_CHECK_FILE_CONTENTS("/tmp/capture.meta",
+            "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
+            "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
+            "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
+            "1970-01-01 01:16:55 - type=\"COMPLETED_PROCESS\" command_line=\"abc\"\n");
+
+        for (auto & f : fileinfo2) {
+            ::unlink(f.filename);
+        }
+    }
+
+    for (auto & f : fileinfo1) {
+        ::unlink(f.filename);
+    }
+}
