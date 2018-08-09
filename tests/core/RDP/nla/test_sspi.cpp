@@ -118,38 +118,7 @@ RED_AUTO_TEST_CASE(TestSecBuffer)
 {
     SecBuffer a;
     a.setzero();
-    RED_CHECK_EQUAL(a.BufferType, 0);
     RED_CHECK_EQUAL(a.Buffer.size(), 0);
-
-    SecBuffer buffs[10];
-    for (int i = 0; i < 10; i++) {
-        buffs[i].setzero();
-    }
-
-    buffs[3].BufferType = SECBUFFER_EXTRA;
-    buffs[3].Buffer.init(333);
-    buffs[5].BufferType = SECBUFFER_ALERT;
-    buffs[5].Buffer.init(555);
-    buffs[7].BufferType = SECBUFFER_DATA;
-    buffs[7].Buffer.init(777);
-
-    SecBufferDesc buffdesc = {
-        SECBUFFER_VERSION,
-        10,
-        buffs
-    };
-
-    PSecBuffer buff3 = buffdesc.FindSecBuffer(SECBUFFER_EXTRA);
-    PSecBuffer buff5 = buffdesc.FindSecBuffer(SECBUFFER_ALERT);
-    PSecBuffer buff7 = buffdesc.FindSecBuffer(SECBUFFER_DATA);
-    PSecBuffer buffunknown = buffdesc.FindSecBuffer(SECBUFFER_CHANGE_PASS_RESPONSE);
-
-    RED_CHECK_EQUAL(buff3->Buffer.size(), 333);
-    RED_CHECK_EQUAL(buff5->Buffer.size(), 555);
-    RED_CHECK_EQUAL(buff7->Buffer.size(), 777);
-    RED_CHECK(buffunknown == nullptr);
-
-
 }
 
 RED_AUTO_TEST_CASE(TestSecIdentity)

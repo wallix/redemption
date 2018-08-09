@@ -111,7 +111,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     SecBuffer output_buffer;
     input_buffer.setzero();
     output_buffer.setzero();
-    output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
     unsigned long fContextReq = 0;
@@ -143,7 +142,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     fsContextReq |= ASC_REQ_EXTENDED_ERROR;
 
-    input_buffer.BufferType = SECBUFFER_TOKEN;
     input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
     // server first call, no context
@@ -155,7 +153,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(input_buffer.Buffer.size(), 120);
     // hexdump_c(input_buffer.Buffer.get_data(), 120);
 
-    output_buffer.BufferType = SECBUFFER_TOKEN;
     output_buffer.Buffer.init(server_packageInfo.cbMaxToken);
 
     // client second call, got context
@@ -173,7 +170,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(output_buffer.Buffer.get_data(), 266);
 
 
-    input_buffer.BufferType = SECBUFFER_TOKEN;
     input_buffer.Buffer.init(client_packageInfo.cbMaxToken);
 
 
@@ -252,10 +248,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 //     client->confidentiality = false;
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
-    SecBuffer Buffers[2];
     Array Result;
-    Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-    Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
+    SecBuffer Buffers[2]; /* Signature, TLS Public Key */
     Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
     Buffers[1].Buffer.init(sizeof(message));
     Buffers[1].Buffer.copy(message,
@@ -275,8 +269,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-    Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
     Buffers[0].Buffer.init(ContextSizes.cbMaxSignature);
     Buffers[0].Buffer.copy(Result.get_data(),
                            ContextSizes.cbMaxSignature);

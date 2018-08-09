@@ -217,9 +217,6 @@ public:
             /*SEC_STATUS status = */this->context->read_negotiate(&input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
-                if (!output_buffer.BufferType) {
-                    return SEC_E_INVALID_TOKEN;
-                }
                 if (output_buffer.Buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
@@ -261,7 +258,6 @@ public:
             }
 
             output_buffer.Buffer.init(0);
-            output_buffer.BufferType = SECBUFFER_TOKEN;
 
             return status;
         }

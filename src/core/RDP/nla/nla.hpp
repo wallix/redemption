@@ -285,7 +285,6 @@ protected:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_public_key_echo");
         }
-        SecBuffer Buffers[2];
         SEC_STATUS status;
         int public_key_length;
         uint8_t * public_key;
@@ -309,8 +308,7 @@ protected:
                 : this->ServerClientHash.get_data();
         }
 
-        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA;  /* TLS Public Key */
+        SecBuffer Buffers[2]; /* Signature, TLS Public Key */
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
 
@@ -345,7 +343,6 @@ protected:
         uint8_t* public_key1 = nullptr;
         uint8_t* public_key2 = nullptr;
         unsigned int public_key_length = 0;
-        SecBuffer Buffers[2];
         SEC_STATUS status;
         uint32_t version = this->ts_request.use_version;
 
@@ -365,8 +362,7 @@ protected:
         }
         length = this->pubKeyAuth.size();
 
-        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA; /* Encrypted TLS Public Key */
+        SecBuffer Buffers[2]; /* Signature, Encrypted TLS Public Key */
 
         Buffers[0].Buffer.init(this->ContextSizes.cbMaxSignature);
         Buffers[0].Buffer.copy(this->pubKeyAuth.get_data(),
@@ -481,7 +477,6 @@ public:
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
-        SecBuffer Buffers[2];
         SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
@@ -491,8 +486,7 @@ public:
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA;  /* TSCredentials */
+        SecBuffer Buffers[2]; /* Signature, TSCredentials */
 
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.get_offset());
 
@@ -592,7 +586,6 @@ private:
         unsigned long const fContextReq
           = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
-        output_buffer.BufferType = SECBUFFER_TOKEN;
         output_buffer.Buffer.init(this->client_auth_data.cbMaxToken);
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
@@ -665,8 +658,6 @@ private:
             return Res::Ok;
         }
         /* receive server response and place in input buffer */
-
-        this->client_auth_data.input_buffer.BufferType = SECBUFFER_TOKEN;
 
         return Res::Ok;
     }
@@ -790,13 +781,12 @@ public:
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
         int length;
-        SecBuffer Buffers[2];
         SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
         }
-        Buffers[0].BufferType = SECBUFFER_TOKEN; /* Signature */
-        Buffers[1].BufferType = SECBUFFER_DATA; /* TSCredentials */
+
+        SecBuffer Buffers[2]; /* Signature, TSCredentials */
 
         if (this->authInfo.size() < 1) {
             LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer");
@@ -893,7 +883,6 @@ public:
         input_buffer.setzero();
         output_buffer.setzero();
 
-        input_buffer.BufferType = SECBUFFER_TOKEN;
         input_buffer.Buffer.copy(this->negoToken);
 
         if (this->negoToken.size() < 1) {
@@ -901,7 +890,6 @@ public:
             return Res::Err;
         }
 
-        output_buffer.BufferType = SECBUFFER_TOKEN;
         output_buffer.Buffer.init(this->server_auth_data.cbMaxToken);
 
         unsigned long const fContextReq = 0

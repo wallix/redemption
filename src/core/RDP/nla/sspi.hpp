@@ -81,61 +81,15 @@ public:
 #define NTLMSP_NAME "NTLM"
 #define SECBUFFER_VERSION 0
 
-/* Buffer Types */
-enum buffer_type {
-    SECBUFFER_EMPTY = 0,
-    SECBUFFER_DATA = 1,
-    SECBUFFER_TOKEN = 2,
-    SECBUFFER_PKG_PARAMS = 3,
-    SECBUFFER_MISSING = 4,
-    SECBUFFER_EXTRA = 5,
-    SECBUFFER_STREAM_TRAILER = 6,
-    SECBUFFER_STREAM_HEADER = 7,
-    SECBUFFER_NEGOTIATION_INFO = 8,
-    SECBUFFER_PADDING = 9,
-    SECBUFFER_STREAM = 10,
-    SECBUFFER_MECHLIST = 11,
-    SECBUFFER_MECHLIST_SIGNATURE = 12,
-    SECBUFFER_TARGET = 13,
-    SECBUFFER_CHANNEL_BINDINGS = 14,
-    SECBUFFER_CHANGE_PASS_RESPONSE = 15,
-    SECBUFFER_TARGET_HOST = 16,
-    SECBUFFER_ALERT = 17
-};
-
 struct SecBuffer {
-    unsigned long BufferType;
     Array         Buffer;
 
     void setzero() {
         this->Buffer.init(0);
-        this->BufferType = SECBUFFER_EMPTY;
     }
 };
 
 using PSecBuffer = SecBuffer *;
-struct SecBufferDesc
-{
-    unsigned long ulVersion;
-    unsigned long cBuffers;
-    SecBuffer *   pBuffers;
-
-    PSecBuffer FindSecBuffer(buffer_type BufferType)
-    {
-        unsigned long index;
-        PSecBuffer pSecBuffer = nullptr;
-
-        for (index = 0; index < this->cBuffers; index++) {
-            if (this->pBuffers[index].BufferType == BufferType) {
-                pSecBuffer = &(this->pBuffers[index]);
-                break;
-            }
-        }
-
-        return pSecBuffer;
-    }
-
-};
 
 struct TimeStamp {
     uint32_t LowPart;
