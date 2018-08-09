@@ -573,6 +573,7 @@ protected:
 
 public:
     void session_update(timeval const & now, array_view_const_char message) override {
+        this->timer = now;
         this->last_sent_timer = this->timer;
 
         if (this->keyboard_buffer_32.get_offset()) {
