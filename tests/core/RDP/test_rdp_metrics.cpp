@@ -226,7 +226,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
     }
     {
-        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         timeval now = {epoch+10, 0};
         metrics.log(now);
 
