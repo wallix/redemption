@@ -300,6 +300,8 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 
+        // data [signature][data_buffer]
+
         auto data_buffer = make_array_view(data.get_data(), data.size())
           .subarray(this->QueryContextSizes().cbMaxSignature);
 
@@ -319,7 +321,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(SecBuffer const& data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -327,26 +329,30 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
+        // data [signature][data_buffer]
+
+        auto data_buffer = make_array_view(data_in.get_data(), data_in.size())
+          .subarray(this->QueryContextSizes().cbMaxSignature);
+        data_out.init(data_buffer.size());
+
         /* Decrypt message using with RC4, result overwrites original buffer */
         // this->context->confidentiality == true
-        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.get_data(), data_buffer.get_data());
+        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(
-            digest, this->context->RecvSigningKey,
-            {data_buffer.get_data(), data_buffer.size()}, MessageSeqNo);
+        this->compute_hmac_md5(digest, this->context->RecvSigningKey, {data_out.get_data(), data_out.size()}, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(
             expected_signature, this->context->RecvRc4Seal, digest, MessageSeqNo);
 
-        if (memcmp(signature_buffer.get_data(), expected_signature, 16) != 0) {
+        if (memcmp(data_in.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
             hexdump_c(expected_signature, 16);
             LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(signature_buffer.get_data(), 16);
+            hexdump_c(data_in.get_data(), 16);
 
             return SEC_E_MESSAGE_ALTERED;
         }

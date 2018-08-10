@@ -246,12 +246,12 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    SecBuffer Buffers[2]; /* Signature, TLS Public Key */
-    Buffers[0].init(ContextSizes.cbMaxSignature);
-    Buffers[0].copy(Result.get_data(), ContextSizes.cbMaxSignature);
-    Buffers[1].init(Result.size() - ContextSizes.cbMaxSignature);
-    Buffers[1].copy(Result.get_data() + ContextSizes.cbMaxSignature, Buffers[1].size());
-    client_status = client_table.DecryptMessage(Buffers[1], Buffers[0], 0);
+    SecBuffer Result2;
+    client_status = client_table.DecryptMessage(static_cast<SecBuffer&>(Result), Result2, 0);
+
+    RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + ContextSizes.cbMaxSignature);
+    RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() -ContextSizes.cbMaxSignature));
+    RED_CHECK_MEM(make_array_view(Result2.get_data(), Result2.size()), make_array_view(message));
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 

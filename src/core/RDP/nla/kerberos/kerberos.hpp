@@ -421,7 +421,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(SecBuffer& data_buffer, SecBuffer& /*signature_buffer*/, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(SecBuffer const& data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
 
         // OM_uint32 gss_unwrap
@@ -441,8 +441,8 @@ public:
             return SEC_E_NO_CONTEXT;
         }
         gss_buffer_desc inbuf, outbuf;
-        inbuf.value = data_buffer.get_data();
-        inbuf.length = data_buffer.size();
+        inbuf.value = const_cast<uint8_t*>(data_in.get_data());
+        inbuf.length = data_in.size();
         // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
         major_status = gss_unwrap(&minor_status, this->krb_ctx->gss_ctx, &inbuf, &outbuf,
                                   &conf_state, &qop_state);
@@ -453,8 +453,8 @@ public:
             return SEC_E_DECRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
-        data_buffer.init(outbuf.length);
-        data_buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_out.init(outbuf.length);
+        data_out.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }
