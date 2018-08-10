@@ -61,8 +61,10 @@ class NTLMContext
 
 public:
     bool server = false;
+private:
     bool NTLMv2 = true;
     bool UseMIC = true;
+public:
     NtlmState state = NTLM_STATE_INITIAL;
 
     int SendSeqNum = 0;
@@ -71,9 +73,9 @@ public:
 private:
     uint8_t MachineID[32];
     bool SendVersionInfo = true;
-public:
-    bool confidentiality = true;
+    const bool confidentiality = true;
 
+public:
     SslRC4 SendRc4Seal {};
     SslRC4 RecvRc4Seal {};
     uint8_t* SendSigningKey = nullptr;
@@ -126,10 +128,10 @@ public:
     uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
     // uint8_t NtProofStr[16];
 
-    bool verbose = false;
+    bool verbose;
 
 public:
-    explicit NTLMContext(Random & rand, TimeObj & timeobj)
+    explicit NTLMContext(Random & rand, TimeObj & timeobj, bool verbose = false)
         : timeobj(timeobj)
         , rand(rand)
         //, LmCompatibilityLevel(3)
@@ -140,7 +142,8 @@ public:
         , SavedAuthenticateMessage(0)
         //, KeyExchangeKey()
         //, RandomSessionKey()
-        // , SendSingleHostData(false)
+        //, SendSingleHostData(false)
+        , verbose(verbose)
     {
         // this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));

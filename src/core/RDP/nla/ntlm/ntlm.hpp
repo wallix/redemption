@@ -132,14 +132,11 @@ public:
         }
 
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
+            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj, verbose);
 
-            this->context->verbose = verbose;
+            assert(fContextReq & ISC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
             // this->context->init();
             this->context->server = false;
-            if (fContextReq & ISC_REQ_CONFIDENTIALITY) {
-                this->context->confidentiality = true;
-            }
 
             // if (this->context->Workstation.size() < 1)
             //     this->context->ntlm_SetContextWorkstation(nullptr);
@@ -198,9 +195,7 @@ public:
             this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
 
             this->context->server = true;
-            if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
-                this->context->confidentiality = true;
-            }
+            assert(fContextReq & ASC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -296,13 +291,8 @@ public:
 
         /* Encrypt message using with RC4, result overwrites original buffer */
 
-        if (this->context->confidentiality) {
-            this->context->SendRc4Seal.crypt(length, data, data_buffer.get_data());
-        }
-        else {
-            data_buffer.copy(data, length);
-        }
-
+        // this->context->confidentiality == true
+        this->context->SendRc4Seal.crypt(length, data, data_buffer.get_data());
 
 // #ifdef WITH_DEBUG_NTLM
         // LOG(LOG_ERR, "======== ENCRYPT ==========");
@@ -368,12 +358,8 @@ public:
 
         /* Decrypt message using with RC4, result overwrites original buffer */
 
-        if (this->context->confidentiality) {
-            this->context->RecvRc4Seal.crypt(length, data, data_buffer.get_data());
-        }
-        else {
-            data_buffer.copy(data, length);
-        }
+        // this->context->confidentiality == true
+        this->context->RecvRc4Seal.crypt(length, data, data_buffer.get_data());
 
         /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         SslHMAC_Md5 hmac_md5(this->context->RecvSigningKey, 16);
