@@ -234,10 +234,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
 //     client->confidentiality = false;
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
-    Array Result;
-    Result.init(ContextSizes.cbMaxSignature + sizeof(message));
-    Result.copy(message, sizeof(message), ContextSizes.cbMaxSignature);
-    server_status = server_table.EncryptMessage(static_cast<SecBuffer&>(Result), 0);
+    SecBuffer Result;
+    server_status = server_table.EncryptMessage(message, Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
 
@@ -247,7 +245,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // DECRYPT
     SecBuffer Result2;
-    client_status = client_table.DecryptMessage(static_cast<SecBuffer&>(Result), Result2, 0);
+    client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
 
     RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + ContextSizes.cbMaxSignature);
     RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() -ContextSizes.cbMaxSignature));

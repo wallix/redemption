@@ -265,7 +265,7 @@ private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        byte_array const& data_buffer, uint32_t SeqNo)
+        const_byte_array data_buffer, uint32_t SeqNo)
     {
         SslHMAC_Md5 hmac_md5(signing_key, 16);
         StaticOutStream<4> out_stream;
@@ -292,7 +292,7 @@ private:
 public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(SecBuffer& data, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -300,28 +300,28 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 
-        // data [signature][data_buffer]
+        // data_out [signature][data_buffer]
 
-        auto data_buffer = make_array_view(data.get_data(), data.size())
+        data_out.init(data_in.size() + this->QueryContextSizes().cbMaxSignature);
+        auto message_out = make_array_view(data_out.get_data(), data_out.size())
           .subarray(this->QueryContextSizes().cbMaxSignature);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->context->SendSigningKey, data_buffer, MessageSeqNo);
+        this->compute_hmac_md5(digest, this->context->SendSigningKey, data_in, MessageSeqNo);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
         // this->context->confidentiality == true
-        this->context->SendRc4Seal.crypt(
-            data_buffer.size(), data_buffer.data(), data_buffer.data());
+        this->context->SendRc4Seal.crypt(data_in.size(), data_in.data(), message_out.data());
 
         this->compute_signature(
-            data.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
+            data_out.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
 
         return SEC_E_OK;
     }
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(SecBuffer const& data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -329,10 +329,9 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
-        // data [signature][data_buffer]
+        // data_in [signature][data_buffer]
 
-        auto data_buffer = make_array_view(data_in.get_data(), data_in.size())
-          .subarray(this->QueryContextSizes().cbMaxSignature);
+        auto data_buffer = data_in.subarray(this->QueryContextSizes().cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -346,13 +345,13 @@ public:
         this->compute_signature(
             expected_signature, this->context->RecvRc4Seal, digest, MessageSeqNo);
 
-        if (memcmp(data_in.get_data(), expected_signature, 16) != 0) {
+        if (memcmp(data_in.data(), expected_signature, 16) != 0) {
             /* signature verification failed! */
             LOG(LOG_ERR, "signature verification failed, something nasty is going on!");
             LOG(LOG_ERR, "Expected Signature:");
             hexdump_c(expected_signature, 16);
             LOG(LOG_ERR, "Actual Signature:");
-            hexdump_c(data_in.get_data(), 16);
+            hexdump_c(data_in.data(), 16);
 
             return SEC_E_MESSAGE_ALTERED;
         }

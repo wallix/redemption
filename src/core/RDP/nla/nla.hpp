@@ -280,7 +280,7 @@ protected:
         }
         uint32_t version = this->ts_request.use_version;
 
-        int public_key_length = this->PublicKey.size();
+        size_t public_key_length = this->PublicKey.size();
         uint8_t * public_key = this->PublicKey.get_data();
         if (version >= 5) {
             const bool client_to_server = !this->server;
@@ -304,10 +304,8 @@ protected:
             this->ap_integer_increment_le(public_key, public_key_length);
         }
 
-        this->pubKeyAuth.init(public_key_length + this->ContextSizes.cbMaxSignature);
-        this->pubKeyAuth.copy(public_key, public_key_length, this->ContextSizes.cbMaxSignature);
-
         return this->table->EncryptMessage(
+            {public_key, public_key_length},
             static_cast<SecBuffer&>(this->pubKeyAuth), this->send_seq_num++);
     }
 
@@ -330,7 +328,7 @@ protected:
         SecBuffer Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
-            static_cast<SecBuffer&>(this->pubKeyAuth), Buffer, this->recv_seq_num++);
+            {this->pubKeyAuth.get_data(), this->pubKeyAuth.size()}, Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
@@ -454,6 +452,7 @@ public:
             ts_credentials_send.get_data(), ts_credentials_send.get_offset());
 
         return this->table->EncryptMessage(
+            {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
             static_cast<SecBuffer&>(this->authInfo), this->send_seq_num++);
     }
 
@@ -735,7 +734,7 @@ public:
         SecBuffer Buffer;
 
         const SEC_STATUS status = this->table->DecryptMessage(
-            static_cast<SecBuffer&>(this->authInfo), Buffer, this->recv_seq_num++);
+            {this->authInfo.get_data(), this->authInfo.size()}, Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
