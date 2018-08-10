@@ -260,13 +260,37 @@ public:
         return SEC_E_OUT_OF_SEQUENCE;
     }
 
+private:
+    /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
+    static void compute_hmac_md5(
+        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key, SecBuffer const& data_buffer, uint32_t SeqNo)
+    {
+        SslHMAC_Md5 hmac_md5(signing_key, 16);
+        StaticOutStream<4> out_stream;
+        out_stream.out_uint32_le(SeqNo);
+        hmac_md5.update(out_stream.get_data(), out_stream.get_offset());
+        hmac_md5.update(data_buffer.get_data(), data_buffer.size());
+        hmac_md5.final(digest);
+    }
+
+    static void compute_signature(
+        uint8_t* signature, SslRC4& rc4, uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint32_t SeqNo)
+    {
+        uint8_t checksum[8];
+        /* RC4-encrypt first 8 bytes of digest */
+        rc4.crypt(8, digest, checksum);
+
+        uint32_t version = 1;
+        /* Concatenate version, ciphertext and sequence number to build signature */
+        memcpy(signature, &version, 4);
+        memcpy(&signature[4], checksum, 8);
+        memcpy(&signature[12], &SeqNo, 4);
+    }
+
+public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
-        uint32_t SeqNo(MessageSeqNo);
-        uint8_t checksum[8];
-        uint8_t* signature;
-        uint32_t version = 1;
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -274,63 +298,16 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 
-        /* Copy original data buffer */
-        size_t const length = data_buffer.size();
-        auto unique_data = std::make_unique<uint8_t[]>(length);
-        auto* data = unique_data.get();
-        memcpy(data, data_buffer.get_data(), length);
-
-        /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        SslHMAC_Md5 hmac_md5(this->context->SendSigningKey, 16);
-        uint8_t tmp[sizeof(SeqNo)];
-        ::out_bytes_le(tmp, sizeof(SeqNo), SeqNo);
-        hmac_md5.update(tmp, sizeof(tmp));
-        hmac_md5.update(data, length);
-        hmac_md5.final(digest);
+        this->compute_hmac_md5(digest, this->context->SendSigningKey, data_buffer, MessageSeqNo);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
-
         // this->context->confidentiality == true
-        this->context->SendRc4Seal.crypt(length, data, data_buffer.get_data());
+        this->context->SendRc4Seal.crypt(
+            data_buffer.size(), data_buffer.get_data(), data_buffer.get_data());
 
-// #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "======== ENCRYPT ==========");
-        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(this->context->SendSigningKey, 16);
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-        // hexdump_c(digest, sizeof(digest));
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", length);
-        // hexdump_c(data, length);
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
-// #endif
-
-        unique_data.reset();
-
-        /* RC4-encrypt first 8 bytes of digest */
-        this->context->SendRc4Seal.crypt(8, digest, checksum);
-
-        signature = signature_buffer.get_data();
-
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(signature, &version, 4);
-        memcpy(&signature[4], checksum, 8);
-        memcpy(&signature[12], &SeqNo, 4);
-        this->context->SendSeqNum++;
-
-// #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "Signature (length = %d)\n", signature_buffer->Buffer.size());
-        // hexdump_c(signature_buffer->Buffer.get_data(), signature_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
-// #endif
+        this->compute_signature(
+            signature_buffer.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
 
         return SEC_E_OK;
     }
@@ -338,11 +315,6 @@ public:
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
     SEC_STATUS DecryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
-        uint32_t SeqNo(MessageSeqNo);
-        uint8_t digest[SslMd5::DIGEST_LENGTH] = {};
-        uint8_t checksum[8] = {};
-        uint32_t version = 1;
-        uint8_t expected_signature[16] = {};
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -350,54 +322,16 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
-        /* Copy original data buffer */
-        size_t const length = data_buffer.size();
-        auto unique_data = std::make_unique<uint8_t[]>(length);
-        auto* data = unique_data.get();
-        memcpy(data, data_buffer.get_data(), length);
-
         /* Decrypt message using with RC4, result overwrites original buffer */
-
         // this->context->confidentiality == true
-        this->context->RecvRc4Seal.crypt(length, data, data_buffer.get_data());
+        this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.get_data(), data_buffer.get_data());
 
-        /* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-        SslHMAC_Md5 hmac_md5(this->context->RecvSigningKey, 16);
-        uint8_t tmp[sizeof(SeqNo)];
-        ::out_bytes_le(tmp, sizeof(SeqNo), SeqNo);
-        hmac_md5.update(tmp, sizeof(tmp));
-        hmac_md5.update(data_buffer.get_data(), data_buffer.size());
-        hmac_md5.final(digest);
+        uint8_t digest[SslMd5::DIGEST_LENGTH];
+        this->compute_hmac_md5(digest, this->context->RecvSigningKey, data_buffer, MessageSeqNo);
 
-// #ifdef WITH_DEBUG_NTLM
-        // LOG(LOG_ERR, "======== DECRYPT ==========");
-        // LOG(LOG_ERR, "signing key (length = %d)\n", 16);
-        // hexdump_c(this->context->RecvSigningKey, 16);
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Digest (length = %d)\n", sizeof(digest));
-        // hexdump_c(digest, sizeof(digest));
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Encrypted Data Buffer (length = %d)\n", length);
-        // hexdump_c(data, length);
-        // LOG(LOG_ERR, "\n");
-
-        // LOG(LOG_ERR, "Data Buffer (length = %d)\n", data_buffer->Buffer.size());
-        // hexdump_c(data_buffer->Buffer.get_data(), data_buffer->Buffer.size());
-        // LOG(LOG_ERR, "\n");
-// #endif
-
-        unique_data.reset();
-
-        /* RC4-encrypt first 8 bytes of digest */
-        this->context->RecvRc4Seal.crypt(8, digest, checksum);
-
-        /* Concatenate version, ciphertext and sequence number to build signature */
-        memcpy(expected_signature, &version, 4);
-        memcpy(&expected_signature[4], checksum, 8);
-        memcpy(&expected_signature[12], &SeqNo, 4);
-        this->context->RecvSeqNum++;
+        uint8_t expected_signature[16] = {};
+        this->compute_signature(
+            expected_signature, this->context->RecvRc4Seal, digest, MessageSeqNo);
 
         if (memcmp(signature_buffer.get_data(), expected_signature, 16) != 0) {
             /* signature verification failed! */

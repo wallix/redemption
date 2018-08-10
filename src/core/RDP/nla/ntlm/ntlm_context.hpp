@@ -67,9 +67,6 @@ private:
 public:
     NtlmState state = NTLM_STATE_INITIAL;
 
-    int SendSeqNum = 0;
-    int RecvSeqNum = 0;
-
 private:
     uint8_t MachineID[32];
     bool SendVersionInfo = true;
