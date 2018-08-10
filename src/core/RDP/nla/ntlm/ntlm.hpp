@@ -23,6 +23,7 @@
 
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include <memory>
 #include <functional>
@@ -263,13 +264,14 @@ public:
 private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
-        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key, SecBuffer const& data_buffer, uint32_t SeqNo)
+        uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
+        byte_array const& data_buffer, uint32_t SeqNo)
     {
         SslHMAC_Md5 hmac_md5(signing_key, 16);
         StaticOutStream<4> out_stream;
         out_stream.out_uint32_le(SeqNo);
         hmac_md5.update(out_stream.get_data(), out_stream.get_offset());
-        hmac_md5.update(data_buffer.get_data(), data_buffer.size());
+        hmac_md5.update(data_buffer.data(), data_buffer.size());
         hmac_md5.final(digest);
     }
 
@@ -290,7 +292,7 @@ private:
 public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& signature_buffer, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBuffer& data, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -298,16 +300,19 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 
+        auto data_buffer = make_array_view(data.get_data(), data.size())
+          .subarray(this->QueryContextSizes().cbMaxSignature);
+
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, this->context->SendSigningKey, data_buffer, MessageSeqNo);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
         // this->context->confidentiality == true
         this->context->SendRc4Seal.crypt(
-            data_buffer.size(), data_buffer.get_data(), data_buffer.get_data());
+            data_buffer.size(), data_buffer.data(), data_buffer.data());
 
         this->compute_signature(
-            signature_buffer.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
+            data.get_data(), this->context->SendRc4Seal, digest, MessageSeqNo);
 
         return SEC_E_OK;
     }
@@ -327,7 +332,9 @@ public:
         this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.get_data(), data_buffer.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->context->RecvSigningKey, data_buffer, MessageSeqNo);
+        this->compute_hmac_md5(
+            digest, this->context->RecvSigningKey,
+            {data_buffer.get_data(), data_buffer.size()}, MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(

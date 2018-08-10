@@ -298,33 +298,17 @@ protected:
                 : this->ServerClientHash.get_data();
         }
 
-        SecBuffer Buffers[2]; /* Signature, TLS Public Key */
-
-        Buffers[0].init(this->ContextSizes.cbMaxSignature);
-
-        Buffers[1].init(public_key_length);
-        Buffers[1].copy(public_key, public_key_length);
-
         if (this->server && version < 5) {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(Buffers[1].get_data(), Buffers[1].size());
+            this->ap_integer_increment_le(public_key, public_key_length);
         }
 
-        SEC_STATUS const status = this->table->EncryptMessage(
-            Buffers[1], Buffers[0], this->send_seq_num++);
+        this->pubKeyAuth.init(public_key_length + this->ContextSizes.cbMaxSignature);
+        this->pubKeyAuth.copy(public_key, public_key_length, this->ContextSizes.cbMaxSignature);
 
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "EncryptMessage status: 0x%08X", status);
-            return status;
-        }
-
-        // this->pubKeyAuth.init(this->ContextSizes.cbMaxSignature + public_key_length);
-        this->pubKeyAuth.init(Buffers[0].size() + Buffers[1].size());
-        this->pubKeyAuth.copy(Buffers[0].get_data(), Buffers[0].size());
-        this->pubKeyAuth.copy(Buffers[1].get_data(), Buffers[1].size(),
-                              this->ContextSizes.cbMaxSignature);
-        return status;
+        return this->table->EncryptMessage(
+            static_cast<SecBuffer&>(this->pubKeyAuth), this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -461,7 +445,6 @@ public:
     }
 
     SEC_STATUS credssp_encrypt_ts_credentials() {
-        SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::encrypt_ts_credentials");
         }
@@ -470,32 +453,15 @@ public:
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        SecBuffer Buffers[2]; /* Signature, TSCredentials */
-
         this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.get_offset());
 
-        Buffers[0].init(this->ContextSizes.cbMaxSignature);
-        memset(Buffers[0].get_data(), 0, Buffers[0].size());
+        memset(this->authInfo.get_data(), 0, this->ContextSizes.cbMaxSignature);
+        memcpy(
+            this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
+            ts_credentials_send.get_data(), ts_credentials_send.get_offset());
 
-        Buffers[1].init(ts_credentials_send.get_offset());
-        Buffers[1].copy(ts_credentials_send.get_data(),
-                               ts_credentials_send.get_offset());
-
-        status = this->table->EncryptMessage(Buffers[1], Buffers[0], this->send_seq_num++);
-
-        if (status != SEC_E_OK) {
-            return status;
-        }
-
-        // this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.size());
-        this->authInfo.init(Buffers[0].size() + Buffers[1].size());
-
-        this->authInfo.copy(Buffers[0].get_data(),
-                            Buffers[0].size());
-        this->authInfo.copy(Buffers[1].get_data(),
-                            Buffers[1].size(),
-                            this->ContextSizes.cbMaxSignature);
-        return SEC_E_OK;
+        return this->table->EncryptMessage(
+            static_cast<SecBuffer&>(this->authInfo), this->send_seq_num++);
     }
 
 private:
