@@ -47,6 +47,7 @@ src_requirements = dict((
 ))
 
 target_requirements = dict((
+    ('libiametrics', '<library>log.o'),
     ('libscytale', '<library>log.o'),
     ('libredrec', '<library>log.o'),
 ))
@@ -61,6 +62,11 @@ dir_requirements = dict((
     ('src/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
     ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
+
+lib_targets = (
+    'src/main/scytale.cpp',
+    'src/main/do_recorder.cpp',
+    'src/main/iametrics.cpp')
 
 # This is usefull if several source files have the same name to disambiguate tests
 target_pre_renames = dict((
@@ -210,6 +216,7 @@ for d in (
     "client_redemption"
 ):
     get_files(sources, 'src/'+d)
+
 get_files(sources, 'src/system/linux/system')
 get_files(sources, 'tests/includes/test_only')
 for path in glob.glob('src/main/*.hpp'):
@@ -219,7 +226,7 @@ for path in glob.glob('src/main/*.cpp'):
     if path == 'src/main/redrec.cpp': # special case in Jamroot
         continue
     a = mains
-    if path in ('src/main/scytale.cpp', 'src/main/do_recorder.cpp'):
+    if path in lib_targets:
         a = libs
     append_file(a, 'src/main', path, 'C')
 

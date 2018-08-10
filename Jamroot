@@ -90,7 +90,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdpclient rdpheadless rdpinichecker ;
-alias libs    : libredrec libscytale ;
+alias libs    : libredrec libscytale libiametrics ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 

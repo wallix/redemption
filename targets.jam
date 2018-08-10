@@ -100,7 +100,7 @@ exe rdpproxy :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-exe rdpheadless :
+exe main_client_redemption :
   $(REDEMPTION_SRC_PATH)/main/main_client_redemption.cpp
 :
   $(EXE_DEPENDENCIES)
@@ -147,47 +147,47 @@ exe rdpheadless :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-#exe rdpheadless :
-#  $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
-#:
- # $(EXE_DEPENDENCIES)
- # <include>$(REDEMPTION_TEST_PATH)/includes
- # <library>app_path_exe.o
- # <library>crypto
- # <library>gssapi_krb5
- # <library>krb5
- # <library>openssl
- # <library>png
- # <library>projects/redemption_configs/redemption_src/configs/config.o
- # <library>src/core/RDP/mppc.o
- # <library>src/core/RDP/nego.o
- # <library>src/core/error.o
- # <library>src/core/font.o
- # <library>src/gdi/clip_from_cmd.o
- # <library>src/gdi/graphic_api.o
- # <library>src/gdi/protected_graphics.o
- # <library>src/keyboard/keymap2.o
- # <library>src/keyboard/keymapSym.o
- # <library>src/mod/internal/client_execute.o
- # <library>src/mod/internal/widget/flat_button.o
- # <library>src/mod/internal/widget/label.o
- # <library>src/mod/rdp/rdp.o
- # <library>src/mod/rdp/rdp_negociation.o
- # <library>src/transport/socket_transport.o
- # <library>src/utils/authorization_channels.o
- # <library>src/utils/bitmap.o
- # <library>src/utils/bitmap_from_file.o
- # <library>src/utils/cfgloader.o
- # <library>src/utils/d3des.o
- # <library>src/utils/fileutils.o
- # <library>src/utils/hexdump.o
- # <library>src/utils/netutils.o
- # <library>src/utils/png.o
- # <library>src/utils/rle.o
- # <library>src/utils/set_exception_handler_pretty_message.o
- # <library>z
- # <variant>debug:<library>dl <variant>san:<library>dl
-#;
+exe rdpheadless :
+  $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
+:
+  $(EXE_DEPENDENCIES)
+  <include>$(REDEMPTION_TEST_PATH)/includes
+  <library>app_path_exe.o
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/set_exception_handler_pretty_message.o
+  <library>z
+  <variant>debug:<library>dl <variant>san:<library>dl
+;
 exe rdpinichecker :
   $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
 :
@@ -299,6 +299,12 @@ lib libredrec :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
+lib libiametrics :
+  src/main/iametrics.cpp.lib.o
+:
+  $(LIB_DEPENDENCIES)
+  <library>log.o
+;
 lib libscytale :
   src/main/scytale.cpp.lib.o
 :
@@ -315,6 +321,11 @@ lib libscytale :
 ;
 obj src/main/do_recorder.cpp.lib.o :
   $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp
+:
+  $(LIB_DEPENDENCIES)
+;
+obj src/main/iametrics.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/main/iametrics.cpp
 :
   $(LIB_DEPENDENCIES)
 ;
@@ -2421,6 +2432,13 @@ test-run tests/main/test_do_recorder :
   <library>src/utils/rle.o
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
+;
+test-run tests/main/test_iametrics :
+  $(REDEMPTION_TEST_PATH)/main/test_iametrics.cpp
+:
+  <covfile>src/main/iametrics.cpp
+  <covfile>src/main/iametrics.hpp
+  <library>src/main/iametrics.o
 ;
 test-run tests/main/test_scytale :
   $(REDEMPTION_TEST_PATH)/main/test_scytale.cpp
@@ -4644,6 +4662,7 @@ obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/t
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
+obj src/main/iametrics.o : $(REDEMPTION_SRC_PATH)/main/iametrics.cpp ;
 obj src/main/scytale.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
@@ -4974,6 +4993,8 @@ alias test_keymapSym : tests/keyboard/test_keymapSym ;
 alias test_keymapSym.coverage : tests/keyboard/test_keymapSym.coverage ;
 alias test_do_recorder : tests/main/test_do_recorder ;
 alias test_do_recorder.coverage : tests/main/test_do_recorder.coverage ;
+alias test_iametrics : tests/main/test_iametrics ;
+alias test_iametrics.coverage : tests/main/test_iametrics.coverage ;
 alias test_scytale : tests/main/test_scytale ;
 alias test_scytale.coverage : tests/main/test_scytale.coverage ;
 alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
@@ -5546,6 +5567,7 @@ alias tests/keyboard :
 explicit tests/main ;
 alias tests/main :
   tests/main/test_do_recorder
+  tests/main/test_iametrics
   tests/main/test_scytale
 ;
 explicit tests/mod/internal ;
