@@ -198,8 +198,6 @@ private:
     uint32_t last_formatID = 0;
     bool cliprdr_init_format_list_done = false;
 
-    bool modified_var_since_last_log = false;
-
    const bool debug;
 
 
@@ -250,6 +248,12 @@ public:
         ::snprintf(header, sizeof(header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", this->session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str());
 
         if (this->path.c_str() && activate) {
+            std::string dir_path = this->path.substr(0, this->path.length()-1);
+            int mkdir_res = mkdir(dir_path.c_str(), ACCESSPERMS);
+            if (mkdir_res == -1) {
+                LOG(LOG_ERR, "Impossible to create directory at %s, error(%d)", dir_path, mkdir_res);
+            }
+
             this->new_day(this->current_file_date);
         }
     }
@@ -266,7 +270,7 @@ public:
         std::string text_date = ((this->current_file_date % (24*3600)) == 0)?text_gmdate(this->current_file_date):filename_gmdatetime(this->current_file_date);
 
         char index_file_path[1024];
-        ::snprintf(index_file_path, sizeof(index_file_path), "%srdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
+        ::snprintf(index_file_path, sizeof(index_file_path), "%s/rdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
 
         char header_disconnection[2048];
         ::snprintf(header_disconnection, sizeof(header_disconnection), "%s disconnection %s", text_gmdatetime(this->next_log_time.tv_sec).c_str(), this->header);
@@ -285,7 +289,6 @@ public:
 
     void add_to_current_data(int index, uint64_t value) {
         this->current_data[index] += value;
-        this->modified_var_since_last_log = true;
     }
 
     void server_other_channel_data(long int len) {
@@ -611,7 +614,7 @@ public:
     void new_day(time_t now) {
         std::string text_date = ((now % (24*3600)) == 0)?text_gmdate(now):filename_gmdatetime(now);
 
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%srdp_metrics-%s-%s.logmetrics", this->path.c_str(), this->version, text_date.c_str());
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path), "%s/rdp_metrics-%s-%s.logmetrics", this->path.c_str(), this->version, text_date.c_str());
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
@@ -619,7 +622,7 @@ public:
         }
 
         char index_file_path[1024];
-        ::snprintf(index_file_path, sizeof(index_file_path), "%srdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
+        ::snprintf(index_file_path, sizeof(index_file_path), "%s/rdp_metrics-%s-%s.logindex", path.c_str(), this->version, text_date.c_str());
 
         char connection_header[1036];
         ::snprintf(connection_header, sizeof(connection_header), "%s connection %s", text_gmdatetime(this->connection_time).c_str(), this->header);
@@ -654,8 +657,9 @@ public:
     void log(timeval & now) {
 
         timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
-        if (/*this->modified_var_since_last_log && */!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+        if (this->active_ && !wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
             this->next_log_time.tv_sec += this->log_delay.count();
+            this->next_log_time.tv_usec = now.tv_usec;
 
             this->rotate(now.tv_sec);
 
@@ -685,8 +689,6 @@ public:
             iovec iov[] = { {sentence, strlen(sentence)} };
 
             ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
-
-            this->modified_var_since_last_log = false;
 
             if (nwritten == -1) {
                 // TODO bad filename
