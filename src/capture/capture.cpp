@@ -1701,9 +1701,9 @@ Capture::Capture(
 
     if (this->meta_capture_obj) {
         this->caps.push_back(this->meta_capture_obj->meta);
+        this->probes.push_back(this->meta_capture_obj->meta);
         if (kbd_log_params.meta_keyboard_log) {
             this->kbds.push_back(this->meta_capture_obj->meta);
-            this->probes.push_back(this->meta_capture_obj->meta);
         }
         else if (this->meta_capture_obj->enable_agent) {
             // meta includes session_log_agent

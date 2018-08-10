@@ -2664,8 +2664,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     Rect scr(0, 0, 100, 100);
 
-    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy,
-        std::chrono::seconds::zero(), ini);
+    VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
     video_params.no_timestamp = no_timestamp;
     const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
     const char * record_path = record_tmp_path;
@@ -2742,9 +2741,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         record_tmp_path,
         record_path,
         groupid,
-        nullptr,
-        SmartVideoCropping::disable,
-        0
+        nullptr
     };
 
     {
