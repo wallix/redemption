@@ -326,19 +326,11 @@ protected:
             }
             return SEC_E_INVALID_TOKEN;
         }
-        int const length = this->pubKeyAuth.size();
 
-        SecBuffer Buffers[2]; /* Signature, Encrypted TLS Public Key */
-
-        Buffers[0].init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].copy(this->pubKeyAuth.get_data(), this->ContextSizes.cbMaxSignature);
-
-        Buffers[1].init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].copy(this->pubKeyAuth.get_data() + this->ContextSizes.cbMaxSignature,
-                        Buffers[1].size());
+        SecBuffer Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
-            Buffers[1], Buffers[0], this->recv_seq_num++);
+            static_cast<SecBuffer&>(this->pubKeyAuth), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
@@ -361,10 +353,11 @@ protected:
                 : this->ServerClientHash.get_data();
         }
 
-        uint8_t* public_key2 = Buffers[1].get_data();
+        uint8_t* public_key2 = Buffer.get_data();
+        size_t public_key_len2 = Buffer.size();
 
-        if (Buffers[1].size() != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", Buffers[1].size(), size_t(public_key_length));
+        if (public_key_len2 != public_key_length) {
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key_len2, size_t(public_key_length));
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
@@ -730,34 +723,25 @@ public:
     using rdpCredsspBase::set_credentials;
 
     SEC_STATUS credssp_decrypt_ts_credentials() {
-        int length;
-        SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
         }
-
-        SecBuffer Buffers[2]; /* Signature, TSCredentials */
 
         if (this->authInfo.size() < 1) {
             LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer");
             return SEC_E_INVALID_TOKEN;
         }
 
-        length = this->authInfo.size();
+        SecBuffer Buffer;
 
-        Buffers[0].init(this->ContextSizes.cbMaxSignature);
-        Buffers[0].copy(this->authInfo.get_data(), Buffers[0].size());
-
-        Buffers[1].init(length - this->ContextSizes.cbMaxSignature);
-        Buffers[1].copy(this->authInfo.get_data() + this->ContextSizes.cbMaxSignature, Buffers[1].size());
-
-        status = this->table->DecryptMessage(Buffers[1], Buffers[0], this->recv_seq_num++);
+        const SEC_STATUS status = this->table->DecryptMessage(
+            static_cast<SecBuffer&>(this->authInfo), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
         }
 
-        InStream decrypted_creds(Buffers[1].get_data(), Buffers[1].size());
+        InStream decrypted_creds(Buffer.get_data(), Buffer.size());
         this->ts_credentials.recv(decrypted_creds);
 
         // hexdump(this->ts_credentials.passCreds.userName,
