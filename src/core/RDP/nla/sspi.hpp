@@ -25,9 +25,6 @@
 #include "utils/utf.hpp"
 #include "utils/sugar/buf_maker.hpp"
 
-#include <new>
-#include <cstdio>
-
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
 class Array
@@ -78,9 +75,6 @@ public:
     }
 };
 
-#define NTLMSP_NAME "NTLM"
-#define SECBUFFER_VERSION 0
-
 struct SecBuffer : Array {};
 
 // struct TimeStamp {
@@ -122,69 +116,39 @@ struct SEC_WINNT_AUTH_IDENTITY
         : User(0)
         , Domain(0)
         , Password(0)
-
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;
     }
 
-    void SetUserFromUtf8(const uint8_t * user) {
-        if (user) {
-            size_t user_len = UTF8Len(user);
-            this->User.init(user_len * 2);
-            UTF8toUTF16(user, this->User.get_data(), user_len * 2);
-        }
-        else {
-            this->User.init(0);
-        }
+    void SetUserFromUtf8(const uint8_t * user)
+    {
+        this->copyFromUtf8(this->User, user);
     }
 
-    void SetDomainFromUtf8(const uint8_t * domain) {
-        if (domain) {
-            size_t domain_len = UTF8Len(domain);
-            this->Domain.init(domain_len * 2);
-            UTF8toUTF16(domain, this->Domain.get_data(), domain_len * 2);
-        }
-        else {
-            this->Domain.init(0);
-        }
+    void SetDomainFromUtf8(const uint8_t * domain)
+    {
+        this->copyFromUtf8(this->Domain, domain);
     }
 
-    void SetPasswordFromUtf8(const uint8_t * password) {
-        if (password) {
-            size_t password_len = UTF8Len(password);
-            this->Password.init(password_len * 2);
-            UTF8toUTF16(password, this->Password.get_data(), password_len * 2);
-        }
-        else {
-            this->Password.init(0);
-        }
+    void SetPasswordFromUtf8(const uint8_t * password)
+    {
+        this->copyFromUtf8(this->Password, password);
     }
-    void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass) {
-        if (user) {
-            const char * p = char_ptr_cast(user);
-            size_t length = 0;
-            if (p) {
-                length = strlen(p);
-                if (length > 256) {
-                    length = 255;
-                }
+
+    void SetKrbAuthIdentity(const uint8_t * user, const uint8_t * pass)
+    {
+        auto copy = [](char (&arr)[256], uint8_t const* data){
+            if (data) {
+                const char * p = char_ptr_cast(data);
+                const size_t length = p ? strnlen(p, 255) : 0;
+                memcpy(arr, data, length);
+                arr[length] = 0;
             }
-            memcpy(this->princname, user, length);
-            this->princname[length] = 0;
-        }
-        if (pass) {
-            const char * p = char_ptr_cast(pass);
-            size_t length = 0;
-            if (p) {
-                length = strlen(p);
-                if (length > 256) {
-                    length = 255;
-                }
-            }
-            memcpy(this->princpass, pass, length);
-            this->princpass[length] = 0;
-        }
+        };
+
+        copy(this->princname, user);
+        copy(this->princpass, pass);
     }
 
     void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
@@ -204,6 +168,19 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->User.copy(src.User);
         this->Domain.copy(src.Domain);
         this->Password.copy(src.Password);
+    }
+
+private:
+    static void copyFromUtf8(Array& arr, uint8_t const* data)
+    {
+        if (data) {
+            size_t user_len = UTF8Len(data);
+            arr.init(user_len * 2);
+            UTF8toUTF16(data, arr.get_data(), user_len * 2);
+        }
+        else {
+            arr.init(0);
+        }
     }
 };
 
