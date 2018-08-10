@@ -56,14 +56,14 @@ struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
 private:
     Random & rand;
     TimeObj & timeobj;
-    std::unique_ptr<CREDENTIALS> credentials;
+    std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
     std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
 
 public:
-    CREDENTIALS const * getCredentialHandle() const
+    SEC_WINNT_AUTH_IDENTITY const * getIdentityHandle() const
     {
-        return this->credentials.get();
+        return this->identity.get();
     }
 
     NTLMContext const * getContextHandle() const
@@ -109,10 +109,10 @@ public:
         if (fCredentialUse == SECPKG_CRED_OUTBOUND
          || fCredentialUse == SECPKG_CRED_INBOUND)
         {
-            this->credentials = std::make_unique<CREDENTIALS>();
+            this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
             if (pAuthData) {
-                this->credentials->identity.CopyAuthIdentity(*pAuthData);
+                this->identity->CopyAuthIdentity(*pAuthData);
             }
         }
 
@@ -123,7 +123,7 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        SecBuffer* pinput_buffer, unsigned long verbose,
+        SecBuffer const* pinput_buffer, unsigned long verbose,
         SecBuffer& output_buffer
     ) override
     {
@@ -143,13 +143,13 @@ public:
 
             // if (this->context->Workstation.size() < 1)
             //     this->context->ntlm_SetContextWorkstation(nullptr);
-            if (!this->credentials) {
+            if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
             this->context->ntlm_SetContextWorkstation(byte_ptr_cast(pszTargetName));
             this->context->ntlm_SetContextServicePrincipalName(byte_ptr_cast(pszTargetName));
 
-            this->context->identity.CopyAuthIdentity(this->credentials->identity);
+            this->context->identity.CopyAuthIdentity(*this->identity);
         }
 
         if ((!pinput_buffer) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
@@ -160,7 +160,7 @@ public:
                 this->context->state = NTLM_STATE_NEGOTIATE;
             }
             if (this->context->state == NTLM_STATE_NEGOTIATE) {
-                return this->context->write_negotiate(&output_buffer);
+                return this->context->write_negotiate(output_buffer);
             }
             return SEC_E_OUT_OF_SEQUENCE;
         }
@@ -176,13 +176,13 @@ public:
         // }
 
         if (this->context->state == NTLM_STATE_CHALLENGE) {
-            this->context->read_challenge(pinput_buffer);
+            this->context->read_challenge(*pinput_buffer);
 
             if (output_buffer.size() < 1) {
                 return SEC_E_INSUFFICIENT_MEMORY;
             }
             if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                return this->context->write_authenticate(&output_buffer);
+                return this->context->write_authenticate(output_buffer);
             }
         }
 
@@ -192,7 +192,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBuffer& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        SecBuffer const& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
     ) override {
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
@@ -201,10 +201,10 @@ public:
             if (fContextReq & ASC_REQ_CONFIDENTIALITY) {
                 this->context->confidentiality = true;
             }
-            if (!this->credentials) {
+            if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            this->context->identity.CopyAuthIdentity(this->credentials->identity);
+            this->context->identity.CopyAuthIdentity(*this->identity);
 
             this->context->ntlm_SetContextServicePrincipalName(nullptr);
         }
@@ -214,14 +214,14 @@ public:
             if (input_buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            /*SEC_STATUS status = */this->context->read_negotiate(&input_buffer);
+            /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
                 if (output_buffer.size() < 1) {
                     return SEC_E_INSUFFICIENT_MEMORY;
                 }
 
-                return this->context->write_challenge(&output_buffer);
+                return this->context->write_challenge(output_buffer);
             }
 
             return SEC_E_OUT_OF_SEQUENCE;
@@ -232,7 +232,7 @@ public:
                 return SEC_E_INVALID_TOKEN;
             }
 
-            SEC_STATUS status = this->context->read_authenticate(&input_buffer);
+            SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
                 if (!set_password_cb) {

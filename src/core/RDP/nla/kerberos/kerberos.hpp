@@ -188,7 +188,7 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        SecBuffer* pinput_buffer, unsigned long Reserved2,
+        SecBuffer const* pinput_buffer, unsigned long Reserved2,
         SecBuffer& output_buffer
     ) override
     {
@@ -218,7 +218,7 @@ public:
             // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
             //     input_buffer->Buffer.size());
             input_tok.length = pinput_buffer->size();
-            input_tok.value = pinput_buffer->get_data();
+            input_tok.value = const_cast<uint8_t*>(pinput_buffer->get_data());
         }
         else {
             // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
@@ -290,7 +290,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBuffer& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        SecBuffer const& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
     ) override
     {
         (void)fContextReq;
@@ -313,7 +313,7 @@ public:
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
         input_tok.length = input_buffer.size();
-        input_tok.value = input_buffer.get_data();
+        input_tok.value = const_cast<uint8_t*>(input_buffer.get_data());
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
