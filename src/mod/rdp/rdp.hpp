@@ -386,6 +386,8 @@ protected:
     const uint32_t                    session_probe_handle_usage_limit;
     const uint32_t                    session_probe_memory_usage_limit;
 
+    const bool                        session_probe_public_session;
+
     const bool                        bogus_ios_rdpdr_virtual_channel;
 
     const bool                        enable_rdpdr_data_analysis;
@@ -819,6 +821,7 @@ public:
         , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
         , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
+        , session_probe_public_session(mod_rdp_params.session_probe_public_session)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
@@ -926,7 +929,9 @@ public:
             // Target informations
             this->session_probe_target_informations  = mod_rdp_params.target_application;
             this->session_probe_target_informations += ":";
-            this->session_probe_target_informations += mod_rdp_params.primary_user_id;
+            if (!this->session_probe_public_session) {
+                this->session_probe_target_informations += mod_rdp_params.primary_user_id;
+            }
 
             if (this->remote_program) {
                 uint32_t const r = this->gen.rand32();

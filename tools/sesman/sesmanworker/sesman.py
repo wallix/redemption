@@ -2052,6 +2052,7 @@ class Sesman():
                 u'session_probe_enable_crash_dump' : 'enable_crash_dump',
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
                 u'session_probe_memory_usage_limit' : 'memory_usage_limit',
+                u'session_probe_public_session'     : 'public_session',
 
                 # Deprecated. For compatibility only.
                 u'enable_session_probe_launch_mask' : 'enable_launch_mask'

@@ -1914,6 +1914,23 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
+    /// AUTHID_MOD_RDP_SESSION_PROBE_PUBLIC_SESSION <br/>
+    /// type: bool <br/>
+    /// sesman -> proxy <br/>
+    /// value{false} <br/>
+    struct mod_rdp::session_probe_public_session {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "session_probe_public_session";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(55);
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// Keep known server certificates on WAB <br/>
     /// AUTHID_MOD_RDP_SERVER_CERT_STORE <br/>
     /// type: bool <br/>
@@ -1926,7 +1943,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_store";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(55);
+        static constexpr authid_t index = authid_t(56);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -1943,7 +1960,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_check";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(56);
+        static constexpr authid_t index = authid_t(57);
         using type = ServerCertCheck;
         using sesman_and_spec_type = ServerCertCheck;
         using mapped_type = sesman_and_spec_type;
@@ -1961,7 +1978,7 @@ namespace cfg {
         static constexpr char const * name = "server_access_allowed_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(57);
+        static constexpr authid_t index = authid_t(58);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1979,7 +1996,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_create_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(58);
+        static constexpr authid_t index = authid_t(59);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -1997,7 +2014,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_success_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(59);
+        static constexpr authid_t index = authid_t(60);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -2015,7 +2032,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_failure_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(60);
+        static constexpr authid_t index = authid_t(61);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -2033,7 +2050,7 @@ namespace cfg {
         static constexpr char const * name = "server_cert_error_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(61);
+        static constexpr authid_t index = authid_t(62);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -2087,7 +2104,7 @@ namespace cfg {
         static constexpr char const * name = "enable_rdpdr_data_analysis";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(62);
+        static constexpr authid_t index = authid_t(63);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2146,8 +2163,20 @@ namespace cfg {
         type value{true};
     };
 
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct rdp_metrics::activate_log_metrics {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "rdp_metrics";
+        static constexpr char const * name = "activate_log_metrics";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::Record) <br/>
+    /// value = app_path(AppPath::Record_Metrics) <br/>
     struct rdp_metrics::log_dir_path {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2156,7 +2185,7 @@ namespace cfg {
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::Record);
+        type value = app_path(AppPath::Record_Metrics);
     };
     /// type: std::chrono::seconds <br/>
     /// value{5} <br/>
@@ -2195,18 +2224,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct rdp_metrics::activate_log_metrics {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "rdp_metrics";
-        static constexpr char const * name = "activate_log_metrics";
-        using type = bool;
-        using sesman_and_spec_type = bool;
-        using mapped_type = sesman_and_spec_type;
-        type value{false};
-    };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
     /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
@@ -2220,7 +2237,7 @@ namespace cfg {
         static constexpr char const * name = "clipboard_up";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(63);
+        static constexpr authid_t index = authid_t(64);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2238,7 +2255,7 @@ namespace cfg {
         static constexpr char const * name = "clipboard_down";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(64);
+        static constexpr authid_t index = authid_t(65);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2274,7 +2291,7 @@ namespace cfg {
         static constexpr char const * name = "server_clipboard_encoding_type";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(65);
+        static constexpr authid_t index = authid_t(66);
         using type = ClipboardEncodingType;
         using sesman_and_spec_type = ClipboardEncodingType;
         using mapped_type = sesman_and_spec_type;
@@ -2291,7 +2308,7 @@ namespace cfg {
         static constexpr char const * name = "bogus_clipboard_infinite_loop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(66);
+        static constexpr authid_t index = authid_t(67);
         using type = VncBogusClipboardInfiniteLoop;
         using sesman_and_spec_type = VncBogusClipboardInfiniteLoop;
         using mapped_type = sesman_and_spec_type;
@@ -2308,7 +2325,7 @@ namespace cfg {
         static constexpr char const * name = "server_is_apple";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(67);
+        static constexpr authid_t index = authid_t(68);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2340,7 +2357,7 @@ namespace cfg {
         static constexpr char const * name = "replay_on_loop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(68);
+        static constexpr authid_t index = authid_t(69);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2585,7 +2602,7 @@ namespace cfg {
         static constexpr char const * name = "rt_display";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(69);
+        static constexpr authid_t index = authid_t(70);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2848,7 +2865,7 @@ namespace cfg {
         static constexpr char const * name = "key0";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(70);
+        static constexpr authid_t index = authid_t(71);
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
@@ -2865,7 +2882,7 @@ namespace cfg {
         static constexpr char const * name = "key1";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(71);
+        static constexpr authid_t index = authid_t(72);
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
@@ -3196,7 +3213,7 @@ namespace cfg {
         static constexpr char const * name = "allow_resize_hosted_desktop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(72);
+        static constexpr authid_t index = authid_t(73);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3214,7 +3231,7 @@ namespace cfg {
         static constexpr char const * name = "language";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(73);
+        static constexpr authid_t index = authid_t(74);
         using type = Language;
         using sesman_and_spec_type = Language;
         using mapped_type = sesman_and_spec_type;
@@ -3231,7 +3248,7 @@ namespace cfg {
         static constexpr char const * name = "password_en";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(74);
+        static constexpr authid_t index = authid_t(75);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3248,7 +3265,7 @@ namespace cfg {
         static constexpr char const * name = "password_fr";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(75);
+        static constexpr authid_t index = authid_t(76);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3279,7 +3296,7 @@ namespace cfg {
         static constexpr char const * name = "opt_bitrate";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(76);
+        static constexpr authid_t index = authid_t(77);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3296,7 +3313,7 @@ namespace cfg {
         static constexpr char const * name = "opt_framerate";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(77);
+        static constexpr authid_t index = authid_t(78);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3313,7 +3330,7 @@ namespace cfg {
         static constexpr char const * name = "opt_qscale";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(78);
+        static constexpr authid_t index = authid_t(79);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3330,7 +3347,7 @@ namespace cfg {
         static constexpr char const * name = "opt_bpp";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(79);
+        static constexpr authid_t index = authid_t(80);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3347,7 +3364,7 @@ namespace cfg {
         static constexpr char const * name = "opt_height";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(80);
+        static constexpr authid_t index = authid_t(81);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3364,7 +3381,7 @@ namespace cfg {
         static constexpr char const * name = "opt_width";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(81);
+        static constexpr authid_t index = authid_t(82);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3392,7 +3409,7 @@ namespace cfg {
         static constexpr char const * name = "selector";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(82);
+        static constexpr authid_t index = authid_t(83);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3409,7 +3426,7 @@ namespace cfg {
         static constexpr char const * name = "selector_current_page";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(83);
+        static constexpr authid_t index = authid_t(84);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3426,7 +3443,7 @@ namespace cfg {
         static constexpr char const * name = "selector_device_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(84);
+        static constexpr authid_t index = authid_t(85);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3443,7 +3460,7 @@ namespace cfg {
         static constexpr char const * name = "selector_group_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(85);
+        static constexpr authid_t index = authid_t(86);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3460,7 +3477,7 @@ namespace cfg {
         static constexpr char const * name = "selector_proto_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(86);
+        static constexpr authid_t index = authid_t(87);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3477,7 +3494,7 @@ namespace cfg {
         static constexpr char const * name = "selector_lines_per_page";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(87);
+        static constexpr authid_t index = authid_t(88);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3494,7 +3511,7 @@ namespace cfg {
         static constexpr char const * name = "selector_number_of_pages";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(88);
+        static constexpr authid_t index = authid_t(89);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3511,7 +3528,7 @@ namespace cfg {
         static constexpr char const * name = "target_password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(89);
+        static constexpr authid_t index = authid_t(90);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3528,7 +3545,7 @@ namespace cfg {
         static constexpr char const * name = "target_host";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(90);
+        static constexpr authid_t index = authid_t(91);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3545,7 +3562,7 @@ namespace cfg {
         static constexpr char const * name = "target_str";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(91);
+        static constexpr authid_t index = authid_t(92);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3562,7 +3579,7 @@ namespace cfg {
         static constexpr char const * name = "target_service";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(92);
+        static constexpr authid_t index = authid_t(93);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3579,7 +3596,7 @@ namespace cfg {
         static constexpr char const * name = "target_port";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(93);
+        static constexpr authid_t index = authid_t(94);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3596,7 +3613,7 @@ namespace cfg {
         static constexpr char const * name = "target_protocol";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(94);
+        static constexpr authid_t index = authid_t(95);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3613,7 +3630,7 @@ namespace cfg {
         static constexpr char const * name = "password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(95);
+        static constexpr authid_t index = authid_t(96);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3630,7 +3647,7 @@ namespace cfg {
         static constexpr char const * name = "reporting";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(96);
+        static constexpr authid_t index = authid_t(97);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3647,7 +3664,7 @@ namespace cfg {
         static constexpr char const * name = "auth_channel_answer";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(97);
+        static constexpr authid_t index = authid_t(98);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3664,7 +3681,7 @@ namespace cfg {
         static constexpr char const * name = "auth_channel_target";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(98);
+        static constexpr authid_t index = authid_t(99);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3681,7 +3698,7 @@ namespace cfg {
         static constexpr char const * name = "message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(99);
+        static constexpr authid_t index = authid_t(100);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3698,7 +3715,7 @@ namespace cfg {
         static constexpr char const * name = "accept_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(100);
+        static constexpr authid_t index = authid_t(101);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3715,7 +3732,7 @@ namespace cfg {
         static constexpr char const * name = "display_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(101);
+        static constexpr authid_t index = authid_t(102);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3732,7 +3749,7 @@ namespace cfg {
         static constexpr char const * name = "rejected";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(102);
+        static constexpr authid_t index = authid_t(103);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3749,7 +3766,7 @@ namespace cfg {
         static constexpr char const * name = "authenticated";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(103);
+        static constexpr authid_t index = authid_t(104);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3766,7 +3783,7 @@ namespace cfg {
         static constexpr char const * name = "keepalive";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(104);
+        static constexpr authid_t index = authid_t(105);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3783,7 +3800,7 @@ namespace cfg {
         static constexpr char const * name = "session_id";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(105);
+        static constexpr authid_t index = authid_t(106);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3800,7 +3817,7 @@ namespace cfg {
         static constexpr char const * name = "end_date_cnx";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(106);
+        static constexpr authid_t index = authid_t(107);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3817,7 +3834,7 @@ namespace cfg {
         static constexpr char const * name = "end_time";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(107);
+        static constexpr authid_t index = authid_t(108);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3834,7 +3851,7 @@ namespace cfg {
         static constexpr char const * name = "mode_console";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(108);
+        static constexpr authid_t index = authid_t(109);
         using type = RdpModeConsole;
         using sesman_and_spec_type = RdpModeConsole;
         using mapped_type = sesman_and_spec_type;
@@ -3851,7 +3868,7 @@ namespace cfg {
         static constexpr char const * name = "timezone";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(109);
+        static constexpr authid_t index = authid_t(110);
         using type = int;
         using sesman_and_spec_type = int;
         using mapped_type = sesman_and_spec_type;
@@ -3868,7 +3885,7 @@ namespace cfg {
         static constexpr char const * name = "real_target_device";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(110);
+        static constexpr authid_t index = authid_t(111);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3885,7 +3902,7 @@ namespace cfg {
         static constexpr char const * name = "authentication_challenge";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(111);
+        static constexpr authid_t index = authid_t(112);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -3902,7 +3919,7 @@ namespace cfg {
         static constexpr char const * name = "ticket";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(112);
+        static constexpr authid_t index = authid_t(113);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3919,7 +3936,7 @@ namespace cfg {
         static constexpr char const * name = "comment";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(113);
+        static constexpr authid_t index = authid_t(114);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3936,7 +3953,7 @@ namespace cfg {
         static constexpr char const * name = "duration";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(114);
+        static constexpr authid_t index = authid_t(115);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3953,7 +3970,7 @@ namespace cfg {
         static constexpr char const * name = "duration_max";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(115);
+        static constexpr authid_t index = authid_t(116);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -3970,7 +3987,7 @@ namespace cfg {
         static constexpr char const * name = "waitinforeturn";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(116);
+        static constexpr authid_t index = authid_t(117);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3987,7 +4004,7 @@ namespace cfg {
         static constexpr char const * name = "showform";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(117);
+        static constexpr authid_t index = authid_t(118);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4004,7 +4021,7 @@ namespace cfg {
         static constexpr char const * name = "formflag";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(118);
+        static constexpr authid_t index = authid_t(119);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -4021,7 +4038,7 @@ namespace cfg {
         static constexpr char const * name = "module";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(119);
+        static constexpr authid_t index = authid_t(120);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4038,7 +4055,7 @@ namespace cfg {
         static constexpr char const * name = "forcemodule";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(120);
+        static constexpr authid_t index = authid_t(121);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4055,7 +4072,7 @@ namespace cfg {
         static constexpr char const * name = "proxy_opt";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(121);
+        static constexpr authid_t index = authid_t(122);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4072,7 +4089,7 @@ namespace cfg {
         static constexpr char const * name = "pattern_kill";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(122);
+        static constexpr authid_t index = authid_t(123);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4089,7 +4106,7 @@ namespace cfg {
         static constexpr char const * name = "pattern_notify";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(123);
+        static constexpr authid_t index = authid_t(124);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4106,7 +4123,7 @@ namespace cfg {
         static constexpr char const * name = "opt_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(124);
+        static constexpr authid_t index = authid_t(125);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4123,7 +4140,7 @@ namespace cfg {
         static constexpr char const * name = "login_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(125);
+        static constexpr authid_t index = authid_t(126);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4140,7 +4157,7 @@ namespace cfg {
         static constexpr char const * name = "session_probe_outbound_connection_monitoring_rules";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(126);
+        static constexpr authid_t index = authid_t(127);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4157,7 +4174,7 @@ namespace cfg {
         static constexpr char const * name = "session_probe_process_monitoring_rules";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(127);
+        static constexpr authid_t index = authid_t(128);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4174,7 +4191,7 @@ namespace cfg {
         static constexpr char const * name = "session_probe_extra_system_processes";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(128);
+        static constexpr authid_t index = authid_t(129);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4191,7 +4208,7 @@ namespace cfg {
         static constexpr char const * name = "disconnect_reason";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(129);
+        static constexpr authid_t index = authid_t(130);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4208,7 +4225,7 @@ namespace cfg {
         static constexpr char const * name = "disconnect_reason_ack";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(130);
+        static constexpr authid_t index = authid_t(131);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4236,7 +4253,7 @@ namespace cfg {
         static constexpr char const * name = "recording_started";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(131);
+        static constexpr authid_t index = authid_t(132);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4253,7 +4270,7 @@ namespace cfg {
         static constexpr char const * name = "rt_ready";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(132);
+        static constexpr authid_t index = authid_t(133);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4281,7 +4298,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(133);
+        static constexpr authid_t index = authid_t(134);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4298,7 +4315,7 @@ namespace cfg {
         static constexpr char const * name = "auth_notify";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(134);
+        static constexpr authid_t index = authid_t(135);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4315,7 +4332,7 @@ namespace cfg {
         static constexpr char const * name = "auth_notify_rail_exec_flags";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(135);
+        static constexpr authid_t index = authid_t(136);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -4332,7 +4349,7 @@ namespace cfg {
         static constexpr char const * name = "auth_notify_rail_exec_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(136);
+        static constexpr authid_t index = authid_t(137);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4349,7 +4366,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_exec_result";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(137);
+        static constexpr authid_t index = authid_t(138);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -4366,7 +4383,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_flags";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(138);
+        static constexpr authid_t index = authid_t(139);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
@@ -4383,7 +4400,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_original_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(139);
+        static constexpr authid_t index = authid_t(140);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4400,7 +4417,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(140);
+        static constexpr authid_t index = authid_t(141);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4417,7 +4434,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_working_dir";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(141);
+        static constexpr authid_t index = authid_t(142);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4434,7 +4451,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_arguments";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(142);
+        static constexpr authid_t index = authid_t(143);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4451,7 +4468,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_account";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(143);
+        static constexpr authid_t index = authid_t(144);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4468,7 +4485,7 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(144);
+        static constexpr authid_t index = authid_t(145);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4485,7 +4502,7 @@ namespace cfg {
         static constexpr char const * name = "rail_disconnect_message_delay";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(145);
+        static constexpr authid_t index = authid_t(146);
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
@@ -4502,7 +4519,7 @@ namespace cfg {
         static constexpr char const * name = "use_session_probe_to_launch_remote_program";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(146);
+        static constexpr authid_t index = authid_t(147);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4519,7 +4536,7 @@ namespace cfg {
         static constexpr char const * name = "session_probe_launch_error_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(147);
+        static constexpr authid_t index = authid_t(148);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4704,6 +4721,7 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_enable_crash_dump
 , cfg::mod_rdp::session_probe_handle_usage_limit
 , cfg::mod_rdp::session_probe_memory_usage_limit
+, cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message
@@ -4722,11 +4740,11 @@ struct mod_rdp
 { static constexpr bool is_section = true; };
 
 struct rdp_metrics
-: cfg::rdp_metrics::log_dir_path
+: cfg::rdp_metrics::activate_log_metrics
+, cfg::rdp_metrics::log_dir_path
 , cfg::rdp_metrics::log_interval
 , cfg::rdp_metrics::log_file_turnover_interval
 , cfg::rdp_metrics::sign_key
-, cfg::rdp_metrics::activate_log_metrics
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -4993,6 +5011,7 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::session_probe_enable_crash_dump
 , cfg::mod_rdp::session_probe_handle_usage_limit
 , cfg::mod_rdp::session_probe_memory_usage_limit
+, cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
 , cfg::mod_rdp::server_cert_check
 , cfg::mod_rdp::server_access_allowed_message

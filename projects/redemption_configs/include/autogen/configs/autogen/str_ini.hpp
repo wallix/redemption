@@ -461,6 +461,9 @@
 "#_advanced\n"
 "#session_probe_memory_usage_limit = 0\n\n"
 
+"#_hidden\n"
+"#session_probe_public_session = 0\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "#server_cert_store = 1\n\n"
@@ -551,7 +554,10 @@
 "[rdp_metrics]\n\n"
 
 "#_advanced\n"
-"#log_dir_path = " << app_path(AppPath::Record) << "\n\n"
+"#activate_log_metrics = 0\n\n"
+
+"#_advanced\n"
+"#log_dir_path = " << app_path(AppPath::Record_Metrics) << "\n\n"
 
 "# (is in second)\n"
 "#_advanced\n"
@@ -564,9 +570,6 @@
 "# signature key to digest log metrics header info\n"
 "#_advanced\n"
 "#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\n\n"
-
-"#_advanced\n"
-"#activate_log_metrics = 0\n\n"
 
 "[mod_vnc]\n\n"
 

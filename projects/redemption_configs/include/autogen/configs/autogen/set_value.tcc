@@ -1408,6 +1408,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "session_probe_public_session")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::session_probe_public_session&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::mod_rdp::session_probe_public_session&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1595,6 +1607,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "rdp_metrics")) {
         if (0) {}
+        else if (0 == strcmp(key, "activate_log_metrics")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "log_dir_path")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1641,18 +1665,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::post_set_value(
                 this->variables,
                 static_cast<cfg::rdp_metrics::sign_key&>(this->variables)
-            );
-        }
-        else if (0 == strcmp(key, "activate_log_metrics")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables)
             );
         }
 

@@ -148,6 +148,7 @@ namespace cfg {
         struct session_probe_enable_crash_dump;
         struct session_probe_handle_usage_limit;
         struct session_probe_memory_usage_limit;
+        struct session_probe_public_session;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;
@@ -166,11 +167,11 @@ namespace cfg {
     };
 
     struct rdp_metrics {
+        struct activate_log_metrics;
         struct log_dir_path;
         struct log_interval;
         struct log_file_turnover_interval;
         struct sign_key;
-        struct activate_log_metrics;
     };
 
     struct mod_vnc {

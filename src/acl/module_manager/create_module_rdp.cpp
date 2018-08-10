@@ -140,6 +140,8 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_clipboard_based_launcher_long_delay                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
     mod_rdp_params.session_probe_clipboard_based_launcher_short_delay                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
 
+    mod_rdp_params.session_probe_public_session        = ini.get<cfg::mod_rdp::session_probe_public_session>();
+
     mod_rdp_params.disable_clipboard_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
     mod_rdp_params.disable_clipboard_log_wrm           = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::wrm);
     mod_rdp_params.disable_file_system_log_syslog      = bool(ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::syslog);
