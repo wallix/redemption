@@ -18,12 +18,12 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Meng Tan, Jennifer Inthavong
 */
 
-
 #pragma once
 
 #include "utils/genrandom.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/utf.hpp"
+#include "utils/stream.hpp"
 
 #include "core/RDP/nla/ntlm/ntlm_message.hpp"
 #include "core/RDP/nla/ntlm/ntlm_message_negotiate.hpp"
@@ -60,33 +60,33 @@ class NTLMContext
     Random & rand;
 
 public:
-    bool server;
-    bool NTLMv2;
-    bool UseMIC;
-    NtlmState state;
+    bool server = false;
+    bool NTLMv2 = true;
+    bool UseMIC = true;
+    NtlmState state = NTLM_STATE_INITIAL;
 
-    int SendSeqNum;
-    int RecvSeqNum;
+    int SendSeqNum = 0;
+    int RecvSeqNum = 0;
 
 private:
     uint8_t MachineID[32];
-    bool SendVersionInfo;
+    bool SendVersionInfo = true;
 public:
-    bool confidentiality;
+    bool confidentiality = true;
 
-    SslRC4 SendRc4Seal;
-    SslRC4 RecvRc4Seal;
-    uint8_t* SendSigningKey;
-    uint8_t* RecvSigningKey;
+    SslRC4 SendRc4Seal {};
+    SslRC4 RecvRc4Seal {};
+    uint8_t* SendSigningKey = nullptr;
+    uint8_t* RecvSigningKey = nullptr;
 private:
-    uint8_t* SendSealingKey;
-    uint8_t* RecvSealingKey;
+    uint8_t* SendSealingKey = nullptr;
+    uint8_t* RecvSealingKey = nullptr;
 
 public:
-    uint32_t NegotiateFlags;
+    uint32_t NegotiateFlags = 0;
 
     //int LmCompatibilityLevel;
-    bool SendWorkstationName;
+    bool SendWorkstationName = true;
     Array Workstation;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
@@ -105,100 +105,47 @@ public:
     Array SavedAuthenticateMessage;
 
 private:
-    uint8_t Timestamp[8];
-    uint8_t ChallengeTimestamp[8];
+    uint8_t Timestamp[8]{};
+    uint8_t ChallengeTimestamp[8]{};
 public:
-    uint8_t ServerChallenge[8];
+   uint8_t ServerChallenge[8]{};
 private:
-    uint8_t ClientChallenge[8];
+    uint8_t ClientChallenge[8]{};
 public:
-    uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH];
+    uint8_t SessionBaseKey[SslMd5::DIGEST_LENGTH]{};
 private:
     //uint8_t KeyExchangeKey[16];
     //uint8_t RandomSessionKey[16];
 public:
-    uint8_t ExportedSessionKey[16];
-    uint8_t EncryptedRandomSessionKey[16];
-    uint8_t ClientSigningKey[16];
-    uint8_t ClientSealingKey[16];
-    uint8_t ServerSigningKey[16];
-    uint8_t ServerSealingKey[16];
+    uint8_t ExportedSessionKey[16]{};
+    uint8_t EncryptedRandomSessionKey[16]{};
+    uint8_t ClientSigningKey[16]{};
+    uint8_t ClientSealingKey[16]{};
+    uint8_t ServerSigningKey[16]{};
+    uint8_t ServerSealingKey[16]{};
     uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
     // uint8_t NtProofStr[16];
 
-    bool verbose;
+    bool verbose = false;
 
 public:
     explicit NTLMContext(Random & rand, TimeObj & timeobj)
         : timeobj(timeobj)
         , rand(rand)
-        , server(false)
-        , NTLMv2(true)
-        , UseMIC(false)
-        , state(NTLM_STATE_INITIAL)
-        , SendSeqNum(0)
-        , RecvSeqNum(0)
-        , MachineID()
-        , SendVersionInfo(true)
-        , confidentiality(true)
-        , SendRc4Seal()
-        , RecvRc4Seal()
-        , SendSigningKey(nullptr)
-        , RecvSigningKey(nullptr)
-        , SendSealingKey(nullptr)
-        , RecvSealingKey(nullptr)
-        , NegotiateFlags(0)
         //, LmCompatibilityLevel(3)
-        , SendWorkstationName(true)
         , Workstation(0)
         , ServicePrincipalName(0)
         , SavedNegotiateMessage(0)
         , SavedChallengeMessage(0)
         , SavedAuthenticateMessage(0)
-        , Timestamp()
-        , ChallengeTimestamp()
-        , ServerChallenge()
-        , ClientChallenge()
-        , SessionBaseKey()
         //, KeyExchangeKey()
         //, RandomSessionKey()
-        , ExportedSessionKey()
-        , EncryptedRandomSessionKey()
-        , ClientSigningKey()
-        , ClientSealingKey()
-        , ServerSigningKey()
-        , ServerSealingKey()
-        , MessageIntegrityCheck()
-        , verbose(false)
         // , SendSingleHostData(false)
     {
-        // this->SavedNegotiateMessage.init(0);
-        // this->SavedChallengeMessage.init(0);
-        // this->SavedAuthenticateMessage.init(0);
         // this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
 
-        // memset(this->Timestamp, 0x00, 8);
-        // memset(this->ChallengeTimestamp, 0x00, 8);
-        // memset(this->ServerChallenge, 0x00, 8);
-        // memset(this->ClientChallenge, 0x00, 8);
-        // memset(this->SessionBaseKey, 0x00, 16);
-        // memset(this->KeyExchangeKey, 0x00, 16);
-        // memset(this->RandomSessionKey, 0x00, 16);
-        // memset(this->ExportedSessionKey, 0x00, 16);
-        // memset(this->EncryptedRandomSessionKey, 0x00, 16);
-        // memset(this->ClientSigningKey, 0x00, 16);
-        // memset(this->ClientSealingKey, 0x00, 16);
-        // memset(this->ServerSigningKey, 0x00, 16);
-        // memset(this->ServerSealingKey, 0x00, 16);
-
-        // this->Workstation.init(0);
-        // this->ServicePrincipalName.init(0);
-
-        if (this->NTLMv2) {
-            this->UseMIC = true;
-        }
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Init");
         }
@@ -222,14 +169,10 @@ public:
             memcpy(this->Timestamp, this->ChallengeTimestamp, 8);
         }
         else {
-            timeval tv = this->timeobj.get_time();
-            struct {
-                uint32_t low;
-                uint32_t high;
-            } timestamp;
-            timestamp.low = tv.tv_usec;
-            timestamp.high = tv.tv_sec;
-            memcpy(this->Timestamp, &timestamp, sizeof(timestamp));
+            const timeval tv = this->timeobj.get_time();
+            OutStream out_stream(this->Timestamp);
+            out_stream.out_uint32_le(tv.tv_usec);
+            out_stream.out_uint32_le(tv.tv_sec);
         }
     }
 
@@ -349,16 +292,14 @@ public:
         // if it is so no need to use a temporary variable
         // and copy digest afterward.
         memset(buff, 0, buff_size);
-        memcpy(buff, tmp_md5,
-            std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        memcpy(buff, tmp_md5, std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
     }
     // all strings are in unicode utf16
     void LMOWFv2(const uint8_t * pass,   size_t pass_size,
                  const uint8_t * user,   size_t user_size,
                  const uint8_t * domain, size_t domain_size,
                  uint8_t * buff, size_t buff_size) {
-        NTOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-                buff, buff_size);
+        NTOWFv2(pass, pass_size, user, user_size, domain, domain_size, buff, buff_size);
     }
 
     // client method
@@ -722,9 +663,7 @@ public:
         hmac_md5resp.update(this->ClientChallenge, 8);
         hmac_md5resp.final(compute_response);
 
-        bool res = !memcmp(response, compute_response, 16);
-
-        return res;
+        return !memcmp(response, compute_response, 16);
     }
 
     // server compute Session Base Key
@@ -1112,8 +1051,7 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
-        InStream in_stream(input_buffer.get_data(),
-                           input_buffer.size());
+        InStream in_stream(input_buffer.get_data(), input_buffer.size());
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
         this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());
@@ -1142,8 +1080,7 @@ public:
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.init(out_stream.get_offset());
-            this->SavedAuthenticateMessage.copy(out_stream.get_data(),
-                                                out_stream.get_offset());
+            this->SavedAuthenticateMessage.copy(out_stream.get_data(), out_stream.get_offset());
             this->ntlm_compute_MIC();
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
