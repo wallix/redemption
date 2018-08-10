@@ -235,23 +235,18 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
     Array Result;
-    SecBuffer Buffers[2]; /* Signature, TLS Public Key */
-    Buffers[0].init(ContextSizes.cbMaxSignature);
-    Buffers[1].init(sizeof(message));
-    Buffers[1].copy(message,
-                           Buffers[1].size());
-    server_status = server_table.EncryptMessage(Buffers[1], Buffers[0], 0);
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
     Result.init(ContextSizes.cbMaxSignature + sizeof(message));
+    Result.copy(message, sizeof(message), ContextSizes.cbMaxSignature);
+    server_status = server_table.EncryptMessage(static_cast<SecBuffer&>(Result), 0);
+    RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
-    Result.copy(Buffers[0].get_data(), Buffers[0].size());
-    Result.copy(Buffers[1].get_data(), Buffers[1].size(), ContextSizes.cbMaxSignature);
 
     // LOG(LOG_INFO, "=== ENCRYPTION RESULT: size: %u, token: %u, data %u",
     //     Result.size(), ContextSizes.cbMaxSignature, sizeof(message));
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
+    SecBuffer Buffers[2]; /* Signature, TLS Public Key */
     Buffers[0].init(ContextSizes.cbMaxSignature);
     Buffers[0].copy(Result.get_data(), ContextSizes.cbMaxSignature);
     Buffers[1].init(Result.size() - ContextSizes.cbMaxSignature);

@@ -380,7 +380,7 @@ public:
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(SecBuffer& data_buffer, SecBuffer& /*signature_buffer*/, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(SecBuffer& data, unsigned long MessageSeqNo) override {
         (void)MessageSeqNo;
         // OM_uint32 KRB5_CALLCONV
         // gss_wrap(
@@ -400,8 +400,8 @@ public:
         }
         gss_buffer_desc inbuf, outbuf;
 
-        inbuf.value = data_buffer.get_data();
-        inbuf.length = data_buffer.size();
+        inbuf.value = data.get_data();
+        inbuf.length = data.size();
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
         major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
 				GSS_C_QOP_DEFAULT, &inbuf, &conf_state, &outbuf);
@@ -412,8 +412,8 @@ public:
             return SEC_E_ENCRYPT_FAILURE;
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
-        data_buffer.init(outbuf.length);
-        data_buffer.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data.init(outbuf.length);
+        data.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
