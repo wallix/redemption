@@ -34,8 +34,6 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     NTLMContext context(rand, timeobj);
     // context.init();
-    context.NTLMv2 = true;
-    context.confidentiality = true;
     context.ntlm_set_negotiate_flags();
     context.verbose = 0x400;
     // context.hardcoded_tests = true;
@@ -544,7 +542,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // send AUTHENTICATE MESSAGE
     out_client_to_server.rewind();
-    if (client_context.UseMIC) {
+    /*client_context.UseMIC*/ {
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = true;
         client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
         client_context.AUTHENTICATE_MESSAGE.ignore_mic = false;
@@ -560,7 +558,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     in_client_to_server = InStream(out_client_to_server.get_data(), out_client_to_server.get_offset());
     server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
-        server_context.UseMIC = true;
         memset(client_to_server_buf +
                server_context.AUTHENTICATE_MESSAGE.PayloadOffset, 0, 16);
         server_context.SavedAuthenticateMessage.init(in_client_to_server.get_offset());

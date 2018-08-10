@@ -190,50 +190,36 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
     // hexdump_c(server->SessionBaseKey, 16);
     // hexdump_c(client->SessionBaseKey, 16);
-    RED_CHECK(!memcmp(server->SessionBaseKey,
-                        client->SessionBaseKey,
-                        16));
+    RED_CHECK_MEM_AA(server->SessionBaseKey, client->SessionBaseKey);
 
     // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
     // hexdump_c(server->ExportedSessionKey, 16);
     // hexdump_c(client->ExportedSessionKey, 16);
-    RED_CHECK(!memcmp(server->ExportedSessionKey,
-                        client->ExportedSessionKey,
-                        16));
+    RED_CHECK_MEM_AA(server->ExportedSessionKey, client->ExportedSessionKey);
     // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
     // hexdump_c(server->ClientSigningKey, 16);
     // hexdump_c(client->ClientSigningKey, 16);
-    RED_CHECK(!memcmp(server->ClientSigningKey,
-                        client->ClientSigningKey,
-                        16));
+    RED_CHECK_MEM_AA(server->ClientSigningKey, client->ClientSigningKey);
 
     // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
     // hexdump_c(server->ClientSealingKey, 16);
     // hexdump_c(client->ClientSealingKey, 16);
-    RED_CHECK(!memcmp(server->ClientSealingKey,
-                        client->ClientSealingKey,
-                        16));
+    RED_CHECK_MEM_AA(server->ClientSealingKey, client->ClientSealingKey);
 
     // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
     // hexdump_c(server->ServerSigningKey, 16);
     // hexdump_c(client->ServerSigningKey, 16);
-    RED_CHECK(!memcmp(server->ServerSigningKey,
-                        client->ServerSigningKey,
-                        16));
+    RED_CHECK_MEM_AA(server->ServerSigningKey, client->ServerSigningKey);
 
     // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
     // hexdump_c(server->ServerSealingKey, 16);
     // hexdump_c(client->ServerSealingKey, 16);
-    RED_CHECK(!memcmp(server->ServerSealingKey,
-                        client->ServerSealingKey,
-                        16));
+    RED_CHECK_MEM_AA(server->ServerSealingKey, client->ServerSealingKey);
 
     // LOG(LOG_INFO, "===== Message Integrity Check =====");
     // hexdump_c(client->MessageIntegrityCheck, 16);
     // hexdump_c(server->MessageIntegrityCheck, 16);
-    RED_CHECK(!memcmp(client->MessageIntegrityCheck,
-                        server->MessageIntegrityCheck,
-                        16));
+    RED_CHECK_MEM_AA(client->MessageIntegrityCheck, server->MessageIntegrityCheck);
 
     SecPkgContext_Sizes ContextSizes = server_table.QueryContextSizes();
     RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
@@ -242,8 +228,8 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(ContextSizes.cbSecurityTrailer, 16);
 
 
-    RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
-    RED_CHECK_EQUAL(server->confidentiality, true);
+    // RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
+    // RED_CHECK_EQUAL(server->confidentiality, true);
 //     server->confidentiality = false;
 //     client->confidentiality = false;
     // ENCRYPT
