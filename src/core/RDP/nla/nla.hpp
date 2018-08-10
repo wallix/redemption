@@ -35,8 +35,6 @@
 
 #include "transport/transport.hpp"
 
-#define NLA_PKG_NAME NTLMSP_NAME
-
 /* CredSSP Client-To-Server Binding Hash */
 static const uint8_t client_server_hash_magic[] =
     "CredSSP Client-To-Server Binding Hash";

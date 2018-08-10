@@ -91,46 +91,34 @@
 //  by byte offsets located in the MessageDependentFields.
 
 
-enum NtlmMessageType {
+enum NtlmMessageType : uint32_t {
     NtlmNegotiate = 0x00000001,
     NtlmChallenge = 0x00000002,
     NtlmAuthenticate = 0x00000003
 };
-static const uint8_t NTLM_MESSAGE_SIGNATURE[] = "NTLMSSP\0";
-struct NTLMMessage final {
-    uint8_t signature[8];      /* 8 Bytes */
+struct NTLMMessage final
+{
+    static constexpr uint8_t NTLM_MESSAGE_SIGNATURE[8] = "NTLMSSP";
+
     NtlmMessageType msgType;   /* 4 Bytes */
 
     explicit NTLMMessage(NtlmMessageType msgType)
-    : signature()
-    , msgType(msgType)
-    {
-        memcpy(this->signature, NTLM_MESSAGE_SIGNATURE, 8);
-        // signature[0] = 'N';
-        // signature[1] = 'T';
-        // signature[2] = 'L';
-        // signature[3] = 'M';
-        // signature[4] = 'S';
-        // signature[5] = 'S';
-        // signature[6] = 'P';
-        // signature[7] = '\0';
-    }
+    : msgType(msgType)
+    {}
 
     void emit(OutStream & stream) const {
-        stream.out_copy_bytes(this->signature, 8);
+        stream.out_copy_bytes(NTLM_MESSAGE_SIGNATURE, sizeof(NTLM_MESSAGE_SIGNATURE));
         stream.out_uint32_le(this->msgType);
     }
 
     bool recv(InStream & stream) {
-        bool res = true;
-        uint8_t received_sig[8];
-        stream.in_copy_bytes(received_sig, 8);
-        res &= (!memcmp(this->signature, received_sig, 8));
+        constexpr auto sig_len = sizeof(NTLM_MESSAGE_SIGNATURE);
+        uint8_t received_sig[sig_len];
+        stream.in_copy_bytes(received_sig, sig_len);
         uint32_t type = stream.in_uint32_le();
-        res &= (static_cast<uint32_t>(this->msgType) == type);
-        return res;
+        return !memcmp(NTLM_MESSAGE_SIGNATURE, received_sig, sig_len)
+            && (static_cast<uint32_t>(this->msgType) == type);
     }
-
 };
 
 // 2.2.2.10   VERSION
@@ -192,21 +180,30 @@ struct NTLMMessage final {
 // | 0x0F                   |                                          |
 // +------------------------+------------------------------------------+
 
-#define WINDOWS_MINOR_VERSION_0          0x00
-#define WINDOWS_MINOR_VERSION_1          0x01
-#define WINDOWS_MINOR_VERSION_2          0x02
+enum ProductMinorVersion : uint8_t
+{
+    WINDOWS_MINOR_VERSION_0 = 0x00,
+    WINDOWS_MINOR_VERSION_1 = 0x01,
+    WINDOWS_MINOR_VERSION_2 = 0x02,
+};
 
-#define WINDOWS_MAJOR_VERSION_5          0x05
-#define WINDOWS_MAJOR_VERSION_6          0x06
+enum ProductMajorVersion : uint8_t
+{
+    WINDOWS_MAJOR_VERSION_5 = 0x05,
+    WINDOWS_MAJOR_VERSION_6 = 0x06
+};
 
-#define NTLMSSP_REVISION_W2K3            0x0F
+enum NTLMRevisionCurrent : uint8_t
+{
+    NTLMSSP_REVISION_W2K3 = 0x0F
+};
 
 struct NtlmVersion {
-    uint8_t ProductMajorVersion{WINDOWS_MAJOR_VERSION_6};   /* 1 Byte */
-    uint8_t ProductMinorVersion{WINDOWS_MINOR_VERSION_2};   /* 1 Byte */
-    uint16_t ProductBuild{0x0000};         /* 2 Bytes */
+    ::ProductMajorVersion ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
+    ::ProductMinorVersion ProductMinorVersion = WINDOWS_MINOR_VERSION_2;
+    uint16_t ProductBuild = 0;
     /* 3 Bytes Reserved */
-    uint8_t NtlmRevisionCurrent{NTLMSSP_REVISION_W2K3};   /* 1 Byte */
+    ::NTLMRevisionCurrent NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
 
     bool ignore_version{true};
 
@@ -220,11 +217,11 @@ struct NtlmVersion {
         this->ignore_version = false;
         // this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_5;
         // this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-	// this->ProductBuild        = 2600;
+        // this->ProductBuild        = 2600;
         // this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
         this->ProductMajorVersion = WINDOWS_MAJOR_VERSION_6;
         this->ProductMinorVersion = WINDOWS_MINOR_VERSION_1;
-	this->ProductBuild        = 7601;
+        this->ProductBuild        = 7601;
         this->NtlmRevisionCurrent = NTLMSSP_REVISION_W2K3;
     }
 
@@ -241,11 +238,11 @@ struct NtlmVersion {
 
     void recv(InStream & stream) {
         this->ignore_version = false;
-        this->ProductMajorVersion = stream.in_uint8();
-        this->ProductMinorVersion = stream.in_uint8();
+        this->ProductMajorVersion = static_cast<::ProductMajorVersion>(stream.in_uint8());
+        this->ProductMinorVersion = static_cast<::ProductMinorVersion>(stream.in_uint8());
         this->ProductBuild = stream.in_uint16_le();
         stream.in_skip_bytes(3);
-        this->NtlmRevisionCurrent = stream.in_uint8();
+        this->NtlmRevisionCurrent = static_cast<::NTLMRevisionCurrent>(stream.in_uint8());
     }
 
     void log() const {

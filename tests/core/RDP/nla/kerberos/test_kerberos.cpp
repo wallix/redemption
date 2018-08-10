@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &id);
+    status = table.AcquireCredentialsHandle("NTLM", SECPKG_CRED_OUTBOUND, nullptr, &id);
 
 
     RED_CHECK_EQUAL(status, SEC_E_NO_CREDENTIALS);

@@ -46,7 +46,7 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
     // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle(NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &id);
+    status = table.AcquireCredentialsHandle("NTLM", SECPKG_CRED_OUTBOUND, nullptr, &id);
 
 
     RED_CHECK_EQUAL(status, SEC_E_OK);
@@ -86,10 +86,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // If AcquireCredential succeed, do not forget to free credential handle !
     server_status = server_table.AcquireCredentialsHandle(
-        NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &server_id);
+        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &server_id);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     client_status = client_table.AcquireCredentialsHandle(
-        NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &client_id);
+        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
     SEC_WINNT_AUTH_IDENTITY const* identity = server_table.getIdentityHandle();
