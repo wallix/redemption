@@ -1,3 +1,9 @@
+redemption (1.1.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix disabling keyboard input log remove also meta-datas collected by Session Probe.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 10 Aug 2018 15:48:16 +0200
+
 redemption (1.1.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
