@@ -524,15 +524,16 @@ struct SecurityFunctionTable
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(SecBuffer& data, unsigned long messageSeqNo) {
-        (void)data;
+    virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) {
+        (void)data_in;
+        (void)data_out;
         (void)messageSeqNo;
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(SecBuffer const& data_in, SecBuffer& data_out, unsigned long messageSeqNo) {
+    virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) {
         (void)data_in;
         (void)data_out;
         (void)messageSeqNo;
