@@ -960,7 +960,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 }
 
                 // Inject a new channel for clipboard channel (cliprdr)
-                if (!has_cliprdr_channel && this->session_probe_use_clipboard_based_launcher) {
+                if (!has_cliprdr_channel && this->enable_session_probe && this->session_probe_use_clipboard_based_launcher) {
                     ::snprintf(cs_net.channelDefArray[cs_net.channelCount].name,
                             sizeof(cs_net.channelDefArray[cs_net.channelCount].name),
                             "%s", channel_names::cliprdr.c_str());
