@@ -50,15 +50,15 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
 
 
     RED_CHECK_EQUAL(status, SEC_E_OK);
-    CREDENTIALS const * creds = table.getCredentialHandle();
+    SEC_WINNT_AUTH_IDENTITY const * identity = table.getIdentityHandle();
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        make_array_view(identity->User.get_data(), identity->User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        make_array_view(identity->Domain.get_data(), identity->Domain.size()),
         "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        make_array_view(identity->Password.get_data(), identity->Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 }
 
@@ -92,15 +92,15 @@ RED_AUTO_TEST_CASE(TestInitialize)
         NTLMSP_NAME, SECPKG_CRED_OUTBOUND, nullptr, &client_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    CREDENTIALS const * creds = server_table.getCredentialHandle();
+    SEC_WINNT_AUTH_IDENTITY const* identity = server_table.getIdentityHandle();
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.User.get_data(), creds->identity.User.size()),
+        make_array_view(identity->User.get_data(), identity->User.size()),
         "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.Domain.get_data(), creds->identity.Domain.size()),
+        make_array_view(identity->Domain.get_data(), identity->Domain.size()),
         "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
     RED_CHECK_MEM_C(
-        make_array_view(creds->identity.Password.get_data(), creds->identity.Password.size()),
+        make_array_view(identity->Password.get_data(), identity->Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
     SecPkgInfo server_packageInfo = server_table.QuerySecurityPackageInfo();

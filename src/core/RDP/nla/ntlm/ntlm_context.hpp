@@ -91,10 +91,6 @@ public:
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
 
-    // uint8_t* ChannelBindingToken;
-    // uint8_t ChannelBindingsHash[16];
-    // SecPkgContext_Bindings Bindings;
-
     // bool SendSingleHostData;
     // NTLM_SINGLE_HOST_DATA SingleHostData;
     NTLMNegotiateMessage NEGOTIATE_MESSAGE;
@@ -1062,15 +1058,15 @@ public:
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(SecBuffer* output_buffer) {
+    SEC_STATUS write_negotiate(SecBuffer& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
         this->ntlm_client_build_negotiate();
         StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
-        output_buffer->init(out_stream.get_offset());
-        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.init(out_stream.get_offset());
+        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
         this->SavedNegotiateMessage.init(out_stream.get_offset());
         this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.get_offset());
@@ -1078,11 +1074,11 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_negotiate(SecBuffer* input_buffer) {
+    SEC_STATUS read_negotiate(SecBuffer const& input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
-        InStream in_stream(input_buffer->get_data(), input_buffer->size());
+        InStream in_stream(input_buffer.get_data(), input_buffer.size());
         this->NEGOTIATE_MESSAGE.recv(in_stream);
         if (!this->ntlm_check_nego()) {
             return SEC_E_INVALID_TOKEN;
@@ -1095,15 +1091,15 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_challenge(SecBuffer* output_buffer) {
+    SEC_STATUS write_challenge(SecBuffer& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
         this->ntlm_server_build_challenge();
         StaticOutStream<65535> out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
-        output_buffer->init(out_stream.get_offset());
-        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.init(out_stream.get_offset());
+        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
 
         this->SavedChallengeMessage.init(out_stream.get_offset());
         this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.get_offset());
@@ -1112,12 +1108,12 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_challenge(SecBuffer* input_buffer) {
+    SEC_STATUS read_challenge(SecBuffer const& input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
-        InStream in_stream(input_buffer->get_data(),
-                           input_buffer->size());
+        InStream in_stream(input_buffer.get_data(),
+                           input_buffer.size());
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
         this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());
@@ -1125,7 +1121,8 @@ public:
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
     }
-    SEC_STATUS write_authenticate(SecBuffer* output_buffer) {
+
+    SEC_STATUS write_authenticate(SecBuffer& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }
@@ -1154,19 +1151,19 @@ public:
         out_stream.rewind();
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
-        output_buffer->init(out_stream.get_offset());
-        output_buffer->copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.init(out_stream.get_offset());
+        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
         if (this->verbose) {
             this->AUTHENTICATE_MESSAGE.log();
         }
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    SEC_STATUS read_authenticate(SecBuffer* input_buffer) {
+    SEC_STATUS read_authenticate(SecBuffer const& input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }
-        InStream in_stream(input_buffer->get_data(), input_buffer->size());
+        InStream in_stream(input_buffer.get_data(), input_buffer.size());
         this->AUTHENTICATE_MESSAGE.recv(in_stream);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;

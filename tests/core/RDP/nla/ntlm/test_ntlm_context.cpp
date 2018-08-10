@@ -641,26 +641,26 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     context_read.server = true;
     SEC_STATUS status;
     SecBuffer nego;
-    status = context_write.write_negotiate(&nego);
+    status = context_write.write_negotiate(nego);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
-    status = context_read.read_negotiate(&nego);
+    status = context_read.read_negotiate(nego);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
 
 
     SecBuffer chal;
-    status = context_write.write_challenge(&chal);
+    status = context_write.write_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
-    status = context_read.read_challenge(&chal);
+    status = context_read.read_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 
     SecBuffer auth;
-    status = context_write.write_authenticate(&auth);
+    status = context_write.write_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);
-    status = context_read.read_authenticate(&auth);
+    status = context_read.read_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_E_LOGON_DENIED);
 }

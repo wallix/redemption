@@ -83,10 +83,10 @@ public:
 
 struct SecBuffer : Array {};
 
-struct TimeStamp {
-    uint32_t LowPart;
-    int32_t HighPart;
-};
+// struct TimeStamp {
+//     uint32_t LowPart;
+//     int32_t HighPart;
+// };
 
 struct SecPkgInfo {
     uint32_t fCapabilities;
@@ -95,24 +95,6 @@ struct SecPkgInfo {
     uint32_t cbMaxToken;
     const char* Name;
     const char* Comment;
-};
-
-
-struct SEC_CHANNEL_BINDINGS
-{
-    uint32_t dwInitiatorAddrType;
-    uint32_t cbInitiatorLength;
-    uint32_t dwInitiatorOffset;
-    uint32_t dwAcceptorAddrType;
-    uint32_t cbAcceptorLength;
-    uint32_t dwAcceptorOffset;
-    uint32_t cbApplicationDataLength;
-    uint32_t dwApplicationDataOffset;
-};
-struct SecPkgContext_Bindings
-{
-        uint32_t BindingsLength;
-        SEC_CHANNEL_BINDINGS* Bindings;
 };
 
 struct SecPkgContext_Sizes
@@ -135,7 +117,6 @@ struct SEC_WINNT_AUTH_IDENTITY
     Array User;
     Array Domain;
     Array Password;
-    uint32_t Flags{0};
 
     SEC_WINNT_AUTH_IDENTITY()
         : User(0)
@@ -208,7 +189,6 @@ struct SEC_WINNT_AUTH_IDENTITY
 
     void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
                                 const uint8_t * password) {
-        this->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
         this->SetUserFromUtf8(user);
         this->SetDomainFromUtf8(domain);
         this->SetPasswordFromUtf8(password);
@@ -218,23 +198,13 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->User.init(0);
         this->Domain.init(0);
         this->Password.init(0);
-        this->Flags = 0;
     }
 
     void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
-        this->User.init(src.User.size());
-        this->User.copy(src.User.get_data(), src.User.size());
-        this->Domain.init(src.Domain.size());
-        this->Domain.copy(src.Domain.get_data(), src.Domain.size());
-        this->Password.init(src.Password.size());
-        this->Password.copy(src.Password.get_data(), src.Password.size());
-        this->Flags = src.Flags;
+        this->User.copy(src.User);
+        this->Domain.copy(src.Domain);
+        this->Password.copy(src.Password);
     }
-};
-
-struct CREDENTIALS {
-    uint32_t flags;
-    SEC_WINNT_AUTH_IDENTITY identity;
 };
 
 
@@ -409,11 +379,6 @@ enum ASC_RET {
     ASC_RET_MISSING_BINDINGS = 0x10000000
 };
 
-enum SecDrep {
-    SECURITY_NATIVE_DREP = 0x00000010,
-    SECURITY_NETWORK_DREP = 0x00000000
-};
-
 enum CredentialUse {
     SECPKG_CRED_INBOUND = 0x00000001,
     SECPKG_CRED_OUTBOUND = 0x00000002,
@@ -422,47 +387,11 @@ enum CredentialUse {
     SECPKG_CRED_PROCESS_POLICY_ONLY = 0x00000020
 };
 
-enum SecPkg_Att {
-/* Security Context Attributes */
 
-    SECPKG_ATTR_SIZES = 0,
-    SECPKG_ATTR_NAMES = 1,
-    SECPKG_ATTR_LIFESPAN = 2,
-    SECPKG_ATTR_DCE_INFO = 3,
-    SECPKG_ATTR_STREAM_SIZES = 4,
-    SECPKG_ATTR_KEY_INFO = 5,
-    SECPKG_ATTR_AUTHORITY = 6,
-    SECPKG_ATTR_PROTO_INFO = 7,
-    SECPKG_ATTR_PASSWORD_EXPIRY = 8,
-    SECPKG_ATTR_SESSION_KEY = 9,
-    SECPKG_ATTR_PACKAGE_INFO = 10,
-    SECPKG_ATTR_USER_FLAGS = 11,
-    SECPKG_ATTR_NEGOTIATION_INFO = 12,
-    SECPKG_ATTR_NATIVE_NAMES = 13,
-    SECPKG_ATTR_FLAGS = 14,
-    SECPKG_ATTR_USE_VALIDATED = 15,
-    SECPKG_ATTR_CREDENTIAL_NAME = 16,
-    SECPKG_ATTR_TARGET_INFORMATION = 17,
-    SECPKG_ATTR_ACCESS_TOKEN = 18,
-    SECPKG_ATTR_TARGET = 19,
-    SECPKG_ATTR_AUTHENTICATION_ID = 20,
-    SECPKG_ATTR_LOGOFF_TIME = 21,
-    SECPKG_ATTR_NEGO_KEYS = 22,
-    SECPKG_ATTR_PROMPTING_NEEDED = 24,
-    SECPKG_ATTR_UNIQUE_BINDINGS = 25,
-    SECPKG_ATTR_ENDPOINT_BINDINGS = 26,
-    SECPKG_ATTR_CLIENT_SPECIFIED_TARGET = 27,
-    SECPKG_ATTR_LAST_CLIENT_TOKEN_STATUS = 30,
-    SECPKG_ATTR_NEGO_PKG_INFO = 31,
-    SECPKG_ATTR_NEGO_STATUS = 32,
-    SECPKG_ATTR_CONTEXT_DELETED = 33
-};
-
-
-using SEC_GET_KEY_FN = void (*)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
-using HANDLE = void*;
-using PHANDLE = void*;
-using LPHANDLE = void*;
+// using SEC_GET_KEY_FN = void (*)(void* Arg, void* Principal, uint32_t KeyVer, void** Key, SEC_STATUS* pStatus);
+// using HANDLE = void*;
+// using PHANDLE = void*;
+// using LPHANDLE = void*;
 
 struct SecurityFunctionTable
 {
@@ -504,7 +433,7 @@ struct SecurityFunctionTable
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 SecBuffer* pinput_buffer,
+                                                 SecBuffer const* pinput_buffer,
                                                  unsigned long Reserved2,
                                                  SecBuffer& output_buffer) {
 
@@ -518,7 +447,7 @@ struct SecurityFunctionTable
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecBuffer& input_buffer,
+    virtual SEC_STATUS AcceptSecurityContext(SecBuffer const& input_buffer,
                                              unsigned long fContextReq,
                                              SecBuffer& output_buffer) {
         (void)input_buffer;
