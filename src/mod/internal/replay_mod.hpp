@@ -92,7 +92,8 @@ public:
         gdi::CaptureApi * capture_ptr,
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
-        gdi::ExternalCaptureApi * external_event_ptr
+        gdi::ExternalCaptureApi * external_event_ptr,
+        gdi::ResizeApi * resize_ptr
     );
 
     void play();

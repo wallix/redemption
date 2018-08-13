@@ -30,10 +30,10 @@ private:
 
     ImageFrameApi& image_frame_api_ptr;
 
-    const unsigned int in_width;
-    const unsigned int in_height;
+    unsigned int in_width;
+    unsigned int in_height;
 
-    const unsigned int in_rowsize;
+    unsigned int in_rowsize;
 
     const uint8_t* in_bmpdata;
 
@@ -82,6 +82,26 @@ public:
         unsigned int out_width, unsigned int out_height)
     : VideoCropper(imageFrameApi, imageFrameApi.get_mutable_image_view(), x, y, out_width, out_height)
     {}
+
+    void resize(ImageFrameApi& imageFrameApi) {
+        this->image_frame_api_ptr = imageFrameApi;
+
+        ImageView const & image_view = imageFrameApi.get_mutable_image_view();
+
+        this->in_width   = image_view.width();
+        this->in_height  = image_view.height();
+        this->in_rowsize = image_view.width() * VideoCropper::bytes_per_pixel;  /* TODO image_view.rowsize() ? */
+        this->in_bmpdata = image_view.data();
+
+        Rect rect = Rect(this->x, this->y, this->out_width, this->out_height).intersect(this->in_width, this->in_height);
+
+        this->reset(rect.x, rect.y, rect.cx, rect.cy);
+
+        this->in_bmpdata_effective =
+            this->in_bmpdata +
+              this->y * this->in_rowsize +
+              this->x * VideoCropper::bytes_per_pixel;
+    }
 
 private:
     template<class ImgView>

@@ -23,6 +23,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "gdi/resize_api.hpp"
 
 #include "capture/file_to_graphic.hpp"
 #include "capture/save_state_chunk.hpp"
@@ -106,7 +107,8 @@ void FileToGraphic::add_consumer(
     gdi::CaptureApi * capture_ptr,
     gdi::KbdInputApi * kbd_input_ptr,
     gdi::CaptureProbeApi * capture_probe_ptr,
-    gdi::ExternalCaptureApi * external_event_ptr
+    gdi::ExternalCaptureApi * external_event_ptr,
+    gdi::ResizeApi * resize_ptr
 )
 {
     this->graphic_consumers.push_back(graphic_ptr);
@@ -114,6 +116,7 @@ void FileToGraphic::add_consumer(
     this->kbd_input_consumers.push_back(kbd_input_ptr);
     this->capture_probe_consumers.push_back(capture_probe_ptr);
     this->external_event_consumers.push_back(external_event_ptr);
+    this->resize_consumers.push_back(resize_ptr);
 }
 
 void FileToGraphic::clear_consumer()
@@ -123,6 +126,7 @@ void FileToGraphic::clear_consumer()
     this->kbd_input_consumers.clear();
     this->capture_probe_consumers.clear();
     this->external_event_consumers.clear();
+    this->resize_consumers.clear();
 }
 
 void FileToGraphic::set_pause_client(timeval & time)
@@ -577,6 +581,7 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::META_FILE:
     // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
     {
+LOG(LOG_INFO, "> > > > > info_width=%u info_height=%u", this->info_width, this->info_height);
         this->info_version                   = this->stream.in_uint16_le();
         this->info_width                     = this->stream.in_uint16_le();
         this->info_height                    = this->stream.in_uint16_le();
@@ -642,20 +647,23 @@ void FileToGraphic::interpret_order()
                     this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
                 BmpCache::CacheOption(
                     this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
-            this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
+//            this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
             this->meta_ok = true;
         }
-        else {
-            if (this->screen_rect.cx != this->info_width ||
-                this->screen_rect.cy != this->info_height) {
-                LOG( LOG_ERR,"Inconsistant redundant meta chunk: (%u x %u) -> (%u x %u)"
-                    , this->screen_rect.cx, this->screen_rect.cy, this->info_width, this->info_height);
-                throw Error(ERR_WRM);
+        this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
+
+        if ((this->max_screen_dim.w != this->info_width) || (this->max_screen_dim.h != this->info_height)) {
+            this->max_screen_dim.w = std::max(this->max_screen_dim.w, this->info_width);
+            this->max_screen_dim.h = std::max(this->max_screen_dim.h, this->info_height);
+
+            for (gdi::ResizeApi * obj : this->resize_consumers){
+                obj->resize(this->info_width, this->info_height);
             }
         }
-
-        for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
-            obj->external_breakpoint();
+        else {
+            for (gdi::ExternalCaptureApi * obj : this->external_event_consumers){
+                obj->external_breakpoint();
+            }
         }
     }
     break;
