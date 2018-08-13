@@ -64,6 +64,16 @@ public:
     : number_of_entries_in_cache(number_of_entries_in_glyph_cache)
     {}
 
+    void reset() {
+        this->glyph_stamp = 0;
+
+        for (auto & array : this->glyphs) {
+            for (auto & glyph : array) {
+                glyph = Glyph();
+            }
+        }
+    }
+
     enum t_glyph_cache_result {
           GLYPH_FOUND_IN_CACHE
         , GLYPH_ADDED_TO_CACHE
