@@ -205,8 +205,6 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     //status = table.ApplyControlToken(nullptr, nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    RED_CHECK_EXCEPTION_ERROR_ID(table.QueryContextSizes(), ERR_SEC);
-
     status = table.ImpersonateSecurityContext();
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 

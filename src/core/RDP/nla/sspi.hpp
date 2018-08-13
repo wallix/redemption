@@ -99,14 +99,6 @@ struct SecPkgInfo {
     const char* Comment;
 };
 
-struct SecPkgContext_Sizes
-{
-    uint32_t cbMaxToken;
-    uint32_t cbMaxSignature;
-    uint32_t cbBlockSize;
-    uint32_t cbSecurityTrailer;
-};
-
 enum SecIdFlag {
     SEC_WINNT_AUTH_IDENTITY_ANSI = 0x1,
     SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2
@@ -451,11 +443,6 @@ struct SecurityFunctionTable
     //virtual SEC_STATUS ApplyControlToken(SecBufferDesc * pInput) {
     //    return SEC_E_UNSUPPORTED_FUNCTION;
     //}
-
-    // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    virtual SecPkgContext_Sizes QueryContextSizes() {
-        throw Error(ERR_SEC);
-    }
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
     virtual SEC_STATUS ImpersonateSecurityContext() {

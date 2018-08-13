@@ -43,6 +43,12 @@ namespace {
         Ntlm_Name,              // Name
         Ntlm_Comment            // Comment
     };
+    constexpr uint32_t cbMaxSignature = 16;
+    // SecPkgContext_Sizes ContextSizes;
+    // ContextSizes.cbMaxToken = 2010;
+    // ContextSizes.cbMaxSignature = 16;
+    // ContextSizes.cbBlockSize = 0;
+    // ContextSizes.cbSecurityTrailer = 16;
 } // namespace
 
 struct Ntlm_SecurityFunctionTable : public SecurityFunctionTable
@@ -81,16 +87,6 @@ public:
     {}
 
     ~Ntlm_SecurityFunctionTable() = default;
-
-    // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SecPkgContext_Sizes QueryContextSizes() override {
-        SecPkgContext_Sizes ContextSizes;
-        ContextSizes.cbMaxToken = 2010;
-        ContextSizes.cbMaxSignature = 16;
-        ContextSizes.cbBlockSize = 0;
-        ContextSizes.cbSecurityTrailer = 16;
-        return ContextSizes;
-    }
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
@@ -286,8 +282,8 @@ public:
 
         // data_out [signature][data_buffer]
 
-        data_out.init(data_in.size() + this->QueryContextSizes().cbMaxSignature);
-        auto message_out = data_out.av().subarray(this->QueryContextSizes().cbMaxSignature);
+        data_out.init(data_in.size() + cbMaxSignature);
+        auto message_out = data_out.av().subarray(cbMaxSignature);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, this->context->SendSigningKey, data_in, MessageSeqNo);
@@ -314,7 +310,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.subarray(this->QueryContextSizes().cbMaxSignature);
+        auto data_buffer = data_in.subarray(cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
