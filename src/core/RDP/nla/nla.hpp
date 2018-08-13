@@ -64,7 +64,6 @@ protected:
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
     std::unique_ptr<SecurityFunctionTable> table;
-    SecPkgContext_Sizes ContextSizes;
     bool RestrictedAdminMode;
     SecInterface sec_interface;
 
@@ -314,22 +313,18 @@ protected:
             LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
         }
 
-        if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
-            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu", this->pubKeyAuth.size());
-            if (this->pubKeyAuth.size() == 0) {
-                this->extra_message = " ";
-                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
-                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
-            }
-            return SEC_E_INVALID_TOKEN;
-        }
-
         SecBuffer Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
             this->pubKeyAuth.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
+            if (this->pubKeyAuth.size() == 0) {
+                // report_error
+                this->extra_message = " ";
+                this->extra_message.append(TR(trkeys::err_login_password, this->lang));
+                LOG(LOG_INFO, "Provided login/password is probably incorrect.");
+            }
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
             return status;
         }
@@ -489,7 +484,6 @@ private:
 
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.have_input_buffer = false;
-        this->ContextSizes = {};
 
         return Res::Ok;
     }
@@ -540,7 +534,6 @@ private:
             (status == SEC_I_COMPLETE_NEEDED) ||
             (status == SEC_E_OK)) {
             // have_pub_key_auth = true;
-            this->ContextSizes = this->table->QueryContextSizes();
             encrypted = this->credssp_encrypt_public_key_echo();
             if (status == SEC_I_COMPLETE_NEEDED) {
                 status = SEC_E_OK;
@@ -761,8 +754,6 @@ private:
             return Res::Err;
         }
 
-        this->ContextSizes = {};
-
         /*
         * from tspkg.dll: 0x00000112
         * ASC_REQ_MUTUAL_AUTH
@@ -816,8 +807,6 @@ public:
         }
 
         if (status == SEC_E_OK) {
-            this->ContextSizes = this->table->QueryContextSizes();
-
             if (this->credssp_decrypt_public_key_echo() != SEC_E_OK) {
                 LOG(LOG_ERR, "Error: could not verify client's public key echo");
                 return Res::Err;

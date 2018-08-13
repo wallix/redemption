@@ -207,13 +207,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(server->MessageIntegrityCheck, 16);
     RED_CHECK_MEM_AA(client->MessageIntegrityCheck, server->MessageIntegrityCheck);
 
-    SecPkgContext_Sizes ContextSizes = server_table.QueryContextSizes();
-    RED_CHECK_EQUAL(ContextSizes.cbMaxToken, 2010);
-    RED_CHECK_EQUAL(ContextSizes.cbMaxSignature, 16);
-    RED_CHECK_EQUAL(ContextSizes.cbBlockSize, 0);
-    RED_CHECK_EQUAL(ContextSizes.cbSecurityTrailer, 16);
-
-
     // RED_CHECK_EQUAL(server->confidentiality, client->confidentiality);
     // RED_CHECK_EQUAL(server->confidentiality, true);
 //     server->confidentiality = false;
@@ -224,17 +217,18 @@ RED_AUTO_TEST_CASE(TestInitialize)
     server_status = server_table.EncryptMessage(message, Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
+    const unsigned cbMaxSignature = 16u;
 
     // LOG(LOG_INFO, "=== ENCRYPTION RESULT: size: %u, token: %u, data %u",
-    //     Result.size(), ContextSizes.cbMaxSignature, sizeof(message));
+    //     Result.size(), cbMaxSignature, sizeof(message));
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
     SecBuffer Result2;
     client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
 
-    RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + ContextSizes.cbMaxSignature);
-    RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() -ContextSizes.cbMaxSignature));
+    RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + cbMaxSignature);
+    RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() - cbMaxSignature));
     RED_CHECK_MEM(make_array_view(Result2.get_data(), Result2.size()), make_array_view(message));
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);

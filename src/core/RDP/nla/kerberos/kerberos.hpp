@@ -49,6 +49,12 @@ namespace {
 
     gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
+
+    // SecPkgContext_Sizes ContextSizes;
+    // ContextSizes.cbMaxToken = 4096;
+    // ContextSizes.cbMaxSignature = 0;
+    // ContextSizes.cbBlockSize = 0;
+    // ContextSizes.cbSecurityTrailer = 16;
 }  // namespace
 
 
@@ -111,16 +117,6 @@ public:
         this->krb_ctx.reset();
         this->credentials.reset();
         unsetenv("KRB5CCNAME");
-    }
-
-    // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
-    SecPkgContext_Sizes QueryContextSizes() override {
-        SecPkgContext_Sizes ContextSizes;
-        ContextSizes.cbMaxToken = 4096;
-        ContextSizes.cbMaxSignature = 0;
-        ContextSizes.cbBlockSize = 0;
-        ContextSizes.cbSecurityTrailer = 16;
-        return ContextSizes;
     }
 
     // GSS_Acquire_cred
