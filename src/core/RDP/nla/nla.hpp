@@ -431,6 +431,7 @@ private:
         }
         bool interface_changed = false;
         do {
+            interface_changed = false;
             this->InitSecurityInterface(this->sec_interface);
 
             if (this->table == nullptr) {
@@ -441,12 +442,10 @@ private:
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
                                                            &this->identity);
-            if (status == SEC_E_NO_CREDENTIALS) {
-                if (this->sec_interface != NTLM_Interface) {
-                    this->sec_interface = NTLM_Interface;
-                    interface_changed = true;
-                    LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
-                }
+            if (status == SEC_E_NO_CREDENTIALS && this->sec_interface != NTLM_Interface) {
+                this->sec_interface = NTLM_Interface;
+                interface_changed = true;
+                LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
             }
         } while (interface_changed);
 
@@ -762,7 +761,7 @@ public:
             | ASC_REQ_SEQUENCE_DETECT
             | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
-            /*input*/static_cast<SecBuffer&>(this->ts_request.negoTokens),
+            this->ts_request.negoTokens.av(),
             fContextReq,
             /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         this->state_accept_security_context = status;

@@ -377,7 +377,7 @@ struct SecurityFunctionTable
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
-    virtual SEC_STATUS AcceptSecurityContext(SecBuffer const& input_buffer,
+    virtual SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer,
                                              unsigned long fContextReq,
                                              SecBuffer& output_buffer) = 0;
 
@@ -416,7 +416,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     }
 
     SEC_STATUS AcceptSecurityContext(
-        SecBuffer const& /*input_buffer*/, unsigned long /*fContextReq*/,
+        array_view_const_u8 /*input_buffer*/, unsigned long /*fContextReq*/,
         SecBuffer& /*output_buffer*/
     ) override
     {

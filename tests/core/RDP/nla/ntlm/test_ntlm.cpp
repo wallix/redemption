@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // server first call, no context
     // got input buffer (output of client): Negotiate message
     server_status = server_table.AcceptSecurityContext(
-        output_buffer, fsContextReq, input_buffer);
+        output_buffer.av(), fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 120);
@@ -163,7 +163,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
     server_status = server_table.AcceptSecurityContext(
-        output_buffer, fsContextReq, input_buffer);
+        output_buffer.av(), fsContextReq, input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 0);

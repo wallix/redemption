@@ -130,8 +130,6 @@ public:
             // this->context->init();
             this->context->server = false;
 
-            // if (this->context->Workstation.size() < 1)
-            //     this->context->ntlm_SetContextWorkstation(nullptr);
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -151,16 +149,6 @@ public:
             return SEC_E_OUT_OF_SEQUENCE;
         }
 
-        if (pinput_buffer->size() < 1) {
-            return SEC_E_INVALID_TOKEN;
-        }
-        // channel_bindings = sspi_FindSecBuffer(pInput, SECBUFFER_CHANNEL_BINDINGS);
-
-        // if (channel_bindings) {
-        //     this->context->Bindings.BindingsLength = channel_bindings->cbBuffer;
-        //     this->context->Bindings.Bindings = (SEC_CHANNEL_BINDINGS*) channel_bindings->pvBuffer;
-        // }
-
         if (this->context->state == NTLM_STATE_CHALLENGE) {
             this->context->read_challenge(*pinput_buffer);
             if (this->context->state == NTLM_STATE_AUTHENTICATE) {
@@ -174,7 +162,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        SecBuffer const& input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
     ) override {
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
@@ -191,10 +179,6 @@ public:
 
         if (this->context->state == NTLM_STATE_INITIAL) {
             this->context->state = NTLM_STATE_NEGOTIATE;
-            if (input_buffer.size() < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
-
             SEC_STATUS status = this->context->read_negotiate(input_buffer);
             if (status != SEC_I_CONTINUE_NEEDED) {
                 return SEC_E_INVALID_TOKEN;
@@ -208,10 +192,6 @@ public:
         }
 
         if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-            if (input_buffer.size() < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
-
             SEC_STATUS status = this->context->read_authenticate(input_buffer);
 
             if (status == SEC_I_CONTINUE_NEEDED) {
