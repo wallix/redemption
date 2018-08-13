@@ -347,4 +347,3 @@ public:
         return SEC_E_OK;
     }
 };
-

@@ -365,13 +365,7 @@ struct SecurityFunctionTable
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
                                                 unsigned long fCredentialUse,
                                                 Array * pvLogonID,
-                                                SEC_WINNT_AUTH_IDENTITY * pAuthData) {
-        (void)pszPrincipal;
-        (void)fCredentialUse;
-        (void)pvLogonID;
-        (void)pAuthData;
-         return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+                                                SEC_WINNT_AUTH_IDENTITY * pAuthData) = 0;
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
@@ -379,51 +373,79 @@ struct SecurityFunctionTable
                                                  unsigned long fContextReq,
                                                  SecBuffer const* pinput_buffer,
                                                  unsigned long Reserved2,
-                                                 SecBuffer& output_buffer) {
-        (void)pszTargetName;
-        (void)fContextReq;
-        (void)pinput_buffer;
-        (void)Reserved2;
-        (void)output_buffer;
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+                                                 SecBuffer& output_buffer) = 0;
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     virtual SEC_STATUS AcceptSecurityContext(SecBuffer const& input_buffer,
                                              unsigned long fContextReq,
-                                             SecBuffer& output_buffer) {
-        (void)input_buffer;
-        (void)fContextReq;
-        (void)output_buffer;
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+                                             SecBuffer& output_buffer) = 0;
 
     // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    virtual SEC_STATUS ImpersonateSecurityContext() {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+    virtual SEC_STATUS ImpersonateSecurityContext() = 0;
 
     // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    virtual SEC_STATUS RevertSecurityContext() {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+    virtual SEC_STATUS RevertSecurityContext() = 0;
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) {
-        (void)data_in;
-        (void)data_out;
-        (void)messageSeqNo;
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+    virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) = 0;
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) {
-        (void)data_in;
-        (void)data_out;
-        (void)messageSeqNo;
+    virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) = 0;
+};
+
+struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
+{
+    SEC_STATUS AcquireCredentialsHandle(
+        const char * /*pszPrincipal*/, unsigned long /*fCredentialUse*/,
+        Array * /*pvLogonID*/, SEC_WINNT_AUTH_IDENTITY * /*pAuthData*/
+    ) override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS InitializeSecurityContext(
+        char* /*pszTargetName*/, unsigned long /*fContextReq*/,
+        SecBuffer const* /*pinput_buffer*/, unsigned long /*Reserved2*/,
+        SecBuffer& /*output_buffer*/
+    ) override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS AcceptSecurityContext(
+        SecBuffer const& /*input_buffer*/, unsigned long /*fContextReq*/,
+        SecBuffer& /*output_buffer*/
+    ) override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS ImpersonateSecurityContext() override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS RevertSecurityContext() override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS EncryptMessage(
+        array_view_const_u8 /*data_in*/, SecBuffer& /*data_out*/,
+        unsigned long /*messageSeqNo*/
+    ) override
+    {
+        return SEC_E_UNSUPPORTED_FUNCTION;
+    }
+
+    SEC_STATUS DecryptMessage(
+        array_view_const_u8 /*data_in*/, SecBuffer& /*data_out*/,
+        unsigned long /*messageSeqNo*/
+    ) override
+    {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 };

@@ -59,7 +59,8 @@ protected:
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    std::unique_ptr<SecurityFunctionTable> table = std::make_unique<SecurityFunctionTable>();
+    std::unique_ptr<SecurityFunctionTable> table
+      = std::make_unique<UnimplementedSecurityFunctionTable>();
     bool RestrictedAdminMode;
     SecInterface sec_interface;
 
@@ -186,11 +187,10 @@ protected:
                 #ifndef __EMSCRIPTEN__
                 this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
                 #else
+                this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
                 assert(false && "Unsupported Kerberos");
                 #endif
                 break;
-            default:
-                this->table = std::make_unique<SecurityFunctionTable>();
         }
     }
 
