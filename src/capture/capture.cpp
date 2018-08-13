@@ -655,6 +655,13 @@ protected:
         }
     }
 
+    void resize(MutableImageDataView const & image_view) {
+        this->scaled_width  = ((((image_view.width()  * this->zoom_factor) / 100) + 3) & 0xFFC);
+        this->scaled_height =  (((image_view.height() * this->zoom_factor) / 100));
+
+        this->timestamp_tracer = TimestampTracer(image_view);
+    }
+
 public:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
@@ -663,6 +670,10 @@ public:
         capture_params, png_params, drawable,
         imageFrameApi, imageFrameApi.get_mutable_image_view())
     {}
+
+    void resize(gdi::ImageFrameApi & imageFrameApi) {
+        this->resize(imageFrameApi.get_mutable_image_view());
+    }
 
     void dump()
     {
@@ -1456,7 +1467,7 @@ Capture::Capture(
         this->meta_capture_obj = std::make_unique<MetaCaptureImpl>(capture_params, meta_params);
     }
 
-    if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
+    if (this->capture_drawable) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
         }
@@ -1674,6 +1685,42 @@ Capture::~Capture()
             this->wrm_capture_obj.reset();
         }
     }
+}
+
+void Capture::resize(uint16_t width, uint16_t height) {
+    if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {
+        return;
+    }
+
+    if (this->capture_drawable) {
+        this->gd_drawable->resize(width, height);
+    }
+
+    if (this->png_capture_real_time_obj) {
+        not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = this->gd_drawable;
+
+        if (this->video_cropper_real_time) {
+            this->video_cropper_real_time->resize(*this->gd_drawable);
+
+            image_frame_api_real_time_ptr = this->video_cropper_real_time.get();
+        }
+
+        this->png_capture_real_time_obj->resize(*image_frame_api_real_time_ptr);
+    }
+
+    if (this->png_capture_obj) {
+        not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
+
+        if (this->video_cropper) {
+            this->video_cropper->resize(*this->gd_drawable);
+
+            image_frame_api_ptr = this->video_cropper.get();
+        }
+
+        this->png_capture_obj->resize(*image_frame_api_ptr);
+    }
+
+    this->external_breakpoint();
 }
 
 // TODO: this could be done directly in external png_capture_real_time_obj object

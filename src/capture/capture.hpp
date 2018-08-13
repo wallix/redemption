@@ -27,6 +27,7 @@
 #include "gdi/capture_api.hpp"
 #include "gdi/kbd_input_api.hpp"
 #include "gdi/capture_probe_api.hpp"
+#include "gdi/resize_api.hpp"
 #include "capture/notify_next_video.hpp"
 
 #include "capture/capture_params.hpp"
@@ -160,6 +161,7 @@ class Capture final
 , public gdi::KbdInputApi
 , public gdi::CaptureProbeApi
 , public gdi::ExternalCaptureApi
+, public gdi::ResizeApi
 {
     const bool is_replay_mod;
 
@@ -384,7 +386,9 @@ public:
 
     ~Capture();
 
-    public:
+public:
+    void resize(uint16_t width, uint16_t height) override;
+
     void update_config(bool enable_rt_display);
 
     void set_row(size_t rownum, const uint8_t * data) override;

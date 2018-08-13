@@ -687,7 +687,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
     std::string output;
     KbdInput kbd_input(output);
     CaptureProbe capture_probe(output);
-    player.add_consumer(nullptr, nullptr, &kbd_input, &capture_probe, nullptr);
+    player.add_consumer(nullptr, nullptr, &kbd_input, &capture_probe, nullptr, nullptr);
 
     while(player.next_order())
     {

@@ -55,9 +55,10 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
+#include "gdi/resize_api.hpp"
 
 class RDPDrawable
-: public gdi::GraphicApi, public gdi::ImageFrameApi
+: public gdi::GraphicApi, public gdi::ImageFrameApi, public gdi::ResizeApi
 {
     using Color = Drawable::Color;
 
@@ -99,6 +100,10 @@ public:
         auto av     = p.get_24bits_xor_mask();
         auto avmask = p.get_monochrome_and_mask();
         this->default_pointer.initialize(32, 32, av.data(), avmask.data());
+    }
+
+    void resize(uint16_t width, uint16_t height) override {
+        this->drawable.resize(width, height);
     }
 
 public:

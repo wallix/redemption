@@ -123,7 +123,7 @@ struct ReplayMod::Reader
                 throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
         }
 
-        this->reader.add_consumer(&front, nullptr, nullptr, nullptr, nullptr);
+        this->reader.add_consumer(&front, nullptr, nullptr, nullptr, nullptr, nullptr);
         front.can_be_start_capture();
         return is_resized;
     }
@@ -175,14 +175,16 @@ void ReplayMod::add_consumer(
     gdi::CaptureApi * capture_ptr,
     gdi::KbdInputApi * kbd_input_ptr,
     gdi::CaptureProbeApi * capture_probe_ptr,
-    gdi::ExternalCaptureApi * external_event_ptr
+    gdi::ExternalCaptureApi * external_event_ptr,
+    gdi::ResizeApi * resize_ptr
 ) {
     this->internal_reader->reader.add_consumer(
         graphic_ptr,
         capture_ptr,
         kbd_input_ptr,
         capture_probe_ptr,
-        external_event_ptr
+        external_event_ptr,
+        resize_ptr
     );
 }
 

@@ -45,6 +45,7 @@ namespace gdi
     class KbdInputApi;
     class CaptureProbeApi;
     class ExternalCaptureApi;
+    class ResizeApi;
 }
 namespace RDP
 {
@@ -70,6 +71,8 @@ private:
 
 public:
     Rect screen_rect;
+
+    Dimension max_screen_dim;
 
     // Internal state of orders
     StateChunk ssc;
@@ -132,6 +135,7 @@ private:
     fixed_ptr_array<gdi::KbdInputApi, 10> kbd_input_consumers;
     fixed_ptr_array<gdi::CaptureProbeApi, 10> capture_probe_consumers;
     fixed_ptr_array<gdi::ExternalCaptureApi, 10> external_event_consumers;
+    fixed_ptr_array<gdi::ResizeApi, 10> resize_consumers;
 
     bool meta_ok;
     bool timestamp_ok;
@@ -249,7 +253,8 @@ public:
         gdi::CaptureApi * capture_ptr,
         gdi::KbdInputApi * kbd_input_ptr,
         gdi::CaptureProbeApi * capture_probe_ptr,
-        gdi::ExternalCaptureApi * external_event_ptr
+        gdi::ExternalCaptureApi * external_event_ptr,
+        gdi::ResizeApi * resize_ptr
     );
 
     void clear_consumer();
