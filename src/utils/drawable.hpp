@@ -342,6 +342,20 @@ struct DrawableTrait<DepthColor::color24>
 : DrawableTraitColor24
 {};
 
+auto DrawableImplAlloc = [](size_t rowsize_, uint16_t height_) {
+        size_t sz = rowsize_ * height_;
+        if (sz == 0) {
+            throw Error(ERR_RECORDER_EMPTY_IMAGE);
+        }
+        uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
+        // done this way because otherwise clang raise a zero-size-array is an extension warning
+        memset(data, 0, sz);
+
+        if (nullptr == data) {
+            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+        }
+        return data;
+    };
 
 template<DepthColor BppIn>
 class DrawableImpl
@@ -356,11 +370,11 @@ class DrawableImpl
     using P = u8 *;
     using cP = u8 const *;
 
-    const uint16_t width_;
-    const uint16_t height_;
-    const size_t rowsize_;
+    uint16_t width_;
+    uint16_t height_;
+    size_t rowsize_;
 
-    P const data_;
+    P data_;
 
 public:
     using traits = DrawableTrait<BppIn>;
@@ -372,28 +386,39 @@ public:
     : width_(width)
     , height_(height)
     , rowsize_(width * Bpp)
-    , data_([this]{
-        size_t sz = this->rowsize_ * this->height_;
-        if (sz == 0) {
-            throw Error(ERR_RECORDER_EMPTY_IMAGE);
-        }
-        uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
-        // done this way because otherwise clang raise a zero-size-array is an extension warning
-        memset(data, 0, sz);
+    // , data_([this]{
+    //     size_t sz = this->rowsize_ * this->height_;
+    //     if (sz == 0) {
+    //         throw Error(ERR_RECORDER_EMPTY_IMAGE);
+    //     }
+    //     uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
+    //     // done this way because otherwise clang raise a zero-size-array is an extension warning
+    //     memset(data, 0, sz);
 
-        if (nullptr == data) {
-            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-        }
-        return data;
-    }())
+    //     if (nullptr == data) {
+    //         throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
+    //     }
+    //     return data;
+    // }())
+    , data_(DrawableImplAlloc(this->rowsize_, this->height_))
     {}
 
     DrawableImpl(DrawableImpl const &) = delete;
     DrawableImpl& operator=(DrawableImpl const &) = delete;
 
+public:
     ~DrawableImpl()
     {
         delete[] this->data_;
+    }
+
+    void resize(unsigned width, unsigned height) {
+        delete[] this->data_;
+
+        this->width_   = width;
+        this->height_  = height;
+        this->rowsize_ = this->width_ * Bpp;
+        this->data_    =  DrawableImplAlloc(this->rowsize_, this->height_);
     }
 
     const uint8_t * data() const noexcept {
@@ -974,6 +999,15 @@ public:
     , tracked_area_changed(false)
     , logical_frame_ended(true)
     {
+    }
+
+    void resize(int width, int height) {
+        this->impl_.resize(width, height);
+
+        this->tracked_area         = Rect(0, 0, 0, 0);
+        this->tracked_area_changed = false;
+
+        this->logical_frame_ended = true;
     }
 
     uint8_t * first_pixel() noexcept {

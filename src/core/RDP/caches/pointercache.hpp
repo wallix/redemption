@@ -56,6 +56,22 @@ public:
 
     ~PointerCache() = default;
 
+    void reset() {
+        this->pointer_stamp = 0;
+
+        for (auto & stamp : this->stamps) {
+            stamp = 0;
+        }
+
+        for (auto & cached_ : this->cached) {
+            cached_ = false;
+        }
+
+        for (auto & pointer : this->Pointers) {
+            pointer = Pointer();
+        }
+    }
+
     void add_pointer_static(const Pointer & cursor, int index) {
         assert((index >= 0) && (index < MAX_POINTER_COUNT));
         this->Pointers[index] = cursor;
