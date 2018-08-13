@@ -36,16 +36,16 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
 
 namespace {
     //const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
-    const char Kerberos_Name[] = "Kerberos";
-    const char Kerberos_Comment[] = "Kerberos Security Package";
-    const SecPkgInfo KERBEROS_SecPkgInfo = {
-        0x00082B37,             // fCapabilities
-        1,                      // wVersion
-        0x000A,                 // wRPCID
-        0x00000B48,             // cbMaxToken
-        Kerberos_Name,          // Name
-        Kerberos_Comment        // Comment
-    };
+    // const char Kerberos_Name[] = "Kerberos";
+    // const char Kerberos_Comment[] = "Kerberos Security Package";
+    // const SecPkgInfo KERBEROS_SecPkgInfo = {
+    //     0x00082B37,             // fCapabilities
+    //     1,                      // wVersion
+    //     0x000A,                 // wRPCID
+    //     0x00000B48,             // cbMaxToken
+    //     Kerberos_Name,          // Name
+    //     Kerberos_Comment        // Comment
+    // };
 
     gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
