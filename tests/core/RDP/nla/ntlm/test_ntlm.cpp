@@ -103,15 +103,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
         make_array_view(identity->Password.get_data(), identity->Password.size()),
         "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
-    SecPkgInfo server_packageInfo = server_table.QuerySecurityPackageInfo();
-
-    SecPkgInfo client_packageInfo = client_table.QuerySecurityPackageInfo();
-
-    SecBuffer input_buffer;
     SecBuffer output_buffer;
-    input_buffer.init(0);
-    output_buffer.init(0);
-    output_buffer.init(client_packageInfo.cbMaxToken);
 
     unsigned long fContextReq = 0;
     fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
@@ -142,7 +134,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     fsContextReq |= ASC_REQ_EXTENDED_ERROR;
 
-    input_buffer.init(client_packageInfo.cbMaxToken);
+    SecBuffer input_buffer;
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
@@ -152,8 +144,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 120);
     // hexdump_c(input_buffer.get_data(), 120);
-
-    output_buffer.init(server_packageInfo.cbMaxToken);
 
     // client second call, got context
     // got input buffer: challenge message
@@ -168,10 +158,6 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_EQUAL(client_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(output_buffer.size(), 266);
     // hexdump_c(output_buffer.get_data(), 266);
-
-
-    input_buffer.init(client_packageInfo.cbMaxToken);
-
 
 
     // server second call, got context

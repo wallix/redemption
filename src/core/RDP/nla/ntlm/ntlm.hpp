@@ -82,11 +82,6 @@ public:
 
     ~Ntlm_SecurityFunctionTable() = default;
 
-    // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SecPkgInfo QuerySecurityPackageInfo() override {
-        return NTLM_SecPkgInfo;
-    }
-
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     SecPkgContext_Sizes QueryContextSizes() override {
         SecPkgContext_Sizes ContextSizes;
@@ -151,9 +146,6 @@ public:
         }
 
         if ((!pinput_buffer) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
-            if (output_buffer.size() < 1) {
-                return SEC_E_INVALID_TOKEN;
-            }
             if (this->context->state == NTLM_STATE_INITIAL) {
                 this->context->state = NTLM_STATE_NEGOTIATE;
             }
@@ -175,10 +167,6 @@ public:
 
         if (this->context->state == NTLM_STATE_CHALLENGE) {
             this->context->read_challenge(*pinput_buffer);
-
-            if (output_buffer.size() < 1) {
-                return SEC_E_INSUFFICIENT_MEMORY;
-            }
             if (this->context->state == NTLM_STATE_AUTHENTICATE) {
                 return this->context->write_authenticate(output_buffer);
             }
@@ -213,10 +201,6 @@ public:
             /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
-                if (output_buffer.size() < 1) {
-                    return SEC_E_INSUFFICIENT_MEMORY;
-                }
-
                 return this->context->write_challenge(output_buffer);
             }
 
@@ -303,8 +287,7 @@ public:
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + this->QueryContextSizes().cbMaxSignature);
-        auto message_out = make_array_view(data_out.get_data(), data_out.size())
-          .subarray(this->QueryContextSizes().cbMaxSignature);
+        auto message_out = data_out.av().subarray(this->QueryContextSizes().cbMaxSignature);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
         this->compute_hmac_md5(digest, this->context->SendSigningKey, data_in, MessageSeqNo);
@@ -339,7 +322,7 @@ public:
         this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->context->RecvSigningKey, {data_out.get_data(), data_out.size()}, MessageSeqNo);
+        this->compute_hmac_md5(digest, this->context->RecvSigningKey, data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(

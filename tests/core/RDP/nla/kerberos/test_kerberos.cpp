@@ -51,12 +51,3 @@ RED_AUTO_TEST_CASE(TestAcquireCredentials)
     //                     creds->identity.Password.get_data(),
     //                     creds->identity.Password.size()));
 }
-
-
-RED_AUTO_TEST_CASE(TestKerberos)
-{
-    Kerberos_SecurityFunctionTable table;
-    SecPkgInfo packageInfo = table.QuerySecurityPackageInfo();
-    (void)packageInfo;
-    KERBEROSContext krb_ctx;
-}

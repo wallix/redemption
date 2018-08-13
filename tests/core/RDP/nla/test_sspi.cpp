@@ -199,9 +199,6 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
     status = table.AcceptSecurityContext(buffer, 0, buffer);
     RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
-    status = table.CompleteAuthToken(buffer);
-    RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
     //status = table.DeleteSecurityContext(nullptr);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
 
@@ -242,11 +239,4 @@ RED_AUTO_TEST_CASE(TestSecFunctionTable)
 
     //status = table.SetContextAttributes(nullptr, 0, nullptr, 0);
     //RED_CHECK_EQUAL(status, SEC_E_UNSUPPORTED_FUNCTION);
-
-    RED_CHECK_EXCEPTION_ERROR_ID(table.QuerySecurityPackageInfo(), ERR_SEC);
-    // RED_CHECK_EQUAL(packageInfo.fCapabilities, NTLM_SecPkgInfo.fCapabilities);
-    // RED_CHECK_EQUAL(packageInfo.wVersion, NTLM_SecPkgInfo.wVersion);
-    // RED_CHECK_EQUAL(packageInfo.wRPCID, NTLM_SecPkgInfo.wRPCID);
-    // RED_CHECK_EQUAL(packageInfo.cbMaxToken, NTLM_SecPkgInfo.cbMaxToken);
-
 }
