@@ -1013,11 +1013,11 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_negotiate(SecBuffer const& input_buffer) {
+    SEC_STATUS read_negotiate(array_view_const_u8 input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Negotiate");
         }
-        InStream in_stream(input_buffer.get_data(), input_buffer.size());
+        InStream in_stream(input_buffer);
         this->NEGOTIATE_MESSAGE.recv(in_stream);
         if (!this->ntlm_check_nego()) {
             return SEC_E_INVALID_TOKEN;
@@ -1096,11 +1096,11 @@ public:
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    SEC_STATUS read_authenticate(SecBuffer const& input_buffer) {
+    SEC_STATUS read_authenticate(array_view_const_u8 input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Authenticate");
         }
-        InStream in_stream(input_buffer.get_data(), input_buffer.size());
+        InStream in_stream(input_buffer);
         this->AUTHENTICATE_MESSAGE.recv(in_stream);
         if (this->AUTHENTICATE_MESSAGE.has_mic) {
             this->UseMIC = true;
