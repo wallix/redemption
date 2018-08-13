@@ -57,6 +57,14 @@ public:
         return this->avbuf.data();
     }
 
+    array_view_const_u8 av() const {
+        return this->avbuf;
+    }
+
+    array_view_u8 av() {
+        return this->avbuf;
+    }
+
     void copy(Array const& other) {
         this->init(other.size());
         memcpy(this->get_data(), other.get_data(), this->size());
@@ -433,14 +441,6 @@ struct SecurityFunctionTable
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
-
-    // GSS_Process_context_token ?
-    // COMPLETE_AUTH_TOKEN CompleteAuthToken;
-    virtual SEC_STATUS CompleteAuthToken(SecBuffer& Token) {
-        (void)Token;
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
     // GSS_Delete_sec_context
     // DELETE_SECURITY_CONTEXT DeleteSecurityContext;
     //virtual SEC_STATUS DeleteSecurityContext() {
@@ -478,13 +478,6 @@ struct SecurityFunctionTable
     //                                    unsigned long MessageSeqNo, unsigned long * pfQOP) {
     //    return SEC_E_UNSUPPORTED_FUNCTION;
     //}
-
-    // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    virtual SecPkgInfo QuerySecurityPackageInfo()
-    {
-        throw Error(ERR_SEC);
-        // return SecPkgInfo{};
-    }
 
     // void* Reserved3;
     // void* Reserved4;

@@ -315,8 +315,7 @@ protected:
         }
 
         if (this->pubKeyAuth.size() < this->ContextSizes.cbMaxSignature) {
-            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu",
-                this->pubKeyAuth.size());
+            LOG(LOG_ERR, "unexpected pubKeyAuth buffer size:%zu", this->pubKeyAuth.size());
             if (this->pubKeyAuth.size() == 0) {
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
@@ -328,7 +327,7 @@ protected:
         SecBuffer Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
-            {this->pubKeyAuth.get_data(), this->pubKeyAuth.size()}, Buffer, this->recv_seq_num++);
+            this->pubKeyAuth.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "DecryptMessage failure: 0x%08X", status);
@@ -444,13 +443,6 @@ public:
         StaticOutStream<65536> ts_credentials_send;
         this->ts_credentials.emit(ts_credentials_send);
 
-        this->authInfo.init(this->ContextSizes.cbMaxSignature + ts_credentials_send.get_offset());
-
-        memset(this->authInfo.get_data(), 0, this->ContextSizes.cbMaxSignature);
-        memcpy(
-            this->authInfo.get_data() + this->ContextSizes.cbMaxSignature,
-            ts_credentials_send.get_data(), ts_credentials_send.get_offset());
-
         return this->table->EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
             static_cast<SecBuffer&>(this->authInfo), this->send_seq_num++);
@@ -469,17 +461,14 @@ private:
         if (this->credssp_ntlm_init(false) == 0) {
             return Res::Err;
         }
-        SecPkgInfo packageInfo;
         bool interface_changed = false;
         do {
-            interface_changed = false;
             this->InitSecurityInterface(this->sec_interface);
 
             if (this->table == nullptr) {
                 LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
                 return Res::Err;
             }
-            packageInfo = this->table->QuerySecurityPackageInfo();
             status = this->table->AcquireCredentialsHandle(this->target_host,
                                                            SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
@@ -498,7 +487,6 @@ private:
             return Res::Err;
         }
 
-        this->client_auth_data.cbMaxToken = packageInfo.cbMaxToken;
         this->client_auth_data.input_buffer.init(0);
         this->client_auth_data.have_input_buffer = false;
         this->ContextSizes = {};
@@ -509,7 +497,6 @@ private:
     struct ClientAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
-        unsigned long cbMaxToken;
         bool have_input_buffer;
         SecBuffer input_buffer;
     };
@@ -524,11 +511,8 @@ private:
          * ISC_REQ_USE_SESSION_KEY
          * ISC_REQ_ALLOCATE_MEMORY
          */
-        SecBuffer output_buffer;
         unsigned long const fContextReq
           = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
-        output_buffer.init(this->client_auth_data.cbMaxToken);
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
             char_ptr_cast(this->ServicePrincipalName.get_data()),
@@ -537,7 +521,7 @@ private:
                 ? &this->client_auth_data.input_buffer
                 : nullptr,
             this->verbose,
-            output_buffer);
+            /*output*/static_cast<SecBuffer&>(this->negoToken));
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&
@@ -555,8 +539,6 @@ private:
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
             (status == SEC_I_COMPLETE_NEEDED) ||
             (status == SEC_E_OK)) {
-            this->table->CompleteAuthToken(output_buffer);
-
             // have_pub_key_auth = true;
             this->ContextSizes = this->table->QueryContextSizes();
             encrypted = this->credssp_encrypt_public_key_echo();
@@ -570,10 +552,7 @@ private:
 
         /* send authentication token to server */
 
-        if (output_buffer.size() > 0) {
-            // copy or set reference ? BStream
-            this->negoToken.copy(output_buffer);
-
+        if (this->negoToken.size() > 0) {
             // #ifdef WITH_DEBUG_CREDSSP
             //             LOG(LOG_ERR, "Sending Authentication Token");
             //             hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
@@ -586,7 +565,6 @@ private:
             this->credssp_buffer_free();
         }
         else if (encrypted == SEC_E_OK) {
-            this->negoToken.init(0);
             this->credssp_send();
             this->credssp_buffer_free();
         }
@@ -734,7 +712,7 @@ public:
         SecBuffer Buffer;
 
         const SEC_STATUS status = this->table->DecryptMessage(
-            {this->authInfo.get_data(), this->authInfo.size()}, Buffer, this->recv_seq_num++);
+            this->authInfo.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
@@ -757,7 +735,6 @@ private:
     struct ServerAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
-        unsigned long cbMaxToken;
     };
     ServerAuthenticateData server_auth_data;
     enum class Res : bool { Err, Ok };
@@ -776,8 +753,6 @@ private:
 
         this->InitSecurityInterface(NTLM_Interface);
 
-        SecPkgInfo const packageInfo = this->table->QuerySecurityPackageInfo();
-
         SEC_STATUS status = this->table->AcquireCredentialsHandle(
             nullptr, SECPKG_CRED_INBOUND, nullptr, nullptr);
 
@@ -786,7 +761,6 @@ private:
             return Res::Err;
         }
 
-        this->server_auth_data.cbMaxToken = packageInfo.cbMaxToken;
         this->ContextSizes = {};
 
         /*
@@ -810,20 +784,10 @@ public:
             this->ts_request.recv(in_stream);
         }
 
-        SecBuffer input_buffer;
-        SecBuffer output_buffer;
-
-        input_buffer.init(0);
-        output_buffer.init(0);
-
-        input_buffer.copy(this->negoToken);
-
         if (this->negoToken.size() < 1) {
             LOG(LOG_ERR, "CredSSP: invalid negoToken!");
             return Res::Err;
         }
-
-        output_buffer.init(this->server_auth_data.cbMaxToken);
 
         unsigned long const fContextReq = 0
             | ASC_REQ_MUTUAL_AUTH
@@ -834,17 +798,15 @@ public:
             | ASC_REQ_SEQUENCE_DETECT
             | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
-            input_buffer, fContextReq, output_buffer);
+            /*input*/static_cast<SecBuffer&>(this->negoToken),
+            fContextReq,
+            /*output*/static_cast<SecBuffer&>(this->negoToken));
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
         }
 
-        this->negoToken.copy(output_buffer);
-
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) || (status == SEC_I_COMPLETE_NEEDED)) {
-            this->table->CompleteAuthToken(output_buffer);
-
             if (status == SEC_I_COMPLETE_NEEDED) {
                 status = SEC_E_OK;
             }

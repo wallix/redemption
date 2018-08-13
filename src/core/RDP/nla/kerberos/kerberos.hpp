@@ -113,11 +113,6 @@ public:
         unsetenv("KRB5CCNAME");
     }
 
-    // QUERY_SECURITY_PACKAGE_INFO QuerySecurityPackageInfo;
-    SecPkgInfo QuerySecurityPackageInfo() override {
-        return KERBEROS_SecPkgInfo;
-    }
-
     // QUERY_CONTEXT_ATTRIBUTES QueryContextAttributes;
     SecPkgContext_Sizes QueryContextSizes() override {
         SecPkgContext_Sizes ContextSizes;
@@ -324,20 +319,20 @@ public:
         // acquire delegated credential handle if client has tgt with delegation flag
         // should be freed with gss_release_cred()
 
-   // OM_uint32 gss_accept_sec_context
-   //               (OM_uint32 ,             /* minor_status */
-   //                gss_ctx_id_t ,          /* context_handle */
-   //                const gss_cred_id_t,    /* acceptor_cred_handle */
-   //                const gss_buffer_t,     /* input_token_buffer */
-   //                const gss_channel_bindings_t,
-   //                                        /* input_chan_bindings */
-   //                gss_name_t ,            /* src_name */
-   //                gss_OID ,               /* mech_type */
-   //                gss_buffer_t,           /* output_token */
-   //                OM_uint32 ,             /* ret_flags */
-   //                OM_uint32 ,             /* time_rec */
-   //                gss_cred_id_t *         /* delegated_cred_handle */
-   //               );
+        // OM_uint32 gss_accept_sec_context
+        //               (OM_uint32 ,             /* minor_status */
+        //                gss_ctx_id_t ,          /* context_handle */
+        //                const gss_cred_id_t,    /* acceptor_cred_handle */
+        //                const gss_buffer_t,     /* input_token_buffer */
+        //                const gss_channel_bindings_t,
+        //                                        /* input_chan_bindings */
+        //                gss_name_t ,            /* src_name */
+        //                gss_OID ,               /* mech_type */
+        //                gss_buffer_t,           /* output_token */
+        //                OM_uint32 ,             /* ret_flags */
+        //                OM_uint32 ,             /* time_rec */
+        //                gss_cred_id_t *         /* delegated_cred_handle */
+        //               );
 
         major_status = gss_accept_sec_context(&minor_status,
                                               &this->krb_ctx->gss_ctx,
