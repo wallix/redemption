@@ -41,29 +41,25 @@ static const uint8_t client_server_hash_magic[] =
 /* CredSSP Server-To-Client Binding Hash */
 static const uint8_t server_client_hash_magic[] =
     "CredSSP Server-To-Client Binding Hash";
-static const size_t CLIENT_NONCE_LENTH = 32;
+static const size_t CLIENT_NONCE_LENGTH = 32;
 
 class rdpCredsspBase : noncopyable
 {
 protected:
-    bool server;
-    int send_seq_num;
-    int recv_seq_num;
+    bool server = false;
+    int send_seq_num = 0;
+    int recv_seq_num = 0;
 
     TSCredentials ts_credentials;
     TSRequest ts_request;
-    Array & negoToken;
-    Array & pubKeyAuth;
-    Array & authInfo;
-    Array & clientNonce;
-    uint8_t SavedClientNonce[CLIENT_NONCE_LENTH];
+    uint8_t SavedClientNonce[CLIENT_NONCE_LENGTH];
     Array PublicKey;
     Array ClientServerHash;
     Array ServerClientHash;
 
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
-    std::unique_ptr<SecurityFunctionTable> table;
+    std::unique_ptr<SecurityFunctionTable> table = std::make_unique<SecurityFunctionTable>();
     bool RestrictedAdminMode;
     SecInterface sec_interface;
 
@@ -97,16 +93,8 @@ public:
         std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>&& set_password_cb,
         const bool verbose = false
     )
-        : server(false)
-        , send_seq_num(0)
-        , recv_seq_num(0)
-        , ts_request(6) // Credssp Version 6 Supported
-        , negoToken(ts_request.negoTokens)
-        , pubKeyAuth(ts_request.pubKeyAuth)
-        , authInfo(ts_request.authInfo)
-        , clientNonce(ts_request.clientNonce)
+        : ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
-        , table(new SecurityFunctionTable)
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
         , target_host(target_host)
@@ -206,48 +194,45 @@ protected:
         }
     }
 
+private:
+    static void ap_integer_increment_le(array_view_u8 number) {
+        for (uint8_t& i : number) {
+            if (i < 0xFF) {
+                i++;
+                break;
+            }
+            i = 0;
+        }
+    }
+
+    static void ap_integer_decrement_le(array_view_u8 number) {
+        for (uint8_t& i : number) {
+            if (i > 0) {
+                i--;
+                break;
+            }
+            i = 0xFF;
+        }
+    }
+
 protected:
-    static void ap_integer_increment_le(uint8_t* number, size_t size) {
-        size_t index = 0;
-
-        for (index = 0; index < size; index++) {
-            if (number[index] < 0xFF) {
-                number[index]++;
-                break;
-            }
-
-            number[index] = 0;
-        }
-    }
-
-    static void ap_integer_decrement_le(uint8_t* number, size_t size) {
-        size_t index = 0;
-        for (index = 0; index < size; index++) {
-            if (number[index] > 0) {
-                number[index]--;
-                break;
-            }
-            number[index] = 0xFF;
-        }
-    }
-
     void credssp_generate_client_nonce() {
         LOG(LOG_DEBUG, "credssp generate client nonce");
-        this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENTH);
+        this->rand.random(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         this->credssp_set_client_nonce();
     }
 
     void credssp_get_client_nonce() {
         LOG(LOG_DEBUG, "credssp get client nonce");
-        if (this->clientNonce.size() == CLIENT_NONCE_LENTH) {
-            memcpy(this->SavedClientNonce, this->clientNonce.get_data(), CLIENT_NONCE_LENTH);
+        if (this->ts_request.clientNonce.size() == CLIENT_NONCE_LENGTH) {
+            memcpy(this->SavedClientNonce, this->ts_request.clientNonce.get_data(), CLIENT_NONCE_LENGTH);
         }
     }
     void credssp_set_client_nonce() {
         LOG(LOG_DEBUG, "credssp set client nonce");
-        if (this->clientNonce.size() == 0) {
-            this->clientNonce.init(CLIENT_NONCE_LENTH);
-            memcpy(this->clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENTH);
+        if (this->ts_request.clientNonce.size() == 0) {
+            this->ts_request.clientNonce.init(CLIENT_NONCE_LENGTH);
+            memcpy(this->ts_request.clientNonce.get_data(), this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         }
     }
 
@@ -257,16 +242,13 @@ protected:
         Array & SavedHash = client_to_server
             ? this->ClientServerHash
             : this->ServerClientHash;
-        const uint8_t * magic_hash = client_to_server
+        auto magic_hash = make_array_view(client_to_server
             ? client_server_hash_magic
-            : server_client_hash_magic;
-        size_t magic_hash_len = client_to_server
-            ? sizeof(client_server_hash_magic)
-            : sizeof(server_client_hash_magic);
+            : server_client_hash_magic);
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update(magic_hash, magic_hash_len);
-        sha256.update(this->SavedClientNonce, CLIENT_NONCE_LENTH);
+        sha256.update(magic_hash.data(), magic_hash.size());
+        sha256.update(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
         sha256.update(this->PublicKey.get_data(), this->PublicKey.size());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
@@ -279,8 +261,7 @@ protected:
         }
         uint32_t version = this->ts_request.use_version;
 
-        size_t public_key_length = this->PublicKey.size();
-        uint8_t * public_key = this->PublicKey.get_data();
+        array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             const bool client_to_server = !this->server;
             if (client_to_server) {
@@ -289,23 +270,20 @@ protected:
                 this->credssp_get_client_nonce();
             }
             this->credssp_generate_public_key_hash(client_to_server);
-            public_key_length = client_to_server
-                ? this->ClientServerHash.size()
-                : this->ServerClientHash.size();
             public_key = client_to_server
-                ? this->ClientServerHash.get_data()
-                : this->ServerClientHash.get_data();
+              ? this->ClientServerHash.av()
+              : this->ServerClientHash.av();
         }
 
         if (this->server && version < 5) {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
-            this->ap_integer_increment_le(public_key, public_key_length);
+            this->ap_integer_increment_le(public_key);
         }
 
         return this->table->EncryptMessage(
-            {public_key, public_key_length},
-            static_cast<SecBuffer&>(this->pubKeyAuth), this->send_seq_num++);
+            public_key,
+            static_cast<SecBuffer&>(this->ts_request.pubKeyAuth), this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -316,10 +294,10 @@ protected:
         SecBuffer Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
-            this->pubKeyAuth.av(), Buffer, this->recv_seq_num++);
+            this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
-            if (this->pubKeyAuth.size() == 0) {
+            if (this->ts_request.pubKeyAuth.size() == 0) {
                 // report_error
                 this->extra_message = " ";
                 this->extra_message.append(TR(trkeys::err_login_password, this->lang));
@@ -331,41 +309,36 @@ protected:
 
         const uint32_t version = this->ts_request.use_version;
 
-        unsigned int public_key_length = this->PublicKey.size();
-        uint8_t* public_key1 = this->PublicKey.get_data();
+        array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
             bool client_to_server = this->server;
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash(client_to_server);
-            public_key_length = client_to_server
-                ? this->ClientServerHash.size()
-                : this->ServerClientHash.size();
-            public_key1 = client_to_server
-                ? this->ClientServerHash.get_data()
-                : this->ServerClientHash.get_data();
+            public_key = client_to_server
+              ? this->ClientServerHash.av()
+              : this->ServerClientHash.av();
         }
 
-        uint8_t* public_key2 = Buffer.get_data();
-        size_t public_key_len2 = Buffer.size();
+        array_view_u8 public_key2 = Buffer.av();
 
-        if (public_key_len2 != public_key_length) {
-            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key_len2, size_t(public_key_length));
+        if (public_key2.size() != public_key.size()) {
+            LOG(LOG_ERR, "Decrypted Pub Key length or hash length does not match ! (%zu != %zu)", public_key2.size(), public_key.size());
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
         if (!this->server && version < 5) {
             // if we are client and protocol is 2,3,4
             // then get the public key minus one
-            ap_integer_decrement_le(public_key2, public_key_length);
+            ap_integer_decrement_le(public_key2);
         }
-        if (memcmp(public_key1, public_key2, public_key_length) != 0) {
+        if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
-            LOG(LOG_ERR, "Expected (length = %u):", public_key_length);
-            hexdump_c(public_key1, public_key_length);
+            LOG(LOG_ERR, "Expected (length = %zu):", public_key.size());
+            hexdump_av_c(public_key);
 
-            LOG(LOG_ERR, "Actual (length = %u):", public_key_length);
-            hexdump_c(public_key2, public_key_length);
+            LOG(LOG_ERR, "Actual (length = %zu):", public_key.size());
+            hexdump_av_c(public_key2);
 
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
@@ -377,10 +350,10 @@ protected:
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::buffer_free");
         }
-        this->negoToken.init(0);
-        this->pubKeyAuth.init(0);
-        this->authInfo.init(0);
-        this->clientNonce.init(0);
+        this->ts_request.negoTokens.init(0);
+        this->ts_request.pubKeyAuth.init(0);
+        this->ts_request.authInfo.init(0);
+        this->ts_request.clientNonce.init(0);
         this->ts_request.error_code = 0;
     }
 };
@@ -440,7 +413,7 @@ public:
 
         return this->table->EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
-            static_cast<SecBuffer&>(this->authInfo), this->send_seq_num++);
+            static_cast<SecBuffer&>(this->ts_request.authInfo), this->send_seq_num++);
     }
 
 private:
@@ -515,7 +488,7 @@ private:
                 ? &this->client_auth_data.input_buffer
                 : nullptr,
             this->verbose,
-            /*output*/static_cast<SecBuffer&>(this->negoToken));
+            /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&
@@ -545,10 +518,10 @@ private:
 
         /* send authentication token to server */
 
-        if (this->negoToken.size() > 0) {
+        if (this->ts_request.negoTokens.size() > 0) {
             // #ifdef WITH_DEBUG_CREDSSP
             //             LOG(LOG_ERR, "Sending Authentication Token");
-            //             hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
+            //             hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
             // #endif
             if (this->verbose) {
                 LOG(LOG_INFO, "rdpCredssp - Client Authentication : Sending Authentication Token");
@@ -580,13 +553,13 @@ private:
         this->ts_request.recv(in_stream);
 
         // #ifdef WITH_DEBUG_CREDSSP
-        //         LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->negoToken.cbBuffer);
-        //         hexdump_c(this->negoToken.pvBuffer, this->negoToken.cbBuffer);
+        //         LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
+        //         hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
         // #endif
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
         }
-        this->client_auth_data.input_buffer.copy(this->negoToken);
+        this->client_auth_data.input_buffer.copy(this->ts_request.negoTokens);
 
         this->client_auth_data.have_input_buffer = true;
 
@@ -697,15 +670,15 @@ public:
             LOG(LOG_INFO, "rdpCredsspServer::decrypt_ts_credentials");
         }
 
-        if (this->authInfo.size() < 1) {
-            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing authInfo buffer");
+        if (this->ts_request.authInfo.size() < 1) {
+            LOG(LOG_ERR, "credssp_decrypt_ts_credentials missing ts_request.authInfo buffer");
             return SEC_E_INVALID_TOKEN;
         }
 
         SecBuffer Buffer;
 
         const SEC_STATUS status = this->table->DecryptMessage(
-            this->authInfo.av(), Buffer, this->recv_seq_num++);
+            this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
 
         if (status != SEC_E_OK) {
             return status;
@@ -775,8 +748,8 @@ public:
             this->ts_request.recv(in_stream);
         }
 
-        if (this->negoToken.size() < 1) {
-            LOG(LOG_ERR, "CredSSP: invalid negoToken!");
+        if (this->ts_request.negoTokens.size() < 1) {
+            LOG(LOG_ERR, "CredSSP: invalid ts_request.negoToken!");
             return Res::Err;
         }
 
@@ -789,9 +762,9 @@ public:
             | ASC_REQ_SEQUENCE_DETECT
             | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
-            /*input*/static_cast<SecBuffer&>(this->negoToken),
+            /*input*/static_cast<SecBuffer&>(this->ts_request.negoTokens),
             fContextReq,
-            /*output*/static_cast<SecBuffer&>(this->negoToken));
+            /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
@@ -812,7 +785,7 @@ public:
                 return Res::Err;
             }
 
-            this->negoToken.init(0);
+            this->ts_request.negoTokens.init(0);
 
             this->credssp_encrypt_public_key_echo();
         }
