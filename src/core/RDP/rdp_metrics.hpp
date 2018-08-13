@@ -31,20 +31,20 @@
 
 inline std::string hmac_user(const std::string & user, const unsigned char * key) {
     char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_encrypt(sig, user.c_str(), user.length(), key);
+    metrics_hmac_sha256_encrypt(sig, user.c_str(), user.length(), key);
     return std::string(sig, SslSha256::DIGEST_LENGTH*2);
 }
 
 inline std::string hmac_account(const std::string & account, const unsigned char * key) {
     char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_encrypt(sig, account.c_str(), account.length(), key);
+    metrics_hmac_sha256_encrypt(sig, account.c_str(), account.length(), key);
     return std::string(sig, SslSha256::DIGEST_LENGTH*2);
 }
 
 inline std::string hmac_device_service(const std::string & device, const std::string & service, const unsigned char * key) {
     std::string target_device_and_service(service+" "+device);
         char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_encrypt(sig, target_device_and_service.c_str(), target_device_and_service.length(), key);
+    metrics_hmac_sha256_encrypt(sig, target_device_and_service.c_str(), target_device_and_service.length(), key);
     return std::string(sig, SslSha256::DIGEST_LENGTH*2);
 }
 
@@ -53,7 +53,7 @@ inline std::string hmac_client_info(const char * client_host, const ClientInfo &
     ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", client_host, info.bpp, info.width, info.height);
 
     char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_encrypt(sig, session_info, strlen(session_info), key);
+    metrics_hmac_sha256_encrypt(sig, session_info, strlen(session_info), key);
     return std::string(sig, SslSha256::DIGEST_LENGTH*2);
 }
 
@@ -182,6 +182,10 @@ public:
         : debug(debug)
     {
         this->metrics = metrics_new("v1.0", "rdp", activate, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count());
+    }
+
+    ~RDPMetrics() {
+        metrics_disconnect(this->metrics);
     }
 
     bool active() {
@@ -534,7 +538,7 @@ public:
 
                 if (nwritten == -1) {
                     // TODO bad filename
-                    //LOG(LOG_ERR, "Log Metrics error(%d): can't write in\"%s\"", this->metrics->fd.fd(), this->metrics->complete_file_path);
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->metrics->fd.fd(), this->metrics->complete_file_path);
                 }
             }
         }
