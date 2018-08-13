@@ -166,7 +166,7 @@ private:
 
 
 public:
-    Metrics * metrics;
+    Metrics metrics;
 
     RDPMetrics( const bool activate                        // do nothing if false
               , const std::string & path
@@ -180,16 +180,13 @@ public:
               , const std::chrono::seconds log_delay       // delay between 2 logs
               , const bool debug = false)
         : debug(debug)
+        , metrics("v1.0", "rdp", activate, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count())
     {
-        this->metrics = metrics_new("v1.0", "rdp", activate, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count());
-    }
-
-    ~RDPMetrics() {
-        metrics_disconnect(this->metrics);
+        //this->metrics = metrics_new("v1.0", "rdp", activate, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count());
     }
 
     bool active() {
-        return this->metrics->active_;
+        return this->metrics.active_;
     }
 
 
@@ -518,13 +515,13 @@ public:
 
     void log(timeval & now) {
 
-        if (this->metrics->active_ ) {
-            timeval wait_log_metrics = ::how_long_to_wait(this->metrics->next_log_time, now);
+        if (this->metrics.active_ ) {
+            timeval wait_log_metrics = ::how_long_to_wait(this->metrics.next_log_time, now);
             if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
-                this->metrics->next_log_time.tv_sec += this->metrics->log_delay;
-                this->metrics->next_log_time.tv_usec = now.tv_usec;
+                this->metrics.next_log_time.tv_sec += this->metrics.log_delay;
+                this->metrics.next_log_time.tv_usec = now.tv_usec;
 
-                metrics_rotate(now.tv_sec, this->metrics);
+                this->metrics.rotate(now.tv_sec);
 
                 std::string text_datetime(text_gmdatetime(now.tv_sec));
 
@@ -534,11 +531,11 @@ public:
 
                 iovec iov[] = { {sentence, strlen(sentence)} };
 
-                ssize_t nwritten = ::writev(this->metrics->fd.fd(), iov, 1);
+                ssize_t nwritten = ::writev(this->metrics.fd.fd(), iov, 1);
 
                 if (nwritten == -1) {
                     // TODO bad filename
-                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->metrics->fd.fd(), this->metrics->complete_file_path);
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->metrics.fd.fd(), this->metrics.complete_file_path);
                 }
             }
         }
@@ -549,7 +546,7 @@ public:
 
                 std::string debug_sentence;
                 char debug_header[128];
-                ::snprintf(debug_header, sizeof(debug_header), "%s %s", text_datetime.c_str(), this->metrics->session_id);
+                ::snprintf(debug_header, sizeof(debug_header), "%s %s", text_datetime.c_str(), this->metrics.session_id);
                 debug_sentence += debug_header;
 
                 for (int i = 0; i < COUNT_FIELD; i++) {
@@ -563,6 +560,6 @@ public:
                 LOG(LOG_INFO, "%s", debug_sentence);
             }
 
-            ::snprintf(sentence, sentence_max_size, "%s %s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n", text_datetime.c_str(), this->metrics->session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
+            ::snprintf(sentence, sentence_max_size, "%s %s %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu\n", text_datetime.c_str(), this->metrics.session_id, current_data[0], current_data[1], current_data[2], current_data[3], current_data[4], current_data[5], current_data[6], current_data[7], current_data[8], current_data[9], current_data[10], current_data[11], current_data[12], current_data[13], current_data[14], current_data[15], current_data[16], current_data[17], current_data[18], current_data[19], current_data[20], current_data[21], current_data[22], current_data[23], current_data[24], current_data[25], current_data[26], current_data[27], current_data[28], current_data[29], current_data[30], current_data[31], current_data[32], current_data[33]);
     }
 };

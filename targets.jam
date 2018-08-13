@@ -303,7 +303,10 @@ lib libiametrics :
   src/main/iametrics.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
+  <library>crypto
   <library>log.o
+  <library>src/core/error.o
+  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libscytale :
   src/main/scytale.cpp.lib.o
@@ -2438,7 +2441,11 @@ test-run tests/main/test_iametrics :
 :
   <covfile>src/main/iametrics.cpp
   <covfile>src/main/iametrics.hpp
+  <library>crypto
+  <library>src/core/error.o
   <library>src/main/iametrics.o
+  <library>src/utils/fileutils.o
+  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/main/test_scytale :
   $(REDEMPTION_TEST_PATH)/main/test_scytale.cpp

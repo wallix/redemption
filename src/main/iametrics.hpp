@@ -26,4 +26,33 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * iametrics_version();
 
+    REDEMPTION_LIB_EXPORT
+    void hmac_sha256(char * dest, const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+
+    class Metrics;
+
+    REDEMPTION_LIB_EXPORT
+    Metrics * metrics_new( const char * version             // fields version
+                         , const char * protocol_name
+                         , const bool activate              // do nothing if false
+                         , const char * path
+                         , const char * session_id
+                         , const char * primary_user_sig    // clear primary user account
+                         , const char * account_sig         // secondary account
+                         , const char * target_service_sig  // clear target service name + clear device name
+                         , const char * session_info_sig    // info relative to client session
+                         , const unsigned long now                 // time at beginning of metrics
+                         , const int file_interval          // daily rotation of filename (hours)
+                         , const int log_delay              // delay between 2 logs
+                         );
+
+    REDEMPTION_LIB_EXPORT
+    void metrics_disconnect(Metrics * metrics);
+
+    REDEMPTION_LIB_EXPORT
+    void metrics_new_file(const unsigned long now, Metrics * metrics);
+
+    REDEMPTION_LIB_EXPORT
+    void metrics_rotate(const unsigned long now, Metrics * metrics);
+
 }
