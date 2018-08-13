@@ -33,16 +33,16 @@
 // better to move them in the scope of functions/objects using them
 namespace {
     //const char* NTLM_PACKAGE_NAME = "NTLM";
-    const char Ntlm_Name[] = "NTLM";
-    const char Ntlm_Comment[] = "NTLM Security Package";
-    const SecPkgInfo NTLM_SecPkgInfo = {
-        0x00082B37,             // fCapabilities
-        1,                      // wVersion
-        0x000A,                 // wRPCID
-        0x00000B48,             // cbMaxToken
-        Ntlm_Name,              // Name
-        Ntlm_Comment            // Comment
-    };
+    // const char Ntlm_Name[] = "NTLM";
+    // const char Ntlm_Comment[] = "NTLM Security Package";
+    // const SecPkgInfo NTLM_SecPkgInfo = {
+    //     0x00082B37,             // fCapabilities
+    //     1,                      // wVersion
+    //     0x000A,                 // wRPCID
+    //     0x00000B48,             // cbMaxToken
+    //     Ntlm_Name,              // Name
+    //     Ntlm_Comment            // Comment
+    // };
     constexpr uint32_t cbMaxSignature = 16;
     // SecPkgContext_Sizes ContextSizes;
     // ContextSizes.cbMaxToken = 2010;
