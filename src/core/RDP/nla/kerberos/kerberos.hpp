@@ -259,13 +259,8 @@ public:
         }
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        if (output_tok.length < 1) {
-            output_buffer.init(0);
-        }
-        else {
-            output_buffer.init(output_tok.length);
-            output_buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
-        }
+        output_buffer.init(output_tok.length);
+        output_buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -350,13 +345,8 @@ public:
         }
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
-        if (output_tok.length < 1) {
-            output_buffer.init(0);
-        }
-        else {
-            output_buffer.init(output_tok.length);
-            output_buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
-        }
+        output_buffer.init(output_tok.length);
+        output_buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 

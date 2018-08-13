@@ -194,7 +194,11 @@ public:
             if (input_buffer.size() < 1) {
                 return SEC_E_INVALID_TOKEN;
             }
-            /*SEC_STATUS status = */this->context->read_negotiate(input_buffer);
+
+            SEC_STATUS status = this->context->read_negotiate(input_buffer);
+            if (status != SEC_I_CONTINUE_NEEDED) {
+                return SEC_E_INVALID_TOKEN;
+            }
 
             if (this->context->state == NTLM_STATE_CHALLENGE) {
                 return this->context->write_challenge(output_buffer);
