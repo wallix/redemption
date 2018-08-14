@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     time_t epoch = 1533211681; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 //     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -81,17 +81,17 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
 
-    metrics_rotate(epoch + (3600*1), metrics);
-    metrics_rotate(epoch + (3600*2), metrics);
-    metrics_rotate(epoch + (3600*3), metrics);
-    metrics_rotate(epoch + (3600*4), metrics);
-    metrics_rotate(epoch + (3600*5), metrics);
-    metrics_rotate(epoch + (3600*6), metrics);
+    metrics_log((epoch + (3600*1)) * 1000, metrics);
+    metrics_log((epoch + (3600*2)) * 1000, metrics);
+    metrics_log((epoch + (3600*3)) * 1000, metrics);
+    metrics_log((epoch + (3600*4)) * 1000, metrics);
+    metrics_log((epoch + (3600*5)) * 1000, metrics);
+    metrics_log((epoch + (3600*6)) * 1000, metrics);
 
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
 
-    metrics_rotate(epoch + (3600*24), metrics);
+    metrics_log((epoch + (3600*24)) * 1000, metrics);
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-03.logindex"));
@@ -118,7 +118,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 //     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -133,23 +133,23 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01.logindex"));
 
-    metrics_rotate(epoch + (3600*1), metrics);
-    metrics_rotate(epoch + (3600*2), metrics);
-    metrics_rotate(epoch + (3600*3), metrics);
-    metrics_rotate(epoch + (3600*4), metrics);
-    metrics_rotate(epoch + (3600*5), metrics);
-    metrics_rotate(epoch + (3600*6), metrics);
-    metrics_rotate(epoch + (3600*6)+3599, metrics);
+    metrics_log((epoch + (3600*1)) * 1000, metrics);
+    metrics_log((epoch + (3600*2)) * 1000, metrics);
+    metrics_log((epoch + (3600*3)) * 1000, metrics);
+    metrics_log((epoch + (3600*4)) * 1000, metrics);
+    metrics_log((epoch + (3600*5)) * 1000, metrics);
+    metrics_log((epoch + (3600*6)) * 1000, metrics);
+    metrics_log((epoch + (3600*6)+3599) * 1000, metrics);
 
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics"));
     RED_CHECK_EQUAL(false, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex"));
 
-    metrics_rotate(epoch + (3600*7), metrics);
+    metrics_log((epoch + (3600*7))*1000, metrics);
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-01_07-00-00.logindex"));
 
-    metrics_rotate(epoch + (24*3600*3), metrics);
+    metrics_log((epoch + (24*3600*3))*1000, metrics);
 
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics"));
     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-1970-01-03_22-00-00.logindex"));
@@ -171,7 +171,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
                     , rdp_metrics_path_file
                     , "164d89c1a56957b752540093e178"
                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
