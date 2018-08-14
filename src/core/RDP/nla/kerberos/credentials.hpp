@@ -26,13 +26,13 @@
 
 #include "utils/log.hpp"
 
-class Krb5Creds final {
-public:
+class Krb5Creds final
+{
     krb5_context ctx;
 
+public:
     Krb5Creds() {
-        krb5_error_code ret;
-        ret = krb5_init_context(&this->ctx);
+        krb5_error_code ret = krb5_init_context(&this->ctx);
         if (ret) {
             LOG(LOG_ERR, "Initialisation KERBEROS 5 LIB");
         }

@@ -45,8 +45,9 @@ static const size_t CLIENT_NONCE_LENGTH = 32;
 
 class rdpCredsspBase : noncopyable
 {
+    const bool is_server;
+
 protected:
-    bool server = false;
     int send_seq_num = 0;
     int recv_seq_num = 0;
 
@@ -78,6 +79,7 @@ private:
 
 public:
     rdpCredsspBase(
+        bool is_server,
         uint8_t const* user,
         uint8_t const* domain,
         uint8_t const* pass,
@@ -94,7 +96,8 @@ public:
         std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>&& set_password_cb,
         const bool verbose = false
     )
-        : ts_request(6) // Credssp Version 6 Supported
+        : is_server(is_server)
+        , ts_request(6) // Credssp Version 6 Supported
         , SavedClientNonce()
         , RestrictedAdminMode(restricted_admin_mode)
         , sec_interface(krb ? Kerberos_Interface : NTLM_Interface)
@@ -115,12 +118,11 @@ public:
     }
 
 protected:
-    int credssp_ntlm_init(bool is_server) {
+    void init_public_key()
+    {
         if (this->verbose) {
             LOG(LOG_INFO, "%s::ntlm_init", this->class_name_log);
         }
-
-        this->server = is_server;
 
         // ============================================
         /* Get Public Key From TLS Layer and hostname */
@@ -129,11 +131,10 @@ protected:
         auto const key = this->trans.get_public_key();
         this->PublicKey.init(key.size());
         this->PublicKey.copy(key.data(), key.size());
-
-        return 1;
     }
 
-    void credssp_send() {
+    void credssp_send()
+    {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspServer::send");
         }
@@ -168,7 +169,10 @@ private:
     }
 
 protected:
-    void InitSecurityInterface(SecInterface secInter) {
+    SEC_STATUS InitSecurityInterface(
+        SecInterface secInter, const char* pszPrincipal,
+        Array* pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData)
+    {
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::InitSecurityInterface");
         }
@@ -188,10 +192,13 @@ protected:
                 this->table = std::make_unique<Kerberos_SecurityFunctionTable>();
                 #else
                 this->table = std::make_unique<UnimplementedSecurityFunctionTable>();
-                assert(false && "Unsupported Kerberos");
+                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
+                assert(!"Unsupported Kerberos");
                 #endif
                 break;
         }
+
+        return this->table->AcquireCredentialsHandle(pszPrincipal, pvLogonID, pAuthData);
     }
 
 private:
@@ -263,7 +270,7 @@ protected:
 
         array_view_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            const bool client_to_server = !this->server;
+            const bool client_to_server = !this->is_server;
             if (client_to_server) {
                 this->credssp_generate_client_nonce();
             } else {
@@ -274,8 +281,7 @@ protected:
               ? this->ClientServerHash.av()
               : this->ServerClientHash.av();
         }
-
-        if (this->server && version < 5) {
+        else if (this->is_server) {
             // if we are server and protocol is 2,3,4
             // then echos the public key +1
             this->ap_integer_increment_le(public_key);
@@ -311,7 +317,7 @@ protected:
 
         array_view_const_u8 public_key = this->PublicKey.av();
         if (version >= 5) {
-            bool client_to_server = this->server;
+            bool client_to_server = this->is_server;
             this->credssp_get_client_nonce();
             this->credssp_generate_public_key_hash(client_to_server);
             public_key = client_to_server
@@ -326,11 +332,12 @@ protected:
             return SEC_E_MESSAGE_ALTERED; /* DO NOT SEND CREDENTIALS! */
         }
 
-        if (!this->server && version < 5) {
+        if (!this->is_server && version < 5) {
             // if we are client and protocol is 2,3,4
             // then get the public key minus one
             ap_integer_decrement_le(public_key2);
         }
+
         if (memcmp(public_key.data(), public_key2.data(), public_key.size()) != 0) {
             LOG(LOG_ERR, "Could not verify server's public key echo");
 
@@ -377,7 +384,7 @@ public:
                Translation::language_t lang,
                const bool verbose = false)
         : rdpCredsspBase(
-            user, domain, pass, hostname, target_host, krb,
+            false, user, domain, pass, hostname, target_host, krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
             transport.get_transport(), "rdpCredsspClient", {}, verbose)
         , trans(transport)
@@ -421,35 +428,24 @@ private:
 
     Res sm_credssp_client_authenticate_start()
     {
-        SEC_STATUS status;
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredsspClient::client_authenticate");
         }
 
-        if (this->credssp_ntlm_init(false) == 0) {
-            return Res::Err;
-        }
-        bool interface_changed = false;
-        do {
-            interface_changed = false;
-            this->InitSecurityInterface(this->sec_interface);
+        this->init_public_key();
 
-            if (this->table == nullptr) {
-                LOG(LOG_ERR, "Could not Initiate %u Security Interface!", this->sec_interface);
-                return Res::Err;
-            }
-            status = this->table->AcquireCredentialsHandle(this->target_host,
-                                                           &this->ServicePrincipalName,
-                                                           &this->identity);
-            if (status == SEC_E_NO_CREDENTIALS && this->sec_interface != NTLM_Interface) {
-                this->sec_interface = NTLM_Interface;
-                interface_changed = true;
-                LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
-            }
-        } while (interface_changed);
+        SEC_STATUS status = this->InitSecurityInterface(this->sec_interface, this->target_host,
+                                                        &this->ServicePrincipalName,
+                                                        &this->identity);
+
+        if (status == SEC_E_NO_CREDENTIALS && this->sec_interface == Kerberos_Interface) {
+            LOG(LOG_INFO, "Credssp: No Kerberos Credentials, fallback to NTLM");
+            status = this->InitSecurityInterface(NTLM_Interface, this->target_host,
+                                                 &this->ServicePrincipalName, &this->identity);
+        }
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
+            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
             return Res::Err;
         }
 
@@ -644,7 +640,7 @@ public:
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
         : rdpCredsspBase(
-            nullptr, nullptr, nullptr, nullptr, "", krb,
+            true, nullptr, nullptr, nullptr, nullptr, "", krb,
             restricted_admin_mode, rand, timeobj, extra_message, lang,
             transport, "rdpCredsspServer", std::move(set_password_cb), verbose)
     {
@@ -700,16 +696,13 @@ private:
         // TODO
         // sspi_GlobalInit();
 
-        if (this->credssp_ntlm_init(true) == 0) {
-            return Res::Err;
-        }
+        this->init_public_key();
 
-        this->InitSecurityInterface(NTLM_Interface);
-
-        SEC_STATUS status = this->table->AcquireCredentialsHandle(nullptr, nullptr, nullptr);
+        SEC_STATUS status = this->InitSecurityInterface(NTLM_Interface, nullptr,
+                                                        nullptr, nullptr);
 
         if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);
+            LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
             return Res::Err;
         }
 

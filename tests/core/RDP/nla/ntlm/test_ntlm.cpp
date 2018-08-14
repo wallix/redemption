@@ -39,14 +39,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
     Ntlm_SecurityFunctionTable client_table(rand, timeobj, set_password_cb);
     SEC_STATUS server_status;
     SEC_STATUS client_status;
-    uint8_t const name[] = "Ménélas";
-    uint8_t const dom[] = "Sparte";
-    uint8_t const pass[] = "Hélène";
     SEC_WINNT_AUTH_IDENTITY client_server_id;
-    client_server_id.SetAuthIdentityFromUtf8(name, dom, pass);
-
-    // status = table.FreeCredentialsHandle(&credentials);
-    // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
+    client_server_id.SetUserFromUtf8(byte_ptr_cast("Ménélas"));
+    client_server_id.SetDomainFromUtf8(byte_ptr_cast("Sparte"));
+    client_server_id.SetPasswordFromUtf8(byte_ptr_cast("Hélène"));
 
     // If AcquireCredential succeed, do not forget to free credential handle !
     server_status = server_table.AcquireCredentialsHandle("NTLM", nullptr, &client_server_id);

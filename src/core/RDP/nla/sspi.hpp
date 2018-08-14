@@ -143,20 +143,15 @@ struct SEC_WINNT_AUTH_IDENTITY
         copy(this->princpass, pass);
     }
 
-    void SetAuthIdentityFromUtf8(const uint8_t * user, const uint8_t * domain,
-                                const uint8_t * password) {
-        this->SetUserFromUtf8(user);
-        this->SetDomainFromUtf8(domain);
-        this->SetPasswordFromUtf8(password);
-    }
-
-    void clear() {
+    void clear()
+    {
         this->User.init(0);
         this->Domain.init(0);
         this->Password.init(0);
     }
 
-    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY const& src) {
+    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY const& src)
+    {
         this->User.copy(src.User);
         this->Domain.copy(src.Domain);
         this->Password.copy(src.Password);

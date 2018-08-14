@@ -73,13 +73,11 @@ RED_AUTO_TEST_CASE(Test_Array)
 
 RED_AUTO_TEST_CASE(TestSecIdentity)
 {
-    uint8_t name[] = "Ménélas";
-    uint8_t dom[] = "Sparte";
-    uint8_t pass[] = "Hélène";
-
     SEC_WINNT_AUTH_IDENTITY id;
 
-    id.SetAuthIdentityFromUtf8(name, dom, pass);
+    id.SetUserFromUtf8(byte_ptr_cast("Ménélas"));
+    id.SetDomainFromUtf8(byte_ptr_cast("Sparte"));
+    id.SetPasswordFromUtf8(byte_ptr_cast("Hélène"));
     RED_CHECK_MEM_C(id.User.av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0");
     RED_CHECK_MEM_C(id.Domain.av(), "S\0p\0a\0r\0t\0e\0");
     RED_CHECK_MEM_C(id.Password.av(), "H\0\xe9\0l\0\xe8\0n\0e\0");
@@ -97,10 +95,10 @@ RED_AUTO_TEST_CASE(TestSecIdentity)
     RED_CHECK_EQUAL(id2.Domain.size(), 0);
     RED_CHECK_EQUAL(id2.Password.size(), 0);
 
-    id.SetUserFromUtf8(reinterpret_cast<const uint8_t *>("Zeus"));
+    id.SetUserFromUtf8(byte_ptr_cast("Zeus"));
     RED_CHECK_MEM_C(id.User.av(), "Z\0e\0u\0s\0");
-    id.SetDomainFromUtf8(reinterpret_cast<const uint8_t *>("Olympe"));
+    id.SetDomainFromUtf8(byte_ptr_cast("Olympe"));
     RED_CHECK_MEM_C(id.Domain.av(), "O\0l\0y\0m\0p\0e\0");
-    id.SetPasswordFromUtf8(reinterpret_cast<const uint8_t *>("Athéna"));
+    id.SetPasswordFromUtf8(byte_ptr_cast("Athéna"));
     RED_CHECK_MEM_C(id.Password.av(), "A\0t\0h\0\xe9\0n\0a\0");
 }
