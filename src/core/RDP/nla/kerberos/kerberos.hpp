@@ -122,11 +122,8 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override {
-        (void)fCredentialUse;
-
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
             pvLogonID->init(length + 1);

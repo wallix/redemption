@@ -49,11 +49,9 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
 
     // If AcquireCredential succeed, do not forget to free credential handle !
-    server_status = server_table.AcquireCredentialsHandle(
-        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_server_id);
+    server_status = server_table.AcquireCredentialsHandle("NTLM", nullptr, &client_server_id);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
-    client_status = client_table.AcquireCredentialsHandle(
-        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_server_id);
+    client_status = client_table.AcquireCredentialsHandle("NTLM", nullptr, &client_server_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
     SecBuffer output_buffer;

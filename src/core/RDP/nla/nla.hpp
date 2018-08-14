@@ -439,7 +439,6 @@ private:
                 return Res::Err;
             }
             status = this->table->AcquireCredentialsHandle(this->target_host,
-                                                           SECPKG_CRED_OUTBOUND,
                                                            &this->ServicePrincipalName,
                                                            &this->identity);
             if (status == SEC_E_NO_CREDENTIALS && this->sec_interface != NTLM_Interface) {
@@ -709,8 +708,7 @@ private:
 
         this->InitSecurityInterface(NTLM_Interface);
 
-        SEC_STATUS status = this->table->AcquireCredentialsHandle(
-            nullptr, SECPKG_CRED_INBOUND, nullptr, nullptr);
+        SEC_STATUS status = this->table->AcquireCredentialsHandle(nullptr, nullptr, nullptr);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "AcquireCredentialsHandle status: 0x%08X", status);

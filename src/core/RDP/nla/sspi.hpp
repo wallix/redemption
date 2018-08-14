@@ -92,11 +92,17 @@ enum SecIdFlag {
 
 struct SEC_WINNT_AUTH_IDENTITY
 {
+    // kerberos only
+    //@{
     char princname[256];
     char princpass[256];
+    //@}
+    // ntlm only
+    //@{
     Array User;
     Array Domain;
     Array Password;
+    //@}
 
     SEC_WINNT_AUTH_IDENTITY()
         : User(0)
@@ -362,9 +368,7 @@ struct SecurityFunctionTable
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
-                                                unsigned long fCredentialUse,
-                                                Array * pvLogonID,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, Array * pvLogonID,
                                                 SEC_WINNT_AUTH_IDENTITY const* pAuthData) = 0;
 
     // GSS_Init_sec_context
@@ -399,8 +403,8 @@ struct SecurityFunctionTable
 struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 {
     SEC_STATUS AcquireCredentialsHandle(
-        const char * /*pszPrincipal*/, unsigned long /*fCredentialUse*/,
-        Array * /*pvLogonID*/, SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
+        const char * /*pszPrincipal*/, Array * /*pvLogonID*/,
+        SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
     ) override
     {
         return SEC_E_UNSUPPORTED_FUNCTION;

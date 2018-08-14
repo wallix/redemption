@@ -80,21 +80,16 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
+        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override
     {
         (void)pszPrincipal;
         (void)pvLogonID;
 
-        if (fCredentialUse == SECPKG_CRED_OUTBOUND
-         || fCredentialUse == SECPKG_CRED_INBOUND)
-        {
-            this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+        this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-            if (pAuthData) {
-                this->identity->CopyAuthIdentity(*pAuthData);
-            }
+        if (pAuthData) {
+            this->identity->CopyAuthIdentity(*pAuthData);
         }
 
         return SEC_E_OK;
