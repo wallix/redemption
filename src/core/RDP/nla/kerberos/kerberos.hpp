@@ -430,15 +430,6 @@ public:
         return SEC_E_OK;
     }
 
-    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext() override {
-        return SEC_E_OK;
-    }
-    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext() override {
-        return SEC_E_OK;
-    }
-
     void report_error(OM_uint32 code, const char *str,
                       OM_uint32 major_status, OM_uint32 minor_status)
     {

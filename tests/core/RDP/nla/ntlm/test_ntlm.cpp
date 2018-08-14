@@ -139,9 +139,4 @@ RED_AUTO_TEST_CASE(TestInitialize)
     RED_CHECK_MEM(Result2.av(), make_array_view(message));
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
-
-    server_status = server_table.ImpersonateSecurityContext();
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
-    server_status = server_table.RevertSecurityContext();
-    RED_CHECK_EQUAL(server_status, SEC_E_OK);
 }

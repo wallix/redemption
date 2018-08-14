@@ -809,20 +809,6 @@ public:
             return Res::Err;
         }
 
-        status = this->table->ImpersonateSecurityContext();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "ImpersonateSecurityContext status: 0x%08X", status);
-            return Res::Err;
-        }
-
-        status = this->table->RevertSecurityContext();
-
-        if (status != SEC_E_OK) {
-            LOG(LOG_ERR, "RevertSecurityContext status: 0x%08X", status);
-            return Res::Err;
-        }
-
         return Res::Ok;
     }
 

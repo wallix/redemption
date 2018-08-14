@@ -385,12 +385,6 @@ struct SecurityFunctionTable
                                              unsigned long fContextReq,
                                              SecBuffer& output_buffer) = 0;
 
-    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    virtual SEC_STATUS ImpersonateSecurityContext() = 0;
-
-    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    virtual SEC_STATUS RevertSecurityContext() = 0;
-
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
     virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) = 0;
@@ -423,16 +417,6 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
         array_view_const_u8 /*input_buffer*/, unsigned long /*fContextReq*/,
         SecBuffer& /*output_buffer*/
     ) override
-    {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
-    SEC_STATUS ImpersonateSecurityContext() override
-    {
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
-    SEC_STATUS RevertSecurityContext() override
     {
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
