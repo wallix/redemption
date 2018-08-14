@@ -24,7 +24,9 @@
 //
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption.hpp"
- #include "utils/set_exception_handler_pretty_message.hpp"
+#include "utils/set_exception_handler_pretty_message.hpp"
+
+#include "client_redemption/client_headless_socket.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -41,29 +43,33 @@ int main(int argc, char** argv)
 
     LOG(LOG_INFO, "ClientRedemption init");
 
+    ClientHeadlessSocket headless_socket;
+    ClientInputSocketAPI * headless_socket_api_obj = &headless_socket;
+
+
     ClientRedemption client( session_reactor, argv, argc, verbose
                            , nullptr
                            , nullptr
                            , nullptr
-                           , nullptr
+                           , headless_socket_api_obj
                            , nullptr
                            , nullptr);
 
     std::cout << "init conn 1" << std::endl;
     int i = 0;
-    if  (!client.mod) {
-
-    }
-
-    while (!client.mod->is_up_and_running()) {
-        i++;
-        if (int err = client.wait_and_draw_event({3, 0})) {
-            std::cout << "init conn error " <<  err << std::endl;
-            return err;
+    if (client.mod) {
+        std::cout << "init conn 2" << std::endl;
+        while (!client.mod->is_up_and_running()) {
+            std::cout << "init conn step " << i << std::endl;
+            i++;
+            if (int err = client.wait_and_draw_event({3, 0})) {
+                std::cout << "init conn error " <<  err << std::endl;
+                return err;
+            }
         }
     }
 
-    std::cout << "init conn 2" << std::endl;
+    std::cout << "init conn32" << std::endl;
 
     return run_mod(client, true, std::chrono::milliseconds(6000), true);
 }

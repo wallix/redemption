@@ -659,6 +659,7 @@ public:
     }
 
     bool init_socket() {
+        std::cout << "init_socket() 1" <<  std::endl;
         if (this->is_full_replaying) {
             LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
             ReplayTransport *transport = new ReplayTransport(
@@ -670,15 +671,22 @@ public:
             return true;
         }
 
+        std::cout << "init_socket() 2" <<  std::endl;
+
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
                                           1000             //retryDelay
                                           );
+        std::cout << "init_socket() 3" <<  std::endl;
         this->client_sck = client_sck.fd();
+
+        std::cout << "init_socket() 4" <<  std::endl;
 
         if (this->client_sck > 0) {
             try {
+                std::cout << "init_socket() 5" <<  std::endl;
+
                 this->socket = new SocketTransport( this->user_name.c_str()
                                             , std::move(client_sck)
                                             , this->target_IP.c_str()
@@ -688,12 +696,15 @@ public:
                                             //, SocketTransport::Verbose::dump
                                             , &this->error_message
                                             );
+                std::cout << "init_socket() 6" <<  std::endl;
 
                 if (this->is_full_capturing) {
                     this->_socket_in_recorder.reset(this->socket);
                     this->socket = new RecorderTransport(
                         *this->socket, this->full_capture_file_name.c_str());
                 }
+
+                std::cout << "init_socket() 7" <<  std::endl;
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 
@@ -842,13 +853,16 @@ public:
                 this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
             }
         }
-
+        std::cout <<  "connect() 3" <<  std::endl;
         if (this->init_socket()) {
 
             this->update_keylayout();
 
+            std::cout <<  "connect() 4" <<  std::endl;
+
             if (this->init_mod()) {
                 this->connected = true;
+                std::cout <<  "connect() 5" <<  std::endl;
 
                 if (this->impl_socket_listener) {
                     if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
