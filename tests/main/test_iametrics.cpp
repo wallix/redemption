@@ -35,7 +35,6 @@ RED_AUTO_TEST_CASE(Testiametrics)
 }
 
 
-
 RED_AUTO_TEST_CASE(TestRDPMetricsH)
 {
     uint8_t key[32] = {0};
@@ -49,7 +48,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
     RED_CHECK_EQUAL(std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"),
     res);
 }
-
 
 constexpr const char * rdp_metrics_path_file = "/tmp";
 constexpr const char * fields_rdp_metrics_version = "v1.0";
@@ -102,7 +100,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-03.logindex");
-
 }
 
 RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
@@ -167,8 +164,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-
 
     time_t epoch = 1533211681;
     Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true

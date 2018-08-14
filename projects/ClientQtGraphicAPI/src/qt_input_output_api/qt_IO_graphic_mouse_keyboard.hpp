@@ -662,44 +662,44 @@ private:
 
 //         LOG(LOG_INFO, "draw_memblt_op bitmap.cx()=%u this->cache.width()=%d drect.x=%u drect.cx=%u", bitmap.cx(), this->cache.width(), drect.x, drect.cx);
 //         LOG(LOG_INFO, "draw_memblt_op bitmap.cy()=%u this->cache.height()=%d drect.y=%u drect.cy=%u", bitmap.cy(), this->cache.height(), drect.y, drect.cy);
-        const uint16_t mincx = std::min<int16_t>(bitmap.cx(), /*std::min<int16_t>(this->cache.width() - drect.x,*/ drect.cx/*)*/);
-        const uint16_t mincy = std::min<int16_t>(bitmap.cy(), /*std::min<int16_t>(this->cache.height() - drect.y,*/ drect.cy/*)*/);
-
-        LOG(LOG_INFO, "draw_memblt_op mincx=%u mincy=%u", mincx, mincy);
-
-        if (mincx <= 0 || mincy <= 0) {
-            return;
-        }
-        if (this->screen) {
-            QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
-
-            LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%d y=%d bpp=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y, bitmap.bpp());
-            QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
-            if (bitmap.bpp() == 24) {
-                srcBitmap = srcBitmap.rgbSwapped();
-            }
-            if (bitmap.bpp() != this->client->info.bpp) {
-                srcBitmap = srcBitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
-            }
-            srcBitmap = srcBitmap.mirrored(false, true);
-            const uchar * srcData = srcBitmap.constBits();
-
-            QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
-            dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
-            const uchar * dstData = dstBitmap.constBits();
-
-            //bitmap.line_size() * mincy;
-            int data_len = (bitmap.bpp() * dstBitmap.width() * dstBitmap.height());
-            LOG(LOG_INFO, "memblt data_len = %d dstBitmap.width()=%d dstBitmap.height()=%d", data_len, dstBitmap.width(),  dstBitmap.height());
-            if (data_len <= 0) {
-                LOG(LOG_INFO, "memblt data_len null");
-                return;
-            }
-
-
-            std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(data_len);
-
-            Op op;
+//         const uint16_t mincx = std::min<int16_t>(bitmap.cx(), /*std::min<int16_t>(this->cache.width() - drect.x,*/ drect.cx/*)*/);
+//         const uint16_t mincy = std::min<int16_t>(bitmap.cy(), /*std::min<int16_t>(this->cache.height() - drect.y,*/ drect.cy/*)*/);
+//
+//         LOG(LOG_INFO, "draw_memblt_op mincx=%u mincy=%u", mincx, mincy);
+//
+//         if (mincx <= 0 || mincy <= 0) {
+//             return;
+//         }
+//         if (this->screen) {
+//             QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), false)); //bpp
+//
+//             LOG(LOG_INFO,"draw_memblt_op mincx=%u mincy=%u bitmap.line_size=%zu x=%d y=%d bpp=%u", mincx, mincy, bitmap.line_size(), drect.x, drect.y, bitmap.bpp());
+//             QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
+//             if (bitmap.bpp() == 24) {
+//                 srcBitmap = srcBitmap.rgbSwapped();
+//             }
+//             if (bitmap.bpp() != this->client->info.bpp) {
+//                 srcBitmap = srcBitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+//             }
+//             srcBitmap = srcBitmap.mirrored(false, true);
+//             const uchar * srcData = srcBitmap.constBits();
+//
+//             QImage dstBitmap(this->cache.toImage().copy(drect.x, drect.y, mincx, mincy));
+//             dstBitmap = dstBitmap.convertToFormat(srcBitmap.format());
+//             const uchar * dstData = dstBitmap.constBits();
+//
+//             //bitmap.line_size() * mincy;
+//             int data_len = (bitmap.bpp() * dstBitmap.width() * dstBitmap.height());
+//             LOG(LOG_INFO, "memblt data_len = %d dstBitmap.width()=%d dstBitmap.height()=%d", data_len, dstBitmap.width(),  dstBitmap.height());
+//             if (data_len <= 0) {
+//                 LOG(LOG_INFO, "memblt data_len null");
+//                 return;
+//             }
+//
+//
+//             std::unique_ptr<uchar[]> data = std::make_unique<uchar[]>(data_len);
+//
+//             Op op;
 //             for (int i = 0; i < data_len; i++) {
 //                 LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 1 i=%d", i);
 //                 uchar dst_res = dstData[i];
@@ -719,7 +719,7 @@ private:
 //                 this->painter.drawImage(trect, image);
 //                 //this->painter.fillRect(trect, Qt::red);
 //             }
-        }
+//         }
     }
 
     void draw_MemBlt(const Rect & drect, const Bitmap & bitmap, bool invert, int srcx, int srcy) {

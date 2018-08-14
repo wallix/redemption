@@ -26,7 +26,7 @@
 #include "utils/fileutils.hpp"
 #include "test_only/get_file_contents.hpp"
 
-#include "core/RDP/rdp_metrics.hpp"
+#include "mod/rdp/rdp_metrics.hpp"
 
 
 RED_AUTO_TEST_CASE(TestRDPMetricsH)
@@ -45,7 +45,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
     ClientInfo info;
     RED_CHECK_EQUAL(std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"),
     hmac_client_info("10.10.13.12", info, key));
-
 }
 
 

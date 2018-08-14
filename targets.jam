@@ -144,6 +144,7 @@ exe main_client_redemption :
   <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/set_exception_handler_pretty_message.o
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
@@ -1805,18 +1806,6 @@ test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
 :
   <covfile>src/core/RDP/protocol.hpp
-;
-test-run tests/core/RDP/test_rdp_metrics :
-  $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_metrics.cpp
-:
-  <covfile>src/core/RDP/rdp_metrics.hpp
-  <library>crypto
-  <library>src/core/RDP/mppc.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
@@ -3578,6 +3567,18 @@ test-run tests/mod/rdp/test_rdp_log :
 :
   <covfile>src/mod/rdp/rdp_log.hpp
 ;
+test-run tests/mod/rdp/test_rdp_metrics :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
+:
+  <covfile>src/mod/rdp/rdp_metrics.hpp
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <variant>debug:<library>dl <variant>san:<library>dl
+;
 test-run tests/mod/rdp/test_rdp_orders :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_orders.cpp
 :
@@ -4928,8 +4929,6 @@ alias test_out_per_bstream : tests/core/RDP/test_out_per_bstream ;
 alias test_out_per_bstream.coverage : tests/core/RDP/test_out_per_bstream.coverage ;
 alias test_protocol : tests/core/RDP/test_protocol ;
 alias test_protocol.coverage : tests/core/RDP/test_protocol.coverage ;
-alias test_rdp_metrics : tests/core/RDP/test_rdp_metrics ;
-alias test_rdp_metrics.coverage : tests/core/RDP/test_rdp_metrics.coverage ;
 alias test_rdp_pointer : tests/core/RDP/test_rdp_pointer ;
 alias test_rdp_pointer.coverage : tests/core/RDP/test_rdp_pointer.coverage ;
 alias test_remote_programs : tests/core/RDP/test_remote_programs ;
@@ -5110,6 +5109,8 @@ alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp.coverage : tests/mod/rdp/test_rdp.coverage ;
 alias test_rdp_log : tests/mod/rdp/test_rdp_log ;
 alias test_rdp_log.coverage : tests/mod/rdp/test_rdp_log.coverage ;
+alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
+alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
@@ -5514,7 +5515,6 @@ alias tests/core/RDP :
   tests/core/RDP/test_non_null_terminated_utf16_from_utf8
   tests/core/RDP/test_out_per_bstream
   tests/core/RDP/test_protocol
-  tests/core/RDP/test_rdp_metrics
   tests/core/RDP/test_rdp_pointer
   tests/core/RDP/test_remote_programs
   tests/core/RDP/test_sec
@@ -5645,6 +5645,7 @@ explicit tests/mod/rdp ;
 alias tests/mod/rdp :
   tests/mod/rdp/test_rdp
   tests/mod/rdp/test_rdp_log
+  tests/mod/rdp/test_rdp_metrics
   tests/mod/rdp/test_rdp_orders
   tests/mod/rdp/test_rdp_params
 ;

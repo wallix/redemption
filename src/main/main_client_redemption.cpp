@@ -19,12 +19,12 @@
 */
 
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wfloat-equal"
-
-#include "utils/log.hpp"
-
+// #pragma GCC diagnostic push
+// #pragma GCC diagnostic ignored "-Wfloat-equal"
+//
+#include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption.hpp"
+ #include "utils/set_exception_handler_pretty_message.hpp"
 
 #pragma GCC diagnostic pop
 
@@ -33,13 +33,15 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
 
 int main(int argc, char** argv)
 {
+    set_exception_handler_pretty_message();
+
     SessionReactor session_reactor;
 
     RDPVerbose verbose = to_verbose_flags(0xffffffff);
 
-    LOG(LOG_INFO, "ClientRedemption 1");
+    LOG(LOG_INFO, "ClientRedemption init");
 
-    ClientRedemption client(session_reactor, argv, argc, verbose
+    ClientRedemption client( session_reactor, argv, argc, verbose
                            , nullptr
                            , nullptr
                            , nullptr
@@ -47,7 +49,18 @@ int main(int argc, char** argv)
                            , nullptr
                            , nullptr);
 
+    std::cout << "init conn 1" << std::endl;
+    int i = 0;
+    while (!client.mod) {
+        std::cout << "init conn step " << i <<  std::endl;
+        i++;
+        if (int err = client.wait_and_draw_event({3, 0})) {
+            std::cout << "init conn error " <<  err << std::endl;
+            return err;
+        }
+    }
 
+    std::cout << "init conn 2" << std::endl;
 
     return run_mod(client, true, std::chrono::milliseconds(6000), true);
 }
@@ -57,17 +70,20 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
-    LOG(LOG_INFO, "run mod 1");
+    std::cout << "run mod 1" << std::endl;
 
-    if (front.connected && front.mod) {
+    if (front.mod) {
 
-        LOG(LOG_INFO, "run mod 2");
+        std::cout << "run mod 2" << std::endl;
 
         auto & mod = *(front.mod);
 
-        while (mod.is_up_and_running())
+        bool running = true;
+        bool connected = false;
+
+        while (running)
         {
-            LOG(LOG_INFO, "run mod 3");
+            std::cout << "run mod 3" << std::endl;
             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
@@ -79,6 +95,8 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
                 break;
             }
 
+            std::cout << "run mod 4" << std::endl;
+
             if (time_set_connection_test) {
                 if (time_stop > tvtime()) {
                     //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
@@ -86,11 +104,27 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
                 }
             }
 
+            std::cout << "run mod 5" << std::endl;
+
             if (int err = front.wait_and_draw_event(time_mark)) {
                 return err;
             }
 
+            std::cout << "run mod 6" << std::endl;
+
             front.send_key_to_keep_alive();
+
+            std::cout << "run mod 7" << std::endl;
+
+            if (connected) {
+                running = mod.is_up_and_running();
+            }
+
+            std::cout << "run mod 8" << std::endl;
+
+            if (mod.is_up_and_running()) {
+                connected = true;
+            }
         }
     }
 
