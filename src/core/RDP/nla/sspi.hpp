@@ -368,36 +368,39 @@ struct SecurityFunctionTable
 
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
-    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal, Array * pvLogonID,
+    virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
+                                                Array * pvLogonID,
                                                 SEC_WINNT_AUTH_IDENTITY const* pAuthData) = 0;
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
-                                                 unsigned long fContextReq,
                                                  array_view_const_u8 input_buffer,
-                                                 unsigned long Reserved2,
                                                  SecBuffer& output_buffer) = 0;
 
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     virtual SEC_STATUS AcceptSecurityContext(array_view_const_u8 input_buffer,
-                                             unsigned long fContextReq,
                                              SecBuffer& output_buffer) = 0;
 
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) = 0;
+    virtual SEC_STATUS EncryptMessage(array_view_const_u8 data_in,
+                                      SecBuffer& data_out,
+                                      unsigned long messageSeqNo) = 0;
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long messageSeqNo) = 0;
+    virtual SEC_STATUS DecryptMessage(array_view_const_u8 data_in,
+                                      SecBuffer& data_out,
+                                      unsigned long messageSeqNo) = 0;
 };
 
 struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 {
     SEC_STATUS AcquireCredentialsHandle(
-        const char * /*pszPrincipal*/, Array * /*pvLogonID*/,
+        const char * /*pszPrincipal*/,
+        Array * /*pvLogonID*/,
         SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
     ) override
     {
@@ -405,8 +408,8 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     }
 
     SEC_STATUS InitializeSecurityContext(
-        char* /*pszTargetName*/, unsigned long /*fContextReq*/,
-        array_view_const_u8 /*input_buffer*/, unsigned long /*Reserved2*/,
+        char* /*pszTargetName*/,
+        array_view_const_u8 /*input_buffer*/,
         SecBuffer& /*output_buffer*/
     ) override
     {
@@ -414,7 +417,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     }
 
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 /*input_buffer*/, unsigned long /*fContextReq*/,
+        array_view_const_u8 /*input_buffer*/,
         SecBuffer& /*output_buffer*/
     ) override
     {

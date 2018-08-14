@@ -56,15 +56,10 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     SecBuffer output_buffer;
 
-    unsigned long fContextReq = 0;
-    fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
-
     // client first call, no input buffer, no context
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
-        fContextReq,
         {}, // input buffer desc
-        0,
         output_buffer // output buffer desc
     );
 
@@ -89,8 +84,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
-    server_status = server_table.AcceptSecurityContext(
-        output_buffer.av(), fsContextReq, input_buffer);
+    server_status = server_table.AcceptSecurityContext(output_buffer.av(), input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 120);
@@ -100,9 +94,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // got input buffer: challenge message
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
-        fContextReq,
         input_buffer.av(), // input buffer desc
-        0,
         output_buffer // output buffer desc
     );
 
@@ -112,8 +104,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // server second call, got context
     // got input buffer (ouput of client): authenticate message
-    server_status = server_table.AcceptSecurityContext(
-        output_buffer.av(), fsContextReq, input_buffer);
+    server_status = server_table.AcceptSecurityContext(output_buffer.av(), input_buffer);
 
     RED_CHECK_EQUAL(server_status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(input_buffer.size(), 0);

@@ -66,13 +66,18 @@ private:
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
     std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
+    bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
+        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
+        bool verbose = false
     )
-        : rand(rand), timeobj(timeobj), set_password_cb(set_password_cb)
+        : rand(rand)
+        , timeobj(timeobj)
+        , set_password_cb(set_password_cb)
+        , verbose(verbose)
     {}
 
     ~Ntlm_SecurityFunctionTable() = default;
@@ -98,19 +103,16 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, unsigned long fContextReq,
-        array_view_const_u8 input_buffer, unsigned long verbose,
-        SecBuffer& output_buffer
+        char* pszTargetName, array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        if (verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(false, this->rand, this->timeobj, verbose);
-
-            assert(fContextReq & ISC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
+            this->context = std::make_unique<NTLMContext>(
+                false, this->rand, this->timeobj, this->verbose);
 
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
@@ -141,12 +143,11 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override {
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
 
-            assert(fContextReq & ASC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -238,7 +239,7 @@ public:
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (this->context->verbose & 0x400) {
+        if (this->context->verbose) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 

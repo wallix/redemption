@@ -175,14 +175,9 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, unsigned long fContextReq,
-        array_view_const_u8 input_buffer, unsigned long Reserved2,
-        SecBuffer& output_buffer
+        char* pszTargetName, array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        (void)fContextReq;
-        (void)Reserved2;
-
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -267,10 +262,9 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        (void)fContextReq;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;

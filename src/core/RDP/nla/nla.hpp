@@ -474,14 +474,12 @@ private:
          * ISC_REQ_USE_SESSION_KEY
          * ISC_REQ_ALLOCATE_MEMORY
          */
-        unsigned long const fContextReq
-          = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
+        //unsigned long const fContextReq
+        //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
             char_ptr_cast(this->ServicePrincipalName.get_data()),
-            fContextReq,
             this->client_auth_data.input_buffer.av(),
-            this->verbose,
             /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
@@ -741,17 +739,16 @@ public:
             return Res::Err;
         }
 
-        unsigned long const fContextReq = 0
-            | ASC_REQ_MUTUAL_AUTH
-            | ASC_REQ_CONFIDENTIALITY
-            | ASC_REQ_CONNECTION
-            | ASC_REQ_USE_SESSION_KEY
-            | ASC_REQ_REPLAY_DETECT
-            | ASC_REQ_SEQUENCE_DETECT
-            | ASC_REQ_EXTENDED_ERROR;
+        // unsigned long const fContextReq = 0
+        //     | ASC_REQ_MUTUAL_AUTH
+        //     | ASC_REQ_CONFIDENTIALITY
+        //     | ASC_REQ_CONNECTION
+        //     | ASC_REQ_USE_SESSION_KEY
+        //     | ASC_REQ_REPLAY_DETECT
+        //     | ASC_REQ_SEQUENCE_DETECT
+        //     | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
-            fContextReq,
             /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
