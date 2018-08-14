@@ -371,7 +371,7 @@ struct SecurityFunctionTable
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
                                                  unsigned long fContextReq,
-                                                 SecBuffer const* pinput_buffer,
+                                                 array_view_const_u8 input_buffer,
                                                  unsigned long Reserved2,
                                                  SecBuffer& output_buffer) = 0;
 
@@ -408,7 +408,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 
     SEC_STATUS InitializeSecurityContext(
         char* /*pszTargetName*/, unsigned long /*fContextReq*/,
-        SecBuffer const* /*pinput_buffer*/, unsigned long /*Reserved2*/,
+        array_view_const_u8 /*input_buffer*/, unsigned long /*Reserved2*/,
         SecBuffer& /*output_buffer*/
     ) override
     {

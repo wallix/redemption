@@ -60,9 +60,7 @@ class NTLMContext
     TimeObj & timeobj;
     Random & rand;
 
-public:
     const bool server = false;
-private:
     const bool NTLMv2 = true;
     bool UseMIC;
 public:
@@ -85,8 +83,10 @@ private:
 public:
     uint32_t NegotiateFlags = 0;
 
+private:
     //int LmCompatibilityLevel;
     bool SendWorkstationName = true;
+public:
     Array Workstation;
     Array ServicePrincipalName;
     SEC_WINNT_AUTH_IDENTITY identity;
@@ -108,7 +108,7 @@ private:
     uint8_t Timestamp[8]{};
     uint8_t ChallengeTimestamp[8]{};
 public:
-   uint8_t ServerChallenge[8]{};
+    uint8_t ServerChallenge[8]{};
 private:
     uint8_t ClientChallenge[8]{};
 public:
@@ -1046,11 +1046,11 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS read_challenge(SecBuffer const& input_buffer) {
+    SEC_STATUS read_challenge(array_view_const_u8 input_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Read Challenge");
         }
-        InStream in_stream(input_buffer.get_data(), input_buffer.size());
+        InStream in_stream(input_buffer);
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
         this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());

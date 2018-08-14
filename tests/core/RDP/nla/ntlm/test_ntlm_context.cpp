@@ -550,7 +550,7 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     status = context_write.write_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
-    status = context_read.read_challenge(chal);
+    status = context_read.read_challenge(chal.av());
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 

@@ -115,7 +115,7 @@ public:
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
         char* pszTargetName, unsigned long fContextReq,
-        SecBuffer const* pinput_buffer, unsigned long verbose,
+        array_view_const_u8 input_buffer, unsigned long verbose,
         SecBuffer& output_buffer
     ) override
     {
@@ -137,21 +137,18 @@ public:
             this->context->identity.CopyAuthIdentity(*this->identity);
         }
 
-        if ((!pinput_buffer) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
-            if (this->context->state == NTLM_STATE_INITIAL) {
-                this->context->state = NTLM_STATE_NEGOTIATE;
-            }
-            if (this->context->state == NTLM_STATE_NEGOTIATE) {
-                return this->context->write_negotiate(output_buffer);
-            }
-            return SEC_E_OUT_OF_SEQUENCE;
+        if (this->context->state == NTLM_STATE_INITIAL) {
+            this->context->state = NTLM_STATE_NEGOTIATE;
+        }
+        if (this->context->state == NTLM_STATE_NEGOTIATE) {
+            return this->context->write_negotiate(output_buffer);
         }
 
         if (this->context->state == NTLM_STATE_CHALLENGE) {
-            this->context->read_challenge(*pinput_buffer);
-            if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                return this->context->write_authenticate(output_buffer);
-            }
+            this->context->read_challenge(input_buffer);
+        }
+        if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+            return this->context->write_authenticate(output_buffer);
         }
 
         return SEC_E_OUT_OF_SEQUENCE;

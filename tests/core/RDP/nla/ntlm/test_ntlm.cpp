@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
         fContextReq,
-        nullptr, // input buffer desc
+        {}, // input buffer desc
         0,
         output_buffer // output buffer desc
     );
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     client_status = client_table.InitializeSecurityContext(
         nullptr, // TargetName
         fContextReq,
-        &input_buffer, // input buffer desc
+        input_buffer.av(), // input buffer desc
         0,
         output_buffer // output buffer desc
     );

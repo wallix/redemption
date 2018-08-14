@@ -455,7 +455,6 @@ private:
         }
 
         this->client_auth_data.input_buffer.init(0);
-        this->client_auth_data.have_input_buffer = false;
 
         return Res::Ok;
     }
@@ -463,7 +462,6 @@ private:
     struct ClientAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
-        bool have_input_buffer;
         SecBuffer input_buffer;
     };
     ClientAuthenticateData client_auth_data;
@@ -483,9 +481,7 @@ private:
         SEC_STATUS status = this->table->InitializeSecurityContext(
             char_ptr_cast(this->ServicePrincipalName.get_data()),
             fContextReq,
-            this->client_auth_data.have_input_buffer
-                ? &this->client_auth_data.input_buffer
-                : nullptr,
+            this->client_auth_data.input_buffer.av(),
             this->verbose,
             /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
@@ -496,10 +492,7 @@ private:
             return Res::Err;
         }
 
-        if (this->client_auth_data.have_input_buffer
-         && this->client_auth_data.input_buffer.size() > 0) {
-            this->client_auth_data.input_buffer.init(0);
-        }
+        this->client_auth_data.input_buffer.init(0);
 
         SEC_STATUS encrypted = SEC_E_INVALID_TOKEN;
         if ((status == SEC_I_COMPLETE_AND_CONTINUE) ||
@@ -552,15 +545,13 @@ private:
         this->ts_request.recv(in_stream);
 
         // #ifdef WITH_DEBUG_CREDSSP
-        //         LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
-        //         hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
+        // LOG(LOG_ERR, "Receiving Authentication Token (%d)", (int) this->ts_request.negoTokens.cbBuffer);
+        // hexdump_c(this->ts_request.negoTokens.pvBuffer, this->ts_request.negoTokens.cbBuffer);
         // #endif
         if (this->verbose) {
             LOG(LOG_INFO, "rdpCredssp - Client Authentication : Receiving Authentication Token");
         }
         this->client_auth_data.input_buffer.copy(this->ts_request.negoTokens);
-
-        this->client_auth_data.have_input_buffer = true;
 
         return Res::Ok;
     }
