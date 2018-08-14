@@ -47,7 +47,7 @@ extern "C"
                          );
 
     REDEMPTION_LIB_EXPORT
-    void metrics_disconnect(Metrics * metrics);
+    void metrics_delete(Metrics * metrics);
 
     REDEMPTION_LIB_EXPORT
     void metrics_new_file(const unsigned long now, Metrics * metrics);

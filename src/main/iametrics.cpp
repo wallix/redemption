@@ -57,8 +57,12 @@ extern "C"
         return metrics;
     }
 
-    void metrics_disconnect(Metrics * metrics) {
-        metrics->disconnect();
+//     void metrics_disconnect(Metrics * metrics) {
+//         metrics->disconnect();
+//     }
+
+    void metrics_delete(Metrics * metrics) {
+        delete(metrics);
     }
 
     void metrics_new_file(const unsigned long now, Metrics * metrics) {
