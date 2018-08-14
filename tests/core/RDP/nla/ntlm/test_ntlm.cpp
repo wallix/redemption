@@ -28,40 +28,6 @@
 
 using PasswordCallback = Ntlm_SecurityFunctionTable::PasswordCallback;
 
-RED_AUTO_TEST_CASE(TestAcquireCredentials)
-{
-    LCGRandom rand(0);
-    LCGTime timeobj;
-    std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb
-      = [](auto&){ return PasswordCallback::Ok; };
-
-    Ntlm_SecurityFunctionTable table(rand, timeobj, set_password_cb);
-    SEC_STATUS status;
-    uint8_t name[] = "Ménélas";
-    uint8_t dom[] = "Sparte";
-    uint8_t pass[] = "Hélène";
-    SEC_WINNT_AUTH_IDENTITY id;
-    id.SetAuthIdentityFromUtf8(name, dom, pass);
-
-    // status = table.FreeCredentialsHandle(&credentials);
-    // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
-    // If AcquireCredential succeed, do not forget to free credential handle !
-    status = table.AcquireCredentialsHandle("NTLM", SECPKG_CRED_OUTBOUND, nullptr, &id);
-
-
-    RED_CHECK_EQUAL(status, SEC_E_OK);
-    SEC_WINNT_AUTH_IDENTITY const * identity = table.getIdentityHandle();
-    RED_CHECK_MEM_C(
-        make_array_view(identity->User.get_data(), identity->User.size()),
-        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
-    RED_CHECK_MEM_C(
-        make_array_view(identity->Domain.get_data(), identity->Domain.size()),
-        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
-    RED_CHECK_MEM_C(
-        make_array_view(identity->Password.get_data(), identity->Password.size()),
-        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
-}
-
 RED_AUTO_TEST_CASE(TestInitialize)
 {
     LCGRandom rand(0);
@@ -76,32 +42,19 @@ RED_AUTO_TEST_CASE(TestInitialize)
     uint8_t const name[] = "Ménélas";
     uint8_t const dom[] = "Sparte";
     uint8_t const pass[] = "Hélène";
-    SEC_WINNT_AUTH_IDENTITY server_id;
-    server_id.SetAuthIdentityFromUtf8(name, dom, pass);
-    SEC_WINNT_AUTH_IDENTITY client_id;
-    client_id.SetAuthIdentityFromUtf8(name, dom, pass);
+    SEC_WINNT_AUTH_IDENTITY client_server_id;
+    client_server_id.SetAuthIdentityFromUtf8(name, dom, pass);
 
     // status = table.FreeCredentialsHandle(&credentials);
     // RED_CHECK_EQUAL(status, SEC_E_INVALID_HANDLE);
 
     // If AcquireCredential succeed, do not forget to free credential handle !
     server_status = server_table.AcquireCredentialsHandle(
-        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &server_id);
+        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_server_id);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
     client_status = client_table.AcquireCredentialsHandle(
-        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_id);
+        "NTLM", SECPKG_CRED_OUTBOUND, nullptr, &client_server_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
-
-    SEC_WINNT_AUTH_IDENTITY const* identity = server_table.getIdentityHandle();
-    RED_CHECK_MEM_C(
-        make_array_view(identity->User.get_data(), identity->User.size()),
-        "\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00");
-    RED_CHECK_MEM_C(
-        make_array_view(identity->Domain.get_data(), identity->Domain.size()),
-        "\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00");
-    RED_CHECK_MEM_C(
-        make_array_view(identity->Password.get_data(), identity->Password.size()),
-        "\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00");
 
     SecBuffer output_buffer;
 
@@ -229,7 +182,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + cbMaxSignature);
     RED_CHECK(0 != memcmp(Result.get_data(), message, Result.size() - cbMaxSignature));
-    RED_CHECK_MEM(make_array_view(Result2.get_data(), Result2.size()), make_array_view(message));
+    RED_CHECK_MEM(Result2.av(), make_array_view(message));
 
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 

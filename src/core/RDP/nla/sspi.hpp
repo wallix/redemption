@@ -150,7 +150,7 @@ struct SEC_WINNT_AUTH_IDENTITY
         this->Password.init(0);
     }
 
-    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY & src) {
+    void CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY const& src) {
         this->User.copy(src.User);
         this->Domain.copy(src.Domain);
         this->Password.copy(src.Password);
@@ -365,7 +365,7 @@ struct SecurityFunctionTable
     virtual SEC_STATUS AcquireCredentialsHandle(const char * pszPrincipal,
                                                 unsigned long fCredentialUse,
                                                 Array * pvLogonID,
-                                                SEC_WINNT_AUTH_IDENTITY * pAuthData) = 0;
+                                                SEC_WINNT_AUTH_IDENTITY const* pAuthData) = 0;
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
@@ -400,7 +400,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
 {
     SEC_STATUS AcquireCredentialsHandle(
         const char * /*pszPrincipal*/, unsigned long /*fCredentialUse*/,
-        Array * /*pvLogonID*/, SEC_WINNT_AUTH_IDENTITY * /*pAuthData*/
+        Array * /*pvLogonID*/, SEC_WINNT_AUTH_IDENTITY const* /*pAuthData*/
     ) override
     {
         return SEC_E_UNSUPPORTED_FUNCTION;

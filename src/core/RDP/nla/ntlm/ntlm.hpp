@@ -68,11 +68,6 @@ private:
     std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
 
 public:
-    SEC_WINNT_AUTH_IDENTITY const * getIdentityHandle() const
-    {
-        return this->identity.get();
-    }
-
     NTLMContext const * getContextHandle() const
     {
         return this->context.get();
@@ -92,7 +87,7 @@ public:
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
         const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
+        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override
     {
         (void)pszPrincipal;

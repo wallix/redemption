@@ -123,7 +123,7 @@ public:
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
         const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
+        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override {
         (void)fCredentialUse;
 
