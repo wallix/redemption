@@ -21,7 +21,9 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
-//
+
+#include "utils/log.hpp"
+
 #include "core/session_reactor.hpp"
 #include "client_redemption/client_redemption.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
@@ -60,12 +62,13 @@ int main(int argc, char** argv)
     if (client.mod) {
         std::cout << "init conn 2" << std::endl;
         while (!client.mod->is_up_and_running()) {
-            std::cout << "init conn step " << i << std::endl;
-            i++;
-            if (int err = client.wait_and_draw_event({3, 0})) {
+
+            if (int err = client.wait_and_draw_event({ 0, 50000 })) {
                 std::cout << "init conn error " <<  err << std::endl;
                 return err;
             }
+            std::cout << "init conn step " << i << std::endl;
+            i++;
         }
     }
 

@@ -205,6 +205,7 @@ public:
 
     int keep_alive_freq;
     timeval start_win_session_time;
+    bool sessionReactorEnableGraphics = true;
 
 
 
@@ -299,8 +300,9 @@ public:
 
     int wait_and_draw_event(timeval timeout)
     {
+        std::cout << "wait_and_draw_event()" << std::endl;
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+            timeout, this->session_reactor, SessionReactor::EnableGraphics{this->sessionReactorEnableGraphics},
             *this->mod, *this
         )) {
 
