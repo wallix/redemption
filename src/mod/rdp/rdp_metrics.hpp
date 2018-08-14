@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "main/metrics.hpp"
+#include "mod/metrics.hpp"
 
 #include "core/client_info.hpp"
 #include "core/RDP/clipboard.hpp"

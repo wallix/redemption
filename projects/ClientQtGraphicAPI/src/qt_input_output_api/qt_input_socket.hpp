@@ -114,20 +114,16 @@ public Q_SLOTS:
 
 private:
     void prepare_timer_event() {
-//         LOG(LOG_INFO, "prepare_timer_event");
+
         timeval now = tvtime();
         this->session_reactor.set_current_time(now);
-        timeval const tv = this->session_reactor.get_next_timeout(
-            SessionReactor::EnableGraphics{true});
+        timeval const tv = this->session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true});
         // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
+
         if (tv.tv_sec > -1) {
 
-            //+  (tv.tvtime - tv
             long time_to_wake = (1000 * (tv.tv_sec - now.tv_sec)) + ((tv.tv_usec - now.tv_usec) / 1000);
 
-                //ustime(tv) - ustime(now);
-            //int delai = std::max(time_to_wake, 0);
-//             LOG(LOG_INFO, "prepare_timer_event = %d", time_to_wake);
             if (time_to_wake < 0) {
                 time_to_wake = 0;
             }

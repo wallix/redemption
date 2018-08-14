@@ -36,4 +36,5 @@ add_src utils/hexdump.cpp ;
 add_src utils/netutils.cpp ;
 add_src utils/png.cpp ;
 add_src utils/rle.cpp ;
+add_src utils/set_exception_handler_pretty_message.cpp ;
 add_lib z ;

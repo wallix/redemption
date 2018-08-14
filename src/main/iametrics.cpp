@@ -21,7 +21,7 @@
 
 #include "main/version.hpp"
 #include "main/iametrics.hpp"
-#include "main/metrics.hpp"
+#include "mod/metrics.hpp"
 
 extern "C"
 {

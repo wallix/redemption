@@ -270,6 +270,7 @@ public:
 
         if (this->connection_info_cmd_complete == COMMAND_VALID) {
 
+            std::cout <<  "connect()" <<  std::endl;
             this->connect();
 
         } else {
@@ -290,6 +291,8 @@ public:
 
             this->disconnect("", false);
         }
+
+        LOG(LOG_INFO, "Client redemption constructed");
     }
 
     ~ClientRedemption() = default;
@@ -300,6 +303,8 @@ public:
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
             *this->mod, *this
         )) {
+
+            std::cout << "RDP CLIENT :: errno = " <<  strerror(errno) << std::endl;
 
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
             return 9;
@@ -734,6 +739,8 @@ public:
             this->set_capture();
         }
 
+        std::cout <<  "connect() 1" <<  std::endl;
+
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
@@ -800,9 +807,8 @@ public:
                                                         };
                 this->cl.push_back(channel_audio_output);
             }
+            std::cout <<  "connect() 2" <<  std::endl;
         }
-
-
 
         if (this->impl_graphic) {
 
