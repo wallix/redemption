@@ -182,16 +182,6 @@ public:
       , cCapabilitiesSets(config.cCapabilitiesSets)
       , generalFlags(config.generalFlags)
       {
-        DIR *pDir;
-        pDir = opendir (this->client->CB_TEMP_DIR.c_str());
-        if (!pDir) {
-            mkdir(this->client->CB_TEMP_DIR.c_str(), 0777);
-        }
-        pDir = opendir (this->client->CB_TEMP_DIR.c_str());
-        if (!pDir) {
-            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
-        }
-
         for (auto const& format : config.formats) {
             this->add_format(format.ID, format.name);
         }
