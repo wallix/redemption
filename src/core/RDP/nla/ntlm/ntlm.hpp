@@ -68,12 +68,6 @@ private:
     std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
 
 public:
-    NTLMContext const * getContextHandle() const
-    {
-        return this->context.get();
-    }
-
-public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
         std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
