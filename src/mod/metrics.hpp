@@ -76,18 +76,18 @@ public:
     timeval next_log_time;
 
 
-    Metrics( const char * version               // fields version
+    Metrics( const char * version                 // fields version
             , const char * protocol_name
-            , const bool activate                        // do nothing if false
+            , const bool activate                 // do nothing if false
             , const char * path
             , const char * session_id
-            , const char * primary_user_sig       // clear primary user account
-            , const char * account_sig            // secondary account
-            , const char * target_service_sig           // clear target service name + clear device name
-            , const char * session_info_sig       // source_host + client info
-            , const time_t now                           // time at beginning of metrics
-            , const int file_interval     // daily rotation of filename (hours)
-            , const int log_delay       // delay between 2 logs
+            , const char * primary_user_sig       // hashed primary user account
+            , const char * account_sig            // hashed secondary account
+            , const char * target_service_sig     // hashed (target service name + device name)
+            , const char * session_info_sig       // hashed (source_host + client info)
+            , const time_t now                    // time at beginning of metrics
+            , const int file_interval             // daily rotation of filename (hours)
+            , const int log_delay                 // delay between 2 logs flush
             )
     : version(version)
     , protocol_name(protocol_name)
@@ -106,31 +106,6 @@ public:
             this->new_file(this->current_file_date);
         }
     }
-
-     Metrics( const char * version               // fields version
-            , const char * protocol_name
-            , const bool activate                        // do nothing if false
-            , const char * path
-            , const char * session_id
-//             , const char * primary_user_sig       // clear primary user account
-//             , const char * account_sig            // secondary account
-//             , const char * target_service_sig           // clear target service name + clear device name
-//             , const char * session_info_sig       // source_host + client info
-            , const time_t now                           // time at beginning of metrics
-            , const int file_interval     // daily rotation of filename (hours)
-            , const int log_delay       // delay between 2 logs
-            )
-    : version(version)
-    , protocol_name(protocol_name)
-    , file_interval{file_interval}
-    , current_file_date(now-now%(this->file_interval*3600))
-    , path(path)
-    , session_id(session_id)
-    , active_(activate)
-    , connection_time(now)
-    , log_delay(log_delay)
-    , next_log_time{ this->log_delay+now, 0}
-    {}
 
     ~Metrics() {
         this->disconnect();

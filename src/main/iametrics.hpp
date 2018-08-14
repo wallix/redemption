@@ -26,8 +26,9 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * iametrics_version();
 
-    REDEMPTION_LIB_EXPORT
-    void hmac_sha256(char * dest, const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+    char * new_hmac_sha256_hex(const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+
+    void delete_hmac_sha256_hex(char * sign) noexcept;
 
     class Metrics;
 

@@ -40,14 +40,14 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
 {
     uint8_t key[32] = {0};
     const char * data = "primaryuser";
-    char sig[64];
-
-    hmac_sha256(sig, data, strlen(data), key);
+    char * sig = new_hmac_sha256_hex(data, strlen(data), key);
 
     std::string res(sig, 64);
 
     RED_CHECK_EQUAL(std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"),
     res);
+
+    delete_hmac_sha256_hex(sig);
 }
 
 constexpr const char * rdp_metrics_path_file = "/tmp";
