@@ -35,6 +35,9 @@ int filesize(const char * path);
 
 bool file_exist(const char * path);
 
+bool dir_exist(const char * path);
+
+
 void ParsePath(const char * fullpath, std::string & directory,
                std::string & filename, std::string & extension);
 

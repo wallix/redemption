@@ -73,6 +73,13 @@ bool file_exist(const char * path)
     return (stat(path, &sb) == 0);
 }
 
+bool dir_exist(const char * path)
+{
+    struct stat sb;
+    int statok = ::stat(path, &sb);
+    return (statok == 0) && ((sb.st_mode & S_IFDIR) != 0);
+}
+
 
 void ParsePath(const char * fullpath, std::string & directory,
                std::string & filename, std::string & extension)
