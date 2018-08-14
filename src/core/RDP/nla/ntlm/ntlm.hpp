@@ -124,11 +124,9 @@ public:
         }
 
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj, verbose);
+            this->context = std::make_unique<NTLMContext>(false, this->rand, this->timeobj, verbose);
 
             assert(fContextReq & ISC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
-            // this->context->init();
-            this->context->server = false;
 
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
@@ -165,9 +163,8 @@ public:
         array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
     ) override {
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
+            this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
 
-            this->context->server = true;
             assert(fContextReq & ASC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;

@@ -43,7 +43,8 @@ enum NtlmState {
     NTLM_STATE_WAIT_PASSWORD,
     NTLM_STATE_FINAL
 };
-//static const uint8_t lm_magic[] = "KGS!@#$%";
+
+// static const uint8_t lm_magic[] = "KGS!@#$%";
 
 static const uint8_t client_sign_magic[] =
     "session key to client-to-server signing key magic constant";
@@ -60,16 +61,16 @@ class NTLMContext
     Random & rand;
 
 public:
-    bool server = false;
+    const bool server = false;
 private:
-    bool NTLMv2 = true;
-    bool UseMIC = true;
+    const bool NTLMv2 = true;
+    bool UseMIC;
 public:
     NtlmState state = NTLM_STATE_INITIAL;
 
 private:
     uint8_t MachineID[32];
-    bool SendVersionInfo = true;
+    const bool SendVersionInfo = true;
     const bool confidentiality = true;
 
 public:
@@ -125,12 +126,14 @@ public:
     uint8_t MessageIntegrityCheck[SslMd5::DIGEST_LENGTH];
     // uint8_t NtProofStr[16];
 
-    bool verbose;
+    const bool verbose;
 
 public:
-    explicit NTLMContext(Random & rand, TimeObj & timeobj, bool verbose = false)
+    explicit NTLMContext(bool is_server, Random & rand, TimeObj & timeobj, bool verbose = false)
         : timeobj(timeobj)
         , rand(rand)
+        , server(is_server)
+        , UseMIC(this->NTLMv2 == true)
         //, LmCompatibilityLevel(3)
         , Workstation(0)
         , ServicePrincipalName(0)
@@ -546,7 +549,6 @@ public:
     //                                 const uint8_t * user,   size_t user_size,
     //                                 const uint8_t * domain, size_t domain_size)
     //{
-    //
     //    uint8_t ResponseKeyLM[16] = {};
     //    this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
     //            ResponseKeyLM, sizeof(ResponseKeyLM));
@@ -564,7 +566,6 @@ public:
     //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
     //    LmChallengeResponse.out_copy_bytes(this->ClientChallenge, 8);
     //    LmChallengeResponse.mark_end();
-    //
     //}
 
 
@@ -580,17 +581,15 @@ public:
             this->RecvSigningKey = this->ClientSigningKey;
             this->SendSealingKey = this->ClientSealingKey;
             this->RecvSealingKey = this->ServerSealingKey;
-            this->SendRc4Seal.set_key(this->ServerSealingKey, 16);
-            this->RecvRc4Seal.set_key(this->ClientSealingKey, 16);
         }
         else {
             this->SendSigningKey = this->ClientSigningKey;
             this->RecvSigningKey = this->ServerSigningKey;
             this->SendSealingKey = this->ServerSealingKey;
             this->RecvSealingKey = this->ClientSealingKey;
-            this->SendRc4Seal.set_key(this->ClientSealingKey, 16);
-            this->RecvRc4Seal.set_key(this->ServerSealingKey, 16);
         }
+        this->SendRc4Seal.set_key(this->RecvSealingKey, 16);
+        this->RecvRc4Seal.set_key(this->SendSealingKey, 16);
     }
 
     // server check nt response
