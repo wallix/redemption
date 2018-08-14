@@ -27,6 +27,7 @@
 
 #include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/fileutils.hpp"
 #include "core/RDP/clipboard.hpp"
 
 #include "client_redemption/client_redemption_api.hpp"
@@ -182,6 +183,13 @@ public:
       , cCapabilitiesSets(config.cCapabilitiesSets)
       , generalFlags(config.generalFlags)
       {
+        if (!dir_exist(this->client->CB_TEMP_DIR.c_str())){
+            mkdir(this->client->CB_TEMP_DIR.c_str(), 0777);
+        }
+        if (!dir_exist(this->client->CB_TEMP_DIR.c_str())){
+            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
+        }
+
         for (auto const& format : config.formats) {
             this->add_format(format.ID, format.name);
         }

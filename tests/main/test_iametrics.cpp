@@ -29,11 +29,11 @@
 
 #include "main/iametrics.hpp"
 
-RED_AUTO_TEST_CASE(Testiametrics)
-{
-    RED_CHECK_EQ(iametrics_version(), "1.3.5");
-}
-
+// test disabled because we do not want to introduce a dependency on redemption version
+// RED_AUTO_TEST_CASE(Testiametrics)
+// {
+//     RED_CHECK_EQ(iametrics_version(), "1.3.5");
+// }
 
 RED_AUTO_TEST_CASE(TestRDPMetricsH)
 {
