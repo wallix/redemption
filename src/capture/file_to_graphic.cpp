@@ -577,7 +577,6 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::META_FILE:
     // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
     {
-LOG(LOG_INFO, "> > > > > info_width=%u info_height=%u", this->info_width, this->info_height);
         this->info_version                   = this->stream.in_uint16_le();
         this->info_width                     = this->stream.in_uint16_le();
         this->info_height                    = this->stream.in_uint16_le();
