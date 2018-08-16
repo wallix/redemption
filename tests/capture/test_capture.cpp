@@ -2889,10 +2889,10 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         const char * filename;
         ssize_t size;
     } fileinfo[] = {
-        {"./resizing-capture-0-000000.wrm", 1646},
-        {"./resizing-capture-0-000001.wrm", 3442},
-        {"./resizing-capture-0-000002.wrm", 3033},
-        {"./resizing-capture-0-000003.wrm", 4672},
+        {"./resizing-capture-0-000000.wrm", 1651},
+        {"./resizing-capture-0-000001.wrm", 3428},
+        {"./resizing-capture-0-000002.wrm", 4384},
+        {"./resizing-capture-0-000003.wrm", 4388},
         {"./resizing-capture-0-000004.wrm", -1},
         {"./resizing-capture-0.mwrm", 256},
         // hash
@@ -3054,17 +3054,17 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 1200, 30), encode_color24()(BLUE)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 1200, 30), encode_color24()(WHITE)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 1200, 30), encode_color24()(RED)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
@@ -3075,23 +3075,24 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 1200, 30), encode_color24()(BLACK)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 1200, 30), encode_color24()(PINK)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 1200, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 1200, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
         // The destruction of capture object will finalize the metafile content
     }
 
@@ -3109,25 +3110,25 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         RED_CHECK_EQUAL(3098, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(1);
-        RED_CHECK_EQUAL(3125, ::filesize(filename));
+        RED_CHECK_EQUAL(3117, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(2);
-        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        RED_CHECK_EQUAL(3128, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3173, ::filesize(filename));
+        RED_CHECK_EQUAL(3140, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(4339, ::filesize(filename));
+        RED_CHECK_EQUAL(4079, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(4363, ::filesize(filename));
+        RED_CHECK_EQUAL(4103, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(4374, ::filesize(filename));
+        RED_CHECK_EQUAL(4121, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(4406, ::filesize(filename));
+        RED_CHECK_EQUAL(4136, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_EQUAL(false, file_exist(filename));
@@ -3151,9 +3152,9 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         ssize_t size;
     } fileinfo[] = {
         {"./resizing-capture-1-000000.wrm", 1646},
-        {"./resizing-capture-1-000001.wrm", 3442},
-        {"./resizing-capture-1-000002.wrm", 1628},
-        {"./resizing-capture-1-000003.wrm", 1682},
+        {"./resizing-capture-1-000001.wrm", 3439},
+        {"./resizing-capture-1-000002.wrm", 2630},
+        {"./resizing-capture-1-000003.wrm", 2630},
         {"./resizing-capture-1-000004.wrm", -1},
         {"./resizing-capture-1.mwrm", 256},
         // hash
@@ -3325,17 +3326,13 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.resize(640, 480);
 
         // ------------------------------ BREAKPOINT ------------------------------
-
-        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
-        now.tv_sec++;
-        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         now.tv_sec++;
@@ -3345,9 +3342,13 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
         // ------------------------------ BREAKPOINT ------------------------------
 
-        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        capture.draw(RDPOpaqueRect(Rect(7, 350, 700, 30), encode_color24()(YELLOW)), scr, color_cxt);
         now.tv_sec++;
         capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
         // The destruction of capture object will finalize the metafile content
@@ -3373,19 +3374,19 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         RED_CHECK_EQUAL(3140, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(3);
-        RED_CHECK_EQUAL(3173, ::filesize(filename));
+        RED_CHECK_EQUAL(3158, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(4);
-        RED_CHECK_EQUAL(1347, ::filesize(filename));
+        RED_CHECK_EQUAL(2301, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(5);
-        RED_CHECK_EQUAL(1348, ::filesize(filename));
+        RED_CHECK_EQUAL(2316, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(6);
-        RED_CHECK_EQUAL(1416, ::filesize(filename));
+        RED_CHECK_EQUAL(2330, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(1499, ::filesize(filename));
+        RED_CHECK_EQUAL(2341, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
         RED_CHECK_EQUAL(false, file_exist(filename));

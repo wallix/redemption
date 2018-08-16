@@ -214,8 +214,8 @@ private:
     }
 
 public:
-    void set_row(size_t rownum, const uint8_t * data) override {
-        this->drawable.set_row(rownum, data);
+    void set_row(size_t rownum, const uint8_t * data, size_t data_length) override {
+        this->drawable.set_row(rownum, data, data_length);
     }
 
     void draw(RDPColCache   const & /*unused*/) override {

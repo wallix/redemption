@@ -439,6 +439,7 @@ void set_rows_from_image_chunk(
     png_read_info(png.ppng, png.pinfo);
 
     size_t height = png_get_image_height(png.ppng, png.pinfo);
+    size_t rowsize = png_get_rowbytes(png.ppng, png.pinfo);
     // TODO check png row_size is identical to drawable rowsize
 
     uint8_t tmp[8192*4];
@@ -458,7 +459,7 @@ void set_rows_from_image_chunk(
         }
 
         for (gdi::GraphicApi * gd : graphic_consumers){
-            gd->set_row(k, tmp);
+            gd->set_row(k, tmp, rowsize);
         }
     }
     png_read_end(png.ppng, png.pinfo);
