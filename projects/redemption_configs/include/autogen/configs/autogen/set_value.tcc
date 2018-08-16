@@ -427,6 +427,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::experimental_enable_serializer_data_block_size_limit&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "experimental_support_resize_session_during_recording")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::globals::experimental_support_resize_session_during_recording&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::globals::experimental_support_resize_session_during_recording&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
