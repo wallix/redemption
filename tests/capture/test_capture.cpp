@@ -2604,6 +2604,7 @@ extern "C" {
 
 #include "main/do_recorder.hpp"
 
+#ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestMetaCapture)
 {
     const struct CheckFiles {
@@ -2882,6 +2883,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         ::unlink(f.filename);
     }
 }
+#endif
 
 RED_AUTO_TEST_CASE(TestResizingCapture)
 {
