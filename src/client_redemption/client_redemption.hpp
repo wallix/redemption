@@ -271,7 +271,6 @@ public:
 
         if (this->connection_info_cmd_complete == COMMAND_VALID) {
 
-            std::cout <<  "connect()" <<  std::endl;
             this->connect();
 
         } else {
@@ -300,14 +299,10 @@ public:
 
     int wait_and_draw_event(timeval timeout)
     {
-        std::cout << "wait_and_draw_event()" << std::endl;
         if (ExecuteEventsResult::Error == execute_events(
             timeout, this->session_reactor, SessionReactor::EnableGraphics{this->sessionReactorEnableGraphics},
             *this->mod, *this
         )) {
-
-            std::cout << "RDP CLIENT :: errno = " <<  strerror(errno) << std::endl;
-
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
             return 9;
         }
@@ -552,6 +547,8 @@ public:
                       , this->reportMessage
                       , this->ini
                     );
+
+                    LOG(LOG_INFO, "this->unique_mod = std::make_unique<mod_rdp>(");
                 }
                     break;
 
@@ -661,7 +658,6 @@ public:
     }
 
     bool init_socket() {
-        std::cout << "init_socket() 1" <<  std::endl;
         if (this->is_full_replaying) {
             LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
             ReplayTransport *transport = new ReplayTransport(
@@ -673,21 +669,16 @@ public:
             return true;
         }
 
-        std::cout << "init_socket() 2" <<  std::endl;
-
         unique_fd client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
                                           1000             //retryDelay
                                           );
-        std::cout << "init_socket() 3" <<  std::endl;
-        this->client_sck = client_sck.fd();
 
-        std::cout << "init_socket() 4" <<  std::endl;
+        this->client_sck = client_sck.fd();
 
         if (this->client_sck > 0) {
             try {
-                std::cout << "init_socket() 5" <<  std::endl;
 
                 this->socket = new SocketTransport( this->user_name.c_str()
                                             , std::move(client_sck)
@@ -698,15 +689,13 @@ public:
                                             //, SocketTransport::Verbose::dump
                                             , &this->error_message
                                             );
-                std::cout << "init_socket() 6" <<  std::endl;
+                LOG(LOG_INFO, "this->socket init done");
 
                 if (this->is_full_capturing) {
                     this->_socket_in_recorder.reset(this->socket);
                     this->socket = new RecorderTransport(
                         *this->socket, this->full_capture_file_name.c_str());
                 }
-
-                std::cout << "init_socket() 7" <<  std::endl;
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 
@@ -751,8 +740,6 @@ public:
         if (this->is_recording) {
             this->set_capture();
         }
-
-        std::cout <<  "connect() 1" <<  std::endl;
 
         if (this->mod_state != MOD_VNC) {
 
@@ -820,7 +807,6 @@ public:
                                                         };
                 this->cl.push_back(channel_audio_output);
             }
-            std::cout <<  "connect() 2" <<  std::endl;
         }
 
         if (this->impl_graphic) {
@@ -855,16 +841,13 @@ public:
                 this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
             }
         }
-        std::cout <<  "connect() 3" <<  std::endl;
+
         if (this->init_socket()) {
 
             this->update_keylayout();
 
-            std::cout <<  "connect() 4" <<  std::endl;
-
             if (this->init_mod()) {
-                this->connected = true;
-                std::cout <<  "connect() 5" <<  std::endl;
+                this->connected = true;;
 
                 if (this->impl_socket_listener) {
                     if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
@@ -874,7 +857,7 @@ public:
                                 this->impl_graphic->show_screen();
                             }
                         }
-
+                        LOG(LOG_INFO, "impl_socket_listener->start_to_listen ok");
                         return;
                     }
                 }
@@ -1213,87 +1196,103 @@ public:
     using ClientRedemptionConfig::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPPatBlt++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.pixels_RDPPatBlt+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPPatBlt++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+                this->wrmGraphicStat.pixels_RDPPatBlt+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
-        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPOpaqueRect++;
-            const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-            this->wrmGraphicStat.pixels_RDPOpaqueRect+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPOpaqueRect++;
+                const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+                this->wrmGraphicStat.pixels_RDPOpaqueRect+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
-        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPBitmapData++;
-            Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
-                                (bitmap_data.dest_right - bitmap_data.dest_left + 1),
-                                (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-            const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-            this->wrmGraphicStat.pixels_RDPBitmapData+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPBitmapData++;
+                Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
+                                    (bitmap_data.dest_right - bitmap_data.dest_left + 1),
+                                    (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
+                const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->wrmGraphicStat.pixels_RDPBitmapData+= rect.cx * rect.cy;
+            }
+            this->draw_impl(no_log{}, bitmap_data, bmp);
         }
-        this->draw_impl(no_log{}, bitmap_data, bmp);
     }
 
 
     void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPLineTo++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-            this->wrmGraphicStat.pixels_RDPLineTo+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPLineTo++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->wrmGraphicStat.pixels_RDPLineTo+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
-        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
 
     void draw(const RDPScrBlt & cmd, Rect clip) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPScrBlt++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.pixels_RDPScrBlt+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPScrBlt++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+                this->wrmGraphicStat.pixels_RDPScrBlt+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip);
         }
-        this->draw_impl(with_log{}, cmd, clip);
     }
 
 
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPMemBlt++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.pixels_RDPMemBlt+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPMemBlt++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+                this->wrmGraphicStat.pixels_RDPMemBlt+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, bitmap);
         }
-        this->draw_impl(with_log{}, cmd, clip, bitmap);
     }
 
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPMem3Blt++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.pixels_RDPMem3Blt+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPMem3Blt++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+                this->wrmGraphicStat.pixels_RDPMem3Blt+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
         }
-        this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
         /*if (this->wab_diag_question) {
             this->answer_question(this->asked_color);
         }*/
     }
 
     void draw(const RDPDestBlt & cmd, Rect clip) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPDestBlt++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-            this->wrmGraphicStat.pixels_RDPDestBlt += rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPDestBlt++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+                this->wrmGraphicStat.pixels_RDPDestBlt += rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip);
         }
-        this->draw_impl(with_log{}, cmd, clip);
     }
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
@@ -1333,12 +1332,14 @@ public:
     }
 
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-        if (this->impl_graphic->is_pre_loading) {
-            this->wrmGraphicStat.amount_RDPGlyphIndex++;
-            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-            this->wrmGraphicStat.pixels_RDPGlyphIndex+= rect.cx * rect.cy;
+        if (this->impl_graphic) {
+            if (this->impl_graphic->is_pre_loading) {
+                this->wrmGraphicStat.amount_RDPGlyphIndex++;
+                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+                this->wrmGraphicStat.pixels_RDPGlyphIndex+= rect.cx * rect.cy;
+            }
+            this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
         }
-        this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
     }
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1404,7 +1405,9 @@ public:
     }
 
     void draw_frame(int frame_index) override {
-        this->impl_graphic->draw_frame(frame_index);
+        if (this->impl_graphic) {
+            this->impl_graphic->draw_frame(frame_index);
+        }
     }
 
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {

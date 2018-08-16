@@ -26,8 +26,6 @@
 
 #define LOG_SIEM LOG__SIEM__REDEMPTION__INTERNAL__IMPL
 
-// #define LOG_SIEM syslog
-
 #ifdef LOGPRINT
 # error LOGPRINT is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=1 bjam`
 #endif

@@ -84,6 +84,7 @@ target_nosyslog = set([
     'proxy_recorder',
     'rdpinichecker',
     'rdpclient',
+    'main_client_redemption',
 ])
 
 #coverage_requirements = dict((

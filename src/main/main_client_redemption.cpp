@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2010-2016
+   Copyright (C) Wallix 2017-2018
    Author(s): Clément Moroldo
 */
 
@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     SessionReactor session_reactor;
 
-    RDPVerbose verbose = to_verbose_flags(0xffffffff);
+    RDPVerbose verbose = to_verbose_flags(0x0);
 
     LOG(LOG_INFO, "ClientRedemption init");
 
@@ -57,8 +57,7 @@ int main(int argc, char** argv)
                            , nullptr
                            , nullptr);
 
-    std::cout << "init conn 1" << std::endl;
-    int i = 0;
+/*    int i = 0;
     if (client.mod) {
         std::cout << "init conn 2" << std::endl;
         while (!client.mod->is_up_and_running()) {
@@ -72,9 +71,9 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << "init conn32" << std::endl;
+    std::cout << "init conn32" << std::endl*/;
 
-    return run_mod(client, true, std::chrono::milliseconds(6000), true);
+    return run_mod(client, true, std::chrono::milliseconds(6000), false);
 }
 
 
@@ -82,11 +81,7 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
-    std::cout << "run mod 1" << std::endl;
-
     if (front.mod) {
-
-        std::cout << "run mod 2" << std::endl;
 
         auto & mod = *(front.mod);
 
@@ -95,7 +90,6 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
 
         while (running)
         {
-            std::cout << "run mod 3" << std::endl;
             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
@@ -107,32 +101,22 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
                 break;
             }
 
-            std::cout << "run mod 4" << std::endl;
-
             if (time_set_connection_test) {
                 if (time_stop > tvtime()) {
-                    //std::cerr <<  " Exit timeout (timeout = " << time_out_response.tv_sec << " sec " <<  time_out_response.tv_usec << " µsec)" << std::endl;
+                    std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << std::endl;
                     return 8;
                 }
             }
-
-            std::cout << "run mod 5" << std::endl;
 
             if (int err = front.wait_and_draw_event(time_mark)) {
                 return err;
             }
 
-            std::cout << "run mod 6" << std::endl;
-
             front.send_key_to_keep_alive();
-
-            std::cout << "run mod 7" << std::endl;
 
             if (connected) {
                 running = mod.is_up_and_running();
             }
-
-            std::cout << "run mod 8" << std::endl;
 
             if (mod.is_up_and_running()) {
                 connected = true;

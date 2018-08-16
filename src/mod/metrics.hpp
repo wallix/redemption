@@ -111,6 +111,35 @@ public:
         }
     }
 
+     Metrics( const char * version               // fields version
+            , const char * protocol_name
+            , const bool activate                        // do nothing if false
+            , const char * path
+            , const char * session_id
+//             , const char * primary_user_sig       // clear primary user account
+//             , const char * account_sig            // secondary account
+//             , const char * target_service_sig           // clear target service name + clear device name
+//             , const char * session_info_sig       // source_host + client info
+            , const time_t now                           // time at beginning of metrics
+            , const int file_interval     // daily rotation of filename (hours)
+            , const int log_delay       // delay between 2 logs
+            )
+    : version(version)
+    , protocol_name(protocol_name)
+    , file_interval{file_interval}
+    , current_file_date(now-now%(this->file_interval*3600))
+    , path(path)
+    , session_id(session_id)
+    , active_(activate)
+    , connection_time(now)
+    , log_delay(log_delay)
+    , next_log_time{ this->log_delay+now, 0}
+    {}
+
+    void add_to_current_data(int index, uint64_t value) {
+        this->current_data[index] += value;
+    }
+
     ~Metrics() {
         this->disconnect();
     }
@@ -200,10 +229,6 @@ public:
         } else {
              LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"",this->fd.fd(), index_file_path);
         }
-    }
-
-    void add_to_current_data(int index, uint64_t value) {
-        this->current_data[index] += value;
     }
 
     void rotate(time_t now) {

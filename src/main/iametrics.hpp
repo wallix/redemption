@@ -61,5 +61,4 @@ extern "C"
 
     REDEMPTION_LIB_EXPORT
     void metrics_add_to_current_data(int index, uint64_t value, Metrics * metrics) noexcept;
-
 }
