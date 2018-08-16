@@ -289,7 +289,7 @@ struct GraphicApi : private noncopyable
     virtual void sync() {}
 
     // TODO berk, data within size
-    virtual void set_row(std::size_t rownum, const uint8_t * data) { (void)rownum; (void)data; }
+    virtual void set_row(std::size_t rownum, const uint8_t * data, size_t data_length) { (void)rownum; (void)data; (void)data_length; }
 };
 
 

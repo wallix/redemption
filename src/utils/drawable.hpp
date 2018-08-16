@@ -412,12 +412,28 @@ public:
     }
 
     void resize(unsigned width, unsigned height) {
-        delete[] this->data_;
+        uint16_t saved_height_  = this->height_;
+        size_t   saved_rowsize_ = this->rowsize_;
+        P        saved_data_    = this->data_;
+
 
         this->width_   = width;
         this->height_  = height;
         this->rowsize_ = this->width_ * Bpp;
         this->data_    =  DrawableImplAlloc(this->rowsize_, this->height_);
+
+        P      src         = saved_data_;
+        P      dest        = this->data_;
+        size_t min_rowsize = std::min(saved_rowsize_, this->rowsize_);
+        for (uint16_t row_index = 0, row_count = std::min(saved_height_, this->height_);
+             row_index < row_count; ++row_index) {
+            memcpy(dest, src, min_rowsize);
+
+            src  += saved_rowsize_;
+            dest += this->rowsize_;
+        }
+
+        delete[] saved_data_;
     }
 
     const uint8_t * data() const noexcept {
@@ -1725,9 +1741,9 @@ public:
         }
     }
 
-    void set_row(size_t rownum, const uint8_t * data)
+    void set_row(size_t rownum, const uint8_t * data, size_t data_length)
     {
-        memcpy(this->impl().row_data(rownum), data, this->rowsize());
+        memcpy(this->impl().row_data(rownum), data, std::min(this->rowsize(), data_length));
     }
 
     void trace_mouse(const DrawablePointer * current_pointer, const int x, const int y, uint8_t * psave) {
