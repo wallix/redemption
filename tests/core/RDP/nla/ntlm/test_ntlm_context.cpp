@@ -92,9 +92,9 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
 
 
-    context.ntlmv2_compute_response_from_challenge(password, sizeof(password),
-                                                   userName, sizeof(userName),
-                                                   userDomain, sizeof(userDomain));
+    context.ntlmv2_compute_response_from_challenge(make_array_view(password),
+                                                   make_array_view(userName),
+                                                   make_array_view(userDomain));
 
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
     // LOG(LOG_INFO, "==== LmChallengeResponse =====");
@@ -182,10 +182,10 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
     UTF8toUTF16(user, uuser, sizeof(uuser));
     UTF8toUTF16(domain, udomain, sizeof(udomain));
 
-    context.NTOWFv2(upassword, sizeof(upassword),
-                    uuser, sizeof(uuser),
-                    udomain, sizeof(udomain),
-                    buff, sizeof(buff));
+    context.NTOWFv2(make_array_view(upassword),
+                    make_array_view(uuser),
+                    make_array_view(udomain),
+                    make_array_view(buff));
     RED_CHECK_MEM_AC(buff, "\x0c\x86\x8a\x40\x3b\xfd\x7a\x93\xa3\x00\x1e\xf2\x2e\xf0\x2e\x3f");
 }
 
@@ -348,9 +348,9 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
-    client_context.ntlmv2_compute_response_from_challenge(password, sizeof(password),
-                                                          userName, sizeof(userName),
-                                                          userDomain, sizeof(userDomain));
+    client_context.ntlmv2_compute_response_from_challenge(make_array_view(password),
+                                                          make_array_view(userName),
+                                                          make_array_view(userDomain));
     client_context.ntlm_encrypt_random_session_key();
     client_context.ntlm_generate_client_signing_key();
     client_context.ntlm_generate_client_sealing_key();
@@ -391,14 +391,14 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
-    server_context.hash_password(password, sizeof(password), hash);
+    server_context.hash_password(make_array_view(password), hash);
 
-    result = server_context.ntlm_check_nt_response_from_authenticate(hash, 16);
+    result = server_context.ntlm_check_nt_response_from_authenticate(make_array_view(hash));
     RED_CHECK(result);
-    result = server_context.ntlm_check_lm_response_from_authenticate(hash, 16);
+    result = server_context.ntlm_check_lm_response_from_authenticate(make_array_view(hash));
     RED_CHECK(result);
     // SERVER COMPUTE SHARED KEY WITH CLIENT
-    server_context.ntlm_compute_session_base_key(hash, 16);
+    server_context.ntlm_compute_session_base_key(make_array_view(hash));
     server_context.ntlm_decrypt_exported_session_key();
 
     server_context.ntlm_generate_client_signing_key();
@@ -481,10 +481,10 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
            in_server_to_client.get_data(), in_server_to_client.get_offset());
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
 
-    client_context.ntlm_client_build_authenticate(password, sizeof(password),
-                                                  userName, sizeof(userName),
-                                                  userDomain, sizeof(userDomain),
-                                                  workstation, sizeof(workstation));
+    client_context.ntlm_client_build_authenticate(make_array_view(password),
+                                                  make_array_view(userName),
+                                                  make_array_view(userDomain),
+                                                  make_array_view(workstation));
 
     // send AUTHENTICATE MESSAGE
     out_client_to_server.rewind();
@@ -513,7 +513,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
 
     // SERVER PROCEED RESPONSE CHECKING
     uint8_t hash[16] = {};
-    server_context.hash_password(password, sizeof(password), hash);
+    server_context.hash_password(make_array_view(password), hash);
     server_context.ntlm_server_proceed_authenticate(hash);
 
     RED_CHECK_MEM_AA(server_context.SessionBaseKey, client_context.SessionBaseKey);

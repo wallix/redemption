@@ -237,73 +237,75 @@ public:
     //}
 
     // all strings are in unicode utf16
-    void NTOWFv2_FromHash(const uint8_t * hash,   size_t hash_size,
-                          const uint8_t * user,   size_t user_size,
-                          const uint8_t * domain, size_t domain_size,
+    void NTOWFv2_FromHash(array_view_const_u8 hash,
+                          array_view_const_u8 user,
+                          array_view_const_u8 domain,
                           uint8_t (&buff)[SslMd5::DIGEST_LENGTH]) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2 Hash");
         }
-        SslHMAC_Md5 hmac_md5({hash, hash_size});
+        SslHMAC_Md5 hmac_md5(hash);
 
-        auto unique_userup = std::make_unique<uint8_t[]>(user_size);
+        auto unique_userup = std::make_unique<uint8_t[]>(user.size());
         uint8_t * userup = unique_userup.get();
-        memcpy(userup, user, user_size);
-        UTF16Upper(userup, user_size);
-        hmac_md5.update({userup, user_size});
+        memcpy(userup, user.data(), user.size());
+        UTF16Upper(userup, user.size());
+        hmac_md5.update({userup, user.size()});
         unique_userup.reset();
 
         // hmac_md5.update({user, user_size});
-        hmac_md5.update({domain, domain_size});
+        hmac_md5.update(domain);
         hmac_md5.final(buff);
     }
+
     // all strings are in unicode utf16
-    void hash_password(const uint8_t * pass, size_t pass_size, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
+    void hash_password(array_view_const_u8 pass, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
         SslMd4 md4;
-        md4.update({pass, pass_size});
+        md4.update(pass);
         md4.final(hash);
     }
 
     // all strings are in unicode utf16
-    void NTOWFv2(const uint8_t * pass,   size_t pass_size,
-                 const uint8_t * user,   size_t user_size,
-                 const uint8_t * domain, size_t domain_size,
-                 uint8_t * buff, size_t buff_size) {
+    void NTOWFv2(array_view_const_u8 pass,
+                 array_view_const_u8 user,
+                 array_view_const_u8 domain,
+                 array_view_u8 buff) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2");
         }
         SslMd4 md4;
         uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
 
-        md4.update({pass, pass_size});
+        md4.update(pass);
         md4.final(md4password);
 
         SslHMAC_Md5 hmac_md5(make_array_view(md4password));
 
-        auto unique_userup = std::make_unique<uint8_t[]>(user_size);
+        auto unique_userup = std::make_unique<uint8_t[]>(user.size());
         uint8_t * userup = unique_userup.get();
-        memcpy(userup, user, user_size);
-        UTF16Upper(userup, user_size);
-        hmac_md5.update({userup, user_size});
+        memcpy(userup, user.data(), user.size());
+        UTF16Upper(userup, user.size());
+        hmac_md5.update({userup, user.size()});
         unique_userup.reset();
 
         uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
 
         userup = nullptr;
-        hmac_md5.update({domain, domain_size});
+        hmac_md5.update(domain);
         hmac_md5.final(tmp_md5);
         // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
         // if it is so no need to use a temporary variable
         // and copy digest afterward.
-        memset(buff, 0, buff_size);
-        memcpy(buff, tmp_md5, std::min(buff_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
+        memset(buff.data(), 0, buff.size());
+        memcpy(buff.data(), tmp_md5, std::min(buff.size(), size_t(SslMd5::DIGEST_LENGTH)));
     }
+
     // all strings are in unicode utf16
-    void LMOWFv2(const uint8_t * pass,   size_t pass_size,
-                 const uint8_t * user,   size_t user_size,
-                 const uint8_t * domain, size_t domain_size,
-                 uint8_t * buff, size_t buff_size) {
-        NTOWFv2(pass, pass_size, user, user_size, domain, domain_size, buff, buff_size);
+    void LMOWFv2(array_view_const_u8 pass,
+                 array_view_const_u8 user,
+                 array_view_const_u8 domain,
+                 array_view_u8 buff) {
+        NTOWFv2(pass, user, domain, buff);
     }
 
     // client method
@@ -313,18 +315,16 @@ public:
     // - NtChallengeResponse
     // - LmChallengeResponse
     // all strings are in unicode utf16
-    void ntlmv2_compute_response_from_challenge(const uint8_t * pass,   size_t pass_size,
-                                                const uint8_t * user,   size_t user_size,
-                                                const uint8_t * domain, size_t domain_size) {
+    void ntlmv2_compute_response_from_challenge(array_view_const_u8 pass,
+                                                array_view_const_u8 user,
+                                                array_view_const_u8 domain) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response from challenge");
         }
         uint8_t ResponseKeyNT[16] = {};
         uint8_t ResponseKeyLM[16] = {};
-        this->NTOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-                ResponseKeyNT, sizeof(ResponseKeyNT));
-        this->LMOWFv2(pass, pass_size, user, user_size, domain, domain_size,
-                ResponseKeyLM, sizeof(ResponseKeyLM));
+        this->NTOWFv2(pass, user, domain, make_array_view(ResponseKeyNT));
+        this->LMOWFv2(pass, user, domain, make_array_view(ResponseKeyLM));
 
         // struct NTLMv2_Client_Challenge = temp
         // temp = { 0x01, 0x01, Z(6), Time, ClientChallenge, Z(4), ServerName , Z(4) }
@@ -465,11 +465,11 @@ public:
      * @param signing_key Destination signing key
      */
 
-    void ntlm_generate_signing_key(const uint8_t * sign_magic, size_t magic_size, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
+    void ntlm_generate_signing_key(array_view_const_u8 sign_magic, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5sign;
         md5sign.update({this->ExportedSessionKey, 16});
-        md5sign.update({sign_magic, magic_size});
+        md5sign.update(sign_magic);
         md5sign.final(signing_key);
     }
 
@@ -481,7 +481,7 @@ public:
 
     void ntlm_generate_client_signing_key()
     {
-        this->ntlm_generate_signing_key(client_sign_magic, sizeof(client_sign_magic),
+        this->ntlm_generate_signing_key(make_array_view(client_sign_magic),
                                         this->ClientSigningKey);
     }
 
@@ -492,7 +492,7 @@ public:
 
     void ntlm_generate_server_signing_key()
     {
-        this->ntlm_generate_signing_key(server_sign_magic, sizeof(server_sign_magic),
+        this->ntlm_generate_signing_key(make_array_view(server_sign_magic),
                                         this->ServerSigningKey);
     }
 
@@ -504,11 +504,11 @@ public:
      * @param sealing_key Destination sealing key
      */
 
-    void ntlm_generate_sealing_key(const uint8_t * seal_magic, size_t magic_size, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
+    void ntlm_generate_sealing_key(array_view_const_u8 seal_magic, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5seal;
         md5seal.update(make_array_view(this->ExportedSessionKey));
-        md5seal.update({seal_magic, magic_size});
+        md5seal.update(seal_magic);
         md5seal.final(sealing_key);
     }
 
@@ -519,8 +519,7 @@ public:
 
     void ntlm_generate_client_sealing_key()
     {
-        ntlm_generate_sealing_key(client_seal_magic, sizeof(client_seal_magic),
-                                  this->ClientSealingKey);
+        ntlm_generate_sealing_key(make_array_view(client_seal_magic), this->ClientSealingKey);
     }
 
     /**
@@ -530,8 +529,7 @@ public:
 
     void ntlm_generate_server_sealing_key()
     {
-        ntlm_generate_sealing_key(server_seal_magic, sizeof(server_seal_magic),
-                                  this->ServerSealingKey);
+        ntlm_generate_sealing_key(make_array_view(server_seal_magic), this->ServerSealingKey);
     }
 
     void ntlm_compute_MIC() {
@@ -592,7 +590,7 @@ public:
     }
 
     // server check nt response
-    bool ntlm_check_nt_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
+    bool ntlm_check_nt_response_from_authenticate(array_view_const_u8 hash) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Check NtResponse");
         }
@@ -617,14 +615,11 @@ public:
         // LOG(LOG_INFO, "DomainName size = %u", DomainName.size());
         // LOG(LOG_INFO, "hash size = %u", hash_size);
 
-        this->NTOWFv2_FromHash(hash, hash_size,
-                               UserName.get_data(), UserName.size(),
-                               DomainName.get_data(), DomainName.size(),
-                               ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
-        hmac_md5resp.update({this->ServerChallenge, 8});
+        hmac_md5resp.update(make_array_view(this->ServerChallenge));
         hmac_md5resp.update({temp, temp_size});
         hmac_md5resp.final(NtProofStr);
 
@@ -632,7 +627,7 @@ public:
     }
 
     // Server check lm response
-    bool ntlm_check_lm_response_from_authenticate(const uint8_t * hash, size_t hash_size) {
+    bool ntlm_check_lm_response_from_authenticate(array_view_const_u8 hash) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Check LmResponse");
         }
@@ -651,10 +646,7 @@ public:
 
         uint8_t compute_response[SslMd5::DIGEST_LENGTH] = {};
         uint8_t ResponseKeyLM[16] = {};
-        this->NTOWFv2_FromHash(hash, hash_size,
-                               UserName.get_data(), UserName.size(),
-                               DomainName.get_data(), DomainName.size(),
-                               ResponseKeyLM);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyLM);
 
         SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
         hmac_md5resp.update({this->ServerChallenge, 8});
@@ -665,7 +657,7 @@ public:
     }
 
     // server compute Session Base Key
-    void ntlm_compute_session_base_key(const uint8_t * hash, size_t hash_size) {
+    void ntlm_compute_session_base_key(array_view_const_u8 hash) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute Session Base Key");
         }
@@ -677,10 +669,7 @@ public:
             .in_copy_bytes(NtProofStr, 16);
         AuthNtResponse.ostream.rewind();
         uint8_t ResponseKeyNT[16] = {};
-        this->NTOWFv2_FromHash(hash, hash_size,
-                               UserName.get_data(), UserName.size(),
-                               DomainName.get_data(), DomainName.size(),
-                               ResponseKeyNT);
+        this->NTOWFv2_FromHash(hash, UserName.av(), DomainName.av(), ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
         SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
@@ -864,16 +853,14 @@ public:
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
     // all strings are in unicode utf16
-    void ntlm_client_build_authenticate(const uint8_t * password, size_t pass_size,
-                                        const uint8_t * userName, size_t user_size,
-                                        const uint8_t * userDomain, size_t domain_size,
-                                        const uint8_t * workstation, size_t work_size) {
+    void ntlm_client_build_authenticate(array_view_const_u8 password,
+                                        array_view_const_u8 userName,
+                                        array_view_const_u8 userDomain,
+                                        array_view_const_u8 workstation) {
         if (this->server) {
             return;
         }
-        this->ntlmv2_compute_response_from_challenge(password, pass_size,
-                                                     userName, user_size,
-                                                     userDomain, domain_size);
+        this->ntlmv2_compute_response_from_challenge(password, userName, userDomain);
         this->ntlm_encrypt_random_session_key();
         this->ntlm_generate_client_signing_key();
         this->ntlm_generate_client_sealing_key();
@@ -898,19 +885,19 @@ public:
         if (flag & NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED) {
             auto & workstationbuff = this->AUTHENTICATE_MESSAGE.Workstation.buffer;
             workstationbuff.reset();
-            workstationbuff.ostream.out_copy_bytes(workstation, work_size);
+            workstationbuff.ostream.out_copy_bytes(workstation);
             workstationbuff.mark_end();
         }
 
         //flag |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
         auto & domain = this->AUTHENTICATE_MESSAGE.DomainName.buffer;
         domain.reset();
-        domain.ostream.out_copy_bytes(userDomain, domain_size);
+        domain.ostream.out_copy_bytes(userDomain);
         domain.mark_end();
 
         auto & user = this->AUTHENTICATE_MESSAGE.UserName.buffer;
         user.reset();
-        user.ostream.out_copy_bytes(userName, user_size);
+        user.ostream.out_copy_bytes(userName);
         user.mark_end();
 
         // this->AUTHENTICATE_MESSAGE.version.ntlm_get_version_info();
@@ -927,9 +914,7 @@ public:
 
         if (this->identity.Password.size() > 0) {
             // password is available
-            this->hash_password(this->identity.Password.get_data(),
-                                this->identity.Password.size(),
-                                hash);
+            this->hash_password(this->identity.Password.av(), hash);
         }
     }
 
@@ -938,16 +923,16 @@ public:
         if (!this->server) {
             return SEC_E_INTERNAL_ERROR;
         }
-        if (!this->ntlm_check_nt_response_from_authenticate(hash, 16)) {
+        if (!this->ntlm_check_nt_response_from_authenticate(make_array_view(hash))) {
             LOG(LOG_ERR, "NT RESPONSE NOT MATCHING STOP AUTHENTICATE");
             return SEC_E_LOGON_DENIED;
         }
-        if (!this->ntlm_check_lm_response_from_authenticate(hash, 16)) {
+        if (!this->ntlm_check_lm_response_from_authenticate(make_array_view(hash))) {
             LOG(LOG_ERR, "LM RESPONSE NOT MATCHING STOP AUTHENTICATE");
             return SEC_E_LOGON_DENIED;
         }
         // SERVER COMPUTE SHARED KEY WITH CLIENT
-        this->ntlm_compute_session_base_key(hash, 16);
+        this->ntlm_compute_session_base_key(make_array_view(hash));
         this->ntlm_decrypt_exported_session_key();
 
         this->ntlm_generate_client_signing_key();
@@ -981,6 +966,8 @@ public:
             this->SendWorkstationName = false;
         }
     }
+
+    // TODO array_view_const_u8
     void ntlm_SetContextServicePrincipalName(const uint8_t * pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
         if (pszTargetName) {
@@ -1063,14 +1050,10 @@ public:
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }
         SEC_WINNT_AUTH_IDENTITY & id = this->identity;
-        this->ntlm_client_build_authenticate(id.Password.get_data(),
-                                             id.Password.size(),
-                                             id.User.get_data(),
-                                             id.User.size(),
-                                             id.Domain.get_data(),
-                                             id.Domain.size(),
-                                             this->Workstation.get_data(),
-                                             this->Workstation.size());
+        this->ntlm_client_build_authenticate(id.Password.av(),
+                                             id.User.av(),
+                                             id.Domain.av(),
+                                             this->Workstation.av());
         StaticOutStream<65535> out_stream;
         if (this->UseMIC) {
             this->AUTHENTICATE_MESSAGE.ignore_mic = true;

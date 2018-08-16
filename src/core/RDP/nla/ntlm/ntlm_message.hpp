@@ -547,6 +547,10 @@ struct NtlmField {
             this->in_sz = this->ostream.get_offset();
         }
 
+        array_view_const_u8 av() const {
+            return {this->get_data(), this->size()};
+        }
+
         uint8_t * get_data() {
             return this->ostream.get_data();
         }
@@ -560,7 +564,7 @@ struct NtlmField {
         }
 
         InStream in_stream() const {
-            return InStream(this->ostream.get_data(), this->in_sz);
+            return InStream(this->av());
         }
 
         void reset() {
