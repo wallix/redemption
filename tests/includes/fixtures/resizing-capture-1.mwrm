@@ -1,0 +1,9 @@
+v2
+800 600
+nochecksum
+
+
+./resizing-capture-1-000000.wrm 0 0 0 0 0 0 0 0 1000 1004
+./resizing-capture-1-000001.wrm 0 0 0 0 0 0 0 0 1004 1005
+./resizing-capture-1-000002.wrm 0 0 0 0 0 0 0 0 1005 1007
+./resizing-capture-1-000003.wrm 0 0 0 0 0 0 0 0 1007 1009
