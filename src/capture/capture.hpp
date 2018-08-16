@@ -290,9 +290,9 @@ private:
             }
         }
 
-        void set_row(std::size_t rownum, const uint8_t * data) override {
+        void set_row(std::size_t rownum, const uint8_t * data, size_t data_length) override {
             for (gdi::GraphicApi & gd : this->gds){
-                gd.set_row(rownum, data);
+                gd.set_row(rownum, data, data_length);
             }
         }
 
@@ -427,7 +427,7 @@ public:
 
     void update_config(bool enable_rt_display);
 
-    void set_row(size_t rownum, const uint8_t * data) override;
+    void set_row(size_t rownum, const uint8_t * data, size_t data_length) override;
 
     void sync() override
     {

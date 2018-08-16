@@ -50,6 +50,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/png.hpp"
+#include "utils/region.hpp"
 #include "utils/stream.hpp"
 #include "utils/timestamp_tracer.hpp"
 
@@ -1769,6 +1770,17 @@ Capture::~Capture()
 
 void Capture::resize(uint16_t width, uint16_t height) {
     if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {
+        if ((this->gd_drawable->width() != width) ||
+            (this->gd_drawable->height() != height)) {
+            SubRegion region;
+            region.add_rect(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
+            region.subtract_rect(Rect(0, 0, width, height));
+
+            for (Rect const & rect : region.rects) {
+                this->gd_drawable->draw(RDPOpaqueRect(rect, encode_color24()(BLACK)), rect, gdi::ColorCtx::depth24());
+            }
+        }
+
         return;
     }
 
@@ -1799,10 +1811,10 @@ void Capture::update_config(bool enable_rt_display)
     }
 }
 
-void Capture::set_row(size_t rownum, const uint8_t * data)
+void Capture::set_row(size_t rownum, const uint8_t * data, size_t data_length)
 {
     if (this->capture_drawable) {
-        this->gd_drawable->set_row(rownum, data);
+        this->gd_drawable->set_row(rownum, data, data_length);
     }
 }
 

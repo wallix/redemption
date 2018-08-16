@@ -98,8 +98,8 @@ public:
         this->get_graphic_proxy().sync();
     }
 
-    void set_row(std::size_t rownum, const uint8_t * data) override {
-        this->get_graphic_proxy().set_row(rownum, data);
+    void set_row(std::size_t rownum, const uint8_t * data, size_t data_length) override {
+        this->get_graphic_proxy().set_row(rownum, data, data_length);
     }
 
     void begin_update() override {
