@@ -164,8 +164,8 @@ RED_AUTO_TEST_CASE(TestSubArray)
     RED_CHECK_EQUAL_RANGES(a.first(3), cstr_array_view("abc"));
     RED_CHECK_EQUAL_RANGES(a.last(1), cstr_array_view("d"));
     RED_CHECK_EQUAL_RANGES(a.last(3), cstr_array_view("bcd"));
-    RED_CHECK_EQUAL_RANGES(a.subarray(3), cstr_array_view("d"));
-    RED_CHECK_EQUAL_RANGES(a.subarray(1), cstr_array_view("bcd"));
+    RED_CHECK_EQUAL_RANGES(a.array_from_offset(3), cstr_array_view("d"));
+    RED_CHECK_EQUAL_RANGES(a.array_from_offset(1), cstr_array_view("bcd"));
     RED_CHECK_EQUAL_RANGES(a.subarray(1, 2), cstr_array_view("bc"));
 }
 

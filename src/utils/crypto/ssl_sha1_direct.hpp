@@ -50,20 +50,21 @@ public:
         this->ctx.count[1] = 0;
     }
 
-    void update(const uint8_t * const data, size_t data_size) noexcept
+    void update(const_byte_array data) noexcept
     {
         uint32_t i;
 
         uint32_t j = this->ctx.count[0];
-        if ((this->ctx.count[0] += data_size << 3) < j){
+        if ((this->ctx.count[0] += data.size() << 3) < j){
             this->ctx.count[1]++;
         }
-        this->ctx.count[1] += (data_size>>29);
+        this->ctx.count[1] += (data.size()>>29);
         j = (j >> 3) & 63;
-        if ((j + data_size) > 63) {
-            memcpy(&this->ctx.buffer[j], data, (i = 64-j));
+        if ((j + data.size()) > 63) {
+            i = 64-j;
+            memcpy(&this->ctx.buffer[j], data.data(), i);
             this->SHA1Transform(this->ctx.state, this->ctx.buffer);
-            for ( ; i + 63 < data_size; i += 64) {
+            for ( ; i + 63 < data.size(); i += 64) {
                 this->SHA1Transform(this->ctx.state, &data[i]);
             }
             j = 0;
@@ -71,28 +72,30 @@ public:
         else {
             i = 0;
         }
-        memcpy(&this->ctx.buffer[j], &data[i], data_size - i);    
+
+        auto data_remaining = data.array_from_offset(i);
+        memcpy(&this->ctx.buffer[j], data_remaining.data(), data_remaining.size());
     }
 
-    void final(unsigned char digest[DIGEST_LENGTH]) noexcept
+    void final(uint8_t digest[DIGEST_LENGTH]) noexcept
     {
         /* Add padding and return the message digest. */
-        unsigned char finalcount[8];
+        uint8_t finalcount[8];
 
         for (unsigned i = 0; i < 8; i++) {
-            finalcount[i] = static_cast<unsigned char>((this->ctx.count[(i >= 4 ? 0 : 1)]
+            finalcount[i] = static_cast<uint8_t>((this->ctx.count[(i >= 4 ? 0 : 1)]
              >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
         }
 
-        unsigned char c = 0200;
-        this->update(&c, 1);
+        uint8_t c = 0200;
+        this->update({&c, 1});
         while ((this->ctx.count[0] & 504) != 448) {
         c = 0000;
-            this->update(&c, 1);
+            this->update({&c, 1});
         }
-        this->update(finalcount, 8);  /* Should cause a SHA1Transform() */
+        this->update(make_array_view(finalcount));  /* Should cause a SHA1Transform() */
         for (unsigned i = 0; i < 20; i++) {
-            digest[i] = static_cast<unsigned char>
+            digest[i] = static_cast<uint8_t>
              ((this->ctx.state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
         }
         /* Wipe variables */
@@ -104,7 +107,7 @@ private:
     struct sha1 {
         uint32_t state[5];
         uint32_t count[2];
-        unsigned char buffer[64];
+        uint8_t buffer[64];
     } ctx;
 
 
@@ -113,7 +116,7 @@ private:
         return ( (value << bits) | (value >> (32 - bits)) );
     }
 
-    static uint32_t PUT_UINT32(int j, uint32_t value, unsigned char * block) noexcept
+    static uint32_t PUT_UINT32(int j, uint32_t value, uint8_t * block) noexcept
     {
         uint8_t a = (value >> 24) & 0xFF;
         uint8_t b = (value >> 16) & 0xFF;
@@ -126,7 +129,7 @@ private:
         return value;
     }
 
-    static uint32_t blk0(int j, unsigned char * block) noexcept
+    static uint32_t blk0(int j, uint8_t * block) noexcept
     {
         return  (block[j+0] << 24)
             + (block[j+1] << 16)
@@ -134,7 +137,7 @@ private:
             + block[j+3];
     }
 
-    static uint32_t blk1(int j, unsigned char * block) noexcept
+    static uint32_t blk1(int j, uint8_t * block) noexcept
     {
         return  (block[j+3] << 24)
             + (block[j+2] << 16)
@@ -142,7 +145,7 @@ private:
             + block[j+0];
     }
 
-    static uint32_t block_xor(unsigned i, unsigned char * block) noexcept
+    static uint32_t block_xor(unsigned i, uint8_t * block) noexcept
     {
         return blk1(((i+13)&15)*4, block)
             ^ blk1(((i+8)&15)*4, block)
@@ -151,31 +154,31 @@ private:
     }
 
     /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
-    static void R0(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, unsigned char * block) noexcept
+    static void R0(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, uint8_t * block) noexcept
     {
         z += ((w&(x^y))^y) + PUT_UINT32(i*4, blk0(i*4, block), block) + 0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    static void R1(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, unsigned char * block) noexcept
+    static void R1(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, uint8_t * block) noexcept
     {
         z+=((w&(x^y))^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x5A827999 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    static void R2(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, unsigned char * block) noexcept
+    static void R2(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, uint8_t * block) noexcept
     {
         z+=(w^x^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x6ED9EBA1 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    static void R3(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, unsigned char * block) noexcept
+    static void R3(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, uint8_t * block) noexcept
     {
         z+=(((w|x)&y)|(w&x))+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0x8F1BBCDC + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
     }
 
-    static void R4(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, unsigned char * block) noexcept
+    static void R4(uint32_t v, uint32_t & w, uint32_t x, uint32_t y, uint32_t & z, int i, uint8_t * block) noexcept
     {
         z+=(w^x^y)+PUT_UINT32((i&15)*4, rol(block_xor(i, block),1), block)+0xCA62C1D6 + ( (v << 5) | (v >> 27) );
         w = (w << 30) | (w >> 2);
@@ -183,9 +186,9 @@ private:
 
 
     /* Hash a single 512-bit block. This is the core of the algorithm. */
-    static void SHA1Transform(uint32_t state[5], const unsigned char buffer[64]) noexcept
+    static void SHA1Transform(uint32_t state[5], const uint8_t buffer[64]) noexcept
     {
-        unsigned char block[64];
+        uint8_t block[64];
         memcpy(block, buffer, 64);
 
         /* Copy this->ctx.state[] to working vars */

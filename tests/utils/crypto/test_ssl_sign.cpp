@@ -25,16 +25,11 @@
 
 RED_AUTO_TEST_CASE(TestSign)
 {
-    const uint8_t key[] = "key";
-    // const uint8_t key[] = "";
-    Sign hmac(key, sizeof(key) - 1);
+    Sign hmac(cstr_array_view("key"));
 
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg) - 1);
+    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[16];
-    hmac.final(sig, sizeof(sig));
-    // hexdump96_c(sig, sizeof(sig));
+    hmac.final(sig);
     RED_CHECK_MEM_AC(sig, "\x10\xfb\x60\x2c\xef\xe7\xe0\x0b\x91\xc2\xe2\x12\x39\x80\xe1\x94");
 }

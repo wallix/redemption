@@ -973,8 +973,7 @@ public:
                 char clipboard_based_launcher_cookie[32];
                 {
                     SslSha1 sha1;
-                    sha1.update(byte_ptr_cast(this->session_probe_target_informations.c_str()),
-                        this->session_probe_target_informations.length());
+                    sha1.update(this->session_probe_target_informations);
 
                     uint8_t sig[SslSha1::DIGEST_LENGTH];
                     sha1.final(sig);
@@ -1485,24 +1484,6 @@ protected:
     }
 
 public:
-    static void get_proxy_managed_connection_cookie(const char * target_informations,
-            size_t target_informations_length, char (&cookie)[9]) {
-        SslSha1 sha1;
-        sha1.update(byte_ptr_cast(target_informations), target_informations_length);
-        uint8_t sig[SslSha1::DIGEST_LENGTH];
-        sha1.final(sig);
-
-        static_assert(((sizeof(cookie) % 2) == 1), "Buffer size must be an odd number");
-
-        char * temp = cookie;
-        ::memset(cookie, 0, sizeof(cookie));
-        for (unsigned i = 0, c = std::min<unsigned>(sizeof(cookie) / 2, sizeof(sig) / 2);
-             i < c; ++i) {
-            snprintf(temp, 3, "%02X", sig[i]);
-            temp += 2;
-        }
-    }
-
     void configure_extra_orders(const char * extra_orders) {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);

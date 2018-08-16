@@ -119,15 +119,15 @@ public:
             this->sha1_is_init_ = true;
             SslSha1 sha1;
             if (this->bpp_ == 8) {
-                sha1.update(this->data_palette(), sizeof(BGRPalette));
+                sha1.update({this->data_palette(), sizeof(BGRPalette)});
             }
-            sha1.update(&this->bpp_, sizeof(this->bpp_));
-            sha1.update(Uint16_le(this->cx_).array, sizeof(this->cx_));
-            sha1.update(Uint16_le(this->cy_).array, sizeof(this->cy_));
+            sha1.update({&this->bpp_, sizeof(this->bpp_)});
+            sha1.update(Uint16_le(this->cx_));
+            sha1.update(Uint16_le(this->cy_));
             const uint8_t * first = this->get();
             const uint8_t * last = first + this->cy_ * this->line_size_;
             for (; first != last; first += this->line_size_) {
-                sha1.update(first, this->line_size_);
+                sha1.update({first, this->line_size_});
             }
             sha1.final(this->sha1_);
         }

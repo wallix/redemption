@@ -2605,7 +2605,7 @@ namespace LIC
 
         uint8_t MACData[16];
 
-        NewLicense_Recv(InStream & stream, uint8_t license_key[]) {
+        NewLicense_Recv(InStream & stream, uint8_t (&license_key)[16]) {
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
              */
             unsigned expected = 8;
@@ -2624,7 +2624,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(license_key, 16);
+            rc4.set_key(make_array_view(license_key));
 
             if (!stream.in_check_rem(this->licenseInfo.wBlobLen)){
                 LOG(LOG_ERR, "Licence NewLicense_Recv : Truncated license data, need=%u, remains=%zu",
@@ -2802,7 +2802,7 @@ namespace LIC
 
         uint8_t MACData[16];
 
-        UpgradeLicense_Recv(InStream & stream, uint8_t license_key[]){
+        UpgradeLicense_Recv(InStream & stream, uint8_t (&license_key)[16]){
             /* wMsgType(1) + bVersion(1) + wMsgSize(2) + wBlobType(2) + wBlobLen(2)
              */
             unsigned expected = 8;
@@ -2821,7 +2821,7 @@ namespace LIC
 
             // following data is encrypted using license_key
             SslRC4 rc4;
-            rc4.set_key(license_key, 16);
+            rc4.set_key(make_array_view(license_key));
 
             uint8_t * data = const_cast<uint8_t*>(stream.get_current());
             // size, in, out

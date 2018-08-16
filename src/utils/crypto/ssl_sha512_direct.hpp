@@ -39,12 +39,12 @@ public:
         this->sha512_init();
     }
 
-    void update(const uint8_t * const data, size_t data_size) noexcept
+    void update(const_byte_array data) noexcept
     {
-        this->sha512_update(data, data_size);
+        this->sha512_update(data.to_u8p(), data.size());
     }
 
-    void final(uint8_t * out_data) noexcept
+    void final(uint8_t (&out_data)[DIGEST_LENGTH]) noexcept
     {
         this->sha512_sum(out_data);
     }

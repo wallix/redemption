@@ -71,14 +71,17 @@ private:
     const bool SendVersionInfo = true;
     const bool confidentiality = true;
 
+    using array16 = uint8_t[16];
+
 public:
     SslRC4 SendRc4Seal {};
     SslRC4 RecvRc4Seal {};
-    uint8_t* SendSigningKey = nullptr;
-    uint8_t* RecvSigningKey = nullptr;
+    array16* SendSigningKey = nullptr;
+    array16* RecvSigningKey = nullptr;
 private:
-    uint8_t* SendSealingKey = nullptr;
-    uint8_t* RecvSealingKey = nullptr;
+    // TODO unused
+    array16* SendSealingKey = nullptr;
+    array16* RecvSealingKey = nullptr;
 
 public:
     uint32_t NegotiateFlags = 0;
@@ -145,7 +148,6 @@ public:
         //, SendSingleHostData(false)
         , verbose(verbose)
     {
-        // this->LmCompatibilityLevel = 3;
         memset(this->MachineID, 0xAA, sizeof(this->MachineID));
         memset(this->MessageIntegrityCheck, 0x00, sizeof(this->MessageIntegrityCheck));
 
@@ -160,7 +162,6 @@ public:
     /**
      * Generate timestamp for AUTHENTICATE_MESSAGE.
      */
-
     void ntlm_generate_timestamp()
     {
         if (this->verbose) {
@@ -243,23 +244,23 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext NTOWFv2 Hash");
         }
-        SslHMAC_Md5 hmac_md5(hash, hash_size);
+        SslHMAC_Md5 hmac_md5({hash, hash_size});
 
         auto unique_userup = std::make_unique<uint8_t[]>(user_size);
         uint8_t * userup = unique_userup.get();
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size);
-        hmac_md5.update(userup, user_size);
+        hmac_md5.update({userup, user_size});
         unique_userup.reset();
 
-        // hmac_md5.update(user, user_size);
-        hmac_md5.update(domain, domain_size);
+        // hmac_md5.update({user, user_size});
+        hmac_md5.update({domain, domain_size});
         hmac_md5.final(buff);
     }
     // all strings are in unicode utf16
     void hash_password(const uint8_t * pass, size_t pass_size, uint8_t (&hash)[SslMd4::DIGEST_LENGTH]) {
         SslMd4 md4;
-        md4.update(pass, pass_size);
+        md4.update({pass, pass_size});
         md4.final(hash);
     }
 
@@ -274,22 +275,22 @@ public:
         SslMd4 md4;
         uint8_t md4password[SslMd4::DIGEST_LENGTH] = {};
 
-        md4.update(pass, pass_size);
+        md4.update({pass, pass_size});
         md4.final(md4password);
 
-        SslHMAC_Md5 hmac_md5(md4password, sizeof(md4password));
+        SslHMAC_Md5 hmac_md5(make_array_view(md4password));
 
         auto unique_userup = std::make_unique<uint8_t[]>(user_size);
         uint8_t * userup = unique_userup.get();
         memcpy(userup, user, user_size);
         UTF16Upper(userup, user_size);
-        hmac_md5.update(userup, user_size);
+        hmac_md5.update({userup, user_size});
         unique_userup.reset();
 
         uint8_t tmp_md5[SslMd5::DIGEST_LENGTH] = {};
 
         userup = nullptr;
-        hmac_md5.update(domain, domain_size);
+        hmac_md5.update({domain, domain_size});
         hmac_md5.final(tmp_md5);
         // TODO: check if buff_size is SslMd5::DIGEST_LENGTH
         // if it is so no need to use a temporary variable
@@ -358,11 +359,11 @@ public:
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Compute response: NtProofStr");
         }
-        SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
+        SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
 
         this->ntlm_get_server_challenge();
-        hmac_md5resp.update(this->ServerChallenge, 8);
-        hmac_md5resp.update(temp, temp_size);
+        hmac_md5resp.update({this->ServerChallenge, 8});
+        hmac_md5resp.update({temp, temp_size});
         hmac_md5resp.final(NtProofStr);
 
         // NtChallengeResponse = Concat(NtProofStr, temp)
@@ -394,10 +395,10 @@ public:
         }
         auto & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
         // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-        SslHMAC_Md5 hmac_md5lmresp(ResponseKeyLM, sizeof(ResponseKeyLM));
+        SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
         LmChallengeResponse.reset();
-        hmac_md5lmresp.update(this->ServerChallenge, 8);
-        hmac_md5lmresp.update(this->ClientChallenge, 8);
+        hmac_md5lmresp.update({this->ServerChallenge, 8});
+        hmac_md5lmresp.update({this->ClientChallenge, 8});
         uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
         hmac_md5lmresp.final(LCResponse);
 
@@ -410,8 +411,8 @@ public:
         }
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
-        SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
-        hmac_md5seskey.update(NtProofStr, sizeof(NtProofStr));
+        SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
+        hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
         hmac_md5seskey.final(this->SessionBaseKey);
     }
 
@@ -419,7 +420,8 @@ public:
     void ntlm_rc4k(uint8_t* key, int length, uint8_t* plaintext, uint8_t* ciphertext)
     {
         SslRC4 rc4;
-        rc4.set_key(key, 16);
+        // TODO check size
+        rc4.set_key({key, 16});
         rc4.crypt(length, plaintext, ciphertext);
     }
 
@@ -466,8 +468,8 @@ public:
     void ntlm_generate_signing_key(const uint8_t * sign_magic, size_t magic_size, uint8_t (&signing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5sign;
-        md5sign.update(this->ExportedSessionKey, 16);
-        md5sign.update(sign_magic, magic_size);
+        md5sign.update({this->ExportedSessionKey, 16});
+        md5sign.update({sign_magic, magic_size});
         md5sign.final(signing_key);
     }
 
@@ -505,8 +507,8 @@ public:
     void ntlm_generate_sealing_key(const uint8_t * seal_magic, size_t magic_size, uint8_t (&sealing_key)[SslMd5::DIGEST_LENGTH])
     {
         SslMd5 md5seal;
-        md5seal.update(this->ExportedSessionKey, 16);
-        md5seal.update(seal_magic, magic_size);
+        md5seal.update(make_array_view(this->ExportedSessionKey));
+        md5seal.update({seal_magic, magic_size});
         md5seal.final(sealing_key);
     }
 
@@ -533,13 +535,10 @@ public:
     }
 
     void ntlm_compute_MIC() {
-        SslHMAC_Md5 hmac_md5resp(this->ExportedSessionKey, 16);
-        hmac_md5resp.update(this->SavedNegotiateMessage.get_data(),
-                            this->SavedNegotiateMessage.size());
-        hmac_md5resp.update(this->SavedChallengeMessage.get_data(),
-                            this->SavedChallengeMessage.size());
-        hmac_md5resp.update(this->SavedAuthenticateMessage.get_data(),
-                            this->SavedAuthenticateMessage.size());
+        SslHMAC_Md5 hmac_md5resp(make_array_view(this->ExportedSessionKey));
+        hmac_md5resp.update(this->SavedNegotiateMessage.av());
+        hmac_md5resp.update(this->SavedChallengeMessage.av());
+        hmac_md5resp.update(this->SavedAuthenticateMessage.av());
         hmac_md5resp.final(this->MessageIntegrityCheck);
     }
 
@@ -557,10 +556,10 @@ public:
     //    // LmChallengeResponse.ChallengeFromClient = ClientChallenge
     //    BStream & LmChallengeResponse = this->AUTHENTICATE_MESSAGE.LmChallengeResponse.Buffer;
     //    // BStream & LmChallengeResponse = this->BuffLmChallengeResponse;
-    //    SslHMAC_Md5 hmac_md5lmresp(ResponseKeyLM, sizeof(ResponseKeyLM));
+    //    SslHMAC_Md5 hmac_md5lmresp(make_array_view(ResponseKeyLM));
     //    LmChallengeResponse.reset();
-    //    hmac_md5lmresp.update(this->ServerChallenge, 8);
-    //    hmac_md5lmresp.update(this->ClientChallenge, 8);
+    //    hmac_md5lmresp.update({this->ServerChallenge, 8});
+    //    hmac_md5lmresp.update({this->ClientChallenge, 8});
     //    uint8_t LCResponse[SslMd5::DIGEST_LENGTH] = {};
     //    hmac_md5lmresp.final(LCResponse);
     //    LmChallengeResponse.out_copy_bytes(LCResponse, 16);
@@ -577,19 +576,19 @@ public:
     void ntlm_init_rc4_seal_states()
     {
         if (this->server) {
-            this->SendSigningKey = this->ServerSigningKey;
-            this->RecvSigningKey = this->ClientSigningKey;
-            this->SendSealingKey = this->ClientSealingKey;
-            this->RecvSealingKey = this->ServerSealingKey;
+            this->SendSigningKey = &this->ServerSigningKey;
+            this->RecvSigningKey = &this->ClientSigningKey;
+            this->SendSealingKey = &this->ClientSealingKey;
+            this->RecvSealingKey = &this->ServerSealingKey;
         }
         else {
-            this->SendSigningKey = this->ClientSigningKey;
-            this->RecvSigningKey = this->ServerSigningKey;
-            this->SendSealingKey = this->ServerSealingKey;
-            this->RecvSealingKey = this->ClientSealingKey;
+            this->SendSigningKey = &this->ClientSigningKey;
+            this->RecvSigningKey = &this->ServerSigningKey;
+            this->SendSealingKey = &this->ServerSealingKey;
+            this->RecvSealingKey = &this->ClientSealingKey;
         }
-        this->SendRc4Seal.set_key(this->RecvSealingKey, 16);
-        this->RecvRc4Seal.set_key(this->SendSealingKey, 16);
+        this->SendRc4Seal.set_key(make_array_view(*this->RecvSealingKey));
+        this->RecvRc4Seal.set_key(make_array_view(*this->SendSealingKey));
     }
 
     // server check nt response
@@ -624,9 +623,9 @@ public:
                                ResponseKeyNT);
         // LOG(LOG_INFO, "ResponseKeyNT");
         // hexdump_c(ResponseKeyNT, sizeof(ResponseKeyNT));
-        SslHMAC_Md5 hmac_md5resp(ResponseKeyNT, sizeof(ResponseKeyNT));
-        hmac_md5resp.update(this->ServerChallenge, 8);
-        hmac_md5resp.update(temp, temp_size);
+        SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyNT));
+        hmac_md5resp.update({this->ServerChallenge, 8});
+        hmac_md5resp.update({temp, temp_size});
         hmac_md5resp.final(NtProofStr);
 
         return !memcmp(NtProofStr, NtProofStr_from_msg, 16);
@@ -657,9 +656,9 @@ public:
                                DomainName.get_data(), DomainName.size(),
                                ResponseKeyLM);
 
-        SslHMAC_Md5 hmac_md5resp(ResponseKeyLM, sizeof(ResponseKeyLM));
-        hmac_md5resp.update(this->ServerChallenge, 8);
-        hmac_md5resp.update(this->ClientChallenge, 8);
+        SslHMAC_Md5 hmac_md5resp(make_array_view(ResponseKeyLM));
+        hmac_md5resp.update({this->ServerChallenge, 8});
+        hmac_md5resp.update({this->ClientChallenge, 8});
         hmac_md5resp.final(compute_response);
 
         return !memcmp(response, compute_response, 16);
@@ -684,8 +683,8 @@ public:
                                ResponseKeyNT);
         // SessionBaseKey = HMAC_MD5(NTOWFv2(password, user, userdomain),
         //                           NtProofStr)
-        SslHMAC_Md5 hmac_md5seskey(ResponseKeyNT, sizeof(ResponseKeyNT));
-        hmac_md5seskey.update(NtProofStr, sizeof(NtProofStr));
+        SslHMAC_Md5 hmac_md5seskey(make_array_view(ResponseKeyNT));
+        hmac_md5seskey.update({NtProofStr, sizeof(NtProofStr)});
         hmac_md5seskey.final(this->SessionBaseKey);
     }
 

@@ -40,7 +40,7 @@ struct BlockTransport : Transport
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
         memcpy(buffer, this->data.to_u8p(), n);
-        this->data = this->data.subarray(n);
+        this->data = this->data.array_from_offset(n);
         return n;
     }
 
@@ -144,7 +144,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     for (int i = 0; i < 84; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
@@ -155,7 +155,7 @@ RED_AUTO_TEST_CASE(Test2Read1)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read10)
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     for (int i = 0; i < 7; ++i) {
         buf.load_data(t); RED_CHECK(!buf.next_pdu());
@@ -183,7 +183,7 @@ RED_AUTO_TEST_CASE(Test2Read10)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read100)
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     buf.load_data(t); RED_CHECK(buf.next_pdu());
     RED_CHECK_EQ(t.remaining(), 0);
@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE(Test2Read100)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 }
 
 RED_AUTO_TEST_CASE(Test2Read1000)
@@ -219,7 +219,7 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     auto av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 
     RED_CHECK(buf.next_pdu());
     RED_CHECK_EQ(t.remaining(), 0);
@@ -227,5 +227,5 @@ RED_AUTO_TEST_CASE(Test2Read1000)
     RED_CHECK(!buf.current_pdu_is_fast_path());
 
     av = buf.current_pdu_buffer();
-    RED_CHECK_MEM(av, data2.subarray(85));
+    RED_CHECK_MEM(av, data2.array_from_offset(85));
 }

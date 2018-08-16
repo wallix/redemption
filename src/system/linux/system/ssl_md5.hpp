@@ -39,9 +39,9 @@ public:
         MD5_Init(&this->md5);
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        MD5_Update(&this->md5, data, data_size);
+        MD5_Update(&this->md5, data.to_u8p(), data.size());
     }
 
     void final(uint8_t (&out_data)[DIGEST_LENGTH])

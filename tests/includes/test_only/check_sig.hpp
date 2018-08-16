@@ -57,7 +57,7 @@ namespace redemption_unit_test__
     inline void compute_av_sig(SigArray& sig, const_byte_array av)
     {
         SslSha1 sha1;
-        sha1.update(av.data(), av.size());
+        sha1.update(av);
         sha1.final(sig);
     }
 
@@ -65,7 +65,7 @@ namespace redemption_unit_test__
     {
         SslSha1 sha1;
         for (size_t y = 0; y < height; y++){
-            sha1.update(p + y * rowsize, rowsize);
+            sha1.update({p + y * rowsize, rowsize});
         }
         sha1.final(sig);
     }

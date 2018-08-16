@@ -23,6 +23,7 @@
 
 #include "system/ssl_sha1.hpp"
 #include "system/ssl_md5.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include <algorithm>
 
@@ -31,15 +32,13 @@
 class Sign
 {
     SslSha1 sha1;
-    const uint8_t * const key;
-    size_t key_size;
+    const const_byte_array key;
 
 public:
-    Sign(const uint8_t * const key, size_t key_size)
+    Sign(const_byte_array key)
         : key(key)
-        , key_size(key_size)
     {
-        this->sha1.update(this->key, this->key_size);
+        this->sha1.update(this->key);
         const uint8_t sha1const[40] = {
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -47,19 +46,20 @@ public:
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
             0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36
         };
-        sha1.update(sha1const, 40);
+        sha1.update(make_array_view(sha1const));
     }
 
-    void update(const uint8_t * const data, size_t data_size) {
-        this->sha1.update(data, data_size);
+    void update(const_byte_array data) {
+        this->sha1.update(data);
     }
 
-    void final(uint8_t * out, size_t out_size) {
+    template<std::size_t OutLen>
+    void final(uint8_t (&out)[OutLen]) {
         uint8_t shasig[SslSha1::DIGEST_LENGTH];
         this->sha1.final(shasig);
 
         SslMd5 md5;
-        md5.update(this->key, this->key_size);
+        md5.update(this->key);
         const uint8_t sigconst[48] = {
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
@@ -68,16 +68,18 @@ public:
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c,
             0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c, 0x5c
         };
-        md5.update(sigconst, sizeof(sigconst));
-        md5.update(shasig, sizeof(shasig));
+        md5.update(make_array_view(sigconst));
+        md5.update(make_array_view(shasig));
 
-        // TODO: check out_size provided to sign.final()
-        // if it's already MD5::DIGEST_LENGTH
-        // no need to provide it
+        static_assert(OutLen <= SslMd5::DIGEST_LENGTH);
 
-        uint8_t tmp[SslMd5::DIGEST_LENGTH];
-        md5.final(tmp);
-        memcpy(out, tmp, std::min(out_size, static_cast<size_t>(SslMd5::DIGEST_LENGTH)));
-
+        if constexpr (OutLen == SslMd5::DIGEST_LENGTH) {
+            md5.final(out);
+        }
+        else {
+            uint8_t tmp[SslMd5::DIGEST_LENGTH];
+            md5.final(tmp);
+            memcpy(out, tmp, OutLen);
+        }
     }
 };

@@ -24,6 +24,9 @@
 #include <cstring>
 #include <cassert>
 
+#include "utils/sugar/byte.hpp"
+
+
 namespace detail_ {
 
 /**
@@ -41,13 +44,17 @@ class basic_HMAC_direct
     Ssl context;
 
 public:
+    basic_HMAC_direct(const_byte_array key)
+      : basic_HMAC_direct(key.to_u8p(), key.size())
+    {}
+
     basic_HMAC_direct(const uint8_t * const key, size_t key_len)
     {
         const uint8_t * k = key;
         uint8_t digest[Ssl::DIGEST_LENGTH];
         if (key_len > pad_length) {
             Ssl ssl;
-            ssl.update(key, key_len);
+            ssl.update({key, key_len});
             ssl.final(digest);
             key_len = Ssl::DIGEST_LENGTH;
             k = digest;
@@ -61,12 +68,12 @@ public:
             k_ipad[i] = 0x36;
             k_opad[i] = 0x5C;
         }
-        context.update(k_ipad, pad_length);
+        context.update(make_array_view(k_ipad));
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        context.update(data, data_size);
+        context.update(data);
     }
 
     void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
@@ -74,8 +81,8 @@ public:
         context.final(out_data);
 
         Ssl ssl;
-        ssl.update(this->k_opad, pad_length);
-        ssl.update(out_data, Ssl::DIGEST_LENGTH);
+        ssl.update(make_array_view(this->k_opad));
+        ssl.update(make_array_view(out_data));
         ssl.final(out_data);
     }
 };
@@ -90,13 +97,18 @@ class DelayedHMAC_direct
 public:
     DelayedHMAC_direct() = default;
 
+    void init(const_byte_array data)
+    {
+        this->init(data.to_u8p(), data.size());
+    }
+
     void init(const uint8_t * const key, size_t key_len)
     {
         const uint8_t * k = key;
         uint8_t digest[Ssl::DIGEST_LENGTH];
         if (key_len > pad_length) {
             Ssl ssl;
-            ssl.update(key, key_len);
+            ssl.update({key, key_len});
             ssl.final(digest);
             key_len = Ssl::DIGEST_LENGTH;
             k = digest;
@@ -110,12 +122,12 @@ public:
             k_ipad[i] = 0x36;
             k_opad[i] = 0x5C;
         }
-        context.update(k_ipad, pad_length);
+        context.update(make_array_view(k_ipad));
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        context.update(data, data_size);
+        context.update(data);
     }
 
     void final(uint8_t (&out_data)[Ssl::DIGEST_LENGTH])
@@ -123,8 +135,8 @@ public:
         context.final(out_data);
 
         Ssl ssl;
-        ssl.update(this->k_opad, pad_length);
-        ssl.update(out_data, Ssl::DIGEST_LENGTH);
+        ssl.update(make_array_view(this->k_opad));
+        ssl.update(make_array_view(out_data));
         ssl.final(out_data);
     }
 };

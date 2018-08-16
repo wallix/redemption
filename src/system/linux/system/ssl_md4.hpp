@@ -39,9 +39,9 @@ public:
         MD4_Init(&this->md4);
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        MD4_Update(&this->md4, data, data_size);
+        MD4_Update(&this->md4, data.to_u8p(), data.size());
     }
 
     void final(uint8_t (&out_data)[DIGEST_LENGTH])

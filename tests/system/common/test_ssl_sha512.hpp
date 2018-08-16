@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestSslSha512)
     {
         SslSha512 sha512;
 
-        sha512.update(data, sizeof(data));
+        sha512.update(make_array_view(data));
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
@@ -116,10 +116,10 @@ RED_AUTO_TEST_CASE(TestSslSha512)
     {
         SslSha512 sha512;
 
-        sha512.update(data, 128);
-        sha512.update(data + 128, 128);
-        sha512.update(data + 256, 128);
-        sha512.update(data + 384, 128);
+        sha512.update({data, 128});
+        sha512.update({data + 128, 128});
+        sha512.update({data + 256, 128});
+        sha512.update({data + 384, 128});
         sha512.final(sig);
         //hexdump96_c(sig, sizeof(sig));
 
@@ -139,13 +139,9 @@ RED_AUTO_TEST_CASE(TestSslSha512)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA512)
 {
-    const uint8_t key[] = "key";
-    // const uint8_t key[] = "";
-    SslHMAC_Sha512 hmac(key, sizeof(key)-1);
+    SslHMAC_Sha512 hmac(cstr_array_view("key"));
 
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg)-1);
+    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslSha512::DIGEST_LENGTH];
     hmac.final(sig);

@@ -27,6 +27,7 @@
 #pragma once
 
 #include "openssl_crypto.hpp"
+#include "utils/sugar/byte.hpp"
 
 #include <cstdint>
 
@@ -38,9 +39,9 @@ class SslRC4
 public:
     SslRC4() = default;
 
-    void set_key(const uint8_t * const key,  size_t key_size)
+    void set_key(const_byte_array key)
     {
-        RC4_set_key(&this->rc4, key_size, key);
+        RC4_set_key(&this->rc4, key.size(), key.data());
     }
 
     void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata)

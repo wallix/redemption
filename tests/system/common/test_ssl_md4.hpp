@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestSslMd4)
     {
         SslMd4 md;
 
-        md.update(data, sizeof(data));
+        md.update(make_array_view(data));
         md.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
@@ -106,10 +106,10 @@ RED_AUTO_TEST_CASE(TestSslMd4)
     {
         SslMd4 md;
 
-        md.update(data, 128);
-        md.update(data + 128, 128);
-        md.update(data + 256, 128);
-        md.update(data + 384, 128);
+        md.update({data, 128});
+        md.update({data + 128, 128});
+        md.update({data + 256, 128});
+        md.update({data + 384, 128});
         md.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
@@ -119,13 +119,9 @@ RED_AUTO_TEST_CASE(TestSslMd4)
 
 RED_AUTO_TEST_CASE(TestSslHmacMd4)
 {
-    const uint8_t key[] = "key";
-    // const uint8_t key[] = "";
-    SslHMAC_Md4 hmac(key, sizeof(key) - 1);
+    SslHMAC_Md4 hmac(cstr_array_view("key"));
 
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg) - 1);
+    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslMd4::DIGEST_LENGTH];
     hmac.final(sig);

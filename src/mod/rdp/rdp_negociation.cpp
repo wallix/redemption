@@ -1338,18 +1338,18 @@ bool RdpNegociation::get_license(InStream & stream)
                         uint8_t lenhdr[4];
                         buf_out_uint32(lenhdr, sizeof(hwid));
 
-                        Sign sign(this->lic_layer_license_sign_key, 16);
-                        sign.update(lenhdr, sizeof(lenhdr));
-                        sign.update(hwid, sizeof(hwid));
+                        Sign sign(make_array_view(this->lic_layer_license_sign_key));
+                        sign.update(make_array_view(lenhdr));
+                        sign.update(make_array_view(hwid));
 
                         static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
-                        sign.final(signature, sizeof(signature));
+                        sign.final(signature);
 
 
                         /* Now encrypt the HWID */
 
                         SslRC4 rc4;
-                        rc4.set_key(this->lic_layer_license_key, 16);
+                        rc4.set_key(make_array_view(this->lic_layer_license_key));
 
                         // in, out
                         rc4.crypt(LIC::LICENSE_HWID_SIZE, hwid, hwid);
@@ -1388,7 +1388,7 @@ bool RdpNegociation::get_license(InStream & stream)
                 /* Decrypt the token. It should read TEST in Unicode. */
                 memcpy(decrypt_token, lic.encryptedPlatformChallenge.blob, LIC::LICENSE_TOKEN_SIZE);
                 SslRC4 rc4_decrypt_token;
-                rc4_decrypt_token.set_key(this->lic_layer_license_key, 16);
+                rc4_decrypt_token.set_key(make_array_view(this->lic_layer_license_key));
                 // size, in, out
                 rc4_decrypt_token.crypt(LIC::LICENSE_TOKEN_SIZE, decrypt_token, decrypt_token);
 
@@ -1403,17 +1403,17 @@ bool RdpNegociation::get_license(InStream & stream)
                 uint8_t lenhdr[4];
                 buf_out_uint32(lenhdr, sizeof(sealed_buffer));
 
-                Sign sign(this->lic_layer_license_sign_key, 16);
-                sign.update(lenhdr, sizeof(lenhdr));
-                sign.update(sealed_buffer, sizeof(sealed_buffer));
+                Sign sign(make_array_view(this->lic_layer_license_sign_key));
+                sign.update(make_array_view(lenhdr));
+                sign.update(make_array_view(sealed_buffer));
 
                 static_assert(static_cast<size_t>(SslMd5::DIGEST_LENGTH) == static_cast<size_t>(LIC::LICENSE_SIGNATURE_SIZE));
-                sign.final(out_sig, sizeof(out_sig));
+                sign.final(out_sig);
 
                 /* Now encrypt the HWID */
                 memcpy(crypt_hwid, hwid, LIC::LICENSE_HWID_SIZE);
                 SslRC4 rc4_hwid;
-                rc4_hwid.set_key(this->lic_layer_license_key, 16);
+                rc4_hwid.set_key(make_array_view(this->lic_layer_license_key));
                 // size, in, out
                 rc4_hwid.crypt(LIC::LICENSE_HWID_SIZE, crypt_hwid, crypt_hwid);
 
@@ -1549,20 +1549,19 @@ void RdpNegociation::send_client_info_pdu()
 
         uint8_t digest[SslMd5::DIGEST_LENGTH] = { 0 };
 
-        SslHMAC_Md5 hmac_md5(server_auto_reconnect_packet.ArcRandomBits,
-            sizeof(server_auto_reconnect_packet.ArcRandomBits));
+        SslHMAC_Md5 hmac_md5(make_array_view(server_auto_reconnect_packet.ArcRandomBits));
         if (!this->nego.enhanced_rdp_security_is_in_effect()) {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
                 LOG(LOG_INFO, "Use client random");
             }
-            hmac_md5.update(this->client_random, sizeof(this->client_random));
+            hmac_md5.update(make_array_view(this->client_random));
         }
         else {
             if (bool(this->verbose & RDPVerbose::basic_trace)){
                 LOG(LOG_INFO, "Use NULL client random");
             }
             uint8_t tmp_client_random[32] = { 0 };
-            hmac_md5.update(tmp_client_random, sizeof(tmp_client_random));
+            hmac_md5.update(make_array_view(tmp_client_random));
         }
         hmac_md5.final(digest);
 

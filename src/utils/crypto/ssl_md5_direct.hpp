@@ -42,12 +42,12 @@ public:
         this->md5_init();
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        this->md5_update(data, data_size);
+        this->md5_update(data.to_u8p(), data.size());
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DIGEST_LENGTH])
     {
         //assert(MD5_DIGEST_LENGTH == out_data_size);
         this->md5_sum(out_data);

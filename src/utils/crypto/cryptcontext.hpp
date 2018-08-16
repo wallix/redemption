@@ -76,7 +76,7 @@ struct CryptContext
 
     CryptContext() = default;
 
-    void generate_key(uint8_t * keyblob, uint32_t encryptionMethod)
+    void generate_key(uint8_t (&keyblob)[16], uint32_t encryptionMethod)
     {
         // 16-byte transformation used to generate export keys (6.2.2).
         this->encryptionMethod = encryptionMethod;
@@ -87,20 +87,18 @@ struct CryptContext
             ssllib ssl;
             ssl.sec_make_40bit(this->key);
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(this->key, 8);
+            this->rc4.set_key({this->key, 8});
         }
         else {
             // 128 bits encryption
-
             memcpy(this->update_key, this->key, 16);
-            this->rc4.set_key(this->key, 16);
+            this->rc4.set_key({this->key, 16});
         }
     }
 
-    /* Decrypt data using RC4 */
-    void decrypt(uint8_t * data, size_t data_size)
+    void decrypt(byte_array data)
     {
-        this->decrypt(data, data_size, data);
+        this->decrypt(data.to_u8p(), data.size(), data.to_u8p());
     }
 
     /* Decrypt data using RC4 */
@@ -111,11 +109,11 @@ struct CryptContext
         if (this->use_count == 4096) {
             size_t keylen = (this->encryptionMethod==1)?8:16;
 
-            Sign sign(this->update_key, keylen);
-            sign.update(this->key, keylen);
-            sign.final(this->key, sizeof(key));
+            Sign sign({this->update_key, keylen});
+            sign.update({this->key, keylen});
+            sign.final(this->key);
 
-            this->rc4.set_key(this->key, keylen);
+            this->rc4.set_key({this->key, keylen});
 
             // size, in, out
             this->rc4.crypt(keylen, this->key, this->key);
@@ -123,7 +121,7 @@ struct CryptContext
             if (this->encryptionMethod == 1){
                 ssl.sec_make_40bit(this->key);
             }
-            this->rc4.set_key(this->key, keylen);
+            this->rc4.set_key({this->key, keylen});
             this->use_count = 0;
         }
         // size, in, out
@@ -132,18 +130,18 @@ struct CryptContext
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(const uint8_t * data, size_t data_size, uint8_t (&signature)[8])
+    void sign(const_byte_array data, uint8_t (&signature)[8])
     {
         uint8_t lenhdr[] = {
-            static_cast<uint8_t>(data_size & 0xff),
-            static_cast<uint8_t>((data_size >> 8) & 0xff),
-            static_cast<uint8_t>((data_size >> 16) & 0xff),
-            static_cast<uint8_t>((data_size >> 24) & 0xff)
+            static_cast<uint8_t>(data.size() & 0xff),
+            static_cast<uint8_t>((data.size() >> 8) & 0xff),
+            static_cast<uint8_t>((data.size() >> 16) & 0xff),
+            static_cast<uint8_t>((data.size() >> 24) & 0xff)
         };
 
-        Sign sign(this->sign_key, (this->encryptionMethod==1)?8:16);
-        sign.update(lenhdr, sizeof(lenhdr));
-        sign.update(data, data_size);
-        sign.final(signature, 8);
+        Sign sign({this->sign_key, (this->encryptionMethod==1)?8u:16u});
+        sign.update(make_array_view(lenhdr));
+        sign.update(data);
+        sign.final(signature);
     }
 };

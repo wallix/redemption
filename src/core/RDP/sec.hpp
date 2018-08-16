@@ -729,7 +729,7 @@ enum {
         , signature(stream.get_current(), 8)
         , payload([&stream, this, &crypt](){
             stream.in_skip_bytes(this->signature.get_capacity());
-            crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
+            crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
             return InStream(stream.get_current(), stream.in_remain());
         }())
         // Body of constructor
@@ -776,7 +776,7 @@ enum {
                     //    LOG(LOG_INFO, "Receiving encrypted TPDU");
                     //    hexdump_c(stream.get_current(), stream.in_remain());
                     //}
-                    crypt.decrypt(const_cast<uint8_t*>(stream.get_current()), stream.in_remain());
+                    crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
                     //if (this->verbose >= 0x80){
                     //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.in_remain());
                     //    hexdump_c(stream.get_current(), stream.in_remain());
@@ -823,7 +823,7 @@ enum {
                         //    LOG(LOG_INFO, "Receiving encrypted TPDU");
                         //    hexdump_c(stream.get_current(), stream.in_remain());
                         //}
-                        crypt.decrypt(const_cast<uint8_t *>(stream.get_current()), stream.in_remain());
+                        crypt.decrypt({const_cast<uint8_t*>(stream.get_current()), stream.in_remain()});
                         //if (this->verbose >= 0x80){
                         //    LOG(LOG_INFO, "Decrypted %zu bytes", stream.get_capacity());
                         //    hexdump_c(stream.get_current(), stream.in_remain());
@@ -849,9 +849,9 @@ enum {
             if (flags & SEC_ENCRYPT){
                 size_t const sig_sz = 8;
                 auto & signature = reinterpret_cast<uint8_t(&)[sig_sz]>(*stream.get_current()); /*NOLINT*/
-                crypt.sign(data, len, signature);
+                crypt.sign({data, len}, signature);
                 stream.out_skip_bytes(sig_sz);
-                crypt.decrypt(data, len);
+                crypt.decrypt({data, len});
             }
         }
     };
@@ -919,45 +919,45 @@ enum {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
-                sha1.update(A, sizeof(A));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(A));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
-                sha1.update(BB, sizeof(BB));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(BB));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
-                sha1.update(CCC, sizeof(CCC));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(CCC));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret + 32);
             }
 
@@ -965,53 +965,53 @@ enum {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
-                sha1.update(A, sizeof(A));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(server_random, server_random_size);
-                sha1.update(client_random, client_random_size);
+                sha1.update(make_array_view(A));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update(make_array_view(server_random));
+                sha1.update({client_random, client_random_size});
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
-                sha1.update(BB, sizeof(BB));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(server_random, server_random_size);
-                sha1.update(client_random, client_random_size);
+                sha1.update(make_array_view(BB));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update(make_array_view(server_random));
+                sha1.update({client_random, client_random_size});
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob1);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
-                sha1.update(CCC, sizeof(CCC));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(server_random, server_random_size);
-                sha1.update(client_random, client_random_size);
+                sha1.update(make_array_view(CCC));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update(make_array_view(server_random));
+                sha1.update({client_random, client_random_size});
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob2);
             }
 
             {
                 SslMd5 md5;
-                md5.update(this->blob1, sizeof(this->blob1));
-                md5.update(client_random, client_random_size);
-                md5.update(server_random, server_random_size);
+                md5.update(make_array_view(blob1));
+                md5.update({client_random, client_random_size});
+                md5.update({server_random, server_random_size});
                 md5.final(this->licensingEncryptionKey);
             }
         }
@@ -1411,45 +1411,45 @@ enum {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t A[1] = {0x41U}; // "A"
-                sha1.update(A, sizeof(A));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(A));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t BB[2] = {0x42U, 0x42U}; // "BB"
-                sha1.update(BB, sizeof(BB));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(BB));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret + 16);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t CCC[3] = {0x43U, 0x43U, 0x43U}; // "CCC"
-                sha1.update(CCC, sizeof(CCC));
-                sha1.update(pre_master_secret, pre_master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(CCC));
+                sha1.update({pre_master_secret, pre_master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(pre_master_secret, pre_master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({pre_master_secret, pre_master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.unchecked_final(master_secret + 32);
             }
 
@@ -1457,30 +1457,30 @@ enum {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t X[1] = {0x58U}; // "X"
-                sha1.update(X, sizeof(X));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(X));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob0);
             }
             {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t YY[2] = {0x59U, 0x59U}; // "YY"
-                sha1.update(YY, sizeof(YY));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(YY));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob1);
             }
             {
@@ -1488,30 +1488,30 @@ enum {
                 uint8_t shasig[SslSha1::DIGEST_LENGTH];
                 SslSha1 sha1;
                 uint8_t ZZZ[3] = {0x5AU, 0x5AU, 0x5AU}; // "ZZZ"
-                sha1.update(ZZZ, sizeof(ZZZ));
-                sha1.update(master_secret, master_secret_size);
-                sha1.update(client_random, client_random_size);
-                sha1.update(server_random, server_random_size);
+                sha1.update(make_array_view(ZZZ));
+                sha1.update({master_secret, master_secret_size});
+                sha1.update({client_random, client_random_size});
+                sha1.update(make_array_view(server_random));
                 sha1.final(shasig);
 
                 SslMd5 md5;
-                md5.update(master_secret, master_secret_size);
-                md5.update(shasig, sizeof(shasig));
+                md5.update({master_secret, master_secret_size});
+                md5.update(make_array_view(shasig));
                 md5.final(this->blob2);
             }
 
             {
                 SslMd5 md5;
-                md5.update(this->blob1, sizeof(this->blob1));
-                md5.update(client_random, client_random_size);
-                md5.update(server_random, server_random_size);
+                md5.update(make_array_view(blob1));
+                md5.update({client_random, client_random_size});
+                md5.update({server_random, server_random_size});
                 md5.final(this->key1);
             }
             {
                 SslMd5 md5;
-                md5.update(this->blob2, sizeof(this->blob2));
-                md5.update(client_random, client_random_size);
-                md5.update(server_random, server_random_size);
+                md5.update(make_array_view(this->blob2));
+                md5.update({client_random, client_random_size});
+                md5.update({server_random, server_random_size});
                 md5.final(this->key2);
             }
         }

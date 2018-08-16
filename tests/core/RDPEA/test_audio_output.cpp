@@ -271,7 +271,7 @@ RED_AUTO_TEST_CASE(WaveInfoPDUReceive)
     RED_CHECK_EQUAL(ch.wTimeStamp, 0x11a7);
     RED_CHECK_EQUAL(ch.wFormatNo, 0x0000);
     RED_CHECK_EQUAL(ch.cBlockNo, 0x00);
-    RED_CHECK_MEM_AA(ch.Data, data.subarray(8));
+    RED_CHECK_MEM_AA(ch.Data, data.array_from_offset(8));
 }
 
 RED_AUTO_TEST_CASE(WaveConfirmPDUEmit)

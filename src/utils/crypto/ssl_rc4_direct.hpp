@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "utils/sugar/byte.hpp"
 
 #include <cstdint>
 
@@ -32,9 +33,9 @@ class SslRC4_direct
 public:
     SslRC4_direct() = default;
 
-    void set_key(const uint8_t * const key, size_t key_size)
+    void set_key(const_byte_array key)
     {
-        this->RC4_set_key(key_size, key);
+        this->RC4_set_key(key.size(), key.data());
     }
 
     void crypt(size_t data_size, const uint8_t * const indata, uint8_t * const outdata){

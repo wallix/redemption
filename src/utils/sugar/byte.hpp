@@ -23,23 +23,52 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 
-struct Uint32_le {
+// TODO other file
+//@{
+struct Uint32_le
+{
     uint8_t array[4];
-    Uint32_le(uint16_t v){
+
+    Uint32_le(uint16_t v) noexcept
+    {
         this->array[0] = static_cast<uint8_t>(v);
         this->array[1] = static_cast<uint8_t>(v >> 8);
         this->array[2] = static_cast<uint8_t>(v >> 16);
         this->array[3] = static_cast<uint8_t>(v << 24);
     }
+
+    array_view_const_u8 av() const noexcept
+    {
+        return make_array_view(this->array);
+    }
+
+    operator array_view_const_u8() const noexcept
+    {
+        return this->av();
+    }
 };
 
-struct Uint16_le {
+struct Uint16_le
+{
     uint8_t array[2];
-    Uint16_le(uint16_t v){
+
+    Uint16_le(uint16_t v) noexcept
+    {
         this->array[0] = static_cast<uint8_t>(v);
         this->array[1] = static_cast<uint8_t>(v >> 8);
     }
+
+    array_view_const_u8 av() const noexcept
+    {
+        return make_array_view(this->array);
+    }
+
+    operator array_view_const_u8() const noexcept
+    {
+        return this->av();
+    }
 };
+//@}
 
 
 struct byte_ptr

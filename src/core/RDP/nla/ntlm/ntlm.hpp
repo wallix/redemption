@@ -210,11 +210,12 @@ private:
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
         const_byte_array data_buffer, uint32_t SeqNo)
     {
-        SslHMAC_Md5 hmac_md5(signing_key, 16);
+        // TODO signing_key by array reference
+        SslHMAC_Md5 hmac_md5({signing_key, 16});
         StaticOutStream<4> out_stream;
         out_stream.out_uint32_le(SeqNo);
-        hmac_md5.update(out_stream.get_data(), out_stream.get_offset());
-        hmac_md5.update(data_buffer.data(), data_buffer.size());
+        hmac_md5.update(stream_to_avu8(out_stream));
+        hmac_md5.update(data_buffer);
         hmac_md5.final(digest);
     }
 
@@ -246,10 +247,10 @@ public:
         // data_out [signature][data_buffer]
 
         data_out.init(data_in.size() + cbMaxSignature);
-        auto message_out = data_out.av().subarray(cbMaxSignature);
+        auto message_out = data_out.av().array_from_offset(cbMaxSignature);
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->context->SendSigningKey, data_in, MessageSeqNo);
+        this->compute_hmac_md5(digest, *this->context->SendSigningKey, data_in, MessageSeqNo);
 
         /* Encrypt message using with RC4, result overwrites original buffer */
         // this->context->confidentiality == true
@@ -273,7 +274,7 @@ public:
 
         // data_in [signature][data_buffer]
 
-        auto data_buffer = data_in.subarray(cbMaxSignature);
+        auto data_buffer = data_in.array_from_offset(cbMaxSignature);
         data_out.init(data_buffer.size());
 
         /* Decrypt message using with RC4, result overwrites original buffer */
@@ -281,7 +282,7 @@ public:
         this->context->RecvRc4Seal.crypt(data_buffer.size(), data_buffer.data(), data_out.get_data());
 
         uint8_t digest[SslMd5::DIGEST_LENGTH];
-        this->compute_hmac_md5(digest, this->context->RecvSigningKey, data_out.av(), MessageSeqNo);
+        this->compute_hmac_md5(digest, *this->context->RecvSigningKey, data_out.av(), MessageSeqNo);
 
         uint8_t expected_signature[16] = {};
         this->compute_signature(

@@ -156,8 +156,7 @@ RED_AUTO_TEST_CASE(TestPolygonCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_polygonCB);
         RED_CHECK_MEM(
-            stream_to_avu8(out_stream).subarray(1),
-            stream_to_avu8(out_stream2).subarray(1));
+            stream_to_avu8(out_stream).array_from_offset(1),
+            stream_to_avu8(out_stream2).array_from_offset(1));
     }
-
 }

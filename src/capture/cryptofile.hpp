@@ -217,13 +217,13 @@ public:
             uint8_t tmp[MD_HASH::DIGEST_LENGTH];
             {
                 MD_HASH sha256;
-                sha256.update(derivator.data(), derivator.size());
+                sha256.update(derivator);
                 sha256.final(tmp);
             }
             {
                 MD_HASH sha256;
-                sha256.update(tmp, DERIVATOR_LENGTH);
-                sha256.update(this->master_key, CRYPTO_KEY_LENGTH);
+                sha256.update({tmp, DERIVATOR_LENGTH});
+                sha256.update(make_array_view(this->master_key));
                 sha256.final(tmp);
             }
             static_assert(sizeof(trace_key) == sizeof(tmp));

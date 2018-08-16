@@ -36,12 +36,12 @@ public:
         this->MD4_init();
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        this->MD4_update(data, data_size);
+        this->MD4_update(data.data(), data.size());
     }
 
-    void final(uint8_t * out_data)
+    void final(uint8_t (&out_data)[DIGEST_LENGTH])
     {
         this->MD4_final(out_data);
     }

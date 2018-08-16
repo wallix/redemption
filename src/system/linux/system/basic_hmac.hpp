@@ -24,6 +24,7 @@
 #include <cstring>
 
 #include "core/error.hpp"
+#include "utils/sugar/byte.hpp"
 #include "openssl_crypto.hpp"
 
 namespace detail_
@@ -56,10 +57,10 @@ class basic_HMAC
     HMACWrap hmac;
 
 public:
-    basic_HMAC(const uint8_t * const key, size_t key_size)
+    basic_HMAC(const_byte_array key)
     {
         this->hmac.init();
-        int res = HMAC_Init_ex(this->hmac, key, key_size, evp(), nullptr);
+        int res = HMAC_Init_ex(this->hmac, key.to_u8p(), key.size(), evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -70,9 +71,9 @@ public:
         this->hmac.deinit();
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        int res = HMAC_Update(this->hmac, data, data_size);
+        int res = HMAC_Update(this->hmac, data.to_u8p(), data.size());
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
@@ -85,6 +86,7 @@ public:
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
+        assert(len == DigestLength);
     }
 };
 
@@ -97,13 +99,13 @@ class DelayedHMAC
 public:
     DelayedHMAC() = default;
 
-    void init(const uint8_t * const key, size_t key_size)
+    void init(const_byte_array key)
     {
         if (this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
         this->hmac.init();
-        int res = HMAC_Init_ex(this->hmac, key, key_size, evp(), nullptr);
+        int res = HMAC_Init_ex(this->hmac, key.to_u8p(), key.size(), evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -117,12 +119,12 @@ public:
         }
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
-        int res = HMAC_Update(this->hmac, data, data_size);
+        int res = HMAC_Update(this->hmac, data.to_u8p(), data.size());
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
@@ -138,6 +140,7 @@ public:
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_FINAL_FAILED);
         }
+        assert(len == DigestLength);
         this->hmac.deinit();
         this->initialized = false;
     }

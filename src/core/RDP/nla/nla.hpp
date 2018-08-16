@@ -254,9 +254,9 @@ protected:
             : server_client_hash_magic);
         SslSha256 sha256;
         uint8_t hash[SslSha256::DIGEST_LENGTH];
-        sha256.update(magic_hash.data(), magic_hash.size());
-        sha256.update(this->SavedClientNonce, CLIENT_NONCE_LENGTH);
-        sha256.update(this->PublicKey.get_data(), this->PublicKey.size());
+        sha256.update(magic_hash);
+        sha256.update(make_array_view(this->SavedClientNonce));
+        sha256.update(this->PublicKey.av());
         sha256.final(hash);
         SavedHash.init(sizeof(hash));
         memcpy(SavedHash.get_data(), hash, sizeof(hash));

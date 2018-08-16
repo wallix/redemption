@@ -110,7 +110,7 @@ bool InCryptoTransport::is_open() const
 
 const InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
 {
-    SslHMAC_Sha256 hm4k(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+    SslHMAC_Sha256 hm4k(make_array_view(this->cctx.get_hmac_key()));
 
     {
         int fd = ::open(pathname, O_RDONLY);
@@ -128,7 +128,7 @@ const InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
             if (res == 0) { break; }
             if (res < 0 && errno == EINTR) { continue; }
             if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
-            hm4k.update(buffer, res);
+            hm4k.update({buffer, size_t(res)});
             total_length += res;
         } while (total_length != buffer_size);
     }
@@ -140,7 +140,7 @@ const InCryptoTransport::HASH InCryptoTransport::qhash(const char * pathname)
 
 const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
 {
-    SslHMAC_Sha256 hm(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+    SslHMAC_Sha256 hm(make_array_view(this->cctx.get_hmac_key()));
 
     {
         int fd = ::open(pathname, O_RDONLY);
@@ -155,7 +155,7 @@ const InCryptoTransport::HASH InCryptoTransport::fhash(const char * pathname)
             if (res == 0) { break; }
             if (res < 0 && errno == EINTR) { continue; }
             if (res < 0) { throw Error(ERR_TRANSPORT_READ_FAILED, errno); }
-            hm.update(buffer, res);
+            hm.update({buffer, size_t(res)});
         } while (true);
     }
 
@@ -495,7 +495,7 @@ void ocrypto::flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     }
 
     // Encrypt
-    unsigned char ciphered_buf[4 + 65536];
+    uint8_t ciphered_buf[4 + 65536];
     uint32_t ciphered_buf_sz = compressed_buf_sz + AES_BLOCK_SIZE;
     ciphered_buf_sz = this->ectx.encrypt(
         byte_ptr_cast(compressed_buf), compressed_buf_sz,
@@ -514,21 +514,21 @@ void ocrypto::flush(uint8_t * buffer, size_t buflen, size_t & towrite)
     ::memcpy(buffer, ciphered_buf, ciphered_buf_sz);
     towrite += ciphered_buf_sz;
 
-    this->update_hmac(&ciphered_buf[0], ciphered_buf_sz);
+    this->update_hmac({&ciphered_buf[0], ciphered_buf_sz});
 
     // Reset buffer
     this->pos = 0;
 }
 
-void ocrypto::update_hmac(uint8_t const * buf, size_t len)
+void ocrypto::update_hmac(const_byte_array buf)
 {
     if (this->cctx.get_with_checksum()){
-        this->hm.update(buf, len);
+        this->hm.update(buf);
         if (this->file_size < 4096) {
             size_t remaining_size = 4096 - this->file_size;
-            this->hm4k.update(buf, std::min(remaining_size, len));
+            this->hm4k.update(buf.first(std::min(remaining_size, buf.size())));
         }
-        this->file_size += len;
+        this->file_size += buf.size();
     }
 }
 
@@ -545,14 +545,14 @@ ocrypto::Result ocrypto::open(const_byte_array derivator)
     this->file_size = 0;
     this->pos = 0;
     if (this->cctx.get_with_checksum()) {
-        this->hm.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
-        this->hm4k.init(this->cctx.get_hmac_key(), HMAC_KEY_LENGTH);
+        this->hm.init(make_array_view(this->cctx.get_hmac_key()));
+        this->hm4k.init(make_array_view(this->cctx.get_hmac_key()));
     }
 
     if (this->cctx.get_with_encryption()) {
-        unsigned char trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
+        uint8_t trace_key[CRYPTO_KEY_LENGTH]; // derived key for cipher
         this->cctx.get_derived_key(trace_key, derivator);
-        unsigned char iv[32];
+        uint8_t iv[32];
         this->rnd.random(iv, 32);
 
         ::memset(this->buf, 0, sizeof(this->buf));
@@ -573,7 +573,7 @@ ocrypto::Result ocrypto::open(const_byte_array derivator)
         this->header_buf[6] = (WABCRYPTOFILE_VERSION >> 16) & 0xFF;
         this->header_buf[7] = (WABCRYPTOFILE_VERSION >> 24) & 0xFF;
         ::memcpy(this->header_buf + 8, iv, 32);
-        this->update_hmac(&this->header_buf[0], 40);
+        this->update_hmac({&this->header_buf[0], 40});
         return Result{{this->header_buf, 40u}, 0u};
     }
     return Result{{this->header_buf, 0u}, 0u};
@@ -604,7 +604,7 @@ ocrypto::Result ocrypto::close(
         ::memcpy(this->result_buffer + towrite, tmp_buf, 8);
         towrite += 8;
 
-        this->update_hmac(tmp_buf, 8);
+        this->update_hmac(make_array_view(tmp_buf));
     }
 
     if (this->cctx.get_with_checksum()) {
@@ -616,21 +616,21 @@ ocrypto::Result ocrypto::close(
 
 }
 
-ocrypto::Result ocrypto::write(const uint8_t * data, size_t len)
+ocrypto::Result ocrypto::write(const_byte_array data)
 {
     if (!this->cctx.get_with_encryption()) {
-        this->update_hmac(data, len);
-        return Result{{data, len}, len};
+        this->update_hmac(data);
+        return Result{data, data.size()};
     }
 
     size_t buflen = sizeof(this->result_buffer);
-    if (len > buflen - 1000) { // 1000: magic enough for header, actual value is smaller
-        len = buflen;
+    if (data.size() > buflen - 1000) { // 1000: magic enough for header, actual value is smaller
+        data = data.first(buflen);
     }
     // Check how much we can append into buffer
     size_t available_size = CRYPTO_BUFFER_SIZE - this->pos;
-    if (available_size > len) {
-        available_size = len;
+    if (available_size > data.size()) {
+        available_size = data.size();
     }
     // Append and update pos pointer
     ::memcpy(this->buf + this->pos, &data[0], available_size);
@@ -801,7 +801,7 @@ namespace
         const uint8_t * data = data_.to_u8p();
         auto to_send = len;
         while (to_send > 0) {
-            const ocrypto::Result res = encrypter.write(data, to_send);
+            const ocrypto::Result res = encrypter.write({data, to_send});
             out_file.send(res.buf.data(), res.buf.size());
             to_send -= res.consumed;
             data += res.consumed;

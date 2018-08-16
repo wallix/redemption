@@ -34,10 +34,10 @@
 #include "system/linux/system/ssl_sha256.hpp"
 
 
-
+// TODO array_view and array ref
 inline void metrics_hmac_sha256_encrypt(char * dest, const char * src, const size_t src_len, const unsigned char * key_crypt) {
-    SslHMAC_Sha256 sha256(key_crypt, 32);
-    sha256.update(reinterpret_cast<const uint8_t *>(src), src_len);
+    SslHMAC_Sha256 sha256({key_crypt, 32});
+    sha256.update({src, src_len});
     uint8_t sig[SslSha256::DIGEST_LENGTH];
     sha256.final(sig);
 

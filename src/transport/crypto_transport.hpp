@@ -128,7 +128,7 @@ struct ocrypto : noncopyable
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH]);
 
-    ocrypto::Result write(const uint8_t * data, size_t len);
+    ocrypto::Result write(const_byte_array data);
 
 private:
     EncryptContext ectx;
@@ -149,7 +149,7 @@ private:
      */
     void flush(uint8_t * buffer, size_t buflen, size_t & towrite);
 
-    void update_hmac(uint8_t const * buf, size_t len);
+    void update_hmac(const_byte_array buf);
 };
 
 

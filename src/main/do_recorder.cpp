@@ -86,7 +86,7 @@ static inline int file_start_hmac_sha256(const char * filename,
         return fd;
     }
 
-    SslHMAC_Sha256 hmac(crypto_key, HMAC_KEY_LENGTH);
+    SslHMAC_Sha256 hmac(make_array_view(crypto_key));
 
     ssize_t ret = 0;
     uint8_t buf[4096] = {};
@@ -101,10 +101,10 @@ static inline int file_start_hmac_sha256(const char * filename,
             return -1;
         }
         if (check_size && number_of_bytes_read + ret >= check_size){
-            hmac.update(buf, check_size - number_of_bytes_read);
+            hmac.update({buf, check_size - number_of_bytes_read});
             break;
         }
-        hmac.update(buf, ret);
+        hmac.update({buf, size_t(ret)});
         number_of_bytes_read += ret;
     }
     hmac.final(hash);

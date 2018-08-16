@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(TestSslSha1)
     {
         SslSha1 sha1;
 
-        sha1.update(data, sizeof(data));
+        sha1.update(make_array_view(data));
         sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
@@ -106,10 +106,10 @@ RED_AUTO_TEST_CASE(TestSslSha1)
     {
         SslSha1 sha1;
 
-        sha1.update(data, 128);
-        sha1.update(data + 128, 128);
-        sha1.update(data + 256, 128);
-        sha1.update(data + 384, 128);
+        sha1.update({data, 128});
+        sha1.update({data + 128, 128});
+        sha1.update({data + 256, 128});
+        sha1.update({data + 384, 128});
         sha1.final(sig);
         // hexdump96_c(sig, sizeof(sig));
 
@@ -119,13 +119,9 @@ RED_AUTO_TEST_CASE(TestSslSha1)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA1)
 {
-    const uint8_t key[] = "key";
-    // const uint8_t key[] = "";
-    SslHMAC_Sha1 hmac(key, sizeof(key)-1);
+    SslHMAC_Sha1 hmac(cstr_array_view("key"));
 
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg)-1);
+    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
     hmac.final(sig);
@@ -138,13 +134,10 @@ RED_AUTO_TEST_CASE(TestSslHmacSHA1)
 
 RED_AUTO_TEST_CASE(TestSslHmacSHA1_bigkey)
 {
-    const uint8_t key[] = "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke";
-    // const uint8_t key[] = "";
-    SslHMAC_Sha1 hmac(key, sizeof(key)-1);
+    SslHMAC_Sha1 hmac(cstr_array_view(
+        "keykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeykeyke"));
 
-    const uint8_t msg[] = "The quick brown fox jumps over the lazy dog";
-    // const uint8_t msg[] = "";
-    hmac.update(msg, sizeof(msg)-1);
+    hmac.update(cstr_array_view("The quick brown fox jumps over the lazy dog"));
 
     uint8_t sig[SslSha1::DIGEST_LENGTH];
     hmac.final(sig);

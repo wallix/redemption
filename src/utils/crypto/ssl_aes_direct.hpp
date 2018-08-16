@@ -29,15 +29,14 @@
 #include <cstdint>
 #include <cstring>
 
+/*  Defines:
+    Add any additional defines you need
+*/
+
 enum class AES_direction : bool {
     SSL_AES_ENCRYPT = 0,
     SSL_AES_DECRYPT = 1
 };
-
-
-/*  Defines:
-    Add any additional defines you need
-*/
 
 // TODO macros, no No NOOOOO !
 

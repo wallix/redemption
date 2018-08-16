@@ -43,9 +43,9 @@ public:
         }
     }
 
-    void update(const uint8_t * const data, size_t data_size)
+    void update(const_byte_array data)
     {
-        if (0 == SHA1_Update(&this->sha1, data, data_size)){
+        if (0 == SHA1_Update(&this->sha1, data.to_u8p(), data.size())){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
         }
     }
