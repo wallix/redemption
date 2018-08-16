@@ -664,6 +664,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct globals::experimental_support_resize_session_during_recording {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "globals";
+        static constexpr char const * name = "experimental_support_resize_session_during_recording";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: bool <br/>
     /// value{1} <br/>
@@ -4583,6 +4595,7 @@ struct globals
 , cfg::globals::mod_recv_timeout
 , cfg::globals::spark_view_specific_glyph_width
 , cfg::globals::experimental_enable_serializer_data_block_size_limit
+, cfg::globals::experimental_support_resize_session_during_recording
 { static constexpr bool is_section = true; };
 
 struct session_log

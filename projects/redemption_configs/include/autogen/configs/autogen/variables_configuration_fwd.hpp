@@ -55,6 +55,7 @@ namespace cfg {
         struct mod_recv_timeout;
         struct spark_view_specific_glyph_width;
         struct experimental_enable_serializer_data_block_size_limit;
+        struct experimental_support_resize_session_during_recording;
     };
 
     struct session_log {
