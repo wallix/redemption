@@ -1239,7 +1239,23 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 {
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    LOG(LOG_INFO, "=================== TestAppRecorderChunkMeta =============");
+
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"/tmp/recorder-chunk-meta-000000.mp4", 411572},
+        {"/tmp/recorder-chunk-meta-000000.png", 15353},
+        {"/tmp/recorder-chunk-meta-000001.mp4", 734169},
+        {"/tmp/recorder-chunk-meta-000001.png", 40151},
+        {"/tmp/recorder-chunk-meta.pgs",        37},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1263,5 +1279,117 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
     RED_CHECK_EQUAL(0, res);
 
     RED_CHECK_FILE_CONTENTS("/tmp/recorder-chunk-meta.meta", "2018-07-10 13:51:55 + type=\"TITLE_BAR\" data=\"Invite de commandes\"\n");
+
+    bool remove_files = !getenv("TestAppRecorderChunkMeta");
+
+    for (auto x: fileinfo) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        if (remove_files) { ::unlink(x.filename); }
+    }
+}
+
+RED_AUTO_TEST_CASE(TestAppRecorderResize)
+{
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"/tmp/recorder-resize-0-000000.mp4", 17275},
+        {"/tmp/recorder-resize-0-000000.png", 3972},
+        {"/tmp/recorder-resize-0.meta",       0},
+        {"/tmp/recorder-resize-0.pgs",        37},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/resizing-capture-0.mwrm",
+        "--mwrm-path", FIXTURES_PATH,
+        "-o",
+            "/tmp/recorder-resize-0",
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-0.mwrm\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    bool remove_files = !getenv("TestAppRecorderResize");
+
+    for (auto x: fileinfo) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        if (remove_files) { ::unlink(x.filename); }
+    }
+}
+
+RED_AUTO_TEST_CASE(TestAppRecorderResize1)
+{
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"/tmp/recorder-resize-1-000000.mp4", 16476},
+        {"/tmp/recorder-resize-1-000000.png", 3080},
+        {"/tmp/recorder-resize-1.meta",       0},
+        {"/tmp/recorder-resize-1.pgs",        37},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
+    LOG(LOG_INFO, "=================== TestAppRecorder =============");
+    char const * argv[] {
+        "recorder.py",
+        "redrec",
+        "-i",
+            FIXTURES_PATH "/resizing-capture-1.mwrm",
+        "--mwrm-path", FIXTURES_PATH,
+        "-o",
+            "/tmp/recorder-resize-1",
+        "--chunk",
+        "--video-codec", "mp4",
+        "--json-pgs",
+    };
+    int argc = sizeof(argv)/sizeof(char*);
+
+    CoutBuf cout_buf;
+    int res = do_main(argc, argv, hmac_fn, trace_fn);
+    EVP_cleanup();
+    RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-1.mwrm\".\n\n");
+    RED_CHECK_EQUAL(0, res);
+
+    bool remove_files = !getenv("TestAppRecorderResize1");
+
+    for (auto x: fileinfo) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        if (remove_files) { ::unlink(x.filename); }
+    }
 }
 #endif
