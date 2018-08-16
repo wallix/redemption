@@ -25,6 +25,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <sys/uio.h>
+#include <vector>
 
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
@@ -53,6 +54,7 @@ class Metrics
 
 public:
 
+    std::vector<uint64_t> current_data;
 
 
     const char * version;
@@ -76,20 +78,22 @@ public:
     timeval next_log_time;
 
 
-    Metrics( const char * version               // fields version
+    Metrics( const char * version                 // fields version
             , const char * protocol_name
-            , const bool activate                        // do nothing if false
+            , const bool activate                 // do nothing if false
+            , size_t     nbkeys                   // number of metric items
             , const char * path
             , const char * session_id
-            , const char * primary_user_sig       // clear primary user account
-            , const char * account_sig            // secondary account
-            , const char * target_service_sig           // clear target service name + clear device name
-            , const char * session_info_sig       // source_host + client info
-            , const time_t now                           // time at beginning of metrics
-            , const int file_interval     // daily rotation of filename (hours)
-            , const int log_delay       // delay between 2 logs
+            , const char * primary_user_sig       // hashed primary user account
+            , const char * account_sig            // hashed secondary account
+            , const char * target_service_sig     // hashed (target service name + device name)
+            , const char * session_info_sig       // hashed (source_host + client info)
+            , const time_t now                    // time at beginning of metrics
+            , const int file_interval             // daily rotation of filename (hours)
+            , const int log_delay                 // delay between 2 logs flush
             )
-    : version(version)
+    : current_data(nbkeys, 0)
+    , version(version)
     , protocol_name(protocol_name)
     , file_interval{file_interval}
     , current_file_date(now-now%(this->file_interval*3600))
@@ -107,33 +111,39 @@ public:
         }
     }
 
-     Metrics( const char * version               // fields version
-            , const char * protocol_name
-            , const bool activate                        // do nothing if false
-            , const char * path
-            , const char * session_id
-//             , const char * primary_user_sig       // clear primary user account
-//             , const char * account_sig            // secondary account
-//             , const char * target_service_sig           // clear target service name + clear device name
-//             , const char * session_info_sig       // source_host + client info
-            , const time_t now                           // time at beginning of metrics
-            , const int file_interval     // daily rotation of filename (hours)
-            , const int log_delay       // delay between 2 logs
-            )
-    : version(version)
-    , protocol_name(protocol_name)
-    , file_interval{file_interval}
-    , current_file_date(now-now%(this->file_interval*3600))
-    , path(path)
-    , session_id(session_id)
-    , active_(activate)
-    , connection_time(now)
-    , log_delay(log_delay)
-    , next_log_time{ this->log_delay+now, 0}
-    {}
-
     ~Metrics() {
         this->disconnect();
+    }
+
+    void log(timeval & now) {
+
+        if (this->active_ ) {
+            timeval wait_log_metrics = ::how_long_to_wait(this->next_log_time, now);
+            if (!wait_log_metrics.tv_sec && ! wait_log_metrics.tv_usec) {
+                this->next_log_time.tv_sec += this->log_delay;
+                this->next_log_time.tv_usec = now.tv_usec;
+
+                this->rotate(now.tv_sec);
+
+                std::string text_datetime(text_gmdatetime(now.tv_sec));
+
+                char sentence[4096];
+                char * ptr = sentence + ::snprintf(sentence, sizeof(sentence), "%s %s", text_datetime.c_str(), this->session_id);
+                for (auto x: this->current_data){
+                    ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), " %lu", x);
+                }
+                ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), "\n");
+
+                iovec iov[] = { {sentence, size_t(ptr-sentence)} };
+
+                ssize_t nwritten = ::writev(this->fd.fd(), iov, 1);
+
+                if (nwritten == -1) {
+                    // TODO bad filename
+                    LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\"", this->fd.fd(), this->complete_file_path);
+                }
+            }
+        }
     }
 
     void disconnect() {
@@ -190,6 +200,10 @@ public:
         } else {
              LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\"",this->fd.fd(), index_file_path);
         }
+    }
+
+    void add_to_current_data(int index, uint64_t value) {
+        this->current_data[index] += value;
     }
 
     void rotate(time_t now) {

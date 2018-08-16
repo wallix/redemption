@@ -24,156 +24,81 @@
 #include "core/RDP/nla/sspi.hpp"
 
 
-
 RED_AUTO_TEST_CASE(Test_Array)
 {
-    RED_CHECK(true);
-    bool test_equal(false);
+    {
+        Array array;
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 65536);
 
-    Array array_0;
-    test_equal = false;
-    RED_CHECK_EQUAL(array_0.size(), 65536);
-    if (array_0.get_data() != nullptr) {
-        test_equal = true;
+        Array array2(42);
+        array.copy(array2);
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 42);
     }
-    RED_CHECK_EQUAL(test_equal, true);
 
-
-    Array array_1(42);
-    test_equal = false;
-    RED_CHECK_EQUAL(array_1.size(), 42);
-    if (array_1.get_data() != nullptr) {
-        test_equal = true;
+    {
+        Array array(42);
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 42);
     }
-    RED_CHECK_EQUAL(test_equal, true);
 
+    {
+        Array array(65536 + 1);
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 65536 + 1);
 
-    Array array_2(65536 + 1);
-    test_equal = false;
-    RED_CHECK_EQUAL(array_2.size(), 65537);
-    if (array_2.get_data() != nullptr) {
-        test_equal = true;
+        array.init(42);
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 42);
     }
-    RED_CHECK_EQUAL(test_equal, true);
 
-
-    Array array_3;
-    test_equal = false;
-    RED_CHECK_EQUAL(array_3.size(), 65536);
-    if (array_3.get_data() != nullptr) {
-        test_equal = true;
+    {
+        Array array;
+        array.get_data()[0] = 42;
+        array.get_data()[4] = 42;
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 65536);
+        uint8_t source[] = {0,  1,  2,  3};
+        array.copy(source, 3, 1);
+        RED_CHECK(array.get_data());
+        RED_CHECK_EQUAL(array.size(), 65536);
+        RED_CHECK_EQUAL(array.get_data()[0], 42);
+        RED_CHECK_EQUAL(array.get_data()[1], 0);
+        RED_CHECK_EQUAL(array.get_data()[2], 1);
+        RED_CHECK_EQUAL(array.get_data()[3], 2);
+        RED_CHECK_EQUAL(array.get_data()[4], 42);
     }
-    RED_CHECK_EQUAL(test_equal, true);
-    array_3.copy(array_1);
-    test_equal = false;
-    RED_CHECK_EQUAL(array_3.size(), 42);
-    if (array_3.get_data() != nullptr) {
-        test_equal = true;
-    }
-    RED_CHECK_EQUAL(test_equal, true);
-
-
-    Array array_4;
-    test_equal = false;
-    RED_CHECK_EQUAL(array_4.size(), 65536);
-    if (array_4.get_data() != nullptr) {
-        test_equal = true;
-    }
-    RED_CHECK_EQUAL(test_equal, true);
-    array_4.init(42);
-    test_equal = false;
-    RED_CHECK_EQUAL(array_4.size(), 42);
-    if (array_4.get_data() != nullptr) {
-        test_equal = true;
-    }
-    RED_CHECK_EQUAL(test_equal, true);
-
-
-    Array array_5;
-    test_equal = false;
-    array_5.get_data()[0] = 42;
-    array_5.get_data()[4] = 42;
-    RED_CHECK_EQUAL(array_5.size(), 65536);
-    if (array_5.get_data() != nullptr) {
-        test_equal = true;
-    }
-    RED_CHECK_EQUAL(test_equal, true);
-    uint8_t source[] = {0,  1,  2,  3};
-    array_5.copy(source, 3, 1);
-    test_equal = false;
-    RED_CHECK_EQUAL(array_5.size(), 65536);
-    if (array_5.get_data() != nullptr) {
-        test_equal = true;
-    }
-    RED_CHECK_EQUAL(test_equal, true);
-    RED_CHECK_EQUAL(array_5.get_data()[0], 42);
-    RED_CHECK_EQUAL(array_5.get_data()[1], 0);
-    RED_CHECK_EQUAL(array_5.get_data()[2], 1);
-    RED_CHECK_EQUAL(array_5.get_data()[3], 2);
-    RED_CHECK_EQUAL(array_5.get_data()[4], 42);
-
 }
 
 RED_AUTO_TEST_CASE(TestSecIdentity)
 {
-    uint8_t name[] = "Ménélas";
-    uint8_t dom[] = "Sparte";
-    uint8_t pass[] = "Hélène";
-
     SEC_WINNT_AUTH_IDENTITY id;
-    id.SetAuthIdentityFromUtf8(name, dom, pass);
 
-    // hexdump_c(name, sizeof(name));
-    // hexdump_c(dom, sizeof(dom));
-    // hexdump_c(pass, sizeof(pass));
+    id.SetUserFromUtf8(byte_ptr_cast("Ménélas"));
+    id.SetDomainFromUtf8(byte_ptr_cast("Sparte"));
+    id.SetPasswordFromUtf8(byte_ptr_cast("Hélène"));
+    RED_CHECK_MEM_C(id.User.av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0");
+    RED_CHECK_MEM_C(id.Domain.av(), "S\0p\0a\0r\0t\0e\0");
+    RED_CHECK_MEM_C(id.Password.av(), "H\0\xe9\0l\0\xe8\0n\0e\0");
 
-    // hexdump_c(id.User.get_data(), id.User.size());
-    // hexdump_c(id.Domain.get_data(), id.Domain.size());
-    // hexdump_c(id.Password.get_data(), id.Password.size());
-
-    RED_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                        id.User.get_data(),
-                        id.User.size()));
-    RED_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                        id.Domain.get_data(),
-                        id.Domain.size()));
-    RED_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                        id.Password.get_data(),
-                        id.Password.size()));
 
     SEC_WINNT_AUTH_IDENTITY id2;
 
-
     id2.CopyAuthIdentity(id);
-    RED_CHECK(!memcmp("\x4d\x00\xe9\x00\x6e\x00\xe9\x00\x6c\x00\x61\x00\x73\x00",
-                       id2.User.get_data(),
-                       id2.User.size()));
-    RED_CHECK(!memcmp("\x53\x00\x70\x00\x61\x00\x72\x00\x74\x00\x65\x00",
-                       id2.Domain.get_data(),
-                       id2.Domain.size()));
-    RED_CHECK(!memcmp("\x48\x00\xe9\x00\x6c\x00\xe8\x00\x6e\x00\x65\x00",
-                       id2.Password.get_data(),
-                       id2.Password.size()));
+    RED_CHECK_MEM_C(id.User.av(), "M\0\xe9\0n\0\xe9\0l\0a\0s\0");
+    RED_CHECK_MEM_C(id.Domain.av(), "S\0p\0a\0r\0t\0e\0");
+    RED_CHECK_MEM_C(id.Password.av(), "H\0\xe9\0l\0\xe8\0n\0e\0");
 
     id2.clear();
     RED_CHECK_EQUAL(id2.User.size(), 0);
     RED_CHECK_EQUAL(id2.Domain.size(), 0);
     RED_CHECK_EQUAL(id2.Password.size(), 0);
 
-
-    id.SetUserFromUtf8(reinterpret_cast<const uint8_t *>("Zeus"));
-    RED_CHECK(!memcmp("\x5a\x00\x65\x00\x75\x00\x73\x00",
-                        id.User.get_data(),
-                        id.User.size()));
-    id.SetDomainFromUtf8(reinterpret_cast<const uint8_t *>("Olympe"));
-    RED_CHECK(!memcmp("\x4f\x00\x6c\x00\x79\x00\x6d\x00\x70\x00\x65\x00",
-                        id.Domain.get_data(),
-                        id.Domain.size()));
-    id.SetPasswordFromUtf8(reinterpret_cast<const uint8_t *>("Athéna"));
-    RED_CHECK(!memcmp("\x41\x00\x74\x00\x68\x00\xe9\x00\x6e\x00\x61\x00",
-                        id.Password.get_data(),
-                        id.Password.size()));
-    // hexdump_c(id.User.get_data(), id.User.size());
-    // hexdump_c(id.Domain.get_data(), id.Domain.size());
-    // hexdump_c(id.Password.get_data(), id.Password.size());
+    id.SetUserFromUtf8(byte_ptr_cast("Zeus"));
+    RED_CHECK_MEM_C(id.User.av(), "Z\0e\0u\0s\0");
+    id.SetDomainFromUtf8(byte_ptr_cast("Olympe"));
+    RED_CHECK_MEM_C(id.Domain.av(), "O\0l\0y\0m\0p\0e\0");
+    id.SetPasswordFromUtf8(byte_ptr_cast("Athéna"));
+    RED_CHECK_MEM_C(id.Password.av(), "A\0t\0h\0\xe9\0n\0a\0");
 }

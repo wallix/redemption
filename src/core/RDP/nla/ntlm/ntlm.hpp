@@ -66,24 +66,18 @@ private:
     std::unique_ptr<SEC_WINNT_AUTH_IDENTITY> identity;
     std::unique_ptr<NTLMContext> context;
     std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)>& set_password_cb;
-
-public:
-    SEC_WINNT_AUTH_IDENTITY const * getIdentityHandle() const
-    {
-        return this->identity.get();
-    }
-
-    NTLMContext const * getContextHandle() const
-    {
-        return this->context.get();
-    }
+    bool verbose;
 
 public:
     explicit Ntlm_SecurityFunctionTable(
         Random & rand, TimeObj & timeobj,
-        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb
+        std::function<PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> & set_password_cb,
+        bool verbose = false
     )
-        : rand(rand), timeobj(timeobj), set_password_cb(set_password_cb)
+        : rand(rand)
+        , timeobj(timeobj)
+        , set_password_cb(set_password_cb)
+        , verbose(verbose)
     {}
 
     ~Ntlm_SecurityFunctionTable() = default;
@@ -91,21 +85,16 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
+        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override
     {
         (void)pszPrincipal;
         (void)pvLogonID;
 
-        if (fCredentialUse == SECPKG_CRED_OUTBOUND
-         || fCredentialUse == SECPKG_CRED_INBOUND)
-        {
-            this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
+        this->identity = std::make_unique<SEC_WINNT_AUTH_IDENTITY>();
 
-            if (pAuthData) {
-                this->identity->CopyAuthIdentity(*pAuthData);
-            }
+        if (pAuthData) {
+            this->identity->CopyAuthIdentity(*pAuthData);
         }
 
         return SEC_E_OK;
@@ -114,21 +103,16 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, unsigned long fContextReq,
-        SecBuffer const* pinput_buffer, unsigned long verbose,
-        SecBuffer& output_buffer
+        char* pszTargetName, array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        if (verbose & 0x400) {
+        if (this->verbose) {
             LOG(LOG_INFO, "NTLM_SSPI::InitializeSecurityContext");
         }
 
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj, verbose);
-
-            assert(fContextReq & ISC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
-            // this->context->init();
-            this->context->server = false;
+            this->context = std::make_unique<NTLMContext>(
+                false, this->rand, this->timeobj, this->verbose);
 
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
@@ -139,21 +123,18 @@ public:
             this->context->identity.CopyAuthIdentity(*this->identity);
         }
 
-        if ((!pinput_buffer) || (this->context->state == NTLM_STATE_AUTHENTICATE)) {
-            if (this->context->state == NTLM_STATE_INITIAL) {
-                this->context->state = NTLM_STATE_NEGOTIATE;
-            }
-            if (this->context->state == NTLM_STATE_NEGOTIATE) {
-                return this->context->write_negotiate(output_buffer);
-            }
-            return SEC_E_OUT_OF_SEQUENCE;
+        if (this->context->state == NTLM_STATE_INITIAL) {
+            this->context->state = NTLM_STATE_NEGOTIATE;
+        }
+        if (this->context->state == NTLM_STATE_NEGOTIATE) {
+            return this->context->write_negotiate(output_buffer);
         }
 
         if (this->context->state == NTLM_STATE_CHALLENGE) {
-            this->context->read_challenge(*pinput_buffer);
-            if (this->context->state == NTLM_STATE_AUTHENTICATE) {
-                return this->context->write_authenticate(output_buffer);
-            }
+            this->context->read_challenge(input_buffer);
+        }
+        if (this->context->state == NTLM_STATE_AUTHENTICATE) {
+            return this->context->write_authenticate(output_buffer);
         }
 
         return SEC_E_OUT_OF_SEQUENCE;
@@ -162,13 +143,11 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override {
         if (!this->context) {
-            this->context = std::make_unique<NTLMContext>(this->rand, this->timeobj);
+            this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
 
-            this->context->server = true;
-            assert(fContextReq & ASC_REQ_CONFIDENTIALITY);  // this->context->confidentiality = true;
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
@@ -260,7 +239,7 @@ public:
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
-        if (this->context->verbose & 0x400) {
+        if (this->context->verbose) {
             LOG(LOG_INFO, "NTLM_SSPI::EncryptMessage");
         }
 
@@ -319,15 +298,6 @@ public:
             return SEC_E_MESSAGE_ALTERED;
         }
 
-        return SEC_E_OK;
-    }
-
-    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext() override {
-        return SEC_E_OK;
-    }
-    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext() override {
         return SEC_E_OK;
     }
 };

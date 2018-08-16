@@ -122,11 +122,8 @@ public:
     // GSS_Acquire_cred
     // ACQUIRE_CREDENTIALS_HANDLE_FN AcquireCredentialsHandle;
     SEC_STATUS AcquireCredentialsHandle(
-        const char * pszPrincipal, unsigned long fCredentialUse,
-        Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY * pAuthData
+        const char * pszPrincipal, Array * pvLogonID, SEC_WINNT_AUTH_IDENTITY const* pAuthData
     ) override {
-        (void)fCredentialUse;
-
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
             pvLogonID->init(length + 1);
@@ -178,14 +175,9 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, unsigned long fContextReq,
-        SecBuffer const* pinput_buffer, unsigned long Reserved2,
-        SecBuffer& output_buffer
+        char* pszTargetName, array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        (void)fContextReq;
-        (void)Reserved2;
-
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -205,16 +197,10 @@ public:
         // Token Buffer
         gss_buffer_desc input_tok, output_tok;
         output_tok.length = 0;
-        if (pinput_buffer) {
-            // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
-            //     input_buffer->Buffer.size());
-            input_tok.length = pinput_buffer->size();
-            input_tok.value = const_cast<uint8_t*>(pinput_buffer->get_data());
-        }
-        else {
-            // LOG(LOG_INFO, "NO INPUT BUFFER TOKEN");
-            input_tok.length = 0;
-        }
+        // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
+        //     input_buffer->Buffer.size());
+        input_tok.length = input_buffer.size();
+        input_tok.value = const_cast<uint8_t*>(input_buffer.data());
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
@@ -276,10 +262,9 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, unsigned long fContextReq, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, SecBuffer& output_buffer
     ) override
     {
-        (void)fContextReq;
         OM_uint32 major_status, minor_status;
 
         gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
@@ -352,7 +337,6 @@ public:
 
         if (major_status & GSS_S_CONTINUE_NEEDED) {
             // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
-            (void) gss_release_buffer(&minor_status, &input_tok);
             return SEC_I_CONTINUE_NEEDED;
         }
         // LOG(LOG_INFO, "MAJOR COMPLETE NEEDED");
@@ -437,15 +421,6 @@ public:
         data_out.init(outbuf.length);
         data_out.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
         gss_release_buffer(&minor_status, &outbuf);
-        return SEC_E_OK;
-    }
-
-    // IMPERSONATE_SECURITY_CONTEXT ImpersonateSecurityContext;
-    SEC_STATUS ImpersonateSecurityContext() override {
-        return SEC_E_OK;
-    }
-    // REVERT_SECURITY_CONTEXT RevertSecurityContext;
-    SEC_STATUS RevertSecurityContext() override {
         return SEC_E_OK;
     }
 

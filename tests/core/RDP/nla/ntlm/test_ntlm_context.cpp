@@ -32,10 +32,9 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context(rand, timeobj);
+    NTLMContext context(false, rand, timeobj, 0x400);
     // context.init();
     context.ntlm_set_negotiate_flags();
-    context.verbose = 0x400;
     // context.hardcoded_tests = true;
 
     // NtlmNegotiateFlags ntlm_nego_flag;
@@ -65,7 +64,6 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         /* 0070 */ "\x07\x00\x08\x00\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00";
 
     InStream s(nego_string, sizeof(nego_string) - 1);
-    context.server = false;
     context.NEGOTIATE_MESSAGE.recv(s);
 
     s = InStream(challenge_string, sizeof(challenge_string) - 1);
@@ -170,7 +168,7 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context(rand, timeobj);
+    NTLMContext context(false, rand, timeobj);
     uint8_t buff[16];
 
     uint8_t password[] = "Password";
@@ -196,7 +194,7 @@ RED_AUTO_TEST_CASE(TestSetters)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context(rand, timeobj);
+    NTLMContext context(false, rand, timeobj);
     // context.init();
 
     uint8_t work[] = "Carpe Diem";
@@ -284,10 +282,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext client_context(rand, timeobj);
-    NTLMContext server_context(rand, timeobj);
-    client_context.verbose = 0x400;
-    server_context.verbose = 0x400;
+    NTLMContext client_context(false, rand, timeobj, 0x400);
+    NTLMContext server_context(true, rand, timeobj, 0x400);
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
         0x77, 0x00, 0x6f, 0x00, 0x72, 0x00, 0x64, 0x00,
@@ -322,13 +318,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     OutStream out_server_to_client(server_to_client_buf);
 
     bool result;
-
-    // client_context.init();
-    // server_context.init();
-
-    client_context.server = false;
-    server_context.server = true;
-
 
     // CLIENT BUILDS NEGOTIATE
     client_context.ntlm_set_negotiate_flags();
@@ -417,48 +406,12 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
     server_context.ntlm_generate_server_signing_key();
     server_context.ntlm_generate_server_sealing_key();
 
-    // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
-    // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
-    // hexdump_c(server_context.SessionBaseKey, 16);
-    // hexdump_c(client_context.SessionBaseKey, 16);
-    RED_CHECK(!memcmp(server_context.SessionBaseKey,
-                        client_context.SessionBaseKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
-    // hexdump_c(server_context.ExportedSessionKey, 16);
-    // hexdump_c(client_context.ExportedSessionKey, 16);
-    RED_CHECK(!memcmp(server_context.ExportedSessionKey,
-                        client_context.ExportedSessionKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
-    // hexdump_c(server_context.ClientSigningKey, 16);
-    // hexdump_c(client_context.ClientSigningKey, 16);
-    RED_CHECK(!memcmp(server_context.ClientSigningKey,
-                        client_context.ClientSigningKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
-    // hexdump_c(server_context.ClientSealingKey, 16);
-    // hexdump_c(client_context.ClientSealingKey, 16);
-    RED_CHECK(!memcmp(server_context.ClientSealingKey,
-                        client_context.ClientSealingKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
-    // hexdump_c(server_context.ServerSigningKey, 16);
-    // hexdump_c(client_context.ServerSigningKey, 16);
-    RED_CHECK(!memcmp(server_context.ServerSigningKey,
-                        client_context.ServerSigningKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
-    // hexdump_c(server_context.ServerSealingKey, 16);
-    // hexdump_c(client_context.ServerSealingKey, 16);
-    RED_CHECK(!memcmp(server_context.ServerSealingKey,
-                        client_context.ServerSealingKey,
-                        16));
+    RED_CHECK_MEM_AA(server_context.SessionBaseKey, client_context.SessionBaseKey);
+    RED_CHECK_MEM_AA(server_context.ExportedSessionKey, client_context.ExportedSessionKey);
+    RED_CHECK_MEM_AA(server_context.ClientSigningKey, client_context.ClientSigningKey);
+    RED_CHECK_MEM_AA(server_context.ClientSealingKey, client_context.ClientSealingKey);
+    RED_CHECK_MEM_AA(server_context.ServerSigningKey, client_context.ServerSigningKey);
+    RED_CHECK_MEM_AA(server_context.ServerSealingKey, client_context.ServerSealingKey);
 }
 
 
@@ -467,8 +420,8 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext client_context(rand, timeobj);
-    NTLMContext server_context(rand, timeobj);
+    NTLMContext client_context(false, rand, timeobj);
+    NTLMContext server_context(true, rand, timeobj);
 
     const uint8_t password[] = {
         0x50, 0x00, 0x61, 0x00, 0x73, 0x00, 0x73, 0x00,
@@ -496,13 +449,6 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     OutStream out_client_to_server(client_to_server_buf);
     uint8_t server_to_client_buf[65535];
     OutStream out_server_to_client(server_to_client_buf);
-
-    // client_context.init();
-    // server_context.init();
-
-    client_context.server = false;
-    server_context.server = true;
-
 
     // CLIENT BUILDS NEGOTIATE
     client_context.ntlm_client_build_negotiate();
@@ -570,56 +516,13 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     server_context.hash_password(password, sizeof(password), hash);
     server_context.ntlm_server_proceed_authenticate(hash);
 
-    // CHECK SHARED KEY ARE EQUAL BETWEEN SERVER AND CLIENT
-    // LOG(LOG_INFO, "===== SESSION BASE KEY =====");
-    // hexdump_c(server_context.SessionBaseKey, 16);
-    // hexdump_c(client_context.SessionBaseKey, 16);
-    RED_CHECK(!memcmp(server_context.SessionBaseKey,
-                        client_context.SessionBaseKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== EXPORTED SESSION KEY =====");
-    // hexdump_c(server_context.ExportedSessionKey, 16);
-    // hexdump_c(client_context.ExportedSessionKey, 16);
-    RED_CHECK(!memcmp(server_context.ExportedSessionKey,
-                        client_context.ExportedSessionKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== CLIENT SIGNING KEY =====");
-    // hexdump_c(server_context.ClientSigningKey, 16);
-    // hexdump_c(client_context.ClientSigningKey, 16);
-    RED_CHECK(!memcmp(server_context.ClientSigningKey,
-                        client_context.ClientSigningKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== CLIENT SEALING KEY =====");
-    // hexdump_c(server_context.ClientSealingKey, 16);
-    // hexdump_c(client_context.ClientSealingKey, 16);
-    RED_CHECK(!memcmp(server_context.ClientSealingKey,
-                        client_context.ClientSealingKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== SERVER SIGNING KEY =====");
-    // hexdump_c(server_context.ServerSigningKey, 16);
-    // hexdump_c(client_context.ServerSigningKey, 16);
-    RED_CHECK(!memcmp(server_context.ServerSigningKey,
-                        client_context.ServerSigningKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== SERVER SEALING KEY =====");
-    // hexdump_c(server_context.ServerSealingKey, 16);
-    // hexdump_c(client_context.ServerSealingKey, 16);
-    RED_CHECK(!memcmp(server_context.ServerSealingKey,
-                        client_context.ServerSealingKey,
-                        16));
-
-    // LOG(LOG_INFO, "===== Message Integrity Check =====");
-    // hexdump_c(client_context.MessageIntegrityCheck, 16);
-    // hexdump_c(server_context.MessageIntegrityCheck, 16);
-    RED_CHECK(!memcmp(client_context.MessageIntegrityCheck,
-                        server_context.MessageIntegrityCheck,
-                        16));
-
+    RED_CHECK_MEM_AA(server_context.SessionBaseKey, client_context.SessionBaseKey);
+    RED_CHECK_MEM_AA(server_context.ExportedSessionKey, client_context.ExportedSessionKey);
+    RED_CHECK_MEM_AA(server_context.ClientSigningKey, client_context.ClientSigningKey);
+    RED_CHECK_MEM_AA(server_context.ClientSealingKey, client_context.ClientSealingKey);
+    RED_CHECK_MEM_AA(server_context.ServerSigningKey, client_context.ServerSigningKey);
+    RED_CHECK_MEM_AA(server_context.ServerSealingKey, client_context.ServerSealingKey);
+    RED_CHECK_MEM_AA(client_context.MessageIntegrityCheck, server_context.MessageIntegrityCheck);
 }
 
 
@@ -629,13 +532,10 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     LCGRandom rand(0);
     LCGTime timeobj;
 
-    NTLMContext context_write(rand, timeobj);
+    NTLMContext context_write(false, rand, timeobj, 0x400);
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED;
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
-    NTLMContext context_read(rand, timeobj);
-    context_read.verbose = 0x400;
-    context_write.verbose = 0x400;
-    context_read.server = true;
+    NTLMContext context_read(true, rand, timeobj, 0x400);
     SEC_STATUS status;
     SecBuffer nego;
     status = context_write.write_negotiate(nego);
@@ -650,7 +550,7 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     status = context_write.write_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
-    status = context_read.read_challenge(chal);
+    status = context_read.read_challenge(chal.av());
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 

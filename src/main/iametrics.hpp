@@ -20,6 +20,9 @@
 */
 
 #include "cxx/cxx.hpp"
+#include <stdint.h> // for uint64_t
+#include <stddef.h> // for size_t
+
 
 extern "C"
 {
@@ -27,7 +30,10 @@ extern "C"
     char const * iametrics_version();
 
     REDEMPTION_LIB_EXPORT
-    void hmac_sha256(char * dest, const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+    char * new_hmac_sha256_hex(const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    void delete_hmac_sha256_hex(char * sign) noexcept;
 
     class Metrics;
 
@@ -35,6 +41,7 @@ extern "C"
     Metrics * metrics_new( const char * version             // fields version
                          , const char * protocol_name
                          , const bool activate              // do nothing if false
+                         , size_t     nbitems
                          , const char * path
                          , const char * session_id
                          , const char * primary_user_sig    // clear primary user account
@@ -50,9 +57,9 @@ extern "C"
     void metrics_delete(Metrics * metrics);
 
     REDEMPTION_LIB_EXPORT
-    void metrics_new_file(const unsigned long now, Metrics * metrics);
+    void metrics_log(long int now_ms, Metrics * metrics) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_rotate(const unsigned long now, Metrics * metrics);
+    void metrics_add_to_current_data(int index, uint64_t value, Metrics * metrics) noexcept;
 
 }
