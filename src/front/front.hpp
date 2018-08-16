@@ -920,9 +920,13 @@ public:
                     this->orders.graphics_update_pdu().sync();
 
                     if (this->capture) {
-//                        this->must_be_stop_capture();
-//                        this->can_be_start_capture();
-                        this->capture->resize(width, height);
+                        if (this->ini.get<cfg::globals::experimental_support_resize_session_during_recording>()) {
+                            this->capture->resize(width, height);
+                        }
+                        else {
+                            this->must_be_stop_capture();
+                            this->can_be_start_capture();
+                        }
                     }
 
                     // clear all pending orders, caches data, and so on and
