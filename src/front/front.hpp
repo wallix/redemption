@@ -4135,7 +4135,12 @@ private:
                     LOG(LOG_INFO, "Front::process_data: --------------> UP AND RUNNING <--------------");
                 }
 
-                this->set_gd(this->orders.graphics_update_pdu());
+                if (this->capture && this->capture->has_graphic_api()) {
+                    this->set_gd(this->capture.get());
+                }
+                else {
+                    this->set_gd(this->orders.graphics_update_pdu());
+                }
 
                 this->up_and_running = true;
                 this->handshake_timeout.reset();
