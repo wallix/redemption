@@ -20,8 +20,8 @@
 */
 
 #include "cxx/cxx.hpp"
-#include <stdint.h> // for uint64_t
-#include <stddef.h> // for size_t
+#include <cstdint> // for uint64_t
+#include <cstddef> // for size_t
 
 
 extern "C"
@@ -40,25 +40,25 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     Metrics * metrics_new( const char * version             // fields version
                          , const char * protocol_name
-                         , const bool activate              // do nothing if false
-                         , size_t     nbitems
+                         , int          activate            // do nothing if false
+                         , unsigned     nbitems
                          , const char * path
                          , const char * session_id
                          , const char * primary_user_sig    // clear primary user account
                          , const char * account_sig         // secondary account
                          , const char * target_service_sig  // clear target service name + clear device name
                          , const char * session_info_sig    // info relative to client session
-                         , const unsigned long now                 // time at beginning of metrics
-                         , const int file_interval          // daily rotation of filename (hours)
-                         , const int log_delay              // delay between 2 logs
+                         , unsigned long now                // time at beginning of metrics
+                         , int           file_interval      // daily rotation of filename (hours)
+                         , int           log_delay          // delay between 2 logs
                          ) noexcept;
 
     REDEMPTION_LIB_EXPORT
     void metrics_delete(Metrics * metrics) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_log(Metrics * metrics, long int now_ms) noexcept;
+    void metrics_log(Metrics * metrics, uint64_t now_ms) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_add_to_current_data(Metrics * metrics, int index, uint64_t value) noexcept;
+    int metrics_add_to_current_data(Metrics * metrics, unsigned index, uint64_t value) noexcept;
 }

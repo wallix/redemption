@@ -112,7 +112,13 @@ public:
         }
     }
 
-    void add_to_current_data(int index, uint64_t value) {
+    std::size_t count_data() noexcept
+    {
+        return this->current_data.size();
+    }
+
+    void add_to_current_data(size_t index, uint64_t value) noexcept
+    {
         this->current_data[index] += value;
     }
 
