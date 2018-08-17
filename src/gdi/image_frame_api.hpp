@@ -23,9 +23,11 @@
 #include "utils/image_data_view.hpp"
 #include "utils/rect.hpp"
 
+#include "utils/sugar/noncopyable.hpp"
+
 namespace gdi {
 
-struct ImageFrameApi
+struct ImageFrameApi : private noncopyable
 {
     using ImageView = MutableImageDataView;
     using ConstImageView = ConstImageDataView;
