@@ -260,6 +260,7 @@ public:
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
+    int wait_and_draw_event(timeval /*timeout*/) override { return 0; }
 };
 
 
