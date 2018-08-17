@@ -3060,7 +3060,6 @@ namespace LIC
 
         explicit ErrorAlert_Recv(InStream & stream) {
             hexdump_d(stream.get_data(), stream.get_capacity());
-
             const unsigned expected =
                 16; /* wMsgType(1) + bVersion(1) + wMsgSize(2) + dwErrorCode(4) + dwStateTransition(4) + wBlobType(2) + wBlobLen(2) */
             if (!stream.in_check_rem(expected)){

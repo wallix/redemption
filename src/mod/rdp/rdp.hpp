@@ -2320,7 +2320,6 @@ public:
                 );
             }
 
-
             sec.payload.in_skip_bytes(sec.payload.in_remain());
 
         }

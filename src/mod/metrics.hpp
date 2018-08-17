@@ -57,25 +57,26 @@ public:
     std::vector<uint64_t> current_data;
 
 
-    const char * version;
-    const char * protocol_name;
+    const std::string version;
+    const std::string protocol_name;
 
     //  output file info
     const int file_interval;
     time_t current_file_date;
     char complete_file_path[4096] = {'\0'};
-    const char * path;
+    const std::string path;
     unique_fd fd = invalid_fd();
 
     // LOG info
     char header[1024];
-    const char * session_id;
+    const std::string session_id;
     const bool active_ = false;
 
     const time_t connection_time;
 
     const int log_delay;
     timeval next_log_time;
+
 
 
     Metrics( const char * version                 // fields version
@@ -104,44 +105,19 @@ public:
     , log_delay(log_delay)
     , next_log_time{ this->log_delay+now, 0}
     {
-        if (path && activate) {
+        if (activate) {
             ::snprintf(this->header, sizeof(this->header), "%s user=%s account=%s target_service_device=%s client_info=%s\n", session_id, primary_user_sig, account_sig, target_service_sig, session_info_sig);
 
             this->new_file(this->current_file_date);
         }
     }
 
-     Metrics( const char * version               // fields version
-            , const char * protocol_name
-            , const bool activate                        // do nothing if false
-            , const char * path
-            , const char * session_id
-//             , const char * primary_user_sig       // clear primary user account
-//             , const char * account_sig            // secondary account
-//             , const char * target_service_sig           // clear target service name + clear device name
-//             , const char * session_info_sig       // source_host + client info
-            , const time_t now                           // time at beginning of metrics
-            , const int file_interval     // daily rotation of filename (hours)
-            , const int log_delay       // delay between 2 logs
-            )
-    : version(version)
-    , protocol_name(protocol_name)
-    , file_interval{file_interval}
-    , current_file_date(now-now%(this->file_interval*3600))
-    , path(path)
-    , session_id(session_id)
-    , active_(activate)
-    , connection_time(now)
-    , log_delay(log_delay)
-    , next_log_time{ this->log_delay+now, 0}
-    {}
-
     void add_to_current_data(int index, uint64_t value) {
         this->current_data[index] += value;
     }
 
     ~Metrics() {
-        this->disconnect();
+         this->disconnect();
     }
 
     void log(timeval & now) {
@@ -157,7 +133,7 @@ public:
                 std::string text_datetime(text_gmdatetime(now.tv_sec));
 
                 char sentence[4096];
-                char * ptr = sentence + ::snprintf(sentence, sizeof(sentence), "%s %s", text_datetime.c_str(), this->session_id);
+                char * ptr = sentence + ::snprintf(sentence, sizeof(sentence), "%s %s", text_datetime.c_str(), this->session_id.c_str());
                 for (auto x: this->current_data){
                     ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), " %lu", x);
                 }
@@ -182,7 +158,7 @@ public:
         std::string text_date = ((this->current_file_date % (24*3600)) == 0) ? text_gmdate(this->current_file_date).c_str() : filename_gmdatetime(this->current_file_date).c_str();
 
         char index_file_path[1024];
-        ::snprintf(index_file_path, sizeof(index_file_path), "%s/%s_metrics-%s-%s.logindex", this->path, this->protocol_name, this->version, text_date.c_str());
+        ::snprintf(index_file_path, sizeof(index_file_path), "%s/%s_metrics-%s-%s.logindex", this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
 
         char header_disconnection[2048];
         ::snprintf(header_disconnection, sizeof(header_disconnection), "%s disconnection %s", text_gmdatetime(this->next_log_time.tv_sec).c_str(), this->header);
@@ -202,7 +178,7 @@ public:
     void new_file(time_t now) {
         std::string text_date = ((now % (24*3600)) == 0)?text_gmdate(now):filename_gmdatetime(now);
 
-        ::snprintf(this->complete_file_path, 4096, "%s/%s_metrics-%s-%s.logmetrics", this->path, this->protocol_name, this->version, text_date.c_str());
+        ::snprintf(this->complete_file_path, 4096, "%s/%s_metrics-%s-%s.logmetrics", this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
@@ -210,7 +186,7 @@ public:
         }
 
         char index_file_path[1024];
-        ::snprintf(index_file_path, sizeof(index_file_path), "%s/%s_metrics-%s-%s.logindex", this->path, this->protocol_name, this->version, text_date.c_str());
+        ::snprintf(index_file_path, sizeof(index_file_path), "%s/%s_metrics-%s-%s.logindex", this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
 
         char connection_header[1036];
         ::snprintf(connection_header, sizeof(connection_header), "%s connection %s", text_gmdatetime(this->connection_time).c_str(), this->header);

@@ -85,6 +85,7 @@ target_nosyslog = set([
     'rdpinichecker',
     'rdpclient',
     'main_client_redemption',
+    'rdpheadless',
 ])
 
 #coverage_requirements = dict((

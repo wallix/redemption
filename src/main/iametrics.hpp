@@ -27,7 +27,7 @@
 extern "C"
 {
     REDEMPTION_LIB_EXPORT
-    char const * iametrics_version();
+    char const * iametrics_version() noexcept;
 
     REDEMPTION_LIB_EXPORT
     char * new_hmac_sha256_hex(const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
@@ -51,14 +51,14 @@ extern "C"
                          , const unsigned long now                 // time at beginning of metrics
                          , const int file_interval          // daily rotation of filename (hours)
                          , const int log_delay              // delay between 2 logs
-                         );
+                         ) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_delete(Metrics * metrics);
+    void metrics_delete(Metrics * metrics) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_log(long int now_ms, Metrics * metrics) noexcept;
+    void metrics_log(Metrics * metrics, long int now_ms) noexcept;
 
     REDEMPTION_LIB_EXPORT
-    void metrics_add_to_current_data(int index, uint64_t value, Metrics * metrics) noexcept;
+    void metrics_add_to_current_data(Metrics * metrics, int index, uint64_t value) noexcept;
 }

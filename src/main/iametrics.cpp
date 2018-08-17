@@ -24,10 +24,10 @@
 #include "mod/metrics.hpp"
 #include <stdint.h>
 
+
 extern "C"
 {
-
-    const char* iametrics_version() {
+    const char* iametrics_version() noexcept {
         return VERSION;
     }
 
@@ -56,7 +56,7 @@ extern "C"
                          , const unsigned long now                         // time at beginning of metrics
                          , const int file_interval                  // daily rotation of filename (hours)
                          , const int log_delay                      // delay between 2 logs
-                         ) {
+                         ) noexcept {
         Metrics * metrics = new Metrics(version, protocol_name, activate, nbitems, path,
                 session_id,
                 primary_user_sig, account_sig, target_service_sig, session_info_sig,
@@ -65,18 +65,16 @@ extern "C"
         return metrics;
     }
 
-    void metrics_delete(Metrics * metrics) {
+    void metrics_delete(Metrics * metrics) noexcept {
         delete(metrics);
     }
 
-    void metrics_log(long int now_ms, Metrics * metrics) noexcept {
+    void metrics_log(Metrics * metrics, long int now_ms) noexcept {
         timeval tv_now = { now_ms / 1000 , (now_ms % 1000) * 1000 };
         metrics->log(tv_now);
     }
 
-    void metrics_add_to_current_data(int index, uint64_t value, Metrics * metrics) noexcept {
+    void metrics_add_to_current_data(Metrics * metrics, int index, uint64_t value) noexcept {
         metrics->add_to_current_data(index, value);
     }
-
-
 }

@@ -41,12 +41,15 @@ int main(int argc, char** argv)
 
     SessionReactor session_reactor;
 
-    RDPVerbose verbose = to_verbose_flags(0x0);
+    RDPVerbose verbose = to_verbose_flags(0xffffffff);      //to_verbose_flags(0x0);
 
     LOG(LOG_INFO, "ClientRedemption init");
 
-    ClientHeadlessSocket headless_socket;
+    ClientHeadlessSocket headless_socket(session_reactor);
     ClientInputSocketAPI * headless_socket_api_obj = &headless_socket;
+
+    ClientHeadlessInput headless_input;
+    ClientInputMouseKeyboardAPI * headless_input_api_obj = &headless_input;
 
 
     ClientRedemption client( session_reactor, argv, argc, verbose
@@ -54,8 +57,25 @@ int main(int argc, char** argv)
                            , nullptr
                            , nullptr
                            , headless_socket_api_obj
-                           , nullptr
+                           , headless_input_api_obj
                            , nullptr);
+
+
+//                            try {
+//         while (!client.mod->is_up_and_running()) {
+//                 std::cout << " Early negociations...\n";
+//                 if (int err = client.wait_and_draw_event({3, 0})) {
+//                     return err;
+//                 }
+//             }
+// //             this->primary_connection_finished = true;
+// //             this->start_wab_session_time = tvtime();
+//
+//         } catch (const Error & e) {
+//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
+//             return 2;
+//         }
+//         std::cout << " Early negociations completes.\n"
 
 /*    int i = 0;
     if (client.mod) {

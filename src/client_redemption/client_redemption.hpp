@@ -205,7 +205,6 @@ public:
 
     int keep_alive_freq;
     timeval start_win_session_time;
-    bool sessionReactorEnableGraphics = true;
 
 
 
@@ -297,10 +296,10 @@ public:
 
     ~ClientRedemption() = default;
 
-    int wait_and_draw_event(timeval timeout)
+    int wait_and_draw_event(timeval timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
-            timeout, this->session_reactor, SessionReactor::EnableGraphics{this->sessionReactorEnableGraphics},
+            timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
             *this->mod, *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
@@ -852,12 +851,13 @@ public:
                 if (this->impl_socket_listener) {
                     if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
 
+                        LOG(LOG_INFO, "impl_socket_listener->start_to_listen ok");
                         if (mod_state != MOD_RDP_REMOTE_APP) {
                             if (this->impl_graphic) {
                                 this->impl_graphic->show_screen();
                             }
                         }
-                        LOG(LOG_INFO, "impl_socket_listener->start_to_listen ok");
+
                         return;
                     }
                 }

@@ -53,29 +53,35 @@ constexpr const char * rdp_metrics_path_file = "/tmp";
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
 
+    const char * metrics_path = "/tmp";
+
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
+    std::string session_id("164d89c1a56957b752540093e178");
+
+    std::string h_user("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58");
+    std::string h2("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31");
+    std::string h3("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48");
+    std::string h4("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7");
+
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
-                      , rdp_metrics_path_file
-                      , "164d89c1a56957b752540093e178"
-                      , std::string("51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58")
-                      , std::string("1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31")
-                      , std::string("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48")
-                      , std::string("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7")
+                      , metrics_path
+                      , session_id.c_str()
+                      , h_user
+                      , h2
+                      , h3
+                      , h4
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
                       );
 
-//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
-//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
+    std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
-//     std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
-
-//     RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-    RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+    RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
+    RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
 
     {
         metrics.right_click_pressed();
@@ -83,8 +89,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
         timeval now = {epoch, 0};
         metrics.log(now);
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         timeval now = {epoch+1, 0};
@@ -92,23 +97,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
 
         metrics.right_click_pressed();
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         timeval now = {epoch+3, 0};
         metrics.log(now);
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         timeval now = {epoch+5, 0};
         metrics.log(now);
 
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);;
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -116,7 +118,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
         metrics.log(now);
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -124,7 +125,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
         metrics.log(now);
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
     }
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
@@ -135,8 +135,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2) {
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-//     std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
     {
 
@@ -153,13 +151,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2) {
                       , std::chrono::seconds{3}
                       );
 
-//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
-//     RED_CHECK_EQUAL(true, file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
-
-
-
-//     RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-    RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+    RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
 
     {
         metrics.right_click_pressed();
@@ -167,22 +159,19 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2) {
         timeval now = {epoch, 0};
         metrics.log(now);
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         timeval now = {epoch+1, 0};
         metrics.log(now);
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         timeval now = {epoch+2, 0};
         metrics.log(now);
 
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
-        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), std::string(""));
+        RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), "");
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -190,14 +179,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2) {
         metrics.log(now);
 
         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"), expected_log_metrics);
-//         RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);
     }
 
     }
-
-//     std::string expected_disconnected_index("2018-08-02 12:08:07 disconnection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
-
-//     RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index+expected_disconnected_index);
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
@@ -207,8 +191,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement) {
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
-
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogBasicIncrement");
 
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
@@ -221,7 +203,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
     std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -356,8 +337,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -369,7 +348,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics;
@@ -435,8 +413,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -448,7 +424,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics;
@@ -514,8 +489,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -527,7 +500,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics;
@@ -598,8 +570,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsRDPDRReadChunk");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -611,7 +581,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
     std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -734,8 +703,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -747,7 +714,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -833,8 +799,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -846,7 +810,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -931,8 +894,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
-    LOG(LOG_INFO, "\n\nTestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer");
-
     time_t epoch = 1533211681;
     RDPMetrics metrics( true
                       , rdp_metrics_path_file
@@ -944,7 +905,6 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer) {
                       , epoch
                       , std::chrono::hours{24}
                       , std::chrono::seconds{5}
-                      , true
                       );
 
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");

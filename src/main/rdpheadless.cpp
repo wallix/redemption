@@ -87,7 +87,7 @@ int main(int argc, char** argv)
                                , theme
                                , server_auto_reconnect_packet
                                , close_box_extra_message
-                               , to_verbose_flags(0)
+                               , to_verbose_flags(0xffffffff)
                                );
     bool quick_connection_test = true;
     bool time_set_connection_test = false;

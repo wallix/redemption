@@ -158,9 +158,6 @@ private:
     uint32_t last_formatID = 0;
     bool cliprdr_init_format_list_done = false;
 
-    const bool debug;
-
-
 
 public:
     Metrics metrics;
@@ -175,9 +172,8 @@ public:
               , const time_t now                           // time at beginning of metrics
               , const std::chrono::hours file_interval     // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay       // delay between 2 logs
-              , const bool debug = false)
-        : debug(debug)
-        , metrics("v1.0", "rdp", activate, COUNT_FIELD, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count())
+              )
+        : metrics(/*this->rdp_field_version*/"v1.0", /*this->rdp_protocol_name*/"rdp", activate, COUNT_FIELD, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count())
     {
     }
 

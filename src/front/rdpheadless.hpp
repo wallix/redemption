@@ -545,12 +545,12 @@ public:
     //------------------------
 
     RDPHeadlessFront(ClientInfo const & info, ReportMessageApi & report_message, uint32_t verbose, RDPHeadlessFrontParams params = RDPHeadlessFrontParams{})
-    : _verbose(verbose)
+    : _verbose(verbose | 0x00000010)
     , _clipboard_channel(&(this->_to_client_sender), &(this->_to_server_sender) ,*this , [&report_message](){
         ClipboardVirtualChannel::Params params(report_message);
 
         params.exchanged_data_limit = ~decltype(params.exchanged_data_limit){};
-        params.verbose = to_verbose_flags(0xfffffff);
+        params.verbose = to_verbose_flags(0x0);
 
         params.clipboard_down_authorized = true;
         params.clipboard_up_authorized = true;
@@ -743,7 +743,7 @@ public:
 
         try {
             while (!this->_callback->is_up_and_running()) {
-                // std::cout << " Early negociations...\n";
+                std::cout << " Early negociations...\n";
                 if (int err = this->wait_and_draw_event({3, 0})) {
                     return err;
                 }

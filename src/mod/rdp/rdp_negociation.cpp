@@ -1308,6 +1308,8 @@ bool RdpNegociation::get_license(InStream & stream)
     if (sec.flags & SEC::SEC_LICENSE_PKT) {
         LIC::RecvFactory flic(sec.payload);
 
+        LOG(LOG_INFO, "flic.tag=%u", flic.tag);
+
         switch (flic.tag) {
         case LIC::LICENSE_REQUEST:
             if (bool(this->verbose & RDPVerbose::license)) {
