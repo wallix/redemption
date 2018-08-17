@@ -22,7 +22,9 @@
 
 namespace gdi {
 
-struct ResizeApi
+#include "utils/sugar/noncopyable.hpp"
+
+struct ResizeApi : private noncopyable
 {
     virtual void resize(uint16_t width, uint16_t height) = 0;
 
