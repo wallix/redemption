@@ -32,7 +32,7 @@ class VideoCropper : public gdi::ImageFrameApi
 private:
     static constexpr const unsigned int bytes_per_pixel = 3;
 
-    ImageFrameApi& image_frame_api_ptr;
+    ImageFrameApi* image_frame_api_ptr;
 
     unsigned int in_width;
     unsigned int in_height;
@@ -60,7 +60,7 @@ private:
         /* TODO x, y, out_width, out_height -> Rect*/
         unsigned int x, unsigned int y,
         unsigned int out_width, unsigned int out_height)
-    : image_frame_api_ptr(imageFrameApi)
+    : image_frame_api_ptr(&imageFrameApi)
     , in_width(image_view.width())
     , in_height(image_view.height())
     , in_rowsize(image_view.width() * VideoCropper::bytes_per_pixel) /* TODO image_view.rowsize() ? */
@@ -90,7 +90,7 @@ public:
     {}
 
     void resize(ImageFrameApi& imageFrameApi) {
-        this->image_frame_api_ptr = imageFrameApi;
+        this->image_frame_api_ptr = &imageFrameApi;
 
         ImageView const & image_view = imageFrameApi.get_mutable_image_view();
 
@@ -147,7 +147,7 @@ public:
         }
 
         const unsigned int remote_last_update_index =
-            this->image_frame_api_ptr.get_last_update_index();
+            this->image_frame_api_ptr->get_last_update_index();
         if (remote_last_update_index == this->last_update_index) {
             return;
         }
