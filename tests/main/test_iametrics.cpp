@@ -54,7 +54,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     // Should create rdp_metrics files if they do not exist
     time_t epoch = 1533211681; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 //     LOG(LOG_INFO, "%s", text_gmdatetime(1533193200-24*3600));
 
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
                       , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -159,7 +159,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 34
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
                     , rdp_metrics_path_file
                     , "164d89c1a56957b752540093e178"
                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -197,7 +197,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, true, 10
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 10
                     , rdp_metrics_path_file
                     , "164d89c1a56957b752540093e178"
                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"

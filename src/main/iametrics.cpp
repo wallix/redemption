@@ -55,7 +55,6 @@ extern "C"
 
     Metrics * metrics_new( const char * version             // fields version
                          , const char * protocol_name
-                         , const int    activate            // do nothing if false
                          , const unsigned nbitems
                          , const char * path
                          , const char * session_id
@@ -68,7 +67,7 @@ extern "C"
                          , const int    log_delay           // delay between 2 logs
                          ) noexcept
     {
-        return new(std::nothrow) Metrics(version, protocol_name, activate, nbitems, path,
+        return new(std::nothrow) Metrics(version, protocol_name, true, nbitems, path,
                                          session_id, primary_user_sig, account_sig,
                                          target_service_sig, session_info_sig, now,
                                          file_interval, log_delay);

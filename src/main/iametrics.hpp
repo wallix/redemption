@@ -40,7 +40,6 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     Metrics * metrics_new( const char * version             // fields version
                          , const char * protocol_name
-                         , int          activate            // do nothing if false
                          , unsigned     nbitems
                          , const char * path
                          , const char * session_id
