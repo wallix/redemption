@@ -32,7 +32,7 @@ class VideoCropper : public gdi::ImageFrameApi
 private:
     static constexpr const unsigned int bytes_per_pixel = 3;
 
-    ImageFrameApi* image_frame_api_ptr;
+    not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr;
 
     unsigned int in_width;
     unsigned int in_height;
