@@ -38,6 +38,12 @@
 
 #include "test_only/get_file_contents.hpp"
 
+#define RED_CHECK_FILESIZE(fsize, size, filename)         \
+    RED_CHECK_MESSAGE(                                    \
+        size == fsize,                                    \
+        "check " << size << " == filesize(\"" << filename \
+        << "\") failed [" << size << " != " << fsize << "]")
+
 
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)
@@ -1272,10 +1278,11 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
     const struct CheckFiles {
         const char * filename;
         ssize_t size;
+        ssize_t size2 = 0;
     } fileinfo[] = {
         {"/tmp/recorder-chunk-meta-000000.mp4", 411572},
         {"/tmp/recorder-chunk-meta-000000.png", 15353},
-        {"/tmp/recorder-chunk-meta-000001.mp4", 734169},
+        {"/tmp/recorder-chunk-meta-000001.mp4", 734169, 734095},
         {"/tmp/recorder-chunk-meta-000001.png", 40151},
         {"/tmp/recorder-chunk-meta.pgs",        37},
     };
@@ -1312,11 +1319,10 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 
     for (auto x: fileinfo) {
         auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
+        if (x.size != fsize) {
+            auto size = x.size2 ? x.size2 : x.size;
+            RED_CHECK_FILESIZE(fsize, size, x.filename);
+        }
         if (remove_files) { ::unlink(x.filename); }
     }
 }
@@ -1362,11 +1368,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize)
 
     for (auto x: fileinfo) {
         auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
+        RED_CHECK_FILESIZE(fsize, x.size, x.filename);
         if (remove_files) { ::unlink(x.filename); }
     }
 }
@@ -1412,11 +1414,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize1)
 
     for (auto x: fileinfo) {
         auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
+        RED_CHECK_FILESIZE(fsize, x.size, x.filename);
         if (remove_files) { ::unlink(x.filename); }
     }
 }
