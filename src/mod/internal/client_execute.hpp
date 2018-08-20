@@ -192,6 +192,8 @@ public:
 
     Rect get_window_rect() const;
 
+    Point get_window_offset() const;
+
     Rect get_auxiliary_window_rect() const;
 
     void ready(mod_api & mod, uint16_t front_width, uint16_t front_height, Font const & font, bool allow_resize_hosted_desktop);

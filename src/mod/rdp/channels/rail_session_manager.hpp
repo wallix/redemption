@@ -500,6 +500,11 @@ private:
 
         this->protected_rect = dialog_box_rect;
 
+        Point window_offset = this->client_execute->get_window_offset();
+
+        const Rect adjusted_protected_rect = this->protected_rect.offset(
+                    window_offset.x, window_offset.y);
+
         {
             RDP::RAIL::NewOrExistingWindow order;
 
@@ -524,18 +529,18 @@ private:
             order.ExtendedStyle(0x40310 | 0x8);
             order.ShowState(5);
             order.TitleInfo("Dialog box");
-            order.ClientOffsetX(this->protected_rect.x + 6);
-            order.ClientOffsetY(this->protected_rect.y + 25);
-            order.WindowOffsetX(this->protected_rect.x);
-            order.WindowOffsetY(this->protected_rect.y);
+            order.ClientOffsetX(adjusted_protected_rect.x + 6);
+            order.ClientOffsetY(adjusted_protected_rect.y + 25);
+            order.WindowOffsetX(adjusted_protected_rect.x);
+            order.WindowOffsetY(adjusted_protected_rect.y);
             order.WindowClientDeltaX(6);
             order.WindowClientDeltaY(25);
-            order.WindowWidth(this->protected_rect.cx);
-            order.WindowHeight(this->protected_rect.cy);
-            order.VisibleOffsetX(this->protected_rect.x);
-            order.VisibleOffsetY(this->protected_rect.y);
+            order.WindowWidth(adjusted_protected_rect.cx);
+            order.WindowHeight(adjusted_protected_rect.cy);
+            order.VisibleOffsetX(adjusted_protected_rect.x);
+            order.VisibleOffsetY(adjusted_protected_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, this->protected_rect.cx, this->protected_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_protected_rect.cx, adjusted_protected_rect.cy));
 
             if (bool(this->verbose & RDPVerbose::rail)) {
                 StaticOutStream<1024> out_s;
@@ -729,6 +734,11 @@ public:
         this->auxiliary_window_id = this->register_client_window();
 
         {
+            Point window_offset = this->client_execute->get_window_offset();
+
+            const Rect adjusted_window_rect = window_rect.offset(
+                        window_offset.x, window_offset.y);
+
             RDP::RAIL::NewOrExistingWindow order;
 
             order.header.FieldsPresentFlags(
@@ -752,18 +762,18 @@ public:
             order.ExtendedStyle(0x40310 | 0x8);
             order.ShowState(5);
             order.TitleInfo("Dialog box");
-            order.ClientOffsetX(window_rect.x + 6);
-            order.ClientOffsetY(window_rect.y + 25);
-            order.WindowOffsetX(window_rect.x);
-            order.WindowOffsetY(window_rect.y);
+            order.ClientOffsetX(adjusted_window_rect.x + 6);
+            order.ClientOffsetY(adjusted_window_rect.y + 25);
+            order.WindowOffsetX(adjusted_window_rect.x);
+            order.WindowOffsetY(adjusted_window_rect.y);
             order.WindowClientDeltaX(6);
             order.WindowClientDeltaY(25);
-            order.WindowWidth(window_rect.cx);
-            order.WindowHeight(window_rect.cy);
-            order.VisibleOffsetX(window_rect.x);
-            order.VisibleOffsetY(window_rect.y);
+            order.WindowWidth(adjusted_window_rect.cx);
+            order.WindowHeight(adjusted_window_rect.cy);
+            order.VisibleOffsetX(adjusted_window_rect.x);
+            order.VisibleOffsetY(adjusted_window_rect.y);
             order.NumVisibilityRects(1);
-            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, window_rect.cx, window_rect.cy));
+            order.VisibilityRects(0, RDP::RAIL::Rectangle(0, 0, adjusted_window_rect.cx, adjusted_window_rect.cy));
 
             if (bool(this->verbose & RDPVerbose::rail)) {
                 StaticOutStream<1024> out_s;
