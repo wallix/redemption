@@ -67,9 +67,7 @@ class CheckoutEngine(object):
 
     def get_target_passwords(self, right):
         # Logger().debug("CHECKOUTENGINE get_target_passwords")
-        if right.get('is_am'):
-            # if is_am, password in credentials is from primary account
-            return []
+        # Use for password vault or mapping
         target_uid = right['target_uid']
         tright, credentials = self.session_credentials.get(target_uid,
                                                            ({}, {}))
