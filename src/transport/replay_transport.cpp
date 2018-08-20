@@ -85,9 +85,10 @@ namespace
 } // namespace
 
 ReplayTransport::ReplayTransport(
-    const char* fname, const char *ip_address, int port,
+    const char* fname, const char *ip_address, int port, TimeObj& timeobj,
     FdType fd_type, FirstPacket first_packet, UncheckedPacket unchecked_packet)
-: start_time(std::chrono::system_clock::now())
+: timeobj(timeobj)
+, start_time(to_ms(timeobj.get_time()))
 , in_file(open_file(fname))
 , fd(FdType::Timer == fd_type
 ? timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)
@@ -137,8 +138,8 @@ void ReplayTransport::reschedule_timer()
         return;
     }
 
-    auto targetTime = prefetchForTimer();
-    auto now = std::chrono::system_clock::now();
+    auto const targetTime = prefetchForTimer();
+    auto const now = to_ms(this->timeobj.get_time());
 
     // zero disarms the timer, force to 1 nanoseconds
     auto const delate_time = std::max(
@@ -284,7 +285,8 @@ void ReplayTransport::read_timer()
     }
 }
 
-std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
+std::chrono::milliseconds ReplayTransport::prefetchForTimer()
+{
 	/* first scan prefetch queue for something that means "select in" */
 	size_t pos = data_in_pos;
 	bool found = false;
@@ -320,7 +322,7 @@ std::chrono::system_clock::time_point ReplayTransport::prefetchForTimer() {
 		/* if we've not found anything just return now so that select() will trigger right now*/
 	}
 
-	return std::chrono::system_clock::now();
+	return to_ms(this->timeobj.get_time());
 }
 
 size_t ReplayTransport::searchAndPrefetchFor(PacketType kind)

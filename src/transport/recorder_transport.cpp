@@ -23,15 +23,11 @@
 #include "transport/recorder_transport.hpp"
 #include "utils/stream.hpp"
 
-#include <chrono>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-RecorderFile::RecorderFile(const char *filename)
-	: start_time(std::chrono::system_clock::now())
-	, file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
+RecorderFile::RecorderFile(TimeObj& timeobj, const char *filename)
+	: timeobj(timeobj)
+	, start_time(to_ms(timeobj.get_time()))
+    , file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
 {
     if (!this->file.is_open()) {
         throw Error(ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE, errno);
@@ -47,8 +43,7 @@ RecorderFile::~RecorderFile()
 
 void RecorderFile::write_packet(PacketType type, const_byte_array buffer)
 {
-	auto now = std::chrono::system_clock::now();
-	auto delta = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_time);
+	auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
 
 	StaticOutStream<13> headers_stream;
 	headers_stream.out_uint8(uint8_t(type));
@@ -61,9 +56,9 @@ void RecorderFile::write_packet(PacketType type, const_byte_array buffer)
 }
 
 
-RecorderTransport::RecorderTransport(Transport& trans, char const* filename)
+RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename)
 	: trans(trans)
-	, out(filename)
+	, out(timeobj, filename)
 {
 }
 

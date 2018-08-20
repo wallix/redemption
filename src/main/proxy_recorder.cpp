@@ -129,12 +129,12 @@ class FrontConnection
 {
 public:
     FrontConnection(unique_fd sck, std::string host, int port, std::string const& captureFile,
-        std::string nla_username, std::string nla_password
+        std::string nla_username, std::string nla_password, TimeObj& timeobj
     )
         : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(0))
         , backConn("back", ip_connect(host.c_str(), port, 3, 1000),
             host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(0))
-        , outFile(captureFile.c_str())
+        , outFile(timeobj, captureFile.c_str())
         , host(std::move(host))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
@@ -560,9 +560,10 @@ public:
             char const* finalPath = captureTemplate.format(finalPathBuffer, connection_counter);
             LOG(LOG_INFO, "Recording front connection in %s", finalPath);
 
+            TimeSystem timeobj;
             FrontConnection conn(
                 std::move(sck_in), targetHost, targetPort, finalPath,
-                nla_username, nla_password);
+                nla_username, nla_password, timeobj);
             try {
                 conn.run();
             } catch(Error const& e) {

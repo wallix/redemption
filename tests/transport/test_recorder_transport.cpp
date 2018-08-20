@@ -35,6 +35,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+class ZeroTime : public TimeObj
+{
+    timeval get_time() override
+    {
+        return {};
+    }
+};
+
 
 RED_AUTO_TEST_CASE(TestRecorderTransport)
 {
@@ -66,10 +74,11 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     };
 
     {
+        ZeroTime timeobj;
         TestTransport socket(
             cstr_array_view("123456789"),
             cstr_array_view("abcdefghijklmnopqrstuvwxyz"));
-        RecorderTransport trans(socket, filename);
+        RecorderTransport trans(socket, timeobj, filename);
         char buf[10];
 
         for (auto m : a) {
@@ -130,14 +139,17 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
     }
 
     {
-        ReplayTransport trans(filename, "ip", 0/*port*/, ReplayTransport::FdType::AlwaysReady,
+        ZeroTime timeobj;
+        ReplayTransport trans(
+            filename, "ip", 0/*port*/, timeobj, ReplayTransport::FdType::AlwaysReady,
             ReplayTransport::FirstPacket::DisableTimer, ReplayTransport::UncheckedPacket::Send);
         RED_CHECK_EXCEPTION_ERROR_ID(trans.send("!@#", 3), ERR_TRANSPORT_DIFFERS);
     }
 
     // Replay
     {
-        ReplayTransport trans(filename, "", 0, ReplayTransport::FdType::AlwaysReady);
+        ZeroTime timeobj;
+        ReplayTransport trans(filename, "", 0, timeobj, ReplayTransport::FdType::AlwaysReady);
         char buf[10];
         auto av = make_array_view(buf);
         auto in = cstr_array_view("123456789");
@@ -175,7 +187,8 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
 
     // Replay real time
     {
-        ReplayTransport trans(filename, "", 0, ReplayTransport::FdType::Timer);
+        ZeroTime timeobj;
+        ReplayTransport trans(filename, "", 0, timeobj, ReplayTransport::FdType::Timer);
         char buf[10];
         auto av = make_array_view(buf);
         auto in = cstr_array_view("123456789");

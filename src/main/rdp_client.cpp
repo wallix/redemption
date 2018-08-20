@@ -148,13 +148,14 @@ int main(int argc, char** argv)
     ClientFront front(client_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
+    TimeSystem system_timeobj;
 
     auto run = [&](auto create_mod){
         std::optional<RecorderTransport> recorder_trans;
         Transport* trans = &mod_trans;
         if (!record_output.empty()) {
             RecorderTransport& recorder = recorder_trans.emplace(
-                mod_trans, record_output.c_str());
+                mod_trans, system_timeobj, record_output.c_str());
             if (ini_file.empty()) {
                 recorder.add_info({});
             }
@@ -241,7 +242,6 @@ int main(int argc, char** argv)
     }
 
     UdevRandom system_gen;
-    TimeSystem system_timeobj;
     FixedRandom lcg_gen;
     LCGTime lcg_timeobj;
     NullAuthentifier authentifier;

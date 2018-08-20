@@ -472,8 +472,7 @@ public:
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
         if (this->mod != nullptr) {
             if (!pipe_broken) {
-                TimeSystem timeobj;
-                this->mod->disconnect(timeobj.get_time().tv_sec);
+                this->mod->disconnect(this->timeSystem.get_time().tv_sec);
             }
             this->mod = nullptr;
         }
@@ -661,7 +660,8 @@ public:
             LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
             ReplayTransport *transport = new ReplayTransport(
                 this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port,
-                ReplayTransport::FdType::Timer, ReplayTransport::FirstPacket::DisableTimer,
+                this->timeSystem, ReplayTransport::FdType::Timer,
+                ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
             this->socket = transport;
             this->client_sck = transport->get_fd();
@@ -693,7 +693,7 @@ public:
                 if (this->is_full_capturing) {
                     this->_socket_in_recorder.reset(this->socket);
                     this->socket = new RecorderTransport(
-                        *this->socket, this->full_capture_file_name.c_str());
+                        *this->socket, this->timeSystem, this->full_capture_file_name.c_str());
                 }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());

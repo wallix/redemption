@@ -42,7 +42,7 @@ public:
 
     ReplayTransport(
         const char* fname, const char *ip_address, int port,
-        FdType fd_type = FdType::Timer,
+        TimeObj& timeobj, FdType fd_type = FdType::Timer,
         FirstPacket first_packet = FirstPacket::DisableTimer,
         UncheckedPacket unchecked_packet = UncheckedPacket::None);
 
@@ -79,7 +79,7 @@ private:
 
     void cleanup_data(std::size_t len, PacketType type);
 
-    std::chrono::system_clock::time_point prefetchForTimer();
+    std::chrono::milliseconds prefetchForTimer();
 
     /** @brief a chunk of capture file */
     struct Data
@@ -87,7 +87,7 @@ private:
         std::unique_ptr<uint8_t[]> data;
         size_t size;
         PacketType type;
-        std::chrono::system_clock::time_point time;
+        std::chrono::milliseconds time;
 
         array_view_const_u8 av() const noexcept;
     };
@@ -98,7 +98,8 @@ private:
 private:
     long long count_packet = 0;
 
-    const std::chrono::system_clock::time_point start_time;
+    TimeObj& timeobj;
+    std::chrono::milliseconds start_time;
 
     InFileTransport in_file;
     const unique_fd fd;

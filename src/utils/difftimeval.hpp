@@ -62,6 +62,13 @@ public:
     }
 };
 
+static inline std::chrono::milliseconds to_ms(timeval const& tv)
+{
+    return std::chrono::milliseconds(
+        static_cast<uint64_t>(tv.tv_sec)*1000LL + static_cast<uint64_t>(tv.tv_usec)/1000L
+    );
+}
+
 static inline std::chrono::microseconds ustime(const timeval & now) {
     return std::chrono::microseconds(
         static_cast<uint64_t>(now.tv_sec)*1000000LL + static_cast<uint64_t>(now.tv_usec)
