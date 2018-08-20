@@ -27,34 +27,35 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 
-
-
-inline std::string hmac_user(const std::string & user, const unsigned char * key) {
-    char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_hmac_sha256_encrypt(sig, user.c_str(), user.length(), key);
-    return std::string(sig, SslSha256::DIGEST_LENGTH*2);
+inline MetricsHmacSha256Encrypt hmac_user(
+    array_view_const_char user, std::array<uint8_t, 32> const& key)
+{
+    return MetricsHmacSha256Encrypt(user, key);
 }
 
-inline std::string hmac_account(const std::string & account, const unsigned char * key) {
-    char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_hmac_sha256_encrypt(sig, account.c_str(), account.length(), key);
-    return std::string(sig, SslSha256::DIGEST_LENGTH*2);
+inline MetricsHmacSha256Encrypt hmac_account(
+    array_view_const_char account, std::array<uint8_t, 32> const& key)
+{
+    return MetricsHmacSha256Encrypt(account, key);
 }
 
-inline std::string hmac_device_service(const std::string & device, const std::string & service, const unsigned char * key) {
-    std::string target_device_and_service(service+" "+device);
-        char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_hmac_sha256_encrypt(sig, target_device_and_service.c_str(), target_device_and_service.length(), key);
-    return std::string(sig, SslSha256::DIGEST_LENGTH*2);
+inline MetricsHmacSha256Encrypt hmac_device_service(
+    array_view_const_char device, std::string service, std::array<uint8_t, 32> const& key)
+{
+    service += " ";
+    service.append(device.data(), device.size());
+    return MetricsHmacSha256Encrypt(service, key);
 }
 
-inline std::string hmac_client_info(const char * client_host, const ClientInfo & info, const unsigned char * key) {
-    char session_info[1024];
-    ::snprintf(session_info, sizeof(session_info), "%s%d%u%u", client_host, info.bpp, info.width, info.height);
-
-    char sig[SslSha256::DIGEST_LENGTH*2];
-    metrics_hmac_sha256_encrypt(sig, session_info, strlen(session_info), key);
-    return std::string(sig, SslSha256::DIGEST_LENGTH*2);
+inline MetricsHmacSha256Encrypt hmac_client_info(
+    std::string client_host, const ClientInfo & info,
+    std::array<uint8_t, 32> const& key)
+{
+    char session_info[128];
+    int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
+        info.bpp, info.width, info.height);
+    client_host.append(session_info, session_info_size);
+    return MetricsHmacSha256Encrypt(client_host, key);
 }
 
 
@@ -162,18 +163,21 @@ private:
 public:
     Metrics metrics;
 
-    RDPMetrics( const bool activate                        // do nothing if false
-              , const std::string & path
-              , const char * session_id
-              , const std::string & primary_user_sig       // clear primary user account
-              , const std::string & account_sig            // secondary account
-              , const std::string & target_service_sig     // clear target service name + clear device name
-              , const std::string & session_info_sig       // source_host + client info
-              , const time_t now                           // time at beginning of metrics
-              , const std::chrono::hours file_interval     // daily rotation of filename (hours)
-              , const std::chrono::seconds log_delay       // delay between 2 logs
+    RDPMetrics( const bool activate                         // do nothing if false
+              , std::string path
+              , std::string session_id
+              , array_view_const_char primary_user_sig      // clear primary user account
+              , array_view_const_char account_sig           // secondary account
+              , array_view_const_char target_service_sig    // clear target service name + clear device name
+              , array_view_const_char session_info_sig      // source_host + client info
+              , const std::chrono::seconds now              // time at beginning of metrics
+              , const std::chrono::hours file_interval      // daily rotation of filename (hours)
+              , const std::chrono::seconds log_delay        // delay between 2 logs
               )
-        : metrics(/*this->rdp_field_version*/"v1.0", /*this->rdp_protocol_name*/"rdp", activate, COUNT_FIELD, path.c_str(), session_id, primary_user_sig.c_str(), account_sig.c_str(), target_service_sig.c_str(), session_info_sig.c_str(), now, file_interval.count(), log_delay.count())
+        : metrics(/*this->rdp_field_version*/"v1.0", /*this->rdp_protocol_name*/"rdp",
+            activate, COUNT_FIELD, std::move(path), std::move(session_id),
+            primary_user_sig, account_sig, target_service_sig, session_info_sig,
+            now, file_interval, log_delay)
     {
     }
 
@@ -464,7 +468,7 @@ public:
         }
     }
 
-    void log(timeval & now) {
+    void log(timeval const& now) {
         this->metrics.log(now);
     }
 

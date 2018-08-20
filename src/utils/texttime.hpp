@@ -20,24 +20,25 @@
 
 #pragma once
 
+#include <string>
+#include <chrono>
 #include <ctime>
 
-extern std::string text_gmdate(const time_t time, char sep);
-
-inline std::string text_gmdate(const time_t time, char sep='-')
+inline std::string text_gmdate(const std::chrono::seconds time_sec)
 {
     struct tm t;
+    time_t time = time_sec.count();
     gmtime_r(&time, &t);
     char buf[11] = {};
-    snprintf(buf, sizeof(buf), "%04d%c%02d%c%02d",1900+t.tm_year, sep, 1+t.tm_mon, sep, t.tm_mday);
+    snprintf(buf, sizeof(buf), "%04d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday);
     return std::string(buf, 10);
 }
 
 
-extern std::string text_gmdatetime(const time_t time);
-
-inline std::string text_gmdatetime(const time_t time) {
+inline std::string text_gmdatetime(const std::chrono::seconds time_sec)
+{
     struct tm t;
+    time_t time = time_sec.count();
     gmtime_r(&time, &t);
     char buf[20] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
@@ -45,10 +46,10 @@ inline std::string text_gmdatetime(const time_t time) {
 }
 
 
-extern std::string filename_gmdatetime(const time_t time);
-
-inline std::string filename_gmdatetime(const time_t time) {
+inline std::string filename_gmdatetime(const std::chrono::seconds time_sec)
+{
     struct tm t;
+    time_t time = time_sec.count();
     gmtime_r(&time, &t);
     char buf[20] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d_%02d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);

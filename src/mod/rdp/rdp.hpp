@@ -875,13 +875,16 @@ public:
         , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
                  , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>().c_str()
-                 , hmac_user(vars.get<cfg::globals::auth_user>(), vars.get<cfg::rdp_metrics::sign_key>().data())
-                 , hmac_account(mod_rdp_params.target_user, vars.get<cfg::rdp_metrics::sign_key>().data())
+                 , hmac_user(vars.get<cfg::globals::auth_user>(),
+                             vars.get<cfg::rdp_metrics::sign_key>())
+                 , hmac_account({mod_rdp_params.target_user, strlen(mod_rdp_params.target_user)},
+                                vars.get<cfg::rdp_metrics::sign_key>())
                  , hmac_device_service(vars.get<cfg::globals::target_device>(),
                                        vars.get<cfg::context::target_service>(),
-                                       vars.get<cfg::rdp_metrics::sign_key>().data())
-                 , hmac_client_info(vars.get<cfg::globals::host>().c_str(), info, vars.get<cfg::rdp_metrics::sign_key>().data())
-                 , tvtime().tv_sec
+                                       vars.get<cfg::rdp_metrics::sign_key>())
+                 , hmac_client_info(vars.get<cfg::globals::host>().c_str(),
+                                    info, vars.get<cfg::rdp_metrics::sign_key>())
+                 , std::chrono::seconds(timeobj.get_time().tv_sec)
                  , vars.get<cfg::rdp_metrics::log_file_turnover_interval>()
                  , vars.get<cfg::rdp_metrics::log_interval>())
     {

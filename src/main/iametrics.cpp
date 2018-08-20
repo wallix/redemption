@@ -22,7 +22,7 @@
 #include "main/version.hpp"
 #include "main/iametrics.hpp"
 #include "mod/metrics.hpp"
-#include <stdint.h>
+
 
 enum class ErrValue : int
 {
@@ -37,19 +37,16 @@ extern "C"
         return VERSION;
     }
 
-    char * new_hmac_sha256_hex(const char * src, const int src_len, const unsigned char * key_crypt) noexcept
+    char* new_hmac_sha256_hex(
+        const char * src, const unsigned src_len, const uint8_t * key_crypt) noexcept
     {
-        auto* dest = new(std::nothrow) char[65];
-        if (dest) {
-            metrics_hmac_sha256_encrypt(dest, src, src_len, key_crypt);
-            dest[64] = 0;
-        }
-        return dest;
+        return reinterpret_cast<char*>(
+            new(std::nothrow) MetricsHmacSha256Encrypt({src, src_len}, {key_crypt, 32u}));
     }
 
-    void delete_hmac_sha256_hex(char * sign) noexcept
+    void delete_hmac_sha256_hex(char* sign) noexcept
     {
-        delete[] sign;
+        delete reinterpret_cast<MetricsHmacSha256Encrypt*>(sign);
     }
 
 
@@ -62,15 +59,19 @@ extern "C"
                          , const char * account_sig         // secondary account
                          , const char * target_service_sig  // clear target service name + clear device name
                          , const char * session_info_sig    // info relative to client session
-                         , const unsigned long now          // time at beginning of metrics
-                         , const int    file_interval       // daily rotation of filename (hours)
-                         , const int    log_delay           // delay between 2 logs
+                         , const unsigned long now_seconds  // time at beginning of metrics
+                         , const int    file_interval_hours // daily rotation of filename (hours)
+                         , const int    log_delay_seconds   // delay between 2 logs
                          ) noexcept
     {
-        return new(std::nothrow) Metrics(version, protocol_name, true, nbitems, path,
-                                         session_id, primary_user_sig, account_sig,
-                                         target_service_sig, session_info_sig, now,
-                                         file_interval, log_delay);
+        auto av = [](char const* s){ return array_view_const_char{s, strlen(s)}; };
+        using std::chrono::seconds;
+        using std::chrono::hours;
+        return new(std::nothrow) Metrics(
+            version, protocol_name, true, nbitems, path, session_id,
+            av(primary_user_sig), av(account_sig), av(target_service_sig),
+            av(session_info_sig), seconds(now_seconds), hours(file_interval_hours),
+            seconds(log_delay_seconds));
     }
 
     void metrics_delete(Metrics * metrics) noexcept

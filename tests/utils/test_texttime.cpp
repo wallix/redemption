@@ -27,17 +27,12 @@
 
 RED_AUTO_TEST_CASE(TestTextdate)
 {
-    RED_CHECK_EQ("1970-01-01", text_gmdate(0));
+    using namespace std::literals::chrono_literals;
 
-    RED_CHECK_EQ("1970 01 01", text_gmdate(0, ' '));
+    RED_CHECK_SMEM("1970-01-01"_av, text_gmdate(0s));
+    RED_CHECK_SMEM("2018-08-02"_av, text_gmdate(1533211681s));
 
-//     struct timeval tv;
-//     struct timezone tz;
-//     gettimeofday(&tv,&tz);
-//     LOG(LOG_INFO, "tv.sec = %d", tv.tv_sec);
-    RED_CHECK_EQ("2018-08-02", text_gmdate(1533211681));
+    RED_CHECK_SMEM("1970-01-01 00:00:00"_av, text_gmdatetime(0s));
 
-    RED_CHECK_EQ("1970-01-01 00:00:00", text_gmdatetime(0));
-
-    RED_CHECK_EQ("1970-01-01_00-00-00", filename_gmdatetime(0));
+    RED_CHECK_SMEM("1970-01-01_00-00-00"_av, filename_gmdatetime(0s));
 }

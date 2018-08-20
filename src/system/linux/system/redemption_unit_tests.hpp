@@ -232,24 +232,18 @@ namespace redemption_unit_test__
         << v1 << " " #op " " << v2 << "]"                  \
     );
 
-#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)          \
-    do {                                                       \
-        size_t res__ = 0;                                      \
-        [](                                                    \
-            redemption_unit_test__::xarray_color mem__,        \
-            redemption_unit_test__::xarray_color memref__      \
-        ){                                                     \
-            red_check_op(                                      \
-                ==, mem__.size(), memref__.size(),             \
-                mem.size(), memref.size());                    \
-            red_check_op(                                      \
-                ==, mem__, memref__,                           \
-                mem, memref);                                  \
-        }(                                                     \
-            redemption_unit_test__::xarray_color{res__,mem},   \
-            redemption_unit_test__::xarray_color{res__,memref} \
-        );                                                     \
-    } while (0)
+#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)                     \
+    [](auto const& x_mem__, auto const& x_memref__){                      \
+        size_t res__ = 0;                                                 \
+        redemption_unit_test__::xarray_color mem__{res__, x_mem__};       \
+        redemption_unit_test__::xarray_color memref__{res__, x_memref__}; \
+        red_check_op(                                                     \
+            ==, mem__.size(), memref__.size(),                            \
+            mem.size(), memref.size());                                   \
+        red_check_op(                                                     \
+            ==, mem__, memref__,                                          \
+            mem, memref);                                                 \
+    }(mem, memref)                                                        \
 
 #define RED_CHECK_MEM(mem, memref) \
     RED_CHECK_MEM_IMPL(RED_CHECK_OP_VAR_MESSAGE, mem, memref)
@@ -290,23 +284,17 @@ namespace redemption_unit_test__
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
 }  // namespace redemption_unit_test__
 
-#define RED_CHECK_SMEM(mem, memref)                  \
-    do {                                             \
-        [](                                          \
-            redemption_unit_test__::xsarray mem__,   \
-            redemption_unit_test__::xsarray memref__ \
-        ){                                           \
-            RED_CHECK_OP_VAR_MESSAGE(                \
-                ==, mem__.size(), memref__.size(),   \
-                mem.size(), memref.size());          \
-            RED_CHECK_OP_VAR_MESSAGE(                \
-                ==, mem__, memref__,                 \
-                mem, memref);                        \
-        }(                                           \
-            redemption_unit_test__::xsarray{mem},    \
-            redemption_unit_test__::xsarray{memref}  \
-        );                                           \
-    } while (0)
+#define RED_CHECK_SMEM(mem, memref)                           \
+    [](auto const& x_mem__, auto const& x_memref__){          \
+        redemption_unit_test__::xsarray mem__{x_mem__};       \
+        redemption_unit_test__::xsarray memref__{x_memref__}; \
+        RED_CHECK_OP_VAR_MESSAGE(                             \
+            ==, mem__.size(), memref__.size(),                \
+            mem.size(), memref.size());                       \
+        RED_CHECK_OP_VAR_MESSAGE(                             \
+            ==, mem__, memref__,                              \
+            mem, memref);                                     \
+    }(mem, memref)                                            \
 
 #ifdef IN_IDE_PARSER
 # define RED_CHECK_SMEM_C(mem, memref) void(mem), void("" memref)
@@ -322,30 +310,32 @@ namespace redemption_unit_test__
 
 
 // require #include "utils/fileutils.hpp"
-#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, sz) \
-    RED_CHECK_EQUAL(filesize(filename), sz);        \
-    ::unlink(filename)
+#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, sz) do { \
+    RED_CHECK_EQUAL(filesize(filename), sz);             \
+    ::unlink(filename);                                  \
+} while(0)
 
-#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) { \
-    size_t fsize = filesize(filename);                           \
-    if (fsize != size2){                                         \
-        RED_CHECK_EQUAL(size1, fsize);                           \
-    }                                                            \
-    ::unlink(filename);                                          \
-}
+#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) do { \
+    size_t fsize = filesize(filename);                              \
+    if (fsize != size2){                                            \
+        RED_CHECK_EQUAL(size1, fsize);                              \
+    }                                                               \
+    ::unlink(filename);                                             \
+} while(0)
 
-#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) { \
-    size_t fsize = filesize(filename);                                  \
-    if (fsize != size2 && fsize != size3){                              \
-        RED_CHECK_EQUAL(size1, fsize);                                  \
-    }                                                                   \
-    ::unlink(filename);                                                 \
-}
+#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) do { \
+    size_t fsize = filesize(filename);                                     \
+    if (fsize != size2 && fsize != size3){                                 \
+        RED_CHECK_EQUAL(size1, fsize);                                     \
+    }                                                                      \
+    ::unlink(filename);                                                    \
+} while(0)
 
 // require #include "test_only/get_file_contents.hpp"
-#define RED_CHECK_FILE_CONTENTS(filename, contents)      \
-    RED_CHECK_EQ(get_file_contents(filename), contents); \
-    ::unlink(filename)
+#define RED_CHECK_FILE_CONTENTS(filename, contents)  do { \
+    RED_CHECK_EQ(get_file_contents(filename), contents);  \
+    ::unlink(filename);                                   \
+} while(0)
 
 // force line to last checkpoint
 #ifndef IN_IDE_PARSER

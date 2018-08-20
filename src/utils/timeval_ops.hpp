@@ -21,9 +21,12 @@
 
 #pragma once
 
-#include <sys/time.h>
+#include <chrono>
+
 #include <cstdint>
 #include <cassert>
+#include <sys/time.h>
+
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
     // return ustime(a) < ustime(b)
@@ -52,7 +55,7 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 
-static inline timeval operator-(timeval const & endtime, timeval const & starttime)
+inline timeval operator-(timeval const & endtime, timeval const & starttime)
 {
     assert(endtime >= starttime);
 
@@ -72,7 +75,7 @@ static inline timeval operator-(timeval const & endtime, timeval const & startti
     return result;
 }
 
-static inline timeval operator+(timeval const & a, timeval const & b)
+inline timeval operator+(timeval const & a, timeval const & b)
 {
     timeval result;
 
@@ -85,4 +88,15 @@ static inline timeval operator+(timeval const & a, timeval const & b)
     }
 
     return result;
+}
+
+inline timeval& operator+=(timeval& tv, std::chrono::seconds const& seconds)
+{
+    tv.tv_sec += seconds.count();
+    return tv;
+}
+
+inline timeval to_timeval(std::chrono::seconds const& seconds)
+{
+    return {seconds.count(), 0};
 }

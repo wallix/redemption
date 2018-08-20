@@ -19,9 +19,10 @@
 
 */
 
+#pragma once
+
 #include "cxx/cxx.hpp"
 #include <cstdint> // for uint64_t
-#include <cstddef> // for size_t
 
 
 extern "C"
@@ -29,11 +30,13 @@ extern "C"
     REDEMPTION_LIB_EXPORT
     char const * iametrics_version() noexcept;
 
-    REDEMPTION_LIB_EXPORT
-    char * new_hmac_sha256_hex(const char * src, const int src_len, const unsigned char * key_crypt) noexcept;
+    class MetricsHmacSha256Encrypt;
 
     REDEMPTION_LIB_EXPORT
-    void delete_hmac_sha256_hex(char * sign) noexcept;
+    char* new_hmac_sha256_hex(const char * src, const unsigned src_len, const uint8_t * key_crypt) noexcept;
+
+    REDEMPTION_LIB_EXPORT
+    void delete_hmac_sha256_hex(char* sign) noexcept;
 
     class Metrics;
 
@@ -47,9 +50,9 @@ extern "C"
                          , const char * account_sig         // secondary account
                          , const char * target_service_sig  // clear target service name + clear device name
                          , const char * session_info_sig    // info relative to client session
-                         , unsigned long now                // time at beginning of metrics
-                         , int           file_interval      // daily rotation of filename (hours)
-                         , int           log_delay          // delay between 2 logs
+                         , unsigned long now_seconds        // time at beginning of metrics
+                         , int           file_interval_hours     // daily rotation of filename (hours)
+                         , int           log_delay_seconds  // delay between 2 logs
                          ) noexcept;
 
     REDEMPTION_LIB_EXPORT
