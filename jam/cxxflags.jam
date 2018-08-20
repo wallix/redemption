@@ -59,10 +59,10 @@ rule get-normalized-compiler-version ( toolset : ps )
 {
     if $(ORIGINAL_TOOLSET) != $(toolset)
     {
-        local version = [ MATCH ^[^0-9]*(.*)$ : [ $(ps).get <toolset-$(toolset):version> ] ] ;
-        local match = [ MATCH ^([0-9]+)(\\.([0-9]+))? : $(version) ] ;
-        local major = [ MATCH (..)$ : [ string.join 00 $(match[1]) ] ] ;
-        local minor = [ MATCH (..)$ : [ string.join 00 $(match[3]) ] ] ;
+        local version = [ MATCH "^[^0-9]*(.*)$" : [ $(ps).get <toolset-$(toolset):version> ] ] ;
+        local match = [ MATCH "^([0-9]+)(\\.([0-9]+))?" : $(version) ] ;
+        local major = [ MATCH "(..)$" : [ string.join 00 $(match[1]) ] ] ;
+        local minor = [ MATCH "(..)$" : [ string.join 00 $(match[3]) ] ] ;
         COMP_VERSION = $(major).$(minor) ;
         ORIGINAL_TOOLSET = $(toolset) ;
     }
