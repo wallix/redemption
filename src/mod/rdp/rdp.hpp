@@ -497,6 +497,8 @@ protected:
     bool input_event_disabled     = false;
     bool graphics_update_disabled = false;
 
+    bool mcs_disconnect_provider_ultimatum_pdu_received = false;
+
     static constexpr std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>
     BmpCacheRev2_Cache_NumEntries()
     { return std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>{{ 120, 120, 2553, 0, 0 }}; }
@@ -2210,6 +2212,8 @@ public:
 
         if (mcs_type == MCS::MCSPDU_DisconnectProviderUltimatum){
             LOG(LOG_INFO, "mod::rdp::DisconnectProviderUltimatum received");
+            this->mcs_disconnect_provider_ultimatum_pdu_received = true;
+
             x224.payload.rewind();
             MCS::DisconnectProviderUltimatum_Recv mcs(x224.payload, MCS::PER_ENCODING);
             const char * reason = MCS::get_reason(mcs.reason);
@@ -2815,7 +2819,7 @@ public:
                     throw;
                 }
 
-                if (e.id != ERR_MCS_APPID_IS_MCS_DPUM) {
+                if (this->mcs_disconnect_provider_ultimatum_pdu_received) {
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
@@ -5559,13 +5563,16 @@ private:
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
-        write_packets(
-            this->trans,
-            [](StreamSize<256>, OutStream & mcs_data) {
-                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-            },
-            X224::write_x224_dt_tpdu_fn{}
-        );
+
+        if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
+            write_packets(
+                this->trans,
+                [](StreamSize<256>, OutStream & mcs_data) {
+                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+                },
+                X224::write_x224_dt_tpdu_fn{}
+            );
+        }
     }
 
     //void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
