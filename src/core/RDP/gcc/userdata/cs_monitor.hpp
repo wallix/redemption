@@ -112,14 +112,11 @@ struct CSMonitor {
         int32_t  right;
         int32_t  bottom;
         uint32_t flags;
-    } monitorDefArray[MAX_MONITOR_COUNT];
+    } monitorDefArray[MAX_MONITOR_COUNT] {};
 
     bool permissive{false};
 
-    CSMonitor()
-    :
-     monitorDefArray()
-     {}
+    CSMonitor() = default;
 
     void emit(OutStream & stream) /* TODO const*/ {
         assert((this->monitorCount > 0) && (this->monitorCount <= MAX_MONITOR_COUNT));

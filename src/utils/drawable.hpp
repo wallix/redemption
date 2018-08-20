@@ -980,7 +980,7 @@ private:
         P p = this->first_pixel(rect);
         const size_t line_size = this->rowsize();
         const size_t cx = rect.cx * Bpp;
-        const size_t inc_line = static_cast<size_t>(line_size - cx);
+        const size_t inc_line = line_size - cx;
         for (cP pe = p + rect.cy * line_size; p != pe; p += inc_line) {
             for (cP pe2 = p + cx; p != pe2; ) {
                 p = f(p);

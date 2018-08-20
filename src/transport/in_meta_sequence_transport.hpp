@@ -150,7 +150,7 @@ private:
             char original_path[1024] = {};
             char basename[1024] = {};
             char extension[256] = {};
-            char filename[2048] = {};
+            char filename[3327] = {};
 
             canonical_path( this->meta_line.filename
                           , original_path, sizeof(original_path)

@@ -272,8 +272,7 @@ void ModuleManager::create_mod_rdp(
         if (host_mod_in_widget) {
             client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
             client_info.height = adjusted_client_execute_rect.cy;
-
-            ::memset(&client_info.cs_monitor, 0, sizeof(client_info.cs_monitor));
+            client_info.cs_monitor = GCC::UserData::CSMonitor{};
         }
         else {
             client_execute.reset(false);

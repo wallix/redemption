@@ -34,10 +34,10 @@ struct ScopedCryptoInit
     {
         CRYPTO_cleanup_all_ex_data();
         ERR_free_strings();
-#if OPENSSL_VERSION_NUMBER > 0x10000000L
+#if OPENSSL_VERSION_NUMBER < 0x10000000L
+        ERR_remove_state(0);
+#elif OPENSSL_VERSION_NUMBER < 0x10100000L
         ERR_remove_thread_state(nullptr);
-#else
-        ERR_remove_state(0); /*NOLINT*/
 #endif
     }
 };
