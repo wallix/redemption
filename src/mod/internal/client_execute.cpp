@@ -133,6 +133,11 @@ Rect ClientExecute::get_window_rect() const
     return this->window_rect;
 }
 
+Point ClientExecute::get_window_offset() const
+{
+    return Point(this->window_offset_x, this->window_offset_y);
+}
+
 Rect ClientExecute::get_auxiliary_window_rect() const
 {
     if (RemoteProgramsWindowIdManager::INVALID_WINDOW_ID == this->auxiliary_window_id) {
