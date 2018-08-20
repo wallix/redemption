@@ -2812,15 +2812,17 @@ public:
                     throw;
                 }
 
-                StaticOutStream<256> stream;
-                X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
-                try {
-                    this->trans.send(stream.get_data(), stream.get_offset());
-                    LOG(LOG_INFO, "Connection to server closed");
+                if (e.id != ERR_MCS_APPID_IS_MCS_DPUM) {
+                    StaticOutStream<256> stream;
+                    X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
+                    try {
+                        this->trans.send(stream.get_data(), stream.get_offset());
+                        LOG(LOG_INFO, "Connection to server closed");
+                    }
+                    catch(Error const & e){
+                        LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
+                    };
                 }
-                catch(Error const & e){
-                    LOG(LOG_INFO, "Connection to server Already closed: error=%u", e.id);
-                };
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
