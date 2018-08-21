@@ -136,7 +136,7 @@ public:
         : timeobj(timeobj)
         , rand(rand)
         , server(is_server)
-        , UseMIC(this->NTLMv2 == true)
+        , UseMIC(this->NTLMv2/* == true*/)
         //, LmCompatibilityLevel(3)
         , Workstation(0)
         , ServicePrincipalName(0)

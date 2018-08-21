@@ -207,28 +207,6 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 #define COND_LOG(cond, priority, ...) if (cond) LOG(priority, __VA_ARGS__)
 
 namespace {
-    // LOG_EMERG      system is unusable
-    // LOG_ALERT      action must be taken immediately
-    // LOG_CRIT       critical conditions
-    // LOG_ERR        error conditions
-    // LOG_WARNING    warning conditions
-    // LOG_NOTICE     normal, but significant, condition
-    // LOG_INFO       informational message
-    // LOG_DEBUG      debug-level message
-
-    constexpr const char * const prioritynames[] =
-    {
-        "EMERG"/*, LOG_EMERG*/,
-        "ALERT"/*, LOG_ALERT*/,
-        "CRIT"/*, LOG_CRIT*/,
-        "ERR"/*, LOG_ERR*/,
-        "WARNING"/*, LOG_WARNING*/,
-        "NOTICE"/*, LOG_NOTICE*/,
-        "INFO"/*, LOG_INFO*/,
-        "DEBUG"/*, LOG_DEBUG*/,
-        //{ nullptr/*, -1*/ }
-    };
-
     inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)
     {}
 
@@ -263,6 +241,28 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
 
 namespace
 {
+    // LOG_EMERG      system is unusable
+    // LOG_ALERT      action must be taken immediately
+    // LOG_CRIT       critical conditions
+    // LOG_ERR        error conditions
+    // LOG_WARNING    warning conditions
+    // LOG_NOTICE     normal, but significant, condition
+    // LOG_INFO       informational message
+    // LOG_DEBUG      debug-level message
+
+    constexpr const char * const prioritynames[] =
+    {
+        "EMERG"/*, LOG_EMERG*/,
+        "ALERT"/*, LOG_ALERT*/,
+        "CRIT"/*, LOG_CRIT*/,
+        "ERR"/*, LOG_ERR*/,
+        "WARNING"/*, LOG_WARNING*/,
+        "NOTICE"/*, LOG_NOTICE*/,
+        "INFO"/*, LOG_INFO*/,
+        "DEBUG"/*, LOG_DEBUG*/,
+        //{ nullptr/*, -1*/ }
+    };
+
     template<class... Ts>
     void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
     {

@@ -73,7 +73,7 @@ public:
 
         static_assert(OutLen <= SslMd5::DIGEST_LENGTH);
 
-        if constexpr (OutLen == SslMd5::DIGEST_LENGTH) {
+        if constexpr (OutLen == SslMd5::DIGEST_LENGTH) { /*NOLINT*/
             md5.final(out);
         }
         else {

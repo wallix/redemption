@@ -44,7 +44,7 @@ extern "C"
             new(std::nothrow) MetricsHmacSha256Encrypt({src, src_len}, {key_crypt, 32u}));
     }
 
-    void delete_hmac_sha256_hex(char* sign) noexcept
+    void delete_hmac_sha256_hex(char* sign) noexcept /*NOLINT*/
     {
         delete reinterpret_cast<MetricsHmacSha256Encrypt*>(sign); /*NOLINT*/
     }

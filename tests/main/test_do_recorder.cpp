@@ -38,13 +38,6 @@
 
 #include "test_only/get_file_contents.hpp"
 
-#define RED_CHECK_FILESIZE(fsize, size, filename)         \
-    RED_CHECK_MESSAGE(                                    \
-        size == fsize,                                    \
-        "check " << size << " == filesize(\"" << filename \
-        << "\") failed [" << size << " != " << fsize << "]")
-
-
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)
     {
@@ -1271,6 +1264,13 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
 }
 
 #ifndef REDEMPTION_NO_FFMPEG
+
+#define RED_CHECK_FILESIZE(fsize, size, filename)         \
+    RED_CHECK_MESSAGE(                                    \
+        size == fsize,                                    \
+        "check " << size << " == filesize(\"" << filename \
+        << "\") failed [" << size << " != " << fsize << "]")
+
 RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 {
     LOG(LOG_INFO, "=================== TestAppRecorderChunkMeta =============");
