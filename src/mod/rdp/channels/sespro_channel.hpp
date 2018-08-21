@@ -362,6 +362,11 @@ private:
 
     uint32_t options = 0;
 
+    static long long ms2ll(std::chrono::milliseconds const& ms)
+    {
+        return ms.count();
+    }
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         std::chrono::milliseconds session_probe_launch_timeout;
@@ -474,11 +479,11 @@ public:
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
-                    "timeout=%" PRId64 " fallback_timeout=%" PRId64
-                    " effective_timeout=%" PRId64 " on_launch_failure=%d",
-                params.session_probe_launch_timeout.count(),
-                params.session_probe_launch_fallback_timeout.count(),
-                this->session_probe_effective_launch_timeout.count(),
+                    "timeout=%lld fallback_timeout=%lld"
+                    " effective_timeout=%lld on_launch_failure=%d",
+                ms2ll(params.session_probe_launch_timeout),
+                ms2ll(params.session_probe_launch_fallback_timeout),
+                ms2ll(this->session_probe_effective_launch_timeout),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
     }
@@ -915,9 +920,9 @@ public:
 
                             {
                                 char cstr[128];
-                                std::snprintf(cstr, sizeof(cstr), "%" PRId64,
-                                    this->param_session_probe_idle_session_limit.count());
-                                out_s.out_copy_bytes(cstr, strlen(cstr));
+                                int len = std::snprintf(cstr, sizeof(cstr), "%lld",
+                                    ms2ll(this->param_session_probe_idle_session_limit));
+                                out_s.out_copy_bytes(cstr, size_t(len));
                             }
                         });
                 }

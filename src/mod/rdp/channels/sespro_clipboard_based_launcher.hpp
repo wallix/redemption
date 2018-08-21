@@ -73,6 +73,11 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 
     const RDPVerbose verbose;
 
+    static long long ms2ll(std::chrono::milliseconds const& ms)
+    {
+        return ms.count();
+    }
+
 public:
     SessionProbeClipboardBasedLauncher(
         SessionReactor& session_reactor,
@@ -95,12 +100,12 @@ public:
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher: "
-                    "clipboard_initialization_delay_ms=%" PRId64 " "
-                    "start_delay_ms=%" PRId64 " "
-                    "long_delay_ms=%" PRId64 " "
-                    "short_delay_ms=%" PRId64,
-                clipboard_initialization_delay_ms.count(), start_delay_ms.count(),
-                long_delay_ms.count(), short_delay_ms.count());
+                    "clipboard_initialization_delay_ms=%lld "
+                    "start_delay_ms=%lld "
+                    "long_delay_ms=%lld "
+                    "short_delay_ms=%lld",
+                ms2ll(clipboard_initialization_delay_ms), ms2ll(start_delay_ms),
+                ms2ll(long_delay_ms), ms2ll(short_delay_ms));
         }
     }
 
