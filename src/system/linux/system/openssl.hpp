@@ -798,7 +798,7 @@ public:
                 return int(pass_len);
             }
         );
-        SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password)));
+        SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password))); /*NOLINT*/
         if(!(SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM)))
         {
             BIO_printf(bio_err,"Can't read key file\n");

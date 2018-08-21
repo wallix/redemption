@@ -96,7 +96,7 @@ public:
 
         iovec to_iovec() const
         {
-            return {const_cast<char*>(buffer), len};
+            return {const_cast<char*>(buffer), len}; /*NOLINT*/
         }
     };
     Header header;

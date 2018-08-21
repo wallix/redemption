@@ -222,7 +222,7 @@ public:
         const unsigned int and_line_length_in_byte = ::nbbytes(width);
         const unsigned int and_padded_line_length_in_byte = ::even_pad_length(and_line_length_in_byte);
         for (unsigned int i0 = 0; i0 < height; ++i0) {
-            uint8_t* xorMask = const_cast<uint8_t*>(this->data) + (height - i0 - 1) * xor_padded_line_length_in_byte;
+            uint8_t* xorMask = this->data + (height - i0 - 1) * xor_padded_line_length_in_byte;
 
             const uint8_t* andMask = this->mask + (height - i0 - 1) * and_padded_line_length_in_byte;
             unsigned char and_bit_extraction_mask = 7;

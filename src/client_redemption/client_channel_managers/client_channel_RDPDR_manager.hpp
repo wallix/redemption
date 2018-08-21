@@ -413,16 +413,16 @@ public:
                                 dah.emit(out_stream);
 
                                 rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
-                                                rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
-                                                , 0
-                                                , 4       // PnPNameLen
-                                                , 2       // DriverNameLen
-                                                , 8  // PrintNameLen
-                                                , 0       // CachedFieldsLen
-                                                , const_cast<char*>("\x00\x61\x00\x00") // nPName
-                                                , const_cast<char*>("\x61\x00")   // DriverName
-                                                , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") // PrintName
-                                                );
+                                    rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
+                                    , 0
+                                    , 4       // PnPNameLen
+                                    , 2       // DriverNameLen
+                                    , 8  // PrintNameLen
+                                    , 0       // CachedFieldsLen
+                                    , const_cast<char*>("\x00\x61\x00\x00") /*NOLINT*/ // nPName
+                                    , const_cast<char*>("\x61\x00") /*NOLINT*/   // DriverName
+                                    , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") /*NOLINT*/ // PrintName
+                                    );
                                 dahp.emit(out_stream);
 
                             } else {

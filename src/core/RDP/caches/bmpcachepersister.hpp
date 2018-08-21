@@ -170,7 +170,7 @@ private:
                 t.recv_boom(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
-                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
+                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette)); /*NOLINT*/
             }
 
             uint16_t bmp_size;
@@ -323,7 +323,7 @@ private:
                 t.recv_boom(end, sizeof(original_palette));
                 end += sizeof(original_palette);
 
-                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette));
+                stream.in_copy_bytes(const_cast<char*>(original_palette.data()), sizeof(original_palette)); /*NOLINT*/
             }
 
             uint16_t bmp_size;

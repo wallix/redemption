@@ -48,7 +48,7 @@ namespace {
     // };
 
     gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
-    { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) };
+    { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) }; /*NOLINT*/
 
     // SecPkgContext_Sizes ContextSizes;
     // ContextSizes.cbMaxToken = 4096;
@@ -200,7 +200,7 @@ public:
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
         input_tok.length = input_buffer.size();
-        input_tok.value = const_cast<uint8_t*>(input_buffer.data());
+        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
@@ -284,7 +284,7 @@ public:
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
         input_tok.length = input_buffer.size();
-        input_tok.value = const_cast<uint8_t*>(input_buffer.data());
+        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
         gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
         if (!this->mech_available(desired_mech)) {
@@ -365,7 +365,7 @@ public:
         }
         gss_buffer_desc inbuf, outbuf;
 
-        inbuf.value = const_cast<uint8_t*>(data_in.data());
+        inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
         inbuf.length = data_in.size();
         // LOG(LOG_INFO, "GSS_WRAP inbuf length : %d", inbuf.length);
         major_status = gss_wrap(&minor_status, this->krb_ctx->gss_ctx, true,
@@ -406,7 +406,7 @@ public:
             return SEC_E_NO_CONTEXT;
         }
         gss_buffer_desc inbuf, outbuf;
-        inbuf.value = const_cast<uint8_t*>(data_in.data());
+        inbuf.value = const_cast<uint8_t*>(data_in.data()); /*NOLINT*/
         inbuf.length = data_in.size();
         // LOG(LOG_INFO, "GSS_UNWRAP inbuf length : %d", inbuf.length);
         major_status = gss_unwrap(&minor_status, this->krb_ctx->gss_ctx, &inbuf, &outbuf,

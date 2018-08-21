@@ -203,7 +203,7 @@ private:
         const int flush = (end ? Z_FINISH : Z_NO_FLUSH);
 
         this->compression_stream.avail_in = data_length;
-        this->compression_stream.next_in  = const_cast<uint8_t *>(data);
+        this->compression_stream.next_in  = const_cast<uint8_t *>(data); /*NOLINT*/
 
         uint8_t temp_compressed_data[GZIP_COMPRESSION_TRANSPORT_BUFFER_LENGTH];
 

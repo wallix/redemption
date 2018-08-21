@@ -116,7 +116,7 @@ private:
         uint8_t * data = this->out_bmpdata.get();
 
         if (this->out_width == this->in_width && this->out_height == this->in_height) {
-            data = const_cast<uint8_t*>(this->in_bmpdata);
+            data = const_cast<uint8_t*>(this->in_bmpdata); /*NOLINT*/
         }
 
         return ImgView{
