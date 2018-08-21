@@ -25,7 +25,7 @@
 #include "utils/fileutils.hpp"
 #include "test_only/get_file_contents.hpp"
 
-#include "main/iametrics.hpp"
+#include "lib/iametrics.hpp"
 
 
 RED_AUTO_TEST_CASE(TestRDPMetricsH)

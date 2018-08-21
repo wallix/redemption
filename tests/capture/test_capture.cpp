@@ -2602,7 +2602,7 @@ extern "C" {
     }
 }
 
-#include "main/do_recorder.hpp"
+#include "lib/do_recorder.hpp"
 
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestMetaCapture)

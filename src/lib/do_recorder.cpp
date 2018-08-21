@@ -6,7 +6,7 @@
    redver video verifier program
 */
 
-#include "main/do_recorder.hpp"
+#include "lib/do_recorder.hpp"
 #include "main/version.hpp"
 
 #include "system/scoped_crypto_init.hpp"

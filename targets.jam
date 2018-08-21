@@ -264,13 +264,13 @@ exe rdpheadless :
 ;
 
 lib libredrec :
-  src/main/do_recorder.cpp.lib.o
+  src/lib/do_recorder.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
+  <library>log.o
   <library>app_path_exe.o
   <library>crypto
   <library>ffmpeg
-  <library>log.o
   <library>png
   <library>ppocr
   <library>program_options
@@ -301,21 +301,21 @@ lib libredrec :
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libiametrics :
-  src/main/iametrics.cpp.lib.o
+  src/lib/iametrics.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
-  <library>crypto
   <library>log.o
+  <library>crypto
   <library>src/core/error.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libscytale :
-  src/main/scytale.cpp.lib.o
+  src/lib/scytale.cpp.lib.o
 :
   $(LIB_DEPENDENCIES)
+  <library>log.o
   <include>$(REDEMPTION_TEST_PATH)/includes
   <library>crypto
-  <library>log.o
   <library>snappy
   <library>src/core/error.o
   <library>src/transport/crypto_transport.o
@@ -323,18 +323,18 @@ lib libscytale :
   <library>src/utils/fileutils.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-obj src/main/do_recorder.cpp.lib.o :
-  $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp
+obj src/lib/do_recorder.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp
 :
   $(LIB_DEPENDENCIES)
 ;
-obj src/main/iametrics.cpp.lib.o :
-  $(REDEMPTION_SRC_PATH)/main/iametrics.cpp
+obj src/lib/iametrics.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp
 :
   $(LIB_DEPENDENCIES)
 ;
-obj src/main/scytale.cpp.lib.o :
-  $(REDEMPTION_SRC_PATH)/main/scytale.cpp
+obj src/lib/scytale.cpp.lib.o :
+  $(REDEMPTION_SRC_PATH)/lib/scytale.cpp
 :
   $(LIB_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
@@ -702,7 +702,7 @@ test-run tests/capture/test_capture :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/main/do_recorder.o
+  <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -2387,11 +2387,11 @@ test-run tests/keyboard/test_keymapSym :
   <covfile>src/keyboard/keymapSym.hpp
   <library>src/keyboard/keymapSym.o
 ;
-test-run tests/main/test_do_recorder :
-  $(REDEMPTION_TEST_PATH)/main/test_do_recorder.cpp
+test-run tests/lib/test_do_recorder :
+  $(REDEMPTION_TEST_PATH)/lib/test_do_recorder.cpp
 :
-  <covfile>src/main/do_recorder.cpp
-  <covfile>src/main/do_recorder.hpp
+  <covfile>src/lib/do_recorder.cpp
+  <covfile>src/lib/do_recorder.hpp
   <library>app_path_test.o
   <library>crypto
   <library>ffmpeg
@@ -2412,7 +2412,7 @@ test-run tests/main/test_do_recorder :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/main/do_recorder.o
+  <library>src/lib/do_recorder.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
@@ -2425,26 +2425,26 @@ test-run tests/main/test_do_recorder :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-test-run tests/main/test_iametrics :
-  $(REDEMPTION_TEST_PATH)/main/test_iametrics.cpp
+test-run tests/lib/test_iametrics :
+  $(REDEMPTION_TEST_PATH)/lib/test_iametrics.cpp
 :
-  <covfile>src/main/iametrics.cpp
-  <covfile>src/main/iametrics.hpp
+  <covfile>src/lib/iametrics.cpp
+  <covfile>src/lib/iametrics.hpp
   <library>crypto
   <library>src/core/error.o
-  <library>src/main/iametrics.o
+  <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
-test-run tests/main/test_scytale :
-  $(REDEMPTION_TEST_PATH)/main/test_scytale.cpp
+test-run tests/lib/test_scytale :
+  $(REDEMPTION_TEST_PATH)/lib/test_scytale.cpp
 :
-  <covfile>src/main/scytale.cpp
-  <covfile>src/main/scytale.hpp
+  <covfile>src/lib/scytale.cpp
+  <covfile>src/lib/scytale.hpp
   <library>crypto
   <library>snappy
   <library>src/core/error.o
-  <library>src/main/scytale.o
+  <library>src/lib/scytale.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
@@ -4598,6 +4598,9 @@ obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
+obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp ;
+obj src/lib/iametrics.o : $(REDEMPTION_SRC_PATH)/lib/iametrics.cpp ;
+obj src/lib/scytale.o : $(REDEMPTION_SRC_PATH)/lib/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
@@ -4668,10 +4671,6 @@ obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-
-obj src/main/do_recorder.o : $(REDEMPTION_SRC_PATH)/main/do_recorder.cpp ;
-obj src/main/iametrics.o : $(REDEMPTION_SRC_PATH)/main/iametrics.cpp ;
-obj src/main/scytale.o : $(REDEMPTION_SRC_PATH)/main/scytale.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;
@@ -4997,12 +4996,12 @@ alias test_keymap2 : tests/keyboard/test_keymap2 ;
 alias test_keymap2.coverage : tests/keyboard/test_keymap2.coverage ;
 alias test_keymapSym : tests/keyboard/test_keymapSym ;
 alias test_keymapSym.coverage : tests/keyboard/test_keymapSym.coverage ;
-alias test_do_recorder : tests/main/test_do_recorder ;
-alias test_do_recorder.coverage : tests/main/test_do_recorder.coverage ;
-alias test_iametrics : tests/main/test_iametrics ;
-alias test_iametrics.coverage : tests/main/test_iametrics.coverage ;
-alias test_scytale : tests/main/test_scytale ;
-alias test_scytale.coverage : tests/main/test_scytale.coverage ;
+alias test_do_recorder : tests/lib/test_do_recorder ;
+alias test_do_recorder.coverage : tests/lib/test_do_recorder.coverage ;
+alias test_iametrics : tests/lib/test_iametrics ;
+alias test_iametrics.coverage : tests/lib/test_iametrics.coverage ;
+alias test_scytale : tests/lib/test_scytale ;
+alias test_scytale.coverage : tests/lib/test_scytale.coverage ;
 alias test_bouncer2_mod : tests/mod/internal/test_bouncer2_mod ;
 alias test_bouncer2_mod.coverage : tests/mod/internal/test_bouncer2_mod.coverage ;
 alias test_copy_paste : tests/mod/internal/test_copy_paste ;
@@ -5571,11 +5570,11 @@ alias tests/keyboard :
   tests/keyboard/test_keymap2
   tests/keyboard/test_keymapSym
 ;
-explicit tests/main ;
-alias tests/main :
-  tests/main/test_do_recorder
-  tests/main/test_iametrics
-  tests/main/test_scytale
+explicit tests/lib ;
+alias tests/lib :
+  tests/lib/test_do_recorder
+  tests/lib/test_iametrics
+  tests/lib/test_scytale
 ;
 explicit tests/mod/internal ;
 alias tests/mod/internal :
@@ -5920,9 +5919,9 @@ explicit tests/keyboard.rec ;
 alias tests/keyboard.rec :
   tests/keyboard
 ;
-explicit tests/main.rec ;
-alias tests/main.rec :
-  tests/main
+explicit tests/lib.rec ;
+alias tests/lib.rec :
+  tests/lib
 ;
 explicit tests/mod/internal.rec ;
 alias tests/mod/internal.rec :
@@ -6039,7 +6038,7 @@ alias test :
   tests/front
   tests/gdi
   tests/keyboard
-  tests/main
+  tests/lib
   tests/mod/internal
   tests/mod/internal/widget
   tests/mod/null

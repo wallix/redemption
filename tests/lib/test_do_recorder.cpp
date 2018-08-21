@@ -24,7 +24,7 @@
 
 #include "utils/log.hpp"
 
-#include "main/do_recorder.hpp"
+#include "lib/do_recorder.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

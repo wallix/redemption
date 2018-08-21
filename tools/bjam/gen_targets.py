@@ -7,21 +7,22 @@ from collections import OrderedDict
 #project_root = '../..'
 project_root = '.'
 
-includes = (
+includes = set([
     'src/',
     'src/system/linux/',
     'src/system/linux/system/',
     'projects/redemption_configs/redemption_src/',
     'src/capture/ocr/',
     'tests/includes/',
-)
+])
 
-disable_tests = (
+disable_tests = set([
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
-    'src/system/linux/system/test_framework.cpp',
-)
+    'tests/test_meta_protocol2.cpp',
+])
 
-disable_srcs = (
+disable_srcs = set([
+    'src/main/redrec.cpp', # special case in Jamroot
     'src/system/linux/system/redemption_unit_tests.cpp',
     'src/system/linux/system/register_error_exception.cpp',
     'src/system/linux/system/test_framework.cpp',
@@ -29,27 +30,24 @@ disable_srcs = (
     'src/utils/log_as_logemasm.cpp',
     'src/utils/log_as_logprint.cpp',
     'src/utils/log_as_logtest.cpp',
-)
+])
 
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
 ))
 
 src_requirements = dict((
+    ('src/lib/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/rdpheadless.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
-    ('src/main/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/rdp_client.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
     ('src/main/main_client_redemption.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for fixed_random
-    #('libscytale', '<library>log_print.o'),
     ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
     ('tests/includes/test_only/fake_graphic.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
     ('src/capture/video_recorder.cpp', '<cxxflags>-Wno-deprecated-declarations'),
 ))
 
 target_requirements = dict((
-    ('libiametrics', '<library>log.o'),
-    ('libscytale', '<library>log.o'),
-    ('libredrec', '<library>log.o'),
+    # ('libredrec', '<library>log.o'),
 ))
 
 # because include a .cpp file...
@@ -62,11 +60,6 @@ dir_requirements = dict((
     ('src/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
     ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
-
-lib_targets = (
-    'src/main/scytale.cpp',
-    'src/main/do_recorder.cpp',
-    'src/main/iametrics.cpp')
 
 # This is usefull if several source files have the same name to disambiguate tests
 target_pre_renames = dict((
@@ -203,34 +196,27 @@ def get_files(a, dirpath):
 def start_with(str, prefix):
     return str[:len(prefix)] == prefix
 
-for d in (
-    "acl",
-    "capture",
-    "core",
-    "front",
-    "gdi",
-    "keyboard",
-    "mod",
-    "regex",
-    "sashimi",
-    "transport",
-    "utils",
-    "client_redemption"
-):
-    get_files(sources, 'src/'+d)
-
-get_files(sources, 'src/system/linux/system')
+get_files(sources, "src/acl")
+get_files(sources, "src/capture")
+get_files(sources, "src/client_redemption")
+get_files(sources, "src/core")
+get_files(sources, "src/front")
+get_files(sources, "src/gdi")
+get_files(sources, "src/keyboard")
+get_files(sources, "src/lib")
+get_files(sources, "src/mod")
+get_files(sources, "src/regex")
+get_files(sources, "src/sashimi")
+get_files(sources, "src/system/linux/system")
+get_files(sources, "src/transport")
+get_files(sources, "src/utils")
 get_files(sources, 'tests/includes/test_only')
-for path in glob.glob('src/main/*.hpp'):
-    append_file(sources, 'src/main', path, 'H')
 
-for path in glob.glob('src/main/*.cpp'):
-    if path == 'src/main/redrec.cpp': # special case in Jamroot
-        continue
-    a = mains
-    if path in lib_targets:
-        a = libs
-    append_file(a, 'src/main', path, 'C')
+for t in ((mains, 'src/main'), (libs, 'src/lib')):
+    for path in glob.glob(t[1] + "/*.hpp"):
+        append_file(sources, t[1], path, 'H')
+    for path in glob.glob(t[1] + "/*.cpp"):
+        append_file(t[0], t[1], path, 'C')
 
 files_on_tests = []
 get_files(files_on_tests, 'tests')
@@ -239,10 +225,11 @@ tests = [f for f in files_on_tests \
     and not start_with(f.path, 'tests/includes/') \
     and not start_with(f.path, 'tests/system/emscripten/system/') \
     and not start_with(f.path, 'tests/web_video/') \
-    and f.path != 'tests/test_meta_protocol2.cpp' \
     and f.path not in disable_tests
 ]
 
+libs = [f for f in libs if f.path not in disable_srcs]
+mains = [f for f in mains if f.path not in disable_srcs]
 sources = [f for f in sources if f.path not in disable_srcs]
 sources += [f for f in files_on_tests \
     if f.type == 'H' \
@@ -518,7 +505,7 @@ generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], '$
 generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], '$(EXE_DEPENDENCIES_NO_SYSLOG)')
 print()
 
-generate('lib', libs, '$(LIB_DEPENDENCIES)', lambda f: 'lib'+get_target(f))
+generate('lib', libs, '$(LIB_DEPENDENCIES)\n  <library>log.o', lambda f: 'lib'+get_target(f))
 for f in libs:
     print('obj ', mark_target(f.path), '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
     requirement_action(f, lambda r: print(' ', r))
@@ -529,8 +516,6 @@ generate('test-run', tests, '', unprefixed_file)
 print()
 
 generate_obj(sources)
-print()
-generate_obj(libs)
 print()
 
 ###

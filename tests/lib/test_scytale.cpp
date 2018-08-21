@@ -24,7 +24,7 @@
 
 #include "utils/log.hpp"
 
-#include "main/scytale.hpp"
+#include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 #include <string>
 

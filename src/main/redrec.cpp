@@ -1,4 +1,4 @@
-#include "main/do_recorder.hpp"
+#include "lib/do_recorder.hpp"
 #include "utils/chex_to_int.hpp"
 
 #include <syslog.h>

@@ -19,7 +19,7 @@
 
 */
 
-#include "main/scytale.hpp"
+#include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 
