@@ -342,21 +342,6 @@ struct DrawableTrait<DepthColor::color24>
 : DrawableTraitColor24
 {};
 
-auto DrawableImplAlloc = [](size_t rowsize_, uint16_t height_) {
-        size_t sz = rowsize_ * height_;
-        if (sz == 0) {
-            throw Error(ERR_RECORDER_EMPTY_IMAGE);
-        }
-        uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
-        // done this way because otherwise clang raise a zero-size-array is an extension warning
-        memset(data, 0, sz);
-
-        if (nullptr == data) {
-            throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-        }
-        return data;
-    };
-
 template<DepthColor BppIn>
 class DrawableImpl
 {
@@ -374,7 +359,16 @@ class DrawableImpl
     uint16_t height_;
     size_t rowsize_;
 
-    P data_;
+    std::unique_ptr<u8[]> data_;
+
+    static std::unique_ptr<u8[]> alloc_data(size_t rowsize, uint16_t height)
+    {
+        size_t sz = rowsize * height;
+        if (sz == 0) {
+            throw Error(ERR_RECORDER_EMPTY_IMAGE);
+        }
+        return std::unique_ptr<u8[]>(new uint8_t[sz]{});
+    }
 
 public:
     using traits = DrawableTrait<BppIn>;
@@ -386,45 +380,24 @@ public:
     : width_(width)
     , height_(height)
     , rowsize_(width * Bpp)
-    // , data_([this]{
-    //     size_t sz = this->rowsize_ * this->height_;
-    //     if (sz == 0) {
-    //         throw Error(ERR_RECORDER_EMPTY_IMAGE);
-    //     }
-    //     uint8_t * data = new (std::nothrow) uint8_t[sz]; /*NOLINT*/
-    //     // done this way because otherwise clang raise a zero-size-array is an extension warning
-    //     memset(data, 0, sz);
-
-    //     if (nullptr == data) {
-    //         throw Error(ERR_RECORDER_FRAME_ALLOCATION_FAILED);
-    //     }
-    //     return data;
-    // }())
-    , data_(DrawableImplAlloc(this->rowsize_, this->height_))
+    , data_(alloc_data(this->rowsize_, this->height_))
     {}
 
     DrawableImpl(DrawableImpl const &) = delete;
     DrawableImpl& operator=(DrawableImpl const &) = delete;
 
-public:
-    ~DrawableImpl()
-    {
-        delete[] this->data_;
-    }
-
     void resize(unsigned width, unsigned height) {
-        uint16_t saved_height_  = this->height_;
-        size_t   saved_rowsize_ = this->rowsize_;
-        P        saved_data_    = this->data_;
-
+        uint16_t const saved_height_  = this->height_;
+        size_t   const saved_rowsize_ = this->rowsize_;
 
         this->width_   = width;
         this->height_  = height;
         this->rowsize_ = this->width_ * Bpp;
-        this->data_    =  DrawableImplAlloc(this->rowsize_, this->height_);
 
-        P      src         = saved_data_;
-        P      dest        = this->data_;
+        auto old_data  = std::exchange(this->data_, alloc_data(this->rowsize_, this->height_));
+        P    src       = old_data.get();
+        P    dest      = this->data_.get();
+
         size_t min_rowsize = std::min(saved_rowsize_, this->rowsize_);
         for (uint16_t row_index = 0, row_count = std::min(saved_height_, this->height_);
              row_index < row_count; ++row_index) {
@@ -433,16 +406,14 @@ public:
             src  += saved_rowsize_;
             dest += this->rowsize_;
         }
-
-        delete[] saved_data_;
     }
 
     const uint8_t * data() const noexcept {
-        return this->data_;
+        return this->data_.get();
     }
 
     const uint8_t * data(int x, int y) const noexcept {
-        return this->data_ + (y * this->width_ + x) * Bpp;
+        return this->data() + (y * this->width_ + x) * Bpp;
     }
 
     uint16_t width() const noexcept {
@@ -474,11 +445,11 @@ public:
     }
 
     uint8_t * first_pixel() const noexcept {
-        return this->data_;
+        return this->data_.get();
     }
 
     uint8_t * first_pixel(int x, int y) const noexcept {
-        return this->data_ + (y * this->width_ + x) * Bpp;
+        return this->data_.get() + (y * this->width_ + x) * Bpp;
     }
 
     uint8_t * first_pixel(Rect rect) const noexcept {
@@ -486,7 +457,7 @@ public:
     }
 
     uint8_t * last_pixel() const noexcept {
-        return this->data_ + this->pix_len();
+        return this->data_.get() + this->pix_len();
     }
 
     uint8_t * row_data(int y) const noexcept {

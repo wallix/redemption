@@ -206,47 +206,47 @@ namespace re {
     }
 
     inline State * new_character(char_int c, State * out1 = nullptr) {
-        return new State(RANGE, c, c, out1);
+        return new State(RANGE, c, c, out1); /*NOLINT*/
     }
 
     inline State * new_range(char_int left, char_int right, State * out1 = nullptr) {
-        return new State(RANGE, left, right, out1);
+        return new State(RANGE, left, right, out1); /*NOLINT*/
     }
 
     inline State * new_any(State * out1 = nullptr) {
-        return new State(RANGE, 0, ~char_int{}, out1);
+        return new State(RANGE, 0, ~char_int{}, out1); /*NOLINT*/
     }
 
     inline State * new_split(State * out1 = nullptr, State * out2 = nullptr) {
-        return new State(SPLIT, 0, 0, out1, out2);
+        return new State(SPLIT, 0, 0, out1, out2); /*NOLINT*/
     }
 
     inline State * new_cap_open(State * out1 = nullptr) {
-        return new State(CAPTURE_OPEN, 0, 0, out1);
+        return new State(CAPTURE_OPEN, 0, 0, out1); /*NOLINT*/
     }
 
     inline State * new_cap_close(State * out1 = nullptr) {
-        return new State(CAPTURE_CLOSE, 0, 0, out1);
+        return new State(CAPTURE_CLOSE, 0, 0, out1); /*NOLINT*/
     }
 
     inline State * new_epsilone(State * out1 = nullptr) {
-        return new State(EPSILONE, 0, 0, out1);
+        return new State(EPSILONE, 0, 0, out1); /*NOLINT*/
     }
 
     inline State * new_finish(State * out1 = nullptr) {
-        return new State(FINISH, 0, 0, out1);
+        return new State(FINISH, 0, 0, out1); /*NOLINT*/
     }
 
     inline State * new_begin(State * out1 = nullptr) {
-        return new State(FIRST, 0, 0, out1);
+        return new State(FIRST, 0, 0, out1); /*NOLINT*/
     }
 
     inline State * new_last() {
-        return new State(LAST, 0, 0);
+        return new State(LAST, 0, 0); /*NOLINT*/
     }
 
     inline State * new_sequence(const char_int * s, size_t len, State * out1 = nullptr) {
-        State * ret = new State(SEQUENCE, 0, 0, out1);
+        State * ret = new State(SEQUENCE, 0, 0, out1); /*NOLINT*/
         ret->data.sequence.s = s;
         ret->data.sequence.len = len;
         return ret;
@@ -257,7 +257,7 @@ namespace re {
     }
 
     inline SequenceString new_string_sequence(char_int c, std::size_t count) {
-        char_int * s = new char_int[count + 1];
+        char_int * s = new char_int[count + 1]; /*NOLINT*/
         std::fill(s, s + count, c);
         *(s+count) = 0;
         return SequenceString(s, count);
@@ -265,7 +265,7 @@ namespace re {
 
     inline SequenceString new_string_sequence(const char_int * str, std::size_t len,
                                               std::size_t count) {
-        char_int * ret = new char_int[count * len + 1];
+        char_int * ret = new char_int[count * len + 1]; /*NOLINT*/
         char_int * p = ret;
         while (count--) {
             std::copy(str, str + len, p);

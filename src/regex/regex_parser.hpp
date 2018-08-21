@@ -102,9 +102,9 @@ namespace re {
             if (this->mem->is_full()) {
                 this->mem = memory_list_t::allocate(this->mem);
             }
-            State * st = new(this->mem->next()) State(type, range_left, range_right, out1, out2);
+            State * st = new(this->mem->next()) State(type, range_left, range_right, out1, out2); /*NOLINT*/
 #else
-            State * st = new State(type, range_left, range_right, out1, out2);
+            State * st = new State(type, range_left, range_right, out1, out2); /*NOLINT*/
 #endif
             sts.push_back(st);
             return st;
@@ -417,7 +417,7 @@ namespace re {
                 }
             }
             if (n > 1) {
-                char_int * str = new char_int[n+1];
+                char_int * str = new char_int[n+1]; /*NOLINT*/
                 char_int * p = str;
                 *p = get_c(consumer, c);
                 for (unsigned i = 1; i != n; ++i) {
@@ -718,7 +718,7 @@ namespace re {
         else {
             const char_int * seq = st->data.sequence.s;
             st->data.sequence = new_string_sequence(st->data.sequence, m);
-            delete [] seq;
+            delete [] seq; /*NOLINT*/
         }
         st->type = SEQUENCE;
     }

@@ -136,7 +136,7 @@ namespace re {
     {
         void operator()(State * st) const
         {
-            delete st;
+            delete st; /*NOLINT*/
         }
     };
 }  // namespace re

@@ -46,7 +46,7 @@ extern "C"
 
     void delete_hmac_sha256_hex(char* sign) noexcept
     {
-        delete reinterpret_cast<MetricsHmacSha256Encrypt*>(sign);
+        delete reinterpret_cast<MetricsHmacSha256Encrypt*>(sign); /*NOLINT*/
     }
 
 
@@ -76,7 +76,7 @@ extern "C"
 
     void metrics_delete(Metrics * metrics) noexcept
     {
-        delete metrics;
+        delete metrics; /*NOLINT*/
     }
 
     void metrics_log(Metrics * metrics, uint64_t now_ms) noexcept
