@@ -71,8 +71,7 @@ class ClientRedemption : public ClientRedemptionController
 private:
     CryptoContext     cctx;
 
-    // TODO unique_ptr
-    Transport       * socket;
+    std::unique_ptr<Transport> socket;
     int               client_sck;
     TimeSystem        timeSystem;
     NullAuthentifier  authentifier;
@@ -218,7 +217,6 @@ public:
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
         : ClientRedemptionController(session_reactor, argv, argc, verbose)
-        , socket(nullptr)
         , client_sck(-1)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
@@ -481,9 +479,8 @@ public:
             this->impl_socket_listener->disconnect();
         }
 
-        if (this->socket != nullptr) {
-            delete (this->socket);
-            this->socket = nullptr;
+        if (!this->socket) {
+            this->socket.reset();
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
@@ -658,13 +655,13 @@ public:
     bool init_socket() {
         if (this->is_full_replaying) {
             LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
-            ReplayTransport *transport = new ReplayTransport(
+            auto transport = std::make_unique<ReplayTransport>(
                 this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port,
                 this->timeSystem, ReplayTransport::FdType::Timer,
                 ReplayTransport::FirstPacket::DisableTimer,
                 ReplayTransport::UncheckedPacket::Send);
-            this->socket = transport;
             this->client_sck = transport->get_fd();
+            this->socket = std::move(transport);
             return true;
         }
 
@@ -676,41 +673,48 @@ public:
 
         this->client_sck = client_sck.fd();
 
+        bool has_error = false;
+        std::string has_error_string;
+
         if (this->client_sck > 0) {
             try {
-
-                this->socket = new SocketTransport( this->user_name.c_str()
-                                            , std::move(client_sck)
-                                            , this->target_IP.c_str()
-                                            , this->port
-                                            , std::chrono::seconds(1)
-                                            , to_verbose_flags(0)
-                                            //, SocketTransport::Verbose::dump
-                                            , &this->error_message
-                                            );
+                this->socket = std::make_unique<SocketTransport>(
+                    this->user_name.c_str(),
+                    std::move(client_sck),
+                    this->target_IP.c_str(),
+                    this->port,
+                    std::chrono::seconds(1),
+                    to_verbose_flags(0),
+                    //SocketTransport::Verbose::dump,
+                    &this->error_message);
                 LOG(LOG_INFO, "this->socket init done");
 
                 if (this->is_full_capturing) {
-                    this->_socket_in_recorder.reset(this->socket);
-                    this->socket = new RecorderTransport(
+                    this->_socket_in_recorder = std::move(this->socket);
+                    this->socket = std::make_unique<RecorderTransport>(
                         *this->socket, this->timeSystem, this->full_capture_file_name.c_str());
                 }
 
                 LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
 
-            } catch (const std::exception &) {
-                const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
-                std::string windowErrorMsg(errorMsg+" Socket error.");
-                LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-                this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
-                return false;
+            } catch (const Error& e) {
+                has_error = true;
+                has_error_string = e.errmsg();
+            } catch (const std::exception & e) {
+                has_error = true;
+                has_error_string = e.what();
             }
-
         } else {
-            const std::string errorMsg("Cannot connect to [" + target_IP +  "].");
-            std::string windowErrorMsg(errorMsg+" Invalid IP or port.");
-            LOG(LOG_WARNING, "%s", windowErrorMsg.c_str());
-            this->disconnect("<font color='Red'>"+windowErrorMsg+"</font>", true);
+            has_error = true;
+        }
+
+        if (has_error) {
+            std::string errorMsg = "Cannot connect to [";
+            errorMsg += this->target_IP;
+            errorMsg += "]. Socket error: ";
+            errorMsg += has_error_string;
+            LOG(LOG_WARNING, "%s", errorMsg);
+            this->disconnect("<font color='Red'>"+errorMsg+"</font>", true);
             return false;
         }
 
