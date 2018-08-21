@@ -37,6 +37,7 @@ bool file_exist(const char * path);
 
 bool dir_exist(const char * path);
 
+bool file_equals(char const* filename1, char const* filename2);
 
 void ParsePath(const char * fullpath, std::string & directory,
                std::string & filename, std::string & extension);

@@ -24,7 +24,7 @@
 #include "utils/png.hpp"
 #include "utils/select.hpp"
 #include "utils/difftimeval.hpp"
-#include "utils/sugar/scope_exit.hpp"
+#include "utils/file.hpp"
 
 #include "core/front_api.hpp"
 #include "core/client_info.hpp"
@@ -224,12 +224,11 @@ inline error_t run_test_client(
             return 0;
         }
 
-        FILE * f = fopen(screen_output.c_str(), "w");
+        File f(screen_output, "w");
         if (!f) {
             LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output.c_str(), strerror(errno));
             return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
-        SCOPE_EXIT(fclose(f));
 
         Dimension dim = mod.get_dim();
         RDPDrawable gd(dim.w, dim.h);
@@ -238,7 +237,7 @@ inline error_t run_test_client(
             return err;
         }
 
-        dump_png24(f, gd, true);
+        dump_png24(f.get(), gd, true);
 
         return 0;
     }

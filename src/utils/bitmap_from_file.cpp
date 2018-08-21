@@ -29,13 +29,14 @@
 
 #include "utils/bitmap_from_file.hpp"
 
-#include "utils/png.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
+#include "utils/file.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/scope_exit.hpp"
+#include "utils/png.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/unique_fd.hpp"
 #include "cxx/cxx.hpp"
 
 #include <png.h>
@@ -143,12 +144,11 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
     }
     // this handle lib png errors for this call
 
-    FILE* file = fdopen(fd, "rb");
+    File file(fdopen(fd, "rb"));
     if (!file) {
         return bitmap;
     }
-    SCOPE_EXIT(fclose(file));
-    png_init_io(png_ptr, file);
+    png_init_io(png_ptr, file.get());
 
     png_set_sig_bytes(png_ptr, 8);
 

@@ -23,6 +23,8 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/file.hpp"
+#include "utils/file.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -80,6 +82,37 @@ bool dir_exist(const char * path)
     return (statok == 0) && ((sb.st_mode & S_IFDIR) != 0);
 }
 
+bool file_equals(char const* filename1, char const* filename2)
+{
+    File f1(filename1, "r");
+    File f2(filename2, "r");
+
+    char buffer1[2048];
+    char buffer2[2048];
+
+    for (;;){
+        auto const buf1 = f1.read(make_array_view(buffer1));
+        auto const buf2 = f2.read(make_array_view(buffer2));
+        LOG(LOG_INFO, "nb1=%zu nb2=%zu", buf1.size(), buf2.size());
+
+        if (buf1.size() != buf2.size()
+            || 0 != memcmp(buf1.data(), buf2.data(), buf2.size())
+        ) {
+            return false;
+        }
+
+        bool const is_eof1 = f1.is_eof();
+        bool const is_eof2 = f2.is_eof();
+
+        if (is_eof1 && is_eof2) {
+            return true;
+        }
+
+        if (is_eof1 || is_eof2 || f1.has_error() || f2.has_error()) {
+            return false;
+        }
+    }
+}
 
 void ParsePath(const char * fullpath, std::string & directory,
                std::string & filename, std::string & extension)

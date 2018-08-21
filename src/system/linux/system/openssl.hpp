@@ -31,6 +31,7 @@
 #include "core/app_path.hpp"
 #include "core/error.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/file.hpp"
 #include "utils/log.hpp"
 
 #include "transport/transport.hpp" // Transport::TlsResult
@@ -287,7 +288,7 @@ public:
         bool certificate_matches = false;
 
         if (!bad_certificate_path) {
-            FILE *fp = ::fopen(filename, "r");
+            File fp(filename, "r");
             if (!fp) {
                 switch (errno) {
                 default: {
@@ -321,8 +322,8 @@ public:
             } // fp
             else {
                 certificate_exists  = true;
-                X509 *px509Existing = PEM_read_X509(fp, nullptr, nullptr, nullptr);
-                ::fclose(fp);
+                X509 *px509Existing = PEM_read_X509(fp.get(), nullptr, nullptr, nullptr);
+                fp.close();
                 if (!px509Existing) {
                     // failed to read stored certificate file
                     LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"", filename);
@@ -342,37 +343,10 @@ public:
                     snprintf(tmpfilename, sizeof(tmpfilename) - 1, "/tmp/rdp,%s,%d,X509,XXXXXX", ip_address, port);
                     tmpfilename[sizeof(tmpfilename) - 1] = 0;
                     int tmpfd = ::mkostemp(tmpfilename, O_RDWR|O_CREAT);
-                    FILE * tmpfp = ::fdopen(tmpfd, "w+");
-                    PEM_write_X509(tmpfp, px509);
-                    ::fclose(tmpfp);
+                    PEM_write_X509(File(::fdopen(tmpfd, "w+")).get(), px509);
 
-                    // This can be made into a function checking two files are identical
-                    FILE* fp2 = ::fopen(filename, "r");
-                    FILE* tmpfp2 = ::fopen(tmpfilename, "r");
-
-                    char buffer1[2048];
-                    char buffer2[2048];
-                    int binary_check_failed = false;
-
-                    for (;;){
-                        size_t nb1 = fread(buffer1, sizeof(buffer1[0]), sizeof(buffer1)/sizeof(buffer1[0]), fp2);
-                        size_t nb2 = fread(buffer2, sizeof(buffer2[0]), sizeof(buffer2)/sizeof(buffer1[1]), tmpfp2);
-                        LOG(LOG_INFO, "nb1=%zu nb2=%zu", nb1, nb2);
-                        if ((nb1 != nb2) || (0 != memcmp(buffer1, buffer2, nb1 * sizeof(buffer1[0])))) {
-                            binary_check_failed = true;
-                            break;
-                        }
-                        if (feof(tmpfp2) && feof(fp2)){
-                            break;
-                        }
-                        if (ferror(tmpfp2)||ferror(fp2)||feof(tmpfp2)||feof(fp2)){
-                            binary_check_failed = true;
-                            break;
-                        }
-                    }
-                    ::fclose(tmpfp2);
+                    certificate_matches = file_equals(filename, tmpfilename);
                     ::unlink(tmpfilename);
-                    ::fclose(fp2);
 
                     const std::unique_ptr<char[]> issuer_existing      = this->crypto_print_name(X509_get_issuer_name(px509Existing));
                     const std::unique_ptr<char[]> subject_existing     = this->crypto_print_name(X509_get_subject_name(px509Existing));
@@ -386,8 +360,7 @@ public:
                     const std::unique_ptr<char[]> subject              = this->crypto_print_name(X509_get_subject_name(px509));
                     const std::unique_ptr<char[]> fingerprint          = this->crypto_cert_fingerprint(px509);
 
-                    certificate_matches = !binary_check_failed;
-                    if (binary_check_failed
+                    if (!certificate_matches
                         // Read certificate fields to ensure change is not irrelevant
                         // Relevant changes are either:
                         // - issuer changed
@@ -441,10 +414,9 @@ public:
                 ::unlink(filename);
 
                 LOG(LOG_INFO, "Dumping X509 peer certificate: \"%s\"", filename);
-                FILE * fp = ::fopen(filename, "w+");
-                if (fp) {
-                    PEM_write_X509(fp, px509);
-                    ::fclose(fp);
+                if (File fp{filename, "w+"}) {
+                    PEM_write_X509(fp.get(), px509);
+                    fp.close();
                     LOG(LOG_INFO, "Dumped X509 peer certificate");
                     server_notifier.server_cert_create();
                 }

@@ -26,6 +26,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "utils/file.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -35,25 +36,6 @@
 
 namespace
 {
-    struct File
-    {
-        std::FILE * f;
-
-        File(const char * filename, const char * mode)
-          : f(std::fopen(filename, mode))
-        {}
-
-        operator std::FILE* () noexcept
-        {
-            return f;
-        }
-
-        ~File()
-        {
-            std::fclose(f); /*NOLINT*/
-        }
-    };
-
     struct PngWriteStruct
     {
         png_struct * ppng = nullptr;
@@ -311,7 +293,7 @@ void dump_png24(const char * filename, ConstImageDataView const & image_view, bo
     assert(3 == image_view.bytes_per_pixel());
 
     if (File f{filename, "wb"}) {
-        dump_png24(f, image_view, bgr);
+        dump_png24(f.get(), image_view, bgr);
     }
 }
 
@@ -322,7 +304,7 @@ void read_png24(const char * filename, MutableImageDataView const & mutable_imag
     assert(3 == mutable_image_view.bytes_per_pixel());
 
     if (File f{filename, "r"}) {
-        read_png24(f, mutable_image_view);
+        read_png24(f.get(), mutable_image_view);
     }
 }
 

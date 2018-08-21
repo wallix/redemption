@@ -341,10 +341,6 @@ int main(int argc, char** argv)
         .help("Active/unactive session probe customize executable name")
         .action(cli::on_off_location(mod_rdp_params.session_probe_customize_executable_name)),
 
-        cli::option("transp_mode")
-        .help("Active/unactive enable transparent mode")
-        .action(cli::on_off_location(mod_rdp_params.enable_transparent_mode)),
-
         cli::option("ignore_auth_channel")
         .help("Active/unactive ignore auth channel")
         .action(cli::on_off_location(mod_rdp_params.ignore_auth_channel)),

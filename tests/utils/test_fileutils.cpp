@@ -437,4 +437,8 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     RED_CHECK_EQUAL(false, file_exist(tmpdirname));
 }
 
-
+RED_AUTO_TEST_CASE(TestFileEquals)
+{
+    RED_CHECK(file_equals(__FILE__, __FILE__));
+    RED_CHECK(!file_equals(__FILE__, "/dev/zero"));
+}

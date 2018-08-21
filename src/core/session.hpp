@@ -20,25 +20,9 @@
 
 #pragma once
 
-#include <netinet/tcp.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <sys/resource.h>
-#include <sys/un.h>
-#include <arpa/inet.h>
-#include <cerrno>
-#include <cstring>
-#include <cassert>
-#include <dirent.h>
-
-#include <array>
-
-#include "utils/invalid_socket.hpp"
-#include "utils/select.hpp"
-#include "utils/verbose_flags.hpp"
-
 #include "acl/authentifier.hpp"
+#include "capture/capture.hpp"
+#include "configs/config.hpp"
 #include "core/server.hpp"
 #include "core/session_reactor.hpp"
 #include "core/set_server_redirection_target.hpp"
@@ -46,16 +30,31 @@
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
 #include "transport/transport.hpp"
-#include "utils/colors.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/colors.hpp"
+#include "utils/file.hpp"
+#include "utils/genfstat.hpp"
+#include "utils/invalid_socket.hpp"
 #include "utils/netutils.hpp"
 #include "utils/rect.hpp"
+#include "utils/select.hpp"
 #include "utils/stream.hpp"
-#include "utils/genfstat.hpp"
+#include "utils/verbose_flags.hpp"
 
-#include "capture/capture.hpp"
+#include <array>
 
-#include "configs/config.hpp"
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+
+#include <arpa/inet.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/resource.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 
 class Session
@@ -80,9 +79,9 @@ class Session
 
     Inifile & ini;
 
-          time_t   perf_last_info_collect_time;
-    const pid_t    perf_pid;
-          FILE   * perf_file;
+    time_t      perf_last_info_collect_time = 0;
+    const pid_t perf_pid = getpid();
+    File        perf_file = nullptr;
 
     static const time_t select_timeout_tv_sec = 3;
 
@@ -103,9 +102,6 @@ class Session
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
         : ini(ini)
-        , perf_last_info_collect_time(0)
-        , perf_pid(getpid())
-        , perf_file(nullptr)
     {
         TRANSLATIONCONF.set_ini(&ini);
 
@@ -530,9 +526,6 @@ public:
         if (this->ini.get<cfg::debug::performance>() & 0x8000) {
             this->write_performance_log(this->perf_last_info_collect_time + 3);
         }
-        if (this->perf_file) {
-            ::fclose(this->perf_file);
-        }
         // Suppress Session file from disk (original name with PID or renamed with session_id)
         if (!this->ini.get<cfg::context::session_id>().empty()) {
             char new_session_file[256];
@@ -565,13 +558,12 @@ private:
                 tm_.tm_year + 1900, tm_.tm_mon, tm_.tm_mday, tm_.tm_hour, tm_.tm_min, tm_.tm_sec, this->perf_pid
                 );
 
-            this->perf_file = ::fopen(filename, "w");
-
-            ::fprintf(this->perf_file,
+            this->perf_file = File(filename, "w");
+            this->perf_file.write(cstr_array_view(
                 "time_t;"
                 "ru_utime.tv_sec;ru_utime.tv_usec;ru_stime.tv_sec;ru_stime.tv_usec;"
                 "ru_maxrss;ru_ixrss;ru_idrss;ru_isrss;ru_minflt;ru_majflt;ru_nswap;"
-                "ru_inblock;ru_oublock;ru_msgsnd;ru_msgrcv;ru_nsignals;ru_nvcsw;ru_nivcsw\n");
+                "ru_inblock;ru_oublock;ru_msgsnd;ru_msgrcv;ru_nsignals;ru_nvcsw;ru_nivcsw\n"));
 
         }
         else if (this->perf_last_info_collect_time + this->select_timeout_tv_sec > now) {
@@ -590,7 +582,7 @@ private:
             localtime_r(&this->perf_last_info_collect_time, &result);
 
             ::fprintf(
-                  this->perf_file
+                  this->perf_file.get()
                 , "%lu;"
                   "%lu;%lu;%lu;%lu;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld;%ld\n"
                 , static_cast<unsigned long>(now)
@@ -613,7 +605,7 @@ private:
                 , resource_usage.ru_nvcsw                                     /* voluntary context switches */
                 , resource_usage.ru_nivcsw                                    /* involuntary context switches */
             );
-            ::fflush(this->perf_file);
+            this->perf_file.flush();
         }
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
