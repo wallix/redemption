@@ -341,7 +341,6 @@ protected:
     const bool session_probe_enable_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
-    const bool enable_transparent_mode;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
@@ -420,8 +419,6 @@ protected:
 
     SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_lecalnotice;
 
-    std::string output_filename;
-
     std::string end_session_reason;
     std::string end_session_message;
 
@@ -437,8 +434,6 @@ protected:
 
     const bool remote_program;
     const bool remote_program_enhanced;
-
-    Transport* persistent_key_list_transport;
 
     //uint64_t total_data_received;
 
@@ -785,7 +780,6 @@ public:
         , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
-        , enable_transparent_mode(mod_rdp_params.enable_transparent_mode)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
@@ -838,7 +832,6 @@ public:
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , session_reactor(session_reactor)
-        , output_filename(mod_rdp_params.output_filename)
         , enable_polygonsc(false)
         , enable_polygoncb(false)
         , enable_polyline(false)
@@ -850,7 +843,6 @@ public:
         , enable_multiscrblt(false)
         , remote_program(mod_rdp_params.remote_program)
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
-        , persistent_key_list_transport(mod_rdp_params.persistent_key_list_transport)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
@@ -891,20 +883,7 @@ public:
                  , vars.get<cfg::rdp_metrics::log_interval>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            if (!enable_transparent_mode) {
-                LOG(LOG_INFO, "Creation of new mod 'RDP'");
-            }
-            else {
-                LOG(LOG_INFO, "Creation of new mod 'RDP Transparent'");
-
-                if (this->output_filename.empty()) {
-                    LOG(LOG_INFO, "Use transparent capabilities.");
-                }
-                else {
-                    LOG(LOG_INFO, "Use proxy default capabilities.");
-                }
-            }
-
+            LOG(LOG_INFO, "Creation of new mod 'RDP'");
             mod_rdp_params.log();
         }
 
@@ -2028,12 +2007,6 @@ public:
         }
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
-        if (this->enable_transparent_mode) {
-            //total_data_received += su.payload.size();
-            //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-            this->front.send_fastpath_data(su.payload);
-            return;
-        }
 
         while (su.payload.in_remain()) {
             FastPath::Update_Recv upd(su.payload, &this->mppc_dec);
@@ -2337,8 +2310,6 @@ public:
                 sec.payload.rewind();
                 sec.payload.in_skip_bytes(next_packet - sec.payload.get_data());
 
-                uint8_t const * current_packet = next_packet;
-
                 if  (peekFlowPDU(sec.payload)){
                     if (bool(this->verbose & RDPVerbose::connection)) {
                         LOG(LOG_WARNING, "FlowPDU TYPE");
@@ -2492,28 +2463,6 @@ public:
                             }
                             break;
                         case UP_AND_RUNNING:
-                            if (this->enable_transparent_mode)
-                            {
-                                sec.payload.rewind();
-                                sec.payload.in_skip_bytes(current_packet - sec.payload.get_data());
-
-                                StaticOutStream<65535> copy_stream;
-                                copy_stream.out_copy_bytes(current_packet, next_packet - current_packet);
-
-                                //total_data_received += copy_stream.size();
-                                //LOG(LOG_INFO, "total_data_received=%llu", total_data_received);
-
-                                this->front.send_data_indication_ex(
-                                    mcs.channelId,
-                                    copy_stream.get_data(),
-                                    copy_stream.get_offset()
-                                );
-
-                                next_packet = sec.payload.get_data_end();
-
-                                break;
-                            }
-
                             {
                                 ShareData_Recv sdata(sctrl.payload, &this->mppc_dec);
                                 // sdata.log();
@@ -2934,9 +2883,6 @@ public:
                     ? FASTPATH_OUTPUT_SUPPORTED
                     : 0
                     ;
-                if (this->enable_transparent_mode) {
-                    general_caps = this->client_general_caps;
-                }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     general_caps.log("Sending to server");
                 }
@@ -2951,9 +2897,6 @@ public:
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
-                if (this->enable_transparent_mode) {
-                    bitmap_caps = this->client_bitmap_caps;
-                }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     bitmap_caps.log("Sending to server");
                 }
@@ -3040,9 +2983,6 @@ public:
 
                 // LOG(LOG_INFO, ">>>>>>>>ORDER CAPABILITIES : ELLIPSE : %d",
                 //     order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]);
-                if (this->enable_transparent_mode) {
-                    order_caps = this->client_order_caps;
-                }
                 if (bool(this->verbose & RDPVerbose::capabilities)) {
                     order_caps.log("Sending to server");
                 }
@@ -3063,20 +3003,7 @@ public:
                 bmpcache2_caps.bitmapCache1CellInfo = this->BmpCacheRev2_Cache_NumEntries()[1];
                 bmpcache2_caps.bitmapCache2CellInfo = (this->BmpCacheRev2_Cache_NumEntries()[2] | 0x80000000);
 
-                bool use_bitmapcache_rev2 = false;
-
-                if (this->enable_transparent_mode) {
-                    use_bitmapcache_rev2 = this->client_use_bmp_cache_2;
-                    if (use_bitmapcache_rev2) {
-                        bmpcache2_caps = this->client_bmp_cache_2_caps;
-                    }
-                    else {
-                        bmpcache_caps = this->client_bmp_cache_caps;
-                    }
-                }
-                else {
-                    use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
-                }
+                bool use_bitmapcache_rev2 = this->enable_persistent_disk_bitmap_cache;
 
                 if (use_bitmapcache_rev2) {
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
@@ -3084,7 +3011,7 @@ public:
                     }
                     confirm_active_pdu.emit_capability_set(bmpcache2_caps);
 
-                    if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
+                    if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
                             this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
                             this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
@@ -3099,7 +3026,7 @@ public:
                     }
                     confirm_active_pdu.emit_capability_set(bmpcache_caps);
 
-                    if (!this->enable_transparent_mode && !this->deactivation_reactivation_in_progress) {
+                    if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
                             0x258, nbbytes(this->orders.bpp) * 0x100,   false,
                             0x12c, nbbytes(this->orders.bpp) * 0x400,   false,
@@ -4490,12 +4417,6 @@ public:
             LOG(LOG_INFO, "mod_rdp::process_server_caps");
         }
 
-        FILE * const output_file =
-            !this->output_filename.empty()
-            ? fopen(this->output_filename.c_str(), "w")
-            : nullptr;
-        SCOPE_EXIT(if (output_file) { fclose(output_file); });
-
         uint16_t ncapsets = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
@@ -4528,9 +4449,6 @@ public:
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         general_caps.log("Received from server");
                     }
-                    if (output_file) {
-                        general_caps.dump(output_file);
-                    }
                 }
                 break;
             case CAPSTYPE_BITMAP:
@@ -4539,9 +4457,6 @@ public:
                     bitmap_caps.recv(stream, capset_length);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_caps.log("Received from server");
-                    }
-                    if (output_file) {
-                        bitmap_caps.dump(output_file);
                     }
                     this->orders.bpp = bitmap_caps.preferredBitsPerPixel;
                     this->negociation_result.front_width = bitmap_caps.desktopWidth;
@@ -4554,9 +4469,6 @@ public:
                     order_caps.recv(stream, capset_length);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         order_caps.log("Received from server");
-                    }
-                    if (output_file) {
-                        order_caps.dump(output_file);
                     }
                 }
                 break;
@@ -4808,9 +4720,9 @@ public:
         );
     }
 
-    void send_persistent_key_list_regular() {
+    void send_persistent_key_list() {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular");
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list");
         }
 
         uint16_t totalEntriesCache[BmpCache::MAXIMUM_NUMBER_OF_CACHES] = { 0, 0, 0, 0, 0 };
@@ -4884,62 +4796,9 @@ public:
         }
 
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_regular done");
+            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list done");
         }
-    }   // send_persistent_key_list_regular
-
-    void send_persistent_key_list_transparent() {
-        if (!this->persistent_key_list_transport) {
-            return;
-        }
-
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent");
-        }
-
-        try
-        {
-            for (;;) {
-                this->send_persistent_key_list_pdu(
-                    [this](StreamSize<65535>, OutStream & pdu_data_stream) {
-                        uint8_t * data = pdu_data_stream.get_data();
-                        this->persistent_key_list_transport->recv_boom(data, 2/*pdu_size(2)*/);
-                        std::size_t pdu_size = Parse(data).in_uint16_le();
-                        this->persistent_key_list_transport->recv_boom(data, pdu_size);
-
-                        pdu_data_stream.out_skip_bytes(pdu_size);
-
-                        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-                            InStream stream(data, pdu_size);
-                            RDP::PersistentKeyListPDUData pklpdu;
-                            pklpdu.receive(stream);
-                            pklpdu.log(LOG_INFO, "Send to server");
-                        }
-                    }
-                );
-            }
-        }
-        catch (Error const & e)
-        {
-            if (e.id != ERR_TRANSPORT_NO_MORE_DATA) {
-                LOG(LOG_ERR, "mod_rdp::send_persistent_key_list_transparent: error=%u", e.id);
-                throw;
-            }
-        }
-
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "mod_rdp::send_persistent_key_list_transparent done");
-        }
-    }
-
-    void send_persistent_key_list() {
-        if (this->enable_transparent_mode) {
-            this->send_persistent_key_list_transparent();
-        }
-        else {
-            this->send_persistent_key_list_regular();
-        }
-    }
+    }   // send_persistent_key_list
 
     // TODO CGR: duplicated code in front
     void send_synchronise() {

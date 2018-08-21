@@ -58,14 +58,6 @@ public:
 
     virtual void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) {}
 
-    ////////////////////////////////
-    // Used by transparent proxy.
-
-    // TODO uint16_t -> CHannelId ; (data + size) -> array_view
-    virtual void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t size)
-    { (void)channelId; (void)data; (void)size; }
-    virtual void send_fastpath_data(InStream & /*unused*/) {}
-
     virtual void set_keyboard_indicators(uint16_t LedFlags) { (void)LedFlags; }
 
     ////////////////////////////////

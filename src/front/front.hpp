@@ -689,8 +689,6 @@ private:
 
     std::string server_capabilities_filename;
 
-    Transport * persistent_key_list_transport;
-
     std::unique_ptr<rdp_mppc_enc> mppc_enc;
 
     ReportMessageApi & report_message;
@@ -774,7 +772,6 @@ public:
          , bool mem3blt_support
          , time_t /*now*/
          , std::string server_capabilities_filename = {}
-         , Transport * persistent_key_list_transport = nullptr
          )
     : nomouse(ini.get<cfg::globals::nomouse>())
     , capture(nullptr)
@@ -799,7 +796,6 @@ public:
     , mem3blt_support(mem3blt_support)
     , clientRequestedProtocols(X224::PROTOCOL_RDP)
     , server_capabilities_filename(std::move(server_capabilities_filename))
-    , persistent_key_list_transport(persistent_key_list_transport)
     , report_message(report_message)
     , auth_info_sent(false)
     , session_reactor(session_reactor)
@@ -2785,15 +2781,6 @@ public:
         );
     }
 
-    void send_data_indication_ex(uint16_t channelId, uint8_t const * data, std::size_t data_size) override {
-        this->send_data_indication_ex_impl(
-            channelId,
-            [&](StreamSize<65536>, OutStream & stream) {
-                stream.out_copy_bytes(data, data_size);
-            }
-        );
-    }
-
 public:
     template<class... Writer>
     void send_data_indication_ex_impl(uint16_t channelId, Writer... writer) {
@@ -2804,28 +2791,6 @@ public:
     }
 
 private:
-
-    void send_fastpath_data(InStream & data) override {
-        write_packets(
-            this->trans,
-            [&data, this](StreamSize<65536>, OutStream & stream) {
-                stream.out_copy_bytes(data.get_data(), data.get_capacity());
-
-                if (bool(this->verbose & Verbose::basic_trace3)) {
-                    LOG(LOG_INFO, "Front::send_fastpath_data");
-                }
-            },
-            [this](StreamSize<256>, OutStream & fastpath_header, uint8_t * pkt_data, std::size_t pkt_sz) {
-                FastPath::ServerUpdatePDU_Send SvrUpdPDU(
-                    fastpath_header, pkt_data, pkt_sz,
-                    ((this->encryptionLevel > 1) ?
-                    FastPath::FASTPATH_OUTPUT_ENCRYPTED : 0),
-                    this->encrypt
-                );
-            }
-        );
-    }
-
     void session_probe_started(bool started) override {
         this->session_probe_started_ = started;
 
@@ -4244,24 +4209,6 @@ private:
                         entries              += pklpdud.numEntriesCache[i];
                         cache_entry_index[i] += pklpdud.numEntriesCache[i];
                     }
-                }
-
-                if (this->persistent_key_list_transport) {
-                    StaticOutStream<65535> persistent_key_list_stream;
-
-                    uint16_t pdu_size_offset = persistent_key_list_stream.get_offset();
-                    persistent_key_list_stream.out_clear_bytes(2);  // Size of Persistent Key List PDU.
-
-                    pklpdud.emit(persistent_key_list_stream);
-
-                    persistent_key_list_stream.set_out_uint16_le(
-                          persistent_key_list_stream.get_offset() - 2 /* Size of Persistent Key List PDU(2) */
-                        , pdu_size_offset);
-
-                    this->persistent_key_list_transport->send(
-                        persistent_key_list_stream.get_data(),
-                        persistent_key_list_stream.get_offset()
-                    );
                 }
 
                 if (pklpdud.bBitMask & RDP::PERSIST_LAST_PDU) {
