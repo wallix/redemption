@@ -4020,7 +4020,7 @@ private:
                 }
 
                 if (this->capture && this->capture->has_graphic_api()) {
-                    this->set_gd(this->capture.get());
+                    this->set_gd(this->capture);
                 }
                 else {
                     this->set_gd(this->orders.graphics_update_pdu());
