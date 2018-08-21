@@ -254,7 +254,7 @@ private:
         LOG(LOG_INFO, "historyBuffer");
         hexdump_d(this->history_buf, histo_buf_max);
         LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE);
+        hexdump_d(reinterpret_cast<const char *>(this->offset_cache), RDP_60_OFFSET_CACHE_SIZE); /*NOLINT*/
         LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
         LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }

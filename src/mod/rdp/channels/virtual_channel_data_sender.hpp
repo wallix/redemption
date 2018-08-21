@@ -34,13 +34,16 @@ namespace
                             ? 0  // Client
                             : 1  // Server
                             );
-        hexdump_c(reinterpret_cast<const uint8_t*>(&dest),
-            sizeof(dest));
-        hexdump_c(reinterpret_cast<uint8_t*>(&total_length),
-            sizeof(total_length));
-        hexdump_c(reinterpret_cast<uint8_t*>(&flags), sizeof(flags));
-        hexdump_c(reinterpret_cast<uint8_t*>(&chunk_data_length),
-            sizeof(chunk_data_length));
+        LOG(LOG_INFO, "\\x00\\x00\\x00\\x0%d", dest);
+        LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
+            (total_length >> 24), (total_length >> 16) & 0xffu,
+            (total_length >> 8) & 0xffu, (total_length & 0xffu));
+        LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
+            (flags >> 24), (flags >> 16) & 0xff,
+            (flags >> 8) & 0xff, (flags & 0xff));
+        LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
+            (chunk_data_length >> 24), (chunk_data_length >> 16) & 0xffu,
+            (chunk_data_length >> 8) & 0xffu, (chunk_data_length & 0xffu));
         hexdump_c(chunk_data, chunk_data_length);
     }
 } // namespace

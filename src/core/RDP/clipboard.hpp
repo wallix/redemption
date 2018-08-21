@@ -1205,7 +1205,7 @@ struct FormatListPDU_ShortName  {
 
             stream.out_uint32_le(this->formatListIDs[i]);
 
-            stream.out_copy_bytes(reinterpret_cast<uint8_t const*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE);
+            stream.out_copy_bytes(reinterpret_cast<uint8_t const*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
         }
     }
 
@@ -1222,7 +1222,7 @@ struct FormatListPDU_ShortName  {
 
         for (size_t i = 0; i < this->formatListSize; i++) {
             this->formatListIDs[i] = stream.in_uint32_le();
-            stream.in_copy_bytes(reinterpret_cast<uint8_t*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE);
+            stream.in_copy_bytes(reinterpret_cast<uint8_t*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
         }
     }
 
@@ -1234,7 +1234,7 @@ struct FormatListPDU_ShortName  {
             uint8_t utf8_string[SHORT_NAME_MAX_SIZE * 4 + 1];
 
             auto const len = ::UTF16toUTF8(
-                reinterpret_cast<uint8_t const*>(this->formatListName[i]),
+                reinterpret_cast<uint8_t const*>(this->formatListName[i]), /*NOLINT*/
                 SHORT_NAME_MAX_SIZE,
                 utf8_string,
                 sizeof(utf8_string) - 1);

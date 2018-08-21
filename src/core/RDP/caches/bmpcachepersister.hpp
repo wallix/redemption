@@ -223,7 +223,7 @@ public:
         const union Sig {
             uint8_t  sig_8[8];
             uint32_t sig_32[2];
-        }              * sig             = reinterpret_cast<const Sig *>(entries);
+        }              * sig             = reinterpret_cast<const Sig *>(entries); /*NOLINT*/
         for (uint8_t entry_index = 0;
              (entry_index < number_of_entries) && (cache_index < max_number_of_entries);
              entry_index++, cache_index++, sig++) {

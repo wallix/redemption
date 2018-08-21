@@ -866,7 +866,7 @@ RED_AUTO_TEST_CASE(TestUtf16UpperCase)
                       "\x41\x1f\x45\xff\x72\x00\x54\x00"  /* ὁ ｅ r T */
                       "\x3e\x02\xcc\x1f\x5a\xff";         /* ⱦ ῃ ｚ  */
     /*
-    Lower    Upper case  
+    Lower    Upper case
     0x0292 ; 0x01B7     # LATIN CAPITAL LETTER EZH
     0x03AF ; 0x038A     # GREEK CAPITAL LETTER IOTA WITH TONOS
     0x03DB ; 0x03DA     # GREEK LETTER STIGMA
@@ -890,11 +890,27 @@ RED_AUTO_TEST_CASE(TestUtf16UpperCase)
     uint8_t expected[] ="\xb7\x01\x8A\x03\xda\x03\x01\x04"  /* Ʒ Ί Ϛ Ё */
                         "\x25\x04\x34\x05\x10\x1e\x09\x1f"  /* Х Դ Ḑ Ἁ */
                         "\x49\x1f\x25\xff\x52\x00\x54\x00"  /* Ὁ Ｅ R T */
-                        "\x66\x2c\xc3\x1f\x3a\xff";         /* Ⱦ ΗΙ Ｚ  */            
+                        "\x66\x2c\xc3\x1f\x3a\xff";         /* Ⱦ ΗΙ Ｚ  */
     UTF16Upper(test, number_of_elements);
 
     RED_CHECK_EQUAL(memcmp(test, expected, number_of_elements), 0);
 }
 
 
+RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
+{
+    {
+        uint8_t u16_1[]{'a', 0, 'b', 0, 'c', 0, 0, 0};
+        uint8_t dest[32]{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
 
+        RED_CHECK_EQ(UTF16toUTF8(u16_1, 4, dest, sizeof(dest)), 4);
+        RED_CHECK_EQ(char_ptr_cast(dest), "abc");
+    }
+    {
+        uint16_t u16_2[]{'a', 'b', 'c', 0};
+        uint8_t dest[32]{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+
+        RED_CHECK_EQ(UTF16toUTF8(u16_2, 4, dest, sizeof(dest)), 4);
+        RED_CHECK_EQ(char_ptr_cast(dest), "abc");
+    }
+}

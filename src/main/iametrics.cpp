@@ -40,7 +40,7 @@ extern "C"
     char* new_hmac_sha256_hex(
         const char * src, const unsigned src_len, const uint8_t * key_crypt) noexcept
     {
-        return reinterpret_cast<char*>(
+        return reinterpret_cast<char*>( /*NOLINT*/
             new(std::nothrow) MetricsHmacSha256Encrypt({src, src_len}, {key_crypt, 32u}));
     }
 

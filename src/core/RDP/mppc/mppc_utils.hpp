@@ -80,21 +80,23 @@ static inline void encode_literal_40_50(
 }
 
 template<typename T>
-struct rdp_mppc_enc_hash_table_manager
+class rdp_mppc_enc_hash_table_manager
 {
     static const uint32_t MAX_HASH_TABLE_ELEMENT = 65536;
 
+public:
     std::unique_ptr<T[]> hash_table;
 
+private:
     std::unique_ptr<uint8_t[]> undo_buffer_begin;
     uint8_t * undo_buffer_end;
     uint8_t * undo_buffer_current;
 
     const unsigned int length_of_data_to_sign;
 
-    const unsigned int max_undo_element;
     const unsigned int undo_element_size;
 
+public:
     using hash_type = uint16_t;
 
     rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
@@ -103,13 +105,12 @@ struct rdp_mppc_enc_hash_table_manager
         , undo_buffer_end(nullptr)
         , undo_buffer_current(nullptr)
         , length_of_data_to_sign(length_of_data_to_sign)
-        , max_undo_element(max_undo_element)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
         this->hash_table = std::make_unique<T[]>(MAX_HASH_TABLE_ELEMENT);
         std::fill(this->hash_table.get(), this->hash_table.get() + MAX_HASH_TABLE_ELEMENT, T{});
 
-        auto const undo_buf_size = this->max_undo_element * this->undo_element_size;
+        auto const undo_buf_size = max_undo_element * this->undo_element_size;
 
         this->undo_buffer_begin = std::make_unique<uint8_t[]>(undo_buf_size);
         std::fill(this->undo_buffer_begin.get(), this->undo_buffer_begin.get() + undo_buf_size, uint8_t{});
@@ -126,7 +127,7 @@ struct rdp_mppc_enc_hash_table_manager
     {
         LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
         LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<uint8_t const *>(&this->hash_table.get()[0]), (mini_dump ? 16 : get_table_size()));
+        hexdump_d(reinterpret_cast<uint8_t const *>(&this->hash_table.get()[0]), (mini_dump ? 16 : get_table_size())); /*NOLINT*/
     }
 
     inline T get_offset(hash_type hash) const
@@ -197,15 +198,7 @@ struct rdp_mppc_enc_hash_table_manager
 
     inline void update_indirect(const uint8_t * data, T offset)
     {
-        hash_type hash = this->sign(data + offset);
-
-        if (this->undo_buffer_current != this->undo_buffer_end) {
-            *(reinterpret_cast<hash_type *>(this->undo_buffer_current                   )) = hash;
-            *(reinterpret_cast<T *>       (this->undo_buffer_current + sizeof(hash_type))) = hash_table[hash];
-
-            this->undo_buffer_current += this->undo_element_size;
-        }
-        this->hash_table[hash] = offset;
+        this->update(this->sign(data + offset), offset);
     }
 
     inline void reset()
