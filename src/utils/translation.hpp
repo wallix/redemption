@@ -111,7 +111,7 @@ namespace trkeys
         "Echec du service d'authentification");
     TR_KV(target_fail,
         "Failed to connect to remote host.",
-        "Echec de la connexion à l'hote distante.");
+        "Echec de la connexion à l'hôte distant.");
 
     TR_KV(authentification_rdp_fail,
         "Failed to authenticate with remote RDP host.",
