@@ -72,6 +72,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
                       , 5s
                       );
 
+    RED_CHECK(file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics"));
+    RED_CHECK(file_exist("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"));
+
     std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
     RED_CHECK_EQUAL(get_file_contents("/tmp/rdp_metrics-v1.0-2018-08-02.logindex"), expected_log_index);

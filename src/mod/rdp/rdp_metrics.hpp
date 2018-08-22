@@ -152,6 +152,7 @@ private:
         return " unknow_rdp_metrics_name";
     }
 
+    const char * rdp_protocol_name = "rdp";
     // RDP context Info
     int last_x = -1;
     int last_y = -1;
@@ -174,7 +175,7 @@ public:
               , const std::chrono::hours file_interval      // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay        // delay between 2 logs
               )
-        : metrics(/*this->rdp_field_version*/"v1.0", /*this->rdp_protocol_name*/"rdp",
+        : metrics(/*this->rdp_field_version*/"v1.0", this->rdp_protocol_name,
             activate, COUNT_FIELD, std::move(path), std::move(session_id),
             primary_user_sig, account_sig, target_service_sig, session_info_sig,
             now, file_interval, log_delay)
