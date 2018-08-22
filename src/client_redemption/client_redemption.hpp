@@ -904,8 +904,8 @@ public:
 
                                 LOG(LOG_INFO, " userDataType = %u", sc_sec1_ptr->userDataType);
                                 LOG(LOG_INFO, " length = %u", sc_sec1_ptr->length);
-                                LOG(LOG_INFO, " encryptionMethod = %u", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
-                                LOG(LOG_INFO, " encryptionLevel = %u", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
+                                LOG(LOG_INFO, " encryptionMethod = %s", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
+                                LOG(LOG_INFO, " encryptionLevel = %s", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
                                 LOG(LOG_INFO, " serverRandomLen = %u", sc_sec1_ptr->serverRandomLen);
                                 LOG(LOG_INFO, " serverCertLen = %u", sc_sec1_ptr->serverCertLen);
                                 LOG(LOG_INFO, " dwVersion = %u", sc_sec1_ptr->dwVersion);
