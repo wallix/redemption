@@ -481,34 +481,29 @@ public:
             this->impl_socket_listener->disconnect();
         }
 
-<<<<<<< HEAD
         if (!this->socket) {
             this->socket.reset();
-=======
+
 //         std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
 //         uint64_t prim_len = prim_duration.count() / 1000;
 
 //         std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
 //         uint64_t sec_len = sec_duration.count() / 1000;
 
-        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
-        uint64_t movie_len = duration.count() / 1000;
+            std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+            uint64_t movie_len = duration.count() / 1000;
 
-        time_t now;
-        time(&now);
+            time_t now;
+            time(&now);
 
-        struct tm * timeinfo;
-        char buffer [80];
-        timeinfo = localtime (&now);
-        strftime (buffer,80,"%F_%r",timeinfo);
-        std::string date(buffer);
+            struct tm * timeinfo;
+            char buffer [80];
+            timeinfo = localtime (&now);
+            strftime (buffer,80,"%F_%r",timeinfo);
+            std::string date(buffer);
 
-        std::cout << "Connection duration = " << movie_len << " ms" << " " << date <<  std::endl;
+            std::cout << "Connection duration = " << movie_len << " ms" << " " << date <<  std::endl;
 
-        if (this->socket != nullptr) {
-            delete (this->socket);
-            this->socket = nullptr;
->>>>>>> 6946b6b... client redemption main fusion WIP
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
@@ -903,47 +898,47 @@ public:
 
 
 
-//                                 LOG(LOG_INFO, " ================================");
-//                                 LOG(LOG_INFO, " ===== Server Security Info =====");
-//                                 LOG(LOG_INFO, " ================================");
+                                LOG(LOG_INFO, " ================================");
+                                LOG(LOG_INFO, " ===== Server Security Info =====");
+                                LOG(LOG_INFO, " ================================");
+
+                                LOG(LOG_INFO, " userDataType = %u", sc_sec1_ptr->userDataType);
+                                LOG(LOG_INFO, " length = %u", sc_sec1_ptr->length);
+                                LOG(LOG_INFO, " encryptionMethod = %u", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
+                                LOG(LOG_INFO, " encryptionLevel = %u", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
+                                LOG(LOG_INFO, " serverRandomLen = %u", sc_sec1_ptr->serverRandomLen);
+                                LOG(LOG_INFO, " serverCertLen = %u", sc_sec1_ptr->serverCertLen);
+                                LOG(LOG_INFO, " dwVersion = %u", sc_sec1_ptr->dwVersion);
+                                LOG(LOG_INFO, " temporary = %u", sc_sec1_ptr->temporary);
+
+                                auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
+                                    for (size_t i = 0; i < av.size(); i++) {
+                                        if ((i % 16) == 0 && i != 0) {
+                                            std::cout << "\n                ";
+                                        }
+                                        std::cout <<"0x";
+                                        if (av[i] < 0x10) {
+                                            std::cout << "0";
+                                        }
+                                        std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
+                                    }
+                                    std::cout << "\n";
+                                    std::cout << "\n";
+                                };
 //
-//                                 LOG(LOG_INFO, " userDataType = %u", sc_sec1_ptr->userDataType);
-//                                 LOG(LOG_INFO, " length = %u", sc_sec1_ptr->length);
-//                                 LOG(LOG_INFO, " encryptionMethod = %u", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
-//                                 LOG(LOG_INFO, " encryptionLevel = %u", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
-//                                 LOG(LOG_INFO, " serverRandomLen = %u", sc_sec1_ptr->serverRandomLen);
-//                                 LOG(LOG_INFO, " serverCertLen = %u", sc_sec1_ptr->serverCertLen);
-//                                 LOG(LOG_INFO, " dwVersion = %u", sc_sec1_ptr->dwVersion);
-//                                 LOG(LOG_INFO, " temporary = %u", sc_sec1_ptr->temporary);
-//
-//                                 auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
-//                                     for (size_t i = 0; i < av.size(); i++) {
-//                                         if ((i % 16) == 0 && i != 0) {
-//                                             std::cout << "\n                ";
-//                                         }
-//                                         std::cout <<"0x";
-//                                         if (av[i] < 0x10) {
-//                                             std::cout << "0";
-//                                         }
-//                                         std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
-//                                     }
-//                                     std::cout << "\n";
-//                                     std::cout << "\n";
-//                                 };
-//
-//                                 LOG(LOG_INFO, " serverRandom : "); print_hex_data(sc_sec1_ptr->serverRandom);
-//                                 LOG(LOG_INFO, " pri_exp : "); print_hex_data(sc_sec1_ptr->pri_exp);
-//                                 LOG(LOG_INFO, " pub_sig : "); print_hex_data(sc_sec1_ptr->pub_sig);
-//
-//                                 LOG(LOG_INFO, " proprietaryCertificate : ");
-//                                 LOG(LOG_INFO, "     dwSigAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwSigAlgId);
-//                                 LOG(LOG_INFO, "     dwKeyAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId);
-//                                 LOG(LOG_INFO, "     wPublicKeyBlobType = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType);
-//                                 LOG(LOG_INFO, "     wPublicKeyBlobLen = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen);
-//                                 LOG(LOG_INFO, "";
-//                                 LOG(LOG_INFO, "     RSAPK : ");
-//                                 LOG(LOG_INFO, "        magic = %u", sc_sec1_ptr->proprietaryCertificate.RSAPK.magic)
-//                                 LOG(LOG_INFO, "");
+                                LOG(LOG_INFO, " serverRandom : "); print_hex_data(sc_sec1_ptr->serverRandom);
+                                LOG(LOG_INFO, " pri_exp : "); print_hex_data(sc_sec1_ptr->pri_exp);
+                                LOG(LOG_INFO, " pub_sig : "); print_hex_data(sc_sec1_ptr->pub_sig);
+
+                                LOG(LOG_INFO, " proprietaryCertificate : ");
+                                LOG(LOG_INFO, "     dwSigAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwSigAlgId);
+                                LOG(LOG_INFO, "     dwKeyAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId);
+                                LOG(LOG_INFO, "     wPublicKeyBlobType = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType);
+                                LOG(LOG_INFO, "     wPublicKeyBlobLen = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen);
+                                LOG(LOG_INFO, "");
+                                LOG(LOG_INFO, "     RSAPK : ");
+                                LOG(LOG_INFO, "        magic = %u", sc_sec1_ptr->proprietaryCertificate.RSAPK.magic);
+                                LOG(LOG_INFO, "");
 
 
                         }
