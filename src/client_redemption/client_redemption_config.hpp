@@ -94,7 +94,6 @@ public:
             }
         }
 
-
         // Set RDP CLIPRDR config
         this->rDPClipboardConfig.arbitrary_scale = 40;
         this->rDPClipboardConfig.total_format_list_pdu_size = 0;

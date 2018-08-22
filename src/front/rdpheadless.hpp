@@ -741,6 +741,7 @@ public:
 
         this->_to_server_sender._callback = this->_callback.get();
 
+        LOG(LOG_INFO, "impl_socket_listener->start_to_listen");
         try {
             while (!this->_callback->is_up_and_running()) {
                 std::cout << " Early negociations...\n";

@@ -240,8 +240,8 @@ public:
     bool                 is_recording = false;
     bool                 is_spanning = false;
 
-    int rdp_width = 0;
-    int rdp_height = 0;
+    int rdp_width = 800;
+    int rdp_height = 6000;
 
     bool                 is_full_capturing = false;
     bool                 is_full_replaying = false;

@@ -102,10 +102,9 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
     const timeval time_mark = { 0, 50000 };
 
     if (front.mod) {
-
         auto & mod = *(front.mod);
 
-        bool running = true;
+        bool running = mod.is_up_and_running();
         bool connected = false;
 
         while (running)
