@@ -1,3 +1,10 @@
+redemption (1.1.59%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support session resize during recording.
+  * Fix showing RemoteApp Splash Screen.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 22 Aug 2018 15:46:29 +0200
+
 redemption (1.1.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix disabling keyboard input log remove also meta-datas collected by Session Probe.
