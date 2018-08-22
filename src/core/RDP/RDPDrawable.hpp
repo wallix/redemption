@@ -55,9 +55,10 @@
 
 #include "gdi/graphic_api.hpp"
 #include "gdi/image_frame_api.hpp"
+#include "gdi/resize_api.hpp"
 
 class RDPDrawable
-: public gdi::GraphicApi, public gdi::ImageFrameApi
+: public gdi::GraphicApi, public gdi::ImageFrameApi, public gdi::ResizeApi
 {
     using Color = Drawable::Color;
 
@@ -75,6 +76,10 @@ public:
     , frame_start_count(0)
     , mod_palette_rgb(BGRPalette::classic_332())
     {
+    }
+
+    void resize(uint16_t width, uint16_t height) override {
+        this->drawable.resize(width, height);
     }
 
     ConstImageView get_image_view() const override

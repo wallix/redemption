@@ -1398,6 +1398,64 @@ inline int is_encrypted_file(const char * input_filename, bool & infile_is_encry
     return -1;
 }
 
+inline void get_joint_visibility_rect(
+    Dimension & out_max_screen_dim,
+    std::string const& infile_path,
+    std::string const& input_basename,
+    std::string const& infile_extension,
+    std::string const& hash_path,
+    bool infile_is_encrypted,
+    Inifile & ini, CryptoContext & cctx,
+    Fstat & fstat, uint32_t verbose)
+{
+    char infile_prefix[4096];
+    std::snprintf(infile_prefix, sizeof(infile_prefix), "%s%s", infile_path.c_str(), input_basename.c_str());
+    ini.set<cfg::video::hash_path>(hash_path);
+
+    auto const encryption_mode = infile_is_encrypted
+      ? InMetaSequenceTransport::EncryptionMode::Encrypted
+      : InMetaSequenceTransport::EncryptionMode::NotEncrypted;
+
+    unsigned file_count = 0;
+    {
+        InCryptoTransport buf_meta(cctx, encryption_mode, fstat);
+        MwrmReader mwrm_reader(buf_meta);
+        MetaLine meta_line;
+
+        buf_meta.open((infile_prefix + infile_extension).c_str());
+        mwrm_reader.read_meta_headers();
+
+        meta_line.start_time = 0;
+        meta_line.stop_time = 0;
+
+        if (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+            while (Transport::Read::Ok == mwrm_reader.read_meta_line(meta_line)) {
+                file_count++;
+            }
+        }
+    }
+
+    InMetaSequenceTransport in_wrm_trans(
+        cctx, infile_prefix,
+        infile_extension.c_str(),
+        encryption_mode,
+        fstat
+    );
+
+    timeval begin_capture = {0, 0};
+    timeval end_capture = {0, 0};
+
+    for (unsigned i = 1; i < file_count ; i++) {
+        in_wrm_trans.next();
+    }
+
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+
+    player.play(program_requested_to_shutdown);
+
+    out_max_screen_dim = player.max_screen_dim;
+}
+
 inline int replay(std::string & infile_path, std::string & input_basename, std::string & infile_extension,
                   std::string & hash_path,
                   CaptureFlags & capture_flags,
@@ -1424,6 +1482,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                   uint32_t video_break_interval,
                   TraceType encryption_type,
                   Inifile & ini, CryptoContext & cctx,
+                  Dimension const & max_screen_dim,
                   Random & rnd, Fstat & fstat,
                   uint32_t verbose)
 {
@@ -1609,8 +1668,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 return ((target_dim * 100 / source_dim) + ((target_dim * 100 % source_dim) ? 1 : 0));
                             };
                             png_params.zoom = std::max<unsigned>(
-                                    get_percent(png_params.png_width, player.screen_rect.cx),
-                                    get_percent(png_params.png_height, player.screen_rect.cy)
+//                                    get_percent(png_params.png_width, player.screen_rect.cx),
+                                    get_percent(png_params.png_width, max_screen_dim.w),
+//                                    get_percent(png_params.png_height, player.screen_rect.cy)
+                                    get_percent(png_params.png_height, max_screen_dim.h)
                                 );
                             //std::cout << "zoom: " << zoom << '%' << std::endl;
                         }
@@ -1620,7 +1681,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         ini.set<cfg::globals::video_quality>(video_params.video_quality);
                         ini.set<cfg::globals::codec_id>(video_params.codec);
                         video_params = video_params_from_ini(
-                            player.screen_rect.cx, player.screen_rect.cy, ini);
+//                            player.screen_rect.cx, player.screen_rect.cy, ini);
+                            max_screen_dim.w, max_screen_dim.h, ini);
 
                         const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
                         const char * record_path = record_tmp_path;
@@ -1676,11 +1738,14 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         png_params.rt_display = ini.get<cfg::video::rt_display>();
 
                         RDPDrawable rdp_drawable{
-                            player.screen_rect.cx, player.screen_rect.cy};
+//                            player.screen_rect.cx, player.screen_rect.cy};
+                            max_screen_dim.w, max_screen_dim.h};
 
                         DrawableParams const drawable_params{
-                            player.screen_rect.cx,
-                            player.screen_rect.cy,
+//                            player.screen_rect.cx,
+                            max_screen_dim.w,
+//                            player.screen_rect.cy,
+                            max_screen_dim.h,
                             &rdp_drawable
                         };
 
@@ -1761,7 +1826,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 );
 
                             player.clear_consumer();
-                            player.add_consumer(capture, capture, capture, capture, capture);
+                            player.add_consumer(capture, capture, capture, capture, capture, capture);
                         };
 
                         auto lazy_capture = [&](timeval const & now) {
@@ -1790,7 +1855,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         if (begin_capture.tv_sec) {
                             player.add_consumer(
-                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker);
+                                &rdp_drawable, nullptr, nullptr, nullptr, &capture_maker, nullptr);
                         }
                         else {
                             set_capture_consumer(player.record_now);
@@ -2390,6 +2455,23 @@ extern "C" {
             // TODO also check if it contains any wrm at all and at wich one we should start depending on input time
             // TODO if start and stop time are outside wrm, userreplay(s should also be warned
 
+            Dimension max_screen_dim;
+            {
+                try {
+                    get_joint_visibility_rect(
+                        max_screen_dim,
+                        rp.mwrm_path, rp.input_basename, rp.infile_extension,
+                        rp.hash_path,
+                        rp.infile_is_encrypted,
+                        ini, cctx, fstat,
+                        verbose
+                    );
+                }
+                catch (Error const&) {
+                    // ignore exceptions, logged within replay()
+                }
+            }
+
             res = replay(rp.mwrm_path, rp.input_basename, rp.infile_extension,
                           rp.hash_path,
                           rp.capture_flags,
@@ -2415,7 +2497,7 @@ extern "C" {
                           rp.wrm_compression_algorithm_,
                           rp.video_break_interval,
                           rp.encryption_type,
-                          ini, cctx, rnd, fstat,
+                          ini, cctx, max_screen_dim, rnd, fstat,
                           verbose);
 
             } catch (const Error & e) {

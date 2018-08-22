@@ -116,7 +116,7 @@ ReplayMod::ReplayMod(
         throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
     }
 
-    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr, nullptr);
     time_t begin_file_read = begin_read.tv_sec+this->in_trans->get_meta_line().start_time - this->balise_time_frame;
     this->in_trans->set_begin_time(begin_file_read);
     this->front.can_be_start_capture();
@@ -132,14 +132,16 @@ void ReplayMod::add_consumer(
     gdi::CaptureApi * capture_ptr,
     gdi::KbdInputApi * kbd_input_ptr,
     gdi::CaptureProbeApi * capture_probe_ptr,
-    gdi::ExternalCaptureApi * external_event_ptr
+    gdi::ExternalCaptureApi * external_event_ptr,
+    gdi::ResizeApi * resize_ptr
 ) {
     this->reader->add_consumer(
         graphic_ptr,
         capture_ptr,
         kbd_input_ptr,
         capture_probe_ptr,
-        external_event_ptr
+        external_event_ptr,
+        resize_ptr
     );
 }
 
@@ -288,7 +290,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
                         throw Error(ERR_VNC_OLDER_RDP_CLIENT_CANT_RESIZE);
                     }
 
-                    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr);
+                    this->reader->add_consumer(&this->front, nullptr, nullptr, nullptr, nullptr, nullptr);
 
                     this->front.can_be_start_capture();
 

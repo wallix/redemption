@@ -836,15 +836,16 @@ public:
                     this->ini.set_acl<cfg::context::opt_width>(this->client_info.width);
                     this->ini.set_acl<cfg::context::opt_height>(this->client_info.height);
 
-                    if (this->capture)
-                    {
-                        this->must_be_stop_capture();
-                        this->can_be_start_capture();
-                    }
-
                     // TODO Why are we not calling this->flush() instead ? Looks dubious.
                     // send buffered orders
                     this->orders.graphics_update_pdu().sync();
+
+                    if (this->capture)
+                    {
+//                        this->must_be_stop_capture();
+//                        this->can_be_start_capture();
+                        this->capture->resize(width, height);
+                    }
 
                     // clear all pending orders, caches data, and so on and
                     // start a send_deactive, send_deman_active process with

@@ -44,11 +44,11 @@ class TimestampTracer {
     char previous_timestamp[size_str_timestamp];
     uint8_t previous_timestamp_length;
 
-    const unsigned int width;
-    const unsigned int height;
-    const unsigned int bpp;
-          uint8_t*     pixels;
-    const unsigned int rowsize;
+    unsigned int width;
+    unsigned int height;
+    unsigned int bpp;
+    uint8_t*     pixels;
+    unsigned int rowsize;
 
 public:
     TimestampTracer(MutableImageDataView const & image_view)

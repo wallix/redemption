@@ -647,6 +647,13 @@ protected:
         }
     }
 
+    void resize(MutableImageDataView const & image_view) {
+        this->scaled_width  = ((((image_view.width()  * this->zoom_factor) / 100) + 3) & 0xFFC);
+        this->scaled_height =  (((image_view.height() * this->zoom_factor) / 100));
+
+        this->timestamp_tracer = TimestampTracer(image_view);
+    }
+
 public:
     PngCapture(
         const CaptureParams & capture_params, const PngParams & png_params,
@@ -656,7 +663,11 @@ public:
         imageFrameApi, imageFrameApi.get_mutable_image_view())
     {}
 
-    void dump(void)
+    void resize(gdi::ImageFrameApi & imageFrameApi) {
+        this->resize(imageFrameApi.get_mutable_image_view());
+    }
+
+    void dump()
     {
         auto const image_view = this->image_frame_api.get_mutable_image_view();
         if (this->zoom_factor == 100) {
@@ -1540,7 +1551,15 @@ Capture::Capture(
         }
     }
 
-    if (capture_wrm || capture_video || capture_ocr || capture_png || capture_video_full) {
+    if (capture_meta) {
+        this->meta_capture_obj.reset(new MetaCaptureImpl(
+            capture_params.now, meta_params,
+            capture_params.record_tmp_path, capture_params.basename,
+            report_error_from_reporter(capture_params.report_message)
+        ));
+    }
+
+    if (capture_drawable) {
         if (drawable_params.rdp_drawable) {
             this->gd_drawable = drawable_params.rdp_drawable;
         }
@@ -1596,14 +1615,6 @@ Capture::Capture(
         if (capture_wrm) {
             this->wrm_capture_obj.reset(new WrmCaptureImpl(
                 capture_params, wrm_params, *this->gd_drawable));
-        }
-
-        if (capture_meta) {
-            this->meta_capture_obj.reset(new MetaCaptureImpl(
-                capture_params.now, meta_params,
-                capture_params.record_tmp_path, capture_params.basename,
-                report_error_from_reporter(capture_params.report_message)
-            ));
         }
 
         if (capture_video) {
@@ -1754,6 +1765,30 @@ Capture::~Capture()
             this->wrm_capture_obj.reset();
         }
     }
+}
+
+void Capture::resize(uint16_t width, uint16_t height) {
+    if (this->sequenced_video_capture_obj || this->full_video_capture_obj) {
+        return;
+    }
+
+    if (this->capture_drawable) {
+        this->gd_drawable->resize(width, height);
+    }
+
+    if (this->png_capture_real_time_obj) {
+        not_null_ptr<gdi::ImageFrameApi> image_frame_api_real_time_ptr = this->gd_drawable;
+
+        this->png_capture_real_time_obj->resize(*image_frame_api_real_time_ptr);
+    }
+
+    if (this->png_capture_obj) {
+        not_null_ptr<gdi::ImageFrameApi> image_frame_api_ptr = this->gd_drawable;
+
+        this->png_capture_obj->resize(*image_frame_api_ptr);
+    }
+
+    this->external_breakpoint();
 }
 
 // TODO: this could be done directly in external png_capture_real_time_obj object

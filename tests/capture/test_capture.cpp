@@ -1360,7 +1360,7 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
     FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(0));
     RDPDrawable drawable1(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     png_recorder.flush();
     out_png_trans.next();
@@ -1506,7 +1506,7 @@ RED_AUTO_TEST_CASE(TestReloadSaveCache)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -1639,7 +1639,7 @@ RED_AUTO_TEST_CASE(TestReloadOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -1732,7 +1732,7 @@ RED_AUTO_TEST_CASE(TestContinuationOrderStates)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -2052,7 +2052,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRM)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -2126,7 +2126,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesFromWRMTwoConsumers)
     OutFilenameSequenceTransport second_out_png_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "second_testimg", ".png", groupid, ReportError{});
     DrawableToFile second_png_recorder(second_out_png_trans, drawable1.impl());
 
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -2205,7 +2205,7 @@ RED_AUTO_TEST_CASE(TestExtractPNGImagesThenSomeOtherChunk)
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     DrawableToFile png_recorder(out_png_trans, drawable.impl());
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
     while (player.next_order()){
         player.interpret_order();
     }
@@ -2384,7 +2384,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     DrawableToFile png_recorder(out_png_trans, drawable1.impl());
 
 //    png_recorder.update_config(ini);
-    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&drawable1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     OutFilenameSequenceTransport out_wrm_trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "./", "first", ".wrm", groupid, ReportError{});
 
@@ -2416,8 +2416,8 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
 
-    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr);
-    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder);
+    player.add_consumer(&drawable, nullptr, nullptr, nullptr, nullptr, nullptr);
+    player.add_consumer(&graphic_to_file, &wrm_recorder, nullptr, nullptr, &wrm_recorder, nullptr);
 
     bool requested_to_stop = false;
 
@@ -2873,5 +2873,518 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     for (auto & f : fileinfo1) {
         ::unlink(f.filename);
+    }
+}
+
+RED_AUTO_TEST_CASE(TestResizingCapture)
+{
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"./resizing-capture-0-000000.wrm", 1646},
+        {"./resizing-capture-0-000001.wrm", 3442},
+        {"./resizing-capture-0-000002.wrm", 3033},
+        {"./resizing-capture-0-000003.wrm", 4672},
+        {"./resizing-capture-0-000004.wrm", -1},
+        {"./resizing-capture-0.mwrm", 256},
+        // hash
+        {"/tmp/resizing-capture-0-000000.wrm", 51},
+        {"/tmp/resizing-capture-0-000001.wrm", 51},
+        {"/tmp/resizing-capture-0-000002.wrm", 51},
+        {"/tmp/resizing-capture-0-000003.wrm", 51},
+        {"/tmp/resizing-capture-0-000004.wrm", -1},
+        {"/tmp/resizing-capture-0.mwrm", 45},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
+    Inifile ini;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
+
+        ini.set<cfg::video::png_limit>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
+
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
+
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp/");
+        ini.set<cfg::globals::movie_path>("resizing-capture-0");
+
+        LCGRandom rnd(0);
+        FakeFstat fstat;
+        CryptoContext cctx;
+
+        // TODO remove this after unifying capture interface
+        bool full_video = false;
+
+        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+        video_params.no_timestamp = false;
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_path = record_tmp_path;
+
+        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_pattern_checker = false;
+
+        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        bool capture_video = bool(capture_flags & CaptureFlags::video);
+        bool capture_video_full = full_video;
+        bool capture_meta = capture_ocr;
+        bool capture_kbd = false;
+
+        OcrParams ocr_params = {
+            ini.get<cfg::ocr::version>(),
+            ocr::locale::LocaleId(
+                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+            ini.get<cfg::ocr::on_title_bar_only>(),
+            ini.get<cfg::ocr::max_unrecog_char_rate>(),
+            ini.get<cfg::ocr::interval>(),
+            ini.get<cfg::debug::ocr>()
+        };
+
+        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            capture_wrm ?"wrm ":"",
+            capture_png ?"png ":"",
+            capture_kbd ? 1 : 0,
+            capture_video ?"video ":"",
+            capture_video_full ?"video_full ":"",
+            capture_pattern_checker ?"pattern ":"",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+            capture_meta?"meta ":""
+        );
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
+        strcat(path, "/");
+        strcpy(basename, movie_path);
+        strcpy(extension, "");          // extension is currently ignored
+
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+        PngParams png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+
+        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
+
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No
+        };
+
+        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+        kbd_log_params.session_log_enabled = false;
+
+        PatternParams const pattern_params = pattern_params_from_ini(ini);
+
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
+        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+
+        CaptureParams capture_params{
+            now,
+            basename,
+            record_tmp_path,
+            record_path,
+            groupid,
+            nullptr,
+        };
+
+        Capture capture(
+                          capture_params
+                        , drawable_params
+                        , capture_wrm, wrm_params
+                        , capture_png, png_params
+                        , capture_pattern_checker, pattern_params
+                        , capture_ocr, ocr_params
+                        , capture_video, sequenced_video_params
+                        , capture_video_full, full_video_params
+                        , capture_meta, meta_params
+                        , capture_kbd, kbd_log_params
+                        , video_params
+                        , nullptr
+                        , Rect()
+                        );
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        scr.cx = 1024;
+        scr.cy = 768;
+
+        capture.resize(scr.cx, scr.cy);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        // The destruction of capture object will finalize the metafile content
+    }
+
+    bool remove_files = !getenv("TestResizingCapture");
+
+    {
+        FilenameGenerator png_seq(
+            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
+          , "./" , "resizing-capture-0", ".png"
+        );
+
+        const char * filename;
+
+        filename = png_seq.get(0);
+        RED_CHECK_EQUAL(3098, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(1);
+        RED_CHECK_EQUAL(3125, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(2);
+        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(3);
+        RED_CHECK_EQUAL(3173, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(4);
+        RED_CHECK_EQUAL(4339, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(5);
+        RED_CHECK_EQUAL(4363, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(6);
+        RED_CHECK_EQUAL(4374, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(7);
+        RED_CHECK_EQUAL(4406, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(8);
+        RED_CHECK_EQUAL(false, file_exist(filename));
+    }
+
+    for (auto x: fileinfo) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        if (remove_files) { ::unlink(x.filename); }
+    }
+}
+
+RED_AUTO_TEST_CASE(TestResizingCapture1)
+{
+    const struct CheckFiles {
+        const char * filename;
+        ssize_t size;
+    } fileinfo[] = {
+        {"./resizing-capture-1-000000.wrm", 1646},
+        {"./resizing-capture-1-000001.wrm", 3442},
+        {"./resizing-capture-1-000002.wrm", 1628},
+        {"./resizing-capture-1-000003.wrm", 1682},
+        {"./resizing-capture-1-000004.wrm", -1},
+        {"./resizing-capture-1.mwrm", 256},
+        // hash
+        {"/tmp/resizing-capture-1-000000.wrm", 51},
+        {"/tmp/resizing-capture-1-000001.wrm", 51},
+        {"/tmp/resizing-capture-1-000002.wrm", 51},
+        {"/tmp/resizing-capture-1-000003.wrm", 51},
+        {"/tmp/resizing-capture-1-000004.wrm", -1},
+        {"/tmp/resizing-capture-1.mwrm", 45},
+    };
+
+    for (auto & f : fileinfo) {
+        ::unlink(f.filename);
+    }
+
+    Inifile ini;
+    ini.set<cfg::video::rt_display>(1);
+    ini.set<cfg::video::wrm_compression_algorithm>(WrmCompressionAlgorithm::no_compression);
+    {
+        // Timestamps are applied only when flushing
+        timeval now;
+        now.tv_usec = 0;
+        now.tv_sec = 1000;
+
+        Rect scr(0, 0, 800, 600);
+
+        ini.set<cfg::video::frame_interval>(std::chrono::seconds{1});
+        ini.set<cfg::video::break_interval>(std::chrono::seconds{3});
+
+        ini.set<cfg::video::png_limit>(10); // one snapshot by second
+        ini.set<cfg::video::png_interval>(std::chrono::seconds{1});
+
+        ini.set<cfg::video::capture_flags>(CaptureFlags::wrm | CaptureFlags::png);
+        CaptureFlags capture_flags = CaptureFlags::wrm | CaptureFlags::png;
+
+        ini.set<cfg::globals::trace_type>(TraceType::localfile);
+
+        ini.set<cfg::video::record_tmp_path>("./");
+        ini.set<cfg::video::record_path>("./");
+        ini.set<cfg::video::hash_path>("/tmp/");
+        ini.set<cfg::globals::movie_path>("resizing-capture-1");
+
+        LCGRandom rnd(0);
+        FakeFstat fstat;
+        CryptoContext cctx;
+
+        // TODO remove this after unifying capture interface
+        bool full_video = false;
+
+        VideoParams video_params = video_params_from_ini(scr.cx, scr.cy, ini);
+        video_params.no_timestamp = false;
+        const char * record_tmp_path = ini.get<cfg::video::record_tmp_path>().c_str();
+        const char * record_path = record_tmp_path;
+
+        bool capture_wrm = bool(capture_flags & CaptureFlags::wrm);
+        bool capture_png = bool(capture_flags & CaptureFlags::png);
+        bool capture_pattern_checker = false;
+
+        bool capture_ocr = bool(capture_flags & CaptureFlags::ocr) || capture_pattern_checker;
+        bool capture_video = bool(capture_flags & CaptureFlags::video);
+        bool capture_video_full = full_video;
+        bool capture_meta = capture_ocr;
+        bool capture_kbd = false;
+
+        OcrParams ocr_params = {
+            ini.get<cfg::ocr::version>(),
+            ocr::locale::LocaleId(
+                static_cast<ocr::locale::LocaleId::type_id>(ini.get<cfg::ocr::locale>())),
+            ini.get<cfg::ocr::on_title_bar_only>(),
+            ini.get<cfg::ocr::max_unrecog_char_rate>(),
+            ini.get<cfg::ocr::interval>(),
+            ini.get<cfg::debug::ocr>()
+        };
+
+        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
+            capture_wrm ?"wrm ":"",
+            capture_png ?"png ":"",
+            capture_kbd ? 1 : 0,
+            capture_video ?"video ":"",
+            capture_video_full ?"video_full ":"",
+            capture_pattern_checker ?"pattern ":"",
+            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
+            capture_meta?"meta ":""
+        );
+
+        const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
+        const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
+        const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
+
+        char path[1024];
+        char basename[1024];
+        char extension[128];
+        strcpy(path, app_path(AppPath::Wrm)); // default value, actual one should come from movie_path
+        strcat(path, "/");
+        strcpy(basename, movie_path);
+        strcpy(extension, "");          // extension is currently ignored
+
+        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
+        ) {
+            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
+            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
+        }
+
+        PngParams png_params = {
+            0, 0, std::chrono::milliseconds{60}, 100, 0, false,
+            false, static_cast<bool>(ini.get<cfg::video::rt_display>())};
+
+        DrawableParams const drawable_params{scr.cx, scr.cy, nullptr};
+
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No
+        };
+
+        KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
+        kbd_log_params.session_log_enabled = false;
+
+        PatternParams const pattern_params = pattern_params_from_ini(ini);
+
+        SequencedVideoParams sequenced_video_params;
+        FullVideoParams full_video_params;
+
+        cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
+
+        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+
+        CaptureParams capture_params{
+            now,
+            basename,
+            record_tmp_path,
+            record_path,
+            groupid,
+            nullptr,
+        };
+
+        Capture capture(
+                          capture_params
+                        , drawable_params
+                        , capture_wrm, wrm_params
+                        , capture_png, png_params
+                        , capture_pattern_checker, pattern_params
+                        , capture_ocr, ocr_params
+                        , capture_video, sequenced_video_params
+                        , capture_video_full, full_video_params
+                        , capture_meta, meta_params
+                        , capture_kbd, kbd_log_params
+                        , video_params
+                        , nullptr
+                        , Rect()
+                        );
+
+        auto const color_cxt = gdi::ColorCtx::depth24();
+        bool ignore_frame_in_timeval = false;
+
+        capture.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.resize(640, 480);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        capture.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+
+        // ------------------------------ BREAKPOINT ------------------------------
+
+        capture.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        now.tv_sec++;
+        capture.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
+        // The destruction of capture object will finalize the metafile content
+    }
+
+    bool remove_files = !getenv("TestResizingCapture1");
+
+    {
+        FilenameGenerator png_seq(
+            FilenameGenerator::PATH_FILE_COUNT_EXTENSION
+          , "./" , "resizing-capture-1", ".png"
+        );
+
+        const char * filename;
+
+        filename = png_seq.get(0);
+        RED_CHECK_EQUAL(3098, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(1);
+        RED_CHECK_EQUAL(3125, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(2);
+        RED_CHECK_EQUAL(3140, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(3);
+        RED_CHECK_EQUAL(3173, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(4);
+        RED_CHECK_EQUAL(1347, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(5);
+        RED_CHECK_EQUAL(1348, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(6);
+        RED_CHECK_EQUAL(1416, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(7);
+        RED_CHECK_EQUAL(1499, ::filesize(filename));
+        if (remove_files) { ::unlink(filename); }
+        filename = png_seq.get(8);
+        RED_CHECK_EQUAL(false, file_exist(filename));
+    }
+
+    for (auto x: fileinfo) {
+        auto fsize = filesize(x.filename);
+        RED_CHECK_MESSAGE(
+            x.size == fsize,
+            "check " << x.size << " == filesize(\"" << x.filename
+            << "\") failed [" << x.size << " != " << fsize << "]"
+        );
+        if (remove_files) { ::unlink(x.filename); }
     }
 }

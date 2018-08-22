@@ -843,7 +843,6 @@ public:
             }
             return std::chrono::microseconds{this->time_to_wait};
         }
-
     } nc;
 
     bool kbd_input_mask_enabled;
