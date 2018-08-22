@@ -1,3 +1,9 @@
+redemption (1.2.63%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix translation bug.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 22 Aug 2018 16:00:46 +0200
+
 redemption (1.2.61%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Support session resize during recording.
