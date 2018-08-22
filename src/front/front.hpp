@@ -62,9 +62,6 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
-#include "core/RDP/nla/nla.hpp"
-#include "core/RDP/nla/ntlm/ntlm.hpp"
-
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
@@ -87,6 +84,8 @@
 #include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
+
+#include "front/credssp_front_server.hpp"
 
 #include "gdi/clip_from_cmd.hpp"
 
@@ -599,85 +598,25 @@ private:
     Random & gen;
     Fstat fstat;
 
-    struct CredsspServer
+    struct CredsspServer : private CredsspFrontServer
     {
-        CredsspServer(Front& front)
-        : front(front)
-        , credssp_server(
-            front.trans, false, false, front.gen, this->timeobj, this->extra_message,
-            language(this->front.ini.get<cfg::translation::language>()),
-            [this](SEC_WINNT_AUTH_IDENTITY& identity){
-                // LOG(LOG_DEBUG, "nla");
-                // LOG(LOG_DEBUG, "user=%s", identity.User.get_data());
-                // LOG(LOG_DEBUG, "pass=%s", identity.Password.get_data());
-                // LOG(LOG_DEBUG, "domain=%s", identity.Domain.get_data());
-                // this->front.ini.set_acl<cfg::globals::auth_user>(char_ptr_cast(identity.User.get_data()));
-                // this->front.ini.ask<cfg::context::selector>();
-                // this->front.ini.ask<cfg::globals::target_user>();
-                // this->front.ini.ask<cfg::globals::target_device>();
-                // this->front.ini.ask<cfg::context::target_protocol>();
-
-                this->front.wait_ntlm_password = true;
-                this->identity = &identity;
-
-                this->front.sesman_credssp_server = this->front.session_reactor.create_sesman_event()
-                .on_action(jln::one_shot([this](Inifile& /*ini*/){
-                    this->front.wait_ntlm_password = false;
-                    if (!this->set_password("x")) {
-                        this->front.state = BASIC_SETTINGS_EXCHANGE;
-                        this->front.sesman_credssp_server.reset();
+        void start(Front& front)
+        {
+            this->CredsspFrontServer::start(
+                front.session_reactor, front.trans, front.gen, front.buf,
+                language(front.ini.get<cfg::translation::language>()), front.wait_ntlm_password,
+                [&front](bool is_valid){
+                    if (is_valid) {
+                        front.state = BASIC_SETTINGS_EXCHANGE;
                     }
-                }));
-
-                return Ntlm_SecurityFunctionTable::PasswordCallback::Wait;
-            }, true)
-        {
-            this->credssp_server.credssp_server_authenticate_init();
-            this->run(this->front.buf);
+                }
+            );
         }
 
-        bool run(TpduBuffer& tpdu_buffer)
-        {
-            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
-            while (tpdu_buffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
-                InStream in_stream(tpdu_buffer.current_pdu_buffer());
-                st = this->credssp_server.credssp_server_authenticate_next(in_stream);
-            }
-            return check_continue(st);
-        }
-
-    private:
-        bool set_password(char const* password)
-        {
-            assert(this->identity);
-            this->identity->SetPasswordFromUtf8(byte_ptr_cast(password));
-            InStream in_stream;
-            return check_continue(
-                    this->credssp_server.credssp_server_authenticate_next(in_stream))
-                && this->run(this->front.buf);
-        }
-
-        static bool check_continue(rdpCredsspServer::State st)
-        {
-            switch (st) {
-            case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-            case rdpCredsspServer::State::Cont: return true;
-            case rdpCredsspServer::State::Finish: return false;
-            }
-
-            REDEMPTION_UNREACHABLE();
-        }
-
-        Front& front;
-        // TODO should be front parameter
-        TimeSystem timeobj;
-        std::string extra_message;
-        rdpCredsspServer credssp_server;
-        SEC_WINNT_AUTH_IDENTITY* identity = nullptr;
+        using CredsspFrontServer::run;
     };
 
-    std::unique_ptr<CredsspServer> credssp_server;
-    SessionReactor::SesmanEventPtr sesman_credssp_server;
+    CredsspServer credssp_server;
 
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
@@ -1343,11 +1282,10 @@ public:
 
         if (this->state == CONNECTION_INITIATION_NLA) {
             buf.load_data(this->trans);
-            if (this->credssp_server->run(buf)) {
+            if (this->credssp_server.run()) {
                 return ;
             }
             this->wait_ntlm_password = false;
-            this->sesman_credssp_server.reset();
             this->state = BASIC_SETTINGS_EXCHANGE;
         }
 
@@ -1453,7 +1391,7 @@ public:
                 }
 
                 if (this->nla_client_active) {
-                    this->credssp_server = std::make_unique<CredsspServer>(*this);
+                    this->credssp_server.start(*this);
                 }
 
                 this->state = this->nla_client_active
