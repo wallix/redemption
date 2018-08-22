@@ -13,7 +13,6 @@ redemption (1.1.57%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.55%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 08 Aug 2018 14:12:00 +0200
 
 redemption (1.1.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
@@ -24,7 +23,6 @@ redemption (1.1.53%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.51%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 03 Aug 2018 11:52:08 +0200
 
 redemption (1.1.49%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
@@ -34,7 +32,6 @@ redemption (1.1.49%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 23 Jul 2018 17:01:45 +0200
 
 redemption (1.1.47%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 13 Jul 2018 10:41:56 +0200
 
@@ -77,16 +74,13 @@ redemption (1.1.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.27%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 14 Jun 2018 10:23:13 +0200
 
 redemption (1.1.25%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 18:51:15 +0200
 
 redemption (1.1.23%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 07 Jun 2018 16:27:01 +0200
 
@@ -104,21 +98,17 @@ redemption (1.1.17%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.15%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 May 2018 16:30:14 +0200
 
 redemption (0.9.740b%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:46:00 +0200
 
 redemption (0.9.740a%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:29:17 +0200
 
 redemption (0.9.740%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Nov 2016 18:23:16 +0200
 
@@ -197,11 +187,9 @@ redemption (0.9.710%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.708%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 16 Mar 2016 16:58:32 +0200
 
 redemption (0.9.706%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Tue, 15 Mar 2016 18:02:30 +0200
 
@@ -213,26 +201,21 @@ redemption (0.9.704%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.702%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 11 Mar 2016 17:26:57 +0200
 
 redemption (0.9.700%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 15:03:54 +0200
 
 redemption (0.9.698%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 14:47:51 +0200
 
 redemption (0.9.696%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 10 Mar 2016 14:37:45 +0200
 
 redemption (0.9.694%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Mar 2016 16:10:48 +0200
 
@@ -250,21 +233,17 @@ redemption (0.9.690%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.688%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 26 Feb 2016 18:59:42 +0200
 
 redemption (0.9.686%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 26 Feb 2016 11:30:53 +0200
 
 redemption (0.9.684%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Feb 2016 15:26:13 +0200
 
 redemption (0.9.682%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 25 Feb 2016 15:23:22 +0200
 
@@ -277,7 +256,6 @@ redemption (0.9.680%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.678%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 03 Feb 2016 11:18:11 +0200
 
 redemption (0.9.676%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
@@ -288,11 +266,9 @@ redemption (0.9.676%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.674%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 29 Jan 2016 18:50:13 +0200
 
 redemption (0.9.672%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 28 Jan 2016 18:12:51 +0200
 
@@ -358,7 +334,7 @@ redemption (0.9.646%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (0.9.644%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * * Fix using Session Probe with Rdesktop client.
+  * Fix using Session Probe with Rdesktop client.
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 16 Dec 2015 08:30:05 +0200
 
