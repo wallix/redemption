@@ -808,17 +808,11 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         player.interpret_order();
     }
 
-    RED_CHECK_EQUAL(player.remote_app, true);
+    RED_CHECK(player.info.remote_app);
     RED_CHECK_EQUAL(player.max_image_frame_rect, Rect(50, 50, 320, 200).disjunct(Rect(125, 75, 370, 250)));
     RED_CHECK_EQUAL(player.min_image_frame_dim, Dimension(370, 250));
 
     for (auto x : fileinfos) {
-        auto fsize = filesize(x.filename);
-        RED_CHECK_MESSAGE(
-            x.size == fsize,
-            "check " << x.size << " == filesize(\"" << x.filename
-            << "\") failed [" << x.size << " != " << fsize << "]"
-        );
-       ::unlink(x.filename);
+        RED_CHECK_FILE_SIZE_AND_CLEAN(x.filename, x.size);
     }
 }

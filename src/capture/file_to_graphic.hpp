@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "capture/wrm_chunk_type.hpp"
+#include "capture/wrm_meta_chunk.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
 #include "core/RDP/state_chunk.hpp"
@@ -53,14 +53,8 @@ namespace RDP
 }
 
 
-struct FileToGraphic
+class FileToGraphic
 {
-    enum {
-        HEADER_SIZE = 8
-    };
-
-
-private:
     uint8_t stream_buf[65536];
     InStream stream;
 
@@ -148,39 +142,12 @@ private:
 public:
     uint32_t max_order_count;
 
-    uint16_t info_version;
-    uint16_t info_width;
-    uint16_t info_height;
-    uint16_t info_bpp;
-
-private:
-    uint16_t info_number_of_cache;
-    bool     info_use_waiting_list;
-
-public:
-    uint16_t info_cache_0_entries;
-    uint16_t info_cache_0_size;
-    bool     info_cache_0_persistent;
-    uint16_t info_cache_1_entries;
-    uint16_t info_cache_1_size;
-    bool     info_cache_1_persistent;
-    uint16_t info_cache_2_entries;
-    uint16_t info_cache_2_size;
-    bool     info_cache_2_persistent;
-    uint16_t info_cache_3_entries;
-    uint16_t info_cache_3_size;
-    bool     info_cache_3_persistent;
-    uint16_t info_cache_4_entries;
-    uint16_t info_cache_4_size;
-    bool     info_cache_4_persistent;
-    WrmCompressionAlgorithm info_compression_algorithm;
+    WrmMetaChunk info {};
 
 private:
     bool ignore_frame_in_timeval;
 
 public:
-    bool remote_app;
-
     Rect      max_image_frame_rect;
     Dimension min_image_frame_dim;
 

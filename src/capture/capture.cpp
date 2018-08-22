@@ -32,6 +32,7 @@
 #include <cassert>
 
 #include "core/error.hpp"
+#include "core/window_constants.hpp"
 
 #include "utils/log.hpp"
 

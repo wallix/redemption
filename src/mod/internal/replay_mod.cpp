@@ -105,7 +105,7 @@ struct ReplayMod::Reader
     {
         bool is_resized = false;
         switch (front.server_resize(
-            this->reader.info_width , this->reader.info_height , this->reader.info_bpp)
+            this->reader.info.width , this->reader.info.height , this->reader.info.bpp)
         ) {
             case FrontAPI::ResizeResult::no_need:
                 // no resizing needed
@@ -155,8 +155,8 @@ ReplayMod::ReplayMod(
 , session_reactor(session_reactor)
 {
     if (this->internal_reader->server_resize(front)) {
-        this->front_width  = this->internal_reader->reader.info_width;
-        this->front_height = this->internal_reader->reader.info_height;
+        this->front_width  = this->internal_reader->reader.info.width;
+        this->front_height = this->internal_reader->reader.info.height;
     }
 
     this->timer = session_reactor.create_graphic_timer()
@@ -298,8 +298,8 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
                         this->internal_reader->debug_capture);
 
                     if (this->internal_reader->server_resize(this->front)) {
-                        this->front_width  = this->internal_reader->reader.info_width;
-                        this->front_height = this->internal_reader->reader.info_height;
+                        this->front_width  = this->internal_reader->reader.info.width;
+                        this->front_height = this->internal_reader->reader.info.height;
                     }
 
                     this->sync_setted = false;

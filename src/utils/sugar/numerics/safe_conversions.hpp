@@ -57,6 +57,10 @@ struct checked_int
     : i(checked_cast<T>(i))
     {}
 
+    constexpr checked_int(T i) noexcept
+    : i(i)
+    {}
+
     template<class U>
     operator U () const noexcept { return checked_cast<U>(i); }
 
@@ -80,6 +84,10 @@ struct saturated_int
     : i(saturated_cast<T>(i))
     {}
 
+    constexpr saturated_int(T i) noexcept
+    : i(i)
+    {}
+
     template<class U>
     operator U () const noexcept { return saturated_cast<U>(i); }
 
@@ -92,7 +100,7 @@ private:
 };
 
 
-// integer type with safe_int
+// integer type with safe_cast
 template<class T>
 struct safe_int
 {
@@ -101,6 +109,10 @@ struct safe_int
     template<class U>
     constexpr safe_int(U i) noexcept
     : i(safe_cast<T>(i))
+    {}
+
+    constexpr safe_int(T i) noexcept
+    : i(i)
     {}
 
     template<class U>

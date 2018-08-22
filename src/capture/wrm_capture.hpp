@@ -21,7 +21,7 @@
 #pragma once
 
 #include "capture/save_state_chunk.hpp"
-#include "capture/wrm_chunk_type.hpp"
+#include "capture/wrm_meta_chunk.hpp"
 #include "capture/wrm_params.hpp"
 
 #include "capture/capture_params.hpp"
@@ -51,88 +51,6 @@
 #include <cstddef>
 
 
-inline void wrmcapture_send_wrm_chunk(Transport & t, WrmChunkType chunktype, uint16_t data_size, uint16_t count)
-{
-    StaticOutStream<8> header;
-    header.out_uint16_le(safe_cast<uint16_t>(chunktype));
-    header.out_uint32_le(8 + data_size);
-    header.out_uint16_le(count);
-    t.send(header.get_data(), header.get_offset());
-}
-
-
-inline void wrmcapture_send_meta_chunk(
-    Transport & t
-  , uint8_t wrm_format_version
-
-  , uint16_t info_width
-  , uint16_t info_height
-  , uint16_t info_bpp
-
-  , uint16_t info_cache_0_entries
-  , uint16_t info_cache_0_size
-  , uint16_t info_cache_1_entries
-  , uint16_t info_cache_1_size
-  , uint16_t info_cache_2_entries
-  , uint16_t info_cache_2_size
-
-  , uint16_t info_number_of_cache
-  , bool     info_use_waiting_list
-
-  , bool     info_cache_0_persistent
-  , bool     info_cache_1_persistent
-  , bool     info_cache_2_persistent
-
-  , uint16_t info_cache_3_entries
-  , uint16_t info_cache_3_size
-  , bool     info_cache_3_persistent
-  , uint16_t info_cache_4_entries
-  , uint16_t info_cache_4_size
-  , bool     info_cache_4_persistent
-
-  , uint8_t  index_algorithm
-
-  , bool     remote_app
-) {
-    StaticOutStream<40> payload;
-    payload.out_uint16_le(wrm_format_version);
-    payload.out_uint16_le(info_width);
-    payload.out_uint16_le(info_height);
-    payload.out_uint16_le(info_bpp);
-
-    payload.out_uint16_le(info_cache_0_entries);
-    payload.out_uint16_le(info_cache_0_size);
-    payload.out_uint16_le(info_cache_1_entries);
-    payload.out_uint16_le(info_cache_1_size);
-    payload.out_uint16_le(info_cache_2_entries);
-    payload.out_uint16_le(info_cache_2_size);
-
-    if (wrm_format_version > 3) {
-        payload.out_uint8(info_number_of_cache);
-        payload.out_uint8(info_use_waiting_list);
-
-        payload.out_uint8(info_cache_0_persistent);
-        payload.out_uint8(info_cache_1_persistent);
-        payload.out_uint8(info_cache_2_persistent);
-
-        payload.out_uint16_le(info_cache_3_entries);
-        payload.out_uint16_le(info_cache_3_size);
-        payload.out_uint8(info_cache_3_persistent);
-        payload.out_uint16_le(info_cache_4_entries);
-        payload.out_uint16_le(info_cache_4_size);
-        payload.out_uint8(info_cache_4_persistent);
-
-        payload.out_uint8(index_algorithm);
-
-        if (wrm_format_version > 4) {
-            payload.out_uint8(remote_app);
-        }
-    }
-
-    wrmcapture_send_wrm_chunk(t, WrmChunkType::META_FILE, payload.get_offset(), 1);
-    t.send(payload.get_data(), payload.get_offset());
-}
-
 template<std::size_t SZ>
 class OutChunkedBufferingTransport : public Transport
 {
@@ -153,7 +71,7 @@ public:
 
     void flush() override {
         if (this->stream.get_offset() > 0) {
-            wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
+            send_wrm_chunk(this->trans, WrmChunkType::LAST_IMAGE_CHUNK, this->stream.get_offset(), 1);
             this->trans.send(this->stream.get_data(), this->stream.get_offset());
             this->stream = OutStream(buf);
         }
@@ -163,7 +81,7 @@ private:
     void do_send(const uint8_t * const buffer, size_t len) override {
         size_t to_buffer_len = len;
         while (this->stream.get_offset() + to_buffer_len > this->max) {
-            wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::PARTIAL_IMAGE_CHUNK, this->max, 1);
+            send_wrm_chunk(this->trans, WrmChunkType::PARTIAL_IMAGE_CHUNK, this->max, 1);
             this->trans.send(this->stream.get_data(), this->stream.get_offset());
             size_t to_send = this->max - this->stream.get_offset();
             this->trans.send(buffer + len - to_buffer_len, to_send);
@@ -294,20 +212,24 @@ public:
 
         auto const image_view = image_frame_api.get_image_view();
 
-        wrmcapture_send_meta_chunk(
-            this->trans_target
-          , this->wrm_format_version
+        WrmMetaChunk{
+            this->wrm_format_version
 
           , image_view.width()
           , image_view.height()
           , this->capture_bpp
 
-          , c0.entries()
+          , static_cast<uint16_t>(c0.entries())
           , c0.bmp_size()
-          , c1.entries()
+          , static_cast<uint16_t>(c1.entries())
           , c1.bmp_size()
-          , c2.entries()
+          , static_cast<uint16_t>(c2.entries())
           , c2.bmp_size()
+
+          , static_cast<uint16_t>(c3.entries())
+          , c3.bmp_size()
+          , static_cast<uint16_t>(c4.entries())
+          , c4.bmp_size()
 
           , this->bmp_cache.number_of_cache
           , this->bmp_cache.use_waiting_list
@@ -316,17 +238,13 @@ public:
           , c1.persistent()
           , c2.persistent()
 
-          , c3.entries()
-          , c3.bmp_size()
           , c3.persistent()
-          , c4.entries()
-          , c4.bmp_size()
           , c4.persistent()
 
-          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
+          , this->compression_bullder.get_algorithm()
 
           , this->remote_app
-        );
+        }.send(this->trans_target);
     }
 
     // this one is used to store some embedded image inside WRM
@@ -338,7 +256,7 @@ public:
 
     void send_reset_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
+        send_wrm_chunk(this->trans, WrmChunkType::RESET_CHUNK, 0, 1);
     }
 
     void send_timestamp_chunk(bool ignore_time_interval = false)
@@ -355,7 +273,7 @@ public:
             keyboard_buffer_32 = OutStream(keyboard_buffer_32_buf);
         }
 
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
+        send_wrm_chunk(this->trans, WrmChunkType::TIMESTAMP, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
 
         this->last_sent_timer = this->timer;
@@ -369,7 +287,7 @@ public:
 
         //------------------------------ missing variable length ---------------
 
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), 1);
+        send_wrm_chunk(this->trans, WrmChunkType::SAVE_STATE, payload.get_offset(), 1);
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -445,7 +363,7 @@ protected:
 public:
     void send_orders_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
+        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_ORDERS, this->stream_orders.get_offset(), this->order_count);
         this->trans.send(this->stream_orders.get_data(), this->stream_orders.get_offset());
         this->order_count = 0;
         this->stream_orders.rewind();
@@ -469,7 +387,7 @@ public:
 
     void send_bitmaps_chunk()
     {
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
+        send_wrm_chunk(this->trans, WrmChunkType::RDP_UPDATE_BITMAP, this->stream_bitmaps.get_offset(), this->bitmap_count);
         this->trans.send(this->stream_bitmaps.get_data(), this->stream_bitmaps.get_offset());
         this->bitmap_count = 0;
         this->stream_bitmaps.rewind();
@@ -486,7 +404,7 @@ public:
         payload.out_uint16_le(min_image_frame_dim.w);
         payload.out_uint16_le(min_image_frame_dim.h);
 
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
+        send_wrm_chunk(this->trans, WrmChunkType::IMAGE_FRAME_RECT, payload.get_offset(), 0);
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -504,7 +422,7 @@ protected:
         else {
             cursor.emit_pointer2(payload);
         }
-        wrmcapture_send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
+        send_wrm_chunk(this->trans, (pointer32x32)?WrmChunkType::POINTER:WrmChunkType::POINTER2, payload.get_offset(), 0);
         this->trans.send(payload.get_data(), payload.get_offset());
     }
 
@@ -513,7 +431,7 @@ protected:
                       + 2                   // mouse y
                       + 1                   // cache index
                       ;
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
+        send_wrm_chunk(this->trans, WrmChunkType::POINTER, size, 0);
 
         StaticOutStream<16> payload;
         payload.out_uint16_le(this->mouse_x);
@@ -537,7 +455,7 @@ public:
         payload.out_timeval_to_uint64le_usec(now);
         payload.out_uint16_le(message_length);
 
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, payload.get_offset() + message_length, 1);
+        send_wrm_chunk(this->trans, WrmChunkType::SESSION_UPDATE, payload.get_offset() + message_length, 1);
         this->trans.send(payload.get_data(), payload.get_offset());
         this->trans.send(message.data(), message.size());
         this->trans.send("\0", 1);
@@ -548,7 +466,7 @@ public:
             this->send_timestamp_chunk();
         }
 
-        wrmcapture_send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
+        send_wrm_chunk(this->trans, WrmChunkType::POSSIBLE_ACTIVE_WINDOW_CHANGE, 0, 0);
     }
 };  // struct GraphicToFile
 

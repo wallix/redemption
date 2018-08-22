@@ -26,25 +26,18 @@
 #pragma once
 
 #include "capture/capture.hpp"
-#include "capture/cryptofile.hpp"
 #include "capture/params_from_ini.hpp"
-
 #include "configs/config.hpp"
-
-#include "core/session_reactor.hpp"
-
 #include "core/RDP/GraphicUpdatePDU.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "core/RDP/SaveSessionInfoPDU.hpp"
 #include "core/RDP/SuppressOutputPDU.hpp"
-
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/bmpcachepersister.hpp"
 #include "core/RDP/caches/brushcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/caches/pointercache.hpp"
-
 #include "core/RDP/capabilities/bitmapcachehostsupport.hpp"
 #include "core/RDP/capabilities/bmpcache2.hpp"
 #include "core/RDP/capabilities/cap_bmpcache.hpp"
@@ -61,7 +54,6 @@
 #include "core/RDP/capabilities/pointer.hpp"
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
-
 #include "core/RDP/fastpath.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
@@ -73,7 +65,6 @@
 #include "core/RDP/slowpath.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
-
 #include "core/app_path.hpp"
 #include "core/callback.hpp"
 #include "core/channel_list.hpp"
@@ -84,40 +75,28 @@
 #include "core/font.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-
+#include "core/session_reactor.hpp"
 #include "front/credssp_front_server.hpp"
-
 #include "gdi/clip_from_cmd.hpp"
-
 #include "keyboard/keymap2.hpp"
-
 #include "openssl_tls.hpp"
-#include "utils/crypto/ssl_lib.hpp"
-
 #include "transport/in_file_transport.hpp"
-#include "transport/transport.hpp"
-
 #include "utils/bitfu.hpp"
-#include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
 #include "utils/colors.hpp"
 #include "utils/confdescriptor.hpp"
 #include "utils/contiguous_sub_rect_f.hpp"
+#include "utils/crypto/ssl_lib.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/pattutils.hpp"
 #include "utils/log.hpp"
+#include "utils/pattutils.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
-
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
-
-#include "core/RDP/RDPDrawable.hpp"
-
-#include <memory>
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };
 

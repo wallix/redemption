@@ -60,30 +60,7 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     , begin_capture(begin_capture)
     , end_capture(end_capture)
     , max_order_count(0)
-    , info_version(0)
-    , info_width(0)
-    , info_height(0)
-    , info_bpp(0)
-    , info_number_of_cache(0)
-    , info_use_waiting_list(true)
-    , info_cache_0_entries(0)
-    , info_cache_0_size(0)
-    , info_cache_0_persistent(false)
-    , info_cache_1_entries(0)
-    , info_cache_1_size(0)
-    , info_cache_1_persistent(false)
-    , info_cache_2_entries(0)
-    , info_cache_2_size(0)
-    , info_cache_2_persistent(false)
-    , info_cache_3_entries(0)
-    , info_cache_3_size(0)
-    , info_cache_3_persistent(false)
-    , info_cache_4_entries(0)
-    , info_cache_4_size(0)
-    , info_cache_4_persistent(false)
-    , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
     , ignore_frame_in_timeval(false)
-    , remote_app(false)
     , statistics()
     , break_privplay_client(false)
     , movie_elapsed_client{}
@@ -168,8 +145,8 @@ bool FileToGraphic::next_order()
             gd->sync();
         }
 
-        uint8_t buf[HEADER_SIZE];
-        if (Transport::Read::Eof == this->trans->atomic_read(buf, HEADER_SIZE)){
+        uint8_t buf[WRM_HEADER_SIZE];
+        if (Transport::Read::Eof == this->trans->atomic_read(buf, WRM_HEADER_SIZE)){
             return false;
         }
         InStream header(buf);
@@ -200,10 +177,10 @@ bool FileToGraphic::next_order()
                 throw Error(ERR_WRM);
             }
             this->stream = InStream(this->stream_buf);
-            if (this->chunk_size - HEADER_SIZE > 0) {
-                this->stream = InStream(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                this->trans->recv_boom(this->stream_buf, this->chunk_size - HEADER_SIZE);
-                this->statistics.internal_order_read_len += HEADER_SIZE;
+            if (this->chunk_size - WRM_HEADER_SIZE > 0) {
+                this->stream = InStream(this->stream_buf, this->chunk_size - WRM_HEADER_SIZE);
+                this->trans->recv_boom(this->stream_buf, this->chunk_size - WRM_HEADER_SIZE);
+                this->statistics.internal_order_read_len += WRM_HEADER_SIZE;
             }
         }
         else {
@@ -283,7 +260,7 @@ struct ReceiveOrder
 
     ColorCtxFromBppConverter color_ctx(BGRPalette const & palette) const
     {
-        return ColorCtxFromBppConverter{ftg.info_bpp, palette};
+        return ColorCtxFromBppConverter{ftg.info.bpp, palette};
     }
 };
 
@@ -339,7 +316,7 @@ void FileToGraphic::interpret_order()
             {
                 auto cmd = receive_order.read<RDPBmpCache>(
                     this->statistics.CacheBitmap, Verbose::rdp_orders,
-                    header, palette, this->info_bpp);
+                    header, palette, this->info.bpp);
                 this->bmp_cache->put(cmd.id, cmd.idx, cmd.bmp, cmd.key1, cmd.key2);
             }
             break;
@@ -500,7 +477,7 @@ void FileToGraphic::interpret_order()
             this->mouse_x = this->stream.in_uint16_le();
             this->mouse_y = this->stream.in_uint16_le();
 
-            if (  (this->info_version > 1)
+            if (  (this->info.version > 1)
                 && this->stream.in_uint8()) {
                 this->ignore_frame_in_timeval = true;
             }
@@ -575,84 +552,40 @@ void FileToGraphic::interpret_order()
     }
     break;
     case WrmChunkType::META_FILE:
-    // TODO Cache meta_data (sizes, number of entries) should be put in META chunk
     {
-        this->info_version                   = this->stream.in_uint16_le();
-        this->info_width                     = this->stream.in_uint16_le();
-        this->info_height                    = this->stream.in_uint16_le();
-        this->info_bpp                       = this->stream.in_uint16_le();
-        this->info_cache_0_entries           = this->stream.in_uint16_le();
-        this->info_cache_0_size              = this->stream.in_uint16_le();
-        this->info_cache_1_entries           = this->stream.in_uint16_le();
-        this->info_cache_1_size              = this->stream.in_uint16_le();
-        this->info_cache_2_entries           = this->stream.in_uint16_le();
-        this->info_cache_2_size              = this->stream.in_uint16_le();
-
-        if (this->info_version <= 3) {
-            this->info_number_of_cache       = 3;
-            this->info_use_waiting_list      = false;
-
-            this->info_cache_0_persistent    = false;
-            this->info_cache_1_persistent    = false;
-            this->info_cache_2_persistent    = false;
-        }
-        else {
-            this->info_number_of_cache       = this->stream.in_uint8();
-            this->info_use_waiting_list      = bool(this->stream.in_uint8());
-
-            this->info_cache_0_persistent    = bool(this->stream.in_uint8());
-            this->info_cache_1_persistent    = bool(this->stream.in_uint8());
-            this->info_cache_2_persistent    = bool(this->stream.in_uint8());
-
-            this->info_cache_3_entries       = this->stream.in_uint16_le();
-            this->info_cache_3_size          = this->stream.in_uint16_le();
-            this->info_cache_3_persistent    = bool(this->stream.in_uint8());
-
-            this->info_cache_4_entries       = this->stream.in_uint16_le();
-            this->info_cache_4_size          = this->stream.in_uint16_le();
-            this->info_cache_4_persistent    = bool(this->stream.in_uint8());
-
-            this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-            assert(is_valid_enum_value(this->info_compression_algorithm));
-            if (!is_valid_enum_value(this->info_compression_algorithm)) {
-                this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-            }
-
-            this->trans = &this->compression_builder.reset(
-                *this->trans_source, this->info_compression_algorithm
-            );
-
-            if (this->info_version > 4) {
-                this->remote_app = bool(this->stream.in_uint8());
-            }
-        }
+        this->info.receive(this->stream);
+        this->trans = &this->compression_builder.reset(
+            *this->trans_source, this->info.compression_algorithm
+        );
 
         this->stream.in_skip_bytes(this->stream.in_remain());
 
         if (!this->meta_ok) {
-            this->bmp_cache = std::make_unique<BmpCache>(BmpCache::Recorder, this->info_bpp, this->info_number_of_cache,
-                this->info_use_waiting_list,
+            this->bmp_cache = std::make_unique<BmpCache>(
+                BmpCache::Recorder, this->info.bpp,
+                this->info.number_of_cache,
+                this->info.use_waiting_list,
                 BmpCache::CacheOption(
-                    this->info_cache_0_entries, this->info_cache_0_size, this->info_cache_0_persistent),
+                    this->info.cache_0_entries, this->info.cache_0_size, this->info.cache_0_persistent),
                 BmpCache::CacheOption(
-                    this->info_cache_1_entries, this->info_cache_1_size, this->info_cache_1_persistent),
+                    this->info.cache_1_entries, this->info.cache_1_size, this->info.cache_1_persistent),
                 BmpCache::CacheOption(
-                    this->info_cache_2_entries, this->info_cache_2_size, this->info_cache_2_persistent),
+                    this->info.cache_2_entries, this->info.cache_2_size, this->info.cache_2_persistent),
                 BmpCache::CacheOption(
-                    this->info_cache_3_entries, this->info_cache_3_size, this->info_cache_3_persistent),
+                    this->info.cache_3_entries, this->info.cache_3_size, this->info.cache_3_persistent),
                 BmpCache::CacheOption(
-                    this->info_cache_4_entries, this->info_cache_4_size, this->info_cache_4_persistent));
+                    this->info.cache_4_entries, this->info.cache_4_size, this->info.cache_4_persistent));
 //            this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
             this->meta_ok = true;
         }
-        this->screen_rect = Rect(0, 0, this->info_width, this->info_height);
+        this->screen_rect = Rect(0, 0, this->info.width, this->info.height);
 
-        if ((this->max_screen_dim.w != this->info_width) || (this->max_screen_dim.h != this->info_height)) {
-            this->max_screen_dim.w = std::max(this->max_screen_dim.w, this->info_width);
-            this->max_screen_dim.h = std::max(this->max_screen_dim.h, this->info_height);
+        if ((this->max_screen_dim.w != this->info.width) || (this->max_screen_dim.h != this->info.height)) {
+            this->max_screen_dim.w = std::max(this->max_screen_dim.w, this->info.width);
+            this->max_screen_dim.h = std::max(this->max_screen_dim.h, this->info.height);
 
             for (gdi::ResizeApi * obj : this->resize_consumers){
-                obj->resize(this->info_width, this->info_height);
+                obj->resize(this->info.width, this->info.height);
             }
         }
         else {
@@ -665,7 +598,7 @@ void FileToGraphic::interpret_order()
     case WrmChunkType::SAVE_STATE:
     {
         SaveStateChunk ssc;
-        ssc.recv(this->stream, this->ssc, this->info_version);
+        ssc.recv(this->stream, this->ssc, this->info.version);
     }
     break;
     case WrmChunkType::LAST_IMAGE_CHUNK:
@@ -683,7 +616,7 @@ void FileToGraphic::interpret_order()
         else {
             // If no drawable is available ignore images chunks
             this->stream.rewind();
-            std::size_t sz = this->chunk_size - HEADER_SIZE;
+            std::size_t sz = this->chunk_size - WRM_HEADER_SIZE;
             this->trans->recv_boom(this->stream_buf, sz);
             this->stream = InStream(this->stream_buf, sz, sz);
         }
@@ -706,15 +639,15 @@ void FileToGraphic::interpret_order()
 
         const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
-        Bitmap bitmap( this->info_bpp
-                        , bitmap_data.bits_per_pixel
-                        , /*0*/&palette
-                        , bitmap_data.width
-                        , bitmap_data.height
-                        , data
-                        , bitmap_data.bitmap_size()
-                        , (bitmap_data.flags & BITMAP_COMPRESSION)
-                        );
+        Bitmap bitmap( this->info.bpp
+                     , bitmap_data.bits_per_pixel
+                     , /*0*/&palette
+                     , bitmap_data.width
+                     , bitmap_data.height
+                     , data
+                     , bitmap_data.bitmap_size()
+                     , (bitmap_data.flags & BITMAP_COMPRESSION)
+                     );
 
         for (gdi::GraphicApi * gd : this->graphic_consumers){
             gd->draw(bitmap_data, bitmap);
@@ -780,7 +713,7 @@ void FileToGraphic::interpret_order()
     }
     break;
     case WrmChunkType::RESET_CHUNK:
-        this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+        this->info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
 
         this->trans = this->trans_source;
     break;

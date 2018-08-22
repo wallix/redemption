@@ -12,7 +12,9 @@
 #include "system/scoped_crypto_init.hpp"
 #include "program_options/program_options.hpp"
 
+#include "capture/file_to_graphic.hpp"
 #include "capture/params_from_ini.hpp"
+#include "capture/wrm_meta_chunk.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/cryptofile.hpp"
@@ -28,17 +30,18 @@
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
-#include "utils/recording_progress.hpp"
 #include "utils/chex_to_int.hpp"
+#include "utils/compression_transport_builder.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/genrandom.hpp"
 #include "utils/genfstat.hpp"
+#include "utils/genrandom.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/iter.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "utils/word_identification.hpp"
+#include "utils/recording_progress.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/sugar/iter.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/unique_fd.hpp"
+#include "utils/word_identification.hpp"
 
 
 #include <string>
@@ -180,33 +183,9 @@ class ChunkToFile
     uint16_t info_version = 0;
 
 public:
-    ChunkToFile(Transport * trans
-
-               , uint16_t info_width
-               , uint16_t info_height
-               , uint16_t info_bpp
-               , uint16_t info_cache_0_entries
-               , uint16_t info_cache_0_size
-               , uint16_t info_cache_1_entries
-               , uint16_t info_cache_1_size
-               , uint16_t info_cache_2_entries
-               , uint16_t info_cache_2_size
-
-               , uint16_t info_number_of_cache
-               , bool     info_use_waiting_list
-
-               , bool     info_cache_0_persistent
-               , bool     info_cache_1_persistent
-               , bool     info_cache_2_persistent
-
-               , uint16_t info_cache_3_entries
-               , uint16_t info_cache_3_size
-               , bool     info_cache_3_persistent
-               , uint16_t info_cache_4_entries
-               , uint16_t info_cache_4_size
-               , bool     info_cache_4_persistent
-
-               , WrmCompressionAlgorithm wrm_compression_algorithm)
+    ChunkToFile(
+        Transport * trans, WrmMetaChunk info,
+        WrmCompressionAlgorithm wrm_compression_algorithm)
     : compression_bullder(*trans, wrm_compression_algorithm)
     , trans_target(*trans)
     , trans(this->compression_bullder.get())
@@ -217,36 +196,9 @@ public:
                , static_cast<unsigned>(wrm_compression_algorithm));
         }
 
-        send_meta_chunk(
-            this->trans_target
-          , this->wrm_format_version
-
-          , info_width
-          , info_height
-          , info_bpp
-          , info_cache_0_entries
-          , info_cache_0_size
-          , info_cache_1_entries
-          , info_cache_1_size
-          , info_cache_2_entries
-          , info_cache_2_size
-
-          , info_number_of_cache
-          , info_use_waiting_list
-
-          , info_cache_0_persistent
-          , info_cache_1_persistent
-          , info_cache_2_persistent
-
-          , info_cache_3_entries
-          , info_cache_3_size
-          , info_cache_3_persistent
-          , info_cache_4_entries
-          , info_cache_4_size
-          , info_cache_4_persistent
-
-          , static_cast<unsigned>(this->compression_bullder.get_algorithm())
-        );
+        info.version = this->wrm_format_version;
+        info.compression_algorithm = wrm_compression_algorithm;
+        info.send(this->trans_target);
     }
 
 public:
@@ -257,82 +209,13 @@ public:
         {
         case WrmChunkType::META_FILE:
             {
-                this->info_version                  = stream.in_uint16_le();
-                uint16_t info_width                 = stream.in_uint16_le();
-                uint16_t info_height                = stream.in_uint16_le();
-                uint16_t info_bpp                   = stream.in_uint16_le();
-                uint16_t info_cache_0_entries       = stream.in_uint16_le();
-                uint16_t info_cache_0_size          = stream.in_uint16_le();
-                uint16_t info_cache_1_entries       = stream.in_uint16_le();
-                uint16_t info_cache_1_size          = stream.in_uint16_le();
-                uint16_t info_cache_2_entries       = stream.in_uint16_le();
-                uint16_t info_cache_2_size          = stream.in_uint16_le();
+                WrmMetaChunk meta;
+                meta.receive(stream);
 
-                uint16_t info_number_of_cache       = 3;
-                bool     info_use_waiting_list      = false;
+                this->info_version = meta.version;
+                meta.compression_algorithm = this->compression_bullder.get_algorithm();
 
-                bool     info_cache_0_persistent    = false;
-                bool     info_cache_1_persistent    = false;
-                bool     info_cache_2_persistent    = false;
-
-                uint16_t info_cache_3_entries       = 0;
-                uint16_t info_cache_3_size          = 0;
-                bool     info_cache_3_persistent    = false;
-                uint16_t info_cache_4_entries       = 0;
-                uint16_t info_cache_4_size          = 0;
-                bool     info_cache_4_persistent    = false;
-
-                if (this->info_version > 3) {
-                    info_number_of_cache            = stream.in_uint8();
-                    info_use_waiting_list           = bool(stream.in_uint8());
-
-                    info_cache_0_persistent         = bool(stream.in_uint8());
-                    info_cache_1_persistent         = bool(stream.in_uint8());
-                    info_cache_2_persistent         = bool(stream.in_uint8());
-
-                    info_cache_3_entries            = stream.in_uint16_le();
-                    info_cache_3_size               = stream.in_uint16_le();
-                    info_cache_3_persistent         = bool(stream.in_uint8());
-
-                    info_cache_4_entries            = stream.in_uint16_le();
-                    info_cache_4_size               = stream.in_uint16_le();
-                    info_cache_4_persistent         = bool(stream.in_uint8());
-
-                    //uint8_t info_compression_algorithm = stream.in_uint8();
-                    //assert(info_compression_algorithm < 3);
-                }
-
-
-                send_meta_chunk(
-                    this->trans_target
-                  , this->wrm_format_version
-
-                  , info_width
-                  , info_height
-                  , info_bpp
-                  , info_cache_0_entries
-                  , info_cache_0_size
-                  , info_cache_1_entries
-                  , info_cache_1_size
-                  , info_cache_2_entries
-                  , info_cache_2_size
-
-                  , info_number_of_cache
-                  , info_use_waiting_list
-
-                  , info_cache_0_persistent
-                  , info_cache_1_persistent
-                  , info_cache_2_persistent
-
-                  , info_cache_3_entries
-                  , info_cache_3_size
-                  , info_cache_3_persistent
-                  , info_cache_4_entries
-                  , info_cache_4_size
-                  , info_cache_4_persistent
-
-                  , static_cast<unsigned>(this->compression_bullder.get_algorithm())
-                );
+                meta.send(this->trans_target);
             }
             break;
 
@@ -388,39 +271,18 @@ class FileToChunk
     Transport * trans;
 
     // variables used to read batch of orders "chunks"
-    uint32_t chunk_size;
-    uint16_t chunk_type;
-    uint16_t chunk_count;
+    uint32_t chunk_size = 0;
+    uint16_t chunk_type = 0;
+    uint16_t chunk_count = 0;
 
-    ChunkToFile * consumer;
+    ChunkToFile * consumer = nullptr;
 
 public:
     timeval record_now;
 
-    bool meta_ok;
+    bool meta_ok = false;
 
-    uint16_t info_version;
-    uint16_t info_width;
-    uint16_t info_height;
-    uint16_t info_bpp;
-    uint16_t info_number_of_cache;
-    bool     info_use_waiting_list;
-    uint16_t info_cache_0_entries;
-    uint16_t info_cache_0_size;
-    bool     info_cache_0_persistent;
-    uint16_t info_cache_1_entries;
-    uint16_t info_cache_1_size;
-    bool     info_cache_1_persistent;
-    uint16_t info_cache_2_entries;
-    uint16_t info_cache_2_size;
-    bool     info_cache_2_persistent;
-    uint16_t info_cache_3_entries;
-    uint16_t info_cache_3_size;
-    bool     info_cache_3_persistent;
-    uint16_t info_cache_4_entries;
-    uint16_t info_cache_4_size;
-    bool     info_cache_4_persistent;
-    WrmCompressionAlgorithm info_compression_algorithm;
+    WrmMetaChunk info;
 
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -433,34 +295,6 @@ public:
         , compression_builder(*trans, WrmCompressionAlgorithm::no_compression)
         , trans_source(trans)
         , trans(trans)
-        // variables used to read batch of orders "chunks"
-        , chunk_size(0)
-        , chunk_type(0)
-        , chunk_count(0)
-        , consumer(nullptr)
-        , meta_ok(false)
-        , info_version(0)
-        , info_width(0)
-        , info_height(0)
-        , info_bpp(0)
-        , info_number_of_cache(0)
-        , info_use_waiting_list(true)
-        , info_cache_0_entries(0)
-        , info_cache_0_size(0)
-        , info_cache_0_persistent(false)
-        , info_cache_1_entries(0)
-        , info_cache_1_size(0)
-        , info_cache_1_persistent(false)
-        , info_cache_2_entries(0)
-        , info_cache_2_size(0)
-        , info_cache_2_persistent(false)
-        , info_cache_3_entries(0)
-        , info_cache_3_size(0)
-        , info_cache_3_persistent(false)
-        , info_cache_4_entries(0)
-        , info_cache_4_size(0)
-        , info_cache_4_persistent(false)
-        , info_compression_algorithm(WrmCompressionAlgorithm::no_compression)
         , verbose(verbose)
     {
         while (this->next_chunk()) {
@@ -489,7 +323,7 @@ private:
     bool next_chunk() {
         try {
             {
-                auto const buf_sz = FileToGraphic::HEADER_SIZE;
+                auto const buf_sz = WRM_HEADER_SIZE;
                 unsigned char buf[buf_sz];
                 this->trans->recv_boom(buf, buf_sz);
                 InStream header(buf);
@@ -503,7 +337,7 @@ private:
                 return false;
             }
             this->stream = InStream(this->stream_buf, 0);   // empty stream
-            auto const ssize = this->chunk_size - FileToGraphic::HEADER_SIZE;
+            auto const ssize = this->chunk_size - WRM_HEADER_SIZE;
             if (ssize > 0) {
                 auto const size = size_t(ssize);
                 this->trans->recv_boom(this->stream_buf, size);
@@ -528,61 +362,16 @@ private:
     void interpret_chunk() {
         switch (safe_cast<WrmChunkType>(this->chunk_type)) {
         case WrmChunkType::META_FILE:
-            this->info_version                   = this->stream.in_uint16_le();
-            this->info_width                     = this->stream.in_uint16_le();
-            this->info_height                    = this->stream.in_uint16_le();
-            this->info_bpp                       = this->stream.in_uint16_le();
-            this->info_cache_0_entries           = this->stream.in_uint16_le();
-            this->info_cache_0_size              = this->stream.in_uint16_le();
-            this->info_cache_1_entries           = this->stream.in_uint16_le();
-            this->info_cache_1_size              = this->stream.in_uint16_le();
-            this->info_cache_2_entries           = this->stream.in_uint16_le();
-            this->info_cache_2_size              = this->stream.in_uint16_le();
-
-            if (this->info_version <= 3) {
-                this->info_number_of_cache       = 3;
-                this->info_use_waiting_list      = false;
-
-                this->info_cache_0_persistent    = false;
-                this->info_cache_1_persistent    = false;
-                this->info_cache_2_persistent    = false;
-            }
-            else {
-                this->info_number_of_cache       = this->stream.in_uint8();
-                this->info_use_waiting_list      = bool(this->stream.in_uint8());
-
-                this->info_cache_0_persistent    = bool(this->stream.in_uint8());
-                this->info_cache_1_persistent    = bool(this->stream.in_uint8());
-                this->info_cache_2_persistent    = bool(this->stream.in_uint8());
-
-                this->info_cache_3_entries       = this->stream.in_uint16_le();
-                this->info_cache_3_size          = this->stream.in_uint16_le();
-                this->info_cache_3_persistent    = bool(this->stream.in_uint8());
-
-                this->info_cache_4_entries       = this->stream.in_uint16_le();
-                this->info_cache_4_size          = this->stream.in_uint16_le();
-                this->info_cache_4_persistent    = bool(this->stream.in_uint8());
-
-                this->info_compression_algorithm = static_cast<WrmCompressionAlgorithm>(this->stream.in_uint8());
-                assert(is_valid_enum_value(this->info_compression_algorithm));
-                if (!is_valid_enum_value(this->info_compression_algorithm)) {
-                    this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
-                }
-
-                // re-init
-                this->trans = &this->compression_builder.reset(
-                    *this->trans_source, this->info_compression_algorithm
-                );
-            }
+            this->info.receive(this->stream);
+            this->trans = &this->compression_builder.reset(
+                *this->trans_source, this->info.compression_algorithm
+            );
 
             this->stream.rewind();
-
-            if (!this->meta_ok) {
-                this->meta_ok = true;
-            }
+            this->meta_ok = true;
             break;
         case WrmChunkType::RESET_CHUNK:
-            this->info_compression_algorithm = WrmCompressionAlgorithm::no_compression;
+            this->info.compression_algorithm = WrmCompressionAlgorithm::no_compression;
 
             this->trans = this->trans_source;
             break;
@@ -631,7 +420,7 @@ static int do_recompress(
 //    }
     ini.set<cfg::video::wrm_compression_algorithm>(
         (wrm_compression_algorithm_ == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-        ? player.info_compression_algorithm
+        ? player.info.compression_algorithm
         : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm_)
     );
 
@@ -647,39 +436,14 @@ static int do_recompress(
             ini.get<cfg::video::hash_path>().c_str(),
             outfile_basename.c_str(),
             begin_record,
-            player.info_width,
-            player.info_height,
+            player.info.width,
+            player.info.height,
             ini.get<cfg::video::capture_groupid>(),
             nullptr
         );
         {
             ChunkToFile recorder(
-                &trans
-              , player.info_width
-              , player.info_height
-              , player.info_bpp
-              , player.info_cache_0_entries
-              , player.info_cache_0_size
-              , player.info_cache_1_entries
-              , player.info_cache_1_size
-              , player.info_cache_2_entries
-              , player.info_cache_2_size
-
-              , player.info_number_of_cache
-              , player.info_use_waiting_list
-
-              , player.info_cache_0_persistent
-              , player.info_cache_1_persistent
-              , player.info_cache_2_persistent
-
-              , player.info_cache_3_entries
-              , player.info_cache_3_size
-              , player.info_cache_3_persistent
-              , player.info_cache_4_entries
-              , player.info_cache_4_size
-              , player.info_cache_4_persistent
-              , ini.get<cfg::video::wrm_compression_algorithm>()
-            );
+                &trans, player.info, ini.get<cfg::video::wrm_compression_algorithm>());
 
             player.set_consumer(recorder);
 
@@ -1186,27 +950,26 @@ static void raise_error(
     update_progress_data.raise_error(code, message);
 }
 
-inline
 static void show_metadata(FileToGraphic const & player) {
     std::cout
-    << "\nWRM file version      : " << player.info_version
-    << "\nWidth                 : " << player.info_width
-    << "\nHeight                : " << player.info_height
-    << "\nBpp                   : " << player.info_bpp
-    << "\nCache 0 entries       : " << player.info_cache_0_entries
-    << "\nCache 0 size          : " << player.info_cache_0_size
-    << "\nCache 1 entries       : " << player.info_cache_1_entries
-    << "\nCache 1 size          : " << player.info_cache_1_size
-    << "\nCache 2 entries       : " << player.info_cache_2_entries
-    << "\nCache 2 size          : " << player.info_cache_2_size
+    << "\nWRM file version      : " << player.info.version
+    << "\nWidth                 : " << player.info.width
+    << "\nHeight                : " << player.info.height
+    << "\nBpp                   : " << player.info.bpp
+    << "\nCache 0 entries       : " << player.info.cache_0_entries
+    << "\nCache 0 size          : " << player.info.cache_0_size
+    << "\nCache 1 entries       : " << player.info.cache_1_entries
+    << "\nCache 1 size          : " << player.info.cache_1_size
+    << "\nCache 2 entries       : " << player.info.cache_2_entries
+    << "\nCache 2 size          : " << player.info.cache_2_size
     << '\n';
 
-    if (player.info_version > 3) {
+    if (player.info.version > 3) {
         //cout << "Cache 3 entries       : " << player.info_cache_3_entries                         << endl;
         //cout << "Cache 3 size          : " << player.info_cache_3_size                            << endl;
         //cout << "Cache 4 entries       : " << player.info_cache_4_entries                         << endl;
         //cout << "Cache 4 size          : " << player.info_cache_4_size                            << endl;
-        std::cout << "Compression algorithm : " << static_cast<int>(player.info_compression_algorithm) << '\n';
+        std::cout << "Compression algorithm : " << static_cast<int>(player.info.compression_algorithm) << '\n';
     }
     if (!player.max_image_frame_rect.isempty()) {
         std::cout << "Max image frame rect  : (" <<
@@ -1220,7 +983,7 @@ static void show_metadata(FileToGraphic const & player) {
             player.min_image_frame_dim.w << ", "  <<
             player.min_image_frame_dim.h << ")"  << '\n';
     }
-    std::cout << "RemoteApp session     : " << (player.remote_app ? "Yes" : "No") << '\n';
+    std::cout << "RemoteApp session     : " << (player.info.remote_app ? "Yes" : "No") << '\n';
     std::cout.flush();
 }
 
@@ -1471,11 +1234,11 @@ inline void get_joint_visibility_rect(
 
     player.play(program_requested_to_shutdown);
 
-    if (player.remote_app) {
-        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info_width, player.info_height));
+    if (player.info.remote_app) {
+        out_max_image_frame_rect = player.max_image_frame_rect.intersect(Rect(0, 0, player.info.width, player.info.height));
         if (out_max_image_frame_rect.cx & 1)
         {
-            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info_width) {
+            if (out_max_image_frame_rect.x + out_max_image_frame_rect.cx < player.info.width) {
                 out_max_image_frame_rect.cx += 1;
             }
             else if (out_max_image_frame_rect.x > 0) {
@@ -1485,15 +1248,15 @@ inline void get_joint_visibility_rect(
         }
 
         out_min_image_frame_rect = Rect(0, 0,
-            std::min(player.min_image_frame_dim.w, player.info_width),
-            std::min(player.min_image_frame_dim.h, player.info_height));
+            std::min(player.min_image_frame_dim.w, player.info.width),
+            std::min(player.min_image_frame_dim.h, player.info.height));
         if (!out_min_image_frame_rect.isempty()) {
             if (out_min_image_frame_rect.cx & 1) {
                 out_min_image_frame_rect.cx++;
             }
 
-            out_min_image_frame_rect.x = (player.info_width  - out_min_image_frame_rect.cx) / 2;
-            out_min_image_frame_rect.y = (player.info_height - out_min_image_frame_rect.cy) / 2;
+            out_min_image_frame_rect.x = (player.info.width  - out_min_image_frame_rect.cx) / 2;
+            out_min_image_frame_rect.y = (player.info.height - out_min_image_frame_rect.cy) / 2;
         }
     }
 
@@ -1683,12 +1446,12 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                     ini.set<cfg::video::wrm_compression_algorithm>(
                         (wrm_compression_algorithm == static_cast<int>(USE_ORIGINAL_COMPRESSION_ALGORITHM))
-                        ? player.info_compression_algorithm
+                        ? player.info.compression_algorithm
                         : static_cast<WrmCompressionAlgorithm>(wrm_compression_algorithm)
                     );
 
                     if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
-                        wrm_color_depth = player.info_bpp;
+                        wrm_color_depth = player.info.bpp;
                     }
 
                     {
@@ -1811,7 +1574,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
 
                         WrmParams const wrm_params = wrm_params_from_ini(
                             wrm_color_depth,
-                            player.remote_app,
+                            player.info.remote_app,
                             cctx,
                             rnd,
                             fstat,

@@ -40,6 +40,7 @@
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
+#include "capture/file_to_graphic.hpp"
 #include "capture/params_from_ini.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/get_file_contents.hpp"

@@ -26,6 +26,7 @@
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.
 
+#include "capture/cryptofile.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
 //include "transport/socket_transport.hpp"
