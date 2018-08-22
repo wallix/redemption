@@ -823,8 +823,7 @@ public:
         return sck;
     }
 
-    int wait_and_draw_event(timeval timeout)
-    {
+    int wait_and_draw_event(timeval timeout) {
         if (ExecuteEventsResult::Error == execute_events(
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
             *this->_callback, *this

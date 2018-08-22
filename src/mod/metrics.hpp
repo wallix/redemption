@@ -205,6 +205,10 @@ public:
 
     void disconnect()
     {
+        if (!this->active_) {
+            return ;
+        }
+
         using namespace std::literals::chrono_literals;
 
         this->rotate(std::chrono::seconds(this->next_log_time.tv_sec));

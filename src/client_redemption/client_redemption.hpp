@@ -81,7 +81,6 @@ private:
 
 public:
     SessionReactor& session_reactor;
-    SessionReactor::GraphicEventPtr clear_screen_event;
 
     std::unique_ptr<Transport> _socket_in_recorder;
 
@@ -127,6 +126,13 @@ public:
 
     // Recorder
     Fstat fstat;
+
+    timeval start_connection_time;                          // when socket is connected
+    timeval start_wab_session_time;                         // when the first resize is received
+    timeval start_win_session_time;                         // when the first memblt is received
+
+    bool secondary_connection_finished;
+    bool primary_connection_finished;
 
     struct Capture
     {
@@ -203,7 +209,6 @@ public:
     std::string       local_IP;
 
     int keep_alive_freq;
-    timeval start_win_session_time;
 
 
 
@@ -231,9 +236,11 @@ public:
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
         , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+        , start_win_session_time(tvtime())
+        , secondary_connection_finished(false)
+        , primary_connection_finished(false)
         , local_IP("unknow_local_IP")
         , keep_alive_freq(100)
-        , start_win_session_time(tvtime())
     {
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -271,18 +278,18 @@ public:
            this->connect();
 
         } else {
-            std::cout << "Argument(s) required to connect: ";
+            LOG(LOG_INFO, "Argument(s) required to connect: ");
             if (!(this->connection_info_cmd_complete & NAME_GOT)) {
-                std::cout << "-u [user_name] ";
+                LOG(LOG_INFO, "-u [user_name] ");
             }
             if (!(this->connection_info_cmd_complete & PWD_GOT)) {
-                std::cout << "-p [password] ";
+                LOG(LOG_INFO, "-p [password] ");
             }
             if (!(this->connection_info_cmd_complete & IP_GOT)) {
-                std::cout << "-i [ip_server] ";
+                LOG(LOG_INFO, "-i [ip_server] ");
             }
             if (!(this->connection_info_cmd_complete & PORT_GOT)) {
-                std::cout << "-P [port] ";
+                LOG(LOG_INFO, "-P [port] ");
             }
             std::cout << std::endl;
 
@@ -430,16 +437,11 @@ public:
 //              this->wrmGraphicStat.amount_RDPMultiScrBlt,
 //              this->wrmGraphicStat.pixels_RDPMultiScrBlt,
 
-
-
-
 //              this->wrmGraphicStat.amount_RDPMultiPatBlt,
 //              this->wrmGraphicStat.pixels_RDPMultiPatBlt,
 
-
 //              this->wrmGraphicStat.amount_RDPMultiOpaqueRect,
 //              this->wrmGraphicStat.pixels_RDPMultiOpaqueRect,
-
 
 //              this->wrmGraphicStat.amount_RDPPolygonSC,
 //              this->wrmGraphicStat.pixels_RDPPolygonSC,
@@ -479,8 +481,34 @@ public:
             this->impl_socket_listener->disconnect();
         }
 
+<<<<<<< HEAD
         if (!this->socket) {
             this->socket.reset();
+=======
+//         std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+//         uint64_t prim_len = prim_duration.count() / 1000;
+
+//         std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+//         uint64_t sec_len = sec_duration.count() / 1000;
+
+        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+        uint64_t movie_len = duration.count() / 1000;
+
+        time_t now;
+        time(&now);
+
+        struct tm * timeinfo;
+        char buffer [80];
+        timeinfo = localtime (&now);
+        strftime (buffer,80,"%F_%r",timeinfo);
+        std::string date(buffer);
+
+        std::cout << "Connection duration = " << movie_len << " ms" << " " << date <<  std::endl;
+
+        if (this->socket != nullptr) {
+            delete (this->socket);
+            this->socket = nullptr;
+>>>>>>> 6946b6b... client redemption main fusion WIP
             LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
         }
 
@@ -512,8 +540,6 @@ public:
                                     , this->server_auto_reconnect_packet_ref
                                     , this->close_box_extra_message_ref
                                     , this->verbose
-                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
-                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
                                     );
 
                     mod_rdp_params.device_id                       = "device_id";
@@ -638,10 +664,6 @@ public:
 
             this->mod = this->unique_mod.get();
 
-            this->clear_screen_event = this->session_reactor.create_graphic_event()
-            .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
-                gdi_clear_screen(gd, this->mod->get_dim());
-            }));
         } catch (const Error &) {
             this->mod = nullptr;
             return false;
@@ -699,9 +721,6 @@ public:
             } catch (const Error& e) {
                 has_error = true;
                 has_error_string = e.errmsg();
-            } catch (const std::exception & e) {
-                has_error = true;
-                has_error_string = e.what();
             }
         } else {
             has_error = true;
@@ -849,11 +868,85 @@ public:
             this->update_keylayout();
 
             if (this->init_mod()) {
-                this->connected = true;;
+                this->connected = true;
 
                 if (this->impl_socket_listener) {
-                    LOG(LOG_INFO, "impl_socket_listener->start_to_listen CIP");
+                    LOG(LOG_INFO, "impl_socket_listener->start_to_listen");
                     if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+
+                        this->start_wab_session_time = tvtime();
+
+                        if (this->mod_state != MOD_VNC) {
+
+                            GCC::UserData::SCCore original_sc_core;
+                            GCC::UserData::SCSecurity const original_sc_sec1;
+
+                            not_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
+                            not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
+
+                            mod_rdp * rdp = reinterpret_cast<mod_rdp*>(this->mod);
+
+                            sc_core_ptr = &(rdp->sc_core);
+                            sc_sec1_ptr = &(rdp->sc_sec1);
+
+
+                                LOG(LOG_INFO, " ================================");
+                                LOG(LOG_INFO, " ======= Server Core Info =======");
+                                LOG(LOG_INFO, " ================================");
+
+                                LOG(LOG_INFO, " userDataType = %u", sc_core_ptr->userDataType);
+                                LOG(LOG_INFO, " length = %u", sc_core_ptr->length);
+                                LOG(LOG_INFO, " version = %u", sc_core_ptr->version);
+                                LOG(LOG_INFO, " clientRequestedProtocols = %u", sc_core_ptr->clientRequestedProtocols);
+                                LOG(LOG_INFO, " earlyCapabilityFlags = %u", sc_core_ptr->earlyCapabilityFlags);
+                                std::cout << std::endl;
+
+
+
+//                                 LOG(LOG_INFO, " ================================");
+//                                 LOG(LOG_INFO, " ===== Server Security Info =====");
+//                                 LOG(LOG_INFO, " ================================");
+//
+//                                 LOG(LOG_INFO, " userDataType = %u", sc_sec1_ptr->userDataType);
+//                                 LOG(LOG_INFO, " length = %u", sc_sec1_ptr->length);
+//                                 LOG(LOG_INFO, " encryptionMethod = %u", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
+//                                 LOG(LOG_INFO, " encryptionLevel = %u", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
+//                                 LOG(LOG_INFO, " serverRandomLen = %u", sc_sec1_ptr->serverRandomLen);
+//                                 LOG(LOG_INFO, " serverCertLen = %u", sc_sec1_ptr->serverCertLen);
+//                                 LOG(LOG_INFO, " dwVersion = %u", sc_sec1_ptr->dwVersion);
+//                                 LOG(LOG_INFO, " temporary = %u", sc_sec1_ptr->temporary);
+//
+//                                 auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
+//                                     for (size_t i = 0; i < av.size(); i++) {
+//                                         if ((i % 16) == 0 && i != 0) {
+//                                             std::cout << "\n                ";
+//                                         }
+//                                         std::cout <<"0x";
+//                                         if (av[i] < 0x10) {
+//                                             std::cout << "0";
+//                                         }
+//                                         std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
+//                                     }
+//                                     std::cout << "\n";
+//                                     std::cout << "\n";
+//                                 };
+//
+//                                 LOG(LOG_INFO, " serverRandom : "); print_hex_data(sc_sec1_ptr->serverRandom);
+//                                 LOG(LOG_INFO, " pri_exp : "); print_hex_data(sc_sec1_ptr->pri_exp);
+//                                 LOG(LOG_INFO, " pub_sig : "); print_hex_data(sc_sec1_ptr->pub_sig);
+//
+//                                 LOG(LOG_INFO, " proprietaryCertificate : ");
+//                                 LOG(LOG_INFO, "     dwSigAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwSigAlgId);
+//                                 LOG(LOG_INFO, "     dwKeyAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId);
+//                                 LOG(LOG_INFO, "     wPublicKeyBlobType = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType);
+//                                 LOG(LOG_INFO, "     wPublicKeyBlobLen = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen);
+//                                 LOG(LOG_INFO, "";
+//                                 LOG(LOG_INFO, "     RSAPK : ");
+//                                 LOG(LOG_INFO, "        magic = %u", sc_sec1_ptr->proprietaryCertificate.RSAPK.magic)
+//                                 LOG(LOG_INFO, "");
+
+
+                        }
 
                         LOG(LOG_INFO, "impl_socket_listener->start_to_listen ok");
                         if (mod_state != MOD_RDP_REMOTE_APP) {
@@ -873,6 +966,49 @@ public:
                 this->impl_graphic->dropScreen();
             }
             this->disconnect(labelErrorMsg, false);
+        }
+    }
+
+     void record_connection_nego_times() {
+        if (!this->secondary_connection_finished) {
+            this->secondary_connection_finished = true;
+
+            std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+            long prim_len = prim_duration.count() / 1000;
+            LOG(LOG_INFO, "primary connection length = %ld ms", prim_len);
+
+//             if (!this->out_path.empty()) {
+//                 LOG(LOG_INFO, "out_path is not empty: " << this->out_path << std::endl;
+//                 std::ofstream file_movie(this->out_path + "_prim_length", std::ios::app);
+//                 if (file_movie) {
+//                     LOG(LOG_INFO, "out_path is written " << this->out_path << std::endl;
+//                     file_movie << this->index << " " << prim_len << "\n";
+//                 } else {
+//                     LOG(LOG_INFO, "out_path is not written " << this->out_path << std::endl;
+//                 }
+//             }
+
+            this->start_win_session_time = tvtime();
+
+            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+            long sec_len = sec_duration.count() / 1000;
+            time_t now;
+            time(&now);
+
+            struct tm * timeinfo;
+            char buffer [80];
+            timeinfo = localtime (&now);
+            strftime (buffer,80,"%F_%r",timeinfo);
+            std::string date(buffer);
+
+            LOG(LOG_INFO, "secondary connection length = %ld ms %s", sec_len, date);
+
+//             if (!this->out_path.empty()) {
+//                 std::ofstream file_movie(this->out_path + "_nego_length", std::ios::app);
+//                 if (file_movie) {
+//                     file_movie << this->index << " " << sec_len << " " << date << "\n";
+//                 }
+//             }
         }
     }
 
@@ -1154,7 +1290,7 @@ public:
 
     void callback(bool is_timeout) override {
 
-//         LOG(LOG_INFO, "Socket Event callback");
+//          LOG(LOG_INFO, "Socket Event callback");
 //         if (this->_recv_disconnect_ultimatum) {
 //             if (this->impl_graphic) {
 //                 this->impl_graphic->dropScreen();
@@ -1235,6 +1371,8 @@ public:
             }
             this->draw_impl(no_log{}, bitmap_data, bmp);
         }
+
+        this->record_connection_nego_times();
     }
 
 
@@ -1271,6 +1409,7 @@ public:
             }
             this->draw_impl(with_log{}, cmd, clip, bitmap);
         }
+        this->record_connection_nego_times();
     }
 
 

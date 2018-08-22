@@ -32,9 +32,11 @@
 
 #include "client_redemption/client_headless_socket.hpp"
 
+#include "client_redemption/client_channel_managers/fake_client_mod.hpp"
+
 #pragma GCC diagnostic pop
 
-int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test);
+int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response);
 
 
 int main(int argc, char** argv)
@@ -50,8 +52,20 @@ int main(int argc, char** argv)
     ClientHeadlessSocket headless_socket(session_reactor);
     ClientInputSocketAPI * headless_socket_api_obj = &headless_socket;
 
-    ClientHeadlessInput headless_input;
-    ClientInputMouseKeyboardAPI * headless_input_api_obj = &headless_input;
+    FakeClientOutputGraphic fakeClientOutputGraphic;
+    ClientOutputGraphicAPI * fakeClientOutputGraphic_api = &fakeClientOutputGraphic;
+
+    FakeClientIOClipboard fakeClientIOClipboard;
+    ClientIOClipboardAPI * fakeClientIOClipboard_api = &fakeClientIOClipboard;
+
+    FakeClientOutPutSound fakeClientOutPutSound;
+    ClientOutputSoundAPI * fakeClientOutPutSound_api = &fakeClientOutPutSound;
+
+    FakeClientInputMouseKeyboard fakeClientInputMouseKeyboard;
+    ClientInputMouseKeyboardAPI * fakeClientInputMouseKeyboard_api = &fakeClientInputMouseKeyboard;
+
+    FakeIODisk fakeIODisk;
+    ClientIODiskAPI * fakeIODisk_api = &fakeIODisk;
 
     {
         struct sigaction sa;
@@ -72,52 +86,18 @@ int main(int argc, char** argv)
 
 
     ClientRedemption client( session_reactor, argv, argc, verbose
-                           , nullptr
-                           , nullptr
-                           , nullptr
+                           , fakeClientOutputGraphic_api
+                           , fakeClientIOClipboard_api
+                           , fakeClientOutPutSound_api
                            , headless_socket_api_obj
-                           , headless_input_api_obj
-                           , nullptr);
+                           , fakeClientInputMouseKeyboard_api
+                           , fakeIODisk_api);
 
-    client.connect();
-
-//                            try {
-//         while (!client.mod->is_up_and_running()) {
-//                 std::cout << " Early negociations...\n";
-//                 if (int err = client.wait_and_draw_event({3, 0})) {
-//                     return err;
-//                 }
-//             }
-// //             this->primary_connection_finished = true;
-// //             this->start_wab_session_time = tvtime();
-//
-//         } catch (const Error & e) {
-//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-//             return 2;
-//         }
-//         std::cout << " Early negociations completes.\n"
-
-/*    int i = 0;
-    if (client.mod) {
-        std::cout << "init conn 2" << std::endl;
-        while (!client.mod->is_up_and_running()) {
-
-            if (int err = client.wait_and_draw_event({ 0, 50000 })) {
-                std::cout << "init conn error " <<  err << std::endl;
-                return err;
-            }
-            std::cout << "init conn step " << i << std::endl;
-            i++;
-        }
-    }
-
-    std::cout << "init conn32" << std::endl*/;
-
-    return run_mod(client, true, std::chrono::milliseconds(10000), false);
+    return run_mod(client, true, std::chrono::milliseconds(10000));
 }
 
 
-int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
+int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
     const timeval time_mark = { 0, 50000 };
 
@@ -145,8 +125,6 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
                 std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << std::endl;
                 return 8;
             }
-
-//             front.callback(false);
 
             if (int err = front.wait_and_draw_event(time_mark)) {
                 return err;
