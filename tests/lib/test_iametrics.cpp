@@ -39,7 +39,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
     delete_hmac_sha256_hex(sig);
 }
 
-constexpr const char * rdp_metrics_path_file = "/tmp";
+constexpr const char * rdp_metrics_path_file = "/tmp/";
 constexpr const char * fields_rdp_metrics_version = "v1.0";
 constexpr const char * protocol_name = "rdp";
 

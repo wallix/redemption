@@ -22,6 +22,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
+#include <signal.h>
+
 #include "utils/log.hpp"
 
 #include "core/session_reactor.hpp"
@@ -51,6 +53,23 @@ int main(int argc, char** argv)
     ClientHeadlessInput headless_input;
     ClientInputMouseKeyboardAPI * headless_input_api_obj = &headless_input;
 
+    {
+        struct sigaction sa;
+        sa.sa_flags = 0;
+        sigaddset(&sa.sa_mask, SIGPIPE);
+        sa.sa_handler = [](int sig){
+            std::cout << "got SIGPIPE(" << sig << ") : ignoring\n";
+        };
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+        #if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+        #endif
+        sigaction(SIGPIPE, &sa, nullptr);
+        REDEMPTION_DIAGNOSTIC_POP
+    }
+
 
     ClientRedemption client( session_reactor, argv, argc, verbose
                            , nullptr
@@ -60,6 +79,7 @@ int main(int argc, char** argv)
                            , headless_input_api_obj
                            , nullptr);
 
+    client.connect();
 
 //                            try {
 //         while (!client.mod->is_up_and_running()) {
@@ -93,7 +113,7 @@ int main(int argc, char** argv)
 
     std::cout << "init conn32" << std::endl*/;
 
-    return run_mod(client, true, std::chrono::milliseconds(6000), false);
+    return run_mod(client, true, std::chrono::milliseconds(10000), false);
 }
 
 
@@ -121,12 +141,12 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
                 break;
             }
 
-            if (time_set_connection_test) {
-                if (time_stop > tvtime()) {
-                    std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << std::endl;
-                    return 8;
-                }
+            if (time_stop > tvtime()) {
+                std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << std::endl;
+                return 8;
             }
+
+//             front.callback(false);
 
             if (int err = front.wait_and_draw_event(time_mark)) {
                 return err;

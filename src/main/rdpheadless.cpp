@@ -200,7 +200,7 @@ int main(int argc, char** argv)
 
         cli::helper("========= USER ========="),
 
-        cli::option("user")
+        cli::option('u')
         .help("Set session user name")
         .action(cli::arg([&](std::string s){
             userName = std::move(s);
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
             input_connection_data_complete |= RDPHeadlessFront::NAME;
         })),
 
-        cli::option("pwd")
+        cli::option('p')
         .help("Set session user password")
         .action(cli::arg([&](std::string s){
             userPwd = std::move(s);
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
             input_connection_data_complete |= RDPHeadlessFront::PWD;
         })),
 
-        cli::option("ip")
+        cli::option('i')
         .help("Set target IP")
         .action(cli::arg([&](std::string s){
             ip = std::move(s);

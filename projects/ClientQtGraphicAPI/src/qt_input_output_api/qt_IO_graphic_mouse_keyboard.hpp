@@ -1464,10 +1464,10 @@ private:
 //         if (this->client->mod_state ==  ClientRedemptionAPI::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
-            this->qtRDPKeymap.keyEvent(0, key, text);
-            if (this->qtRDPKeymap.scanCode != 0) {
-                this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
-            }
+        this->qtRDPKeymap.keyEvent(0, key, text);
+        if (this->qtRDPKeymap.scanCode != 0) {
+            this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+        }
 //         }
     }
 

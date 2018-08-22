@@ -760,7 +760,7 @@ public:
         }
         std::cout << " Early negociations completes.\n";
 
-        if (protocol_is_VNC) {
+        if (!protocol_is_VNC) {
             if (this->_verbose & RDPHeadlessFront::SHOW_CORE_SERVER_INFO && !protocol_is_VNC) {
                 std::cout << " ================================" << "\n";
                 std::cout << " ======= Server Core Info =======" << "\n";

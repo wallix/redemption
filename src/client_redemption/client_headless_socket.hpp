@@ -42,26 +42,36 @@ public:
         (void) client_sck;
         (void) mod;
 
-        LOG(LOG_INFO, "start_to_listen()");
-                                try {
+//         LOG(LOG_INFO, "start_to_listen()");
+//                                 try {
             while (!this->client->mod->is_up_and_running()) {
-                    std::cout << " Early negociations...\n";
-                    if (int err = this->client->wait_and_draw_event({3, 0})) {
-                        return err;
-                    }
+                std::cout << " Early negociations...\n";
+
+//                 if (mod) {
+//                     this->client->callback(false);
+//                 }
+/*
+                timeval now = tvtime();*/
+
+                if (int err = this->client->wait_and_draw_event({3, 0})) {
+                    return err;
                 }
-//             this->primary_connection_finished = true;
-//             this->start_wab_session_time = tvtime();
+//                 timeval now = tvtime();
+//                 this->session_reactor.set_current_time(now);
 
-        } catch (const Error & e) {
-            std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-            return 2;
-        }
-        std::cout << " Early negociations completes.\n";
+            }
+// //             this->primary_connection_finished = true;
+// //             this->start_wab_session_time = tvtime();
+//
+//         } catch (const Error & e) {
+//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
+//             return false;
+//         }
+//         std::cout << " Early negociations completes.\n";
 
 
-        timeval now = tvtime();
-        this->session_reactor.set_current_time(now);
+//         timeval now = tvtime();
+//         this->session_reactor.set_current_time(now);
 
         return true;
     }
@@ -79,9 +89,9 @@ class ClientHeadlessInput : public ClientInputMouseKeyboardAPI
 
 
     // TODO string_view
-    void virtual keyPressEvent(const int key, std::string const& text) override {}
+    void virtual keyPressEvent(const int /*key*/, std::string const& /*text*/) override {}
 
     // TODO string_view
-    void virtual keyReleaseEvent(const int key, std::string const& text) override {}
+    void virtual keyReleaseEvent(const int /*key*/, std::string const& /*text*/) override {}
 };
 

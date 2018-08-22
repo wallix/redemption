@@ -48,13 +48,12 @@ RED_AUTO_TEST_CASE(TestRDPMetricsH)
 }
 
 
-constexpr const char * rdp_metrics_path_file = "/tmp";
+constexpr const char * rdp_metrics_path_file = "/tmp/";
 
 using namespace std::literals::chrono_literals;
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 {
-    const char * metrics_path = "/tmp";
 
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logmetrics");
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
@@ -62,7 +61,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
     auto epoch = 1533211681s;
 
     RDPMetrics metrics( true
-                      , metrics_path
+                      , rdp_metrics_path_file
                       , "164d89c1a56957b752540093e178"
                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
                       , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av

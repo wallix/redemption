@@ -268,7 +268,7 @@ public:
 
         if (this->connection_info_cmd_complete == COMMAND_VALID) {
 
-            this->connect();
+           this->connect();
 
         } else {
             std::cout << "Argument(s) required to connect: ";
@@ -542,8 +542,6 @@ public:
                       , this->reportMessage
                       , this->ini
                     );
-
-                    LOG(LOG_INFO, "this->unique_mod = std::make_unique<mod_rdp>(");
                 }
                     break;
 
@@ -684,9 +682,10 @@ public:
                     this->target_IP.c_str(),
                     this->port,
                     std::chrono::seconds(1),
-                    to_verbose_flags(0),
+                    to_verbose_flags(0xffffffff),
                     //SocketTransport::Verbose::dump,
                     &this->error_message);
+
                 LOG(LOG_INFO, "this->socket init done");
 
                 if (this->is_full_capturing) {
@@ -773,7 +772,7 @@ public:
 
             } else {
 
-                if (this->enable_shared_virtual_disk) {
+                if (this->enable_shared_virtual_disk && this->impl_io_disk) {
                     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
@@ -783,7 +782,7 @@ public:
                 }
             }
 
-            if (this->enable_shared_clipboard) {
+            if (this->enable_shared_clipboard && this->impl_clipboard) {
                 CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                     GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -801,7 +800,7 @@ public:
     //                                              };
     //         this->cl.push_back(channel_WabDiag);
 
-            if (modRDPParamsData.enable_sound) {
+            if (modRDPParamsData.enable_sound && this->impl_sound) {
                 CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
                                                         , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -853,6 +852,7 @@ public:
                 this->connected = true;;
 
                 if (this->impl_socket_listener) {
+                    LOG(LOG_INFO, "impl_socket_listener->start_to_listen CIP");
                     if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
 
                         LOG(LOG_INFO, "impl_socket_listener->start_to_listen ok");

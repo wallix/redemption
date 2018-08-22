@@ -226,7 +226,7 @@ public:
         auto text_date = (now % 24h == 0s) ? text_gmdate(now) : filename_gmdatetime(now);
 
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path),
-            "%s/%s_metrics-%s-%s.logmetrics",
+            "%s%s_metrics-%s-%s.logmetrics",
             this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -255,7 +255,7 @@ private:
     {
         char index_file_path[4096];
         ::snprintf(index_file_path, sizeof(index_file_path),
-            "%s/%s_metrics-%s-%s.logindex",
+            "%s%s_metrics-%s-%s.logindex",
             this->path.c_str(),
             this->protocol_name.c_str(),
             this->version.c_str(),
