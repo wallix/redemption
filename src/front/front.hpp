@@ -4022,8 +4022,8 @@ private:
                     LOG(LOG_INFO, "Front::process_data: --------------> UP AND RUNNING <--------------");
                 }
 
-                if (this->capture && this->capture->has_graphic_api()) {
-                    this->set_gd(this->capture.get());
+                if (this->capture && this->capture->get_graphic_api()) {
+                    this->set_gd(this->capture->get_graphic_api());
                 }
                 else {
                     this->set_gd(this->orders.graphics_update_pdu());
