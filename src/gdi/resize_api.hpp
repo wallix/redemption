@@ -20,9 +20,11 @@
 
 #pragma once
 
+#include "utils/sugar/noncopyable.hpp"
+
 namespace gdi {
 
-struct ResizeApi
+struct ResizeApi : private noncopyable
 {
     virtual void resize(uint16_t width, uint16_t height) = 0;
 
