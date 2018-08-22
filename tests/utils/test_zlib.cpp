@@ -163,6 +163,8 @@ RED_AUTO_TEST_CASE(TestZLIB1)
     } while (CHUNK != strm.avail_out);
     BOOST_CHECK_EQUAL(ret, Z_STREAM_END);
 
+    ret = deflateEnd(&strm);
+
     hexdump(&all_out[0], total_size); 
 
    RED_CHECK_EQUAL(total_size, 262);
