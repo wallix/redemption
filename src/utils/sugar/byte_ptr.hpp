@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include <cstddef>
 #include "utils/sugar/cast.hpp"
 
+#include <cstddef>
 
 
 struct byte_ptr

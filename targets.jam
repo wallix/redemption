@@ -184,7 +184,6 @@ exe rdpheadless :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
   <library>z
@@ -258,6 +257,7 @@ exe rdpclient :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
