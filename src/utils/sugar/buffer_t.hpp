@@ -20,40 +20,40 @@
 
 #pragma once
 
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 /**
- * \c array_view on \c uint8_t* and \c char*
+ * \c array_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
  */
-struct buffer_t : byte_array
+struct buffer_t : bytes_view
 {
     buffer_t() = default;
     buffer_t(buffer_t const &) = default;
 
     buffer_t & operator=(buffer_t const &) = default;
 
-    using byte_array::byte_array;
+    using bytes_view::bytes_view;
 
     template<class T, std::size_t n>
     buffer_t(T (& a)[n]) noexcept
-    : byte_array(a, n)
+    : bytes_view(a, n)
     {}
 };
 
 /**
- * \c array_view on \c uint8_t* and \c char*
+ * \c const_array_view on \c uint8_t*, \c char*, \c uint8_t[n], \c char[n]
  */
-struct const_buffer_t : const_byte_array
+struct const_buffer_t : const_bytes_view
 {
     const_buffer_t() = default;
     const_buffer_t(const_buffer_t const &) = default;
 
     const_buffer_t & operator=(const_buffer_t const &) = default;
 
-    using const_byte_array::const_byte_array;
+    using const_bytes_view::const_bytes_view;
 
     template<class T, std::size_t n>
     const_buffer_t(T (& a)[n]) noexcept
-    : const_byte_array(a, n)
+    : const_bytes_view(a, n)
     {}
 };

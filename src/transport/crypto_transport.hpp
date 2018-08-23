@@ -22,7 +22,7 @@
 #pragma once
 
 #include "capture/cryptofile.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 #include "transport/out_file_transport.hpp"
 
 #include <memory>
@@ -60,7 +60,7 @@ public:
 
     const HASH fhash(const char * pathname);
 
-    void open(const char * const pathname, const_byte_array derivator);
+    void open(const char * const pathname, const_bytes_view derivator);
 
     // derivator implicitly basename(pathname)
     void open(const char * const pathname);
@@ -116,7 +116,7 @@ private:
 struct ocrypto : noncopyable
 {
     struct Result {
-        const_byte_array buf;
+        const_bytes_view buf;
         std::size_t consumed;
     };
 
@@ -124,11 +124,11 @@ struct ocrypto : noncopyable
 
     ~ocrypto();
 
-    Result open(const_byte_array derivator);
+    Result open(const_bytes_view derivator);
 
     ocrypto::Result close(uint8_t (&qhash)[MD_HASH::DIGEST_LENGTH], uint8_t (&fhash)[MD_HASH::DIGEST_LENGTH]);
 
-    ocrypto::Result write(const_byte_array data);
+    ocrypto::Result write(const_bytes_view data);
 
 private:
     EncryptContext ectx;
@@ -149,7 +149,7 @@ private:
      */
     void flush(uint8_t * buffer, size_t buflen, size_t & towrite);
 
-    void update_hmac(const_byte_array buf);
+    void update_hmac(const_bytes_view buf);
 };
 
 
@@ -172,7 +172,7 @@ public:
 
     bool is_open() const;
 
-    void open(const char * const finalname, const char * const hash_filename, int groupid, const_byte_array derivator);
+    void open(const char * const finalname, const char * const hash_filename, int groupid, const_bytes_view derivator);
 
     // derivator implicitly basename(finalname)
     void open(const char * finalname, const char * const hash_filename, int groupid);
@@ -209,11 +209,11 @@ enum class EncryptionSchemeTypeResult
 
 EncryptionSchemeTypeResult get_encryption_scheme_type(
     CryptoContext & cctx, const char * filename,
-    const_byte_array derivator = const_byte_array(nullptr),
+    const_bytes_view derivator = const_bytes_view(nullptr),
     Error * err = nullptr);
 
 /// \attention if result is \c EncryptionSchemeTypeResult::OldScheme, the CryptoContext::old_encryption_scheme must be set to 1 and the file reopen because some data are lost
 EncryptionSchemeTypeResult open_if_possible_and_get_encryption_scheme_type(
     InCryptoTransport & in, const char * filename,
-    const_byte_array derivator = const_byte_array(nullptr),
+    const_bytes_view derivator = const_bytes_view(nullptr),
     Error * err = nullptr);

@@ -4,6 +4,8 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
+#include "cxx/cxx.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
 #include <iterator>
@@ -172,7 +174,6 @@ namespace std // NOLINT(cert-dcl58-cpp)
     }
 } // namespace std
 
-#include "utils/sugar/underlying_cast.hpp"
 
 template<class Ch, class Tr, class E>
 typename std::enable_if<
@@ -184,14 +185,12 @@ operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
     return out << +underlying_cast(e); // '+' for transform u8/s8 to int
 }
 
-#include "cxx/cxx.hpp"
-#include "utils/sugar/byte.hpp"
 
 namespace redemption_unit_test__
 {
     struct xarray
     {
-        const_byte_array sig;
+        const_bytes_view sig;
 
         std::size_t size() const
         {
@@ -204,7 +203,7 @@ namespace redemption_unit_test__
     struct xarray_color
     {
         size_t & res;
-        const_byte_array sig;
+        const_bytes_view sig;
 
         std::size_t size() const
         {
@@ -271,7 +270,7 @@ namespace redemption_unit_test__
 {
     struct xsarray
     {
-        const_byte_array sig;
+        const_bytes_view sig;
 
         std::size_t size() const
         {

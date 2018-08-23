@@ -1688,7 +1688,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "vnc password ok\n");
@@ -1726,7 +1726,7 @@ private:
                     LOG(LOG_INFO, "Waiting for password ack");
                 }
 
-                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, byte_array bytes){
+                if (!this->auth_response_ctx.run(this->server_data_buf, [this](bool status, bytes_view bytes){
                     if (status) {
                         if (bool(this->verbose & VNCVerbose::basic_trace)) {
                             LOG(LOG_INFO, "MS LOGON password ok\n");

@@ -4180,10 +4180,10 @@ test-run tests/utils/sugar/test_buffer_t :
 :
   <covfile>src/utils/sugar/buffer_t.hpp
 ;
-test-run tests/utils/sugar/test_byte :
-  $(REDEMPTION_TEST_PATH)/utils/sugar/test_byte.cpp
+test-run tests/utils/sugar/test_bytes_view :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_bytes_view.cpp
 :
-  <covfile>src/utils/sugar/byte.hpp
+  <covfile>src/utils/sugar/bytes_view.hpp
 ;
 test-run tests/utils/sugar/test_cast :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_cast.cpp
@@ -5224,8 +5224,8 @@ alias test_buf_maker : tests/utils/sugar/test_buf_maker ;
 alias test_buf_maker.coverage : tests/utils/sugar/test_buf_maker.coverage ;
 alias test_buffer_t : tests/utils/sugar/test_buffer_t ;
 alias test_buffer_t.coverage : tests/utils/sugar/test_buffer_t.coverage ;
-alias test_byte : tests/utils/sugar/test_byte ;
-alias test_byte.coverage : tests/utils/sugar/test_byte.coverage ;
+alias test_bytes_view : tests/utils/sugar/test_bytes_view ;
+alias test_bytes_view.coverage : tests/utils/sugar/test_bytes_view.coverage ;
 alias test_cast : tests/utils/sugar/test_cast ;
 alias test_cast.coverage : tests/utils/sugar/test_cast.coverage ;
 alias test_finally : tests/utils/sugar/test_finally ;
@@ -5748,7 +5748,7 @@ alias tests/utils/sugar :
   tests/utils/sugar/test_array_view
   tests/utils/sugar/test_buf_maker
   tests/utils/sugar/test_buffer_t
-  tests/utils/sugar/test_byte
+  tests/utils/sugar/test_bytes_view
   tests/utils/sugar/test_cast
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_iter

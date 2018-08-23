@@ -23,7 +23,7 @@
 #define RED_TEST_MODULE TestBytesT
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <type_traits>
 #include <vector>
@@ -94,12 +94,12 @@ RED_AUTO_TEST_CASE(TestBytesT)
     RED_CHECK(bool(const_byte_ptr(a)));
     RED_CHECK(!bool(const_byte_ptr{}));
 
-    const_byte_array{uv};
+    const_bytes_view{uv};
 
     byte_ptr bs{s};
     const_byte_ptr cbs{cs};
-    byte_array ba;
-    const_byte_array cba;
+    bytes_view ba;
+    const_bytes_view cba;
     array_view_char av{s, 1};
     array_view_u8 uav{us, 1};
     array_view_const_char cav{cs, 1};
@@ -107,58 +107,58 @@ RED_AUTO_TEST_CASE(TestBytesT)
 
     std::false_type no;
 
-    byte_array{bs, 1};
-    is_callable<byte_array>(a) = no;
-    is_callable<byte_array>(ua) = no;
-    byte_array{av};
-    byte_array{uav};
-    byte_array{ba};
+    bytes_view{bs, 1};
+    is_callable<bytes_view>(a) = no;
+    is_callable<bytes_view>(ua) = no;
+    bytes_view{av};
+    bytes_view{uav};
+    bytes_view{ba};
 
-    const_byte_array{bs, 1};
-    is_callable<const_byte_array>(a) = no;
-    is_callable<const_byte_array>(ua) = no;
-    const_byte_array{av};
-    const_byte_array{uav};
-    const_byte_array{ba};
+    const_bytes_view{bs, 1};
+    is_callable<const_bytes_view>(a) = no;
+    is_callable<const_bytes_view>(ua) = no;
+    const_bytes_view{av};
+    const_bytes_view{uav};
+    const_bytes_view{ba};
 
-    const_byte_array{cbs, 1};
-    is_callable<const_byte_array>(ca) = no;
-    is_callable<const_byte_array>(cua) = no;
-    const_byte_array{cav};
-    const_byte_array{cuav};
-    const_byte_array{cba};
+    const_bytes_view{cbs, 1};
+    is_callable<const_bytes_view>(ca) = no;
+    is_callable<const_bytes_view>(cua) = no;
+    const_bytes_view{cav};
+    const_bytes_view{cuav};
+    const_bytes_view{cba};
 
-    std::is_assignable<byte_array, decltype(a)>::type{} = no;
-    std::is_assignable<byte_array, decltype(ua)>::type{} = no;
-    byte_array{} = av;
-    byte_array{} = uav;
-    byte_array{} = ba;
+    std::is_assignable<bytes_view, decltype(a)>::type{} = no;
+    std::is_assignable<bytes_view, decltype(ua)>::type{} = no;
+    bytes_view{} = av;
+    bytes_view{} = uav;
+    bytes_view{} = ba;
 
-    std::is_assignable<const_byte_array, decltype(a)>::type{} = no;
-    std::is_assignable<const_byte_array, decltype(ua)>::type{} = no;
-    const_byte_array{} = av;
-    const_byte_array{} = uav;
-    const_byte_array{} = ba;
+    std::is_assignable<const_bytes_view, decltype(a)>::type{} = no;
+    std::is_assignable<const_bytes_view, decltype(ua)>::type{} = no;
+    const_bytes_view{} = av;
+    const_bytes_view{} = uav;
+    const_bytes_view{} = ba;
 
-    std::is_assignable<const_byte_array, decltype(ca)>::type{} = no;
-    std::is_assignable<const_byte_array, decltype(cua)>::type{} = no;
-    const_byte_array{} = cav;
-    const_byte_array{} = cuav;
-    const_byte_array{} = cba;
+    std::is_assignable<const_bytes_view, decltype(ca)>::type{} = no;
+    std::is_assignable<const_bytes_view, decltype(cua)>::type{} = no;
+    const_bytes_view{} = cav;
+    const_bytes_view{} = cuav;
+    const_bytes_view{} = cba;
 
     array_view_u8{} = ba;
     array_view_const_u8{} = ba;
     array_view_const_u8{} = cba;
 
-    [](byte_array){}(av);
-    [](byte_array){}(uav);
-    [](byte_array){}(ba);
+    [](bytes_view){}(av);
+    [](bytes_view){}(uav);
+    [](bytes_view){}(ba);
 
-    [](const_byte_array){}(av);
-    [](const_byte_array){}(uav);
-    [](const_byte_array){}(ba);
+    [](const_bytes_view){}(av);
+    [](const_bytes_view){}(uav);
+    [](const_bytes_view){}(ba);
 
-    [](const_byte_array){}(cav);
-    [](const_byte_array){}(cuav);
-    [](const_byte_array){}(cba);
+    [](const_bytes_view){}(cav);
+    [](const_bytes_view){}(cuav);
+    [](const_bytes_view){}(cba);
 }

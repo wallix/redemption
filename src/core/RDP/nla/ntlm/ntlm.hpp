@@ -23,7 +23,7 @@
 
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 
 #include <memory>
 #include <functional>
@@ -208,7 +208,7 @@ private:
     /// Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key
     static void compute_hmac_md5(
         uint8_t (&digest)[SslMd5::DIGEST_LENGTH], uint8_t* signing_key,
-        const_byte_array data_buffer, uint32_t SeqNo)
+        const_bytes_view data_buffer, uint32_t SeqNo)
     {
         // TODO signing_key by array reference
         SslHMAC_Md5 hmac_md5({signing_key, 16});

@@ -25,7 +25,7 @@
 
 #include "system/ssl_sha1.hpp"
 #include "utils/image_data_view.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 // fix tests with:
 // bjam test_flat_wab_close | grep ^tests/ | while IFS='()"' read f l e n E s ; do sed $l,$(($l+1))'s/RED_CHECK_SIG(drawable.gd, .*/RED_CHECK_SIG(drawable.gd, "'${s//x/\\\\x}');/' -i "$f" ; done
@@ -54,7 +54,7 @@ namespace redemption_unit_test__
 {
     using SigArray = uint8_t[SslSha1::DIGEST_LENGTH];
 
-    inline void compute_av_sig(SigArray& sig, const_byte_array av)
+    inline void compute_av_sig(SigArray& sig, const_bytes_view av)
     {
         SslSha1 sha1;
         sha1.update(av);
@@ -93,7 +93,7 @@ namespace redemption_unit_test__
         }
         else
         {
-            const_byte_array ar = obj;
+            const_bytes_view ar = obj;
             ::redemption_unit_test__::compute_av_sig2(sig, ar.data(), 1, ar.size());
         }
     }

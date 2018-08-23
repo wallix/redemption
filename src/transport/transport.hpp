@@ -32,7 +32,7 @@
 #include "utils/invalid_socket.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include "configs/autogen/enums.hpp"
 
@@ -98,7 +98,7 @@ public:
         }
     }
 
-    void recv_boom(byte_array buffer)
+    void recv_boom(bytes_view buffer)
     {
         if (Read::Eof == this->atomic_read(buffer.to_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
@@ -116,21 +116,21 @@ public:
     }
 
     REDEMPTION_CXX_NODISCARD
-    Read atomic_read(byte_array buffer)
+    Read atomic_read(bytes_view buffer)
     {
         return this->do_atomic_read(buffer.to_u8p(), buffer.size());
     }
 
-    // TODO returns byte_array
+    // TODO returns bytes_view
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_ptr buffer, size_t len)
     {
         return this->do_partial_read(buffer.to_u8p(), len);
     }
 
-    // TODO returns byte_array
+    // TODO returns bytes_view
     REDEMPTION_CXX_NODISCARD
-    size_t partial_read(byte_array buffer)
+    size_t partial_read(bytes_view buffer)
     {
         return this->do_partial_read(buffer.to_u8p(), buffer.size());
     }
@@ -140,7 +140,7 @@ public:
         this->do_send(buffer.to_u8p(), len);
     }
 
-    void send(cbyte_array buffer)
+    void send(cbytes_view buffer)
     {
         this->do_send(buffer.to_u8p(), buffer.size());
     }
@@ -222,7 +222,7 @@ struct InTransport
     {}
 
     void recv_boom(byte_ptr buffer, size_t len) { this->t.recv_boom(buffer, len); }
-    void recv_boom(byte_array buffer) { this->t.recv_boom(buffer); }
+    void recv_boom(bytes_view buffer) { this->t.recv_boom(buffer); }
 
     REDEMPTION_CXX_NODISCARD
     Transport::Read atomic_read(byte_ptr buffer, size_t len) { return this->t.atomic_read(buffer, len); }
@@ -270,7 +270,7 @@ struct OutTransport
     {}
 
     void send(cbyte_ptr buffer, size_t len) { this->t.send(buffer, len); }
-    void send(cbyte_array buffer) { this->t.send(buffer); }
+    void send(cbytes_view buffer) { this->t.send(buffer); }
 
     uint32_t get_seqno() const { return this->t.get_seqno(); }
 

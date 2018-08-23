@@ -27,7 +27,7 @@
 #pragma once
 
 #include "openssl_crypto.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
 
@@ -39,7 +39,7 @@ class SslRC4
 public:
     SslRC4() = default;
 
-    void set_key(const_byte_array key)
+    void set_key(const_bytes_view key)
     {
         RC4_set_key(&this->rc4, key.size(), key.data());
     }

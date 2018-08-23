@@ -24,7 +24,7 @@
 #include <cstring>
 #include <cassert>
 
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 
 namespace detail_ {
@@ -44,7 +44,7 @@ class basic_HMAC_direct
     Ssl context;
 
 public:
-    basic_HMAC_direct(const_byte_array key)
+    basic_HMAC_direct(const_bytes_view key)
       : basic_HMAC_direct(key.to_u8p(), key.size())
     {}
 
@@ -71,7 +71,7 @@ public:
         context.update(make_array_view(k_ipad));
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         context.update(data);
     }
@@ -97,7 +97,7 @@ class DelayedHMAC_direct
 public:
     DelayedHMAC_direct() = default;
 
-    void init(const_byte_array data)
+    void init(const_bytes_view data)
     {
         this->init(data.to_u8p(), data.size());
     }
@@ -125,7 +125,7 @@ public:
         context.update(make_array_view(k_ipad));
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         context.update(data);
     }

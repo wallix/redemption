@@ -2329,7 +2329,7 @@ extern "C" {
             ini.set<cfg::debug::config>(false);
             try {
                 Error out_error{NO_ERROR};
-                switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbyte_array{}, &out_error))
+                switch (get_encryption_scheme_type(cctx, rp.full_path.c_str(), cbytes_view{}, &out_error))
                 {
                     case EncryptionSchemeTypeResult::Error:
                         throw out_error; /* NOLINT(misc-throw-by-value-catch-by-reference) */
@@ -2356,7 +2356,7 @@ extern "C" {
                 InCryptoTransport in_t(cctx, EncryptionMode::Auto, fstat);
                 Error out_error{NO_ERROR};
                 switch (open_if_possible_and_get_encryption_scheme_type(
-                    in_t, rp.full_path.c_str(), cbyte_array{}, &out_error))
+                    in_t, rp.full_path.c_str(), cbytes_view{}, &out_error))
                 {
                     case EncryptionSchemeTypeResult::Error:
                         std::cerr

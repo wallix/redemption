@@ -96,7 +96,7 @@ struct CryptContext
         }
     }
 
-    void decrypt(byte_array data)
+    void decrypt(bytes_view data)
     {
         this->decrypt(data.to_u8p(), data.size(), data.to_u8p());
     }
@@ -130,7 +130,7 @@ struct CryptContext
     }
 
     /* Generate a MAC hash (5.2.3.1), using a combination of SHA1 and MD5 */
-    void sign(const_byte_array data, uint8_t (&signature)[8])
+    void sign(const_bytes_view data, uint8_t (&signature)[8])
     {
         uint8_t lenhdr[] = {
             static_cast<uint8_t>(data.size() & 0xff),

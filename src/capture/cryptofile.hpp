@@ -22,7 +22,7 @@
 
 #include "configs/autogen/enums.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
@@ -104,7 +104,7 @@ public:
         return this->master_key;
     }
 
-    void set_master_derivator(const_byte_array derivator)
+    void set_master_derivator(const_bytes_view derivator)
     {
         if ((this->master_key_loaded || !this->master_derivator.empty())
          && not (this->master_derivator.size() == derivator.size()
@@ -134,7 +134,7 @@ public:
     // force extension to "mwrm" if it's .log
     static array_view_const_u8 get_normalized_derivator(
         std::unique_ptr<uint8_t[]> & normalized_derivator,
-        const_byte_array derivator
+        const_bytes_view derivator
     )
     {
         using reverse_iterator = std::reverse_iterator<array_view_const_u8::const_iterator>;
@@ -163,7 +163,7 @@ public:
     }
 
 private:
-    void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], const_byte_array derivator)
+    void load_trace_key(uint8_t (&buffer)[MD_HASH::DIGEST_LENGTH], const_bytes_view derivator)
     {
         std::unique_ptr<uint8_t[]> normalized_derivator_gc;
         auto const new_derivator = get_normalized_derivator(normalized_derivator_gc, derivator);
@@ -180,7 +180,7 @@ private:
     }
 
 public:
-    void get_derived_key(uint8_t (&trace_key)[CRYPTO_KEY_LENGTH], const_byte_array derivator)
+    void get_derived_key(uint8_t (&trace_key)[CRYPTO_KEY_LENGTH], const_bytes_view derivator)
     {
         if (this->old_encryption_scheme){
             if (this->get_trace_key_cb != nullptr){
@@ -270,7 +270,7 @@ public:
         return nbytes;
     }
 
-    class key_data : private const_byte_array
+    class key_data : private const_bytes_view
     {
         static constexpr std::size_t key_length = CRYPTO_KEY_LENGTH;
 
@@ -282,21 +282,21 @@ public:
     public:
         template<class T>
         key_data(T const & bytes32) noexcept
-        : const_byte_array(bytes32)
+        : const_bytes_view(bytes32)
         {
             assert(this->size() == key_length);
         }
 
         template<class T, std::size_t array_length>
         key_data(std::array<T, array_length> const & data) noexcept
-        : const_byte_array(data.data(), data.size())
+        : const_bytes_view(data.data(), data.size())
         {
             static_assert(array_length == key_length);
         }
 
         template<class T, std::size_t array_length>
         key_data(T const (& data)[array_length]) noexcept
-        : const_byte_array(data, array_length)
+        : const_bytes_view(data, array_length)
         {
             static_assert(array_length == key_length);
         }

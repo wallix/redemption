@@ -42,7 +42,7 @@ public:
         this->md5_init();
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         this->md5_update(data.to_u8p(), data.size());
     }

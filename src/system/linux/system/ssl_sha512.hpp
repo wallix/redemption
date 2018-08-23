@@ -43,7 +43,7 @@ public:
         }
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         if (0 == SHA512_Update(&this->sha512, data.to_u8p(), data.size())){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);

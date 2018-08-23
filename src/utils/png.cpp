@@ -338,7 +338,7 @@ void read_png24(Transport & trans, MutableImageDataView const & mutable_image_vi
         mutable_image_view.line_size());
 }
 
-// TODO void read_png24_by_line(read_fn:size_t(byte_array), f:void(byte_array))
+// TODO void read_png24_by_line(read_fn:size_t(bytes_view), f:void(bytes_view))
 void set_rows_from_image_chunk(
     Transport & trans,
     const WrmChunkType chunk_type,

@@ -776,7 +776,7 @@ public:
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(cbyte_array data){
+    void out_copy_bytes(cbytes_view data){
         assert(this->has_room(data.size()));
         memcpy(this->p, data.data(), data.size());
         this->p += data.size();

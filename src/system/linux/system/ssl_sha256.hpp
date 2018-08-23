@@ -43,7 +43,7 @@ public:
         }
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         if (0 == SHA256_Update(&this->sha256, data.to_u8p(), data.size())){
             throw Error(ERR_SSL_CALL_SHA256_UPDATE_FAILED);

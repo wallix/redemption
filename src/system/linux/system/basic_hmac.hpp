@@ -24,7 +24,7 @@
 #include <cstring>
 
 #include "core/error.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "openssl_crypto.hpp"
 
 namespace detail_
@@ -57,7 +57,7 @@ class basic_HMAC
     HMACWrap hmac;
 
 public:
-    basic_HMAC(const_byte_array key)
+    basic_HMAC(const_bytes_view key)
     {
         this->hmac.init();
         int res = HMAC_Init_ex(this->hmac, key.to_u8p(), key.size(), evp(), nullptr);
@@ -71,7 +71,7 @@ public:
         this->hmac.deinit();
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         int res = HMAC_Update(this->hmac, data.to_u8p(), data.size());
         if (res == 0) {
@@ -99,7 +99,7 @@ class DelayedHMAC
 public:
     DelayedHMAC() = default;
 
-    void init(const_byte_array key)
+    void init(const_bytes_view key)
     {
         if (this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
@@ -119,7 +119,7 @@ public:
         }
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);

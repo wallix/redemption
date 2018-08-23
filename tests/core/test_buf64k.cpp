@@ -45,7 +45,7 @@ struct BlockTransport : Transport
     }
 
 private:
-    cbyte_array data;
+    cbytes_view data;
     std::size_t n_by_bloc;
 };
 
@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(Test1Read1)
 {
     Buf64k buf;
     RED_CHECK_EQ(0, buf.remaining());
-    RED_CHECK_MEM(const_byte_array{}, buf.av());
+    RED_CHECK_MEM(const_bytes_view{}, buf.av());
 
     uint8_t data[100000];
     std::iota(std::begin(data), std::end(data), 0);
@@ -72,7 +72,7 @@ RED_AUTO_TEST_CASE(Test1Read1)
         buf.advance(k64);
         buf.read_with(t);
         RED_CHECK_EQ(1, buf.remaining());
-        RED_CHECK_MEM(const_byte_array(data+k64, 1), buf.av());
+        RED_CHECK_MEM(const_bytes_view(data+k64, 1), buf.av());
     }
 
     buf.advance(buf.remaining());
@@ -87,6 +87,6 @@ RED_AUTO_TEST_CASE(Test1Read1)
         buf.advance(1000);
         buf.read_with(t);
         RED_CHECK_EQ(k64, buf.remaining());
-        RED_CHECK_MEM(const_byte_array(data+1000, k64), buf.av());
+        RED_CHECK_MEM(const_bytes_view(data+1000, k64), buf.av());
     }
 }

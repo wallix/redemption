@@ -36,7 +36,7 @@ public:
         this->MD4_init();
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         this->MD4_update(data.data(), data.size());
     }

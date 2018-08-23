@@ -39,7 +39,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
@@ -399,7 +399,7 @@ private:
         );
     }
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -479,7 +479,7 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     bool is_probe_enabled_session = false;
     ReportMessageApi & report_message;
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -1178,7 +1178,7 @@ private:
         );
     }
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->send_kbd();
         }

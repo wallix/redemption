@@ -221,7 +221,7 @@ public:
 
     void open(
         std::string const& log_path, std::string const& hash_path,
-        int groupid, const_byte_array derivator)
+        int groupid, const_bytes_view derivator)
     {
         assert(!this->ct.is_open());
         this->ct.open(log_path.c_str(), hash_path.c_str(), groupid, derivator);

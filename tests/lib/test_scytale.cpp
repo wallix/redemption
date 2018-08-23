@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(Testscytale)
             RED_REQUIRE_GT(res, 0);
             total += size_t(res);
         }
-        RED_CHECK_MEM_C(byte_array(buf, 31), "We write, and again, and so on.");
+        RED_CHECK_MEM_C(bytes_view(buf, 31), "We write, and again, and so on.");
         RED_CHECK_EQ(scytale_reader_close(handle), 0);
 
         RED_CHECK_EQ(scytale_reader_error_message(handle), "No error");

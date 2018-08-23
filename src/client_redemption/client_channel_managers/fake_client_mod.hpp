@@ -34,7 +34,7 @@
 
 
 #include "core/RDP/clipboard.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 
 
 class FakeRDPChannelsMod : public mod_api
@@ -299,7 +299,7 @@ public:
         return FileStatvfs{};
     }
 
-    void read_data(std::string const& file_to_tread, int offset, byte_array data) override {
+    void read_data(std::string const& file_to_tread, int offset, bytes_view data) override {
         (void)file_to_tread;
         (void)offset;
         (void)data;
