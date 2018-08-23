@@ -45,27 +45,12 @@ int main(int argc, char** argv)
 
     SessionReactor session_reactor;
 
-    RDPVerbose verbose = to_verbose_flags(0xffffffff);      //to_verbose_flags(0x0);
+    RDPVerbose verbose = to_verbose_flags(0x0);      //to_verbose_flags(0x0);
 
     LOG(LOG_INFO, "ClientRedemption init");
 
     ClientHeadlessSocket headless_socket(session_reactor);
     ClientInputSocketAPI * headless_socket_api_obj = &headless_socket;
-
-    FakeClientOutputGraphic fakeClientOutputGraphic;
-    ClientOutputGraphicAPI * fakeClientOutputGraphic_api = &fakeClientOutputGraphic;
-
-    FakeClientIOClipboard fakeClientIOClipboard;
-    ClientIOClipboardAPI * fakeClientIOClipboard_api = &fakeClientIOClipboard;
-
-    FakeClientOutPutSound fakeClientOutPutSound;
-    ClientOutputSoundAPI * fakeClientOutPutSound_api = &fakeClientOutPutSound;
-
-    FakeClientInputMouseKeyboard fakeClientInputMouseKeyboard;
-    ClientInputMouseKeyboardAPI * fakeClientInputMouseKeyboard_api = &fakeClientInputMouseKeyboard;
-
-    FakeIODisk fakeIODisk;
-    ClientIODiskAPI * fakeIODisk_api = &fakeIODisk;
 
     {
         struct sigaction sa;
@@ -84,16 +69,15 @@ int main(int argc, char** argv)
         REDEMPTION_DIAGNOSTIC_POP
     }
 
-
     ClientRedemption client( session_reactor, argv, argc, verbose
-                           , fakeClientOutputGraphic_api
-                           , fakeClientIOClipboard_api
-                           , fakeClientOutPutSound_api
+                           , nullptr
+                           , nullptr
+                           , nullptr
                            , headless_socket_api_obj
-                           , fakeClientInputMouseKeyboard_api
-                           , fakeIODisk_api);
+                           , nullptr
+                           , nullptr);
 
-    return run_mod(client, true, std::chrono::milliseconds(10000));
+    return run_mod(client, false, std::chrono::milliseconds(10000));
 }
 
 
@@ -104,24 +88,25 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
     if (front.mod) {
         auto & mod = *(front.mod);
 
-        bool running = mod.is_up_and_running();
-        bool connected = false;
+        bool logged = false;
 
-        while (running)
+        while (true)
         {
             if (mod.logged_on == mod_api::CLIENT_LOGGED) {
                 mod.logged_on = mod_api::CLIENT_UNLOGGED;
 
-                LOG(LOG_INFO, "RDP Session Log On.");
-                if (quick_connection_test) {
-                    LOG(LOG_INFO, "quick_connection_test");
+                std::cout << "RDP Session Log On.\n";
+                if (quick_connection_test && !logged) {
+                    logged = true;
+                    std::cout << "quick_connection_test\n";
+                    front.disconnect("", false);
                     return 0;
                 }
-                break;
             }
 
-            if (time_stop > tvtime()) {
-                std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << std::endl;
+            if (time_stop < tvtime()) {
+                std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << ")" << std::endl;
+                front.disconnect("", false);
                 return 8;
             }
 
@@ -130,14 +115,6 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
             }
 
             front.send_key_to_keep_alive();
-
-            if (connected) {
-                running = mod.is_up_and_running();
-            }
-
-            if (mod.is_up_and_running()) {
-                connected = true;
-            }
         }
     }
 

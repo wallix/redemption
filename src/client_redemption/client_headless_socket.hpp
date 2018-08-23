@@ -39,12 +39,7 @@ public:
     {}
 
     virtual bool start_to_listen(int client_sck, mod_api * mod) override {
-//         (void) client_sck;
-//         (void) mod;
 
-//         LOG(LOG_INFO, "start_to_listen()");
-
-//         try {
             while (!mod->is_up_and_running()) {
                 std::cout << " Early negociations...\n";
                 if (int err = this->client->wait_and_draw_event({3, 0})) {
@@ -52,24 +47,7 @@ public:
                 }
             }
 
-//         } catch (const Error & e) {
-//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-//             return true;
-//         }
-//                                 try {
-
-// //             this->primary_connection_finished = true;
-// //             this->start_wab_session_time = tvtime();
-//
-//         } catch (const Error & e) {
-//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-//             return false;
-//         }
-        LOG(LOG_INFO, " Early negociations completes.\n");
-
-
-//         timeval now = tvtime();
-//         this->session_reactor.set_current_time(now);
+        std::cout << " Early negociations completes.\n";
 
         return true;
     }
