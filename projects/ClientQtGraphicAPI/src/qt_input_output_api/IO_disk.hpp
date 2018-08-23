@@ -114,7 +114,7 @@ public:
         return fileStatvfs;
     }
 
-    void read_data(std::string const& file_to_tread, int offset, byte_array data) override {
+    void read_data(std::string const& file_to_tread, int offset, bytes_view data) override {
 
         std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
         if(inFile.is_open()) {

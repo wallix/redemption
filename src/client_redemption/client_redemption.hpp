@@ -293,10 +293,12 @@ public:
             }
             std::cout << std::endl;
 
-            this->disconnect("", false);
-        }
+            if (this->impl_mouse_keyboard && this->impl_graphic) {
+                this->impl_mouse_keyboard->init_form();
+            }
 
-        LOG(LOG_INFO, "Client redemption constructed");
+            //this->disconnect("", false);
+        }
     }
 
     ~ClientRedemption() = default;

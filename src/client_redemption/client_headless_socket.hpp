@@ -40,12 +40,12 @@ public:
 
     virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override {
 
-            while (!mod->is_up_and_running()) {
-                std::cout << " Early negociations...\n";
-                if (int err = this->client->wait_and_draw_event({3, 0})) {
-                    std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
-                }
+        while (!mod->is_up_and_running()) {
+//                 std::cout << " Early negociations...\n";
+            if (int err = this->client->wait_and_draw_event({3, 0})) {
+                std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
             }
+        }
 
         std::cout << " Early negociations completes.\n";
 
