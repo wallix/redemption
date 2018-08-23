@@ -47,7 +47,7 @@ public:
             }
         }
 
-        std::cout << " Early negociations completes.\n";
+        //std::cout << " Early negociations completes.\n";
 
         return true;
     }

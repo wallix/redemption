@@ -271,33 +271,29 @@ public:
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
 
-//         this->disconnect("", false);
-
         if (this->connection_info_cmd_complete == COMMAND_VALID) {
 
            this->connect();
 
         } else {
-            LOG(LOG_INFO, "Argument(s) required to connect: ");
+            std::cout <<  "Argument(s) required for connection: ";
             if (!(this->connection_info_cmd_complete & NAME_GOT)) {
-                LOG(LOG_INFO, "-u [user_name] ");
+                std::cout << "-u [user_name] ";
             }
             if (!(this->connection_info_cmd_complete & PWD_GOT)) {
-                LOG(LOG_INFO, "-p [password] ");
+                std::cout << "-p [password] ";
             }
             if (!(this->connection_info_cmd_complete & IP_GOT)) {
-                LOG(LOG_INFO, "-i [ip_server] ");
+                std::cout << "-i [ip_server] ";
             }
             if (!(this->connection_info_cmd_complete & PORT_GOT)) {
-                LOG(LOG_INFO, "-P [port] ");
+                std::cout << "-P [port] ";
             }
             std::cout << std::endl;
 
             if (this->impl_mouse_keyboard && this->impl_graphic) {
                 this->impl_mouse_keyboard->init_form();
             }
-
-            //this->disconnect("", false);
         }
     }
 
