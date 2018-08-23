@@ -217,11 +217,13 @@ rule flags ( properties * )
         }
     }
 
-    ## libstdc++ debugging
+    ## libc++/libstdc++ debugging
     if <variant>debug in $(properties)
     || <variant>san in $(properties)
     || <san>on in $(properties)
     {
+        flags += <define>_LIBCPP_DEBUG=1 ;
+
         if $(GLIBCXX_ALLOW_BROKEN_ABI) = 1
         {
             flags += <define>_GLIBCXX_DEBUG ;
