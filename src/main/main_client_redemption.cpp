@@ -36,7 +36,7 @@
 
 #pragma GCC diagnostic pop
 
-int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response);
+int run_mod(ClientRedemption & front);
 
 
 int main(int argc, char** argv)
@@ -77,12 +77,12 @@ int main(int argc, char** argv)
                            , nullptr
                            , nullptr);
 
-    return run_mod(client, false, std::chrono::milliseconds(10000));
+    return run_mod(client);
 }
 
 
-int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::milliseconds time_out_response) {
-    const timeval time_stop = addusectimeval(time_out_response, tvtime());
+int run_mod(ClientRedemption & front) {
+    const timeval time_stop = addusectimeval(front.time_out_disconnection, tvtime());
     const timeval time_mark = { 0, 50000 };
 
     if (front.mod) {
@@ -92,20 +92,21 @@ int run_mod(ClientRedemption & front, bool quick_connection_test, std::chrono::m
 
         while (true)
         {
-            if (mod.logged_on == mod_api::CLIENT_LOGGED) {
-                mod.logged_on = mod_api::CLIENT_UNLOGGED;
+            if (mod.logged_on == mod_api::CLIENT_LOGGED && !logged) {
+                //mod.logged_on = mod_api::CLIENT_UNLOGGED;
+                logged = true;
 
                 std::cout << "RDP Session Log On.\n";
-                if (quick_connection_test && !logged) {
-                    logged = true;
+                if (front.quick_connection_test) {
+
                     std::cout << "quick_connection_test\n";
                     front.disconnect("", false);
                     return 0;
                 }
             }
 
-            if (time_stop < tvtime()) {
-                std::cerr <<  " Exit timeout (timeout = " << time_out_response.count() << ")" << std::endl;
+            if (time_stop < tvtime() && !front.persist) {
+                std::cerr <<  " Exit timeout (timeout = " << front.time_out_disconnection.count() << " ms)" << std::endl;
                 front.disconnect("", false);
                 return 8;
             }

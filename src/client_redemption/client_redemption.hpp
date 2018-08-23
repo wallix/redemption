@@ -497,7 +497,7 @@ public:
         strftime (buffer,80,"%F_%r",timeinfo);
         std::string date(buffer);
 
-        std::cout << "Connection duration = " << movie_len << " ms" << " " << date <<  std::endl;
+        std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
 
         LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
 
@@ -944,9 +944,7 @@ public:
                         }
 
                         return;
-                    } /*else {
-                        LOG(LOG_INFO, "Error "
-                    }*/
+                    }
                 }
             }
 

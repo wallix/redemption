@@ -54,6 +54,11 @@ public:
     RDPDiskConfig      rDPDiskConfig;
     RDPSoundConfig     rDPSoundConfig;
 
+    bool quick_connection_test;
+
+    bool persist;
+
+    std::chrono::milliseconds time_out_disconnection;
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
@@ -61,6 +66,9 @@ public:
     , verbose(verbose)
     //, _recv_disconnect_ultimatum(false)
     , wab_diag_question(false)
+    , quick_connection_test(true)
+    , persist(false)
+    , time_out_disconnection(5000)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -314,6 +322,18 @@ public:
 
             cli::option("enable-record").help("Enable session recording as .wrm movie")
             .action(cli::on_off_location(this->is_recording)),
+
+            cli::option("persist").help("Set connection to persist")
+            .action([&]{
+                quick_connection_test = false;
+                persist = true;
+            }),
+
+            cli::option("timeout").help("Set timeout response before to disconnect in milisecond")
+            .action(cli::arg("time", [&](long time){
+                quick_connection_test = false;
+                time_out_disconnection = std::chrono::milliseconds(time);
+            })),
 
             cli::option("share-dir").help("Set directory path on local disk to share with your session.")
             .action(cli::arg("directory", [this](std::string s) {

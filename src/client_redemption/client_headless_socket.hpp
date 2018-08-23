@@ -38,7 +38,7 @@ public:
       : session_reactor(session_reactor)
     {}
 
-    virtual bool start_to_listen(int client_sck, mod_api * mod) override {
+    virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override {
 
             while (!mod->is_up_and_running()) {
                 std::cout << " Early negociations...\n";
