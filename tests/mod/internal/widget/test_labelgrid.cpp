@@ -27,9 +27,9 @@
 #include "mod/internal/widget/grid.hpp"
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "test_only/check_sig.hpp"
 
 #include "test_only/mod/fake_draw.hpp"
+
 
 RED_AUTO_TEST_CASE(TraceLabelGrid)
 {

@@ -26,8 +26,9 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include <cstdint>
-#include <sys/types.h>
-#include <netinet/in.h>
+
+
+class in_addr;
 
 bool try_again(int errnum);
 

@@ -27,11 +27,13 @@
    color model.
 */
 
+#include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/rle.hpp"
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 #include "utils/stream.hpp"
 #include "utils/image_data_view.hpp"
+
 
 using std::size_t; /*NOLINT*/
 

@@ -7,7 +7,6 @@
 */
 
 #include "lib/do_recorder.hpp"
-#include "main/version.hpp"
 
 #include "system/scoped_crypto_init.hpp"
 #include "program_options/program_options.hpp"
@@ -22,7 +21,6 @@
 
 #include "configs/config.hpp"
 
-#include "core/RDP/RDPSerializer.hpp" // RDPSerializer::Verbose
 #include "core/RDP/RDPDrawable.hpp"
 
 #include "transport/crypto_transport.hpp"
@@ -30,7 +28,6 @@
 #include "transport/out_file_transport.hpp"
 #include "transport/out_meta_sequence_transport.hpp"
 
-#include "utils/chex_to_int.hpp"
 #include "utils/compression_transport_builder.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
@@ -47,7 +44,6 @@
 #include <string>
 #include <vector>
 #include <cerrno>
-#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <iostream>

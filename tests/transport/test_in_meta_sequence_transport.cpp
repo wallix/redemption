@@ -23,9 +23,10 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "capture/wrm_capture.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
+#include "transport/out_meta_sequence_transport.hpp"
 #include "core/error.hpp"
+#include "utils/genfstat.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -268,7 +269,7 @@ RED_AUTO_TEST_CASE(TestCryptoInmetaSequenceTransport)
         const int groupid = 0;
 
         cctx.set_trace_type(TraceType::cryptofile);
-        
+
         OutMetaSequenceTransport crypto_trans(cctx, rnd, fstat, "", "/tmp/", "TESTOFS", tv, 800, 600, groupid, nullptr);
         crypto_trans.send("AAAAX", 5);
         tv.tv_sec += 100;

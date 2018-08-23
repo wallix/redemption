@@ -22,7 +22,7 @@
 #pragma once
 
 #include "capture/cryptofile.hpp"
-#include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/bytes_view.hpp"
 #include "transport/out_file_transport.hpp"
 
 #include <memory>

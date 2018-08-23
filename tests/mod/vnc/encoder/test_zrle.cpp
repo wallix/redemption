@@ -23,27 +23,7 @@
 #include "test_only/fake_graphic.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "test_only/transport/test_transport.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
-
-#include "vnc_zrle_slice1_0_34.hpp"
-
-namespace VNC
-{
-    namespace Encoder {
-        enum class State
-        {
-            Header,
-            Encoding,
-            Data,
-            RreData,
-            Exit
-        };
-    }
-}
-
-
-
 
 
 //connection to 10.10.47.0:5900 (10.10.47.0) succeeded : socket 34

@@ -21,8 +21,7 @@ Author(s): Jonathan Poelen
 #include "core/date_dir_from_filename.hpp"
 
 #include <algorithm>
-#include <iterator>
-#include <cassert>
+
 
 // format: $directory '/' $year'-'$month'-'$day '/' $filename
 DateDirFromFilename::DateDirFromFilename(array_view_const_char path) noexcept

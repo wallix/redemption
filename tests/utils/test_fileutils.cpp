@@ -24,6 +24,9 @@
 
 #include "utils/fileutils.hpp"
 
+#include <unistd.h> // for getgid
+
+
 RED_AUTO_TEST_CASE(TestBasename)
 {
 // basename() change behavior depending if <filegen.h> is included
@@ -126,13 +129,6 @@ RED_AUTO_TEST_CASE(TestBasename)
     }
 
 }
-
-
-#include <unistd.h> // for getgid
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 
 
 RED_AUTO_TEST_CASE(CanonicalPath)

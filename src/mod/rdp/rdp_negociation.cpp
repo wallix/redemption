@@ -32,7 +32,6 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "mod/rdp/alternate_shell.hpp"
 #include "utils/authorization_channels.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"

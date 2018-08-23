@@ -30,7 +30,6 @@
 #pragma once
 
 #include <cstddef>
-#include <cstdint>
 
 class OutStream;
 class ConstImageDataView;

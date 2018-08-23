@@ -27,7 +27,6 @@
 #include "mod/internal/widget/edit.hpp"
 #include "core/channel_names.hpp"
 
-#include <utility>
 #include <algorithm>
 
 void CopyPaste::LimitString::utf16_push_back(const uint8_t * s, size_t n)

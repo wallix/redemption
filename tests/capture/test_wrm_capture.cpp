@@ -23,33 +23,18 @@
 #define RED_TEST_MODULE TestWrmCapture
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
+#include "capture/file_to_graphic.hpp"
+#include "capture/wrm_capture.hpp"
+#include "core/app_path.hpp"
+#include "test_only/fake_stat.hpp"
+#include "test_only/get_file_contents.hpp"
+#include "test_only/lcg_random.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/transport.hpp"
 
-#include <snappy-c.h>
-#include <memory>
 #include <cstring>
 #include <string>
 
-#include "core/app_path.hpp"
-#include "utils/png.hpp"
-#include "utils/drawable.hpp"
-
-#include "transport/transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/in_file_transport.hpp"
-
-#include "test_only/check_sig.hpp"
-#include "test_only/get_file_contents.hpp"
-#include "utils/bitmap_shrink.hpp"
-
-#include "capture/wrm_capture.hpp"
-#include "transport/in_meta_sequence_transport.hpp"
-
-#include "test_only/lcg_random.hpp"
-#include "test_only/fake_stat.hpp"
-
-#include "capture/file_to_graphic.hpp"
 
 template<class Writer>
 void wrmcapture_write_meta_headers(Writer & writer, uint16_t width, uint16_t height, bool has_checksum)
@@ -371,7 +356,6 @@ int wrmcapture_write_meta_file(
     return 0;
 }
 
-#include <string>
 
 RED_AUTO_TEST_CASE(TestWriteFilename)
 {

@@ -4,11 +4,11 @@
 
 #include <boost/test/auto_unit_test.hpp>
 
-#include "cxx/cxx.hpp"
 #include "utils/sugar/bytes_view.hpp"
 #include "utils/sugar/underlying_cast.hpp"
 
 #include <iterator>
+#include <type_traits>
 
 
 // // fixed link error (API changed)

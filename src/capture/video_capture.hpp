@@ -20,24 +20,23 @@
 
 #pragma once
 
-#include "capture/video_recorder.hpp"
-#include "capture/capture_params.hpp"
 #include "capture/video_params.hpp"
-#include "capture/full_video_params.hpp"
+#include "capture/video_recorder.hpp"
 #include "capture/notify_next_video.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/capture_api.hpp"
-#include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/timestamp_tracer.hpp"
-#include "utils/video_cropper.hpp"
 
 #include <memory>
 #include <chrono>
 
 struct timeval;
 class video_recorder;
+class CaptureParams;
+class VideoParams;
+class FullVideoParams;
 
 struct VideoTransportBase : Transport
 {

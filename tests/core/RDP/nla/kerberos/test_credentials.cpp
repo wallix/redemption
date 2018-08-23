@@ -27,5 +27,5 @@
 
 RED_AUTO_TEST_CASE(TestTSRequest)
 {
-
+    Krb5Creds();
 }

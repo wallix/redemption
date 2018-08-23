@@ -34,14 +34,9 @@
 #include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
 #include "mod/rdp/rdp.hpp"
-#include "utils/fileutils.hpp"
 
 #include "front/front.hpp"
 #include "mod/null/null.hpp"
-
-// Uncomment the code block below to generate testing data.
-#include "core/listen.hpp"
-#include "front/front.hpp"
 
 #include "test_only/lcg_random.hpp"
 

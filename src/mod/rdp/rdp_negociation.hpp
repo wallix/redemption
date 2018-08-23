@@ -25,11 +25,9 @@
 #pragma once
 
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
-#include "core/RDP/gcc/userdata/cs_security.hpp"
-#include "core/RDP/gcc/userdata/sc_core.hpp"
-#include "core/RDP/gcc/userdata/sc_sec1.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
+#include "core/RDP/lic.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
 #include "mod/rdp/rdp_log.hpp"

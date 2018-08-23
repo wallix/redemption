@@ -24,12 +24,9 @@
 
 #include "utils/netutils.hpp"
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 RED_AUTO_TEST_CASE(ParseIpConntrack)
 {

@@ -20,32 +20,11 @@
  */
 
 #include "gdi/protected_graphics.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryColorCache.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "utils/bitmap.hpp"
 #include "gdi/graphic_api.hpp"
 
-#include "gdi/clip_from_cmd.hpp"
 
 namespace gdi
 {

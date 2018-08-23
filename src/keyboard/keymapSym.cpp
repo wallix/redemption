@@ -23,7 +23,6 @@
 #include "keyboard/keymapSym.hpp"
 #include "utils/log.hpp"
 #include <cstring>
-#include <cstdio>
 
 
 // KEYSYMS

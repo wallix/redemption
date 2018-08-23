@@ -22,12 +22,11 @@
 
 #include <algorithm>
 #include <chrono>
-#include <utility>
 #include <string>
+#include <type_traits>
 
 #include <ctime> // localtime_r
-#include <cstdio> //snprintf
-#include <cstdlib> //mkostemps
+#include <cstdio> // snprintf / sprintf
 #include <cerrno>
 #include <cassert>
 
@@ -36,10 +35,8 @@
 
 #include "utils/log.hpp"
 
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
@@ -62,9 +59,6 @@
 #include "gdi/kbd_input_api.hpp"
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
 #include "capture/capture.hpp"

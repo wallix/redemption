@@ -24,7 +24,6 @@
 #include "utils/log.hpp"
 #include "utils/png.hpp"
 #include "core/front_api.hpp"
-#include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp"
@@ -33,9 +32,8 @@
 #include "gdi/graphic_api.hpp"
 
 #include <cstdlib>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+
 
 namespace
 {

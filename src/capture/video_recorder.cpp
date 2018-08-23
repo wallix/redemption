@@ -26,7 +26,6 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <cmath>
 
 #ifndef M_PI
@@ -64,7 +63,6 @@ extern "C" {
 #include "cxx/diagnostic.hpp"
 #include "utils/image_data_view.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/scope_exit.hpp"
 
 #include <algorithm>
 

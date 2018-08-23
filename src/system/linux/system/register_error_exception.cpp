@@ -8,7 +8,7 @@
 #include <stdexcept>
 
 #include "core/error.hpp"
-#include "cxx/cxx.hpp"
+#include "cxx/compiler_version.hpp"
 #include "cxx/diagnostic.hpp"
 
 namespace

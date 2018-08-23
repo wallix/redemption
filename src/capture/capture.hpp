@@ -22,17 +22,8 @@
 
 #pragma once
 
-#include "utils/sugar/noncopyable.hpp"
-#include "gdi/graphic_api.hpp"
-#include "gdi/capture_api.hpp"
-#include "gdi/kbd_input_api.hpp"
-#include "gdi/capture_probe_api.hpp"
-#include "gdi/resize_api.hpp"
-#include "capture/notify_next_video.hpp"
-
 #include "capture/capture_params.hpp"
 #include "capture/drawable_params.hpp"
-#include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/kbd_log_params.hpp"
 #include "capture/meta_params.hpp"
@@ -40,7 +31,15 @@
 #include "capture/pattern_params.hpp"
 #include "capture/png_params.hpp"
 #include "capture/sequenced_video_params.hpp"
+#include "capture/video_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "gdi/graphic_api.hpp"
+#include "gdi/capture_api.hpp"
+#include "gdi/kbd_input_api.hpp"
+#include "gdi/capture_probe_api.hpp"
+#include "gdi/resize_api.hpp"
+#include "capture/notify_next_video.hpp"
 
 #include <functional> // std::reference_wrapper
 #include <vector>

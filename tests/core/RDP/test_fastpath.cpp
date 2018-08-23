@@ -28,7 +28,6 @@
 
 #include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "core/RDP/sec.hpp"
 #include "core/RDP/x224.hpp"
 #include "core/RDP/fastpath.hpp"
 

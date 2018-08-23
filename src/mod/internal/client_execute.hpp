@@ -21,16 +21,14 @@
 #pragma once
 
 #include "core/session_reactor.hpp"
-#include "core/misc.hpp"
 #include "core/RDP/rdp_pointer.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 
 #include <string>
-#include <vector>
+
 
 class FrontAPI;
 class mod_api;

@@ -30,10 +30,6 @@
 #include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
@@ -45,6 +41,13 @@
 #include "mod/internal/client_execute.hpp" // TODO only for BORDER_WIDTH_HEIGHT
 
 #include <type_traits>
+
+
+class RDPEllipseCB;
+class RDPEllipseSC;
+class RDPPolygonCB;
+class RDPPolygonSC;
+class RDPBitmapData;
 
 
 WidgetModuleHost::ModuleHolder::ModuleHolder(

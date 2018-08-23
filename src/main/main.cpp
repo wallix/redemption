@@ -51,12 +51,8 @@
 #include <ctime>
 #include <csignal>
 
-#include <arpa/inet.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/un.h>
+#include <dirent.h>
 
 
 inline void daemonize(const char * pid_file)

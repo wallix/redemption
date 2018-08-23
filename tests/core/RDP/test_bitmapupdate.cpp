@@ -27,7 +27,6 @@
 
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "utils/png.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)

@@ -19,9 +19,11 @@
  *              Meng Tan
  */
 
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 #include "mod/internal/widget/scroll.hpp"
 #include "mod/internal/widget/flat_button.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+
 
 WidgetScrollBar::WidgetScrollBar(
     gdi::GraphicApi & drawable, Widget& parent,

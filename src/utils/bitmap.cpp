@@ -40,15 +40,12 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
 
-#include "cxx/cxx.hpp"
-
 #include "system/ssl_sha1.hpp"
 
 #include <cstring>
 
 #include <cassert>
 #include <utility>
-#include <type_traits> // aligned_storage
 
 
 namespace aux_

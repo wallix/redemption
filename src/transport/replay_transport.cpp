@@ -21,7 +21,7 @@
 
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
-#include "utils/stream.hpp"
+#include "utils/difftimeval.hpp"
 #include "replay_transport.hpp"
 #include "recorder_transport.hpp"
 
@@ -29,7 +29,6 @@
 #include <cstring>
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/timerfd.h>
 #include <sys/eventfd.h>
 #include <fcntl.h>

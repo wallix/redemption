@@ -22,7 +22,6 @@
 
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "mod/internal/widget/rail_module_host.hpp"
-#include "mod/mod_api.hpp"
 
 #include "configs/config_access.hpp"
 

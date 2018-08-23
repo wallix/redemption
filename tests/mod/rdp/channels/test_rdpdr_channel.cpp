@@ -33,9 +33,6 @@
 
 #include "test_only/front/fake_front.hpp"
 
-#include <sys/stat.h>
-#include <sys/types.h>
-
 
 class TestToClientSender : public VirtualChannelDataSender {
     Transport& transport;

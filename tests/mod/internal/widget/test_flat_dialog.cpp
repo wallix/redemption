@@ -22,8 +22,6 @@
 #define RED_TEST_MODULE TestFlatDialog
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
 #include "core/font.hpp"
 #include "mod/internal/widget/flat_dialog.hpp"
 #include "mod/internal/widget/edit.hpp"
@@ -32,6 +30,7 @@
 #include "keyboard/keymap2.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/mod/fake_draw.hpp"
+
 
 RED_AUTO_TEST_CASE(TraceFlatDialog)
 {

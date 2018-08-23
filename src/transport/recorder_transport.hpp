@@ -23,9 +23,11 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "utils/difftimeval.hpp"
 
 #include <chrono>
+
+class TimeObj;
+
 
 /**
  * @brief a file containing a capture

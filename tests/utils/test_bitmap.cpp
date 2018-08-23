@@ -24,9 +24,7 @@
 #define RED_TEST_MODULE TestBitmap
 #include "system/redemption_unit_tests.hpp"
 
-#include "gdi/graphic_api.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/bitfu.hpp"
@@ -34,8 +32,6 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "test_only/check_sig.hpp"
-#include "utils/png.hpp"
-#include <cstdio>
 
 
 RED_AUTO_TEST_CASE(TestBitmapCompress)
@@ -52,14 +48,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x0A, 0x0C, 0x0D, 0x0E,
             0x0F, 0x10, 0x12, 0x13};
 
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
 
         StaticOutStream<256> out;
@@ -73,24 +61,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompress ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
     }
 
     // test COPY 16 bits
@@ -101,14 +74,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x05, 0, 0x06, 0, 0x07, 0, 0x08, 0,
             0x09, 0, 0x0A, 0, 0x0B, 0, 0x0C, 0,
             0x0D, 0, 0x0E, 0, 0x0F, 0, 0x10, 0};
-
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         Bitmap bmp(bpp, bpp, nullptr, 4, 4, data, sizeof(data));
         StaticOutStream<256> out;
@@ -125,26 +90,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         // empty set to 0,0,0,0,0,0,...
         Bitmap bmp2(16, 16, nullptr, 4, 4, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
     }
 
     // test COLOR
@@ -163,14 +112,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x84, 0x01, 0x02, 0x03, 0x04, // 4 COPY
             0x6c, 0x01, // 12 COLOR (01)
         };
-
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
@@ -193,14 +134,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
-
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         uint8_t expected[] = {
             0xC4, 0x01, // 4 MIX SET (01)
@@ -230,14 +163,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         uint8_t expected[] = {
             0x84, 0x01, 0x02, 0x03, 0x04, // COPY
             0x64, 0x01,                   // COLOR
@@ -252,14 +177,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
     }
 
     // test BICOLOR
@@ -272,14 +189,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
         };
 
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp(bpp, bpp, &palette332, 24, 1, data, sizeof(data));
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
@@ -289,25 +198,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp2(bpp, bpp, &palette332, 24, 1, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
     }
 
     // test FILL
@@ -322,14 +215,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
-
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         uint8_t expected[] = {
             0x84, 0x02, 0x03, 0x04, 0x05, // 4 COPY
@@ -360,14 +245,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x2c, // 12 MIX
         };
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
@@ -386,14 +263,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xFD, 0xFC, 0xFB, 0xFA,
             0x03, 0x03, 0x03, 0x03};
 
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
@@ -406,25 +275,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
     }
 
     // test FOM 2
@@ -436,14 +289,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xFD, 0xFC, 0xFB, 0xFA,
             0x02, 0xFC, 0x04, 0xFA};
 
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp(bpp, bpp, &palette332, 4, 4, data, sizeof(data));
         StaticOutStream<256> out;
         bmp.compress(bpp, out);
@@ -454,25 +299,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp2(bpp, bpp, &palette332, 4, 4, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
     }
 
     {
@@ -485,23 +314,8 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xd6, 0xd0, 0x04, 0xbb, 0xd6, 0x0c, 0x81, 0x00, // 48 FOM SET
         };
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK(1);
         Bitmap bmp2(bpp, bpp, &palette332, 256, 3, compressed, sizeof(compressed), true);
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
     }
 
 
@@ -602,27 +416,11 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a,
         };
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK(1);
         Bitmap bmp2(bpp, bpp, &palette332, 548, 1, compressed, sizeof(compressed), true);
 
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
         RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
-
     }
 
 
@@ -722,23 +520,8 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xf8, 0x12, 0x01, 0x10, 0xe5, 0xef, 0x1a,
         };
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK(1);
         Bitmap bmp2(16, 16, &palette332, 548, 1, compressed, sizeof(compressed), true);
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data_co[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
         RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
@@ -760,16 +543,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0x00, 0x00, 0x00,
         0x00, 0x00, 0x00,  0x9f, 0x21, 0x08,  0xea, 0x31, 0x0c,  0xea, 0x31, 0x0c
         };
-
-
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(raw); i++){
-//            printf("%.2x ", raw[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
 
         Bitmap bmp(bpp, bpp, &palette332, 16, 2, raw, sizeof(raw));
         StaticOutStream<256> out;
@@ -794,24 +567,9 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp2(bpp, bpp, &palette332, 16, 2, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
         RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
     }
 
 
@@ -826,14 +584,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
         Bitmap bmp(bpp, bpp, &palette332, 64, 10, compressed, 9, true);
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         uint8_t expected[] = {
             0x08, 0x42, 0x08, 0x42, 0x08, 0x42, 0x08, 0x42,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -841,13 +591,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x01, 0x02
         };
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("%.2x ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -886,13 +629,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         };
 
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK_EQUAL(bmp.bmp_size(), sizeof(expected));
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -909,13 +645,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         uint8_t expected[] = {
             0x00, 0x00, 0xff, 0x00,
         };
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -934,13 +663,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
         };
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -962,13 +684,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xFF, 0x00, 0x00, 0x00,
         };
 
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
 
@@ -988,13 +703,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0xFF, 0x00,
         };
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -1039,14 +747,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x01, 0x02, 0x03, 0x04,
         };
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp.bmp_size(); i++){
-//            if (i % 16 == 0) printf("\n");
-//            printf("0x%.2x, ", bmp.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK(0 == memcmp(bmp.data(), expected, sizeof(expected)));
     }
@@ -1652,26 +1352,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         StaticOutStream<8192> out;
         bmp.compress(bpp, out);
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data) ; i++){
-//            if (i % 16 == 0) printf("\n");
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
-
-        RED_CHECK(2);
-
         Bitmap bmp2(bpp, bpp, &palette332, 64, 64, out.get_data(), (out.get_offset()), true);
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < 8192 ; i++){
-//            if (i % 16 == 0) printf("\n");
-//            printf("0x%.2x, ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), 8192));
     }
@@ -2833,14 +2514,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
             0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,
         };
 
-//        printf("------- Raw pixels ---------\n");
-//        for (int i = 0; i < sizeof(data); i++){
-//            printf("%.2x ", data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         Bitmap bmp(bpp, bpp, nullptr, 64, 64, data, sizeof(data));
         StaticOutStream<12288> out;
         bmp.compress(bpp, out);
@@ -2853,25 +2526,10 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK_EQUAL(sizeof(expected), out.get_offset());
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data); i++){
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n");
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
         // empty set to 0,0,0,0,0,0,...
         Bitmap bmp2(bpp, bpp, nullptr, 64, 64, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < bmp2.bmp_size(); i++){
-//            printf("%.2x ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
     }
 
     {
@@ -3313,13 +2971,6 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         bmp2.compute_sha1(sha1);
 //        hexdump_d(sha1, sizeof(sha1));
         RED_CHECK(0 == memcmp(expected_sha1, sha1, 20));
-//        printf("------- Decompressed ---------\n");
-//        for (size_t i = 0; i < bmp2.bmp_size() ; i++){
-//            if (i % 192 == 0) printf("\n");
-//            printf("%c", (bmp2.data()[i]==0xFF)?'O':'.');
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
 // BOGUS VERSION, BEFORE FIXING SPECIAL_FGBG_1 and FIXING SPECIAL_FGBG_2
 //00_.............................................................................................................................................................................................
@@ -3667,25 +3318,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         StaticOutStream<8192> out;
         bmp.compress(bpp, out);
 
-//        printf("------- Compressed ---------\n");
-//        for (int i = 0; i < (out.p - out.data) ; i++){
-//            if (i % 16 == 0) printf("\n");
-//            printf("0x%.2x, ", out.data[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
-
-        RED_CHECK(2);
-
         Bitmap bmp2(bpp, bpp, &palette332, 32, 32, out.get_data(), out.get_offset(), true);
-
-//        printf("------- Decompressed ---------\n");
-//        for (int i = 0; i < 8192 ; i++){
-//            if (i % 16 == 0) printf("\n");
-//            printf("0x%.2x, ", bmp2.data()[i]);
-//        }
-//        printf("\n----------------------------\n");
-//        printf("\n");
 
         RED_CHECK_EQUAL(0, memcmp(bmp2.data(), bmp.data(), sizeof(uncompressed)));
     }

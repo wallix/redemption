@@ -26,7 +26,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include <sys/time.h>
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/mppc/mppc_50.hpp"
 

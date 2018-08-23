@@ -19,13 +19,15 @@
  *              Meng Tan
  */
 
-#include "mod/internal/widget/edit.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/slowpath.hpp"
+#include "core/font.hpp"
 #include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
+#include "mod/internal/widget/edit.hpp"
 #include "utils/colors.hpp"
 #include "utils/sugar/cast.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+
 
 WidgetEdit::WidgetEdit(
     gdi::GraphicApi & drawable,

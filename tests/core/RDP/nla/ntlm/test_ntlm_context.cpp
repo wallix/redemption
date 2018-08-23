@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/RDP/nla/ntlm/ntlm_context.hpp"
-#include "test_only/check_sig.hpp"
 
 #include "test_only/lcg_random.hpp"
 

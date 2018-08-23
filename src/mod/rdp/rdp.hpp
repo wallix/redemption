@@ -26,8 +26,6 @@
 
 #include "acl/auth_api.hpp"
 
-#include "core/FSCC/FileInformation.hpp"
-
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
 #include "core/RDP/RefreshRectPDU.hpp"
@@ -66,12 +64,9 @@
 
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/fastpath.hpp"
-#include "core/RDP/gcc.hpp"
 #include "core/RDP/lic.hpp"
-#include "core/RDP/logon.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
-#include "core/RDP/nego.hpp"
 #include "core/RDP/protocol.hpp"
 #include "core/RDP/remote_programs.hpp"
 #include "core/RDP/rdp_pointer.hpp"
@@ -86,7 +81,6 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-#include "core/server_notifier_api.hpp"
 #include "mod/rdp/rdp_metrics.hpp"
 
 #include "mod/internal/client_execute.hpp"
@@ -106,15 +100,11 @@
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
 
-#include "system/ssl_calls.hpp"
-
 #include "utils/authorization_channels.hpp"
-#include "utils/colors.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
-#include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/splitter.hpp"
 
 #include <cstdlib>

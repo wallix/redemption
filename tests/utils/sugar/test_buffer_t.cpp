@@ -25,8 +25,6 @@
 
 #include "utils/sugar/buffer_t.hpp"
 
-#include <type_traits>
-
 
 RED_AUTO_TEST_CASE(TestBufferT)
 {

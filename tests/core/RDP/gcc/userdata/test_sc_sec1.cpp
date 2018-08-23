@@ -24,7 +24,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "utils/crypto/ssl_lib.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/gcc/userdata/sc_sec1.hpp"
 

@@ -27,4 +27,12 @@
 
 RED_AUTO_TEST_CASE(TestUnderlyingCast)
 {
+    enum E1 : char {A};
+    enum E2 : long {B};
+    auto a = underlying_cast(A);
+    auto b = underlying_cast(B);
+    char* ap = &a;
+    long* bp = &b;
+    (void)ap;
+    (void)bp;
 }

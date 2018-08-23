@@ -21,9 +21,7 @@
 #define RED_TEST_MODULE TestVNCHextileEncoder
 #include "system/redemption_unit_tests.hpp"
 #include "test_only/fake_graphic.hpp"
-#include "test_only/check_sig.hpp"
 
-#include "test_only/transport/test_transport.hpp"
 #include "mod/vnc/encoder/hextile.hpp"
 
 

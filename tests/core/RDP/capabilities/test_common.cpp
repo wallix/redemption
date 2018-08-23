@@ -25,4 +25,5 @@
 
 RED_AUTO_TEST_CASE(TestXXX)
 {
+    Capability(CAPSTYPE_GENERAL, 0);
 }

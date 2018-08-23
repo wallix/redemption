@@ -22,15 +22,13 @@
 #define RED_TEST_MODULE TestWidgetSelector
 #include "system/redemption_unit_tests.hpp"
 
-
-#include "utils/log.hpp"
-
 #include "core/font.hpp"
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/check_sig.hpp"
 
 #include "test_only/mod/fake_draw.hpp"
+
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector)
 {

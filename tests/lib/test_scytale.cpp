@@ -22,11 +22,9 @@
 #define RED_TEST_MODULE Testscytale
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"
-#include <string>
+
 
 extern "C" {
     inline

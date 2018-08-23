@@ -19,13 +19,12 @@
  */
 
 #include "transport/mwrm_reader.hpp"
-#include "transport/crypto_transport.hpp"
-#include "utils/sugar/std_stream_proto.hpp"
 #include "utils/chex_to_int.hpp"
 
 #include <algorithm>
 
 #include <cerrno>
+
 
 // buffer must be able to contain line
 // if no line at end of buffer apply some memmove

@@ -27,4 +27,12 @@
 
 RED_AUTO_TEST_CASE(TestCast)
 {
+    using Ptr = void*;
+
+    char const* a = "";
+    uint8_t const* b = byte_ptr_cast(a);
+    char const* c = char_ptr_cast(b);
+
+    RED_CHECK_EQ(Ptr(a), Ptr(b));
+    RED_CHECK_EQ(Ptr(b), Ptr(c));
 }

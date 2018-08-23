@@ -20,11 +20,7 @@
 
 #define RED_TEST_MODULE TestVNC
 #include "system/redemption_unit_tests.hpp"
-#include "test_only/fake_graphic.hpp"
-#include "test_only/check_sig.hpp"
 
-#include "core/client_info.hpp"
-#include "core/font.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "test_only/transport/test_transport.hpp"
 

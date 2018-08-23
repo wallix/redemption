@@ -18,15 +18,15 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#include "utils/png.hpp"
 #include "cxx/cxx.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
-#include "utils/drawable.hpp"
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/buf_maker.hpp"
 #include "utils/file.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/png.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/buf_maker.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cassert>
 #include <cstdint>

@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "main/version.hpp"
 #include "utils/pp.hpp"
 
 inline char const* redemption_info_version() noexcept

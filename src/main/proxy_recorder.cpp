@@ -27,8 +27,6 @@
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/listen.hpp"
 #include "core/server_notifier_api.hpp"
-#include "core/session_reactor.hpp"
-#include "main/version.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/cli.hpp"
