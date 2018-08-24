@@ -30,7 +30,7 @@
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 
 
 #include "core/RDP/clipboard.hpp"
@@ -134,7 +134,7 @@ public:
 class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
 
 public:
-    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
+    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {(void)config;}
 
     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 

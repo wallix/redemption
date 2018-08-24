@@ -210,7 +210,6 @@ public:
 
 
 
-
 public:
     ClientRedemption(SessionReactor & session_reactor,
                      char* argv[], int argc, RDPVerbose verbose,
@@ -234,14 +233,14 @@ public:
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound, this->rDPSoundConfig)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard, this)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
         , local_IP("unknow_local_IP")
     {
-//         SSL_load_error_strings();
-//         SSL_library_init();
+        SSL_load_error_strings();
+        SSL_library_init();
 
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
@@ -265,7 +264,7 @@ public:
             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
-            this->impl_graphic->set_drawn_client(this);
+            this->impl_graphic->set_drawn_client(this, this);
         } else {
             LOG(LOG_WARNING, "No graphic output implementation.");
         }
@@ -538,7 +537,7 @@ public:
                     mod_rdp_params.enable_new_pointer              = true;
                     mod_rdp_params.enable_glyph_cache              = true;
                     mod_rdp_params.enable_ninegrid_bitmap          = true;
-                    std::string allow_channels = "*";
+                    std::string allow_channels                     = "*";
                     mod_rdp_params.allow_channels                  = &allow_channels;
                     mod_rdp_params.deny_channels = nullptr;
                     mod_rdp_params.enable_rdpdr_data_analysis = false;

@@ -22,8 +22,8 @@
 
 #include "utils/log.hpp"
 
-
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
+
 
 
 class ClientHeadlessSocket : public ClientInputSocketAPI {
@@ -44,7 +44,6 @@ public:
                 std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
             }
         }
-
         //std::cout << " Early negociations completes.\n";
 
         return true;

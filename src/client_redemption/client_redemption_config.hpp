@@ -48,6 +48,7 @@ private:
 public:
     RDPVerbose        verbose;
     //bool                _recv_disconnect_ultimatum;
+    ClientInfo           info;
     bool wab_diag_question;
 
     RDPClipboardConfig rDPClipboardConfig;
@@ -61,6 +62,30 @@ public:
     std::chrono::milliseconds time_out_disconnection;
     int keep_alive_freq;
 
+    //  Remote App
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+    std::string full_cmd_line;
+
+    struct AccountData {
+        std::string title;
+        std::string IP;
+        std::string name;
+        std::string pwd;
+        int port = 0;
+        int options_profil = 0;
+        int index = -1;
+        int protocol = NO_PROTOCOL;
+    }    _accountData[MAX_ACCOUNT_DATA];
+    int  _accountNB = 0;
+    bool _save_password_account = false;
+    int  _last_target_index = 0;
+
+    int current_user_profil = 0;
+
+    uint8_t mod_state = MOD_RDP;
+
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
@@ -73,13 +98,10 @@ public:
     , time_out_disconnection(5000)
     , keep_alive_freq(100)
     {
-        SSL_load_error_strings();
-        SSL_library_init();
-
         this->setDefaultConfig();
 
-        this->info.width  = rdp_width;
-        this->info.height = rdp_height;
+        this->info.width  = 800;
+        this->info.height = 600;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = false;
         this->info.brush_cache_code = 0;
@@ -143,7 +165,6 @@ public:
         this->openWindowsData();
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
         this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
-;
 
         //this->parse_options(argc, argv);
 
@@ -184,7 +205,6 @@ public:
                 this->port = n;
                 this->connection_info_cmd_complete += PORT_GOT;
             })),
-
 
             cli::helper("========= Verbose ========="),
 

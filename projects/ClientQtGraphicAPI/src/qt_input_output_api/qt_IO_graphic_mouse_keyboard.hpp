@@ -59,7 +59,6 @@
 
 
 
-
 class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInputMouseKeyboardAPI
 {
 
@@ -103,10 +102,11 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    virtual void set_drawn_client(ClientRedemptionAPI * client) override {
+    virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) override {
         this->drawn_client = client;
+        this->config = config;
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
-        this->qtRDPKeymap.setKeyboardLayout(this->drawn_client->info.keylayout);
+        this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
 
         this->qtRDPKeymap.clearCustomKeyCode();
         for (size_t i = 0; i < this->drawn_client->keyCustomDefinitions.size(); i++) {
@@ -114,7 +114,7 @@ public:
             this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
         }
 
-        this->form = new QtForm(this, this->client);
+        this->form = new QtForm(this->config, this, this->client);
     }
 
     virtual void show_screen() override {
@@ -162,12 +162,12 @@ public:
 
     virtual void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(this->drawn_client, this, map);
+        this->screen = new RDPQtScreen(this->config, this->drawn_client, this, map);
     }
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(this->client->get_mwrm_filename()), 0);
+        this->screen = new ReplayQtScreen(this->config, this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(this->client->get_mwrm_filename()), 0);
     }
 
     QWidget * get_static_qwidget() {
@@ -189,7 +189,7 @@ public:
     }
 
     virtual void update_keylayout() override {
-        this->qtRDPKeymap.setKeyboardLayout(this->client->info.keylayout);
+        this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
     }
 
     void readError(std::string const & movie_path) {
@@ -210,7 +210,7 @@ public:
 
     virtual void init_form() override {
         if (this->form) {
-            if (this->client->mod_state != ClientRedemptionAPI::MOD_RDP_REPLAY) {
+            if (this->config->mod_state != ClientRedemptionAPI::MOD_RDP_REPLAY) {
                 this->form->init_form();
                 this->form->set_IPField(this->client->target_IP);
                 this->form->set_portField(this->client->port);
@@ -228,8 +228,10 @@ public:
     //////////////////////////
 
     virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
+        LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->drawn_client, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->drawn_client, this, w, h, x, y, &(this->cache));
+        LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
     virtual void show_screen(uint32_t id) override {
@@ -309,8 +311,8 @@ public:
 
 //      void setScreenDimension() {
 //         if (!this->is_spanning) {
-//             this->_screen_dimensions[0].cx = this->client->info.width;
-//             this->_screen_dimensions[0].cy = this->client->info.height;
+//             this->_screen_dimensions[0].cx = this->config->info.width;
+//             this->_screen_dimensions[0].cy = this->config->info.height;
 //
 //         } else {
 //
@@ -319,31 +321,31 @@ public:
 //             if (this->_monitorCount > screen_count) {
 //                 this->_monitorCount = screen_count;
 //             }
-//             this->client->info.width  = 0;
-//             this->client->info.height = 0;
-//             this->client->info.cs_monitor.monitorCount = this->_monitorCount;
+//             this->config->info.width  = 0;
+//             this->config->info.height = 0;
+//             this->config->info.cs_monitor.monitorCount = this->_monitorCount;
 //
 //             for (int i = 0; i < this->_monitorCount; i++) {
 //                 const QRect rect = desktop->screenGeometry(i);
-//                 this->_screen_dimensions[i].x   = this->client->info.width;
-//                 this->client->info.cs_monitor.monitorDefArray[i].left   = this->client->info.width;
-//                 this->client->info.width  += rect.width();
+//                 this->_screen_dimensions[i].x   = this->config->info.width;
+//                 this->config->info.cs_monitor.monitorDefArray[i].left   = this->config->info.width;
+//                 this->config->info.width  += rect.width();
 //
-//                 if (this->client->info.height < rect.height()) {
-//                     this->client->info.height = rect.height();
+//                 if (this->config->info.height < rect.height()) {
+//                     this->config->info.height = rect.height();
 //                 }
-//                 this->client->info.cs_monitor.monitorDefArray[i].top    = rect.top();
-//                 this->client->info.cs_monitor.monitorDefArray[i].right  = this->client->info.width + rect.width() - 1;
-//                 this->client->info.cs_monitor.monitorDefArray[i].bottom = rect.height() - 1 - 3*Screen_Qt::BUTTON_HEIGHT;
+//                 this->config->info.cs_monitor.monitorDefArray[i].top    = rect.top();
+//                 this->config->info.cs_monitor.monitorDefArray[i].right  = this->config->info.width + rect.width() - 1;
+//                 this->config->info.cs_monitor.monitorDefArray[i].bottom = rect.height() - 1 - 3*Screen_Qt::BUTTON_HEIGHT;
 //
-//                 this->client->info.cs_monitor.monitorDefArray[i].flags  = 0;
+//                 this->config->info.cs_monitor.monitorDefArray[i].flags  = 0;
 //
 //                 this->_screen_dimensions[i].y   = 0;
 //                 this->_screen_dimensions[i].cx  = rect.width();
 //                 this->_screen_dimensions[i].cy  = rect.height() - 3*Screen_Qt::BUTTON_HEIGHT;
 //             }
-//             this->client->info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
-//             this->client->info.height -= 3*Screen_Qt::BUTTON_HEIGHT;
+//             this->config->info.cs_monitor.monitorDefArray[0].flags  = GCC::UserData::CSMonitor::TS_MONITOR_PRIMARY;
+//             this->config->info.height -= 3*Screen_Qt::BUTTON_HEIGHT;
 //         }
 //     }
 
@@ -394,7 +396,7 @@ private:
             return;
         }
 
-        if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->update_view();
@@ -413,15 +415,15 @@ private:
             return FrontAPI::ResizeResult::fail;
         }
 
-        switch (this->client->mod_state) {
+        switch (this->config->mod_state) {
 
             case ClientRedemptionAPI::MOD_RDP:
-                if (this->client->info.width == width && this->client->info.height == height) {
+                if (this->config->info.width == width && this->config->info.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->drawn_client, this, &(this->cache));
                 this->screen->show();
                     break;
 
@@ -433,7 +435,7 @@ private:
                 this->client->vnc_conf.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->drawn_client, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->drawn_client, this, &(this->cache));
                 this->screen->show();
                     break;
 
@@ -454,7 +456,7 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
+                        this->screen = new ReplayQtScreen(this->config, this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
                     }
@@ -463,7 +465,7 @@ private:
                     break;
         }
 
-        this->client->info.bpp = bpp;
+        this->config->info.bpp = bpp;
 
         return FrontAPI::ResizeResult::instant_done;
     }
@@ -483,7 +485,7 @@ private:
 
 
 
-        if (this->drawn_client->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
@@ -533,9 +535,9 @@ private:
 //         QRgb asked(color);
 //
 //         QRgb top_left  = image.pixel(0, 0);
-//         QRgb top_right = image.pixel(this->client->info.width-1, 0);
-//         QRgb bot_left  = image.pixel(0, this->client->info.height-1);
-//         QRgb bot_right = image.pixel(this->client->info.width-1, this->client->info.height-1);
+//         QRgb top_right = image.pixel(this->config->info.width-1, 0);
+//         QRgb bot_left  = image.pixel(0, this->config->info.height-1);
+//         QRgb bot_right = image.pixel(this->config->info.width-1, this->config->info.height-1);
 //
 //         //LOG(LOG_INFO, "         top_left = 0x%04x top_right = 0x%04x bot_left = 0x%04x bot_right = 0x%04x asked_color = 0x%04x, top_left, top_right, bot_left, bot_right, asked);
 //
@@ -546,20 +548,20 @@ private:
 // //             LOG(LOG_INFO, "CLIENT >> answer_question top_left");
 //
 //         } else if (top_right == asked) {
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->client->info.width-1, 0, &(this->keymap));
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->client->info.width-1, 0, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->config->info.width-1, 0, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->config->info.width-1, 0, &(this->keymap));
 //             this->wab_diag_question = false;
 // //             LOG(LOG_INFO, "CLIENT >> answer_question top_right");
 //
 //         } else if (bot_left == asked) {
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, this->client->info.height-1, &(this->keymap));
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, this->client->info.height-1, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, 0, this->config->info.height-1, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, 0, this->config->info.height-1, &(this->keymap));
 //             this->wab_diag_question = false;
 // //             LOG(LOG_INFO, "CLIENT >> answer_question bot_left");
 //
 //         } else if (bot_right == asked) {
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->client->info.width-1, this->client->info.height-1, &(this->keymap));
-//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->client->info.width-1, this->client->info.height-1, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, this->config->info.width-1, this->config->info.height-1, &(this->keymap));
+//             this->mod->rdp_input_mouse(MOUSE_FLAG_BUTTON1, this->config->info.width-1, this->config->info.height-1, &(this->keymap));
 //             this->wab_diag_question = false;
 // //             LOG(LOG_INFO, "CLIENT >> answer_question bot_right");
 //
@@ -647,12 +649,12 @@ private:
 
     QColor u32_to_qcolor(RDPColor color, gdi::ColorCtx color_ctx) {
 
-        if (uint8_t(this->client->info.bpp) != color_ctx.depth().to_bpp()) {
+        if (uint8_t(this->config->info.bpp) != color_ctx.depth().to_bpp()) {
             BGRColor d = color_decode(color, color_ctx);
-            color      = color_encode(d, uint8_t(this->client->info.bpp));
+            color      = color_encode(d, uint8_t(this->config->info.bpp));
         }
 
-        BGRColor bgr = color_decode(color, this->client->info.bpp, this->client->mod_palette);
+        BGRColor bgr = color_decode(color, this->config->info.bpp, this->client->mod_palette);
 
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
@@ -678,8 +680,8 @@ private:
 //             if (bitmap.bpp() == 24) {
 //                 srcBitmap = srcBitmap.rgbSwapped();
 //             }
-//             if (bitmap.bpp() != this->client->info.bpp) {
-//                 srcBitmap = srcBitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+//             if (bitmap.bpp() != this->config->info.bpp) {
+//                 srcBitmap = srcBitmap.convertToFormat(this->bpp_to_QFormat(this->config->info.bpp, false));
 //             }
 //             srcBitmap = srcBitmap.mirrored(false, true);
 //             const uchar * srcData = srcBitmap.constBits();
@@ -1022,8 +1024,8 @@ private:
             qbitmap = qbitmap.rgbSwapped();
         }
 
-        if (bmp.bpp() != this->client->info.bpp) {
-            qbitmap = qbitmap.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+        if (bmp.bpp() != this->config->info.bpp) {
+            qbitmap = qbitmap.convertToFormat(this->bpp_to_QFormat(this->config->info.bpp, false));
             //LOG(LOG_INFO, "RDPBitmapData convertToFormat");
         }
 
@@ -1202,8 +1204,8 @@ private:
                     }
 
                     QImage image(data.get(), mincx, mincy, srcBitmap.format());
-                    if (image.depth() != this->client->info.bpp) {
-                        image = image.convertToFormat(this->bpp_to_QFormat(this->client->info.bpp, false));
+                    if (image.depth() != this->config->info.bpp) {
+                        image = image.convertToFormat(this->bpp_to_QFormat(this->config->info.bpp, false));
                     }
                     QRect trect(drect.x, drect.y, mincx, mincy-1);
 

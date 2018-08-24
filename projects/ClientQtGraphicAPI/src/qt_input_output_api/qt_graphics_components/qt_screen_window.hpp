@@ -62,6 +62,7 @@ public:
         READING_BAR_H = 12,
     };
 
+    ClientRedemptionConfig * config;
     ClientRedemptionAPI       * _front;
     ClientInputMouseKeyboardAPI * impl_input;
 
@@ -79,8 +80,9 @@ public:
      QRect clip;
 
 
-    QtScreen(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
+    QtScreen(ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
     : QWidget()
+    , config(config)
     , _front(front)
     , impl_input(impl_input)
     , _width(w)
@@ -125,7 +127,7 @@ public:
         int x = e->x();
         int y = e->y();
 
-        if (this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             QPoint mouseLoc = QCursor::pos();
             x = mouseLoc.x();
             y = mouseLoc.y();
@@ -158,7 +160,7 @@ public:
             int x = std::max(0, mouseEvent->x());
             int y = std::max(0, mouseEvent->y());
 
-            if (this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+            if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
                 QPoint mouseLoc = QCursor::pos();
                 x = std::max(0, mouseLoc.x());
                 y = std::max(0, mouseLoc.y());
@@ -204,7 +206,7 @@ public:
         int x = e->x();
         int y = e->y();
 
-        if (this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
             QPoint mouseLoc = QCursor::pos();
             x = mouseLoc.x();
             y = mouseLoc.y();
@@ -236,8 +238,8 @@ public:
 
 
 
-    RemoteAppQtScreen (ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(front, impl_input, cache, width, height)
+    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(config, front, impl_input, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -285,8 +287,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
-        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
+    RDPQtScreen (ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
+        : QtScreen(config, front, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -412,8 +414,8 @@ public:
 
 
 public:
-    ReplayQtScreen (ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie)
-        : QtScreen(front, impl_input, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie)
+        : QtScreen(config, front, impl_input, cache, cache->width(), cache->height())
 
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)

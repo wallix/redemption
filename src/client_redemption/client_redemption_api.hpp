@@ -81,13 +81,6 @@ public:
     const std::string    DATA_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_CONF_PATH;
 
     mod_api            * mod = nullptr;
-    ClientInfo           info;
-
-    //  Remote App
-    std::string source_of_ExeOrFile;
-    std::string source_of_WorkingDir;
-    std::string source_of_Arguments;
-    std::string full_cmd_line;
 
     struct MouseData {
         uint16_t x = 0;
@@ -125,23 +118,9 @@ public:
         MAX_ACCOUNT_DATA = 15
     };
 
-    struct AccountData {
-        std::string title;
-        std::string IP;
-        std::string name;
-        std::string pwd;
-        int port = 0;
-        int options_profil = 0;
-        int index = -1;
-        int protocol = NO_PROTOCOL;
-    }    _accountData[MAX_ACCOUNT_DATA];
-    int  _accountNB = 0;
-    bool _save_password_account = false;
-    int  _last_target_index = 0;
 
-    int current_user_profil = 0;
 
-    uint8_t mod_state = MOD_RDP;
+
 
     struct UserProfil {
         int id;

@@ -29,7 +29,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
@@ -156,10 +156,9 @@ class ClientChannelRemoteAppManager {
     RDPVerbose verbose;
 
     ClientRedemptionAPI * client;
-
     ClientOutputGraphicAPI * impl_graphic;
-
     ClientInputMouseKeyboardAPI * impl_input;
+    ClientRedemptionConfig * config;
 
 public:
 
@@ -182,11 +181,13 @@ public:
     ClientChannelRemoteAppManager(RDPVerbose verbose,
                                   ClientRedemptionAPI * client,
                                   ClientOutputGraphicAPI * impl_graphic,
-                                  ClientInputMouseKeyboardAPI * impl_input)
+                                  ClientInputMouseKeyboardAPI * impl_input,
+                                  ClientRedemptionConfig * config)
       : verbose(verbose)
       , client(client)
       , impl_graphic(impl_graphic)
       , impl_input(impl_input)
+      , config(config)
       {}
 
     void clear() {
@@ -461,8 +462,8 @@ public:
                     out_stream.out_uint32_le(SPI_SETWORKAREA);
                     out_stream.out_uint16_le(0);
                     out_stream.out_uint16_le(0);
-                    out_stream.out_uint16_le(this->client->info.width);
-                    out_stream.out_uint16_le(this->client->info.height);
+                    out_stream.out_uint16_le(this->config->info.width);
+                    out_stream.out_uint16_le(this->config->info.height);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -679,15 +680,15 @@ public:
                     {
                     StaticOutStream<1600> out_stream;
 
-                    const char * source_of_ExeOrFile = this->client->source_of_ExeOrFile.c_str();
+                    const char * source_of_ExeOrFile = this->config->source_of_ExeOrFile.c_str();
                     uint8_t unicode_ExeOrFile[500];
                     const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(byte_ptr_cast(source_of_ExeOrFile), unicode_ExeOrFile, 500);
 
-                    const char * source_of_WorkingDir = this->client->source_of_WorkingDir.c_str();
+                    const char * source_of_WorkingDir = this->config->source_of_WorkingDir.c_str();
                     uint8_t unicode_WorkingDir[500];
                     const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(byte_ptr_cast(source_of_WorkingDir), unicode_WorkingDir, 500);
 
-                    const char * source_of_Arguments = this->client->source_of_Arguments.c_str();
+                    const char * source_of_Arguments = this->config->source_of_Arguments.c_str();
                     uint8_t unicode_Arguments[500];
                     const size_t size_of_unicode_Arguments = ::UTF8toUTF16(byte_ptr_cast(source_of_Arguments), unicode_Arguments, 500);
 

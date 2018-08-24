@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
@@ -30,6 +30,7 @@ class ClientOutputGraphicAPI : public gdi::GraphicApi
 {
 public:
     ClientRedemptionAPI * drawn_client;
+    ClientRedemptionConfig * config;
 
     const int screen_max_width;
     const int screen_max_height;
@@ -37,15 +38,15 @@ public:
     bool is_pre_loading;
 
     ClientOutputGraphicAPI(int max_width, int max_height)
-      : drawn_client(nullptr),
-		screen_max_width(max_width)
+      : drawn_client(nullptr)
+      , screen_max_width(max_width)
       , screen_max_height(max_height)
       , is_pre_loading(false) {
     }
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientRedemptionAPI * client) {
+    virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) {
         this->drawn_client = client;
     }
 

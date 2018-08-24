@@ -28,7 +28,7 @@
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 
@@ -71,6 +71,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
+
     int q_key_code;
     QLabel label;
     bool key_not_assigned;
@@ -109,6 +110,7 @@ public:
         RDP,
         VNC
     };
+    ClientRedemptionConfig * config;
     ClientRedemptionAPI   * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
@@ -155,8 +157,9 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QWidget(parent)
+        , config(config)
         , _front(front)
         , controllers(controllers)
         , _width(410)
@@ -202,7 +205,7 @@ public:
 //         , key_editting(true)/**/
     {
         this->setFixedSize(this->_width, this->_height);
-        this->_front->setClientInfo();
+        this->config->setClientInfo();
         this->_layout = new QGridLayout(this);
 
 
@@ -307,7 +310,7 @@ public:
     	this->_recordingCB.setChecked(this->_front->is_recording);
 
         // Keyboard tab
-        int indexLanguage = this->_languageComboBox.findData(this->_front->info.keylayout);
+        int indexLanguage = this->_languageComboBox.findData(this->config->info.keylayout);
         if ( indexLanguage != -1 ) {
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
@@ -450,7 +453,7 @@ public Q_SLOTS:
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
             this->_front->deleteCurrentProtile();
-            this->profilComboBox.removeItem(this->_front->current_user_profil);
+            this->profilComboBox.removeItem(this->config->current_user_profil);
             this->changeProfil(0);
         }
     }
@@ -461,7 +464,7 @@ public Q_SLOTS:
     }
 
     void changeProfil(int index) {
-        this->_front->current_user_profil = this->profilComboBox.itemData(index).toInt();
+        this->config->current_user_profil = this->profilComboBox.itemData(index).toInt();
         this->_front->setClientInfo();
         this->setConfigValues();
     }
@@ -549,8 +552,8 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-        : QtOptions( front, controllers, parent)
+    QtRDPOptions(ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+        : QtOptions(config, front, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
         , _labelTls("TLS :", this)
@@ -635,7 +638,7 @@ public:
 
         this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
 
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
         this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
 
 
@@ -685,7 +688,7 @@ public:
         // General tab
         this->_tlsBox.setChecked(this->_front->modRDPParamsData.enable_tls);
         this->_nlaBox.setChecked(this->_front->modRDPParamsData.enable_nla);
-        int indexProfil = this->profilComboBox.findData(this->_front->current_user_profil);
+        int indexProfil = this->profilComboBox.findData(this->config->current_user_profil);
         if ( indexProfil != -1 ) {
             this->profilComboBox.setCurrentIndex(indexProfil);
         }
@@ -697,13 +700,13 @@ public:
         this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
         this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
         this->remoteappCheckBox.setChecked(this->_front->enable_shared_remoteapp);
-        this->remoteapp_cmd.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_cmd.setText(this->_front->full_cmd_line.c_str());
-        this->remoteapp_workin_dir.setEnabled(this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_workin_dir.setText(this->_front->source_of_WorkingDir.c_str());
+        this->remoteapp_cmd.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_cmd.setText(this->config->full_cmd_line.c_str());
+        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setText(this->config->source_of_WorkingDir.c_str());
 
         // View tab
-        int indexBpp = this->_bppComboBox.findData(this->_front->info.bpp);
+        int indexBpp = this->_bppComboBox.findData(this->config->info.bpp);
         if ( indexBpp != -1 ) {
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
@@ -712,25 +715,25 @@ public:
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
         this->_spanCheckBox.setChecked(this->_front->is_spanning);
-        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
+        if (this->config->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
             this->_wallpapperCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) {
+        if (this->config->info.rdp5_performanceflags & PERF_DISABLE_FULLWINDOWDRAG) {
             this->windowdragCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) {
+        if (this->config->info.rdp5_performanceflags & PERF_DISABLE_MENUANIMATIONS) {
             this->menuanimationsCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSOR_SHADOW) {
+        if (this->config->info.rdp5_performanceflags & PERF_DISABLE_CURSOR_SHADOW) {
             this->cursorShadowCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_DISABLE_CURSORSETTINGS) {
+        if (this->config->info.rdp5_performanceflags & PERF_DISABLE_CURSORSETTINGS) {
             this->cursorsettingsCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_FONT_SMOOTHING) {
+        if (this->config->info.rdp5_performanceflags & PERF_ENABLE_FONT_SMOOTHING) {
             this->fontSmoothingCheckBox.setCheckState(Qt::Checked);
         }
-        if (this->_front->info.rdp5_performanceflags & PERF_ENABLE_DESKTOP_COMPOSITION) {
+        if (this->config->info.rdp5_performanceflags & PERF_ENABLE_DESKTOP_COMPOSITION) {
             this->desktopCompositionCheckBox.setCheckState(Qt::Checked);
         }
     }
@@ -750,18 +753,18 @@ public:
         if (new_profil) {
             this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
 
-            this->_front->current_user_profil = this->_front->userProfils.size()-1;
+            this->config->current_user_profil = this->_front->userProfils.size()-1;
         } else {
-            this->_front->current_user_profil = this->profilComboBox.currentIndex();
+            this->config->current_user_profil = this->profilComboBox.currentIndex();
         }
-        _front->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        _front->update_keylayout();
-        _front->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
-        _front->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
-        _front->info.console_session = this->_consoleBox.isChecked();
-        _front->is_full_capturing = (this->_captureReplayCombo.currentText() == "capture");
-        _front->is_full_replaying = (this->_captureReplayCombo.currentText() == "replay");
-        _front->full_capture_file_name = this->_captureFileEntry.text().toStdString();
+        this->config->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->config->update_keylayout();
+        this->config->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
+        this->config->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
+        this->config->info.console_session = this->_consoleBox.isChecked();
+        this->config->is_full_capturing = (this->_captureReplayCombo.currentText() == "capture");
+        this->config->is_full_replaying = (this->_captureReplayCombo.currentText() == "replay");
+        this->config->full_capture_file_name = this->_captureFileEntry.text().toStdString();
 
 
         // Services tab
@@ -775,45 +778,45 @@ public:
         this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
         if (this->remoteappCheckBox.isChecked()) {
             this->_front->enable_shared_remoteapp = true;
-            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
+            this->config->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
             this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
-            this->_front->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
+            this->config->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
             this->_front->enable_shared_remoteapp = false;
-            this->_front->mod_state = ClientRedemptionAPI::MOD_RDP;
+            this->config->mod_state = ClientRedemptionAPI::MOD_RDP;
         }
 
         //  View tab
-        this->_front->info.bpp = this->_bppComboBox.currentText().toInt();
+        this->config->info.bpp = this->_bppComboBox.currentText().toInt();
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
         this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
         this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
         this->_front->is_spanning = this->_spanCheckBox.isChecked();
-        this->_front->info.rdp5_performanceflags = 0;
+        this->config->info.rdp5_performanceflags = 0;
         if (this->_wallpapperCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_WALLPAPER;
+            this->config->info.rdp5_performanceflags |= PERF_DISABLE_WALLPAPER;
         }
         if (this->windowdragCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
+            this->config->info.rdp5_performanceflags |= PERF_DISABLE_FULLWINDOWDRAG;
         }
         if (this->menuanimationsCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_MENUANIMATIONS;
+            this->config->info.rdp5_performanceflags |= PERF_DISABLE_MENUANIMATIONS;
         }
         if (this->cursorShadowCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSOR_SHADOW;
+            this->config->info.rdp5_performanceflags |= PERF_DISABLE_CURSOR_SHADOW;
         }
         if (this->cursorsettingsCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_DISABLE_CURSORSETTINGS;
+            this->config->info.rdp5_performanceflags |= PERF_DISABLE_CURSORSETTINGS;
         }
         if (this->fontSmoothingCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_ENABLE_FONT_SMOOTHING;
+            this->config->info.rdp5_performanceflags |= PERF_ENABLE_FONT_SMOOTHING;
         }
         if (this->desktopCompositionCheckBox.isChecked()) {
-            this->_front->info.rdp5_performanceflags |= PERF_ENABLE_DESKTOP_COMPOSITION;
+            this->config->info.rdp5_performanceflags |= PERF_ENABLE_DESKTOP_COMPOSITION;
         }
-        this->_front->info.console_session = this->_consoleBox.isChecked();
+        this->config->info.console_session = this->_consoleBox.isChecked();
     }
 
 
@@ -856,8 +859,8 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-      : QtOptions( front, controllers, parent)
+    QtVNCOptions(ClientRedemptionConfig* config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+      : QtOptions(config, front, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
     {
