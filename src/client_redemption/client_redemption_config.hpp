@@ -59,6 +59,8 @@ public:
     bool persist;
 
     std::chrono::milliseconds time_out_disconnection;
+    int keep_alive_freq;
+
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
@@ -69,6 +71,7 @@ public:
     , quick_connection_test(true)
     , persist(false)
     , time_out_disconnection(5000)
+    , keep_alive_freq(100)
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -239,7 +242,10 @@ public:
             }),
 
             cli::option("rdp").help("Set connection mod to RDP (default).")
-            .action([this](){ this->mod_state = MOD_VNC; }),
+            .action([this](){
+                this->mod_state = MOD_RDP;
+                this->port = 3389;
+            }),
 
             cli::option("remote-app").help("Connection as remote application.")
             .action(cli::on_off_bit_location<MOD_RDP_REMOTE_APP>(this->mod_state)),
@@ -304,6 +310,11 @@ public:
 
             cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
             .action(cli::on_off_location(this->vnc_conf.is_apple)),
+
+
+            cli::option("keep_alive_frequence")
+            .help("Set timeout to send keypress to keep the session alive")
+            .action(cli::arg([&](int t){ keep_alive_freq = t; })),
 
 
             cli::helper("========= Client ========="),

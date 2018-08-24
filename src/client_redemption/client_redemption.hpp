@@ -208,7 +208,6 @@ public:
 
     std::string       local_IP;
 
-    int keep_alive_freq;
 
 
 
@@ -240,8 +239,10 @@ public:
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
         , local_IP("unknow_local_IP")
-        , keep_alive_freq(100)
     {
+//         SSL_load_error_strings();
+//         SSL_library_init();
+
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
         } else {

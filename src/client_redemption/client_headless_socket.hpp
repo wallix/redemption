@@ -24,8 +24,6 @@
 
 
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-//#include "client_redemption/client_input_output_api/client"
 
 
 class ClientHeadlessSocket : public ClientInputSocketAPI {
@@ -56,18 +54,18 @@ public:
 };
 
 
-class ClientHeadlessInput : public ClientInputMouseKeyboardAPI
-{
-    virtual void update_keylayout() override {}
-
-    virtual void init_form() override {}
-
-
-    // TODO string_view
-    void virtual keyPressEvent(const int /*key*/, std::string const& /*text*/) override {}
-
-    // TODO string_view
-    void virtual keyReleaseEvent(const int /*key*/, std::string const& /*text*/) override {}
-};
+// class ClientHeadlessInput : public ClientInputMouseKeyboardAPI
+// {
+//     virtual void update_keylayout() override {}
+//
+//     virtual void init_form() override {}
+//
+//
+//     // TODO string_view
+//     void virtual keyPressEvent(const int /*key*/, std::string const& /*text*/) override {}
+//
+//     // TODO string_view
+//     void virtual keyReleaseEvent(const int /*key*/, std::string const& /*text*/) override {}
+// };
 
 

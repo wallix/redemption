@@ -98,7 +98,7 @@ public:
 public Q_SLOTS:
     void call_draw_event_data() {
         // LOG(LOG_DEBUG, "draw_event_data");
-        if (this->client->mod) {
+        if (this->_callback) {
             this->client->callback(false);
             this->prepare_timer_event();
         }
@@ -106,7 +106,7 @@ public Q_SLOTS:
 
     void call_draw_event_timer() {
         // LOG(LOG_DEBUG, "draw_event_timer");
-        if (this->client->mod) {
+        if (this->_callback) {
             this->client->callback(true);
             this->prepare_timer_event();
         }
