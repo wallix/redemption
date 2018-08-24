@@ -93,8 +93,6 @@ project redemption_qt_client
     <conditional>@flags
     <conditional>@disable-buggy-warn
 
-    <cxxflags>-std=c++17
-
     $(CXXFLAGS)
 
     # <cxxflags>-fPIC
