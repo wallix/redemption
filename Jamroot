@@ -13,9 +13,16 @@ if $(NO_FFMPEG) = 1 {
     REDEMPTION_CXXFLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
 }
 
+REDEMPTION_CXXFLAGS +=
+    <define>_FILE_OFFSET_BITS=64
+    <define>_LARGEFILE64_SOURCE
+
+    <define>__STDC_FORMAT_MACROS
+    <define>ZLIB_CONST
+;
 
 variant coverage : debug : ;
-variant san : debug : <cxx-libcxx-debug>allow_broken_abi <cxx-sanitizers>on ;
+variant san : debug : <variant>debug <cxx-libcxx-debug>allow_broken_abi <cxx-sanitizers>on ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
 
@@ -52,12 +59,6 @@ project redemption
     # <cxxflags>-fno-rtti
 
     $(REDEMPTION_CXXFLAGS)
-
-    <define>_FILE_OFFSET_BITS=64
-    <define>_LARGEFILE64_SOURCE
-
-    <define>__STDC_FORMAT_MACROS
-    <define>ZLIB_CONST
 
    : default-build release
 ;
