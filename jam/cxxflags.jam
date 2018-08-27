@@ -16,7 +16,9 @@ CXXFLAGS =
 #
 
 import feature : feature ;
-import toolset ;
+import modules ;
+
+CXX_BJAM_YEAR_VERSION = [ modules.peek : JAMVERSION ] ;
 
 feature <cxx-color> : default auto never always : incidental ;
 feature <cxx-coverage> : off on : propagated ;
@@ -33,6 +35,20 @@ feature <cxx-sanitizers-extra> : off thread pointer : propagated ;
 feature <cxx-stack-protector> : off on strong all : propagated ;
 feature <cxx-suggests> : off on : incidental ;
 feature <cxx-warnings> : on off strict : incidental ;
+
+if $(CXX_BJAM_YEAR_VERSION) < 2016.00 {
+  import toolset ;
+  toolset.flags cxx-coverage CXX_COVERAGE : <cxx-coverage> ;
+  toolset.flags cxx-fast-math CXX_FAST-MATH : <cxx-fast-math> ;
+  toolset.flags cxx-lto CXX_LTO : <cxx-lto> ;
+  toolset.flags cxx-debug CXX_DEBUG : <cxx-debug> ;
+  toolset.flags cxx-libcxx-debug CXX_LIBCXX_DEBUG : <cxx-libcxx-debug> ;
+  toolset.flags cxx-optimize CXX_OPTIMIZE : <cxx-optimize> ;
+  toolset.flags cxx-relro CXX_RELRO : <cxx-relro> ;
+  toolset.flags cxx-sanitizers CXX_SANITIZERS : <cxx-sanitizers> ;
+  toolset.flags cxx-sanitizers-extra CXX_SANITIZERS_EXTRA : <cxx-sanitizers-extra> ;
+  toolset.flags cxx-stack-protector CXX_STACK_PROTECTOR : <cxx-stack-protector> ;
+}
 
 import property-set ;
 import string ;
@@ -73,7 +89,12 @@ rule flags ( properties * )
   local toolset = [ $(ps).get <toolset> ] ;
   local version = [ jln-get-normalized-compiler-version $(toolset)
                   : [ $(ps).get <toolset-$(toolset):version> ] ] ;
-  local flags = <relevant>cxx-coverage <relevant>cxx-lto <relevant>cxx-optimize <relevant>cxx-relro <relevant>cxx-sanitizers <relevant>cxx-sanitizers-extra <relevant>cxx-stack-protector ;
+  local flags = ;
+
+  if $(CXX_BJAM_YEAR_VERSION) >= 2016.00
+  {
+    flags += <relevant>cxx-coverage <relevant>cxx-lto <relevant>cxx-optimize <relevant>cxx-relro <relevant>cxx-sanitizers <relevant>cxx-sanitizers-extra <relevant>cxx-stack-protector ;
+  }
 
 
   if (  $(toolset) = gcc || $(toolset) = clang  )

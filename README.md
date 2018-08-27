@@ -17,7 +17,7 @@ Dependencies
 ============
 
 To compile ReDemPtion you need the following packages:
-- bjam (https://github.com/boostorg/build) (/!\ incompatible with libboost-tools-dev package) <!-- version 2018-02 is ok -->
+- libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
@@ -26,9 +26,6 @@ To compile ReDemPtion you need the following packages:
 - libpng12-dev
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
-
-<!--Optionally:
-- python (python-dev)-->
 
 Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/program_options
