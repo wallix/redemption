@@ -17,7 +17,7 @@ Dependencies
 ============
 
 To compile ReDemPtion you need the following packages:
-- libboost-tools-dev (contains bjam: software build tool) (http://sourceforge.net/projects/boost/files/boost/)
+- bjam (https://github.com/boostorg/build) (/!\ incompatible with libboost-tools-dev package) <!-- version 2018-02 is ok -->
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
@@ -109,13 +109,18 @@ and install (as administrator):
 
 Binaries are located in /usr/local/bin.
 
-## Modes
+## Modes and options
 
-$ `bjam [variant=]{release|debug|san}`
+$ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
 
 - `release`: default
 - `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
 - `san`: enable sanitizers: asan, lsan, usan
+
+- `cxx-color`: default auto never always
+- `cxx-lto`: off on fat
+- `cxx-relro`: default off on full
+- `cxx-stack-protector`: off on strong all
 
 
 Run ReDemPtion
@@ -158,7 +163,7 @@ Generate target and lib/obj dependencies
 
 When create a new test or when a target fail with link error:
 
-`bjam targets.jam` for updated `targets.jam` file.
+`bjam targets.jam` for updated `targets.jam` and `projects/ClientQtGraphicAPI/redemption_deps.jam` files.
 
 Or run `./tools/bjam/gen_targets.py > targets.jam`
 
