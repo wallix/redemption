@@ -20,9 +20,9 @@
 
 #pragma once
 
-namespace gdi {
-
 #include "utils/sugar/noncopyable.hpp"
+
+namespace gdi {
 
 struct ResizeApi : private noncopyable
 {
