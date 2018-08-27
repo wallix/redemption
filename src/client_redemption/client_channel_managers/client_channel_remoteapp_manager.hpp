@@ -336,7 +336,11 @@ public:
 
 
     void receive(InStream & stream) {
-        if (this->impl_graphic && this->impl_input) {
+        if (!this->impl_graphic || !this->impl_input) {
+            return;
+        }
+
+        LOG(LOG_INFO,  "ClientChannelRemoteAppManager::receive");
         RAILPDUHeader header;
         header.receive(stream);
 
@@ -785,8 +789,5 @@ public:
                 }
                 break;
         }
-
-        }
-
     }
 };

@@ -48,6 +48,7 @@ public:
 
     virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) {
         this->drawn_client = client;
+        this->config = config;
     }
 
     virtual void set_ErrorMsg(std::string const & movie_path) = 0;

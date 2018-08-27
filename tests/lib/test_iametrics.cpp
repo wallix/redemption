@@ -197,7 +197,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
     unlink("/tmp/rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
-    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 10
+    const unsigned int index_len = 10;
+
+    Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, index_len
                     , rdp_metrics_path_file
                     , "164d89c1a56957b752540093e178"
                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"
@@ -222,7 +224,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
 
     std::string expected_log_metrics2("2018-08-02 12:08:11 164d89c1a56957b752540093e178 1 2 3 4 5 6 7 8 9 10\n");
 
-    for (int index = 0; index < 10; index++) {
+    for (int index = 0; index < index_len; index++) {
         int val = index+1;
         metrics_add_to_current_data(metrics, index, val);
     }

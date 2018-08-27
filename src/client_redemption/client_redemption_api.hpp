@@ -82,6 +82,7 @@ public:
 
     mod_api            * mod = nullptr;
 
+
     struct MouseData {
         uint16_t x = 0;
         uint16_t y = 0;
@@ -220,7 +221,7 @@ public:
     bool                 is_spanning = false;
 
     int rdp_width = 800;
-    int rdp_height = 6000;
+    int rdp_height = 600;
 
     bool                 is_full_capturing = false;
     bool                 is_full_replaying = false;

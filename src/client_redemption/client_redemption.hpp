@@ -593,6 +593,7 @@ public:
                     mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+                    this->info.cs_monitor = GCC::UserData::CSMonitor{};
 
                     if (this->impl_graphic) {
                         this->info.width = this->impl_graphic->screen_max_width;
@@ -752,7 +753,8 @@ public:
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
-                this->info.remote_program |= INFO_RAIL;
+
+                //this->info.remote_program |= INFO_RAIL;
                 this->info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
                 this->info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
     //                                                     | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
