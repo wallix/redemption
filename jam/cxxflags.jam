@@ -1,12 +1,8 @@
 # https://boostorg.github.io/build/manual/develop/index.html
 
-variant san : debug : ;
-
 CXXFLAGS =
   <cxxflags>-std=c++17
   <variant>debug:<cxx-libcxx-debug>allow_broken_abi
-  <variant>san:<cxx-libcxx-debug>allow_broken_abi
-  <variant>san:<cxx-sanitizers>on
   <variant>debug:<cxxflags>-O2
   <toolset>clang:<cxxflags>-Wno-overlength-strings
   <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
@@ -18,12 +14,13 @@ CXXFLAGS =
 #
 
 import feature : feature ;
+import toolset ;
 
 feature <cxx-color> : default auto never always : incidental ;
 feature <cxx-coverage> : off on : propagated ;
 feature <cxx-debug> : off on : propagated ;
 feature <cxx-fast-math> : off on : propagated ;
-feature <cxx-libcxx-debug> : off on allow_broken_abi use_exceptions : propagated ;
+feature <cxx-libcxx-debug> : off on allow_broken_abi assert_as_exceptions : propagated ;
 feature <cxx-lto> : off on fat : propagated ;
 feature <cxx-optimize> : default off on size speed full : propagated ;
 feature <cxx-pedantic> : on off as_error : incidental ;
@@ -74,7 +71,7 @@ rule flags ( properties * )
   local toolset = [ $(ps).get <toolset> ] ;
   local version = [ jln-get-normalized-compiler-version $(toolset)
                   : [ $(ps).get <toolset-$(toolset):version> ] ] ;
-  local flags ;
+  local flags = <relevant>cxx-coverage <relevant>cxx-lto <relevant>cxx-optimize <relevant>cxx-relro <relevant>cxx-sanitizers <relevant>cxx-sanitizers-extra <relevant>cxx-stack-protector ;
 
 
   if (  $(toolset) = gcc || $(toolset) = clang  )
@@ -199,7 +196,7 @@ rule flags ( properties * )
       flags +=
         <define>_LIBCPP_DEBUG=1
       ;
-      if <cxx-libcxx-debug>use_exceptions in $(properties)
+      if <cxx-libcxx-debug>assert_as_exceptions in $(properties)
       {
         flags +=
           <define>_LIBCPP_DEBUG_USE_EXCEPTIONS
@@ -350,8 +347,8 @@ rule flags ( properties * )
       else if $(toolset) = clang
       {
         flags +=
-          <cxxflags>-Wno-sign-conversion
           <cxxflags>-Wno-conversion
+          <cxxflags>-Wno-sign-conversion
         ;
       }
     }
@@ -367,14 +364,14 @@ rule flags ( properties * )
             <cxxflags>-fsanitize-address-use-after-scope
             <cxxflags>-fno-omit-frame-pointer
             <cxxflags>-fno-optimize-sibling-calls
-            <linkflags>-lubsan
-            <linkflags>-lasan
+            <linkflags>-fsanitize=undefined
+            <linkflags>-fsanitize=address
           ;
           if ! (  $(version) < 03.04  )
           {
             flags +=
               <cxxflags>-fsanitize=leak
-              <linkflags>-llsan
+              <linkflags>-fsanitize=leak
             ;
             if ! (  $(version) < 06.00  )
             {
@@ -394,15 +391,15 @@ rule flags ( properties * )
             <cxxflags>-fsanitize=address
             <cxxflags>-fno-omit-frame-pointer
             <cxxflags>-fno-optimize-sibling-calls
-            <linkflags>-lasan
+            <linkflags>-fsanitize=address
           ;
           if ! (  $(version) < 04.09  )
           {
             flags +=
               <cxxflags>-fsanitize=undefined
               <cxxflags>-fsanitize=leak
-              <linkflags>-lubsan
-              <linkflags>-llsan
+              <linkflags>-fsanitize=undefined
+              <linkflags>-fsanitize=leak
             ;
             if ! (  $(version) < 06.00  )
             {

@@ -15,6 +15,7 @@ if $(NO_FFMPEG) = 1 {
 
 
 variant coverage : debug : ;
+variant san : debug : <cxx-libcxx-debug>allow_broken_abi <cxx-sanitizers>on ;
 
 #gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
 
