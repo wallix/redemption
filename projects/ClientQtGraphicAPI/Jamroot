@@ -161,7 +161,7 @@ constant EXE_DEPENDENCIES :
 
 if $(qtversion) = 4
 {
-    using qt : /usr ;
+    using qt4 : /usr ;
     alias libqtclient : /qt//QtGui ;
     alias libphonon : /qt//phonon ;
 }
