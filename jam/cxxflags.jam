@@ -2,6 +2,7 @@
 
 CXXFLAGS =
   <cxxflags>-std=c++17
+  <cxxflags>-Wno-shadow
   <variant>debug:<cxx-libcxx-debug>allow_broken_abi
   # <variant>debug:<cxxflags>-O2
   <variant>debug:<linkflags>-rdynamic # boost.stacktrace
@@ -222,6 +223,12 @@ rule flags ( properties * )
             <cxxflags>-Wsuggest-final-types
             <cxxflags>-Wsuggest-final-methods
           ;
+          if ! (  $(version) < 05.01  )
+          {
+            flags +=
+              <cxxflags>-Wnoexcept
+            ;
+          }
         }
       }
     }
@@ -309,7 +316,6 @@ rule flags ( properties * )
                   <cxxflags>-fsized-deallocation
                   <cxxflags>-Warray-bounds=2
                   <cxxflags>-Wconditionally-supported
-                  <cxxflags>-Wnoexcept
                   <cxxflags>-Wsized-deallocation
                   <cxxflags>-Wstrict-null-sentinel
                   <cxxflags>-Wsuggest-override
@@ -331,7 +337,7 @@ rule flags ( properties * )
                         <cxxflags>-Walloc-zero
                         <cxxflags>-Walloca
                         <cxxflags>-Wformat-overflow
-                        <cxxflags>-Wshadow=compatible-local
+                        # <cxxflags>-Wshadow=compatible-local
                       ;
                       if ! (  $(version) < 08.00  )
                       {
