@@ -701,9 +701,9 @@ public:
         this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
         this->remoteappCheckBox.setChecked(this->_front->enable_shared_remoteapp);
         this->remoteapp_cmd.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_cmd.setText(this->config->full_cmd_line.c_str());
+        this->remoteapp_cmd.setText(this->config->rDPRemoteAppConfig.full_cmd_line.c_str());
         this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
-        this->remoteapp_workin_dir.setText(this->config->source_of_WorkingDir.c_str());
+        this->remoteapp_workin_dir.setText(this->config->rDPRemoteAppConfig.source_of_WorkingDir.c_str());
 
         // View tab
         int indexBpp = this->_bppComboBox.findData(this->config->info.bpp);
@@ -780,7 +780,7 @@ public:
             this->_front->enable_shared_remoteapp = true;
             this->config->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
             this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
-            this->config->source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
+            this->config->rDPRemoteAppConfig.source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
             this->_front->enable_shared_remoteapp = false;
             this->config->mod_state = ClientRedemptionAPI::MOD_RDP;

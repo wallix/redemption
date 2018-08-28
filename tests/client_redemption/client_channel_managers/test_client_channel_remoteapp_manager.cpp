@@ -32,38 +32,42 @@
 
 RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 {
-//     SessionReactor session_reactor;
-//     FakeClient client(session_reactor);
-//     FakeClientOutputGraphic graph_io;
-//     FakeClientInputMouseKeyboard input_io;
-//
-//     ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
-//
-//
-//     StaticOutStream<32> out_handshake;
-//     out_handshake.out_uint16_le(TS_RAIL_ORDER_HANDSHAKE);
-//     out_handshake.out_uint16_le(8);
-//     HandshakePDU handshake;
-//     handshake.buildNumber(1);
-//     handshake.emit(out_handshake);
-//     InStream chunk_handshake(out_handshake.get_data(), out_handshake.get_offset());
-//     manager.receive(chunk_handshake);
-//
-//     StaticOutStream<32> out_sspu;
-//     out_sspu.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
-//     out_sspu.out_uint16_le(8);
-//     ServerSystemParametersUpdatePDU sspu;
-//     sspu.SystemParam(SPI_SETSCREENSAVEACTIVE);
-//     sspu.emit(out_sspu);
-//     InStream chunk_sspu(out_sspu.get_data(), out_sspu.get_offset());
-//     manager.receive(chunk_sspu);
-//
-//     RED_CHECK_EQUAL(client.get_total_stream_produced(), 10);
-//
-//     RED_CHECK_EQUAL(manager.build_number, 1);
-//
-//     FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
-//     RED_REQUIRE(pdu_data);
+    SessionReactor session_reactor;
+    FakeClient client(session_reactor);
+    FakeClientOutputGraphic graph_io;
+    FakeClientInputMouseKeyboard input_io;
+
+    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
+
+    RDPRemoteAppConfig config;
+
+    manager.set_configuration(800, 600, config);
+
+
+    StaticOutStream<32> out_handshake;
+    out_handshake.out_uint16_le(TS_RAIL_ORDER_HANDSHAKE);
+    out_handshake.out_uint16_le(8);
+    HandshakePDU handshake;
+    handshake.buildNumber(1);
+    handshake.emit(out_handshake);
+    InStream chunk_handshake(out_handshake.get_data(), out_handshake.get_offset());
+    manager.receive(chunk_handshake);
+
+    StaticOutStream<32> out_sspu;
+    out_sspu.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
+    out_sspu.out_uint16_le(8);
+    ServerSystemParametersUpdatePDU sspu;
+    sspu.SystemParam(SPI_SETSCREENSAVEACTIVE);
+    sspu.emit(out_sspu);
+    InStream chunk_sspu(out_sspu.get_data(), out_sspu.get_offset());
+    manager.receive(chunk_sspu);
+
+    RED_CHECK_EQUAL(client.get_total_stream_produced(), 10);
+
+    RED_CHECK_EQUAL(manager.build_number, 1);
+
+    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    RED_REQUIRE(pdu_data);
 
 
 }

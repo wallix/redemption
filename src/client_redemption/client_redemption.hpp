@@ -233,7 +233,7 @@ public:
         , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound, this->rDPSoundConfig)
         , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
         , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard, this)
+        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -599,6 +599,8 @@ public:
                         this->info.width = this->impl_graphic->screen_max_width;
                         this->info.height = this->impl_graphic->screen_max_height;
                     }
+
+                    this->clientChannelRemoteAppManager.set_configuration(this->info.width, this->info.height, this->rDPRemoteAppConfig);
 
                     this->unique_mod = std::make_unique<mod_rdp>(
                         *(this->socket)

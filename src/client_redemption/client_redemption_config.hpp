@@ -39,6 +39,16 @@
 #include <openssl/ssl.h>
 
 
+
+
+struct RDPRemoteAppConfig {
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+    std::string full_cmd_line;
+};
+
+
 class ClientRedemptionConfig: public ClientRedemptionAPI
 {
 
@@ -54,6 +64,7 @@ public:
     RDPClipboardConfig rDPClipboardConfig;
     RDPDiskConfig      rDPDiskConfig;
     RDPSoundConfig     rDPSoundConfig;
+    RDPRemoteAppConfig rDPRemoteAppConfig;
 
     bool quick_connection_test;
 
@@ -62,11 +73,6 @@ public:
     std::chrono::milliseconds time_out_disconnection;
     int keep_alive_freq;
 
-    //  Remote App
-    std::string source_of_ExeOrFile;
-    std::string source_of_WorkingDir;
-    std::string source_of_Arguments;
-    std::string full_cmd_line;
 
     struct AccountData {
         std::string title;
@@ -109,10 +115,10 @@ public:
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
 
-        this->source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
-        this->source_of_WorkingDir = "C:\\Users\\user1";
+        this->rDPRemoteAppConfig.source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
+        this->rDPRemoteAppConfig.source_of_WorkingDir = "C:\\Users\\user1";
 
-        this->full_cmd_line = this->source_of_ExeOrFile + " " + this->source_of_Arguments;
+        this->rDPRemoteAppConfig.full_cmd_line = this->rDPRemoteAppConfig.source_of_ExeOrFile + " " + this->rDPRemoteAppConfig.source_of_Arguments;
 
         for (auto* pstr : {
             &this->DATA_DIR,
@@ -276,12 +282,12 @@ public:
                 this->enable_shared_remoteapp = true;
                 auto pos(line.find(' '));
                 if (pos == std::string::npos) {
-                    this->source_of_ExeOrFile = std::move(line);
-                    this->source_of_Arguments.clear();
+                    this->rDPRemoteAppConfig.source_of_ExeOrFile = std::move(line);
+                    this->rDPRemoteAppConfig.source_of_Arguments.clear();
                 }
                 else {
-                    this->source_of_ExeOrFile = line.substr(0, pos);
-                    this->source_of_Arguments = line.substr(pos + 1);
+                    this->rDPRemoteAppConfig.source_of_ExeOrFile = line.substr(0, pos);
+                    this->rDPRemoteAppConfig.source_of_Arguments = line.substr(pos + 1);
                 }
             })),
 
@@ -373,7 +379,7 @@ public:
             })),
 
             cli::option("remote-dir").help("Remote working directory")
-            .action(cli::arg_location("directory", this->source_of_WorkingDir))
+            .action(cli::arg_location("directory", this->rDPRemoteAppConfig.source_of_WorkingDir))
         );
 
         auto cli_result = cli::parse(options, argc, argv);
@@ -509,12 +515,12 @@ public:
                 this->mod_state = MOD_RDP_REMOTE_APP;
                 auto pos(line.find(' '));
                 if (pos == std::string::npos) {
-                    this->source_of_ExeOrFile = std::move(line);
-                    this->source_of_Arguments.clear();
+                    this->rDPRemoteAppConfig.source_of_ExeOrFile = std::move(line);
+                    this->rDPRemoteAppConfig.source_of_Arguments.clear();
                 }
                 else {
-                    this->source_of_ExeOrFile = line.substr(0, pos);
-                    this->source_of_Arguments = line.substr(pos + 1);
+                    this->rDPRemoteAppConfig.source_of_ExeOrFile = line.substr(0, pos);
+                    this->rDPRemoteAppConfig.source_of_Arguments = line.substr(pos + 1);
                 }
             })),
 
@@ -589,7 +595,7 @@ public:
             })),
 
             cli::option("remote-dir").help("Remote directory")
-            .action(cli::arg_location("directory", this->source_of_WorkingDir)),
+            .action(cli::arg_location("directory", this->rDPRemoteAppConfig.source_of_WorkingDir)),
 
 
             cli::helper("========= Replay ========="),
@@ -867,10 +873,10 @@ public:
                         this->mod_state = std::stoi(info);
                     } else
                     if (line.compare(0, pos, "remote-exe") == 0) {
-                        this->full_cmd_line                = info;
+                         this->rDPRemoteAppConfig.full_cmd_line                = info;
                     } else
                     if (line.compare(0, pos, "remote-dir") == 0) {
-                        this->source_of_WorkingDir                = info;
+                        this->rDPRemoteAppConfig.source_of_WorkingDir                = info;
                     } else
                     if (line.compare(0, pos, "rdp5_performanceflags") == 0) {
                         this->info.rdp5_performanceflags |= std::stoi(info);
@@ -1111,10 +1117,10 @@ public:
 
 
     void set_remoteapp_cmd_line(const std::string & cmd) override {
-        this->full_cmd_line = cmd;
+        this->rDPRemoteAppConfig.full_cmd_line = cmd;
         int pos = cmd.find(' ');
-        this->source_of_ExeOrFile = cmd.substr(0, pos);
-        this->source_of_Arguments = cmd.substr(pos + 1);
+        this->rDPRemoteAppConfig.source_of_ExeOrFile = cmd.substr(0, pos);
+        this->rDPRemoteAppConfig.source_of_Arguments = cmd.substr(pos + 1);
     }
 
     bool is_no_win_data() override {
@@ -1230,8 +1236,8 @@ public:
                 new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
                 new_ofile << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
-                new_ofile << "remote-exe "                              << this->full_cmd_line << std::endl;
-                new_ofile << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
+                new_ofile << "remote-exe "                              << this->rDPRemoteAppConfig.full_cmd_line << std::endl;
+                new_ofile << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;
                 new_ofile << "vnc- applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
                 new_ofile << "mod"                              << static_cast<int>(this->mod_state) << std::endl;
 
@@ -1260,8 +1266,8 @@ public:
                 ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
                 ofichier << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
                 ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
-                ofichier << "remote-exe "                              << this->full_cmd_line << std::endl;
-                ofichier << "remote-dir "                              << this->source_of_WorkingDir << std::endl;
+                ofichier << "remote-exe "                              <<  this->rDPRemoteAppConfig.full_cmd_line << std::endl;
+                ofichier << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;
                 ofichier << "vnc-applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
                 ofichier << "mod "                              << static_cast<int>(this->mod_state) << std::endl;
             }
