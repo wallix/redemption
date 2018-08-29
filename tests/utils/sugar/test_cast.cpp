@@ -27,7 +27,7 @@
 
 RED_AUTO_TEST_CASE(TestCast)
 {
-    using Ptr = void*;
+    using Ptr = void const*;
 
     char const* a = "";
     uint8_t const* b = byte_ptr_cast(a);
