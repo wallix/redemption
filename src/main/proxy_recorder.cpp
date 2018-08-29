@@ -127,7 +127,7 @@ class FrontConnection
 {
 public:
     FrontConnection(unique_fd sck, std::string host, int port, std::string const& captureFile,
-        std::string nla_username, std::string nla_password, TimeObj& timeobj
+        TimeObj& timeobj,std::string nla_username, std::string nla_password, bool enable_kerberos
     )
         : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(0))
         , backConn("back", ip_connect(host.c_str(), port, 3, 1000),
@@ -136,7 +136,11 @@ public:
         , host(std::move(host))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
+        , enable_kerberos(enable_kerberos)
     {
+        if (!this->nla_password.empty()) {
+            this->nla_password.push_back('\0');
+        }
     }
 
     void treat_front_activity()
@@ -158,7 +162,7 @@ public:
                 bool const is_nla
                   = (x224.rdp_neg_requestedProtocols & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX));
 
-                if (is_nla || !nla_password.empty()) {
+                if (is_nla || !nla_password.empty() || enable_kerberos) {
                     StaticOutStream<256> new_x224_stream;
                     X224::CC_TPDU_Send(
                         new_x224_stream,
@@ -188,12 +192,13 @@ public:
 
                     state = NEGOCIATING_FRONT_NLA;
                 }
-                else if (!nla_password.empty()) {
+                else if (!nla_password.empty() || enable_kerberos) {
                     LOG(LOG_INFO, "start NegoClient");
-                    nla_password.push_back('\0');
                     nego_client = std::make_unique<NegoClient>(
                         backConn, outFile,
-                        host.c_str(), nla_username.c_str(), nla_password.c_str());
+                        host.c_str(), nla_username.c_str(),
+                        nla_password.empty() ? "\0" : nla_password.c_str(),
+                        enable_kerberos);
                     nego_client->send_negotiation_request();
 
                     state = NEGOCIATING_BACK_NLA;
@@ -224,10 +229,11 @@ public:
                 LOG(LOG_INFO, "stop NegoServer");
                 LOG(LOG_INFO, "start NegoClient");
                 nego_server.reset();
-                nla_password.push_back('\0');
                 nego_client = std::make_unique<NegoClient>(
                     this->backConn, this->outFile,
-                    this->host.c_str(), nla_username.c_str(), nla_password.c_str());
+                    this->host.c_str(), nla_username.c_str(),
+                    nla_password.empty() ? "\0" : nla_password.c_str(),
+                    enable_kerberos);
                 nego_client->send_negotiation_request();
                 state = NEGOCIATING_BACK_STEP1;
                 break;
@@ -462,9 +468,10 @@ private:
     public:
         NegoClient(
             Transport& trans, RecorderFile& outFile,
-            char const* host, char const* target_user, char const* password
+            char const* host, char const* target_user, char const* password,
+            bool enable_kerberos
         )
-        : nego(true, target_user, true, false, host, false,
+        : nego(true, target_user, true, false, host, enable_kerberos,
             this->random, this->timeobj, this->extra_message, Translation::EN)
         , trans(trans, outFile, NlaTeeTransport::Type::Client)
         {
@@ -514,18 +521,20 @@ private:
     std::string host;
     std::string nla_username;
     std::string nla_password;
+    bool enable_kerberos;
 };
 
 /** @brief the server that handles RDP connections */
 class FrontServer : public Server
 {
 public:
-    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password)
+    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos)
         : targetPort(port)
         , targetHost(std::move(host))
         , captureTemplate(std::move(captureFile))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
+        , enable_kerberos(enable_kerberos)
     {
         // just ignore this signal because there is no child termination management yet.
         struct sigaction sa;
@@ -560,8 +569,8 @@ public:
 
             TimeSystem timeobj;
             FrontConnection conn(
-                std::move(sck_in), targetHost, targetPort, finalPath,
-                nla_username, nla_password, timeobj);
+                std::move(sck_in), targetHost, targetPort, finalPath, timeobj,
+                nla_username, nla_password, enable_kerberos);
             try {
                 conn.run();
             } catch(Error const& e) {
@@ -625,6 +634,7 @@ private:
     CaptureTemplate captureTemplate;
     std::string nla_username;
     std::string nla_password;
+    bool enable_kerberos;
 };
 
 
@@ -666,6 +676,7 @@ int main(int argc, char *argv[])
     std::string nla_username;
     std::string nla_password;
     bool forkable = true;
+    bool enable_kerberos = false;
 
     auto options = cli::options(
         cli::option('h', "help").help("Show help").action(cli::help),
@@ -676,9 +687,10 @@ int main(int argc, char *argv[])
         cli::option('P', "port").help("Listen port").action(cli::arg_location(listen_port)),
         cli::option("nla-username").action(cli::arg_location("username", nla_username)),
         cli::option("nla-password").action(CliPassword{nla_password, argv}),
+        cli::option("enable-kerberos").action(cli::on_off_location(enable_kerberos)),
         cli::option('t', "template").help("Ex: dump-%d.out")
             .action(cli::arg_location("path", capture_file)),
-        cli::option('N', "no-fork").action([&]{ forkable = false; })
+        cli::option('N', "no-fork").action(cli::on_off_location(forkable))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -719,7 +731,8 @@ int main(int argc, char *argv[])
 
     FrontServer front(
         target_host, target_port, capture_file,
-        std::move(nla_username), std::move(nla_password));
+        std::move(nla_username), std::move(nla_password),
+        enable_kerberos);
     Listen listener(front, inet_addr("0.0.0.0"), listen_port);
     if (listener.sck <= 0) {
         return 2;
