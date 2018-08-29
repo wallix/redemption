@@ -21,6 +21,7 @@
 #pragma once
 
 #include "acl/authentifier.hpp"
+#include "acl/module_manager.hpp"
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
 #include "core/server.hpp"
@@ -29,7 +30,7 @@
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
 #include "system/ssl_calls.hpp"
-#include "transport/transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/colors.hpp"
 #include "utils/file.hpp"

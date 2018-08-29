@@ -25,6 +25,9 @@
 
 
 #include "acl/acl_serializer.hpp"
+#include "utils/genfstat.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/get_file_contents.hpp"

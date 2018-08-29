@@ -24,8 +24,9 @@
 
 #pragma once
 
+#include "acl/auth_api.hpp"
 #include "acl/mm_api.hpp"
-#include "acl/module_manager.hpp" // TODO only for MODULE_*
+#include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
 #include "core/authid.hpp"
@@ -33,6 +34,8 @@
 #include "core/set_server_redirection_target.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/transport.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/fileutils.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"

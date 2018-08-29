@@ -21,6 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "core/error.hpp"
+#include "core/back_event_t.hpp"
 #include "cxx/cxx.hpp"
 #include "cxx/diagnostic.hpp"
 #include "utils/difftimeval.hpp"
@@ -2828,15 +2829,6 @@ namespace gdi
 {
     class GraphicApi;
 }
-
-enum BackEvent_t {
-    BACK_EVENT_NONE = 0,
-    BACK_EVENT_NEXT,
-    BACK_EVENT_STOP = 4,
-    BACK_EVENT_REFRESH,
-
-    BACK_EVENT_RETRY_CURRENT,
-};
 
 struct SessionReactor
 {

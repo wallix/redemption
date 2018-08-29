@@ -22,10 +22,12 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "acl/module_manager.hpp"
+#include "acl/authentifier.hpp"
+#include "acl/module_manager/mm_ini.hpp"
+#include "core/session_reactor.hpp"
+#include "utils/genfstat.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/transport/test_transport.hpp"
-#include "acl/authentifier.hpp"
 
 inline void init_keys(CryptoContext & cctx)
 {
