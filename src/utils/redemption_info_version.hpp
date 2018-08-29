@@ -40,14 +40,22 @@ inline char const* redemption_info_version() noexcept
     #elif defined __GNUC__
         " (gcc "
         PP_STRINGIFY(__GNUC__) "."
-        PP_STRINGIFY(__GNUC_MINOR__) "."
+        PP_STRINGIFY(__GNUC_MINOR__)
         # ifdef __GNUC_PATCHLEVEL__
+        "."
         PP_STRINGIFY(__GNUC_PATCHLEVEL__)
         # endif
         ")"
     #endif
     #ifndef NDEBUG
         " (DEBUG)"
+    #endif
+    #if defined(__SANITIZE_ADDRESS__) && __SANITIZE_ADDRESS__ == 1
+        " (-fsanitize=address)"
+    #elif defined(__has_feature)
+        #  if __has_feature(address_sanitizer)
+        " (-fsanitize=address)"
+        #  endif
     #endif
     ;
 }

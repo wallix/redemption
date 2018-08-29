@@ -79,6 +79,23 @@ bool dir_exist(const char * path)
     return (statok == 0) && ((sb.st_mode & S_IFDIR) != 0);
 }
 
+
+int filesize(std::string const& path)
+{
+    return filesize(path.c_str());
+}
+
+bool file_exist(std::string const& path)
+{
+    return file_exist(path.c_str());
+}
+
+bool dir_exist(std::string const& path)
+{
+    return dir_exist(path.c_str());
+}
+
+
 bool file_equals(char const* filename1, char const* filename2)
 {
     File f1(filename1, "r");

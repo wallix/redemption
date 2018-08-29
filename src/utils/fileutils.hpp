@@ -32,10 +32,13 @@ const char * basename_len(const char * path, size_t & len);
 char * basename_len(char * path, size_t & len);
 
 int filesize(const char * path);
+int filesize(std::string const& path);
 
 bool file_exist(const char * path);
+bool file_exist(std::string const& path);
 
 bool dir_exist(const char * path);
+bool dir_exist(std::string const& path);
 
 bool file_equals(char const* filename1, char const* filename2);
 

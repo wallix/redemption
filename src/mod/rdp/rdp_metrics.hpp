@@ -149,7 +149,7 @@ private:
             case COUNT_FIELD: break;
         }
 
-        return " unknow_rdp_metrics_name";
+        return "unknow_rdp_metrics_name";
     }
 
     const char * rdp_protocol_name = "rdp";
@@ -508,6 +508,4 @@ public:
     void client_main_channel_data(long int len) {
         this->metrics.add_to_current_data(main_channel_data_from_client, len);
     }
-
-
 };

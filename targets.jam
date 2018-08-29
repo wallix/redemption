@@ -2411,6 +2411,7 @@ test-run tests/lib/test_iametrics :
   <library>src/core/error.o
   <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
+  <library>tests/includes/test_only/working_directory.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/lib/test_scytale :
@@ -3553,6 +3554,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/core/font.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>tests/includes/test_only/working_directory.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/rdp/test_rdp_orders :
@@ -4623,6 +4625,7 @@ obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj tests/includes/test_only/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp ;
 
 alias test_acl_serializer : tests/acl/test_acl_serializer ;
 alias test_acl_serializer.coverage : tests/acl/test_acl_serializer.coverage ;

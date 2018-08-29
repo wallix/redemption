@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         RED_CHECK_EQUAL(3223, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {
@@ -3126,7 +3126,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         RED_CHECK_EQUAL(4136, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {
@@ -3384,7 +3384,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         RED_CHECK_EQUAL(2341, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {

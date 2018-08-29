@@ -330,6 +330,21 @@ namespace redemption_unit_test__
     ::unlink(filename);                                                    \
 } while(0)
 
+
+#define RED_CHECK_FILE_EXISTS(filename) do {                      \
+    auto&& filename__ = filename;                                 \
+    RED_CHECK_MESSAGE(                                            \
+        file_exist(filename__),                                   \
+        "check file_exist(\"" << filename__ << "\") has failed"); \
+} while (0)
+
+#define RED_CHECK_FILE_NOT_EXISTS(filename) do {                   \
+    auto&& filename__ = filename;                                  \
+    RED_CHECK_MESSAGE(                                             \
+        !file_exist(filename__),                                   \
+        "check !file_exist(\"" << filename__ << "\") has failed"); \
+} while (0)
+
 // require #include "test_only/get_file_contents.hpp"
 #define RED_CHECK_FILE_CONTENTS(filename, contents)  do { \
     RED_CHECK_EQ(get_file_contents(filename), contents);  \
