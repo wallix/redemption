@@ -399,11 +399,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient) {
     }
 
     {  // FILE CONTENT REQUEST FROM CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 44 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 54 0 0 0 0 0 0 1 48 0 0 1 42 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;                                                    //
         epoch += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::FileContentsRequestPDU format(0, RDPECLIP::FILECONTENTS_RANGE, 0, 42);
+        RDPECLIP::FileContentsRequestPDU format(0, RDPECLIP::FILECONTENTS_RANGE, 0, 42, 42);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -786,11 +786,11 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer) {
     }
 
     {  // FILE CONTENT REQUEST FROM CLIENT
-        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 44 0 0 1 42 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 0 48 0 0 1 42 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
         expected_log_metrics += expected_log_metrics_next;                                                    //
         epoch += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::FileContentsRequestPDU format(0, RDPECLIP::FILECONTENTS_RANGE, 0, 42);
+        RDPECLIP::FileContentsRequestPDU format(0, RDPECLIP::FILECONTENTS_RANGE, 0, 42, 42);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 

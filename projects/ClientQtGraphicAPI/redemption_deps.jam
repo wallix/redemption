@@ -8,6 +8,7 @@ add_lib snappy ;
 add_src capture/file_to_graphic.cpp ;
 add_src client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
 add_src client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
+add_src client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
 add_src core/RDP/mppc.cpp ;
 add_src core/RDP/nego.cpp ;
 add_src core/error.cpp ;
