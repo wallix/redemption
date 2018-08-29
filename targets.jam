@@ -4337,6 +4337,13 @@ test-run tests/utils/test_get_printable_password :
 :
   <covfile>src/utils/get_printable_password.hpp
 ;
+test-run tests/utils/test_id_manager :
+  $(REDEMPTION_TEST_PATH)/utils/test_id_manager.cpp
+:
+  <covfile>src/utils/id_manager.hpp
+  <library>src/core/error.o
+  <variant>debug:<library>dl <variant>san:<library>dl
+;
 test-run tests/utils/test_key_qvalue_pairs :
   $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
 :
@@ -5215,6 +5222,8 @@ alias test_genrandom : tests/utils/test_genrandom ;
 alias test_genrandom.coverage : tests/utils/test_genrandom.coverage ;
 alias test_get_printable_password : tests/utils/test_get_printable_password ;
 alias test_get_printable_password.coverage : tests/utils/test_get_printable_password.coverage ;
+alias test_id_manager : tests/utils/test_id_manager ;
+alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
 alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
 alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverage ;
 alias test_log : tests/utils/test_log ;
@@ -5709,6 +5718,7 @@ alias tests/utils :
   tests/utils/test_genfstat
   tests/utils/test_genrandom
   tests/utils/test_get_printable_password
+  tests/utils/test_id_manager
   tests/utils/test_key_qvalue_pairs
   tests/utils/test_log
   tests/utils/test_netutils
