@@ -519,7 +519,7 @@ public:
                     }
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(16);

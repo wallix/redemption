@@ -1435,7 +1435,7 @@ struct FormatDataRequestPDU
 
 // clipDataId (4 bytes): An optional unsigned, 32-bit integer that identifies File Stream data which was tagged in a prior Lock Clipboard Data PDU (section 2.2.4.1).
 
-enum : int {
+enum : uint32_t {
     FILECONTENTS_SIZE              = 0x00000001
   , FILECONTENTS_RANGE             = 0x00000002
   , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
@@ -1444,24 +1444,32 @@ enum : int {
 struct FileContentsRequestPDU     // Resquest RANGE
 {
     CliprdrHeader header;
-    int streamID;
-    int flag;
-    int lindex;
+    uint32_t streamID;
+    uint32_t flag;
+    uint32_t lindex;
     uint64_t sizeRequested;
+    uint32_t cbRequested;
+    uint32_t clipDataId;
 
     explicit FileContentsRequestPDU( int streamID
                                    , int flag
                                    , int lindex
-                                   , uint64_t sizeRequested)
-    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_OK, 24)
+                                   , uint64_t sizeRequested
+                                   , uint32_t cbRequested)
+    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
     , streamID(streamID)
     , flag(flag)
     , lindex(lindex)
     , sizeRequested(sizeRequested)
-    {}
+    , cbRequested(cbRequested)
+    , clipDataId(streamID)
+    {
 
-    explicit FileContentsRequestPDU(bool response_ok = false)
-    : header( CB_FILECONTENTS_REQUEST, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 24)
+    }
+
+    explicit FileContentsRequestPDU(bool /*response_ok = false*/)
+    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
+    , clipDataId(0)
     {}
 
     void emit(OutStream & stream) const {
@@ -1476,6 +1484,8 @@ struct FileContentsRequestPDU     // Resquest RANGE
         } else {
             stream.out_uint32_le(this->sizeRequested);
         }
+        stream.out_uint32_le(this->clipDataId);
+
     }
 
     void recv(InStream & stream) {
@@ -1486,15 +1496,23 @@ struct FileContentsRequestPDU     // Resquest RANGE
         uint64_t low = stream.in_uint32_le();
         uint64_t high = stream.in_uint32_le();
         this->sizeRequested = low + (high << 32);
+        this->cbRequested = stream.in_uint32_le();
+        if (stream.in_remain() == 4) {
+            this->clipDataId = stream.in_uint32_le();
+        }
     }
 
     void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Request PDU:");
-        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", unsigned(this->streamID));
-        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", unsigned(this->flag));
-        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", unsigned(this->lindex));
+        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
+        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
+        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
         LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
+        LOG(LOG_INFO, "          * cbRequested   = %u (4 bytes)", this->cbRequested);
+        if (this->clipDataId) {
+            LOG(LOG_INFO, "          * clipDataId    = %08x (4 bytes)", this->clipDataId);
+        }
     }
 
 };
@@ -1575,8 +1593,8 @@ struct FileContentsResponse_Size : FileContentsResponse {
     void log() const {
         this->header.log();
         LOG(LOG_INFO, "     File Contents Response Size:");
-        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
+        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
         LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
 };
