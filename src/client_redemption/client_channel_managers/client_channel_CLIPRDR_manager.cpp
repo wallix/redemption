@@ -21,7 +21,6 @@
    Unit test to writing RDP orders to file and rereading them
 */
 
-#pragma once
 
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 
@@ -848,7 +847,7 @@
                                                                         , RDPECLIP::FILECONTENTS_SIZE
                                                                         , cb_filesList.lindexToRequest
                                                                         , 0
-                                                                        , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED /*cb_filesList.itemslist[cb_filesList.lindexToRequest].size*/);
+                                                                        , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
                     StaticOutStream<64> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -887,7 +886,7 @@
                                                                             , this->file_content_flag
                                                                             , cb_filesList.lindexToRequest
                                                                             , 0
-                                                                            , 0xffffffff < cb_filesList.itemslist[cb_filesList.lindexToRequest].size ? 0xffffffff : cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
+                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
                         fileContentsRequest.emit(out_streamRequest);
                         const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 

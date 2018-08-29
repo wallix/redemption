@@ -175,3 +175,4 @@ public:
     void FremoveDriveDevice(const DeviceData * devices, const size_t deviceCount);
 
 };
+
