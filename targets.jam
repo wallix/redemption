@@ -85,7 +85,6 @@ exe rdpproxy :
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -372,7 +371,6 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -473,7 +471,6 @@ test-run tests/acl/test_authentifier :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -573,7 +570,6 @@ test-run tests/acl/test_module_manager :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -1988,7 +1984,6 @@ test-run tests/core/test_mainloop :
   <library>src/core/font.o
   <library>src/core/mainloop.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2094,7 +2089,6 @@ test-run tests/core/test_session :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2199,7 +2193,6 @@ test-run tests/core/test_session_server :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -2291,7 +2284,6 @@ test-run tests/front/test_front :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
@@ -3736,7 +3728,6 @@ test-run tests/server/test_mstsc_client :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -3785,7 +3776,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -3834,7 +3824,6 @@ test-run tests/server/test_rdesktop_client :
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
-  <library>src/front/credssp_front_server.o
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
@@ -4546,7 +4535,6 @@ obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp ;
 obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj src/core/mainloop.o : $(REDEMPTION_SRC_PATH)/core/mainloop.cpp ;
 obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
-obj src/front/credssp_front_server.o : $(REDEMPTION_SRC_PATH)/front/credssp_front_server.cpp ;
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;

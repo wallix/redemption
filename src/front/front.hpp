@@ -76,7 +76,6 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
-#include "front/credssp_front_server.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "keyboard/keymap2.hpp"
 #include "openssl_tls.hpp"
@@ -526,7 +525,6 @@ protected:
 
 public:
     bool up_and_running;
-    bool wait_ntlm_password = false;
 
 private:
     int share_id;
@@ -562,7 +560,6 @@ private:
 
     enum {
         CONNECTION_INITIATION,
-        CONNECTION_INITIATION_NLA,
         BASIC_SETTINGS_EXCHANGE,
         CHANNEL_ATTACH_USER,
         CHANNEL_JOIN_REQUEST,
@@ -577,31 +574,10 @@ private:
     Random & gen;
     Fstat fstat;
 
-    struct CredsspServer : private CredsspFrontServer
-    {
-        void start(Front& front)
-        {
-            this->CredsspFrontServer::start(
-                front.session_reactor, front.trans, front.gen, front.buf,
-                language(front.ini.get<cfg::translation::language>()), front.wait_ntlm_password,
-                [&front](bool is_valid){
-                    if (is_valid) {
-                        front.state = BASIC_SETTINGS_EXCHANGE;
-                    }
-                }
-            );
-        }
-
-        using CredsspFrontServer::run;
-    };
-
-    CredsspServer credssp_server;
-
     bool fastpath_support;                    // choice of programmer
     bool client_fastpath_input_event_support; // = choice of programmer
     bool server_fastpath_update_support;      // choice of programmer + capability of client
     bool tls_client_active;
-    bool nla_client_active = false;
     bool mem3blt_support;
     int clientRequestedProtocols;
 
@@ -1259,15 +1235,6 @@ public:
             LOG(LOG_INFO, "Front::incoming");
         }
 
-        if (this->state == CONNECTION_INITIATION_NLA) {
-            buf.load_data(this->trans);
-            if (this->credssp_server.run()) {
-                return ;
-            }
-            this->wait_ntlm_password = false;
-            this->state = BASIC_SETTINGS_EXCHANGE;
-        }
-
         buf.load_data(this->trans);
         while (buf.next_pdu())
         {
@@ -1275,8 +1242,6 @@ public:
             cb.set_last_tram_len(new_x224_stream.in_remain());
 
             switch (this->state) {
-            case CONNECTION_INITIATION_NLA:
-                REDEMPTION_UNREACHABLE();
             case CONNECTION_INITIATION:
             {
                 // Connection Initiation
@@ -1309,13 +1274,7 @@ public:
                     LOG(LOG_WARNING, "Front::incoming: tls_support and tls_fallback_legacy should not be disabled at same time. tls_support is assumed to be enabled.");
                 }
 
-                if ((bool(this->clientRequestedProtocols
-                    & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX)))
-                    && this->ini.get<cfg::client::nla_support>()
-                ) {
-                    this->nla_client_active = true;
-                }
-                else if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
+                if (// Proxy doesnt supports TLS or RDP client doesn't support TLS
                     (!this->ini.get<cfg::client::tls_support>() || 0 == (this->clientRequestedProtocols & X224::PROTOCOL_TLS))
                     // Fallback to legacy security protocol (RDP) is allowed.
                     && this->ini.get<cfg::client::tls_fallback_legacy>()
@@ -1336,13 +1295,7 @@ public:
                     uint8_t rdp_neg_type = 0;
                     uint8_t rdp_neg_flags = /*0*/RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED;
                     uint32_t rdp_neg_code = 0;
-                    if (this->nla_client_active) {
-                        LOG(LOG_INFO, "-----------------> Front::incoming: NLA Support Enabled");
-                        rdp_neg_type = X224::RDP_NEG_RSP;
-                        rdp_neg_code = X224::PROTOCOL_HYBRID;
-                        this->encryptionLevel = 0;
-                    }
-                    else if (this->tls_client_active) {
+                    if (this->tls_client_active) {
                         LOG(LOG_INFO, "-----------------> Front::incoming: TLS Support Enabled");
                         if (this->clientRequestedProtocols & X224::PROTOCOL_TLS) {
                             rdp_neg_type = X224::RDP_NEG_RSP;
@@ -1369,13 +1322,7 @@ public:
                         this->ini.get<cfg::client::ssl_cipher_list>().c_str());
                 }
 
-                if (this->nla_client_active) {
-                    this->credssp_server.start(*this);
-                }
-
-                this->state = this->nla_client_active
-                  ? CONNECTION_INITIATION_NLA
-                  : BASIC_SETTINGS_EXCHANGE;
+                this->state = BASIC_SETTINGS_EXCHANGE;
 
                 // 2.2.10.2 Early User Authorization Result PDU
                 // ============================================
@@ -1579,7 +1526,7 @@ public:
                         {
                             GCC::UserData::SCCore sc_core;
                             sc_core.version = 0x00080004;
-                            if (this->tls_client_active || this->nla_client_active) {
+                            if (this->tls_client_active) {
                                 sc_core.length = 12;
                                 sc_core.clientRequestedProtocols = this->clientRequestedProtocols;
                             }
@@ -1602,7 +1549,7 @@ public:
                             sc_net.emit(stream);
                         }
                         // ------------------------------------------------------------------
-                        if (this->tls_client_active || this->nla_client_active) {
+                        if (this->tls_client_active) {
                             GCC::UserData::SCSecurity sc_sec1;
                             sc_sec1.encryptionMethod = 0;
                             sc_sec1.encryptionLevel = 0;
@@ -1852,7 +1799,7 @@ public:
 
                 // Client                                                     Server
                 //    |------Security Exchange PDU ---------------------------> |
-                if (!this->tls_client_active && !this->nla_client_active) {
+                if (!this->tls_client_active) {
                     LOG(LOG_INFO, "Front::incoming: Legacy RDP mode: expecting exchange packet");
                     X224::DT_TPDU_Recv x224(new_x224_stream);
 
