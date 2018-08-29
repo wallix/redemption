@@ -25,5 +25,8 @@ using clang : : ccache clang++ : <cxxflags>-fcolor-diagnostics ;
 # bjam --toolset=clang-tidy
 using clang : tidy : clang-tidy-6.0 : <cxxflags>-fcolor-diagnostics ;
 
+# bjam --toolset=clang-libc++
+using clang : libc++ : clang++-6.0 : <cxxflags>-fcolor-diagnostics <cxxflags>-stdlib=libc++ <linkflags>-stdlib=libc++ ;
+
 # bjam --toolset=clang-iwyu
 using clang : iwyu : iwyu ;
