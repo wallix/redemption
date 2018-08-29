@@ -193,4 +193,6 @@ public:
     void emptyLocalBuffer();
     void send_FormatListPDU();
 
+    void send_UnlockPDU(uint32_t streamID);
+
 };

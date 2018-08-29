@@ -1467,7 +1467,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
 
     }
 
-    explicit FileContentsRequestPDU(bool /*response_ok = false*/)
+    explicit FileContentsRequestPDU()
     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
     , clipDataId(0)
     {}
@@ -1482,7 +1482,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
         if (flag & FILECONTENTS_SIZE) {
             stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
         } else {
-            stream.out_uint32_le(this->sizeRequested);
+            stream.out_uint32_le(this->cbRequested);
         }
         stream.out_uint32_le(this->clipDataId);
 

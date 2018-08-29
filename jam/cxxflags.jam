@@ -94,7 +94,7 @@ rule flags ( properties * )
   local flags = ;
   if $(CXX_BJAM_YEAR_VERSION) >= 2016.00
   {
-    flags += 
+    flags +=
       # <relevant>cxx-coverage
       # <relevant>cxx-debug
       <relevant>cxx-fast-math
@@ -234,9 +234,9 @@ rule flags ( properties * )
     }
     if ! (  <cxx-libcxx-debug>off in $(properties) )
     {
-      flags +=
-        <define>_LIBCPP_DEBUG=1
-      ;
+ #     flags +=
+ #      <define>_LIBCPP_DEBUG=1
+ #    ;
       if <cxx-libcxx-debug>assert_as_exception in $(properties)
       {
         flags +=
