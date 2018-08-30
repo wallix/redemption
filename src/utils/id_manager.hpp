@@ -80,7 +80,7 @@ public:
         throw Error(ERR_UNEXPECTED);
     }
 
-    bool is_dest_only_id(T dest_id) {
+    bool is_dest_only_id(T dest_id) const {
         auto iter = this->dest_to_src.find(dest_id);
         if (this->dest_to_src.end() != iter) {
             if (iter->second.second) {
