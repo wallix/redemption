@@ -100,8 +100,8 @@ public:
 
     ~QtScreen() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->_front->windowsData.screen_x = points.x()-1;    //-1;
-        this->_front->windowsData.screen_y = points.y()-39;   //-39;
+        this->config->windowsData.screen_x = points.x()-1;    //-1;
+        this->config->windowsData.screen_y = points.y()-39;   //-39;
         this->_front->writeWindowsData();
 
         if (!this->_connexionLasted) {
@@ -333,11 +333,11 @@ public:
         } else {
             if (this->_front->is_no_win_data()) {
                 QDesktopWidget* desktop = QApplication::desktop();
-                this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
-                this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+                this->config->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+                this->config->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
             }
 
-            this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
+            this->move(this->config->windowsData.screen_x, this->config->windowsData.screen_y);
         }
     }
 
@@ -501,10 +501,10 @@ public:
 
         if (this->_front->is_no_win_data()) {
             QDesktopWidget* desktop = QApplication::desktop();
-            this->_front->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
-            this->_front->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+            this->config->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
+            this->config->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
         }
-        this->move(this->_front->windowsData.screen_x, this->_front->windowsData.screen_y);
+        this->move(this->config->windowsData.screen_x, this->config->windowsData.screen_y);
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
 

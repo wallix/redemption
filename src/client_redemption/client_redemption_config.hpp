@@ -73,6 +73,16 @@ public:
     std::chrono::milliseconds time_out_disconnection;
     int keep_alive_freq;
 
+    struct WindowsData {
+        int form_x = 0;
+        int form_y = 0;
+        int screen_x = 0;
+        int screen_y = 0;
+
+        bool no_data = true;
+
+    } windowsData;
+
 
     struct AccountData {
         std::string title;
@@ -83,7 +93,8 @@ public:
         int options_profil = 0;
         int index = -1;
         int protocol = NO_PROTOCOL;
-    }    _accountData[MAX_ACCOUNT_DATA];
+    };                                                      // _accountData[MAX_ACCOUNT_DATA];
+    std::vector<AccountData> _accountData;
     int  _accountNB = 0;
     bool _save_password_account = false;
     int  _last_target_index = 0;
@@ -597,7 +608,6 @@ public:
             cli::option("remote-dir").help("Remote directory")
             .action(cli::arg_location("directory", this->rDPRemoteAppConfig.source_of_WorkingDir)),
 
-
             cli::helper("========= Replay ========="),
 
             cli::option('R', "replay").help("Enable replay mode")
@@ -916,6 +926,8 @@ public:
                     this->_last_target_index = std::stoi(info);
                 } else
                 if (line.compare(0, pos, "title") == 0) {
+                    AccountData new_account;
+                    this->_accountData.push_back(new_account);
                     this->_accountData[accountNB].title = info;
                 } else
                 if (line.compare(0, pos, "IP") == 0) {
@@ -930,8 +942,10 @@ public:
                     this->_accountData[accountNB].pwd = info;
                 } else
                 if (line.compare(0, pos, "options_profil") == 0) {
+
                     this->_accountData[accountNB].options_profil = std::stoi(info);
                     this->_accountData[accountNB].index = accountNB+1;
+
                     accountNB++;
                     if (accountNB == MAX_ACCOUNT_DATA) {
                         this->_accountNB = MAX_ACCOUNT_DATA;
@@ -965,6 +979,7 @@ public:
             for (int i = 0; i < this->_accountNB; i++) {
                 if (this->_accountData[i].title == title) {
                     alreadySet = true;
+                    LOG(LOG_INFO, "this->_accountData[i].title = %s  title = %s", this->_accountData[i].title, title);
                     this->_last_target_index = i;
                     this->_accountData[i].pwd  = pwd;
                     this->_accountData[i].port = port;
@@ -973,6 +988,8 @@ public:
             }
 
             if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
+                AccountData new_account;
+                this->_accountData.push_back(new_account);
                 this->_accountData[this->_accountNB].title = title;
                 this->_accountData[this->_accountNB].IP    = ip;
                 this->_accountData[this->_accountNB].name  = name;

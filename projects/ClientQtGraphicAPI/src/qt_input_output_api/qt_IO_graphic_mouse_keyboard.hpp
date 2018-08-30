@@ -157,7 +157,6 @@ public:
         }
 
         this->painter.fillRect(0, 0, w, h, Qt::black);
-
     }
 
     virtual void create_screen() override {
@@ -1484,7 +1483,7 @@ private:
 //         }
     }
 
-    void connexionReleased() override {
+    bool connexionReleased() override {
         if (this->form) {
             this->form->setCursor(Qt::WaitCursor);
             this->client->user_name     = this->form->get_userNameField();
@@ -1495,10 +1494,13 @@ private:
             this->client->is_full_capturing = true;
             this->client->full_capture_file_name = "/tmp/capture.dump";
 
+            bool conn_res = false;
             if (!this->client->target_IP.empty()){
-                this->client->connect();
+                conn_res = this->client->connect();
             }
             this->form->setCursor(Qt::ArrowCursor);
+
+            return conn_res;
         }
     }
 

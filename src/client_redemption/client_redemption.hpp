@@ -468,6 +468,7 @@ public:
     }
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
+
         if (this->mod != nullptr) {
             if (!pipe_broken) {
                 this->mod->disconnect(this->timeSystem.get_time().tv_sec);
@@ -675,13 +676,13 @@ public:
             return true;
         }
 
-        unique_fd client_sck = ip_connect(this->target_IP.c_str(),
+        unique_fd unique_client_sck = ip_connect(this->target_IP.c_str(),
                                           this->port,
                                           3,                //nbTry
                                           1000             //retryDelay
                                           );
 
-        this->client_sck = client_sck.fd();
+        this->client_sck = unique_client_sck.fd();
 
         bool has_error = false;
         std::string has_error_string;
@@ -690,15 +691,13 @@ public:
             try {
                 this->socket = std::make_unique<SocketTransport>(
                     this->user_name.c_str(),
-                    std::move(client_sck),
+                    std::move(unique_client_sck),
                     this->target_IP.c_str(),
                     this->port,
                     std::chrono::seconds(1),
                     to_verbose_flags(0x0),
                     //SocketTransport::Verbose::dump,
                     &this->error_message);
-
-                LOG(LOG_INFO, "this->socket init done");
 
                 if (this->is_full_capturing) {
                     this->_socket_in_recorder = std::move(this->socket);
@@ -723,10 +722,9 @@ public:
             errorMsg += has_error_string;
             LOG(LOG_WARNING, "%s", errorMsg);
             this->disconnect("<font color='Red'>"+errorMsg+"</font>", true);
-            return false;
         }
 
-        return true;
+        return !has_error;
     }
 
 
@@ -736,7 +734,7 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    virtual void connect() override {
+    virtual bool connect() override {
 
         if (this->is_full_capturing || this->is_full_replaying) {
             gen = std::make_unique<FixedRandom>();
@@ -854,12 +852,16 @@ public:
             }
         }
 
-        if (this->init_socket()) {
+        bool valid_socket_conn = this->init_socket();
+
+        if (valid_socket_conn) {
 
             this->update_keylayout();
 
-            if (this->init_mod()) {
-                this->connected = true;
+            this->connected = this->init_mod();
+
+            if (this->connected) {
+//                 this->connected = true;
 
                 if (this->impl_socket_listener) {
 
@@ -945,18 +947,20 @@ public:
                             }
                         }
 
-                        return;
+                        return true;
                     }
                 }
             }
 
-            const std::string errorMsgfail("Error: Mod Initialization failed.");
+/*            const std::string errorMsgfail("Error: Mod Initialization failed.");
             std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
-            this->disconnect(labelErrorMsg, false);
+            this->disconnect(labelErrorMsg, false)*/;
         }
+
+        return false;
     }
 
      void record_connection_nego_times() {

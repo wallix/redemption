@@ -50,8 +50,8 @@ public:
 
 
     // CONTROLLER
-    virtual void connexionReleased() {
-        this->client->connect();
+    virtual bool connexionReleased() {
+        return this->client->connect();
     }
 
     virtual void disconnexionReleased() {

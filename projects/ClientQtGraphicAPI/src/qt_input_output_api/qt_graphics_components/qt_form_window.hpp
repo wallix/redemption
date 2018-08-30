@@ -633,21 +633,21 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     QtIconAccount * icons[15];
     QFormLayout lay;
-    const ClientRedemptionConfig::AccountData * accountData;
+//     const std::vector<ClientRedemptionConfig::AccountData>  accountData;
     const int nb_account;
 
 
-    QtAccountPanel(FormTabAPI * main_tab, const ClientRedemptionConfig::AccountData * accountData, int nb_account, QWidget * parent, int protocol_type)
+    QtAccountPanel(FormTabAPI * main_tab, ClientRedemptionConfig * config, int nb_account, QWidget * parent, int protocol_type)
       : QWidget(parent)
       , lay(this)
-      , accountData(accountData)
+//       , accountData(accountData)
       , nb_account(nb_account < 15 ?  nb_account : 15)
     {
         this->setMinimumHeight(160);
 
         for (int i = 0; i < this->nb_account; i++) {
-            if (this->accountData[i].protocol ==  protocol_type) {
-                this->icons[i] = new QtIconAccount(main_tab, this->accountData[i], this);
+            if (config->_accountData[i].protocol ==  protocol_type) {
+                this->icons[i] = new QtIconAccount(main_tab, config->_accountData[i], this);
                 this->icons[i]->draw_account();
                 this->lay.addRow(this->icons[i]);
             }
@@ -698,7 +698,7 @@ public:
       , protocol_type(protocol_type)
     {
         this->setAccountData();
-        this->account_panel = new QtAccountPanel(main_panel, this->config->_accountData, this->config->_accountNB, this, protocol_type);
+        this->account_panel = new QtAccountPanel(main_panel, this->config, this->config->_accountNB, this, protocol_type);
 
         this->scroller.setFixedSize(170,  160);
         this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
@@ -930,23 +930,27 @@ private Q_SLOTS:
         }
 
         QPoint points = this->mapToGlobal({0, 0});
-        this->controllers->client->windowsData.form_x = points.x()-14;
-        this->controllers->client->windowsData.form_y = points.y()-85;
+        this->config->windowsData.form_x = points.x()-14;
+        this->config->windowsData.form_y = points.y()-85;
         this->controllers->client->writeWindowsData();
 
         this->options->getConfigValues();
+
 //         this->_front->rdp_width = 1920;
 //         this->_front->rdp_height = 1080;
-        this->_front->writeAccoundData(
-            this->get_IPField(),
-            this->get_userNameField(),
-            this->get_PWDField(),
-            this->get_portField()
-        );
+
         this->_front->writeCustomKeyConfig();
         this->_front->writeClientInfo();
 
-        this->controllers->connexionReleased();
+        if (this->controllers->connexionReleased()) {
+            this->_front->writeAccoundData(
+                this->get_IPField(),
+                this->get_userNameField(),
+                this->get_PWDField(),
+                this->get_portField()
+
+            );
+        }
 
         if (this->_pwdCheckBox.isChecked()) {
             this->config->_save_password_account = true;
@@ -1045,8 +1049,8 @@ public:
 
     ~QtForm() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->controllers->client->windowsData.form_x = points.x()-1;
-        this->controllers->client->windowsData.form_y = points.y()-39;
+        this->config->windowsData.form_x = points.x()-1;
+        this->config->windowsData.form_y = points.y()-39;
         this->controllers->client->writeWindowsData();
         this->is_closing = true;
 
@@ -1105,10 +1109,10 @@ public:
     void init_form() {
         if (this->controllers->client->is_no_win_data()) {
             QDesktopWidget* desktop = QApplication::desktop();
-            this->controllers->client->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
-            this->controllers->client->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
+            this->config->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
+            this->config->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
         }
-        this->move(this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
+        this->move(this->config->windowsData.form_x, this->config->windowsData.form_y);
     }
 
     void options() {

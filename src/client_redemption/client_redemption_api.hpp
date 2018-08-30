@@ -88,15 +88,7 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    struct WindowsData {
-        int form_x = 0;
-        int form_y = 0;
-        int screen_x = 0;
-        int screen_y = 0;
 
-        bool no_data = true;
-
-    } windowsData;
 
     enum : int {
         COMMAND_VALID = 15
@@ -118,8 +110,6 @@ public:
         BALISED_FRAME = 15,
         MAX_ACCOUNT_DATA = 15
     };
-
-
 
 
 
@@ -179,8 +169,6 @@ public:
             , movie_len(movie_len)
             {}
     };
-//     std::vector<IconMovieData> icons_movie_data;
-
 
     // VNC mod
     struct ModVNCParamsData {
@@ -262,7 +250,7 @@ public:
     virtual int wait_and_draw_event(timeval timeout) = 0;
 
     // CONTROLLER
-    virtual void connect() {}
+    virtual bool connect() {return true;}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void replay(const std::string & /*unused*/, const std::string & /*unused*/) {}
     virtual bool load_replay_mod(std::string const & /*unused*/, std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
