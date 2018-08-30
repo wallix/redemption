@@ -46,6 +46,10 @@ src_requirements = dict((
     ('src/capture/video_recorder.cpp', '<cxxflags>-Wno-deprecated-declarations'),
 ))
 
+dir_requirements = dict((
+    # ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
+))
+
 target_requirements = dict((
     # ('libredrec', '<library>log.o'),
 ))
@@ -54,11 +58,6 @@ target_requirements = dict((
 remove_requirements = dict((
     ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
     ('tests/utils/test_rle.cpp', '<library>src/utils/rle.o'),
-))
-
-dir_requirements = dict((
-    ('src/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
-    ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
 
 # This is usefull if several source files have the same name to disambiguate tests
@@ -85,7 +84,6 @@ target_nosyslog = set([
 #))
 
 dir_nocoverage = set([
-    'tests/sashimi/',
     'tests/server/',
     'tests/system/common/',
     'tests/system/emscripten/',
@@ -206,7 +204,6 @@ get_files(sources, "src/keyboard")
 get_files(sources, "src/lib")
 get_files(sources, "src/mod")
 get_files(sources, "src/regex")
-get_files(sources, "src/sashimi")
 get_files(sources, "src/system/linux/system")
 get_files(sources, "src/transport")
 get_files(sources, "src/utils")
@@ -571,14 +568,6 @@ print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
 print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
 
 
-# explicit sashimi
-print('explicit ')
-for target,dep in all_targets:
-    if -1 != target.find("/sashimi/") or (dep and -1 != dep.find("/sashimi/")):
-        print(' ', target)
-print(';')
-
-
 import sys
 for f in all_files.values():
     if f.type == 'C' and not f.used and \
@@ -586,7 +575,4 @@ for f in all_files.values():
     f.path != 'src/capture/ocr/extract_text.cc' and \
     f.path != 'src/capture/ocr/learning.cc' and \
     f.path != 'src/capture/ocr/ppocr_extract_text.cpp':
-        if not start_with(f.path, 'src/sashimi/'):
-            print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')
-        else:
-            print(f.path, 'is unused', file=sys.stderr)
+        print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')

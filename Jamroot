@@ -290,35 +290,6 @@ make ppocr_resources :
 # explicit test_meta_protocol2 ;
 
 
-## sashimi {
-explicit install-sashimi local-install-sashimi libsashimi sashimi ;
-
-install install-sashimi : sashimi : <location>debian/sashimi/usr/lib ;
-install local-install-sashimi : sashimi : <location>/usr/lib ;
-
-alias sashimi : libsashimi tests/sashimi ;
-
-lib libsashimi :
-    log_print.o
-    src/sashimi/channels.o
-    src/sashimi/pki.o
-    src/sashimi/sftp.o
-    src/sashimi/libssh.o
-    src/sashimi/ssh_error.o
-    krb5
-    gssapi_krb5
-    crypto
-    dl
-    z
-    rt
-:
-    <link>shared
-    # <linkflags>-Wl,-Bsymbolic
-    $(LIB_DEPENDENCIES)
-;
-## } sashimi
-
-
 include $(REDEMPTION_PUBLIC_PATH)/targets.jam ;
 
 

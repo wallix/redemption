@@ -3542,25 +3542,6 @@ test-run tests/regex/test_regex_utils :
 :
   <covfile>src/regex/regex_utils.hpp
 ;
-test-run tests/sashimi/test_buffer :
-  $(REDEMPTION_TEST_PATH)/sashimi/test_buffer.cpp
-:
-  <covfile>src/sashimi/buffer.hpp
-  <cxxflags>-Wno-format <cxxflags>-Wno-format-security
-  <library>crypto
-  <library>src/core/error.o
-  <library>z
-  <variant>debug:<library>dl <variant>san:<library>dl
-;
-test-run tests/sashimi/test_crypto :
-  $(REDEMPTION_TEST_PATH)/sashimi/test_crypto.cpp
-:
-  <cxxflags>-Wno-format <cxxflags>-Wno-format-security
-  <library>crypto
-  <library>src/core/error.o
-  <library>z
-  <variant>debug:<library>dl <variant>san:<library>dl
-;
 test-run tests/server/test_mstsc_client :
   $(REDEMPTION_TEST_PATH)/server/test_mstsc_client.cpp
 :
@@ -4444,14 +4425,6 @@ obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
-obj src/sashimi/channels.o : $(REDEMPTION_SRC_PATH)/sashimi/channels.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/channels_client.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_client.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/channels_server.o : $(REDEMPTION_SRC_PATH)/sashimi/channels_server.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/dh.o : $(REDEMPTION_SRC_PATH)/sashimi/dh.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/libssh.o : $(REDEMPTION_SRC_PATH)/sashimi/libssh.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/pki.o : $(REDEMPTION_SRC_PATH)/sashimi/pki.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/sftp.o : $(REDEMPTION_SRC_PATH)/sashimi/sftp.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
-obj src/sashimi/ssh_error.o : $(REDEMPTION_SRC_PATH)/sashimi/ssh_error.cpp : <cxxflags>-Wno-format <cxxflags>-Wno-format-security ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
@@ -4942,9 +4915,6 @@ alias test_regex_states_value : tests/regex/test_regex_states_value ;
 alias test_regex_states_value.coverage : tests/regex/test_regex_states_value.coverage ;
 alias test_regex_utils : tests/regex/test_regex_utils ;
 alias test_regex_utils.coverage : tests/regex/test_regex_utils.coverage ;
-alias test_buffer : tests/sashimi/test_buffer ;
-alias test_buffer.coverage : tests/sashimi/test_buffer.coverage ;
-alias test_crypto : tests/sashimi/test_crypto ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
@@ -5444,10 +5414,6 @@ alias tests/regex.norec :
   tests/regex/test_regex_states_value
   tests/regex/test_regex_utils
 ;
-alias tests/sashimi.norec :
-  tests/sashimi/test_buffer
-  tests/sashimi/test_crypto
-;
 alias tests/server.norec :
   tests/server/test_mstsc_client
   tests/server/test_mstsc_client_rdp50bulk
@@ -5694,9 +5660,6 @@ alias tests/mod/xup :
 alias tests/regex :
   tests/regex.norec
 ;
-alias tests/sashimi :
-  tests/sashimi.norec
-;
 alias tests/server :
   tests/server.norec
 ;
@@ -5715,7 +5678,6 @@ alias tests :
   tests/lib
   tests/mod
   tests/regex
-  tests/sashimi
   tests/server
   tests/transport
   tests/utils
@@ -5779,7 +5741,6 @@ explicit
   tests/mod/vnc.norec
   tests/mod/xup.norec
   tests/regex.norec
-  tests/sashimi.norec
   tests/server.norec
   tests/system/linux/system.norec
   tests.norec
@@ -5827,7 +5788,6 @@ explicit
   tests/mod/vnc
   tests/mod/xup
   tests/regex
-  tests/sashimi
   tests/server
   tests/system/linux/system
   tests
@@ -5837,20 +5797,4 @@ explicit
   tests/utils/sugar
   tests/utils
   tests/utils/winpr
-;
-explicit 
-  tests/sashimi/test_buffer
-  tests/sashimi/test_crypto
-  src/sashimi/channels.o
-  src/sashimi/channels_client.o
-  src/sashimi/channels_server.o
-  src/sashimi/dh.o
-  src/sashimi/libssh.o
-  src/sashimi/pki.o
-  src/sashimi/sftp.o
-  src/sashimi/ssh_error.o
-  test_buffer
-  test_buffer.coverage
-  tests/sashimi/test_buffer.coverage
-  test_crypto
 ;
