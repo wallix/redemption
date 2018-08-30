@@ -83,18 +83,15 @@ Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
 
-$ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
+$ `bjam` or `bjam toolset=your-compiler` (ex: `bjam toolset=gcc`) (see https://boostorg.github.io/build/manual/develop/index.html#bbv2.overview.configuration and `tools/bjam/user-config.jam`)
 
 Verbose tests:
 
 $ `export REDEMPTION_LOG_PRINT=1`\
-$ `bjam test`
+$ `bjam tests`
 
-or
+Note: `bjam tests.norec`, `bjam tests/front.norec` execute files directly in tests directory, but not recursively.
 
-$ `REDEMPTION_LOG_PRINT=1 bjam test`
-
-/!\ `bjam tests` execute files directly in tests directory, but not recursively.
 
 Compile executables without tests (as user):
 
@@ -104,7 +101,8 @@ and install (as administrator):
 
 \# `bjam install`
 
-Binaries are located in /usr/local/bin.
+Binaries are located in `/usr/local/bin`.
+
 
 ## Modes and options
 
