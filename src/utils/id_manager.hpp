@@ -24,14 +24,15 @@
 #include "utils/log.hpp"
 
 #include <map>
+#include <utility>
 
-template <typename T, unsigned int invalid, unsigned int next_usable,
+template <typename T, unsigned int next_usable,
     unsigned int first_invariable, unsigned int last_invariable>
 class IDManager
 {
 private:
-    std::map<T, T> src_to_dest;
-    std::map<T, T> dest_to_src;
+    std::map<T, T>                  src_to_dest;
+    std::map<T, std::pair<T, bool>> dest_to_src;
 
     T next_usable_dest_id = static_cast<T>(next_usable);
 
@@ -49,8 +50,6 @@ public:
         LOG(LOG_ERR, "IDManager::get_dest_id(...): Unknown source Id! Id=0x%X",
             src_id);
         throw Error(ERR_UNEXPECTED);
-
-        return invalid;
     }
 
     T get_dest_id_ex(T src_id) {
@@ -65,32 +64,46 @@ public:
     T get_src_id(T dest_id) const {
         auto iter = this->dest_to_src.find(dest_id);
         if (this->dest_to_src.end() != iter) {
-            return iter->second;
+            if (iter->second.second) {
+                return iter->second.first;
+            }
+
+            LOG(LOG_ERR,
+                "IDManager::get_src_id(...): Destination only Id! Id=0x%X",
+                dest_id);
+            throw Error(ERR_UNEXPECTED);
         }
 
         LOG(LOG_ERR,
             "IDManager::get_src_id(...): Unknown destination Id! Id=0x%X",
             dest_id);
         throw Error(ERR_UNEXPECTED);
-
-        return invalid;
     }
 
     bool is_dest_only_id(T dest_id) {
-        return (invalid == this->get_src_id(dest_id));
+        auto iter = this->dest_to_src.find(dest_id);
+        if (this->dest_to_src.end() != iter) {
+            if (iter->second.second) {
+                return false;
+            }
+
+            return true;
+        }
+
+        LOG(LOG_ERR,
+            "IDManager::get_src_id(...): Unknown destination Id! Id=0x%X",
+            dest_id);
+        throw Error(ERR_UNEXPECTED);
     }
 
 private:
     T map_src_id(T src_id) {
         assert(this->src_to_dest.end() == this->src_to_dest.find(src_id));
 
-        if ((src_id >= first_invariable) && (src_id <= last_invariable)) {
-            return src_id;
-        }
+        T dest_id;
 
-        T dest_id = invalid;
-
-        if (this->dest_to_src.end() == this->dest_to_src.find(src_id)) {
+        if (((src_id >= first_invariable) && (src_id <= last_invariable)) ||
+            (this->dest_to_src.end() == this->dest_to_src.find(src_id))) {
             dest_id = src_id;
 
             if (dest_id == this->next_usable_dest_id) {
@@ -103,8 +116,9 @@ private:
             this->update_next_usable_dest_id();
         }
 
-        this->dest_to_src[dest_id] = src_id;
-        this->src_to_dest[src_id]  = dest_id;
+        this->dest_to_src[dest_id].first  = src_id;
+        this->dest_to_src[dest_id].second = true;
+        this->src_to_dest[src_id]         = dest_id;
 
         if (this->verbose) {
             LOG(LOG_INFO,
@@ -121,7 +135,8 @@ public:
 
         this->update_next_usable_dest_id();
 
-        this->dest_to_src[dest_id] = invalid;
+        this->dest_to_src[dest_id].first  = 0;
+        this->dest_to_src[dest_id].second = false;
 
         if (this->verbose) {
             LOG(LOG_INFO, "IDManager::reg_dest_only_id(...): dest_id=0x%X",
@@ -134,7 +149,7 @@ public:
     void unreg_dest_only_id(T dest_id) {
         auto iter = this->dest_to_src.find(dest_id);
         if (this->dest_to_src.end() != iter) {
-            if (invalid == iter->second) {
+            if (!iter->second.second) {
                 this->dest_to_src.erase(iter);
 
                 if (this->verbose) {
@@ -163,8 +178,6 @@ public:
     void unreg_src_id(T src_id) {
         auto iter = this->src_to_dest.find(src_id);
         if (this->src_to_dest.end() != iter) {
-            assert(invalid != iter->second);
-
             this->dest_to_src.erase(iter->second);
 
             LOG(LOG_INFO,
@@ -190,7 +203,6 @@ private:
             this->next_usable_dest_id++;
         }
         while (
-                (invalid == this->next_usable_dest_id) ||
                 ((this->next_usable_dest_id >= first_invariable) &&
                  (this->next_usable_dest_id <= last_invariable)) ||
                 (this->dest_to_src.end() !=

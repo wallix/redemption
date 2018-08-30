@@ -25,14 +25,15 @@
 
 RED_AUTO_TEST_CASE(TestIDManagerGeneral)
 {
-    constexpr unsigned int INVALID_ID = 0xFFFFFFFF;
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
 
     IDManager<
-            std::remove_const<decltype(INVALID_ID)>::type,
-            INVALID_ID,
-            0,
-            INVALID_ID,
-            INVALID_ID
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
         > id_manager;
 
 
@@ -45,8 +46,6 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
 
 
     uint32_t const dest_only_id = id_manager.reg_dest_only_id();
-
-    RED_CHECK_EQUAL(id_manager.get_src_id(dest_only_id), INVALID_ID);
 
     RED_CHECK_EQUAL(id_manager.is_dest_only_id(dest_only_id), true);
 
@@ -64,20 +63,19 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
 
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterDestinationID)
 {
-    constexpr unsigned int INVALID_ID = 0xFFFFFFFF;
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
 
     IDManager<
-            std::remove_const<decltype(INVALID_ID)>::type,
-            INVALID_ID,
-            0,
-            INVALID_ID,
-            INVALID_ID
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
         > id_manager;
 
 
     uint32_t const dest_only_id = id_manager.reg_dest_only_id();
-
-    RED_CHECK_EQUAL(id_manager.get_src_id(dest_only_id), INVALID_ID);
 
     id_manager.unreg_dest_only_id(dest_only_id);
 
@@ -90,14 +88,15 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterDestinationID)
 
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID0)
 {
-    constexpr unsigned int INVALID_ID = 0xFFFFFFFF;
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
 
     IDManager<
-            std::remove_const<decltype(INVALID_ID)>::type,
-            INVALID_ID,
-            0,
-            INVALID_ID,
-            INVALID_ID
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
         > id_manager;
 
 
@@ -124,20 +123,21 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID0)
 
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
 {
-    constexpr unsigned int INVALID_ID = 0xFFFFFFFF;
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
 
     IDManager<
-            std::remove_const<decltype(INVALID_ID)>::type,
-            INVALID_ID,
-            0,
-            INVALID_ID,
-            INVALID_ID
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
         > id_manager;
 
 
     uint32_t const dest_only_id = id_manager.reg_dest_only_id();
 
-    RED_CHECK_EQUAL(id_manager.get_src_id(dest_only_id), INVALID_ID);
+    RED_CHECK(id_manager.is_dest_only_id(dest_only_id));
 
 
     uint32_t const src_id  = dest_only_id;
@@ -164,15 +164,33 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
     }
 
 
-    RED_CHECK_EQUAL(id_manager.get_src_id(dest_only_id), INVALID_ID);
-
     RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_dest_id(src_id), ERR_UNEXPECTED);
 
     RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_src_id(src_id), ERR_UNEXPECTED);
+
 
     RED_CHECK_EXCEPTION_ERROR_ID(id_manager.is_dest_only_id(dest_id), ERR_UNEXPECTED);
 
     RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_src_id(dest_id), ERR_UNEXPECTED);
 
     RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_dest_only_id(dest_id), ERR_UNEXPECTED);
+}
+
+RED_AUTO_TEST_CASE(TestIDManagerInvariable)
+{
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
+
+    IDManager<
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
+        > id_manager;
+
+    for (std::remove_const<decltype(NEXT_USABLE_ID)>::type i = INVARIABLE_FIRST;
+         i <= INVARIABLE_LAST; ++i) {
+        RED_CHECK_EQUAL(id_manager.get_dest_id_ex(i), i);
+    }
 }
