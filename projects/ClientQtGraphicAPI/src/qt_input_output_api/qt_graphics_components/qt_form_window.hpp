@@ -948,7 +948,6 @@ private Q_SLOTS:
                 this->get_userNameField(),
                 this->get_PWDField(),
                 this->get_portField()
-
             );
         }
 
