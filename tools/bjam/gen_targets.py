@@ -2,6 +2,7 @@
 
 import glob
 import os
+import sys
 from collections import OrderedDict
 
 #project_root = '../..'
@@ -96,18 +97,17 @@ sys_lib_assoc = dict((
     ('krb5.h', '<library>krb5'),
     ('gssapi/gssapi.h', '<library>gssapi_krb5'),
     ('snappy-c.h', '<library>snappy'),
-    ('zlib.h', '<library>z <define>ZLIB_CONST'),
+    ('zlib.h', '<library>z'),
+    ('openssl/ssl.h', '<library>openssl'),
 ))
 sys_lib_prefix = (
     ('libavformat/', '<library>ffmpeg'),
-    ('openssl/', '<library>crypto'),
+    ('openssl/', '<library>crypto', ('openssl/ssl.h', 'openssl/err.h')),
 )
 
 user_lib_assoc = dict((
     ('program_options/program_options.hpp', '<library>program_options'),
     ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
-    ('openssl_crypto.hpp', '<library>crypto'),
-    ('openssl_tls.hpp', '<library>openssl'),
 ))
 user_lib_prefix = (
     ('ppocr/', '<library>ppocr'),
@@ -119,7 +119,8 @@ def get_lib(inc, lib_assoc, lib_prefix):
 
     for t in lib_prefix:
         if start_with(inc, t[0]):
-            return t[1]
+            if not (len(t) > 2 and inc in t[2]):
+                return t[1]
 
     return None
 
@@ -568,7 +569,6 @@ print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
 print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
 
 
-import sys
 for f in all_files.values():
     if f.type == 'C' and not f.used and \
     f.path != 'src/capture/ocr/display_learning.cc' and \

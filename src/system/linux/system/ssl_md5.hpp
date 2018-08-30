@@ -20,11 +20,12 @@
 
 #pragma once
 
+#include "system/basic_hmac.hpp"
+
 #include <cstdint>
 #include <cstring>
 
-#include "openssl_crypto.hpp"
-#include "system/basic_hmac.hpp"
+#include <openssl/md5.h>
 
 
 class SslMd5

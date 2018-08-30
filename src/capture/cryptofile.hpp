@@ -26,7 +26,6 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "openssl_crypto.hpp"
 #include "system/ssl_sha256.hpp"
 
 #include <algorithm>

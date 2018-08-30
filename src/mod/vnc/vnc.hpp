@@ -23,10 +23,6 @@ h
 
 #pragma once
 
-#include <cstdlib>
-
-#include <zlib.h>
-
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -63,6 +59,9 @@ h
 #include "mod/vnc/encoder/copyrect.hpp"
 #include "mod/vnc/encoder/cursor.hpp"
 #include "mod/vnc/encoder/hextile.hpp"
+
+#include <cstdlib>
+
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto

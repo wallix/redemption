@@ -33,6 +33,8 @@
 #include <memory>
 
 #include <snappy-c.h>
+#include <openssl/aes.h>
+
 
 namespace
 {

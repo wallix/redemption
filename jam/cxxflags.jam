@@ -2,7 +2,6 @@
 
 CXXFLAGS =
   <cxxflags>-std=c++17
-  <cxxflags>-Wno-shadow
   <variant>debug:<cxx-libcxx-debug>allow_broken_abi
   # <variant>debug:<cxxflags>-O2
   <variant>debug:<linkflags>-rdynamic # boost.stacktrace
@@ -10,6 +9,8 @@ CXXFLAGS =
   <toolset>clang:<cxxflags>-Wno-overlength-strings
   <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
   <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
+
+  <define>ZLIB_CONST
 ;
 
 #

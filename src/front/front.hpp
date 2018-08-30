@@ -78,7 +78,6 @@
 #include "core/session_reactor.hpp"
 #include "gdi/clip_from_cmd.hpp"
 #include "keyboard/keymap2.hpp"
-#include "openssl_tls.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/bitmap_private_data.hpp"
@@ -95,6 +94,9 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/underlying_cast.hpp"
+
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 
 enum { MAX_DATA_BLOCK_SIZE = 1024 * 30 };

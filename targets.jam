@@ -51,7 +51,7 @@ exe headlessclient :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpproxy :
@@ -150,7 +150,7 @@ exe rdpproxy :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpheadless :
@@ -190,7 +190,7 @@ exe rdpheadless :
   <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpinichecker :
@@ -263,7 +263,7 @@ exe rdpclient :
   <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
@@ -301,7 +301,7 @@ lib libredrec :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libiametrics :
@@ -487,7 +487,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
@@ -558,7 +558,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/test_cryptofile :
@@ -637,7 +637,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/utils/test_match_finder :
@@ -784,6 +784,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
@@ -807,6 +808,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
@@ -830,6 +832,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
@@ -852,6 +855,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <covfile>src/client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp
   <library>app_path_test.o
   <library>crypto
+  <library>openssl
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
@@ -1902,7 +1906,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/test_server :
@@ -2008,7 +2012,7 @@ test-run tests/core/test_session :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/test_session_reactor :
@@ -2113,7 +2117,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/front/test_front :
@@ -2163,7 +2167,7 @@ test-run tests/front/test_front :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/gdi/test_graphic_api :
@@ -2249,7 +2253,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/lib/test_iametrics :
@@ -2541,7 +2545,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/internal/test_selector_mod :
@@ -3464,7 +3468,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/vnc/test_vnc :
@@ -3486,7 +3490,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/xup/test_xup :
@@ -3587,7 +3591,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/server/test_mstsc_client_rdp50bulk :
@@ -3635,7 +3639,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/server/test_rdesktop_client :
@@ -3683,18 +3687,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z <define>ZLIB_CONST
-  <variant>debug:<library>dl <variant>san:<library>dl
-;
-test-run tests/system/linux/system/test_openssl :
-  $(REDEMPTION_TEST_PATH)/system/linux/system/test_openssl.cpp
-:
-  <covfile>src/system/linux/system/openssl.hpp
-  <library>app_path_test.o
-  <library>crypto
-  <library>openssl
-  <library>src/core/error.o
-  <library>src/utils/fileutils.o
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/system/linux/system/test_ssl_aes :
@@ -3702,14 +3695,6 @@ test-run tests/system/linux/system/test_ssl_aes :
 :
   <covfile>src/system/linux/system/ssl_aes.hpp
   <library>crypto
-;
-test-run tests/system/linux/system/test_ssl_calls :
-  $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_calls.cpp
-:
-  <covfile>src/system/linux/system/ssl_calls.hpp
-  <library>crypto
-  <library>src/core/error.o
-  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/system/linux/system/test_ssl_md4 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_md4.cpp
@@ -3763,6 +3748,17 @@ test-run tests/system/linux/system/test_ssl_sha512 :
   <library>src/core/error.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
+test-run tests/system/linux/system/test_tls_context :
+  $(REDEMPTION_TEST_PATH)/system/linux/system/test_tls_context.cpp
+:
+  <covfile>src/system/linux/system/tls_context.hpp
+  <library>app_path_test.o
+  <library>crypto
+  <library>openssl
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <variant>debug:<library>dl <variant>san:<library>dl
+;
 test-run tests/test_bitmap_perf :
   $(REDEMPTION_TEST_PATH)/test_bitmap_perf.cpp
 :
@@ -3794,7 +3790,7 @@ test-run tests/transport/test_gzip_compression_transport :
   <covfile>src/transport/gzip_compression_transport.hpp
   <library>src/core/error.o
   <library>src/utils/hexdump.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/transport/test_in_file_transport :
@@ -4102,7 +4098,7 @@ test-run tests/utils/test_compression_transport_builder :
   <covfile>src/utils/compression_transport_builder.hpp
   <library>snappy
   <library>src/core/error.o
-  <library>z <define>ZLIB_CONST
+  <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/utils/test_confdescriptor :
@@ -4340,7 +4336,7 @@ test-run tests/utils/test_zlib :
 :
   <covfile>src/utils/zlib.hpp
   <library>src/utils/hexdump.o
-  <library>z <define>ZLIB_CONST
+  <library>z
 ;
 test-run tests/utils/winpr/test_pattern :
   $(REDEMPTION_TEST_PATH)/utils/winpr/test_pattern.cpp
@@ -4918,12 +4914,8 @@ alias test_regex_utils.coverage : tests/regex/test_regex_utils.coverage ;
 alias test_mstsc_client : tests/server/test_mstsc_client ;
 alias test_mstsc_client_rdp50bulk : tests/server/test_mstsc_client_rdp50bulk ;
 alias test_rdesktop_client : tests/server/test_rdesktop_client ;
-alias test_openssl : tests/system/linux/system/test_openssl ;
-alias test_openssl.coverage : tests/system/linux/system/test_openssl.coverage ;
 alias test_ssl_aes : tests/system/linux/system/test_ssl_aes ;
 alias test_ssl_aes.coverage : tests/system/linux/system/test_ssl_aes.coverage ;
-alias test_ssl_calls : tests/system/linux/system/test_ssl_calls ;
-alias test_ssl_calls.coverage : tests/system/linux/system/test_ssl_calls.coverage ;
 alias test_ssl_md4 : tests/system/linux/system/test_ssl_md4 ;
 alias test_ssl_md4.coverage : tests/system/linux/system/test_ssl_md4.coverage ;
 alias test_ssl_md5 : tests/system/linux/system/test_ssl_md5 ;
@@ -4938,6 +4930,8 @@ alias test_ssl_sha256 : tests/system/linux/system/test_ssl_sha256 ;
 alias test_ssl_sha256.coverage : tests/system/linux/system/test_ssl_sha256.coverage ;
 alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
 alias test_ssl_sha512.coverage : tests/system/linux/system/test_ssl_sha512.coverage ;
+alias test_tls_context : tests/system/linux/system/test_tls_context ;
+alias test_tls_context.coverage : tests/system/linux/system/test_tls_context.coverage ;
 alias test_bitmap_perf : tests/test_bitmap_perf ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
 alias test_crypto_transport.coverage : tests/transport/test_crypto_transport.coverage ;
@@ -5420,9 +5414,7 @@ alias tests/server.norec :
   tests/server/test_rdesktop_client
 ;
 alias tests/system/linux/system.norec :
-  tests/system/linux/system/test_openssl
   tests/system/linux/system/test_ssl_aes
-  tests/system/linux/system/test_ssl_calls
   tests/system/linux/system/test_ssl_md4
   tests/system/linux/system/test_ssl_md5
   tests/system/linux/system/test_ssl_mod_exp
@@ -5430,6 +5422,7 @@ alias tests/system/linux/system.norec :
   tests/system/linux/system/test_ssl_sha1
   tests/system/linux/system/test_ssl_sha256
   tests/system/linux/system/test_ssl_sha512
+  tests/system/linux/system/test_tls_context
 ;
 alias tests.norec :
   tests/test_bitmap_perf

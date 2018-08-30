@@ -33,9 +33,11 @@
 #include "utils/crypto/ssl_lib.hpp"
 #include "utils/stream.hpp"
 #include "utils/log.hpp"
-#include "openssl_crypto.hpp"
 
 #include <cinttypes>
+
+#include <openssl/x509.h>
+
 
 namespace GCC { namespace UserData {
 

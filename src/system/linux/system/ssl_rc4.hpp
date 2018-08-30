@@ -26,10 +26,11 @@
 
 #pragma once
 
-#include "openssl_crypto.hpp"
 #include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
+
+#include <openssl/rc4.h>
 
 
 class SslRC4

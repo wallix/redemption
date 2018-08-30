@@ -31,7 +31,6 @@
 #include "core/mainloop.hpp"
 
 #include "main/version.hpp"
-#include "openssl_crypto.hpp"
 #include "program_options/program_options.hpp"
 #include "system/scoped_crypto_init.hpp"
 #include "transport/in_file_transport.hpp"

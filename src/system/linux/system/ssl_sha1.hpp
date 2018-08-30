@@ -20,13 +20,14 @@
 
 #pragma once
 
+#include "core/error.hpp"
+#include "system/basic_hmac.hpp"
+
 #include <cstdint>
 #include <cstring>
 #include <cassert>
 
-#include "core/error.hpp"
-#include "openssl_crypto.hpp"
-#include "system/basic_hmac.hpp"
+#include <openssl/sha.h>
 
 
 class SslSha1

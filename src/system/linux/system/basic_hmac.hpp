@@ -20,12 +20,14 @@
 
 #pragma once
 
+#include "core/error.hpp"
+#include "utils/sugar/bytes_view.hpp"
+
 #include <cstdint>
 #include <cstring>
 
-#include "core/error.hpp"
-#include "utils/sugar/bytes_view.hpp"
-#include "openssl_crypto.hpp"
+#include <openssl/hmac.h>
+
 
 namespace detail_
 {

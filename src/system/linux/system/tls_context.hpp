@@ -24,9 +24,6 @@
 #pragma once
 
 #include "fcntl.h"
-#include "openssl_crypto.hpp"
-#include "openssl_tls.hpp"
-
 #include "core/server_notifier_api.hpp"
 #include "core/app_path.hpp"
 #include "core/error.hpp"
@@ -40,6 +37,11 @@
 
 #include <memory>
 #include <cstring>
+
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast")
