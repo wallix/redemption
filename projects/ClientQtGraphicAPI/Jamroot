@@ -21,14 +21,14 @@ local qtversion = [ os.environ qt ] ;
 if ! $(qtversion)
 {
     qtversion = [ os.environ qtversion ] ;
-}
 
-if ! $(qtversion)
-{
-    qtversion = [ os.environ KDE_SESSION_VERSION ] ;
-    if $(qtversion)
+    if ! $(qtversion)
     {
-        echo "KDE_SESSION_VERSION=$(qtversion) found. Use Qt$(qtversion)." ;
+        qtversion = [ os.environ KDE_SESSION_VERSION ] ;
+        if $(qtversion)
+        {
+            echo "KDE_SESSION_VERSION=$(qtversion) found. Use Qt$(qtversion)." ;
+        }
     }
 }
 
@@ -131,12 +131,19 @@ obj config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 
 local obj_list = config.o ;
 local lib_list = ;
+local requirement_list = ;
 
 rule add_src ( src : requirements * )
 {
     obj $(src).o : $(REDEMPTION_SRC_PATH)/$(src) : $(requirements) ;
     obj_list += $(src).o ;
 }
+
+rule add_requirements ( requirements * )
+{
+    requirement_list += $(requirements) ;
+}
+
 rule add_lib ( lib )
 {
     lib_list += $(lib) ;
@@ -161,7 +168,13 @@ constant EXE_DEPENDENCIES :
 
 if $(qtversion) = 4
 {
-    using qt4 : /usr ;
+    local CXX_BJAM_YEAR_VERSION = [ modules.peek : JAMVERSION ] ;
+    if $(CXX_BJAM_YEAR_VERSION) < 2016.00 {
+        using qt : /usr ;
+    }
+    else {
+        using qt4 : /usr ;
+    }
     alias libqtclient : /qt//QtGui ;
     alias libphonon : /qt//phonon ;
 }
@@ -211,10 +224,10 @@ exe client_rdp :
     libphonon
 :
     $(EXE_DEPENDENCIES)
+    $(requirement_list)
     # disable moc warnings
     <toolset>gcc:<cxxflags>-Wuseless-cast&&-Wno-useless-cast
     <toolset>clang:<cxxflags>-Wredundant-parens&&-Wno-redundant-parens
-    <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
 #obj test_client.o : src/test_client_redemption.cpp :

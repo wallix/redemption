@@ -51,7 +51,7 @@ exe headlessclient :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpproxy :
@@ -150,7 +150,7 @@ exe rdpproxy :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpheadless :
@@ -190,7 +190,7 @@ exe rdpheadless :
   <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 exe rdpinichecker :
@@ -263,7 +263,7 @@ exe rdpclient :
   <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 
@@ -301,7 +301,7 @@ lib libredrec :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libiametrics :
@@ -487,7 +487,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
@@ -558,7 +558,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/test_cryptofile :
@@ -637,7 +637,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/capture/utils/test_match_finder :
@@ -1902,7 +1902,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/test_server :
@@ -2008,7 +2008,7 @@ test-run tests/core/test_session :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/core/test_session_reactor :
@@ -2113,7 +2113,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/front/test_front :
@@ -2163,7 +2163,7 @@ test-run tests/front/test_front :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/gdi/test_graphic_api :
@@ -2249,7 +2249,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/lib/test_iametrics :
@@ -2541,7 +2541,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/internal/test_selector_mod :
@@ -3464,7 +3464,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>tests/includes/test_only/fake_graphic.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/vnc/test_vnc :
@@ -3486,7 +3486,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/d3des.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/mod/xup/test_xup :
@@ -3587,7 +3587,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/server/test_mstsc_client_rdp50bulk :
@@ -3635,7 +3635,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/server/test_rdesktop_client :
@@ -3683,7 +3683,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/system/linux/system/test_openssl :
@@ -3794,7 +3794,7 @@ test-run tests/transport/test_gzip_compression_transport :
   <covfile>src/transport/gzip_compression_transport.hpp
   <library>src/core/error.o
   <library>src/utils/hexdump.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/transport/test_in_file_transport :
@@ -4102,7 +4102,7 @@ test-run tests/utils/test_compression_transport_builder :
   <covfile>src/utils/compression_transport_builder.hpp
   <library>snappy
   <library>src/core/error.o
-  <library>z
+  <library>z <define>ZLIB_CONST
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 test-run tests/utils/test_confdescriptor :
@@ -4340,7 +4340,7 @@ test-run tests/utils/test_zlib :
 :
   <covfile>src/utils/zlib.hpp
   <library>src/utils/hexdump.o
-  <library>z
+  <library>z <define>ZLIB_CONST
 ;
 test-run tests/utils/winpr/test_pattern :
   $(REDEMPTION_TEST_PATH)/utils/winpr/test_pattern.cpp

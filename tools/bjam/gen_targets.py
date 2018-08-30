@@ -96,7 +96,7 @@ sys_lib_assoc = dict((
     ('krb5.h', '<library>krb5'),
     ('gssapi/gssapi.h', '<library>gssapi_krb5'),
     ('snappy-c.h', '<library>snappy'),
-    ('zlib.h', '<library>z'),
+    ('zlib.h', '<library>z <define>ZLIB_CONST'),
 ))
 sys_lib_prefix = (
     ('libavformat/', '<library>ffmpeg'),
