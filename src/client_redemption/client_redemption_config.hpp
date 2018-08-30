@@ -944,7 +944,7 @@ public:
                 if (line.compare(0, pos, "options_profil") == 0) {
 
                     this->_accountData[accountNB].options_profil = std::stoi(info);
-                    this->_accountData[accountNB].index = accountNB+1;
+                    this->_accountData[accountNB].index = accountNB;
 
                     accountNB++;
                     if (accountNB == MAX_ACCOUNT_DATA) {

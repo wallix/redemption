@@ -147,7 +147,6 @@ public:
         std::string line(this->checksum+"   "+this->reso);
         QString qchecksum(line.c_str());
 
-
         painter.drawText(QPoint(this->height()+6, 15), qname);
         painter.drawText(QPoint(this->height()+6, 25), qversion);
         painter.drawText(QPoint(this->height()+6, 35), qchecksum);
@@ -380,6 +379,7 @@ public:
     virtual void targetPicked(int ) {}
     virtual void drop_account() {}
     virtual void check_password_box() {}
+    virtual void delete_account(int index) {}
     virtual ~FormTabAPI() = default;
 };
 
@@ -508,8 +508,13 @@ public:
 
         QString qip(this->accountData.IP.c_str());
         QString qname(this->accountData.name.c_str());
+
         painter.drawText(QPoint(this->height()+6, 20), qip);
         painter.drawText(QPoint(this->height()+6, 30), qname);
+
+        QString qcross("x");
+        painter.drawText(QPoint(128, 8), qcross);
+        painter.drawRect(128, 3, 6, 6);
 
         pen.setBrush(QColor(0xFF, 0x8C, 0x00));
         painter.setPen(pen);
@@ -555,13 +560,18 @@ public:
             case Qt::LeftButton:
                 if (this->main_tab) {
 
-                    this->main_tab->account_index_to_drop = this->accountData.index;
-                    QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
-                    QPixmap map = QPixmap::fromImage(image);
+                    if (e->x() > 127 && e->x() < 135 && e->y() > 2 && e->y() < 9) {
+                        this->main_tab->delete_account(this->accountData.index);
+                    } else {
 
-                    QCursor qcursor(map, 10, 10);
+                        this->main_tab->account_index_to_drop = this->accountData.index;
+                        QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
+                        QPixmap map = QPixmap::fromImage(image);
 
-                    this->main_tab->setCursor(qcursor);
+                        QCursor qcursor(map, 10, 10);
+
+                        this->main_tab->setCursor(qcursor);
+                    }
                 }
                 break;
 
@@ -592,7 +602,9 @@ public:
         switch (e->button()) {
             case Qt::LeftButton:
                 if (this->main_tab) {
-                    this->main_tab->account_index_to_drop = this->accountData.index;
+                    this->main_tab->account_index_to_drop = this->accountData.index+1;
+
+                    LOG(LOG_INFO, "this->main_tab->account_index_to_drop = %d", this->main_tab->account_index_to_drop);
                     this->main_tab->drop_account();
                     this->main_tab->account_index_to_drop = -1;
                     this->main_tab->setCursor(Qt::ArrowCursor);
@@ -634,20 +646,23 @@ public:
     QtIconAccount * icons[15];
     QFormLayout lay;
 //     const std::vector<ClientRedemptionConfig::AccountData>  accountData;
-    const int nb_account;
+//     const int nb_account;
 
 
-    QtAccountPanel(FormTabAPI * main_tab, ClientRedemptionConfig * config, int nb_account, QWidget * parent, int protocol_type)
+    QtAccountPanel(FormTabAPI * main_tab, ClientRedemptionConfig * config,  QWidget * parent, int protocol_type)
       : QWidget(parent)
       , lay(this)
 //       , accountData(accountData)
-      , nb_account(nb_account < 15 ?  nb_account : 15)
+//       , nb_account(nb_account < 15 ?  nb_account : 15)
     {
+        this->setAttribute(Qt::WA_DeleteOnClose);
         this->setMinimumHeight(160);
 
-        for (int i = 0; i < this->nb_account; i++) {
+        for (size_t i = 0; i < config->_accountData.size(); i++) {
             if (config->_accountData[i].protocol ==  protocol_type) {
+
                 this->icons[i] = new QtIconAccount(main_tab, config->_accountData[i], this);
+                LOG(LOG_INFO, "elem account %zu title=%s index=%d", i, config->_accountData[i].title, config->_accountData[i].index);
                 this->icons[i]->draw_account();
                 this->lay.addRow(this->icons[i]);
             }
@@ -697,14 +712,17 @@ public:
       , scroller(this)
       , protocol_type(protocol_type)
     {
-        this->setAccountData();
-        this->account_panel = new QtAccountPanel(main_panel, this->config, this->config->_accountNB, this, protocol_type);
 
-        this->scroller.setFixedSize(170,  160);
-        this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
-        "border-bottom-color: #FF8C00;");
-        this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-        this->scroller.setWidget(this->account_panel);
+//         this->scroller.setFixedSize(170,  160);
+//         this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
+//         "border-bottom-color: #FF8C00;");
+//         this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+
+        this->set_account_panel();
+//         this->account_panel = new QtAccountPanel(main_panel, this->config, this->config->_accountNB, this, protocol_type);
+
+
+
 
         this->setFixedSize(this->scroller.width() + this->line_edit_panel.width(), this->scroller.height());
 
@@ -713,6 +731,20 @@ public:
         this->scroller.setGeometry(QRect(this->line_edit_panel.width()+1, 0, this->scroller.width(), this->scroller.height() ));
     }
 
+    void set_account_panel() {
+//         if (this->account_panel) {
+//             this->account_panel->close();
+//         }
+
+        this->scroller.setFixedSize(170,  160);
+        this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
+        "border-bottom-color: #FF8C00;");
+        this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+        this->account_panel = new QtAccountPanel(this->main_panel, this->config, this, this->protocol_type);
+        this->scroller.setWidget(this->account_panel);
+
+        this->setAccountData();
+    }
 
     void setAccountData() {
         if (this->_front) {
@@ -920,6 +952,19 @@ public:
 
             this->config->current_user_profil = this->config->_accountData[index].options_profil;
         }
+    }
+
+    void delete_account(int index) override {
+//         this->config->_accountData.size();
+        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+        this->config->_accountData.erase(this->config->_accountData.begin()+index);
+        for (size_t i = 0; i < this->config->_accountData.size(); i++) {
+            this->config->_accountData[i].index = i;
+        }
+        this->config->_accountNB = this->config->_accountData.size();
+        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+        this->formAccountConnectionPanel.set_account_panel();
+       // this->show();
     }
 
 private Q_SLOTS:
