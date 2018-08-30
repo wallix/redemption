@@ -81,27 +81,11 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterDestinationID)
 
     id_manager.unreg_dest_only_id(dest_only_id);
 
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.is_dest_only_id(dest_only_id), ERR_UNEXPECTED);
 
-    try {
-        id_manager.is_dest_only_id(dest_only_id);
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_src_id(dest_only_id), ERR_UNEXPECTED);
 
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-    try {
-        id_manager.get_src_id(dest_only_id);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-    try {
-        id_manager.unreg_dest_only_id(dest_only_id);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_dest_only_id(dest_only_id), ERR_UNEXPECTED);
 }
 
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID0)
@@ -133,19 +117,9 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID0)
     id_manager.unreg_src_id(40020);
 
 
-    try {
-        id_manager.get_dest_id(40020);
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_dest_id(40020), ERR_UNEXPECTED);
 
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-    try {
-        id_manager.unreg_src_id(40020);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_src_id(40020), ERR_UNEXPECTED);
 }
 
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
@@ -192,40 +166,13 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
 
     RED_CHECK_EQUAL(id_manager.get_src_id(dest_only_id), INVALID_ID);
 
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_dest_id(src_id), ERR_UNEXPECTED);
 
-    try {
-        id_manager.get_dest_id(src_id);
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_src_id(src_id), ERR_UNEXPECTED);
 
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.is_dest_only_id(dest_id), ERR_UNEXPECTED);
 
-    try {
-        id_manager.unreg_src_id(src_id);
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_src_id(dest_id), ERR_UNEXPECTED);
 
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-
-    try {
-        id_manager.is_dest_only_id(dest_id);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-    try {
-        id_manager.get_src_id(dest_id);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
-
-    try {
-        id_manager.unreg_dest_only_id(dest_id);
-
-        RED_CHECK(false);
-    }
-    catch (Error & e) {}
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_dest_only_id(dest_id), ERR_UNEXPECTED);
 }
