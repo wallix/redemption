@@ -127,16 +127,18 @@ class FrontConnection
 {
 public:
     FrontConnection(unique_fd sck, std::string host, int port, std::string const& captureFile,
-        TimeObj& timeobj,std::string nla_username, std::string nla_password, bool enable_kerberos
+        TimeObj& timeobj,std::string nla_username, std::string nla_password, bool enable_kerberos,
+        uint64_t verbosity
     )
-        : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(0))
+        : frontConn("front", std::move(sck), "127.0.0.1", 3389, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
         , backConn("back", ip_connect(host.c_str(), port, 3, 1000),
-            host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(0))
+            host.c_str(), port, std::chrono::milliseconds(100), to_verbose_flags(verbosity))
         , outFile(timeobj, captureFile.c_str())
         , host(std::move(host))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
         , enable_kerberos(enable_kerberos)
+        , verbosity(verbosity)
     {
         if (!this->nla_password.empty()) {
             this->nla_password.push_back('\0');
@@ -177,13 +179,12 @@ public:
                 if (is_nla) {
                     LOG(LOG_INFO, "start NegoServer");
                     nego_server = std::make_unique<NegoServer>(
-                        frontConn, outFile, nla_username, nla_password);
-                    nego_server->credssp.credssp_server_authenticate_init();
+                        frontConn, outFile, nla_username, nla_password, verbosity);
 
                     rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
                     while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
                         InStream in_stream(frontBuffer.current_pdu_buffer());
-                        st = nego_server->credssp.credssp_server_authenticate_next(in_stream);
+                        st = nego_server->recv_next_data(in_stream);
                     }
 
                     if (rdpCredsspServer::State::Err == st) {
@@ -198,7 +199,7 @@ public:
                         backConn, outFile,
                         host.c_str(), nla_username.c_str(),
                         nla_password.empty() ? "\0" : nla_password.c_str(),
-                        enable_kerberos);
+                        enable_kerberos, verbosity);
                     nego_client->send_negotiation_request();
 
                     state = NEGOCIATING_BACK_NLA;
@@ -217,7 +218,7 @@ public:
             frontBuffer.load_data(this->frontConn);
             while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
                 InStream in_stream(frontBuffer.current_pdu_buffer());
-                st = nego_server->credssp.credssp_server_authenticate_next(in_stream);
+                st = nego_server->recv_next_data(in_stream);
             }
 
             switch (st) {
@@ -233,7 +234,7 @@ public:
                     this->backConn, this->outFile,
                     this->host.c_str(), nla_username.c_str(),
                     nla_password.empty() ? "\0" : nla_password.c_str(),
-                    enable_kerberos);
+                    enable_kerberos, verbosity);
                 nego_client->send_negotiation_request();
                 state = NEGOCIATING_BACK_STEP1;
                 break;
@@ -418,7 +419,7 @@ private:
         return ret;
     }
 
-    struct NegoServer
+    class NegoServer
     {
         FixedRandom rand;
         LCGTime timeobj;
@@ -426,9 +427,11 @@ private:
         NlaTeeTransport trans;
         rdpCredsspServer credssp;
 
+    public:
         NegoServer(
             Transport& trans, RecorderFile& outFile,
-            std::string const& user, std::string const& password)
+            std::string const& user, std::string const& password,
+            uint64_t verbosity)
         : trans(trans, outFile, NlaTeeTransport::Type::Server)
         , credssp(
             this->trans, false, false, rand, timeobj, extra_message, Translation::EN,
@@ -453,8 +456,15 @@ private:
 
                 LOG(LOG_ERR, "Ntlm: bad identity");
                 return Ntlm_SecurityFunctionTable::PasswordCallback::Error;
-            })
-        {}
+            }, verbosity)
+        {
+            this->credssp.credssp_server_authenticate_init();
+        }
+
+        rdpCredsspServer::State recv_next_data(InStream& in_stream)
+        {
+            return this->credssp.credssp_server_authenticate_next(in_stream);
+        }
     };
 
     class NegoClient
@@ -469,10 +479,11 @@ private:
         NegoClient(
             Transport& trans, RecorderFile& outFile,
             char const* host, char const* target_user, char const* password,
-            bool enable_kerberos
+            bool enable_kerberos, uint64_t verbosity
         )
         : nego(true, target_user, true, false, host, enable_kerberos,
-            this->random, this->timeobj, this->extra_message, Translation::EN)
+            this->random, this->timeobj, this->extra_message, Translation::EN,
+            to_verbose_flags(verbosity))
         , trans(trans, outFile, NlaTeeTransport::Type::Client)
         {
             auto [username, domain] = extract_user_domain(target_user);
@@ -522,19 +533,21 @@ private:
     std::string nla_username;
     std::string nla_password;
     bool enable_kerberos;
+    uint64_t verbosity;
 };
 
 /** @brief the server that handles RDP connections */
 class FrontServer : public Server
 {
 public:
-    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos)
+    FrontServer(std::string host, int port, std::string captureFile, std::string nla_username, std::string nla_password, bool enable_kerberos, uint64_t verbosity)
         : targetPort(port)
         , targetHost(std::move(host))
         , captureTemplate(std::move(captureFile))
         , nla_username(std::move(nla_username))
         , nla_password(std::move(nla_password))
         , enable_kerberos(enable_kerberos)
+        , verbosity(verbosity)
     {
         // just ignore this signal because there is no child termination management yet.
         struct sigaction sa;
@@ -570,7 +583,7 @@ public:
             TimeSystem timeobj;
             FrontConnection conn(
                 std::move(sck_in), targetHost, targetPort, finalPath, timeobj,
-                nla_username, nla_password, enable_kerberos);
+                nla_username, nla_password, enable_kerberos, verbosity);
             try {
                 conn.run();
             } catch(Error const& e) {
@@ -635,6 +648,7 @@ private:
     std::string nla_username;
     std::string nla_password;
     bool enable_kerberos;
+    uint64_t verbosity;
 };
 
 
@@ -675,8 +689,9 @@ int main(int argc, char *argv[])
     char const* capture_file = nullptr;
     std::string nla_username;
     std::string nla_password;
-    bool forkable = true;
+    bool no_forkable = false;
     bool enable_kerberos = false;
+    uint64_t verbosity = 0;
 
     auto options = cli::options(
         cli::option('h', "help").help("Show help").action(cli::help),
@@ -690,7 +705,8 @@ int main(int argc, char *argv[])
         cli::option("enable-kerberos").action(cli::on_off_location(enable_kerberos)),
         cli::option('t', "template").help("Ex: dump-%d.out")
             .action(cli::arg_location("path", capture_file)),
-        cli::option('N', "no-fork").action(cli::on_off_location(forkable))
+        cli::option('N', "no-fork").action(cli::on_off_location(no_forkable)),
+        cli::option('V', "verbose").action(cli::arg_location("verbosity", verbosity))
     );
 
     auto cli_result = cli::parse(options, argc, argv);
@@ -732,10 +748,10 @@ int main(int argc, char *argv[])
     FrontServer front(
         target_host, target_port, capture_file,
         std::move(nla_username), std::move(nla_password),
-        enable_kerberos);
+        enable_kerberos, verbosity);
     Listen listener(front, inet_addr("0.0.0.0"), listen_port);
     if (listener.sck <= 0) {
         return 2;
     }
-    listener.run(forkable);
+    listener.run(!no_forkable);
 }
