@@ -20,16 +20,41 @@
 
 #pragma once
 
-#include "core/RDP/clipboard.hpp"
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <cstdio>
+#include <dirent.h>
+// #include <unistd.h>
+// #include <sys/types.h>
+// #include <sys/stat.h>
+// #include <unistd.h>
+
 #include "main/version.hpp"
 #include "utils/cli.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/redemption_info_version.hpp"
+#include "utils/theme.hpp"
+
+
+#include "core/client_info.hpp"
+#include "core/RDP/clipboard.hpp"
+#include "core/session_reactor.hpp"
+
+#include "mod/rdp/rdp_log.hpp"
+#include "mod/internal/client_execute.hpp"
+
+#include "capture/cryptofile.hpp"
+
+#include "transport/crypto_transport.hpp"
+#include "transport/mwrm_reader.hpp"
+
+// #include <sys/stat.h>
 
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
-#include "client_redemption/client_redemption_api.hpp"
+// #include "client_redemption/client_redemption_api.hpp"
 
 #include <algorithm>
 // #include <string>
@@ -38,7 +63,100 @@
 #include <cstdint>
 #include <openssl/ssl.h>
 
+#include "client_redemption/client_redemption_path.hpp"
 
+
+
+    struct UserProfil {
+        int id;
+        std::string name;
+
+        UserProfil(int id, std::string name)
+          : id(id)
+          , name(std::move(name)) {}
+    };
+
+
+    struct KeyCustomDefinition {
+        int qtKeyID;
+        int scanCode;
+        std::string ASCII8;
+        int extended;
+        std::string name;
+
+        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
+          : qtKeyID(qtKeyID)
+          , scanCode(scanCode)
+          , ASCII8(std::move(ASCII8))
+          , extended(extended ? 0x0100 : 0)
+          , name(std::move(name))
+        {}
+    };
+
+
+   // bool                 _recv_disconnect_ultimatum;
+
+
+    struct IconMovieData {
+        const std::string file_name;
+        const std::string file_path;
+        const std::string file_version;
+        const std::string file_resolution;
+        const std::string file_checksum;
+        const long int movie_len = 0;
+
+        IconMovieData(std::string file_name,
+                      std::string file_path,
+                      std::string file_version,
+                      std::string file_resolution,
+                      std::string file_checksum,
+                      long int movie_len)
+            : file_name(std::move(file_name))
+            , file_path(std::move(file_path))
+            , file_version(std::move(file_version))
+            , file_resolution(std::move(file_resolution))
+            , file_checksum(std::move(file_checksum))
+            , movie_len(movie_len)
+            {}
+    };
+
+    // VNC mod
+    struct ModVNCParamsData {
+        bool is_apple;
+        Theme      theme;
+        WindowListCaps windowListCaps;
+        ClientExecute exe;
+        std::string vnc_encodings;
+        int keylayout = 0x040C;
+        int width = 800;
+        int height = 600;
+
+        bool enable_tls = false;
+        bool enable_nla = false;
+        bool enable_sound = false;
+        bool enable_shared_clipboard = false;
+
+        std::vector<UserProfil> userProfils;
+        int current_user_profil = 0;
+
+        ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
+          : is_apple(false)
+          , exe(session_reactor, client, this->windowListCaps, false)
+          , vnc_encodings("5,16,0,1,-239")
+        {}
+    };
+
+    struct ModRDPParamsData
+    {
+        int rdp_width;
+        int rdp_height;
+        bool enable_tls   = false;
+        bool enable_nla   = false;
+        bool enable_sound = false;
+
+        bool enable_shared_virtual_disk = true;
+        bool enable_shared_remoteapp = false;
+    };
 
 
 struct RDPRemoteAppConfig {
@@ -49,13 +167,46 @@ struct RDPRemoteAppConfig {
 };
 
 
-class ClientRedemptionConfig: public ClientRedemptionAPI
+class ClientRedemptionConfig
 {
 
-private:
+public:
     std::vector<IconMovieData> icons_movie_data;
 
-public:
+
+    const std::string    MAIN_DIR = CLIENT_REDEMPTION_MAIN_PATH;
+    const std::string    REPLAY_DIR = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH;
+    const std::string    USER_CONF_LOG = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH;
+    const std::string    WINDOWS_CONF = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH;
+    const std::string    CB_TEMP_DIR = MAIN_DIR + CLIENT_REDEMPTION_CB_FILE_TEMP_PATH;
+    std::string          SHARE_DIR = MAIN_DIR + CLIENT_REDEMPTION_SHARE_PATH;
+    const std::string    USER_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_USER_CONF_PATH;
+    const std::string    SOUND_TEMP_DIR = CLIENT_REDEMPTION_SOUND_TEMP_PATH;
+    const std::string    DATA_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_PATH;
+    const std::string    DATA_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_CONF_PATH;
+
+    enum : int {
+        COMMAND_VALID = 15
+      , NAME_GOT      = 1
+      , PWD_GOT       = 2
+      , IP_GOT        = 4
+      , PORT_GOT      = 8
+    };
+
+    enum : uint8_t {
+        NO_PROTOCOL        = 0,
+        MOD_RDP            = 1,
+        MOD_VNC            = 2,
+        MOD_RDP_REMOTE_APP = 3,
+        MOD_RDP_REPLAY     = 4
+    };
+
+    enum : int {
+        BALISED_FRAME = 15,
+        MAX_ACCOUNT_DATA = 15
+    };
+
+
     RDPVerbose        verbose;
     //bool                _recv_disconnect_ultimatum;
     ClientInfo           info;
@@ -72,6 +223,12 @@ public:
 
     std::chrono::milliseconds time_out_disconnection;
     int keep_alive_freq;
+
+    std::vector<KeyCustomDefinition> keyCustomDefinitions;
+    std::vector<UserProfil> userProfils;
+
+    ModRDPParamsData modRDPParamsData;
+    ModVNCParamsData vnc_conf;
 
     struct WindowsData {
         int form_x = 0;
@@ -103,17 +260,46 @@ public:
 
     uint8_t mod_state = MOD_RDP;
 
+    bool enable_shared_clipboard = true;
 
 
-    ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
-    : ClientRedemptionAPI(session_reactor)
-    , verbose(verbose)
+    bool                 is_recording = false;
+    bool                 is_spanning = false;
+
+    int rdp_width = 800;
+    int rdp_height = 600;
+
+    bool                 is_full_capturing = false;
+    bool                 is_full_replaying = false;
+    std::string          full_capture_file_name;
+    bool                 is_replaying = false;
+    bool                 is_loading_replay_mod = false;
+    bool                 connected = false;
+
+    std::string _movie_name;
+    std::string _movie_dir;
+    std::string _movie_full_path;
+
+    uint8_t           connection_info_cmd_complete = PORT_GOT;
+
+    std::string       user_name;
+    std::string       user_password;
+    std::string       target_IP;
+    int               port = 3389;
+    BGRPalette        mod_palette = BGRPalette::classic_332();
+
+
+
+    ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose, FrontAPI &front)
+//     : ClientRedemptionAPI()
+    : verbose(verbose)
     //, _recv_disconnect_ultimatum(false)
     , wab_diag_question(false)
     , quick_connection_test(true)
     , persist(false)
     , time_out_disconnection(5000)
     , keep_alive_freq(100)
+    , vnc_conf(session_reactor, front)
     {
         this->setDefaultConfig();
 
@@ -154,6 +340,7 @@ public:
         this->rDPClipboardConfig.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_TEXT, {});
         this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, {});
+        this->rDPClipboardConfig.path = this->CB_TEMP_DIR;
 
 
         // Set RDP RDPDR config
@@ -290,7 +477,7 @@ public:
             cli::option("remote-exe").help("Connection as remote application and set the line command.")
             .action(cli::arg("command", [this](std::string line){
                 this->mod_state = MOD_RDP_REMOTE_APP;
-                this->enable_shared_remoteapp = true;
+                this->modRDPParamsData.enable_shared_remoteapp = true;
                 auto pos(line.find(' '));
                 if (pos == std::string::npos) {
                     this->rDPRemoteAppConfig.source_of_ExeOrFile = std::move(line);
@@ -385,7 +572,7 @@ public:
 
             cli::option("share-dir").help("Set directory path on local disk to share with your session.")
             .action(cli::arg("directory", [this](std::string s) {
-                this->enable_shared_virtual_disk = !s.empty();
+                this->modRDPParamsData.enable_shared_virtual_disk = !s.empty();
                 this->SHARE_DIR = std::move(s);
             })),
 
@@ -421,6 +608,8 @@ public:
     }
 
     ~ClientRedemptionConfig() = default;
+
+
 
     void parse_options(int argc, char const* const argv[])
     {
@@ -601,7 +790,7 @@ public:
 
             cli::option("share-dir").help("Set directory path on local disk to share with your session.")
             .action(cli::arg("directory", [this](std::string s) {
-                this->enable_shared_virtual_disk = !s.empty();
+                this->modRDPParamsData.enable_shared_virtual_disk = !s.empty();
                 this->SHARE_DIR = std::move(s);
             })),
 
@@ -649,8 +838,14 @@ public:
     }
 
 
+//     std::vector<IconMovieData> get_icon_movie_data() {
+//         std::vector<IconMovieData> vec;
+//         return vec;
+//     }
 
-    void openWindowsData() override {
+
+
+    void openWindowsData()  {
         if (std::ifstream ifile{this->WINDOWS_CONF}) {
             this->windowsData.no_data = false;
 
@@ -679,7 +874,7 @@ public:
         }
     }
 
-    void writeWindowsData() override {
+    void writeWindowsData()  {
         std::ofstream ofile(this->WINDOWS_CONF, std::ios::trunc);
         if (ofile) {
             ofile
@@ -692,7 +887,7 @@ public:
         }
     }
 
-    void setUserProfil() override {
+    void setUserProfil()  {
         std::ifstream ifichier(this->USER_CONF_DIR);
         if(ifichier) {
             std::string line;
@@ -704,7 +899,7 @@ public:
         }
     }
 
-    void setCustomKeyConfig() override {
+    void setCustomKeyConfig()  {
         std::ifstream ifichier(this->MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH);
 
         if(ifichier) {
@@ -755,7 +950,7 @@ public:
         }
     }
 
-    void writeCustomKeyConfig() override {
+    void writeCustomKeyConfig()  {
         auto const filename = this->MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH;
         remove(filename.c_str());
 
@@ -778,13 +973,13 @@ public:
     }
 
 
-    void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name) override {
+    void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name)  {
         this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
     }
 
 
 
-    void setClientInfo() override {
+    void setClientInfo()  {
 
         this->userProfils.clear();
         this->userProfils.emplace_back(0, "Default");
@@ -871,12 +1066,12 @@ public:
                     } else
                     if (line.compare(0, pos, "enable_shared_remoteapp") == 0) {
                         if (std::stoi(info)) {
-                            this->enable_shared_remoteapp = true;
+                            this->modRDPParamsData.enable_shared_remoteapp = true;
                         }
                     } else
                     if (line.compare(0, pos, "enable_shared_virtual_disk") == 0) {
                         if (std::stoi(info)) {
-                            this->enable_shared_virtual_disk = true;
+                            this->modRDPParamsData.enable_shared_virtual_disk = true;
                         }
                     } else
                     if (line.compare(0, pos, "mod") == 0) {
@@ -907,7 +1102,7 @@ public:
         }
     }
 
-    void setAccountData() override {
+    void setAccountData()  {
         this->_accountNB = 0;
         std::ifstream ifichier(this->USER_CONF_LOG, std::ios::in);
 
@@ -970,8 +1165,8 @@ public:
 
 
 
-    void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
-        if (this->connected && this->mod !=  nullptr) {
+    void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port)  {
+        if (this->connected) {
             bool alreadySet = false;
 
             std::string title(ip + " - " + name);
@@ -979,7 +1174,6 @@ public:
             for (int i = 0; i < this->_accountNB; i++) {
                 if (this->_accountData[i].title == title) {
                     alreadySet = true;
-                    LOG(LOG_INFO, "this->_accountData[i].title = %s  title = %s", this->_accountData[i].title, title);
                     this->_last_target_index = i;
                     this->_accountData[i].pwd  = pwd;
                     this->_accountData[i].port = port;
@@ -1081,66 +1275,15 @@ public:
 
 
 
-    std::vector<IconMovieData> get_icon_movie_data() override {
 
-        this->icons_movie_data.clear();
-
-        DIR *dir;
-        struct dirent *ent;
-        std::string extension(".mwrm");
-
-        if ((dir = opendir (this->REPLAY_DIR.c_str())) != nullptr) {
-
-            try {
-                while ((ent = readdir (dir)) != nullptr) {
-
-                    std::string current_name = std::string (ent->d_name);
-
-                    if (current_name.length() > 5) {
-
-                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
-                        if (end_string == extension) {
-
-                            std::string file_path = this->REPLAY_DIR + "/" + current_name;
-
-                            std::fstream ofile(file_path.c_str(), std::ios::in);
-                            if(ofile) {
-                                std::string file_name(current_name.substr(0, current_name.length()-5));
-                                std::string file_version;
-                                std::string file_resolution;
-                                std::string file_checksum;
-                                long int movie_len = this->get_movie_time_length(file_path.c_str());
-
-                                std::getline(ofile, file_version);
-                                std::getline(ofile, file_resolution);
-                                std::getline(ofile, file_checksum);
-
-                                this->icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
-
-                            } else {
-                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
-                            }
-                        }
-                    }
-                }
-            } catch (Error & e) {
-                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-            }
-            closedir (dir);
-        }
-
-        return this->icons_movie_data;
-    }
-
-
-    void set_remoteapp_cmd_line(const std::string & cmd) override {
+    void set_remoteapp_cmd_line(const std::string & cmd)  {
         this->rDPRemoteAppConfig.full_cmd_line = cmd;
         int pos = cmd.find(' ');
         this->rDPRemoteAppConfig.source_of_ExeOrFile = cmd.substr(0, pos);
         this->rDPRemoteAppConfig.source_of_Arguments = cmd.substr(pos + 1);
     }
 
-    bool is_no_win_data() override {
+    bool is_no_win_data()  {
         return this->windowsData.no_data;
     }
 
@@ -1148,7 +1291,7 @@ public:
 //         this->windowsData.write();
 //     }
 
-    void deleteCurrentProtile() override {
+    void deleteCurrentProtile()  {
         std::ifstream ifichier(this->USER_CONF_DIR);
         if(ifichier) {
 
@@ -1183,7 +1326,7 @@ public:
     }
 
 
-    void setDefaultConfig() override {
+    void setDefaultConfig()  {
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.brush_cache_code = 0;
@@ -1191,20 +1334,20 @@ public:
         this->info.width  = 800;
         this->info.height = 600;
         this->info.console_session = false;
-        this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->info.rdp5_performanceflags = 0;               //PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
         this->is_spanning = false;
         this->is_recording = false;
         this->modRDPParamsData.enable_tls = true;
         this->modRDPParamsData.enable_nla = true;
         this->enable_shared_clipboard = true;
-        this->enable_shared_virtual_disk = true;
+        this->modRDPParamsData.enable_shared_virtual_disk = true;
         this->SHARE_DIR = "/home";
         //this->info.encryptionLevel = 1;
     }
 
 
-    void writeClientInfo() override {
+    void writeClientInfo()  {
         std::fstream ofichier(this->USER_CONF_DIR);
         if(ofichier) {
 
@@ -1250,8 +1393,8 @@ public:
                 new_ofile << "console_mode "               << this->info.console_session << "\n";
 //                 new_ofile << "delta_time "            << this->delta_time << "\n";
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-                new_ofile << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                new_ofile << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
+                new_ofile << "enable_shared_virtual_disk " << this->modRDPParamsData.enable_shared_virtual_disk << "\n";
+                new_ofile << "enable_shared_remoteapp " << this->modRDPParamsData.enable_shared_remoteapp << "\n";
                 new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
                 new_ofile << "remote-exe "                              << this->rDPRemoteAppConfig.full_cmd_line << std::endl;
                 new_ofile << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;
@@ -1280,8 +1423,8 @@ public:
                 ofichier << "sound "                 << this->modRDPParamsData.enable_sound << "\n";
 //                 ofichier << "delta_time "            << this->delta_time << "\n";
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
-                ofichier << "enable_shared_virtual_disk " << this->enable_shared_virtual_disk << "\n";
-                ofichier << "enable_shared_remoteapp " << this->enable_shared_remoteapp << "\n";
+                ofichier << "enable_shared_virtual_disk " << this->modRDPParamsData.enable_shared_virtual_disk << "\n";
+                ofichier << "enable_shared_remoteapp " << this->modRDPParamsData.enable_shared_remoteapp << "\n";
                 ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
                 ofichier << "remote-exe "                              <<  this->rDPRemoteAppConfig.full_cmd_line << std::endl;
                 ofichier << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;

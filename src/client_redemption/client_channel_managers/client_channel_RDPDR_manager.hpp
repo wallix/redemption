@@ -128,6 +128,8 @@ public:
 
     std::unordered_map<int, std::string> paths;
 
+    std::string share_dir;
+
 
     struct DeviceData {
         char name[8] = {0};
@@ -173,6 +175,8 @@ public:
     void receive(InStream & chunk) /*NOLINT*/;
 
     void FremoveDriveDevice(const DeviceData * devices, const size_t deviceCount);
+
+    void set_share_dir(const std::string & share_dir);
 
 };
 

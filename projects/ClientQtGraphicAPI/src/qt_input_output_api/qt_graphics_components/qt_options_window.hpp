@@ -111,7 +111,7 @@ public:
         VNC
     };
     ClientRedemptionConfig * config;
-    ClientRedemptionAPI   * _front;
+//     ClientRedemptionAPI   * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
@@ -157,10 +157,10 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config/*, ClientRedemptionAPI * front*/, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
         : QWidget(parent)
         , config(config)
-        , _front(front)
+//         , _front(front)
         , controllers(controllers)
         , _width(410)
         , _height(330)
@@ -220,8 +220,8 @@ public:
         this->_layoutConnection = new QFormLayout(this->_connectionTab);
 
         this->profilComboBox.setLineEdit(&(this->profilLineEdit));
-        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-            this->profilComboBox.addItem(this->_front->userProfils[i].name.c_str(), this->_front->userProfils[i].id);
+        for (size_t i = 0; i < this->config->userProfils.size(); i++) {
+            this->profilComboBox.addItem(this->config->userProfils[i].name.c_str(), this->config->userProfils[i].id);
         }
         this->profilComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutConnection->addRow(&(this->_labelProfil), &(this->profilComboBox));
@@ -307,15 +307,15 @@ public:
     virtual void setConfigValues() {
 
         // Connection tab
-    	this->_recordingCB.setChecked(this->_front->is_recording);
+    	this->_recordingCB.setChecked(this->config->is_recording);
 
         // Keyboard tab
         int indexLanguage = this->_languageComboBox.findData(this->config->info.keylayout);
         if ( indexLanguage != -1 ) {
             this->_languageComboBox.setCurrentIndex(indexLanguage);
         }
-        for (size_t i = 0; i < this->_front->keyCustomDefinitions.size(); i++) {
-            ClientRedemptionAPI::KeyCustomDefinition & key = this->_front->keyCustomDefinitions[i];
+        for (size_t i = 0; i < this->config->keyCustomDefinitions.size(); i++) {
+            KeyCustomDefinition & key = this->config->keyCustomDefinitions[i];
             this->addRow();
             this->setRowValues(key.qtKeyID, key.scanCode, key.ASCII8, key.extended, i, key.name);
         }
@@ -353,15 +353,15 @@ public:
     virtual void getConfigValues() {
 
         //  Connection tab
-        this->_front->is_recording = this->_recordingCB.isChecked();
+        this->config->is_recording = this->_recordingCB.isChecked();
 
         // Keyboard tab
-        this->_front->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->config->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
 
-        this->_front->keyCustomDefinitions.clear();
+        this->config->keyCustomDefinitions.clear();
 
         const int row_count = this->_tableKeySetting->rowCount();
-        this->_front->keyCustomDefinitions.clear();
+        this->config->keyCustomDefinitions.clear();
 
         for (int i = 0; i < row_count; i++) {
             int qtKeyID(0);
@@ -378,18 +378,18 @@ public:
                 extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
                 name = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->label.text().toStdString();
             }
-            this->_front->add_key_custom_definition(qtKeyID, scanCode, ASCII8, extended, name);
+            this->config->add_key_custom_definition(qtKeyID, scanCode, ASCII8, extended, name);
         }
 
-        this->_front->update_keylayout();
+        //this->config->update_keylayout();
 
-        this->_front->writeCustomKeyConfig();
-        //this->_front->writeClientInfo();
+        this->config->writeCustomKeyConfig();
+        //this->config->writeClientInfo();
     }
 
     void keyPressEvent(QKeyEvent *e) override {
 
-        const ClientRedemptionAPI::KeyCustomDefinition & keyCustomDefinition =
+        const KeyCustomDefinition & keyCustomDefinition =
         this->controllers->get_key_info(e->key(), e->text().toStdString());
 
         int count = this->_tableKeySetting->selectedItems().count();
@@ -452,20 +452,20 @@ public Q_SLOTS:
 
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
-            this->_front->deleteCurrentProtile();
+            this->config->deleteCurrentProtile();
             this->profilComboBox.removeItem(this->config->current_user_profil);
             this->changeProfil(0);
         }
     }
 
     void restoreConfig() {
-        this->_front->setDefaultConfig();
+        this->config->setDefaultConfig();
         this->setConfigValues();
     }
 
     void changeProfil(int index) {
         this->config->current_user_profil = this->profilComboBox.itemData(index).toInt();
-        this->_front->setClientInfo();
+        this->config->setClientInfo();
         this->setConfigValues();
     }
 
@@ -552,8 +552,8 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionConfig * config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-        : QtOptions(config, front, controllers, parent)
+    QtRDPOptions(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+        : QtOptions(config, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
         , _labelTls("TLS :", this)
@@ -638,7 +638,7 @@ public:
 
         this->_layoutServices->addRow(&(this->remoteapp_cmd_label), &(this->remoteapp_cmd));
 
-        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP);
         this->_layoutServices->addRow(&(this->remoteapp_workin_dir_label), &(this->remoteapp_workin_dir));
 
 
@@ -686,23 +686,23 @@ public:
         QtOptions::setConfigValues();
 
         // General tab
-        this->_tlsBox.setChecked(this->_front->modRDPParamsData.enable_tls);
-        this->_nlaBox.setChecked(this->_front->modRDPParamsData.enable_nla);
+        this->_tlsBox.setChecked(this->config->modRDPParamsData.enable_tls);
+        this->_nlaBox.setChecked(this->config->modRDPParamsData.enable_nla);
         int indexProfil = this->profilComboBox.findData(this->config->current_user_profil);
         if ( indexProfil != -1 ) {
             this->profilComboBox.setCurrentIndex(indexProfil);
         }
 
         // Services tab
-        this->_clipboardCheckBox.setChecked(this->_front->enable_shared_clipboard);
-        this->_shareCheckBox.setChecked(this->_front->enable_shared_virtual_disk);
-        this->_sharePath.setEnabled(this->_front->enable_shared_virtual_disk);
-        this->_sharePath.setText(this->_front->SHARE_DIR.c_str());
-        this->_soundBox.setChecked(this->_front->modRDPParamsData.enable_sound);
-        this->remoteappCheckBox.setChecked(this->_front->enable_shared_remoteapp);
-        this->remoteapp_cmd.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->_clipboardCheckBox.setChecked(this->config->enable_shared_clipboard);
+        this->_shareCheckBox.setChecked(this->config->modRDPParamsData.enable_shared_virtual_disk);
+        this->_sharePath.setEnabled(this->config->modRDPParamsData.enable_shared_virtual_disk);
+        this->_sharePath.setText(this->config->SHARE_DIR.c_str());
+        this->_soundBox.setChecked(this->config->modRDPParamsData.enable_sound);
+        this->remoteappCheckBox.setChecked(this->config->modRDPParamsData.enable_shared_remoteapp);
+        this->remoteapp_cmd.setEnabled(this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP);
         this->remoteapp_cmd.setText(this->config->rDPRemoteAppConfig.full_cmd_line.c_str());
-        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP);
+        this->remoteapp_workin_dir.setEnabled(this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP);
         this->remoteapp_workin_dir.setText(this->config->rDPRemoteAppConfig.source_of_WorkingDir.c_str());
 
         // View tab
@@ -710,11 +710,11 @@ public:
         if ( indexBpp != -1 ) {
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
-        int indexResolution = this->_resolutionComboBox.findData(this->_front->rdp_width);
+        int indexResolution = this->_resolutionComboBox.findData(this->config->rdp_width);
         if ( indexResolution != -1 ) {
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
-        this->_spanCheckBox.setChecked(this->_front->is_spanning);
+        this->_spanCheckBox.setChecked(this->config->is_spanning);
         if (this->config->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
             this->_wallpapperCheckBox.setCheckState(Qt::Checked);
         }
@@ -745,20 +745,20 @@ public:
         // General tab
         bool new_profil = true;
         std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->_front->userProfils.size(); i++) {
-            if (this->_front->userProfils[i].name == text_profil) {
+        for (size_t i = 0; i < this->config->userProfils.size(); i++) {
+            if (this->config->userProfils[i].name == text_profil) {
                 new_profil = false;
             }
         }
         if (new_profil) {
-            this->_front->userProfils.push_back({int(this->_front->userProfils.size()), text_profil.c_str()});
+            this->config->userProfils.push_back({int(this->config->userProfils.size()), text_profil.c_str()});
 
-            this->config->current_user_profil = this->_front->userProfils.size()-1;
+            this->config->current_user_profil = this->config->userProfils.size()-1;
         } else {
             this->config->current_user_profil = this->profilComboBox.currentIndex();
         }
         this->config->info.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
-        this->config->update_keylayout();
+//         this->config->update_keylayout();
         this->config->modRDPParamsData.enable_tls = this->_tlsBox.isChecked();
         this->config->modRDPParamsData.enable_nla = this->_nlaBox.isChecked();
         this->config->info.console_session = this->_consoleBox.isChecked();
@@ -768,22 +768,22 @@ public:
 
 
         // Services tab
-        this->_front->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        this->config->enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
         if (this->_shareCheckBox.isChecked()) {
-            this->_front->enable_shared_virtual_disk = true;
-            this->_front->SHARE_DIR = this->_sharePath.text().toStdString();
+            this->config->modRDPParamsData.enable_shared_virtual_disk = true;
+            this->config->SHARE_DIR = this->_sharePath.text().toStdString();
         } else {
-            this->_front->enable_shared_virtual_disk = false;
+            this->config->modRDPParamsData.enable_shared_virtual_disk = false;
         }
-        this->_front->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
+        this->config->modRDPParamsData.enable_sound = this->_soundBox.isChecked();
         if (this->remoteappCheckBox.isChecked()) {
-            this->_front->enable_shared_remoteapp = true;
-            this->config->mod_state = ClientRedemptionAPI::MOD_RDP_REMOTE_APP;
-            this->_front->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
+            this->config->modRDPParamsData.enable_shared_remoteapp = true;
+            this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
+            this->config->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
             this->config->rDPRemoteAppConfig.source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
-            this->_front->enable_shared_remoteapp = false;
-            this->config->mod_state = ClientRedemptionAPI::MOD_RDP;
+            this->config->modRDPParamsData.enable_shared_remoteapp = false;
+            this->config->mod_state = ClientRedemptionConfig::MOD_RDP;
         }
 
         //  View tab
@@ -791,9 +791,9 @@ public:
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));
-        this->_front->rdp_width  = std::stoi(resolution.substr(0, pos));
-        this->_front->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
-        this->_front->is_spanning = this->_spanCheckBox.isChecked();
+        this->config->rdp_width  = std::stoi(resolution.substr(0, pos));
+        this->config->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->config->is_spanning = this->_spanCheckBox.isChecked();
         this->config->info.rdp5_performanceflags = 0;
         if (this->_wallpapperCheckBox.isChecked()) {
             this->config->info.rdp5_performanceflags |= PERF_DISABLE_WALLPAPER;
@@ -824,7 +824,7 @@ public Q_SLOTS:
     void setEnableSharePath(int value) {
         this->_sharePath.setEnabled(value);
         this->_buttonSharePath.setEnabled(value);
-        this->_front->enable_shared_virtual_disk = bool(value);
+        this->config->modRDPParamsData.enable_shared_virtual_disk = bool(value);
     }
 
     void setEnableRemoteApp(int value) {
@@ -835,7 +835,7 @@ public Q_SLOTS:
     void dirPathPressed() {
         QString filePath("");
         filePath = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
-                                                     this->_front->SHARE_DIR.c_str(),
+                                                     this->config->SHARE_DIR.c_str(),
                                                      QFileDialog::ShowDirsOnly |
                                                      QFileDialog::DontResolveSymlinks);
         std::string str_share_path(filePath.toStdString());
@@ -859,8 +859,8 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionConfig* config, ClientRedemptionAPI * front, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-      : QtOptions(config, front, controllers, parent)
+    QtVNCOptions(ClientRedemptionConfig* config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+      : QtOptions(config, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
     {
@@ -878,22 +878,22 @@ public:
         // General tab
         bool new_profil = true;
         std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->_front->vnc_conf.userProfils.size(); i++) {
-            if (this->_front->vnc_conf.userProfils[i].name == text_profil) {
+        for (size_t i = 0; i < this->config->vnc_conf.userProfils.size(); i++) {
+            if (this->config->vnc_conf.userProfils[i].name == text_profil) {
                 new_profil = false;
             }
         }
         if (new_profil) {
-            this->_front->vnc_conf.userProfils.push_back({int(this->_front->vnc_conf.userProfils.size()), text_profil.c_str()});
-            this->_front->vnc_conf.current_user_profil = this->_front->vnc_conf.userProfils.size()-1;
+            this->config->vnc_conf.userProfils.push_back({int(this->config->vnc_conf.userProfils.size()), text_profil.c_str()});
+            this->config->vnc_conf.current_user_profil = this->config->vnc_conf.userProfils.size()-1;
         } else {
-            this->_front->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
+            this->config->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
         }
-        this->_front->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
+        this->config->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
 
         // Services tab
-        this->_front->vnc_conf.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
-        this->_front->vnc_conf.enable_sound = this->_soundBox.isChecked();
+        this->config->vnc_conf.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        this->config->vnc_conf.enable_sound = this->_soundBox.isChecked();
     }
 
 
@@ -901,14 +901,14 @@ public:
         QtOptions::setConfigValues();
 
         // General tab
-        int indexProfil = this->profilComboBox.findData(this->_front->vnc_conf.current_user_profil);
+        int indexProfil = this->profilComboBox.findData(this->config->vnc_conf.current_user_profil);
         if ( indexProfil >= 0) {
             this->profilComboBox.setCurrentIndex(indexProfil);
         }
 
         // Services tab
-        this->_soundBox.setChecked(this->_front->vnc_conf.enable_sound);
-        this->_clipboardCheckBox.setChecked(this->_front->vnc_conf.enable_shared_clipboard);
+        this->_soundBox.setChecked(this->config->vnc_conf.enable_sound);
+        this->_clipboardCheckBox.setChecked(this->config->vnc_conf.enable_shared_clipboard);
     }
 
 };

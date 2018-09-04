@@ -42,11 +42,15 @@ struct RDPClipboardConfig {
 
     // Arbitrary picture resolution ratio, a 40 value empirically keep native resolution.
     // Data are last if to low.
+
+    std::string path;
+
 	double arbitrary_scale = 40;
 	size_t total_format_list_pdu_size = 0;
     bool server_use_long_format_names = true;
     uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
+
 
 
 

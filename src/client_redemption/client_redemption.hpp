@@ -35,20 +35,22 @@
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
-#include "mod/internal/replay_mod.hpp"
+
 #include "mod/rdp/rdp.hpp"
 #include "mod/vnc/vnc.hpp"
 
 #include "transport/crypto_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "transport/recorder_transport.hpp"
-#include "transport/replay_transport.hpp"
+
 
 #include "capture/full_video_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/wrm_capture.hpp"
 
-
+#include "mod/internal/replay_mod.hpp"
+#include "transport/replay_transport.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
@@ -69,6 +71,7 @@ class ClientRedemption : public ClientRedemptionController
 {
 
 private:
+
     CryptoContext     cctx;
 
     std::unique_ptr<Transport> socket;
@@ -83,7 +86,7 @@ public:
     SessionReactor& session_reactor;
 
     std::unique_ptr<Transport> _socket_in_recorder;
-
+    std::unique_ptr<ReplayMod> replay_mod;
     // io API
     ClientOutputGraphicAPI      * impl_graphic;
     ClientIOClipboardAPI        * impl_clipboard;
@@ -121,8 +124,8 @@ public:
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
 
 
-    // Replay Mod
-    std::unique_ptr<ReplayMod> replay_mod;
+//     // Replay Mod
+//     ClientRedemptionReplay replay;
 
     // Recorder
     Fstat fstat;
@@ -220,6 +223,7 @@ public:
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
         : ClientRedemptionController(session_reactor, argv, argc, verbose)
+//         , config(session_reactor, argv, argc, verbose, *(this))
         , client_sck(-1)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
@@ -229,11 +233,11 @@ public:
         , impl_mouse_keyboard(impl_mouse_keyboard)
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
-        , client_execute(session_reactor, *(this), this->info.window_list_caps, false)
-        , clientChannelRDPSNDManager(this->verbose, this, this->impl_sound, this->rDPSoundConfig)
-        , clientChannelCLIPRDRManager(this->verbose, this, this->impl_clipboard, this->rDPClipboardConfig)
-        , clientChannelRDPDRManager(this->verbose, this, this->impl_io_disk, this->rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+        , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
+        , clientChannelRDPSNDManager(this->config.verbose, this, this->impl_sound, this->config.rDPSoundConfig)
+        , clientChannelCLIPRDRManager(this->config.verbose, this, this->impl_clipboard, this->config.rDPClipboardConfig)
+        , clientChannelRDPDRManager(this->config.verbose, this, this->impl_io_disk, this->config.rDPDiskConfig)
+        , clientChannelRemoteAppManager(this->config.verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -244,12 +248,13 @@ public:
 
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
+            this->impl_clipboard->set_path(this->config.CB_TEMP_DIR);
         } else {
             LOG(LOG_WARNING, "No clipoard IO implementation.");
         }
         if (this->impl_sound) {
             this->impl_sound->set_client(this);
-            this->impl_sound->set_path(this->SOUND_TEMP_DIR);
+            this->impl_sound->set_path(this->config.SOUND_TEMP_DIR);
         } else {
             LOG(LOG_WARNING, "No sound output implementation.");
         }
@@ -259,34 +264,34 @@ public:
             LOG(LOG_WARNING, "No socket lister implementation.");
         }
         if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->set_client(this);
+            this->impl_mouse_keyboard->set_callback(this);
         } else {
             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
-            this->impl_graphic->set_drawn_client(this, this);
+            this->impl_graphic->set_drawn_client(this, &(this->config));
         } else {
             LOG(LOG_WARNING, "No graphic output implementation.");
         }
 
-        this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->verbose) | (RDPVerbose::rail_dump & this->verbose) ));
+        this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
 
-        if (this->connection_info_cmd_complete == COMMAND_VALID) {
+        if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
 
            this->connect();
 
         } else {
             std::cout <<  "Argument(s) required for connection: ";
-            if (!(this->connection_info_cmd_complete & NAME_GOT)) {
+            if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::NAME_GOT)) {
                 std::cout << "-u [user_name] ";
             }
-            if (!(this->connection_info_cmd_complete & PWD_GOT)) {
+            if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::PWD_GOT)) {
                 std::cout << "-p [password] ";
             }
-            if (!(this->connection_info_cmd_complete & IP_GOT)) {
+            if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::IP_GOT)) {
                 std::cout << "-i [ip_server] ";
             }
-            if (!(this->connection_info_cmd_complete & PORT_GOT)) {
+            if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::PORT_GOT)) {
                 std::cout << "-P [port] ";
             }
             std::cout << std::endl;
@@ -312,10 +317,10 @@ public:
     }
 
     void send_key_to_keep_alive() {
-        if (this->keep_alive_freq) {
+        if (this->config.keep_alive_freq) {
             std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
 
-            if ( ((duration.count() / 1000000) % this->keep_alive_freq) == 0) {
+            if ( ((duration.count() / 1000000) % this->config.keep_alive_freq) == 0) {
                 this->send_rdp_scanCode(0x1e, KBD_FLAG_UP);
                 this->send_rdp_scanCode(0x1e, 0);
             }
@@ -327,12 +332,12 @@ public:
             this->impl_mouse_keyboard->update_keylayout();
         }
 
-        switch (this->mod_state) {
+        switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:
-                this->init_layout(this->vnc_conf.keylayout);
+                this->init_layout(this->config.vnc_conf.keylayout);
                 break;
 
-            default: this->init_layout(this->info.keylayout);
+            default: this->init_layout(this->config.info.keylayout);
                 break;
         }
     }
@@ -355,19 +360,575 @@ public:
         }
     }
 
+    // std::vector<IconMovieData> & iconData
+
+    std::vector<IconMovieData> get_icon_movie_data() override {
+
+        this->config.icons_movie_data.clear();
+
+        DIR *dir;
+        struct dirent *ent;
+        std::string extension(".mwrm");
+
+        if ((dir = opendir (this->config.REPLAY_DIR.c_str())) != nullptr) {
+
+            try {
+                while ((ent = readdir (dir)) != nullptr) {
+
+                    std::string current_name = std::string (ent->d_name);
+
+                    if (current_name.length() > 5) {
+
+                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
+                        if (end_string == extension) {
+
+                            std::string file_path = this->config.REPLAY_DIR + "/" + current_name;
+
+                            std::fstream ofile(file_path.c_str(), std::ios::in);
+                            if(ofile) {
+                                std::string file_name(current_name.substr(0, current_name.length()-5));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+                                long int movie_len = this->get_movie_time_length(file_path.c_str());
+
+                                std::getline(ofile, file_version);
+                                std::getline(ofile, file_resolution);
+                                std::getline(ofile, file_checksum);
+
+                                this->config.icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
+
+                            } else {
+                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
+                            }
+                        }
+                    }
+                }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
+
+        return this->config.icons_movie_data;
+    }
+
+
+    virtual void  disconnect(std::string const & error, bool pipe_broken) override {
+
+        if (this->mod != nullptr) {
+            if (!pipe_broken) {
+                this->mod->disconnect(this->timeSystem.get_time().tv_sec);
+            }
+            this->mod = nullptr;
+        }
+
+        if (this->impl_socket_listener) {
+            this->impl_socket_listener->disconnect();
+        }
+
+        if (!this->socket) {
+            this->socket.reset();
+        }
+
+        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
+        uint64_t movie_len = duration.count() / 1000;
+
+        time_t now;
+        time(&now);
+
+        struct tm * timeinfo;
+        char buffer [80];
+        timeinfo = localtime (&now);
+        strftime (buffer,80,"%F_%r",timeinfo);
+        std::string date(buffer);
+
+        std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
+
+        LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
+
+        if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
+            if (this->impl_graphic) {
+                this->impl_graphic->set_ErrorMsg(error);
+            }
+        }
+        if (this->impl_mouse_keyboard) {
+            this->impl_mouse_keyboard->init_form();
+        }
+    }
+
+    bool init_mod()  {
+
+        try {
+            this->mod = nullptr;
+
+            switch (this->config.mod_state) {
+                case ClientRedemptionConfig::MOD_RDP:
+                {
+                    ModRDPParams mod_rdp_params( this->config.user_name.c_str()
+                                    , this->config.user_password.c_str()
+                                    , this->config.target_IP.c_str()
+                                    , this->local_IP.c_str()
+                                    , 2
+                                    , ini.get<cfg::font>()
+                                    , ini.get<cfg::theme>()
+                                    , this->server_auto_reconnect_packet_ref
+                                    , this->close_box_extra_message_ref
+                                    , this->config.verbose
+                                    );
+
+                    mod_rdp_params.device_id                       = "device_id";
+                    mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
+                    mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
+                    mod_rdp_params.enable_fastpath                 = true;
+                    mod_rdp_params.enable_mem3blt                  = true;
+                    mod_rdp_params.enable_new_pointer              = true;
+                    mod_rdp_params.enable_glyph_cache              = true;
+                    mod_rdp_params.enable_ninegrid_bitmap          = true;
+                    std::string allow_channels                     = "*";
+                    mod_rdp_params.allow_channels                  = &allow_channels;
+                    mod_rdp_params.deny_channels = nullptr;
+                    mod_rdp_params.enable_rdpdr_data_analysis = false;
+
+                    this->unique_mod = std::make_unique<mod_rdp>(
+                      *this->socket
+                      , session_reactor
+                      , *this
+                      , this->config.info
+                      , ini.get_ref<cfg::mod_rdp::redir_info>()
+                      , *this->gen
+                      , this->timeSystem
+                      , mod_rdp_params
+                      , this->authentifier
+                      , this->reportMessage
+                      , this->ini
+                    );
+                }
+                    break;
+
+                case ClientRedemptionConfig::MOD_RDP_REMOTE_APP:
+                {
+                    ModRDPParams mod_rdp_params( this->config.user_name.c_str()
+                                    , this->config.user_password.c_str()
+                                    , this->config.target_IP.c_str()
+                                    , this->local_IP.c_str()
+                                    , 2
+                                    , ini.get<cfg::font>()
+                                    , ini.get<cfg::theme>()
+                                    , this->server_auto_reconnect_packet_ref
+                                    , this->close_box_extra_message_ref
+                                    , this->config.verbose
+                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
+                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
+                                    );
+
+                    mod_rdp_params.device_id                       = "device_id";
+                    mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
+                    mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
+                    mod_rdp_params.enable_fastpath                 = true;
+                    mod_rdp_params.enable_mem3blt                  = true;
+                    mod_rdp_params.enable_new_pointer              = true;
+                    mod_rdp_params.enable_glyph_cache              = true;
+                    mod_rdp_params.enable_ninegrid_bitmap          = true;
+                    std::string allow_channels = "*";
+                    mod_rdp_params.allow_channels                  = &allow_channels;
+                    mod_rdp_params.deny_channels = nullptr;
+                    mod_rdp_params.enable_rdpdr_data_analysis = false;
+
+                    this->client_execute.enable_remote_program(true);
+                    mod_rdp_params.remote_program = true;
+                    mod_rdp_params.client_execute = &(this->client_execute);
+                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
+                    mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
+                    mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
+                    this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
+
+                    if (this->impl_graphic) {
+                        this->config.info.width = this->impl_graphic->screen_max_width;
+                        this->config.info.height = this->impl_graphic->screen_max_height;
+                    }
+
+                    this->clientChannelRemoteAppManager.set_configuration(this->config.info.width, this->config.info.height, this->config.rDPRemoteAppConfig);
+
+                    this->unique_mod = std::make_unique<mod_rdp>(
+                        *(this->socket)
+                      , session_reactor
+                      , *(this)
+                      , this->config.info
+                      , ini.get_ref<cfg::mod_rdp::redir_info>()
+                      , *this->gen
+                      , this->timeSystem
+                      , mod_rdp_params
+                      , this->authentifier
+                      , this->reportMessage
+                      , this->ini
+                    );
+
+                    std::string target_info = this->ini.get<cfg::context::target_str>();
+                    target_info += ":";
+                    target_info += this->ini.get<cfg::globals::primary_user_id>();
+
+                    this->client_execute.set_target_info(target_info.c_str());
+                }
+                    break;
+
+            case ClientRedemptionConfig::MOD_VNC:
+            {
+                 this->unique_mod = std::make_unique<mod_vnc>(
+                     *this->socket
+                    , this->session_reactor
+                    , this->config.user_name.c_str()
+                    , this->config.user_password.c_str()
+                    , *this
+                    , this->config.vnc_conf.width
+                    , this->config.vnc_conf.height
+                    , this->config.vnc_conf.keylayout
+                    , 0
+                    , true
+                    , true
+                    , this->config.vnc_conf.vnc_encodings.c_str()
+                    , mod_vnc::ClipboardEncodingType::UTF8
+                    , VncBogusClipboardInfiniteLoop::delayed
+                    , this->reportMessage
+                    , this->config.vnc_conf.is_apple
+                    , &this->config.vnc_conf.exe
+                    // , to_verbose_flags(0xfffffffd)
+                    , to_verbose_flags(0)
+                  );
+            }
+                break;
+
+            }
+
+            this->mod = this->unique_mod.get();
+
+        } catch (const Error &) {
+            this->mod = nullptr;
+            return false;
+        }
+
+         return true;
+    }
+
+    bool init_socket() {
+        if (this->config.is_full_replaying) {
+            LOG(LOG_INFO, "Replay %s", this->config.full_capture_file_name);
+            auto transport = std::make_unique<ReplayTransport>(
+                this->config.full_capture_file_name.c_str(), this->config.target_IP.c_str(), this->config.port,
+                this->timeSystem, ReplayTransport::FdType::Timer,
+                ReplayTransport::FirstPacket::DisableTimer,
+                ReplayTransport::UncheckedPacket::Send);
+            this->client_sck = transport->get_fd();
+            this->socket = std::move(transport);
+            return true;
+        }
+
+        unique_fd unique_client_sck = ip_connect(this->config.target_IP.c_str(),
+                                          this->config.port,
+                                          3,                //nbTry
+                                          1000             //retryDelay
+                                          );
+
+        this->client_sck = unique_client_sck.fd();
+
+        bool has_error = false;
+        std::string has_error_string;
+
+        if (this->client_sck > 0) {
+            try {
+                this->socket = std::make_unique<SocketTransport>(
+                    this->config.user_name.c_str(),
+                    std::move(unique_client_sck),
+                    this->config.target_IP.c_str(),
+                    this->config.port,
+                    std::chrono::seconds(1),
+                    to_verbose_flags(0x0),
+                    //SocketTransport::Verbose::dump,
+                    &this->error_message);
+
+                if (this->config.is_full_capturing) {
+                    this->_socket_in_recorder = std::move(this->socket);
+                    this->socket = std::make_unique<RecorderTransport>(
+                        *this->_socket_in_recorder, this->timeSystem, this->config.full_capture_file_name.c_str());
+                }
+
+                LOG(LOG_INFO, "Connected to [%s].", this->config.target_IP.c_str());
+
+            } catch (const Error& e) {
+                has_error = true;
+                has_error_string = e.errmsg();
+            }
+        } else {
+            has_error = true;
+        }
+
+        if (has_error) {
+            std::string errorMsg = "Cannot connect to [";
+            errorMsg += this->config.target_IP;
+            errorMsg += "]. Socket error: ";
+            errorMsg += has_error_string;
+            LOG(LOG_WARNING, "%s", errorMsg);
+            this->disconnect("<font color='Red'>"+errorMsg+"</font>", true);
+        }
+
+        return !has_error;
+    }
+
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //------------------------
+    //      CONTROLLERS
+    //------------------------
+
+    virtual bool connect() override {
+
+        if (this->config.is_full_capturing || this->config.is_full_replaying) {
+            gen = std::make_unique<FixedRandom>();
+        } else {
+            gen = std::make_unique<UdevRandom>();
+        }
+
+        this->clientChannelRemoteAppManager.clear();
+        this->cl.clear_channels();
+
+        this->config.is_replaying = false;
+        if (this->config.is_recording) {
+            this->set_capture();
+        }
+
+        if (this->config.mod_state != ClientRedemptionConfig::MOD_VNC) {
+
+            if (this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+
+                //this->config.info.remote_program |= INFO_RAIL;
+                this->config.info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
+                this->config.info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
+    //                                                     | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
+                                                        | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED
+                                                        //| TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
+                                                        | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED
+                                                        | TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED
+                                                        | TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
+                                                        | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+
+                this->config.info.window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
+                this->config.info.window_list_caps.NumIconCaches = 3;  // 3;
+                // 12;
+                this->config.info.window_list_caps.NumIconCacheEntries = 12;
+
+                CHANNELS::ChannelDef channel_rail { channel_names::rail
+                                            , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                            , CHANID_RAIL
+                                            };
+                this->cl.push_back(channel_rail);
+
+            } else {
+
+                if (this->config.modRDPParamsData.enable_shared_virtual_disk && this->impl_io_disk) {
+                    CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
+                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                                    , CHANID_RDPDR
+                                                    };
+                    this->cl.push_back(channel_rdpdr);
+
+                    this->clientChannelRDPDRManager.set_share_dir(this->config.SHARE_DIR);
+                }
+            }
+
+            if (this->config.enable_shared_clipboard && this->impl_clipboard) {
+                CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
+                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                    , CHANID_CLIPDRD
+                                                    };
+//                 this->_to_client_sender._channel = channel_cliprdr;
+                this->cl.push_back(channel_cliprdr);
+            }
+
+    //         CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
+    //                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+    //                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+    //                                              , CHANID_WABDIAG
+    //                                              };
+    //         this->cl.push_back(channel_WabDiag);
+
+            if (this->config.modRDPParamsData.enable_sound && this->impl_sound) {
+                CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
+                                                        , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                        , CHANID_RDPSND
+                                                        };
+                this->cl.push_back(channel_audio_output);
+            }
+        }
+
+        if (this->impl_graphic) {
+
+            if (this->config.is_spanning) {
+                this->config.rdp_width  = this->impl_graphic->screen_max_width;
+                this->config.rdp_height = this->impl_graphic->screen_max_height;
+
+                this->config.vnc_conf.width = this->impl_graphic->screen_max_width;
+                this->config.vnc_conf.height = this->impl_graphic->screen_max_height;
+            }
+
+            switch (this->config.mod_state) {
+                case ClientRedemptionConfig::MOD_RDP:
+                    this->config.info.width = this->config.rdp_width;
+                    this->config.info.height = this->config.rdp_height;
+                    break;
+
+                case ClientRedemptionConfig::MOD_VNC:
+                    this->config.info.width = this->config.vnc_conf.width;
+                    this->config.info.height = this->config.vnc_conf.height;
+                    break;
+
+                default: break;
+            }
+
+            if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+
+                this->impl_graphic->reset_cache(this->config.info.width, this->config.info.height);
+                this->impl_graphic->create_screen();
+            } else {
+                this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+            }
+        }
+
+        bool valid_socket_conn = this->init_socket();
+
+        if (valid_socket_conn) {
+
+            this->update_keylayout();
+
+            this->config.connected = this->init_mod();
+
+            if (this->config.connected) {
+
+                if (this->impl_socket_listener) {
+
+                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+
+                        this->start_wab_session_time = tvtime();
+
+                        if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+                            if (this->impl_graphic) {
+                                this->impl_graphic->show_screen();
+                            }
+                        }
+
+                        return true;
+                    }
+                }
+            }
+
+/*            const std::string errorMsgfail("Error: Mod Initialization failed.");
+            std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
+            if (this->impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
+            this->disconnect(labelErrorMsg, false)*/;
+        }
+
+        return false;
+    }
+
+     void record_connection_nego_times() {
+        if (!this->secondary_connection_finished) {
+            this->secondary_connection_finished = true;
+
+            std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
+            long prim_len = prim_duration.count() / 1000;
+            std::cout << "primary connection length = " <<  prim_len << " ms\n";
+
+            this->start_win_session_time = tvtime();
+
+            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
+            long sec_len = sec_duration.count() / 1000;
+            time_t now;
+            time(&now);
+
+            struct tm * timeinfo;
+            char buffer [80];
+            timeinfo = localtime (&now);
+            strftime (buffer,80,"%F_%r",timeinfo);
+            std::string date(buffer);
+
+            std::cout << "secondary connection length = " <<  sec_len << " ms " <<  date << "\n";
+        }
+    }
+
+
+    // Replay
+
+
+    void disconnexionReleased() override{
+        this->config.is_replaying = false;
+        this->config.connected = false;
+        if (this->impl_graphic) {
+            this->impl_graphic->dropScreen();
+        }
+        this->disconnect("", false);
+    }
+
+    virtual void set_capture() {
+        std::string record_path = this->config.REPLAY_DIR + "/";
+        std::string hash_path = this->config.REPLAY_DIR + "/signatures/";
+        time_t now;
+        time(&now);
+        std::string movie_name = ctime(&now);
+        movie_name.pop_back();
+        movie_name += "-Replay";
+
+        bool const is_remoteapp = false;
+        WrmParams wrmParams(
+              this->config.info.bpp
+            , is_remoteapp
+            , this->cctx
+            , *this->gen
+            , this->fstat
+            , hash_path.c_str()
+            , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
+            , std::chrono::seconds(600) /* break_interval */
+            , WrmCompressionAlgorithm::no_compression
+            , 0
+        );
+
+        CaptureParams captureParams;
+        captureParams.now = tvtime();
+        captureParams.basename = movie_name.c_str();
+        captureParams.record_tmp_path = record_path.c_str();
+        captureParams.record_path = record_path.c_str();
+        captureParams.groupid = 0;
+        captureParams.report_message = nullptr;
+
+        this->capture = std::make_unique<Capture>(
+            this->config.info.width, this->config.info.height,
+            captureParams, wrmParams);
+
+        //this->capture->gd_drawable->width();
+    }
+
+
     bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , *this
-              , (movie_dir + movie_name).c_str() //(this->REPLAY_DIR + "/").c_str()
-              , 0             //this->info.width
-              , 0             //this->info.height
+              , (movie_dir + movie_name).c_str() //(this->config.REPLAY_DIR + "/").c_str()
+              , 0             //this->config.info.width
+              , 0             //this->config.info.height
               , this->_error
               , true
               , begin_read
               , end_read
-              , BALISED_FRAME
+              , ClientRedemptionConfig::BALISED_FRAME
               , false
               //, FileToGraphic::Verbose::rdp_orders
               , to_verbose_flags(0)
@@ -380,7 +941,7 @@ public:
         }
 
         if (this->replay_mod == nullptr) {
-            if (impl_graphic) {
+            if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
             const std::string errorMsg("Cannot read movie \""+movie_name+ "\".");
@@ -393,25 +954,25 @@ public:
 
     void replay(const std::string & movie_name, const std::string & movie_dir) override {
 
-        this->_movie_name = movie_name;
-        this->_movie_dir = movie_dir;
+        this->config._movie_name = movie_name;
+        this->config._movie_dir = movie_dir;
 
-        if (this->_movie_name.empty()) {
+        if (this->config._movie_name.empty()) {
              //this->impl_graphic->readError(movie_path_);
             return;
         }
 
-        this->is_replaying = true;
-        this->is_loading_replay_mod = true;
+        this->config.is_replaying = true;
+        this->config.is_loading_replay_mod = true;
         //this->setScreenDimension();
-        if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+        if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {0, 0}, {0, 0})) {
 
-            this->is_loading_replay_mod = false;
+            this->config.is_loading_replay_mod = false;
 
             if (impl_graphic) {
                 //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->impl_graphic->create_screen(this->_movie_dir, this->_movie_name);
+                this->impl_graphic->create_screen(this->config._movie_dir, this->config._movie_name);
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
                         this->impl_mouse_keyboard->pre_load_movie();
@@ -464,538 +1025,19 @@ public:
             }
         }
 
-        this->is_loading_replay_mod = false;
-    }
-
-    virtual void  disconnect(std::string const & error, bool pipe_broken) override {
-
-        if (this->mod != nullptr) {
-            if (!pipe_broken) {
-                this->mod->disconnect(this->timeSystem.get_time().tv_sec);
-            }
-            this->mod = nullptr;
-        }
-
-        if (this->impl_socket_listener) {
-            this->impl_socket_listener->disconnect();
-        }
-
-        if (!this->socket) {
-            this->socket.reset();
-        }
-
-        std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
-        uint64_t movie_len = duration.count() / 1000;
-
-        time_t now;
-        time(&now);
-
-        struct tm * timeinfo;
-        char buffer [80];
-        timeinfo = localtime (&now);
-        strftime (buffer,80,"%F_%r",timeinfo);
-        std::string date(buffer);
-
-        std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
-
-        LOG(LOG_INFO, "Disconnected from [%s].", this->target_IP.c_str());
-
-        if (this->mod_state != MOD_RDP_REPLAY) {
-            if (this->impl_graphic) {
-                this->impl_graphic->set_ErrorMsg(error);
-            }
-        }
-        if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->init_form();
-        }
-    }
-
-    bool init_mod()  {
-
-        try {
-            this->mod = nullptr;
-
-            switch (this->mod_state) {
-                case MOD_RDP:
-                {
-                    ModRDPParams mod_rdp_params( this->user_name.c_str()
-                                    , this->user_password.c_str()
-                                    , this->target_IP.c_str()
-                                    , this->local_IP.c_str()
-                                    , 2
-                                    , ini.get<cfg::font>()
-                                    , ini.get<cfg::theme>()
-                                    , this->server_auto_reconnect_packet_ref
-                                    , this->close_box_extra_message_ref
-                                    , this->verbose
-                                    );
-
-                    mod_rdp_params.device_id                       = "device_id";
-                    mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;
-                    mod_rdp_params.enable_nla                      = this->modRDPParamsData.enable_nla;
-                    mod_rdp_params.enable_fastpath                 = true;
-                    mod_rdp_params.enable_mem3blt                  = true;
-                    mod_rdp_params.enable_new_pointer              = true;
-                    mod_rdp_params.enable_glyph_cache              = true;
-                    mod_rdp_params.enable_ninegrid_bitmap          = true;
-                    std::string allow_channels                     = "*";
-                    mod_rdp_params.allow_channels                  = &allow_channels;
-                    mod_rdp_params.deny_channels = nullptr;
-                    mod_rdp_params.enable_rdpdr_data_analysis = false;
-
-                    this->unique_mod = std::make_unique<mod_rdp>(
-                      *this->socket
-                      , session_reactor
-                      , *this
-                      , this->info
-                      , ini.get_ref<cfg::mod_rdp::redir_info>()
-                      , *this->gen
-                      , this->timeSystem
-                      , mod_rdp_params
-                      , this->authentifier
-                      , this->reportMessage
-                      , this->ini
-                    );
-                }
-                    break;
-
-                case MOD_RDP_REMOTE_APP:
-                {
-                    ModRDPParams mod_rdp_params( this->user_name.c_str()
-                                    , this->user_password.c_str()
-                                    , this->target_IP.c_str()
-                                    , this->local_IP.c_str()
-                                    , 2
-                                    , ini.get<cfg::font>()
-                                    , ini.get<cfg::theme>()
-                                    , this->server_auto_reconnect_packet_ref
-                                    , this->close_box_extra_message_ref
-                                    , this->verbose
-                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
-                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
-                                    );
-
-                    mod_rdp_params.device_id                       = "device_id";
-                    mod_rdp_params.enable_tls                      = this->modRDPParamsData.enable_tls;
-                    mod_rdp_params.enable_nla                      = this->modRDPParamsData.enable_nla;
-                    mod_rdp_params.enable_fastpath                 = true;
-                    mod_rdp_params.enable_mem3blt                  = true;
-                    mod_rdp_params.enable_new_pointer              = true;
-                    mod_rdp_params.enable_glyph_cache              = true;
-                    mod_rdp_params.enable_ninegrid_bitmap          = true;
-                    std::string allow_channels = "*";
-                    mod_rdp_params.allow_channels                  = &allow_channels;
-                    mod_rdp_params.deny_channels = nullptr;
-                    mod_rdp_params.enable_rdpdr_data_analysis = false;
-
-                    this->client_execute.enable_remote_program(true);
-                    mod_rdp_params.remote_program = true;
-                    mod_rdp_params.client_execute = &(this->client_execute);
-                    mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
-                    mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
-                    mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
-                    this->info.cs_monitor = GCC::UserData::CSMonitor{};
-
-                    if (this->impl_graphic) {
-                        this->info.width = this->impl_graphic->screen_max_width;
-                        this->info.height = this->impl_graphic->screen_max_height;
-                    }
-
-                    this->clientChannelRemoteAppManager.set_configuration(this->info.width, this->info.height, this->rDPRemoteAppConfig);
-
-                    this->unique_mod = std::make_unique<mod_rdp>(
-                        *(this->socket)
-                      , session_reactor
-                      , *(this)
-                      , this->info
-                      , ini.get_ref<cfg::mod_rdp::redir_info>()
-                      , *this->gen
-                      , this->timeSystem
-                      , mod_rdp_params
-                      , this->authentifier
-                      , this->reportMessage
-                      , this->ini
-                    );
-
-                    std::string target_info = this->ini.get<cfg::context::target_str>();
-                    target_info += ":";
-                    target_info += this->ini.get<cfg::globals::primary_user_id>();
-
-                    this->client_execute.set_target_info(target_info.c_str());
-                }
-                    break;
-
-            case MOD_VNC:
-            {
-                 this->unique_mod = std::make_unique<mod_vnc>(
-                     *this->socket
-                    , this->session_reactor
-                    , this->user_name.c_str()
-                    , this->user_password.c_str()
-                    , *this
-                    , this->vnc_conf.width
-                    , this->vnc_conf.height
-                    , this->vnc_conf.keylayout
-                    , 0
-                    , true
-                    , true
-                    , this->vnc_conf.vnc_encodings.c_str()
-                    , mod_vnc::ClipboardEncodingType::UTF8
-                    , VncBogusClipboardInfiniteLoop::delayed
-                    , this->reportMessage
-                    , this->vnc_conf.is_apple
-                    , &this->vnc_conf.exe
-                    // , to_verbose_flags(0xfffffffd)
-                    , to_verbose_flags(0)
-                  );
-            }
-                break;
-
-            }
-
-            this->mod = this->unique_mod.get();
-
-        } catch (const Error &) {
-            this->mod = nullptr;
-            return false;
-        }
-
-         return true;
-    }
-
-    bool init_socket() {
-        if (this->is_full_replaying) {
-            LOG(LOG_INFO, "Replay %s", this->full_capture_file_name);
-            auto transport = std::make_unique<ReplayTransport>(
-                this->full_capture_file_name.c_str(), this->target_IP.c_str(), this->port,
-                this->timeSystem, ReplayTransport::FdType::Timer,
-                ReplayTransport::FirstPacket::DisableTimer,
-                ReplayTransport::UncheckedPacket::Send);
-            this->client_sck = transport->get_fd();
-            this->socket = std::move(transport);
-            return true;
-        }
-
-        unique_fd unique_client_sck = ip_connect(this->target_IP.c_str(),
-                                          this->port,
-                                          3,                //nbTry
-                                          1000             //retryDelay
-                                          );
-
-        this->client_sck = unique_client_sck.fd();
-
-        bool has_error = false;
-        std::string has_error_string;
-
-        if (this->client_sck > 0) {
-            try {
-                this->socket = std::make_unique<SocketTransport>(
-                    this->user_name.c_str(),
-                    std::move(unique_client_sck),
-                    this->target_IP.c_str(),
-                    this->port,
-                    std::chrono::seconds(1),
-                    to_verbose_flags(0x0),
-                    //SocketTransport::Verbose::dump,
-                    &this->error_message);
-
-                if (this->is_full_capturing) {
-                    this->_socket_in_recorder = std::move(this->socket);
-                    this->socket = std::make_unique<RecorderTransport>(
-                        *this->_socket_in_recorder, this->timeSystem, this->full_capture_file_name.c_str());
-                }
-
-                LOG(LOG_INFO, "Connected to [%s].", this->target_IP.c_str());
-
-            } catch (const Error& e) {
-                has_error = true;
-                has_error_string = e.errmsg();
-            }
-        } else {
-            has_error = true;
-        }
-
-        if (has_error) {
-            std::string errorMsg = "Cannot connect to [";
-            errorMsg += this->target_IP;
-            errorMsg += "]. Socket error: ";
-            errorMsg += has_error_string;
-            LOG(LOG_WARNING, "%s", errorMsg);
-            this->disconnect("<font color='Red'>"+errorMsg+"</font>", true);
-        }
-
-        return !has_error;
+        this->config.is_loading_replay_mod = false;
     }
 
 
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //------------------------
-    //      CONTROLLERS
-    //------------------------
-
-    virtual bool connect() override {
-
-        if (this->is_full_capturing || this->is_full_replaying) {
-            gen = std::make_unique<FixedRandom>();
-        } else {
-            gen = std::make_unique<UdevRandom>();
-        }
-
-        this->clientChannelRemoteAppManager.clear();
-        this->cl.clear_channels();
-
-        this->is_replaying = false;
-        if (this->is_recording) {
-            this->set_capture();
-        }
-
-        if (this->mod_state != MOD_VNC) {
-
-            if (this->mod_state == MOD_RDP_REMOTE_APP) {
-
-                //this->info.remote_program |= INFO_RAIL;
-                this->info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
-                this->info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
-    //                                                     | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED
-                                                        | TS_RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED
-                                                        //| TS_RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED
-                                                        | TS_RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED
-                                                        | TS_RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED
-                                                        | TS_RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED
-                                                        | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
-
-                this->info.window_list_caps.WndSupportLevel = TS_WINDOW_LEVEL_SUPPORTED;
-                this->info.window_list_caps.NumIconCaches = 3;  // 3;
-                // 12;
-                this->info.window_list_caps.NumIconCacheEntries = 12;
-
-                CHANNELS::ChannelDef channel_rail { channel_names::rail
-                                            , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                            , CHANID_RAIL
-                                            };
-                this->cl.push_back(channel_rail);
-
-            } else {
-
-                if (this->enable_shared_virtual_disk && this->impl_io_disk) {
-                    CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
-                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                                    , CHANID_RDPDR
-                                                    };
-                    this->cl.push_back(channel_rdpdr);
-                }
-            }
-
-            if (this->enable_shared_clipboard && this->impl_clipboard) {
-                CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                    , CHANID_CLIPDRD
-                                                    };
-//                 this->_to_client_sender._channel = channel_cliprdr;
-                this->cl.push_back(channel_cliprdr);
-            }
-
-    //         CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
-    //                                              , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-    //                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-    //                                              , CHANID_WABDIAG
-    //                                              };
-    //         this->cl.push_back(channel_WabDiag);
-
-            if (modRDPParamsData.enable_sound && this->impl_sound) {
-                CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-                                                        , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                        , CHANID_RDPSND
-                                                        };
-                this->cl.push_back(channel_audio_output);
-            }
-        }
-
-        if (this->impl_graphic) {
-
-            if (this->is_spanning) {
-                this->rdp_width  = this->impl_graphic->screen_max_width;
-                this->rdp_height = this->impl_graphic->screen_max_height;
-
-                this->vnc_conf.width = this->impl_graphic->screen_max_width;
-                this->vnc_conf.height = this->impl_graphic->screen_max_height;
-            }
-
-            switch (this->mod_state) {
-                case MOD_RDP:
-                    this->info.width = this->rdp_width;
-                    this->info.height = this->rdp_height;
-                    break;
-
-                case MOD_VNC:
-                    this->info.width = this->vnc_conf.width;
-                    this->info.height = this->vnc_conf.height;
-                    break;
-
-                default: break;
-            }
-
-            if (this->mod_state != MOD_RDP_REMOTE_APP) {
-
-                this->impl_graphic->reset_cache(this->info.width, this->info.height);
-                this->impl_graphic->create_screen();
-            } else {
-                this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
-            }
-        }
-
-        bool valid_socket_conn = this->init_socket();
-
-        if (valid_socket_conn) {
-
-            this->update_keylayout();
-
-            this->connected = this->init_mod();
-
-            if (this->connected) {
-//                 this->connected = true;
-
-                if (this->impl_socket_listener) {
-
-                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
-
-                        this->start_wab_session_time = tvtime();
-
-//                         if (this->mod_state != MOD_VNC) {
-//
-//                             GCC::UserData::SCCore original_sc_core;
-//                             GCC::UserData::SCSecurity const original_sc_sec1;
-//
-//                             not_null_ptr<GCC::UserData::SCCore const> sc_core_ptr = &original_sc_core;
-//                             not_null_ptr<GCC::UserData::SCSecurity const> sc_sec1_ptr = &original_sc_sec1;
-//
-//                             mod_rdp * rdp = reinterpret_cast<mod_rdp*>(this->mod);
-//
-//                             sc_core_ptr = &(rdp->sc_core);
-//                             sc_sec1_ptr = &(rdp->sc_sec1);
-//
-//
-//                             LOG(LOG_INFO, " ================================");
-//                             LOG(LOG_INFO, " ======= Server Core Info =======");
-//                             LOG(LOG_INFO, " ================================");
-//
-//                             LOG(LOG_INFO, " userDataType = %u", sc_core_ptr->userDataType);
-//                             LOG(LOG_INFO, " length = %u", sc_core_ptr->length);
-//                             LOG(LOG_INFO, " version = %u", sc_core_ptr->version);
-//                             LOG(LOG_INFO, " clientRequestedProtocols = %u", sc_core_ptr->clientRequestedProtocols);
-//                             LOG(LOG_INFO, " earlyCapabilityFlags = %u", sc_core_ptr->earlyCapabilityFlags);
-//                             std::cout << std::endl;
-//
-//
-//
-//                             LOG(LOG_INFO, " ================================");
-//                             LOG(LOG_INFO, " ===== Server Security Info =====");
-//                             LOG(LOG_INFO, " ================================");
-//
-//                             LOG(LOG_INFO, " userDataType = %u", sc_sec1_ptr->userDataType);
-//                             LOG(LOG_INFO, " length = %u", sc_sec1_ptr->length);
-//                             LOG(LOG_INFO, " encryptionMethod = %s", GCC::UserData::SCSecurity::get_encryptionMethod_name(sc_sec1_ptr->encryptionMethod));
-//                             LOG(LOG_INFO, " encryptionLevel = %s", GCC::UserData::SCSecurity::get_encryptionLevel_name(sc_sec1_ptr->encryptionLevel));
-//                             LOG(LOG_INFO, " serverRandomLen = %u", sc_sec1_ptr->serverRandomLen);
-//                             LOG(LOG_INFO, " serverCertLen = %u", sc_sec1_ptr->serverCertLen);
-//                             LOG(LOG_INFO, " dwVersion = %u", sc_sec1_ptr->dwVersion);
-//                             LOG(LOG_INFO, " temporary = %u", sc_sec1_ptr->temporary);
-//
-//                             auto print_hex_data = [&sc_sec1_ptr](array_view_const_u8 av){
-//                                 for (size_t i = 0; i < av.size(); i++) {
-//                                     if ((i % 16) == 0 && i != 0) {
-//                                         std::cout << "\n                ";
-//                                     }
-//                                     std::cout <<"0x";
-//                                     if (av[i] < 0x10) {
-//                                         std::cout << "0";
-//                                     }
-//                                     std::cout << std::hex << int(sc_sec1_ptr->serverRandom[i]) << std::dec << " ";
-//                                 }
-//                                 std::cout << "\n";
-//                                 std::cout << "\n";
-//                             };
-//
-//                             LOG(LOG_INFO, " serverRandom : "); print_hex_data(sc_sec1_ptr->serverRandom);
-//                             LOG(LOG_INFO, " pri_exp : "); print_hex_data(sc_sec1_ptr->pri_exp);
-//                             LOG(LOG_INFO, " pub_sig : "); print_hex_data(sc_sec1_ptr->pub_sig);
-//
-//                             LOG(LOG_INFO, " proprietaryCertificate : ");
-//                             LOG(LOG_INFO, "     dwSigAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwSigAlgId);
-//                             LOG(LOG_INFO, "     dwKeyAlgId = %u", sc_sec1_ptr->proprietaryCertificate.dwKeyAlgId);
-//                             LOG(LOG_INFO, "     wPublicKeyBlobType = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobType);
-//                             LOG(LOG_INFO, "     wPublicKeyBlobLen = %u", sc_sec1_ptr->proprietaryCertificate.wPublicKeyBlobLen);
-//                             LOG(LOG_INFO, "");
-//                             LOG(LOG_INFO, "     RSAPK : ");
-//                             LOG(LOG_INFO, "        magic = %u", sc_sec1_ptr->proprietaryCertificate.RSAPK.magic);
-//                             LOG(LOG_INFO, "");
-//
-//
-//                         }
-
-                        if (mod_state != MOD_RDP_REMOTE_APP) {
-                            if (this->impl_graphic) {
-                                this->impl_graphic->show_screen();
-                            }
-                        }
-
-                        return true;
-                    }
-                }
-            }
-
-/*            const std::string errorMsgfail("Error: Mod Initialization failed.");
-            std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-            if (this->impl_graphic) {
-                this->impl_graphic->dropScreen();
-            }
-            this->disconnect(labelErrorMsg, false)*/;
-        }
-
-        return false;
-    }
-
-     void record_connection_nego_times() {
-        if (!this->secondary_connection_finished) {
-            this->secondary_connection_finished = true;
-
-            std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
-            long prim_len = prim_duration.count() / 1000;
-            std::cout << "primary connection length = " <<  prim_len << " ms\n";
-
-            this->start_win_session_time = tvtime();
-
-            std::chrono::microseconds sec_duration = difftimeval(this->start_win_session_time, this->start_wab_session_time);
-            long sec_len = sec_duration.count() / 1000;
-            time_t now;
-            time(&now);
-
-            struct tm * timeinfo;
-            char buffer [80];
-            timeinfo = localtime (&now);
-            strftime (buffer,80,"%F_%r",timeinfo);
-            std::string date(buffer);
-
-            std::cout << "secondary connection length = " <<  sec_len << " ms " <<  date << "\n";
-        }
-    }
-
-    timeval reload_replay_mod(int begin, timeval now_stop) override {
+ timeval reload_replay_mod(int begin, timeval now_stop) override {
 
         timeval movie_time_start;
 
         switch (this->replay_mod->get_wrm_version()) {
 
                 case WrmVersion::v1:
-                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+                    if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {0, 0}, {0, 0})) {
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
                         movie_time_start = tvtime();
                         return movie_time_start;
@@ -1005,10 +1047,10 @@ public:
                 case WrmVersion::v2:
                 {
                     int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
-                    this->is_loading_replay_mod = true;
-                    if (this->load_replay_mod(this->_movie_dir, this->_movie_name, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+                    this->config.is_loading_replay_mod = true;
+                    if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
 
-                        this->is_loading_replay_mod = false;
+                        this->config.is_loading_replay_mod = false;
 
                         this->draw_frame(last_balised);
 
@@ -1023,7 +1065,7 @@ public:
                         timeval wait_duration = {movie_time_start.tv_sec - begin - waited_for_load.tv_sec, movie_time_start.tv_usec - waited_for_load.tv_usec};
                         this->replay_mod->set_wait_after_load_client(wait_duration);
                     }
-                    this->is_loading_replay_mod = false;
+                    this->config.is_loading_replay_mod = false;
 
                     return movie_time_start;
                 }
@@ -1055,8 +1097,8 @@ public:
     }
 
     char const * get_mwrm_filename() override {
-        this->_movie_full_path = this->_movie_dir + this->_movie_name;
-        return _movie_full_path.c_str();
+        this->config._movie_full_path = this->config._movie_dir + this->config._movie_name;
+        return this->config._movie_full_path.c_str();
     }
 
     time_t get_movie_time_length(char const * mwrm_filename) override  {
@@ -1090,54 +1132,6 @@ public:
     void instant_play_client(std::chrono::microseconds time) override {
         this->replay_mod->instant_play_client(time);
     }
-
-    void disconnexionReleased() override{
-        this->is_replaying = false;
-        this->connected = false;
-        if (this->impl_graphic) {
-            this->impl_graphic->dropScreen();
-        }
-        this->disconnect("", false);
-    }
-
-    virtual void set_capture() {
-        std::string record_path = this->REPLAY_DIR + "/";
-        std::string hash_path = this->REPLAY_DIR + "/signatures/";
-        time_t now;
-        time(&now);
-        std::string movie_name = ctime(&now);
-        movie_name.pop_back();
-        movie_name += "-Replay";
-
-        bool const is_remoteapp = false;
-        WrmParams wrmParams(
-              this->info.bpp
-            , is_remoteapp
-            , this->cctx
-            , *this->gen
-            , this->fstat
-            , hash_path.c_str()
-            , std::chrono::duration<unsigned int, std::ratio<1l, 100l> >{60}
-            , std::chrono::seconds(600) /* break_interval */
-            , WrmCompressionAlgorithm::no_compression
-            , 0
-        );
-
-        CaptureParams captureParams;
-        captureParams.now = tvtime();
-        captureParams.basename = movie_name.c_str();
-        captureParams.record_tmp_path = record_path.c_str();
-        captureParams.record_path = record_path.c_str();
-        captureParams.groupid = 0;
-        captureParams.report_message = nullptr;
-
-        this->capture = std::make_unique<Capture>(
-            this->info.width, this->info.height,
-            captureParams, wrmParams);
-
-        //this->capture->gd_drawable->width();
-    }
-
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1197,7 +1191,7 @@ public:
     }
 
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop  & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::ActivelyMonitoredDesktop");
         }
         //cmd.log(LOG_INFO);
@@ -1206,7 +1200,7 @@ public:
     }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             cmd.log(LOG_INFO);
 //             LOG(LOG_INFO, "RDP::RAIL::NewOrExistingWindow");
         }
@@ -1215,7 +1209,7 @@ public:
     }
 
     void draw(const RDP::RAIL::DeletedWindow            & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::DeletedWindow");
         }
         //cmd.log(LOG_INFO);
@@ -1223,35 +1217,35 @@ public:
     }
 
     void draw(const RDP::RAIL::WindowIcon            &  /*unused*/) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::WindowIcon");
         }
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::CachedIcon            &  /*unused*/) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::CachedIcon");
         }
 //         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NewOrExistingNotificationIcons            & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::NewOrExistingNotificationIcons");
         }
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::DeletedNotificationIcons            & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::DeletedNotificationIcons");
         }
         cmd.log(LOG_INFO);
     }
 
     void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override {
-        if (bool(this->verbose & RDPVerbose::rail_order)) {
+        if (bool(this->config.verbose & RDPVerbose::rail_order)) {
             LOG(LOG_INFO, "RDP::RAIL::NonMonitoredDesktop");
         }
         cmd.log(LOG_INFO);
@@ -1293,7 +1287,7 @@ public:
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
-                const std::string errorMsg("[" + this->target_IP +  "] lost: pipe broken");
+                const std::string errorMsg("[" + this->config.target_IP +  "] lost: pipe broken");
                 LOG(LOG_INFO, "%s: %s", errorMsg, e.errmsg());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
@@ -1309,7 +1303,7 @@ public:
     //       DRAW FUNCTIONS
     //-----------------------------
 
-    using ClientRedemptionConfig::draw;
+    using ClientRedemptionAPI::draw;
 
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->impl_graphic) {
@@ -1548,13 +1542,13 @@ public:
     }
 
     void begin_update() override {
-        if ((this->connected || this->is_replaying)) {
+        if ((this->config.connected || this->config.is_replaying)) {
 
             if (this->impl_graphic) {
                 this->impl_graphic->begin_update();
             }
 
-            if (this->is_recording && !this->is_replaying) {
+            if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.begin_update();
                 this->capture->wrm_capture.begin_update();
                 this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
@@ -1564,13 +1558,13 @@ public:
 
 
     void end_update() override {
-        if ((this->connected || this->is_replaying)) {
+        if ((this->config.connected || this->config.is_replaying)) {
 
             if (this->impl_graphic) {
                 this->impl_graphic->end_update();
             }
 
-            if (this->is_recording && !this->is_replaying) {
+            if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.end_update();
                 this->capture->wrm_capture.end_update();
                 this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
@@ -1588,13 +1582,13 @@ private:
 
     void draw_impl(no_log /*unused*/, RDP::FrameMarker const& order)
     {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             //order.log(LOG_INFO);
             LOG(LOG_INFO, "========================================\n");
         }
 
-        if (this->is_recording && !this->is_replaying) {
+        if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order);
             this->capture->wrm_capture.draw(order);
             this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
@@ -1604,7 +1598,7 @@ private:
     template<class WithLog, class Order, class T, class... Ts>
     void draw_impl(WithLog with_log, Order& order, T& clip_or_bmp, Ts&... others)
     {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip_or_bmp);
@@ -1616,7 +1610,7 @@ private:
             this->impl_graphic->draw(order, clip_or_bmp, others...);
         }
 
-        if (this->is_recording && !this->is_replaying) {
+        if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
@@ -1626,7 +1620,7 @@ private:
     template<class WithLog, class Order, class... Ts>
     void draw_impl(WithLog with_log, Order& order, Rect clip, gdi::ColorCtx color_ctx, Ts&... others)
     {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
@@ -1638,9 +1632,9 @@ private:
             this->impl_graphic->draw(order, clip, color_ctx, others...);
         }
 
-        if (this->is_recording && !this->is_replaying) {
-            this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), others...);
-            this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->info.bpp), &this->mod_palette), others...);
+        if (this->config.is_recording && !this->config.is_replaying) {
+            this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
+            this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
             this->capture->wrm_capture.periodic_snapshot(tvtime(), this->mouse_data.x, this->mouse_data.y, false);
         }
     }
@@ -1648,7 +1642,7 @@ private:
     template<class WithLog, class Order, class... Ts>
     void draw_unimplemented(WithLog with_log, Order& order, Rect clip, Ts&... /*others*/)
     {
-        if (bool(this->verbose & RDPVerbose::graphics)) {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "--------- FRONT ------------------------");
             (void)clip;
             (void)order;

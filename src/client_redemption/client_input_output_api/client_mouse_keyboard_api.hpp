@@ -22,8 +22,7 @@
 
 #include "utils/log.hpp"
 
-
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_controller.hpp"
 
 
 
@@ -32,15 +31,21 @@ class ClientInputMouseKeyboardAPI : public ClientIO {
 
 
 public:
+    ClientRedemptionController * callback;
 
-    ClientInputMouseKeyboardAPI() = default;
+    ClientInputMouseKeyboardAPI()
+      : callback(nullptr)
+      {}
 
     virtual ~ClientInputMouseKeyboardAPI() = default;
 
 
-    virtual ClientRedemptionAPI * get_client() {
-        return this->client;
+    void set_callback(ClientRedemptionController * callback) {
+        this->callback = callback;
     }
+//     virtual ClientRedemptionAPI * get_client() {
+//         return this->client;
+//     }
 
     virtual void update_keylayout() = 0;
 
@@ -51,31 +56,31 @@ public:
 
     // CONTROLLER
     virtual bool connexionReleased() {
-        return this->client->connect();
+        return this->callback->connect();
     }
 
     virtual void disconnexionReleased() {
-        this->client->disconnexionReleased();
+        this->callback->disconnexionReleased();
     }
 
     void CtrlAltDelPressed() {
-        this->client->CtrlAltDelPressed();
+        this->callback->CtrlAltDelPressed();
     }
 
     void CtrlAltDelReleased() {
-        this->client->CtrlAltDelReleased();
+        this->callback->CtrlAltDelReleased();
     }
 
     virtual void mouseButtonEvent(int x, int y, int flag) {
-        this->client->mouseButtonEvent(x, y, flag);
+        this->callback->mouseButtonEvent(x, y, flag);
     }
 
     virtual void wheelEvent(int x,  int y, int delta) {
-        this->client->wheelEvent(x, y, delta);
+        this->callback->wheelEvent(x, y, delta);
     }
 
     virtual bool mouseMouveEvent(int x, int y) {
-        return this->client->mouseMouveEvent(x, y);
+        return this->callback->mouseMouveEvent(x, y);
     }
 
     // TODO string_view
@@ -85,14 +90,14 @@ public:
     void virtual keyReleaseEvent(const int key, std::string const& text)  = 0;
 
     void virtual refreshPressed() {
-        this->client->refreshPressed();
+        this->callback->refreshPressed();
     }
 
     virtual void open_options() {}
 
     // TODO string_view
-    virtual ClientRedemptionAPI::KeyCustomDefinition get_key_info(int /*unused*/, std::string const& /*unused*/) {
-        return ClientRedemptionAPI::KeyCustomDefinition(0, 0, "", 0, "");
+    virtual KeyCustomDefinition get_key_info(int /*unused*/, std::string const& /*unused*/) {
+        return KeyCustomDefinition(0, 0, "", 0, "");
     }
 
 };

@@ -125,6 +125,9 @@ ClientChannelRDPDRManager::~ClientChannelRDPDRManager() {
     this->elem_in_path.clear();
 }
 
+void ClientChannelRDPDRManager::set_share_dir(const std::string & share_dir) {
+    this->share_dir = share_dir;
+}
 
 void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 {
@@ -447,7 +450,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                             if (id == 0) {
 
-                                std::string new_path(this->client->SHARE_DIR + request.Path());
+                                std::string new_path(this->share_dir + request.Path());
 
                                 if (this->impl_io_disk->ifile_good(new_path.c_str())) {
                                     id = this->get_file_id();
@@ -729,7 +732,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                                         }
                                         str_file_name = tmp_path;
 
-                                        std::string str_file_path_slash(this->client->SHARE_DIR + path);
+                                        std::string str_file_path_slash(this->share_dir + path);
 
                                         if (this->impl_io_disk->dir_good(str_file_path_slash.c_str())) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -1066,7 +1069,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                                         rdpdr::RDPFileRenameInformation rdpfri;
                                         rdpfri.receive(chunk);
 
-                                        std::string fileName(this->client->SHARE_DIR + rdpfri.FileName());
+                                        std::string fileName(this->share_dir + rdpfri.FileName());
 
                                         if (this->impl_io_disk->rename_file(file_to_request.c_str(), fileName.c_str())) {
                                             LOG(LOG_WARNING, "  Can't rename such file of directory : \'%s\' to \'%s\'.", file_to_request.c_str(), fileName.c_str());

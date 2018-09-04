@@ -114,12 +114,13 @@
       , server_use_long_format_names(config.server_use_long_format_names)
       , cCapabilitiesSets(config.cCapabilitiesSets)
       , generalFlags(config.generalFlags)
+      , path(config.path)
       {
-        if (!dir_exist(this->client->CB_TEMP_DIR.c_str())){
-            mkdir(this->client->CB_TEMP_DIR.c_str(), 0777);
+        if (!dir_exist(this->path.c_str())){
+            mkdir(this->path.c_str(), 0777);
         }
-        if (!dir_exist(this->client->CB_TEMP_DIR.c_str())){
-            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->client->CB_TEMP_DIR);
+        if (!dir_exist(this->path.c_str())){
+            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->path);
         }
 
         for (auto const& format : config.formats) {
@@ -755,8 +756,7 @@
         // If the embedded flags field of the channelPduHeader field (the Channel PDU Header structure is specified
         // in section 2.2.6.1.1) does not contain the CHANNEL_FLAG_FIRST (0x00000001) flag or CHANNEL_FLAG_LAST
         // (0x00000002) flag, and the data is not part of a chunked sequence (that is, a start chunk has not been
-        // received), then the data in the virtualChannelData field can be dispatched to the appropriate virtual
-        // channel endpoint (no reassembly is required by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL
+        // received), then the data in the virtualChannelDmanagerd by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL
         // (0x00000010) flag is specified in the Channel PDU Header, then the channelPduHeader field MUST also
         // be dispatched to the virtual channel endpoint.
 

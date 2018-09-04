@@ -179,6 +179,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    manager.receive(chunk_FormatDataResponse, flag_channel);
    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
 
+
+
    pdu_data = client.stream();
    RED_CHECK_EQUAL(pdu_data->size, 12);
    InStream stream_unlock(pdu_data->data, pdu_data->size);
@@ -188,6 +190,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    RED_CHECK_EQUAL(ucdp.header.msgFlags(), RDPECLIP::CB_RESPONSE_NONE);
    RED_CHECK_EQUAL(ucdp.header.dataLen(), 4);
    RED_CHECK_EQUAL(ucdp.streamDataID, 0x00000000);
+
+   std::string data_sent_to_local_clipboard(manager._cb_buffers.data);
+   std::string data_sent_expected;
+   RED_CHECK_EQUAL(data_sent_to_local_clipboard, data_sent_expected);
+
 }
 
 

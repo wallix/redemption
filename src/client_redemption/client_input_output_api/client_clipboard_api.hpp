@@ -43,10 +43,16 @@ public:
     size_t      _cliboard_data_length = 0;
     int         _cItems = 0;
 
+    std::string tmp_path;
+
 public:
     ClientIOClipboardAPI() = default;
 
     virtual ~ClientIOClipboardAPI() = default;
+
+    void set_path(const std::string & path) {
+        this->tmp_path = path;
+    }
 
     // control state
     virtual void emptyBuffer() = 0;

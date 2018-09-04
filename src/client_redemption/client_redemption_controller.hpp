@@ -27,13 +27,13 @@
 #include "keyboard/keymap2.hpp"
 
 
-#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #endif
 
 
 
-class ClientRedemptionController : public ClientRedemptionConfig
+class ClientRedemptionController : public ClientRedemptionAPI
 {
 private:
     Keymap2           keymap;
@@ -41,26 +41,32 @@ private:
     int                  _timer;
 
 
+
 public:
+    struct MouseData {
+        uint16_t x = 0;
+        uint16_t y = 0;
+    } mouse_data;
+
     ClientRedemptionController(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
-      : ClientRedemptionConfig(session_reactor, argv, argc, verbose)
+      : ClientRedemptionAPI(session_reactor, argv, argc, verbose)
       , _timer(0)
     {
-        this->keymap.init_layout(this->info.keylayout);
+        //this->keymap.init_layout(LICD);
     }
 
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
     }
 
-    void refreshPressed() override {
+    void refreshPressed() {
         if (this->mod != nullptr) {
-            Rect rect(0, 0, this->info.width, this->info.height);
+            Rect rect(0, 0, this->config.info.width, this->config.info.height);
             this->mod->rdp_input_invalidate(rect);
         }
     }
 
-    void CtrlAltDelPressed() override {
+    void CtrlAltDelPressed() {
         int flag = Keymap2::KBDFLAGS_EXTENDED;
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
@@ -68,7 +74,7 @@ public:
         this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    void CtrlAltDelReleased() override {
+    void CtrlAltDelReleased() {
         int flag = Keymap2::KBDFLAGS_EXTENDED | KBD_FLAG_UP;
 
         this->send_rdp_scanCode(KBD_SCANCODE_ALTGR , flag);
@@ -76,13 +82,13 @@ public:
         this->send_rdp_scanCode(KBD_SCANCODE_DELETE, flag);
     }
 
-    void mouseButtonEvent(int x, int y, int flag) override {
+    void mouseButtonEvent(int x, int y, int flag) {
         if (this->mod != nullptr) {
             this->mod->rdp_input_mouse(flag, x, y, &(this->keymap));
         }
     }
 
-    void wheelEvent(int  /*unused*/,  int  /*unused*/, int /*delta*/) override {
+    void wheelEvent(int  /*unused*/,  int  /*unused*/, int /*delta*/) {
         // int flag(MOUSE_FLAG_HWHEEL);
         // if (delta < 0) {
         //     flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
@@ -92,9 +98,9 @@ public:
         // }
     }
 
-    bool mouseMouveEvent(int x, int y) override {
+    bool mouseMouveEvent(int x, int y) {
 
-        if (this->mod != nullptr && y < this->info.height) {
+        if (this->mod != nullptr && y < this->config.info.height) {
             this->mouse_data.x = x;
             this->mouse_data.y = y;
             this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
@@ -103,7 +109,7 @@ public:
         return false;
     }
 
-    void send_rdp_scanCode(int keyCode, int flag) override {
+    void send_rdp_scanCode(int keyCode, int flag) {
         bool tsk_switch_shortcuts = false;
         Keymap2::DecodedKeys decoded_keys = this->keymap.event(flag, keyCode, tsk_switch_shortcuts);
         switch (decoded_keys.count)
@@ -130,7 +136,7 @@ public:
         }
     }
 
-    void send_rdp_unicode(uint16_t unicode, uint16_t flag) override {
+    void send_rdp_unicode(uint16_t unicode, uint16_t flag) {
         this->mod->rdp_input_unicode(unicode, flag);
     }
 

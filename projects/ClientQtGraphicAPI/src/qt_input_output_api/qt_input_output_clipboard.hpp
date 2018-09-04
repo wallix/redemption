@@ -22,7 +22,7 @@
 #pragma once
 
 
-
+#include <fstream>
 #include <vector>
 
 
@@ -30,7 +30,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 
 #include <QtCore/QMimeData>
@@ -66,7 +66,7 @@ public:
         , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
-    ClientRedemptionAPI    * _front;
+//     ClientRedemptionAPI    * _front;
     QClipboard                * _clipboard;
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
@@ -101,8 +101,13 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
+    void set_client(ClientRedemptionAPI * client, std::string & path) {
+        this->client = client;
+        this->tmp_path = path;
+    }
+
     void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
-        std::string filePath(this->client->CB_TEMP_DIR + "/" + fileName);
+        std::string filePath(this->tmp_path + "/" + fileName);
         std::string filePath_mem(filePath);
         this->_temp_files_list.push_back(filePath_mem);
 
@@ -165,7 +170,7 @@ public:
 
             QByteArray gnomeFormat = QByteArray("copy\n");
 
-            std::string path(this->client->CB_TEMP_DIR + "/" + name);
+            std::string path(this->tmp_path + "/" + name);
             //std::cout <<  path <<  std::endl;
             QString qpath(path.c_str());
 
@@ -198,14 +203,14 @@ public:
     }
 
     void clean_CB_temp_dir() {
-        DIR *theFolder = opendir(this->client->CB_TEMP_DIR.c_str());
+        DIR *theFolder = opendir(this->tmp_path.c_str());
 
         if (theFolder) {
             struct dirent *next_file;
 
             while ((next_file = readdir(theFolder)))
             {
-                std::string filepath(this->client->CB_TEMP_DIR + std::string("/") + next_file->d_name);
+                std::string filepath(this->tmp_path + std::string("/") + next_file->d_name);
                 remove(filepath.c_str());
             }
             closedir(theFolder);

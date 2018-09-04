@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_redemption_controller.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
@@ -29,7 +29,7 @@
 class ClientOutputGraphicAPI : public gdi::GraphicApi
 {
 public:
-    ClientRedemptionAPI * drawn_client;
+    ClientRedemptionController * controller;
     ClientRedemptionConfig * config;
 
     const int screen_max_width;
@@ -38,7 +38,8 @@ public:
     bool is_pre_loading;
 
     ClientOutputGraphicAPI(int max_width, int max_height)
-      : drawn_client(nullptr)
+      : controller(nullptr)
+      , config(nullptr)
       , screen_max_width(max_width)
       , screen_max_height(max_height)
       , is_pre_loading(false) {
@@ -46,9 +47,9 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) {
-        this->drawn_client = client;
+    virtual void set_drawn_client(ClientRedemptionController * controller, ClientRedemptionConfig * config) {
         this->config = config;
+        this->controller = controller;
     }
 
     virtual void set_ErrorMsg(std::string const & movie_path) = 0;

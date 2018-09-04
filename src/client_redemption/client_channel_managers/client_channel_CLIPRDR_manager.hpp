@@ -140,6 +140,8 @@ public:
 
     uint32_t file_content_flag;
 
+    const std::string path;
+
 
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;

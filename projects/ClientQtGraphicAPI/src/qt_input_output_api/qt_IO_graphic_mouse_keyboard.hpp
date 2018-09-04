@@ -63,6 +63,7 @@ class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInp
 {
 
 public:
+//
     int                  mod_bpp;
     QtForm            * form;
     QtScreen           * screen;
@@ -102,19 +103,22 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) override {
-        this->drawn_client = client;
-        this->config = config;
+    virtual void set_drawn_client(ClientRedemptionController * controller, ClientRedemptionConfig * config) override {
+
+
+        ClientOutputGraphicAPI::set_drawn_client(controller, config);
+        this->callback = controller;
+
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
 
         this->qtRDPKeymap.clearCustomKeyCode();
-        for (size_t i = 0; i < this->drawn_client->keyCustomDefinitions.size(); i++) {
-            ClientRedemptionAPI::KeyCustomDefinition & key = this->drawn_client->keyCustomDefinitions[i];
+        for (size_t i = 0; i < this->config->keyCustomDefinitions.size(); i++) {
+            KeyCustomDefinition & key = this->config->keyCustomDefinitions[i];
             this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
         }
 
-        this->form = new QtForm(this->config, this, this->client);
+        this->form = new QtForm(this->config, this->controller->get_icon_movie_data(), this);
     }
 
     virtual void show_screen() override {
@@ -161,12 +165,12 @@ public:
 
     virtual void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(this->config, this->drawn_client, this, map);
+        this->screen = new RDPQtScreen(this->config, this->controller, this, map);
     }
 
     virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->config, this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(this->client->get_mwrm_filename()), 0);
+        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(this->controller->get_mwrm_filename()), 0);
     }
 
     QWidget * get_static_qwidget() {
@@ -209,12 +213,12 @@ public:
 
     virtual void init_form() override {
         if (this->form) {
-            if (this->config->mod_state != ClientRedemptionAPI::MOD_RDP_REPLAY) {
+            if (this->config->mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
                 this->form->init_form();
-                this->form->set_IPField(this->client->target_IP);
-                this->form->set_portField(this->client->port);
-                this->form->set_PWDField(this->client->user_password);
-                this->form->set_userNameField(this->client->user_name);
+                this->form->set_IPField(this->config->target_IP);
+                this->form->set_portField(this->config->port);
+                this->form->set_PWDField(this->config->user_password);
+                this->form->set_userNameField(this->config->user_name);
             }
             this->form->show();
         }
@@ -229,7 +233,7 @@ public:
     virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->drawn_client, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->controller, this, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
@@ -395,7 +399,7 @@ private:
             return;
         }
 
-        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->update_view();
@@ -416,34 +420,34 @@ private:
 
         switch (this->config->mod_state) {
 
-            case ClientRedemptionAPI::MOD_RDP:
+            case ClientRedemptionConfig::MOD_RDP:
                 if (this->config->info.width == width && this->config->info.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->drawn_client, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->controller, this, &(this->cache));
                 this->screen->show();
                     break;
 
-            case ClientRedemptionAPI::MOD_VNC:
-                if (this->client->vnc_conf.width == width && this->client->vnc_conf.height == height) {
+            case ClientRedemptionConfig::MOD_VNC:
+                if (this->config->vnc_conf.width == width && this->config->vnc_conf.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
-                this->client->vnc_conf.width = width;
-                this->client->vnc_conf.height = height;
+                this->config->vnc_conf.width = width;
+                this->config->vnc_conf.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->drawn_client, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->controller, this, &(this->cache));
                 this->screen->show();
                     break;
 
-            case ClientRedemptionAPI::MOD_RDP_REMOTE_APP:
+            case ClientRedemptionConfig::MOD_RDP_REMOTE_APP:
                 return FrontAPI::ResizeResult::remoteapp;
                     break;
 
-            case ClientRedemptionAPI::MOD_RDP_REPLAY:
-                if (!this->client->is_loading_replay_mod) {
+            case ClientRedemptionConfig::MOD_RDP_REPLAY:
+                if (!this->config->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
                     if (!this->is_pre_loading) {
@@ -455,7 +459,7 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->config, this->drawn_client, this, this->client->_movie_dir, this->client->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
+                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
 
                         this->screen->show();
                     }
@@ -484,7 +488,7 @@ private:
 
 
 
-        if (this->config->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) {
+        if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
                     it->second->setCursor(QCursor(QPixmap::fromImage(this->cursor_image), hotspot.x, hotspot.x));
@@ -507,17 +511,21 @@ private:
 
         this->is_pre_loading = true;
 
-        if (movie_length > ClientRedemptionAPI::BALISED_FRAME) {
+        if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {
 
             while (endin_frame < movie_length) {
 
                 this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
                 this->balises.push_back(this->cache);
-                endin_frame += ClientRedemptionAPI::BALISED_FRAME;
+                endin_frame += ClientRedemptionConfig::BALISED_FRAME;
                 if (this->bar) {
                     this->bar->setValue(endin_frame);
                 }
+            }
+
+            if (this->bar) {
+                this->bar->close();
             }
         }
 
@@ -653,7 +661,7 @@ private:
             color      = color_encode(d, uint8_t(this->config->info.bpp));
         }
 
-        BGRColor bgr = color_decode(color, this->config->info.bpp, this->client->mod_palette);
+        BGRColor bgr = color_decode(color, this->config->info.bpp, this->config->mod_palette);
 
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
@@ -716,7 +724,7 @@ private:
 //             QImage image(data.get(), mincx, mincy, srcBitmap.format());
 //             QRect trect(drect.x, drect.y, mincx, mincy);
 
-//             if (this->client->connected || this->client->is_replaying) {
+//             if (this->config->connected || this->config->is_replaying) {
 //                 this->painter.drawImage(trect, image);
 //                 //this->painter.fillRect(trect, Qt::red);
 //             }
@@ -746,7 +754,7 @@ private:
         }
 
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
 
              this->painter.drawImage(trect, qbitmap);
         }
@@ -759,7 +767,7 @@ private:
             qbitmap.invertPixels();
         }
         const QRect trect(drect.x, drect.y, drect.cx, drect.cy);
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             this->painter.drawImage(trect, qbitmap);
         }
     }
@@ -793,7 +801,7 @@ private:
 
     void draw_RDPPatBlt(const Rect & rect, const QColor color, const QPainter::CompositionMode mode, const Qt::BrushStyle style) {
         QBrush brush(color, style);
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             this->painter.setBrush(brush);
             this->painter.setCompositionMode(mode);
             this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -803,7 +811,7 @@ private:
     }
 
     void draw_RDPPatBlt(const Rect & rect, const QPainter::CompositionMode mode) {
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             this->painter.setCompositionMode(mode);
             this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
             this->painter.setCompositionMode(QPainter::CompositionMode_SourceOver);
@@ -811,7 +819,7 @@ private:
     }
 
     void draw_frame(int frame_index) override {
-        if (this->client->is_replaying) {
+        if (this->config->is_replaying) {
             this->painter.drawPixmap(QPoint(0, 0), this->balises[frame_index], QRect(0, 0, this->cache.width(), this->cache.height()));
         }
     }
@@ -844,7 +852,7 @@ private:
                 case 0x5A:
                     {
                         QBrush brush(backColor, Qt::Dense4Pattern);
-                        if (this->client->connected || this->client->is_replaying) {
+                        if (this->config->connected || this->config->is_replaying) {
                             this->painter.setBrush(brush);
                             this->painter.setCompositionMode(QPainter::RasterOp_SourceXorDestination);
                             this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -860,7 +868,7 @@ private:
                 // +------+-------------------------------+
                 case 0xF0:
                     {
-                        if (this->client->connected || this->client->is_replaying) {
+                        if (this->config->connected || this->config->is_replaying) {
                             QBrush brush(foreColor, Qt::Dense4Pattern);
                             this->painter.setPen(Qt::NoPen);
                             this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
@@ -878,7 +886,7 @@ private:
             switch (cmd.rop) {
 
                 case 0x00: // blackness
-                    if (this->client->connected || this->client->is_replaying) {
+                    if (this->config->connected || this->config->is_replaying) {
                         this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::black);
                     }
                     break;
@@ -953,7 +961,7 @@ private:
                     // |      | RPN: P                        |
                     // +------+-------------------------------+
                 case 0xF0:
-                    if (this->client->connected || this->client->is_replaying) {
+                    if (this->config->connected || this->config->is_replaying) {
                         this->painter.setPen(Qt::NoPen);
                         this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, backColor);
                         this->painter.drawRect(rect.x, rect.y, rect.cx, rect.cy);
@@ -975,7 +983,7 @@ private:
                     break;
 
                 case 0xFF: // whiteness
-                    if (this->client->connected || this->client->is_replaying) {
+                    if (this->config->connected || this->config->is_replaying) {
                         this->painter.fillRect(rect.x, rect.y, rect.cx, rect.cy, Qt::white);
                     }
                     break;
@@ -988,7 +996,7 @@ private:
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             QColor qcolor(this->u32_to_qcolor(cmd.color, color_ctx));
             Rect rect(cmd.rect.intersect(clip));
             // this->setClip(rect.x, rect.y, rect.cx, rect.cy);
@@ -1030,7 +1038,7 @@ private:
 
         qbitmap = qbitmap.mirrored(false, true);
         QRect trect(drect.x, drect.y, mincx, mincy);
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             // this->setClip(trect.x(), trect.y(), trect.width(), trect.height());
             this->painter.drawImage(trect, qbitmap);
         }
@@ -1041,7 +1049,7 @@ private:
         (void) clip;
 
         // TODO clipping
-        if (this->client->connected || this->client->is_replaying) {
+        if (this->config->connected || this->config->is_replaying) {
             this->screen->setPenColor(this->u32_to_qcolor(cmd.back_color, color_ctx));
             // this->setClip(clip.x, clip.y, clip.cx, clip.cy);
             this->painter.drawLine(cmd.startx, cmd.starty, cmd.endx, cmd.endy);
@@ -1065,7 +1073,7 @@ private:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -1080,7 +1088,7 @@ private:
                 break;
 
             case 0xFF:
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -1106,7 +1114,7 @@ private:
         switch (cmd.rop) {
 
             case 0x00:
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -1142,7 +1150,7 @@ private:
                 break;
 
             case 0xFF:
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -1179,7 +1187,7 @@ private:
 
                 const QImage::Format format(this->bpp_to_QFormat(bitmap.bpp(), true));
 
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
 
                     QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
                     srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
@@ -1226,7 +1234,7 @@ private:
 
         switch (cmd.rop) {
             case 0x00: // blackness
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::black);
                 }
                 break;
@@ -1236,7 +1244,7 @@ private:
             case 0xAA: // change nothing
                 break;
             case 0xFF: // whiteness
-                if (this->client->connected || this->client->is_replaying) {
+                if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(drect.x, drect.y, drect.cx, drect.cy, Qt::white);
                 }
                 break;
@@ -1293,7 +1301,7 @@ private:
             if ((ajusted.cx > 1) && (ajusted.cy > 1)) {
                 ajusted.cy--;
                 ajusted = ajusted.intersect(screen_rect);
-                 if (this->client->connected || this->client->is_replaying) {
+                 if (this->config->connected || this->config->is_replaying) {
                     this->painter.fillRect(ajusted.x, ajusted.y, ajusted.cx, ajusted.cy, this->u32_to_qcolor(cmd.fore_color, color_ctx));
                  }
             }
@@ -1357,7 +1365,7 @@ private:
                                 if (clip.contains_pt(x + fc.offsetx + xx, y + fc.offsety + yy)
                                 && (fc_bit_mask & *fc_data))
                                 {
-                                    if (this->client->connected || this->client->is_replaying) {
+                                    if (this->config->connected || this->config->is_replaying) {
                                         this->painter.fillRect(x + fc.offsetx + xx, y + fc.offsety + yy, 1, 1, color);
                                     }
                                 }
@@ -1462,60 +1470,60 @@ private:
     //------------------------
 
     void keyPressEvent(const int key, std::string const& text) override {
-//         if (this->client->mod_state ==  ClientRedemptionAPI::MOD_VNC) {
+//         if (this->client->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, 0);
 //         } else {
         this->qtRDPKeymap.keyEvent(0, key, text);
         if (this->qtRDPKeymap.scanCode != 0) {
-            this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+            this->callback->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
         }
 //         }
     }
 
     void keyReleaseEvent(const int key, std::string const& text) override {
-//          if (this->client->mod_state ==  ClientRedemptionAPI::MOD_VNC) {
+//          if (this->client->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
 //             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
             if (this->qtRDPKeymap.scanCode != 0) {
-                this->client->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+                this->callback->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
             }
 //         }
     }
 
     bool connexionReleased() override {
+        bool conn_res = false;
         if (this->form) {
             this->form->setCursor(Qt::WaitCursor);
-            this->client->user_name     = this->form->get_userNameField();
-            this->client->target_IP     = this->form->get_IPField();
-            this->client->user_password = this->form->get_PWDField();
-            this->client->port          = this->form->get_portField();
+            this->config->user_name     = this->form->get_userNameField();
+            this->config->target_IP     = this->form->get_IPField();
+            this->config->user_password = this->form->get_PWDField();
+            this->config->port          = this->form->get_portField();
 
-            this->client->is_full_capturing = true;
-            this->client->full_capture_file_name = "/tmp/capture.dump";
+            this->config->is_full_capturing = true;
+            this->config->full_capture_file_name = "/tmp/capture.dump";
 
-            bool conn_res = false;
-            if (!this->client->target_IP.empty()){
-                conn_res = this->client->connect();
+
+            if (!this->config->target_IP.empty()){
+                conn_res = this->callback->connect();
             }
             this->form->setCursor(Qt::ArrowCursor);
-
-            return conn_res;
         }
+        return conn_res;
     }
 
     void closeFromScreen() override {
 
         this->disconnexionReleased();
 
-        if (this->form != nullptr && this->client->connected) {
+        if (this->form != nullptr && this->config->connected) {
             this->form->close();
         }
     }
 
-    ClientRedemptionAPI::KeyCustomDefinition get_key_info(int key, std::string const& text) override {
+    KeyCustomDefinition get_key_info(int key, std::string const& text) override {
         this->qtRDPKeymap.keyEvent(0, key, text);
-        ClientRedemptionAPI::KeyCustomDefinition key_info(
+        KeyCustomDefinition key_info(
             this->qtRDPKeymap.qKeyCode,
             this->qtRDPKeymap.scanCode,
             this->qtRDPKeymap.ascii,
