@@ -82,7 +82,7 @@ int main(int argc, char** argv)
 
 
 int run_mod(ClientRedemption & front) {
-    const timeval time_stop = addusectimeval(front.time_out_disconnection, tvtime());
+    const timeval time_stop = addusectimeval(front.config.time_out_disconnection, tvtime());
     const timeval time_mark = { 0, 50000 };
 
     if (front.mod) {
@@ -97,7 +97,7 @@ int run_mod(ClientRedemption & front) {
                 logged = true;
 
                 std::cout << "RDP Session Log On.\n";
-                if (front.quick_connection_test) {
+                if (front.config.quick_connection_test) {
 
                     std::cout << "quick_connection_test\n";
                     front.disconnect("", false);
@@ -105,8 +105,8 @@ int run_mod(ClientRedemption & front) {
                 }
             }
 
-            if (time_stop < tvtime() && !front.persist) {
-                std::cerr <<  " Exit timeout (timeout = " << front.time_out_disconnection.count() << " ms)" << std::endl;
+            if (time_stop < tvtime() && !front.config.persist) {
+                std::cerr <<  " Exit timeout (timeout = " << front.config.time_out_disconnection.count() << " ms)" << std::endl;
                 front.disconnect("", false);
                 return 8;
             }
