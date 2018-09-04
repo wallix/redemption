@@ -33,7 +33,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     SessionReactor session_reactor;
-    FakeClient client(session_reactor);
+    char * argv[2] = {"1234", "5678"};
+    int argc = 2;
+    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.arbitrary_scale = 40;
@@ -118,7 +120,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
    SessionReactor session_reactor;
-   FakeClient client(session_reactor);
+    char * argv[2] = {"1234", "5678"};
+    int argc = 2;
+   FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
    FakeClientIOClipboard clip_io;
    RDPClipboardConfig conf;
    conf.arbitrary_scale = 40;
@@ -190,9 +194,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    RED_CHECK_EQUAL(ucdp.header.msgFlags(), RDPECLIP::CB_RESPONSE_NONE);
    RED_CHECK_EQUAL(ucdp.header.dataLen(), 4);
    RED_CHECK_EQUAL(ucdp.streamDataID, 0x00000000);
+/*
+   uint8_t * data_manager = manager._cb_buffers.data;*/
 
-   std::string data_sent_to_local_clipboard(manager._cb_buffers.data);
-   std::string data_sent_expected;
+   std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( manager._cb_buffers.data.get()));
+   std::string data_sent_expected("acab");
    RED_CHECK_EQUAL(data_sent_to_local_clipboard, data_sent_expected);
 
 }
@@ -204,7 +210,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromClientToServer)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     SessionReactor session_reactor;
-    FakeClient client(session_reactor);
+    char * argv[2] = {"1234", "5678"};
+    int argc = 2;
+    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.arbitrary_scale = 40;

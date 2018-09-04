@@ -217,8 +217,8 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient(SessionReactor& session_reactor)
-      : ClientRedemptionAPI( session_reactor)
+    FakeClient(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
+      : ClientRedemptionAPI( session_reactor, argv, argc, verbose)
     {
         this->mod = &(this->fake_mod);
     }
