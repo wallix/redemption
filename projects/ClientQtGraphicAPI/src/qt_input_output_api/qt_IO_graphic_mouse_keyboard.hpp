@@ -102,7 +102,7 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    virtual void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) override {
+    void set_drawn_client(ClientRedemptionAPI * client, ClientRedemptionConfig * config) override {
         this->drawn_client = client;
         this->config = config;
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
@@ -117,7 +117,7 @@ public:
         this->form = new QtForm(this->config, this, this->client);
     }
 
-    virtual void show_screen() override {
+    void show_screen() override {
         if (this->form) {
             this->form->hide();
             if (this->screen) {
@@ -126,19 +126,19 @@ public:
         }
     }
 
-    virtual void set_screen_size(int x, int y) override {
+    void set_screen_size(int x, int y) override {
         if (this->screen) {
             this->screen->setFixedSize(x, y);
         }
     }
 
-    virtual void update_screen() override {
+    void update_screen() override {
         if (this->screen) {
             this->screen->slotRepainMatch();
         }
     }
 
-    virtual void reset_cache(const int w,  const int h) override {
+    void reset_cache(const int w,  const int h) override {
 
         LOG(LOG_INFO, "reset_cache w=%d h=%d", w, h);
         if (w == 0 || h == 0) {
@@ -159,12 +159,12 @@ public:
         this->painter.fillRect(0, 0, w, h, Qt::black);
     }
 
-    virtual void create_screen() override {
+    void create_screen() override {
         QPixmap * map = &(this->cache);
         this->screen = new RDPQtScreen(this->config, this->drawn_client, this, map);
     }
 
-    virtual void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
+    void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
         this->screen = new ReplayQtScreen(this->config, this->drawn_client, this, movie_dir, movie_path, map, this->client->get_movie_time_length(this->client->get_mwrm_filename()), 0);
     }
@@ -173,7 +173,7 @@ public:
         return this->form;
     }
 
-    virtual void open_options() override {
+    void open_options() override {
 //         new DialogOptions_Qt(this->drawn_client, this->form);
         if (this->form) {
             this->form->options();
@@ -187,7 +187,7 @@ public:
         }
     }
 
-    virtual void update_keylayout() override {
+    void update_keylayout() override {
         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
     }
 
@@ -201,13 +201,13 @@ public:
         }
     }
 
-    virtual void set_ErrorMsg(std::string const & error_msg) override {
+    void set_ErrorMsg(std::string const & error_msg) override {
         if (this->form) {
             this->form->set_ErrorMsg(error_msg);
         }
     }
 
-    virtual void init_form() override {
+    void init_form() override {
         if (this->form) {
             if (this->config->mod_state != ClientRedemptionAPI::MOD_RDP_REPLAY) {
                 this->form->init_form();
@@ -226,14 +226,14 @@ public:
     //  REMOTE APP FUNCTIONS
     //////////////////////////
 
-    virtual void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
+    void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
         this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->drawn_client, this, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
-    virtual void show_screen(uint32_t id) override {
+    void show_screen(uint32_t id) override {
         if (this->form) {
             this->form->hide();
             if (this->remote_app_screen_map[id]) {
@@ -242,42 +242,42 @@ public:
         }
     }
 
-    virtual void move_screen(uint32_t id, int x, int y) override {
+    void move_screen(uint32_t id, int x, int y) override {
         if (this->remote_app_screen_map[id]) {
             this->remote_app_screen_map[id]->move(x, y);
         }
     }
 
-    virtual void set_screen_size(uint32_t id, int x, int y) override {
+    void set_screen_size(uint32_t id, int x, int y) override {
         if (this->remote_app_screen_map[id]) {
             this->remote_app_screen_map[id]->setFixedSize(x, y);
         }
     }
 
-    virtual void set_pixmap_shift(uint32_t id, int x, int y) override {
+    void set_pixmap_shift(uint32_t id, int x, int y) override {
         if (this->remote_app_screen_map[id]) {
             this->remote_app_screen_map[id]->x_pixmap_shift = x;
             this->remote_app_screen_map[id]->y_pixmap_shift = y;
         }
     }
 
-    virtual int get_visible_width(uint32_t id) override {
+    int get_visible_width(uint32_t id) override {
         return this->remote_app_screen_map[id]->width();
     }
 
-    virtual int get_visible_height(uint32_t id) override {
+    int get_visible_height(uint32_t id) override {
         return this->remote_app_screen_map[id]->height();
     }
 
-    virtual int get_mem_width(uint32_t id) override {
+    int get_mem_width(uint32_t id) override {
         return this->remote_app_screen_map[id]->_width;
     }
 
-    virtual int get_mem_height(uint32_t id) override {
+    int get_mem_height(uint32_t id) override {
         return this->remote_app_screen_map[id]->_height;
     }
 
-    virtual void set_mem_size(uint32_t id, int w, int h) override {
+    void set_mem_size(uint32_t id, int w, int h) override {
         this->remote_app_screen_map[id]->_width = w;
         this->remote_app_screen_map[id]->_height = h;
     }
@@ -292,7 +292,7 @@ public:
         remote_app_screen_map.erase (it);
     }
 
-    virtual void clear_remote_app_screen() override {
+    void clear_remote_app_screen() override {
         for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
             if (it->second) {
                 it->second->disconnection();
@@ -469,7 +469,7 @@ private:
         return FrontAPI::ResizeResult::instant_done;
     }
 
-    virtual void set_pointer(Pointer const & cursor) override {
+    void set_pointer(Pointer const & cursor) override {
 
         auto dimensions = cursor.get_dimensions();
         auto hotspot = cursor.get_hotspot();
@@ -1449,7 +1449,7 @@ private:
         LOG(LOG_INFO, "DEFAULT: FrameMarker");
     }
 
-    virtual void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
+    void draw(RDPNineGrid const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 

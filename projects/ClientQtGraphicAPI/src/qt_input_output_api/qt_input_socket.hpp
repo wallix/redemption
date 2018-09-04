@@ -67,7 +67,7 @@ public:
     }
 
 
-    virtual void disconnect() override {
+    void disconnect() override {
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);
             this->_sckListener = nullptr;
@@ -75,7 +75,7 @@ public:
     }
 
 
-    virtual bool start_to_listen(int client_sck, mod_api * mod) override {
+    bool start_to_listen(int client_sck, mod_api * mod) override {
 
         this->_callback = mod;
 
