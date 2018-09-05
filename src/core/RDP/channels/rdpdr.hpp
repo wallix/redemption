@@ -14,29 +14,27 @@
 *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 *
 *   Product name: redemption, a FLOSS RDP proxy
-*   Copyright (C) Wallix 2010-2014
-*   Author(s): Jonathan Poelen, Clément Moroldo
+*   Copyright (C) Wallix 2010-2018
+*   Author(s): Jonathan Poelen, Clément Moroldo, Christophe Grosjean, Raphaël Zhou
 */
-
 
 #pragma once
 
-#include <cinttypes>
-#include <cinttypes>
-#include  <algorithm>
-
-
-#include "utils/sugar/cast.hpp"
 #include "core/error.hpp"
-#include "utils/sugar/noncopyable.hpp"
-#include "utils/stream.hpp"
-#include "utils/utf.hpp"
-#include "utils/sugar/underlying_cast.hpp"
-
-#include "core/SMB2/MessageSyntax.hpp"
-#include "core/FSCC/FileInformation.hpp"
 #include "core/ERREF/ntstatus.hpp"
+#include "core/FSCC/FileInformation.hpp"
+#include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
+#include "core/SMB2/MessageSyntax.hpp"
 
+#include "utils/id_manager.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/sugar/noncopyable.hpp"
+#include "utils/sugar/underlying_cast.hpp"
+#include "utils/utf.hpp"
+
+#include <algorithm>
+#include <cinttypes>
 #include <vector>
 
 namespace rdpdr {
@@ -1216,6 +1214,18 @@ public:
         LOG(LOG_INFO, "          * MajorFunction = 0x%08x (4 bytes): %s", this->MajorFunction_, get_MajorFunction_name(this->MajorFunction_));
         LOG(LOG_INFO, "          * MinorFunction = 0x%08x (4 bytes): %s", this->MinorFunction_, get_MinorFunction_name(this->MinorFunction_));
     }
+
+    bool map_completion_id(FileSystemCompletionIdManager & id_manager) {
+        uint32_t const completion_id = id_manager.get_dest_id_ex(this->CompletionId_);
+
+        if (completion_id != this->CompletionId_) {
+            this->CompletionId_ = completion_id;
+
+            return true;
+        }
+
+        return false;
+    }
 };
 
 
@@ -2054,8 +2064,8 @@ struct DriveControlResponse {
 //  are specified in [MS-ERREF] section 2.3.
 
 class DeviceIOResponse {
-    uint32_t DeviceId_     = 0;
-    uint32_t CompletionId_ = 0;
+    uint32_t DeviceId_        = 0;
+    uint32_t CompletionId_    = 0;
     erref::NTSTATUS IoStatus_ = erref::NTSTATUS::STATUS_SUCCESS;
 
 public:
@@ -2114,6 +2124,20 @@ public:
         LOG(LOG_INFO, "          * DeviceId     = 0x%08x (4 bytes)", this->DeviceId_);
         LOG(LOG_INFO, "          * CompletionId = 0x%08x (4 bytes)", this->CompletionId_);
         LOG(LOG_INFO, "          * IoStatus     = 0x%08x (4 bytes): %s", this->IoStatus_, erref::get_NTStatus(this->IoStatus_));
+    }
+
+    bool map_completion_id(FileSystemCompletionIdManager & id_manager) {
+        uint32_t const completion_id = id_manager.get_src_id(this->CompletionId_);
+
+        id_manager.unreg_src_id(completion_id);
+
+        if (completion_id != this->CompletionId_) {
+            this->CompletionId_ = completion_id;
+
+            return true;
+        }
+
+        return false;
     }
 };
 
@@ -6113,4 +6137,3 @@ void streamLog(InStream & stream , RdpDrStatus & status)
 }
 
 }   // namespace rdpdr
-

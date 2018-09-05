@@ -180,13 +180,17 @@ public:
         if (this->src_to_dest.end() != iter) {
             this->dest_to_src.erase(iter->second);
 
-            LOG(LOG_INFO,
-                "IDManager::unreg_src_id(...): dest_id=0x%X", iter->second);
+            if (this->verbose) {
+                LOG(LOG_INFO,
+                    "IDManager::unreg_src_id(...): dest_id=0x%X", iter->second);
+            }
 
             this->src_to_dest.erase(iter);
 
-            LOG(LOG_INFO,
-                "IDManager::unreg_src_id(...): src_id=0x%X", src_id);
+            if (this->verbose) {
+                LOG(LOG_INFO,
+                    "IDManager::unreg_src_id(...): src_id=0x%X", src_id);
+            }
 
             return;
         }

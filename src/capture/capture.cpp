@@ -957,6 +957,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
               || cstr_equal("DRIVE_REDIRECTION_DELETE", order)) {
             line_with_1_var("file_name");
         }
+        else if (cstr_equal("DRIVE_REDIRECTION_READ_EX", order)
+              || cstr_equal("DRIVE_REDIRECTION_WRITE_EX", order)) {
+            line_with_3_var("file_name", "size", "sha256");
+        }
         else if (cstr_equal("DRIVE_REDIRECTION_RENAME", order)) {
             line_with_2_var("old_file_name", "new_file_name");
         }
@@ -990,12 +994,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN_2", order)) {
             line_with_3_var("application_name", "raw_result", "raw_result_message");
         }
-
         else if (cstr_equal("PROCESS_BLOCKED", order)
               || cstr_equal("PROCESS_DETECTED", order)) {
             line_with_3_var("rule", "app_name", "app_cmd_line");
         }
-
         else {
             message.clear();
             LOG(LOG_WARNING,

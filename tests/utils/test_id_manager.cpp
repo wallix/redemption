@@ -61,6 +61,45 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
     RED_CHECK_EQUAL(id_manager.is_dest_only_id(dest_id), false);
 }
 
+RED_AUTO_TEST_CASE(TestIDManagerGeneral2)
+{
+    constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_FIRST = 0xFFFFFFFE;
+    constexpr decltype(NEXT_USABLE_ID) INVARIABLE_LAST  = 0x00000000;
+
+    IDManager<
+            std::remove_const<decltype(NEXT_USABLE_ID)>::type,
+            NEXT_USABLE_ID,
+            INVARIABLE_FIRST,
+            INVARIABLE_LAST
+        > id_manager;
+
+
+    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020);
+
+    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020);
+
+    RED_CHECK_EQUAL(id_manager.is_dest_only_id(40020), false);
+
+
+    decltype(NEXT_USABLE_ID) src_id = id_manager.get_src_id(40020);
+
+    RED_CHECK_EQUAL(src_id, 40020);
+
+    id_manager.unreg_src_id(src_id);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_dest_id(40020), ERR_UNEXPECTED);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_src_id(40020), ERR_UNEXPECTED);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.is_dest_only_id(40020), ERR_UNEXPECTED);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.get_src_id(40020), ERR_UNEXPECTED);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(id_manager.unreg_dest_only_id(40020), ERR_UNEXPECTED);
+}
+
 RED_AUTO_TEST_CASE(TestIDManagerUnregisterDestinationID)
 {
     constexpr unsigned int             NEXT_USABLE_ID   = 0x8FFFFFFF;
@@ -75,7 +114,7 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterDestinationID)
         > id_manager;
 
 
-    uint32_t const dest_only_id = id_manager.reg_dest_only_id();
+    decltype(NEXT_USABLE_ID) dest_only_id = id_manager.reg_dest_only_id();
 
     id_manager.unreg_dest_only_id(dest_only_id);
 
@@ -135,13 +174,13 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
         > id_manager;
 
 
-    uint32_t const dest_only_id = id_manager.reg_dest_only_id();
+    decltype(NEXT_USABLE_ID) dest_only_id = id_manager.reg_dest_only_id();
 
     RED_CHECK(id_manager.is_dest_only_id(dest_only_id));
 
 
-    uint32_t const src_id  = dest_only_id;
-    uint32_t const dest_id = id_manager.get_dest_id_ex(src_id);
+    decltype(NEXT_USABLE_ID) src_id  = dest_only_id;
+    decltype(NEXT_USABLE_ID) dest_id = id_manager.get_dest_id_ex(src_id);
 
     RED_CHECK(src_id != dest_id);
 
@@ -152,8 +191,8 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID1)
 
 
     {
-        uint32_t const src_id_2  = dest_only_id;
-        uint32_t const dest_id_2 = id_manager.get_dest_id_ex(src_id_2);
+        decltype(NEXT_USABLE_ID) src_id_2  = dest_only_id;
+        decltype(NEXT_USABLE_ID) dest_id_2 = id_manager.get_dest_id_ex(src_id_2);
 
         RED_CHECK(src_id_2 != dest_id_2);
 

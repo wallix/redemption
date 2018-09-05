@@ -21,16 +21,18 @@
 
 #pragma once
 
-#include <deque>
-
 #include "core/front_api.hpp"
+#include "core/RDP/channels/rdpdr_completion_id_manager.hpp"
 #include "core/session_reactor.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "utils/sugar/strutils.hpp"
-#include "utils/sugar/algostring.hpp"
+#include "system/linux/system/ssl_sha256.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/strutils.hpp"
+
+#include <deque>
 
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
@@ -39,10 +41,14 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     rdpdr::SharedHeader client_message_header;
     rdpdr::SharedHeader server_message_header;
 
-    rdpdr::DeviceIORequest server_device_io_request;
+    rdpdr::DeviceIORequest  server_device_io_request;
+    rdpdr::DeviceIOResponse client_device_io_response;
+
     uint16_t serverVersionMinor;
 
     FileSystemDriveManager& file_system_drive_manager;
+
+    FileSystemCompletionIdManager file_system_completion_id_manager;
 
 
     struct device_io_request_info_type
@@ -50,21 +56,39 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
         uint32_t device_id;
         uint32_t file_id;
         uint32_t completion_id;
+
+        std::string file_path;
+
         // TODO IRP_MAJOR
         uint32_t major_function;
         uint32_t extra_data;
-        std::string path;
+
+        uint64_t offset;
+        uint32_t length;
+        uint32_t remaining;
     };
     using device_io_request_info_inventory_type = std::vector<device_io_request_info_type>;
     device_io_request_info_inventory_type device_io_request_info_inventory;
 
+    static constexpr const int64_t END_OF_FILE_READING = -1ll;  // Reading in progress.
+    static constexpr const int64_t END_OF_FILE_UNREAD  = -2ll;
+
     struct device_io_target_info_type
     {
+
         uint32_t device_id;
         uint32_t file_id;
+
         std::string file_path;
+
         bool for_reading;
         bool for_writing;
+
+        int64_t end_of_file;
+
+        int64_t sequential_access_offset;
+
+        SslSha256 sha256;
     };
     using device_io_target_info_inventory_type = std::vector<device_io_target_info_type>;
     device_io_target_info_inventory_type device_io_target_info_inventory;
@@ -232,7 +256,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 }
             }
 
-            this->device_info_inventory.push_back({DeviceId, DeviceType, PreferredDosName});
+            this->device_info_inventory.push_back({ DeviceId, DeviceType, PreferredDosName });
             if (bool(this->verbose & RDPVerbose::rdpdr)) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
@@ -979,7 +1003,7 @@ public:
                 request_info.completion_id,
                 request_info.major_function,
                 request_info.extra_data,
-                request_info.path.c_str()
+                request_info.file_path.c_str()
             );
         }
 #endif  // #ifndef NDEBUG
@@ -1034,27 +1058,29 @@ protected:
 
 private:
     device_io_request_info_inventory_type::iterator
-    find_request_response(rdpdr::DeviceIOResponse const & device_io_response)
+    find_request_info(uint32_t device_id, uint32_t completion_id)
     {
         return std::find_if(
             this->device_io_request_info_inventory.begin(),
             this->device_io_request_info_inventory.end(),
-            [&device_io_response](device_io_request_info_type const & request_info) {
-                return request_info.device_id == device_io_response.DeviceId()
-                    && request_info.completion_id == device_io_response.CompletionId();
+            [device_id, completion_id](device_io_request_info_type const & request_info) {
+                return (request_info.device_id == device_id)
+                    && (request_info.completion_id == completion_id);
             }
         );
     }
 
+
+
     device_io_target_info_inventory_type::iterator
-    find_target_response(rdpdr::DeviceIOResponse const & device_io_response, uint32_t file_id)
+    find_target_info(uint32_t device_id, uint32_t file_id)
     {
         return std::find_if(
             this->device_io_target_info_inventory.begin(),
             this->device_io_target_info_inventory.end(),
-            [&device_io_response, file_id](device_io_target_info_type const & target_info){
-                return target_info.device_id == device_io_response.DeviceId()
-                    && target_info.file_id == file_id;
+            [device_id, file_id](device_io_target_info_type const & target_info){
+                return (target_info.device_id == device_id)
+                    && (target_info.file_id == file_id);
             }
         );
     }
@@ -1360,7 +1386,7 @@ public:
 
     bool process_client_drive_query_information_response(
         uint32_t total_length, uint32_t flags, InStream& chunk,
-        uint32_t FsInformationClass)
+        uint32_t FsInformationClass, uint32_t DeviceId, uint32_t FileId)
     {
         (void)total_length;
         (void)flags;
@@ -1411,11 +1437,16 @@ public:
                 uint32_t Length = chunk.in_uint32_le(); // Length(4)
 
                 if (Length) {
-                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                        fscc::FileStandardInformation file_standard_information;
+                    fscc::FileStandardInformation file_standard_information;
+                    file_standard_information.receive(chunk);
 
-                        file_standard_information.receive(chunk);
+                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
                         file_standard_information.log(LOG_INFO);
+                    }
+
+                    auto iter = this->find_target_info(DeviceId, FileId);
+                    if (iter != this->device_io_target_info_inventory.end()) {
+                        iter->end_of_file = file_standard_information.EndOfFile;
                     }
                 }
             }
@@ -1533,33 +1564,66 @@ public:
     bool process_client_drive_io_response(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        assert(flags & CHANNELS::CHANNEL_FLAG_FIRST);
+        size_t const chunk_offset = chunk.get_offset();
 
-        rdpdr::DeviceIOResponse device_io_response;
-
-        device_io_response.receive(chunk);
-        if (bool(this->verbose & RDPVerbose::rdpdr)) {
-            device_io_response.log(LOG_INFO);
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            this->client_device_io_response.receive(chunk);
+            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                this->client_device_io_response.log(LOG_INFO);
+            }
         }
 
-        auto iter = this->find_request_response(device_io_response);
-
-        if (iter == this->device_io_request_info_inventory.end()) {
+        auto request_iter = this->find_request_info(this->client_device_io_response.DeviceId(), this->client_device_io_response.CompletionId());
+        if (request_iter == this->device_io_request_info_inventory.end()) {
             LOG(LOG_WARNING,
                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                     "The corresponding "
                     "Server Drive I/O Request is not found! "
                     "DeviceId=%u CompletionId=%u",
-                device_io_response.DeviceId(),
-                device_io_response.CompletionId());
+                this->client_device_io_response.DeviceId(),
+                this->client_device_io_response.CompletionId());
 
             return true;
         }
 
-        const uint32_t FileId         = iter->file_id;
-        const uint32_t MajorFunction  = iter->major_function;
-        const uint32_t extra_data     = iter->extra_data;
-        const std::string & file_path = iter->path;
+        auto target_iter = this->find_target_info(this->client_device_io_response.DeviceId(), request_iter->file_id);
+
+        if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+            if (rdpdr::IRP_MJ_READ == request_iter->major_function) {
+                if (this->device_io_target_info_inventory.end() != target_iter) {
+                    uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
+
+#ifndef NDEBUG
+                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                        assert(chunk.in_remain() == request_iter->remaining);
+                    }
+#endif  // #ifndef NDEBUG
+
+                    target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                    request_iter->remaining -= effective_chunked_data_length;
+                }
+#ifndef NDEBUG
+                else {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::process_client_drive_io_response: "
+                            "Target not found!");
+                    assert(false);
+                }
+#endif  // #ifndef NDEBUG
+            }
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                unordered_erase(this->device_io_request_info_inventory, request_iter);
+            }
+
+            return true;
+        }
+
+        const uint32_t     FileId        = request_iter->file_id;
+        const uint32_t     MajorFunction = request_iter->major_function;
+        const uint32_t     extra_data    = request_iter->extra_data;
+        const std::string& file_path     = request_iter->file_path;
 
         if (bool(this->verbose & RDPVerbose::rdpdr)) {
             LOG(LOG_INFO,
@@ -1584,29 +1648,28 @@ public:
                 rdpdr::DeviceCreateResponse device_create_response;
 
                 device_create_response.receive(chunk,
-                    device_io_response.IoStatus());
+                    this->client_device_io_response.IoStatus());
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     device_create_response.log(LOG_INFO);
                 }
 
-                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
+                if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     std::string const * p_device_name =
                         this->device_redirection_manager.get_device_name(
-                            device_io_response.DeviceId());
+                            this->client_device_io_response.DeviceId());
 
                     {
                         rdpdr::RDPDR_DTYP device_type =
                             this->device_redirection_manager.get_device_type(
-                                device_io_response.DeviceId());
-                        std::string device_name = (p_device_name) ? *p_device_name : "";
-
+                                this->client_device_io_response.DeviceId());
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
+                            std::string device_name = (p_device_name) ? *p_device_name : "";
 
                             auto device_type_name = rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(device_type);
                             auto info = key_qvalue_pairs({
-                                {"type", "DRIVE_REDIRECTION_USE"},
-                                {"device_name", device_name},
-                                {"device_type", device_type_name}
+                                    { "type", "DRIVE_REDIRECTION_USE" },
+                                    { "device_name", device_name },
+                                    { "device_type", device_type_name }
                                 });
 
                             this->report_message.log5(info);
@@ -1636,23 +1699,26 @@ public:
                                     "Add \"%s\" to known file list. "
                                     "DeviceId=%u FileId=%u",
                                 target_file_name,
-                                device_io_response.DeviceId(),
+                                this->client_device_io_response.DeviceId(),
                                 device_create_response.FileId());
                         }
 
                         this->device_io_target_info_inventory.push_back({
-                            device_io_response.DeviceId(),
+                            this->client_device_io_response.DeviceId(),
                             device_create_response.FileId(),
                             std::move(target_file_name),    // file_path
                             false,                          // for_reading
-                            false                           // for_writing
+                            false,                          // for_writing
+                            END_OF_FILE_UNREAD,             // end_of_file
+                            0,                              // sequential_access_offset
+                            {}
                         });
                     }
                     else {
                         LOG(LOG_WARNING,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Device not found. DeviceId=%u",
-                            device_io_response.DeviceId());
+                            this->client_device_io_response.DeviceId());
 
                         //assert(false);
                     }
@@ -1668,18 +1734,160 @@ public:
                             "Close request.");
                 }
 
-                auto target_iter = this->find_target_response(device_io_response, FileId);
+                if (this->device_io_target_info_inventory.end() != target_iter) {
+                    rdpdr::RDPDR_DTYP const device_type =
+                        this->device_redirection_manager.get_device_type(
+                            this->server_device_io_request.DeviceId());
+                    if ((rdpdr::RDPDR_DTYP_FILESYSTEM == device_type) &&
+                        (target_iter->for_reading != target_iter->for_writing)) {
+                        static const char DESKTOP_INI_FILENAME[] = "/desktop.ini";
+                        if (target_iter->sequential_access_offset &&
+                            !::ends_case_with(
+                                    file_path.data(),
+                                    file_path.size(),
+                                    DESKTOP_INI_FILENAME,
+                                    sizeof(DESKTOP_INI_FILENAME) - 1
+                                )) {
+                            if (target_iter->for_reading) {
+                                if (target_iter->sequential_access_offset == target_iter->end_of_file) {
+                                    uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
 
-                if (target_iter != this->device_io_target_info_inventory.end()) {
+                                    target_iter->sha256.final(digest);
+
+                                    char digest_s[128];
+                                    snprintf(digest_s, sizeof(digest_s),
+                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+                                        digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
+                                        digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
+                                        digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
+                                        digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+
+                                    if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                        LOG(LOG_INFO,
+                                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                                "File reading. Length=%" PRId64 " SHA-256=%s",
+                                            target_iter->end_of_file, digest_s);
+                                    }
+
+                                    auto const file_size_str = std::to_string(target_iter->end_of_file);
+                                    auto const info = key_qvalue_pairs({
+                                            { "type", "DRIVE_REDIRECTION_READ_EX" },
+                                            { "file_name", file_path },
+                                            { "size", file_size_str },
+                                            { "sha256", digest_s }
+                                        });
+
+                                    this->report_message.log5(info);
+
+                                    if (!this->param_dont_log_data_into_syslog) {
+                                        LOG(LOG_INFO, "%s", info);
+                                    }
+
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("DRIVE_REDIRECTION_READ_EX=");
+                                        message += file_path;
+                                        message += "\x01";
+                                        message += file_size_str;
+                                        message += "\x01";
+                                        message += digest_s;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+                                else {
+                                    auto const info = key_qvalue_pairs({
+                                            { "type", "DRIVE_REDIRECTION_READ" },
+                                            { "file_name", file_path }
+                                        });
+
+                                    this->report_message.log5(info);
+
+                                    if (!this->param_dont_log_data_into_syslog) {
+                                        LOG(LOG_INFO, "%s", info);
+                                    }
+
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("DRIVE_REDIRECTION_READ=");
+                                        message += file_path;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+                            }
+                            else if (target_iter->for_writing) {
+                                if (target_iter->sequential_access_offset >= target_iter->end_of_file) {
+                                    uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
+
+                                    target_iter->sha256.final(digest);
+
+                                    char digest_s[128];
+                                    snprintf(digest_s, sizeof(digest_s),
+                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+                                        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+                                        digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
+                                        digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
+                                        digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
+                                        digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+
+                                    auto const file_size_str = std::to_string(target_iter->end_of_file);
+                                    auto const info = key_qvalue_pairs({
+                                            { "type", "DRIVE_REDIRECTION_WRITE_EX" },
+                                            { "file_name", file_path },
+                                            { "size", file_size_str },
+                                            { "sha256", digest_s }
+                                        });
+
+                                    this->report_message.log5(info);
+
+                                    if (!this->param_dont_log_data_into_syslog) {
+                                        LOG(LOG_INFO, "%s", info);
+                                    }
+
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("DRIVE_REDIRECTION_WRITE_EX=");
+                                        message += file_path;
+                                        message += "\x01";
+                                        message += file_size_str;
+                                        message += "\x01";
+                                        message += digest_s;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+                                else if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                    auto info = key_qvalue_pairs({
+                                            { "type", "DRIVE_REDIRECTION_WRITE" },
+                                            { "file_name", file_path },
+                                        });
+
+                                    this->report_message.log5(info);
+
+                                    if (!this->param_dont_log_data_into_syslog) {
+                                        LOG(LOG_INFO, "%s", info);
+                                    }
+
+                                    if (!this->param_dont_log_data_into_wrm) {
+                                        std::string message("DRIVE_REDIRECTION_WRITE=");
+                                        message += file_path;
+
+                                        this->front.session_update(message);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Remove \"%s\" from known file list. "
-                                "DeviceId=%u FileId=%u",
-                            target_iter->file_path,
-                            device_io_response.DeviceId(),
-                            FileId);
+                                "DeviceId=%u FileId=%u EndOfFile=%" PRId64,
+                            file_path.c_str(),
+                            this->client_device_io_response.DeviceId(),
+                            FileId, target_iter->end_of_file);
                     }
+
                     unordered_erase(this->device_io_target_info_inventory, target_iter);
                 }
             }
@@ -1692,13 +1900,15 @@ public:
                     if (!chunk.in_check_rem(expected)) {
                         LOG(LOG_ERR,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Truncated IRP_MJ_READ, need=%u remains=%zu",
+                                "Truncated Device Read Response. (1) need=%u remains=%zu",
                             expected, chunk.in_remain());
                         throw Error(ERR_RDP_DATA_TRUNCATED);
                     }
                 }
 
                 const uint32_t Length = chunk.in_uint32_le();
+
+                request_iter->remaining = Length;
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
@@ -1707,65 +1917,25 @@ public:
                         Length);
                 }
 
-                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
+                if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     this->update_exchanged_data(Length);
 
-                    auto request_iter = this->find_request_response(device_io_response);
-                    //for (auto & request_info
-                    //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
-                    //) {
-                    //    LOG(LOG_INFO, "DeviceId=%u:%u CompletionId=%u:%u",
-                    //       device_io_response.DeviceId(), request_info.device_id,
-                    //       device_io_response.CompletionId(), request_info.completion_id
-                    //    );
-                    //}
+                    if (this->device_io_target_info_inventory.end() != target_iter) {
+                        device_io_target_info_type & target_info = *target_iter;
 
-                    if (request_iter != this->device_io_request_info_inventory.end()) {
-                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
-                        //for (auto & target_info
-                        //    : iter(this->device_io_request_info_inventory.begin(), request_iter)
-                        //) {
-                        //    LOG(LOG_INFO, "--> DeviceId=%u:%u FileId=%u:%u",
-                        //       device_io_response.DeviceId(), target_info.device_id,
-                        //       request_iter->file_id, target_info.file_id
-                        //       );
-                        //}
+                        if (!target_info.for_writing &&
+                            (static_cast<uint64_t>(target_info.sequential_access_offset) == request_iter->offset)) {
 
-                        if (target_iter != this->device_io_target_info_inventory.end()) {
-                            device_io_target_info_type & target_info = *target_iter;
-                            if (!target_info.for_reading) {
-                                if (!::ends_case_with(
-                                    target_info.file_path.data(),
-                                    target_info.file_path.size(),
-                                    "/desktop.ini",
-                                    sizeof("/desktop.ini")-1
-                                )) {
-                                    auto info = key_qvalue_pairs({
-                                        {"type", "DRIVE_REDIRECTION_READ"},
-                                        {"file_name", target_info.file_path},
-                                        });
+                            uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
 
-                                    this->report_message.log5(info);
+                            target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
 
-                                    if (!this->param_dont_log_data_into_syslog) {
-                                        LOG(LOG_INFO, "%s", info);
-                                    }
+                            request_iter->remaining -= effective_chunked_data_length;
 
-                                    if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("DRIVE_REDIRECTION_READ=");
-                                        message += target_info.file_path;
-
-                                        this->front.session_update(message);
-                                    }
-                                }
-
-                                target_info.for_reading = true;
-
-                                if (target_info.for_reading == target_info.for_writing) {
-                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
-                                }
-                            }
+                            target_info.sequential_access_offset += Length;
                         }
+
+                        target_info.for_reading = true;
                     }
                 }
             }
@@ -1778,40 +1948,17 @@ public:
                             "Write request.");
                 }
 
-                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
-                    auto request_iter = this->find_request_response(device_io_response);
-                    if (request_iter != this->device_io_request_info_inventory.end()) {
-                        auto target_iter = this->find_target_response(device_io_response, request_iter->file_id);
-                        if (target_iter != this->device_io_target_info_inventory.end()) {
-                            device_io_target_info_type & target_info = *target_iter;
-                            if (!target_info.for_writing) {
+                if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
+                    if (this->device_io_target_info_inventory.end() != target_iter) {
+                        device_io_target_info_type & target_info = *target_iter;
 
-                                auto info = key_qvalue_pairs({
-                                    {"type", "DRIVE_REDIRECTION_WRITE"},
-                                    {"file_name", target_info.file_path},
-                                    });
+                        if (!target_info.for_reading &&
+                            (static_cast<uint64_t>(target_info.sequential_access_offset) == request_iter->offset)) {
 
-                                this->report_message.log5(info);
-
-                                if (!this->param_dont_log_data_into_syslog) {
-                                    LOG(LOG_INFO, "%s", info);
-                                }
-
-                                if (!this->param_dont_log_data_into_wrm) {
-                                    std::string message("DRIVE_REDIRECTION_WRITE=");
-                                    message += target_info.file_path;
-
-                                    this->front.session_update(message);
-                                }
-
-                                target_info.for_writing = true;
-
-                                if (target_info.for_reading == target_info.for_writing) {
-                                    unordered_erase(this->device_io_target_info_inventory, target_iter);
-                                }
-                            }
-
+                            target_info.sequential_access_offset += request_iter->length;
                         }
+
+                        target_info.for_writing = true;
                     }
                 }
             break;
@@ -1825,7 +1972,7 @@ public:
             case rdpdr::IRP_MJ_QUERY_INFORMATION:
                 this->process_client_drive_query_information_response(
                     total_length, flags, chunk,
-                    /* FsInformationClass = */extra_data);
+                    /* FsInformationClass = */extra_data, this->client_device_io_response.DeviceId(), FileId);
             break;
 
             case rdpdr::IRP_MJ_DIRECTORY_CONTROL:
@@ -1835,16 +1982,15 @@ public:
             break;
 
             case rdpdr::IRP_MJ_SET_INFORMATION:
-                if (device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
+                if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     switch (extra_data) {
                         case rdpdr::FileDispositionInformation:
                         {
-                            auto target_iter = this->find_target_response(device_io_response, FileId);
-                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                            if (this->device_io_target_info_inventory.end() != target_iter) {
 
                                 auto info = key_qvalue_pairs({
-                                    {"type", "DRIVE_REDIRECTION_DELETE"},
-                                    {"file_name", target_iter->file_path},
+                                        { "type", "DRIVE_REDIRECTION_DELETE" },
+                                        { "file_name", file_path },
                                     });
 
                                 this->report_message.log5(info);
@@ -1856,7 +2002,7 @@ public:
 
                             if (!this->param_dont_log_data_into_wrm) {
                                 std::string message("DRIVE_REDIRECTION_DELETE=");
-                                message += target_iter->file_path;
+                                message += file_path;
 
                                 this->front.session_update(message);
                             }
@@ -1865,13 +2011,12 @@ public:
 
                         case rdpdr::FileRenameInformation:
                         {
-                            auto target_iter = this->find_target_response(device_io_response, FileId);
-                            if (target_iter != this->device_io_target_info_inventory.end()) {
+                            if (this->device_io_target_info_inventory.end() != target_iter) {
 
                                 auto info = key_qvalue_pairs({
-                                    {"type", "DRIVE_REDIRECTION_RENAME"},
-                                    {"old_file_name", target_iter->file_path},
-                                    {"new_file_name", file_path},
+                                        { "type", "DRIVE_REDIRECTION_RENAME" },
+                                        { "old_file_name", target_iter->file_path },
+                                        { "new_file_name", file_path },
                                     });
 
                                 this->report_message.log5(info);
@@ -1901,16 +2046,40 @@ public:
                         "FileSystemVirtualChannel::process_client_drive_io_response: "
                             "Undecoded Drive I/O Response - "
                             "MajorFunction=%s(0x%08X)",
-                        rdpdr::get_MajorFunction_name(
-                            this->server_device_io_request.MajorFunction()),
-                        this->server_device_io_request.MajorFunction());
+                        rdpdr::get_MajorFunction_name(MajorFunction),
+                        MajorFunction);
                 }
             break;
         }   // switch (MajorFunction)
 
-        unordered_erase(this->device_io_request_info_inventory, iter);
+        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+            unordered_erase(this->device_io_request_info_inventory, request_iter);
+        }
 
-        return true;
+        bool send_message_to_server = true;
+
+        uint32_t completion_id = this->client_device_io_response.CompletionId();
+
+        if (this->file_system_completion_id_manager.is_dest_only_id(completion_id)) {
+            this->file_system_completion_id_manager.unreg_dest_only_id(completion_id);
+
+            send_message_to_server = false;
+        }
+        else if (this->client_device_io_response.map_completion_id(this->file_system_completion_id_manager)) {
+            StaticOutStream<65536> out_chunk;
+            out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
+
+            OutStream out_stream(out_chunk.get_data(), out_chunk.get_offset());
+            out_stream.rewind(chunk_offset);
+            this->client_device_io_response.emit(out_stream);
+
+            this->send_message_to_server(total_length, flags, out_chunk.get_data(),
+                out_chunk.get_offset());
+
+            send_message_to_server = false;
+        }
+
+        return send_message_to_server;
     }   // process_client_drive_io_response
 
     void process_client_message(uint32_t total_length,
@@ -2023,11 +2192,9 @@ public:
                             "Client Drive I/O Response");
                 }
 
-                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                    send_message_to_server =
-                        this->process_client_drive_io_response(
-                            total_length, flags, chunk);
-                }
+                send_message_to_server =
+                    this->process_client_drive_io_response(
+                        total_length, flags, chunk);
             break;
 
             case rdpdr::PacketId::PAKID_CORE_CLIENT_CAPABILITY:
@@ -2383,6 +2550,8 @@ public:
         uint32_t flags, InStream& chunk,
         std::unique_ptr<AsynchronousTask>& out_asynchronous_task)
     {
+        size_t const chunk_offset = chunk.get_offset();
+
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->server_device_io_request.receive(chunk);
             if (bool(this->verbose & RDPVerbose::rdpdr)) {
@@ -2404,16 +2573,138 @@ public:
             return false;
         }
 
+        auto target_iter = this->device_io_target_info_inventory.end();
+
+        if (this->server_device_io_request.MajorFunction() != rdpdr::IRP_MJ_CREATE) {
+            target_iter = this->find_target_info(
+                    this->server_device_io_request.DeviceId(),
+                    this->server_device_io_request.FileId()
+                );
+        }
+
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+            if (this->server_device_io_request.MajorFunction() == rdpdr::IRP_MJ_WRITE) {
+                if (this->device_io_target_info_inventory.end() != target_iter) {
+                    auto request_iter = this->find_request_info(this->server_device_io_request.DeviceId(), this->server_device_io_request.CompletionId());
+                    if (this->device_io_request_info_inventory.end() != request_iter) {
+                        uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
+
+#ifndef NDEBUG
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            assert(chunk.in_remain() == request_iter->remaining);
+                        }
+#endif  // #ifndef NDEBUG
+
+                        target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                        request_iter->remaining -= effective_chunked_data_length;
+                    }
+#ifndef NDEBUG
+                    else {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                "Request not found!");
+                        assert(false);
+                    }
+#endif  // #ifndef NDEBUG
+                }
+#ifndef NDEBUG
+                else {
+                    LOG(LOG_ERR,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Target not found!");
+                    assert(false);
+                }
+#endif  // #ifndef NDEBUG
+            }
+
             return true;
         }
 
         uint32_t extra_data = 0;
+        uint64_t offset     = 0;
+        uint32_t length     = 0;
+        uint32_t remaining  = 0;
 
         bool send_message_to_client  = true;
         bool do_not_add_to_inventory = false;
 
         std::string file_path;
+
+        if (this->device_io_target_info_inventory.end() != target_iter) {
+            file_path = target_iter->file_path.c_str();
+        }
+
+        if ((this->server_device_io_request.MajorFunction() == rdpdr::IRP_MJ_READ) ||
+            (this->server_device_io_request.MajorFunction() == rdpdr::IRP_MJ_WRITE)) {
+
+            rdpdr::RDPDR_DTYP device_type =
+                this->device_redirection_manager.get_device_type(
+                    this->server_device_io_request.DeviceId());
+            if ((rdpdr::RDPDR_DTYP_FILESYSTEM == device_type) &&
+                (this->device_io_target_info_inventory.end() != target_iter) &&
+                (target_iter->end_of_file == END_OF_FILE_UNREAD))
+            {
+                const rdpdr::SharedHeader shared_header(
+                        rdpdr::Component::RDPDR_CTYP_CORE,
+                        rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST
+                    );
+                const uint32_t completion_id = this->file_system_completion_id_manager.reg_dest_only_id();
+                const uint32_t MinorFunction = 0;
+                const rdpdr::DeviceIORequest device_io_request(
+                        this->server_device_io_request.DeviceId(),
+                        this->server_device_io_request.FileId(),
+                        completion_id,
+                        rdpdr::IRP_MJ_QUERY_INFORMATION,
+                        MinorFunction
+                    );
+                const rdpdr::ServerDriveQueryInformationRequest
+                    server_drive_query_information_request(
+                           rdpdr::FileStandardInformation
+                        );
+                StaticOutStream<65536> out_stream;
+
+                if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Send proxy-managed Server Drive Query Information Request. "
+                            "FilePath=\"%s\"",
+                        file_path);
+                }
+
+                if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                    shared_header.log(LOG_INFO);
+                }
+                shared_header.emit(out_stream);
+
+                if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                    device_io_request.log(LOG_INFO);
+                }
+                device_io_request.emit(out_stream);
+
+                if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                    server_drive_query_information_request.log(LOG_INFO);
+                }
+                server_drive_query_information_request.emit(out_stream);
+
+                this->send_message_to_client(out_stream.get_offset(), flags, out_stream.get_data(),
+                    out_stream.get_offset());
+
+                this->device_io_request_info_inventory.push_back({
+                    this->server_device_io_request.DeviceId(),
+                    this->server_device_io_request.FileId(),
+                    completion_id,
+                    file_path.c_str(),
+                    rdpdr::IRP_MJ_QUERY_INFORMATION,
+                    rdpdr::FileStandardInformation,
+                    0,                                          // offset
+                    0,                                          // length
+                    0                                           // remaining
+                });
+
+                target_iter->end_of_file = END_OF_FILE_READING;
+            }
+        }
 
         switch (this->server_device_io_request.MajorFunction())
         {
@@ -2437,20 +2728,66 @@ public:
                 }
             break;
 
-            case rdpdr::IRP_MJ_WRITE:
-            {
-                const uint32_t Length = chunk.in_uint32_le();
+            case rdpdr::IRP_MJ_READ:
+                {
+                    const unsigned expected = 12;    // Length(4) + Offset(8)
+
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "Truncated Device Read Request: expected=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                    }
+                }
+
+                length    = chunk.in_uint32_le();
+                offset    = chunk.in_uint64_le();
+                remaining = length;
 
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
-                    const uint64_t Offset = chunk.in_uint64_le();
+                    LOG(LOG_INFO,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Read request. Length=%u Offset=%" PRIu64,
+                        length, offset);
+                }
+            break;
 
+            case rdpdr::IRP_MJ_WRITE:
+            {
+                {
+                    const unsigned expected = 32;   // Length(4) + Offset(8) + Padding(20)
+
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                "Truncated Device Write Request. (1) expected=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                    }
+                }
+
+                length    = chunk.in_uint32_le();
+                offset    = chunk.in_uint64_le();
+                remaining = length;
+
+                if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Write Request. Length=%u Offset=%" PRIu64,
-                        Length, Offset);
+                        length, offset);
                 }
 
-                this->update_exchanged_data(Length);
+                chunk.in_skip_bytes(20);    // Padding(20)
+
+                if (this->device_io_target_info_inventory.end() != target_iter) {
+                    uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), remaining);
+
+                    target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                    remaining -= effective_chunked_data_length;
+                }
+
+                this->update_exchanged_data(length);
             }
             break;
 
@@ -2555,30 +2892,59 @@ public:
                 extra_data =
                     server_drive_set_information_request.FsInformationClass();
 
-                if (server_drive_set_information_request.FsInformationClass() ==
-                    rdpdr::FileRenameInformation) {
+                switch (server_drive_set_information_request.FsInformationClass())
+                {
+                    case rdpdr::FileEndOfFileInformation: {
+                        {
+                            const unsigned expected = 8;    // EndOfFile(8)
 
-                    rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+                            if (!chunk.in_check_rem(expected)) {
+                                LOG(LOG_ERR,
+                                    "Truncated FILE_END_OF_FILE_INFORMATION: expected=%u remains=%zu",
+                                    expected, chunk.in_remain());
+                                throw Error(ERR_RDPDR_PDU_TRUNCATED);
+                            }
+                        }
 
-                    rdp_file_rename_information.receive(chunk);
+                        int64_t EndOfFile = chunk.in_sint64_le();
 
-                    if (bool(verbose & RDPVerbose::rdpdr)) {
-                        rdp_file_rename_information.log(LOG_INFO);
-                    }
-
-                    std::string const * device_name =
-                        this->device_redirection_manager.get_device_name(
-                            this->server_device_io_request.DeviceId());
-                    if (device_name) {
-                        file_path =
-                            *device_name + rdp_file_rename_information.FileName();
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                    "FileName=\"%s\"",
-                                file_path.c_str());
+                                    "EndOfFile=%" PRId64,
+                                EndOfFile);
+                        }
+
+                        if (this->device_io_target_info_inventory.end() != target_iter) {
+                            target_iter->end_of_file = EndOfFile;
                         }
                     }
+                    break;
+
+                    case rdpdr::FileRenameInformation: {
+                        rdpdr::RDPFileRenameInformation rdp_file_rename_information;
+
+                        rdp_file_rename_information.receive(chunk);
+
+                        if (bool(verbose & RDPVerbose::rdpdr)) {
+                            rdp_file_rename_information.log(LOG_INFO);
+                        }
+
+                        std::string const * device_name =
+                            this->device_redirection_manager.get_device_name(
+                                this->server_device_io_request.DeviceId());
+                        if (device_name) {
+                            file_path =
+                                *device_name + rdp_file_rename_information.FileName();
+                            if (bool(this->verbose & RDPVerbose::rdpdr)) {
+                                LOG(LOG_INFO,
+                                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                        "FileName=\"%s\"",
+                                    file_path.c_str());
+                            }
+                        }
+                    }
+                    break;
                 }
             }
             break;
@@ -2600,14 +2966,38 @@ public:
             break;
         }   // switch (this->server_device_io_request.MajorFunction())
 
-        if (send_message_to_client && !do_not_add_to_inventory) {
+        bool send_replaced_message_to_client = false;
+
+        if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) && send_message_to_client &&
+            this->server_device_io_request.map_completion_id(this->file_system_completion_id_manager)) {
+
+            StaticOutStream<65536> out_chunk;
+            out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
+
+            OutStream out_stream(out_chunk.get_data(), out_chunk.get_offset());
+            out_stream.rewind(chunk_offset);
+            this->server_device_io_request.emit(out_stream);
+
+            this->send_message_to_client(total_length, flags, out_chunk.get_data(),
+                out_chunk.get_offset());
+
+            send_message_to_client          = false;
+            send_replaced_message_to_client = true;
+        }
+
+        if ((send_message_to_client || send_replaced_message_to_client) &&
+            !do_not_add_to_inventory) {
+
             this->device_io_request_info_inventory.push_back({
                 this->server_device_io_request.DeviceId(),
                 this->server_device_io_request.FileId(),
                 this->server_device_io_request.CompletionId(),
+                std::move(file_path),
                 this->server_device_io_request.MajorFunction(),
                 extra_data,
-                std::move(file_path)
+                offset,                                         // offset
+                length,                                         // length
+                remaining                                       // remaining
             });
         }
 
