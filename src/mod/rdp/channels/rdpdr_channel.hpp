@@ -83,6 +83,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         bool for_reading;
         bool for_writing;
+        bool for_sequential_access;
 
         int64_t end_of_file;
 
@@ -1591,26 +1592,33 @@ public:
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             if (rdpdr::IRP_MJ_READ == request_iter->major_function) {
                 if (this->device_io_target_info_inventory.end() != target_iter) {
-                    uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
+                    if (target_iter->for_sequential_access) {
+                        uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
 
+                        if ((flags & CHANNELS::CHANNEL_FLAG_LAST) &&
+                            (chunk.in_remain() != request_iter->remaining)) {
+                            LOG(LOG_ERR,
+                                "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                    "in_remain(%" PRIu64 ") != remaining=(%u)",
+                                chunk.in_remain(), request_iter->remaining);
 #ifndef NDEBUG
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                        assert(chunk.in_remain() == request_iter->remaining);
+                            assert(false);
+#endif  // #ifndef NDEBUG
+                        }
+
+                        target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                        request_iter->remaining -= effective_chunked_data_length;
                     }
-#endif  // #ifndef NDEBUG
-
-                    target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
-
-                    request_iter->remaining -= effective_chunked_data_length;
                 }
-#ifndef NDEBUG
                 else {
-                    LOG(LOG_ERR,
+                    LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Target not found!");
+                            "Target not found! (1)");
+#ifndef NDEBUG
                     assert(false);
-                }
 #endif  // #ifndef NDEBUG
+                }
             }
 
             if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
@@ -1709,6 +1717,7 @@ public:
                             std::move(target_file_name),    // file_path
                             false,                          // for_reading
                             false,                          // for_writing
+                            true,                           // for_sequential_access
                             END_OF_FILE_UNREAD,             // end_of_file
                             0,                              // sequential_access_offset
                             {}
@@ -1921,21 +1930,32 @@ public:
                     this->update_exchanged_data(Length);
 
                     if (this->device_io_target_info_inventory.end() != target_iter) {
-                        device_io_target_info_type & target_info = *target_iter;
+                        if (target_iter->for_sequential_access) {
+                            if (!target_iter->for_writing &&
+                                (static_cast<uint64_t>(target_iter->sequential_access_offset) == request_iter->offset)) {
 
-                        if (!target_info.for_writing &&
-                            (static_cast<uint64_t>(target_info.sequential_access_offset) == request_iter->offset)) {
+                                uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
 
-                            uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
+                                target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
 
-                            target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+                                request_iter->remaining -= effective_chunked_data_length;
 
-                            request_iter->remaining -= effective_chunked_data_length;
-
-                            target_info.sequential_access_offset += Length;
+                                target_iter->sequential_access_offset += Length;
+                            }
+                            else {
+                                target_iter->for_sequential_access = false;
+                            }
                         }
 
-                        target_info.for_reading = true;
+                        target_iter->for_reading = true;
+                    }
+                    else {
+                        LOG(LOG_WARNING,
+                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                "Target not found! (2)");
+#ifndef NDEBUG
+                        assert(false);
+#endif  // #ifndef NDEBUG
                     }
                 }
             }
@@ -1950,15 +1970,15 @@ public:
 
                 if (this->client_device_io_response.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
                     if (this->device_io_target_info_inventory.end() != target_iter) {
-                        device_io_target_info_type & target_info = *target_iter;
-
-                        if (!target_info.for_reading &&
-                            (static_cast<uint64_t>(target_info.sequential_access_offset) == request_iter->offset)) {
-
-                            target_info.sequential_access_offset += request_iter->length;
-                        }
-
-                        target_info.for_writing = true;
+                        target_iter->for_writing = true;
+                    }
+                    else {
+                        LOG(LOG_WARNING,
+                            "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                "Target not found! (3)");
+#ifndef NDEBUG
+                        assert(false);
+#endif  // #ifndef NDEBUG
                     }
                 }
             break;
@@ -1987,7 +2007,6 @@ public:
                         case rdpdr::FileDispositionInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-
                                 auto info = key_qvalue_pairs({
                                         { "type", "DRIVE_REDIRECTION_DELETE" },
                                         { "file_name", file_path },
@@ -1998,6 +2017,14 @@ public:
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
                                 }
+                            }
+                            else {
+                                LOG(LOG_WARNING,
+                                    "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                        "Target not found! (4)");
+#ifndef NDEBUG
+                                assert(false);
+#endif  // #ifndef NDEBUG
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
@@ -2012,7 +2039,6 @@ public:
                         case rdpdr::FileRenameInformation:
                         {
                             if (this->device_io_target_info_inventory.end() != target_iter) {
-
                                 auto info = key_qvalue_pairs({
                                         { "type", "DRIVE_REDIRECTION_RENAME" },
                                         { "old_file_name", target_iter->file_path },
@@ -2024,6 +2050,14 @@ public:
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
                                 }
+                            }
+                            else {
+                                LOG(LOG_WARNING,
+                                    "FileSystemVirtualChannel::process_client_drive_io_response: "
+                                        "Target not found! (5)");
+#ifndef NDEBUG
+                                assert(false);
+#endif  // #ifndef NDEBUG
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
@@ -2585,37 +2619,44 @@ public:
         if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             if (this->server_device_io_request.MajorFunction() == rdpdr::IRP_MJ_WRITE) {
                 if (this->device_io_target_info_inventory.end() != target_iter) {
-                    auto request_iter = this->find_request_info(this->server_device_io_request.DeviceId(), this->server_device_io_request.CompletionId());
-                    if (this->device_io_request_info_inventory.end() != request_iter) {
-                        uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
+                    if (target_iter->for_sequential_access) {
+                        auto request_iter = this->find_request_info(this->server_device_io_request.DeviceId(), this->server_device_io_request.CompletionId());
+                        if (this->device_io_request_info_inventory.end() != request_iter) {
+                            uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), request_iter->remaining);
 
+                            if ((flags & CHANNELS::CHANNEL_FLAG_LAST) &&
+                                (chunk.in_remain() != request_iter->remaining)) {
+                                LOG(LOG_WARNING,
+                                    "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                        "in_remain(%" PRIu64 ") != remaining=(%u)",
+                                    chunk.in_remain(), request_iter->remaining);
 #ifndef NDEBUG
-                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                            assert(chunk.in_remain() == request_iter->remaining);
+                                assert(false);
+#endif  // #ifndef NDEBUG
+                            }
+
+                            target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                            request_iter->remaining -= effective_chunked_data_length;
                         }
-#endif  // #ifndef NDEBUG
-
-                        target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
-
-                        request_iter->remaining -= effective_chunked_data_length;
-                    }
+                        else {
+                            LOG(LOG_WARNING,
+                                "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                    "Request not found!");
 #ifndef NDEBUG
-                    else {
-                        LOG(LOG_ERR,
-                            "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                "Request not found!");
-                        assert(false);
-                    }
+                            assert(false);
 #endif  // #ifndef NDEBUG
+                        }
+                    }
                 }
-#ifndef NDEBUG
                 else {
-                    LOG(LOG_ERR,
+                    LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Target not found!");
+                            "Target not found! (1)");
+#ifndef NDEBUG
                     assert(false);
-                }
 #endif  // #ifndef NDEBUG
+                }
             }
 
             return true;
@@ -2780,11 +2821,30 @@ public:
                 chunk.in_skip_bytes(20);    // Padding(20)
 
                 if (this->device_io_target_info_inventory.end() != target_iter) {
-                    uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), remaining);
+                    if (target_iter->for_sequential_access) {
+                        if (!target_iter->for_reading &&
+                            (static_cast<uint64_t>(target_iter->sequential_access_offset) == offset)) {
 
-                    target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+                            uint32_t const effective_chunked_data_length = std::min<uint32_t>(chunk.in_remain(), remaining);
 
-                    remaining -= effective_chunked_data_length;
+                            target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
+
+                            remaining -= effective_chunked_data_length;
+
+                            target_iter->sequential_access_offset += length;
+                        }
+                        else {
+                            target_iter->for_sequential_access = false;
+                        }
+                    }
+                }
+                else {
+                    LOG(LOG_WARNING,
+                        "FileSystemVirtualChannel::process_server_drive_io_request: "
+                            "Target not found! (2)");
+#ifndef NDEBUG
+                    assert(false);
+#endif  // #ifndef NDEBUG
                 }
 
                 this->update_exchanged_data(length);
@@ -2917,6 +2977,14 @@ public:
 
                         if (this->device_io_target_info_inventory.end() != target_iter) {
                             target_iter->end_of_file = EndOfFile;
+                        }
+                        else {
+                            LOG(LOG_WARNING,
+                                "FileSystemVirtualChannel::process_server_drive_io_request: "
+                                    "Target not found! (3)");
+#ifndef NDEBUG
+                            assert(false);
+#endif  // #ifndef NDEBUG
                         }
                     }
                     break;
