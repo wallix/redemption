@@ -159,6 +159,7 @@ private:
     uint32_t file_contents_format_ID = 0;
     uint32_t last_formatID = 0;
     bool cliprdr_init_format_list_done = false;
+    bool use_long_format_names     = true;
 
 
 public:
@@ -276,33 +277,49 @@ public:
 
                 case RDPECLIP::CB_FORMAT_LIST:
                 {
-                    RDPECLIP::FormatListPDU_LongName fl_ln;
-                    fl_ln.recv(chunk);;
+                    bool known_format_not_found = true;
+                        while (known_format_not_found && (chunk.in_remain() >= 6)) {
 
-                    switch (fl_ln.formatID) {
-
-                        case RDPECLIP::CF_TEXT:
-                        case RDPECLIP::CF_OEMTEXT:
-                        case RDPECLIP::CF_UNICODETEXT:
-                        case RDPECLIP::CF_DSPTEXT:
-                        case RDPECLIP::CF_LOCALE:
-                            this->metrics.add_to_current_data(nb_copy_text_from_server, 1);
-                            break;
-                        case RDPECLIP::CF_METAFILEPICT:
-                        case RDPECLIP::CF_DSPMETAFILEPICT:
-                            this->metrics.add_to_current_data(nb_copy_image_from_server, 1);
-                            break;
-                        default:
-                            // TODO string_view
-                            std::string format_name_string(fl_ln.formatDataNameUTF8());
-                            if (format_name_string == RDPECLIP::FILECONTENTS
-                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
-                            ) {
-                                this->file_contents_format_ID = fl_ln.formatID;
-                                this->metrics.add_to_current_data(nb_copy_file_from_server, 1);
+                            uint32_t formatID = 0;
+                            std::string formatName;
+                            if (this->use_long_format_names) {
+                                RDPECLIP::FormatListPDU_LongName fl_ln;
+                                fl_ln.recv(chunk);
+                                formatID = fl_ln.formatID;
+                                formatName = fl_ln.formatDataNameUTF8();
+                            } else {
+                                RDPECLIP::FormatListPDU_ShortName fl_sn;
+                                fl_sn.recv(chunk);
+                                formatID = fl_sn.;
                             }
-                            break;
-                    }
+
+                            switch (formatID) {
+
+                                case RDPECLIP::CF_TEXT:
+                                    this->metrics.add_to_current_data(nb_copy_text_from_client, 1);
+                                    known_format_not_found = false;
+                                    break;
+                                case RDPECLIP::CF_METAFILEPICT:
+                                    this->metrics.add_to_current_data(nb_copy_image_from_client, 1);
+                                    known_format_not_found = false;
+                                    break;
+                                default:
+                                    // TODO string_view
+                                    LOG(LOG_INFO, "!!!! Metrics::set_server_cliprdr_metrics ID=%u formatName=%s flag1=%s flag2=%s", formatID, formatName, RDPECLIP::FILECONTENTS, RDPECLIP::FILEGROUPDESCRIPTORW);
+                                    if (formatName == RDPECLIP::FILECONTENTS
+                                    || formatName == RDPECLIP::FILEGROUPDESCRIPTORW
+                                    || formatName == RDPECLIP::PREFERRED_DROPEFFECT
+                                    ) {
+                                        this->file_contents_format_ID = formatID;
+                                        this->metrics.add_to_current_data(nb_copy_file_from_client, 1);
+                                        known_format_not_found = false;
+                                    }
+
+
+
+                                    break;
+                            }
+                        }
                 }
                     break;
 
@@ -375,36 +392,66 @@ public:
             // TODO code duplicated
             switch (header.msgType()) {
 
+                case RDPECLIP::CB_CLIP_CAPS:
+                {
+                    RDPECLIP::ClipboardCapabilitiesPDU pdu;
+                    pdu.recv(chunk);
+                    pdu.log();
+
+                    RDPECLIP::GeneralCapabilitySet pdu2;
+                    pdu2.recv(chunk);
+                    pdu2.log();
+
+                    this->use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                }
+                    break;
+
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
-                        RDPECLIP::FormatListPDU_LongName fl_ln;
-                        fl_ln.recv(chunk);
 
-                        switch (fl_ln.formatID) {
+                        bool known_format_not_found = true;
+                        while (known_format_not_found && (chunk.in_remain() >= 6)) {
 
-                            case RDPECLIP::CF_TEXT:
-                            case RDPECLIP::CF_OEMTEXT:
-                            case RDPECLIP::CF_UNICODETEXT:
-                            case RDPECLIP::CF_DSPTEXT:
-                            case RDPECLIP::CF_LOCALE:
-                                this->metrics.add_to_current_data(nb_copy_text_from_client, 1);
-                                break;
-                            case RDPECLIP::CF_METAFILEPICT:
-                            case RDPECLIP::CF_DSPMETAFILEPICT:
-                                this->metrics.add_to_current_data(nb_copy_image_from_client, 1);
-                                break;
-                            default:
-                                // TODO string_view
-                                std::string format_name_string(fl_ln.formatDataNameUTF8());
-                                if (format_name_string == RDPECLIP::FILECONTENTS
-                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
-                                ) {
-                                    this->file_contents_format_ID = fl_ln.formatID;
-                                    this->metrics.add_to_current_data(nb_copy_file_from_client, 1);
-                                }
-                                break;
+                            uint32_t formatID = 0;
+                            std::string formatName;
+                            if (this->use_long_format_names) {
+                                RDPECLIP::FormatListPDU_LongName fl_ln;
+                                fl_ln.recv(chunk);
+                                formatID = fl_ln.formatID;
+                                formatName = fl_ln.formatDataNameUTF8();
+                            } else {
+                                RDPECLIP::FormatListPDU_ShortName fl_sn;
+                                fl_sn.recv(chunk);
+                                formatID = fl_sn.;
+                            }
+
+                            switch (formatID) {
+
+                                case RDPECLIP::CF_TEXT:
+                                    this->metrics.add_to_current_data(nb_copy_text_from_client, 1);
+                                    known_format_not_found = false;
+                                    break;
+                                case RDPECLIP::CF_METAFILEPICT:
+                                    this->metrics.add_to_current_data(nb_copy_image_from_client, 1);
+                                    known_format_not_found = false;
+                                    break;
+                                default:
+                                    // TODO string_view
+                                    LOG(LOG_INFO, "!!!! Metrics::set_server_cliprdr_metrics ID=%u formatName=%s flag1=%s flag2=%s", formatID, formatName, RDPECLIP::FILECONTENTS, RDPECLIP::FILEGROUPDESCRIPTORW);
+                                    if (formatName == RDPECLIP::FILECONTENTS
+                                    || formatName == RDPECLIP::FILEGROUPDESCRIPTORW
+                                    || formatName == RDPECLIP::PREFERRED_DROPEFFECT
+                                    ) {
+                                        this->file_contents_format_ID = formatID;
+                                        this->metrics.add_to_current_data(nb_copy_file_from_client, 1);
+                                        known_format_not_found = false;
+                                    }
+
+
+
+                                    break;
+                            }
                         }
-
                     } else {
                         this->cliprdr_init_format_list_done = true;
                     }
