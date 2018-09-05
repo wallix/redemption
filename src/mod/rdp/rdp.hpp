@@ -87,7 +87,6 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "core/server_notifier_api.hpp"
-#include "core/RDP/rdp_metrics.hpp"
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
@@ -105,6 +104,7 @@
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/rdp_metrics.hpp"
 
 #include "system/ssl_calls.hpp"
 
@@ -706,6 +706,9 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
+private:
+    RDPMetrics metrics;
+
     mod_rdp( Transport & trans
            , SessionReactor& session_reactor
            , FrontAPI & front
@@ -851,13 +854,21 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-
-        // TODO replace nullptr with log metrics file path
-        , metrics( nullptr
-                 , redir_info.session_id
-                 , mod_rdp_params.target_user
-                 , mod_rdp_params.target_host
-                 , vars.get<cfg::globals::auth_user>().c_str())
+        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
+                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+                 , vars.get<cfg::context::session_id>()
+                 , hmac_user(vars.get<cfg::globals::auth_user>(),
+                             vars.get<cfg::rdp_metrics::sign_key>())
+                 , hmac_account({mod_rdp_params.target_user, strlen(mod_rdp_params.target_user)},
+                                vars.get<cfg::rdp_metrics::sign_key>())
+                 , hmac_device_service(vars.get<cfg::globals::target_device>(),
+                                       vars.get<cfg::context::target_service>(),
+                                       vars.get<cfg::rdp_metrics::sign_key>())
+                 , hmac_client_info(vars.get<cfg::globals::host>(),
+                                    info, vars.get<cfg::rdp_metrics::sign_key>())
+                 , std::chrono::seconds(timeobj.get_time().tv_sec)
+                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>()
+                 , vars.get<cfg::rdp_metrics::log_interval>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             if (!enable_transparent_mode) {
@@ -1607,6 +1618,10 @@ public:
                 this->first_scancode = false;
 
                 this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+
+                if (this->metrics.active()) {
+                    this->metrics.key_pressed();
+                }
             }
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
@@ -1620,6 +1635,9 @@ public:
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
+            if (this->metrics.active()) {
+                this->metrics.key_pressed();
+            }
         }
     }
 
@@ -1638,6 +1656,20 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
+
+             if (this->metrics.active()) {
+                if (device_flags & MOUSE_FLAG_MOVE) {
+                    this->metrics.mouse_mouve(x, y);
+                }
+
+                if (device_flags & MOUSE_FLAG_DOWN) {
+                    if (device_flags & MOUSE_FLAG_BUTTON2) {
+                        this->metrics.right_click_pressed();
+                    } else if (device_flags & MOUSE_FLAG_BUTTON1) {
+                        this->metrics.left_click_pressed();
+                    }
+                }
+            }
 
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_mouse(device_flags, x, y);
@@ -1672,22 +1704,35 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
-                this->metrics.total_cliprdr_amount_data_rcv_from_client += length;
+                if (this->metrics.active()) {
+                    InStream metrics_stream = chunk.clone();
+                    this->metrics.set_client_cliprdr_metrics(metrics_stream, length, flags);
+                }
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
-                this->metrics.total_rail_amount_data_rcv_from_client += length;
+                if (this->metrics.active()) {
+                    this->metrics.client_rail_channel_data(length);
+                }
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
-                this->metrics.total_rdpdr_amount_data_rcv_from_client += length;
+                if (this->metrics.active()) {
+                    InStream metrics_stream = chunk.clone();
+                    this->metrics.set_client_rdpdr_metrics(metrics_stream, length, flags);
+                }
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
-                this->metrics.total_drdynvc_amount_data_rcv_from_client += length;
+                if (this->metrics.active()) {
+                    this->metrics.client_other_channel_data(length);
+                }
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
+                if (this->metrics.active()) {
+                    this->metrics.client_other_channel_data(length);
+                }
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
@@ -1695,10 +1740,9 @@ public:
     // this->metrics.total_main_amount_data_rcv_from_client += length;
     // this->metrics.total_main_amount_data_rcv_from_server += length;
     void log_metrics() override {
-
-        if (bool(this->verbose & RDPVerbose::export_metrics)) {
-
-            this->metrics.log();
+        if (this->metrics.active()) {
+            timeval now = tvtime();
+            this->metrics.log(now);
         }
     }
 
@@ -1992,7 +2036,9 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
-        this->metrics.total_main_amount_data_rcv_from_server += stream.in_remain();
+        if (this->metrics.active()) {
+            this->metrics.server_main_channel_data(stream.in_remain());
+        }
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
         if (this->enable_transparent_mode) {
@@ -2166,7 +2212,9 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
-        this->metrics.total_main_amount_data_rcv_from_server += stream.in_remain();
+        if (this->metrics.active()) {
+            this->metrics.server_main_channel_data(stream.in_remain());
+        }
 
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
@@ -2247,22 +2295,35 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                this->metrics.total_cliprdr_amount_data_rcv_from_server += length;
+                if (this->metrics.active()) {
+                    InStream metrics_stream = sec.payload.clone();
+                    this->metrics.set_server_cliprdr_metrics(metrics_stream, length, flags);
+                }
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
-                this->metrics.total_rail_amount_data_rcv_from_server += length;
+                if (this->metrics.active()) {
+                    this->metrics.server_rail_channel_data(length);
+                }
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                this->metrics.total_rdpdr_amount_data_rcv_from_server += length;
+                if (this->metrics.active()) {
+                    InStream metrics_stream = sec.payload.clone();
+                    this->metrics.set_server_rdpdr_metrics(metrics_stream, length, flags);
+                }
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                this->metrics.total_drdynvc_amount_data_rcv_from_server += length;
+                if (this->metrics.active()) {
+                    this->metrics.server_other_channel_data(length);
+                }
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
+                if (this->metrics.active()) {
+                    this->metrics.server_other_channel_data(length);
+                }
                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
                     InStream clone = sec.payload.clone();
                     rdpsnd::streamLogServer(clone, flags);
@@ -5095,7 +5156,9 @@ public:
     }
 
     void set_last_tram_len(size_t tram_length) override {
-        this->metrics.total_main_amount_data_rcv_from_client += tram_length;
+        if (this->metrics.active()) {
+            this->metrics.client_main_channel_data(tram_length);
+        }
     }
 
     // [referenced from 2.2.9.1.2.1.7 Fast-Path Color Pointer Update (TS_FP_COLORPOINTERATTRIBUTE) ]

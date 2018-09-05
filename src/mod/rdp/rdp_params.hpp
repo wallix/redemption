@@ -40,7 +40,12 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::context::auth_notify,                       vcfg::accessmode::set>,
     vcfg::var<cfg::context::auth_notify_rail_exec_flags,       vcfg::accessmode::set>,
     vcfg::var<cfg::context::auth_notify_rail_exec_exe_or_file, vcfg::accessmode::set>,
-    vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>
+    vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::log_dir_path,                  vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::sign_key,                      vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::activate_log_metrics,          vcfg::accessmode::get>,
+    vcfg::var<cfg::rdp_metrics::log_interval,                  vcfg::accessmode::get>
 >;
 
 struct ModRDPParams {

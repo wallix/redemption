@@ -503,6 +503,10 @@ public:
                         alarm_log_metrics.tv_sec += this->log_metrics_delay;
                     }
                 }
+
+                if (mm.get_mod()) {
+                    mm.get_mod()->log_metrics();
+                }
             }
             if (mm.get_mod()) {
                 mm.get_mod()->disconnect(time(nullptr));
