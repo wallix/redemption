@@ -48,8 +48,8 @@ namespace
 #ifndef NDEBUG
 # include <cstring>
 # include "utils/log.hpp"
-# if __has_include(<boost/stacktrace.hpp>)
-//#  include <iostream>
+# if REDEMPTION_HAS_INCLUDE(<boost/stacktrace.hpp>)
+// #  define BOOST_STACKTRACE_USE_BACKTRACE
 #  include <boost/stacktrace.hpp>
 #  define REDEMPTION_ERROR_WITH_STACKTRACE
 # endif
@@ -80,7 +80,6 @@ Error::Error(error_type id, int errnum) noexcept
             ++i;
         }
     }
-//    std::cerr << boost::stacktrace::stacktrace() << std::flush;
 # endif
 #endif
 }

@@ -240,6 +240,8 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "tls_fallback_legacy", desc{"Fallback to RDP Legacy Encryption if client does not support TLS."}, set(false));
         W.member(ini_and_gui, no_sesman, type_<bool>(), "tls_support", set(true));
+        // TODO disable
+        W.member(no_ini_no_gui, no_sesman, type_<bool>(), "nla_support", set(false));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_neg_request", desc{"Needed to connect with jrdp, based on bogus X224 layer code."}, set(false));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "bogus_user_id", desc{"Needed to connect with Remmina 0.8.3 and freerdp 0.9.4, based on bogus MCS layer code."}, set(true));
         W.sep();

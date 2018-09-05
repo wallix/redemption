@@ -144,11 +144,9 @@ public:
         if (pAuthData) {
             int ret = this->credentials->get_credentials(pAuthData->princname,
                                                          pAuthData->princpass, nullptr);
-            if (!ret) {
-                return SEC_E_OK;
-            }
+            return ret ? SEC_E_NO_CREDENTIALS : SEC_E_OK;
         }
-        return SEC_E_NO_CREDENTIALS;
+        return SEC_E_OK;
     }
 
     bool get_service_name(char * server, gss_name_t * name) {
@@ -454,7 +452,6 @@ public:
             LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
-
     }
 
     bool mech_available(gss_OID mech)

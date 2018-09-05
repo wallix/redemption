@@ -80,12 +80,11 @@ public:
         krb5_free_unparsed_name(this->ctx, name);
 
         // get TGT
-        // 4th argument should be const char * !!!
         ret = krb5_get_init_creds_password(this->ctx, &creds, client_princ,
                                            password, nullptr, nullptr, 0, nullptr, nullptr);
 
         if (ret) {
-            LOG(LOG_INFO, "Init creds password failed: Wrong password or no such user");
+            LOG(LOG_INFO, "Init creds password failed: Wrong password or no such user %d", ret);
             goto cleanup;
         }
         // ret = krb5_verify_init_creds(this->ctx, &creds, nullptr, nullptr, nullptr, nullptr);

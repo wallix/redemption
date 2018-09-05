@@ -121,7 +121,7 @@ protected:
     void init_public_key()
     {
         if (this->verbose) {
-            LOG(LOG_INFO, "%s::ntlm_init", this->class_name_log);
+            LOG(LOG_INFO, "%s::init_public_key", this->class_name_log);
         }
 
         // ============================================
@@ -638,8 +638,9 @@ public:
                std::function<Ntlm_SecurityFunctionTable::PasswordCallback(SEC_WINNT_AUTH_IDENTITY&)> set_password_cb,
                const bool verbose = false)
         : rdpCredsspBase(
-            true, nullptr, nullptr, nullptr, nullptr, "", krb,
-            restricted_admin_mode, rand, timeobj, extra_message, lang,
+            true, byte_ptr_cast("Tester"), byte_ptr_cast("PROXY.CORP.WALLIX.COM"),
+            byte_ptr_cast("SecureLinux$42"), byte_ptr_cast("jpowab6-1.proxy.corp.wallix.com"),
+            "10.10.44.89", krb, restricted_admin_mode, rand, timeobj, extra_message, lang,
             transport, "rdpCredsspServer", std::move(set_password_cb), verbose)
     {
     }
@@ -696,8 +697,8 @@ private:
 
         this->init_public_key();
 
-        SEC_STATUS status = this->InitSecurityInterface(NTLM_Interface, nullptr,
-                                                        nullptr, nullptr);
+        SEC_STATUS status = this->InitSecurityInterface(this->sec_interface,
+                                                        nullptr, nullptr, nullptr);
 
         if (status != SEC_E_OK) {
             LOG(LOG_ERR, "InitSecurityInterface status: 0x%08X", status);
@@ -720,6 +721,7 @@ private:
 public:
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
+        hexdump_av(this->ts_request.negoTokens.av());
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
             this->ts_request.recv(in_stream);
@@ -738,6 +740,7 @@ public:
         //     | ASC_REQ_REPLAY_DETECT
         //     | ASC_REQ_SEQUENCE_DETECT
         //     | ASC_REQ_EXTENDED_ERROR;
+        hexdump_av(this->ts_request.negoTokens.av());
         SEC_STATUS status = this->table->AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
             /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
