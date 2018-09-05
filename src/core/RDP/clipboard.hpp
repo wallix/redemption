@@ -1082,6 +1082,7 @@ struct FormatListPDU
 
 constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW");
 constexpr auto FILECONTENTS         = cstr_array_view("FileContents");
+constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect");
 // constexpr const uint16_t * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
 // constexpr const uint16_t * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
 
@@ -1156,95 +1157,146 @@ struct FormatListPDU_LongName {
 
     void log() const {
         LOG(LOG_INFO, "     Format List PDU Long Name:");
-
-//         char utf8_string[500];
-
-
-
-//         std::string name_string(utf8_string);
-
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
         LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", this->formatUTF8Name, this->formatDataNameUTF16Len);
     }
 
 };
 
-struct FormatListPDU_ShortName  {
+struct FormatListPDU_ShortName {
 
-    CliprdrHeader header;
-    uint32_t    formatListIDs[FORMAT_LIST_MAX_SIZE];
-    uint16_t    formatListName[FORMAT_LIST_MAX_SIZE][SHORT_NAME_MAX_SIZE] = { {0} };
-    std::size_t formatListSize = 0;
+    //  FORMAT_LIST_MAX_SIZE
 
-    explicit FormatListPDU_ShortName( const uint32_t * formatListIDs
-                                   , const uint16_t ** formatListName
-                                   , const std::size_t * formatListNameLen
-                                   , const std::size_t formatListSize)
-    : header(CB_FORMAT_LIST, 0, 0)
-    , formatListSize(formatListSize)
+    uint32_t    formatID = 0;
+    uint8_t     formatUTF16Name[32] = {0};
+    uint8_t     formatUTF8Name[16] = {0};
+
+
+    explicit FormatListPDU_ShortName( const uint32_t  formatID
+                                    , const char * formatUTF8Name
+                                    , const std::size_t )
+    : formatID(formatID)
     {
-        assert(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
-
-        this->header.dataLen_ = this->formatListSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
-
-        for (std::size_t i = 0; i < this->formatListSize; i++) {
-
-            this->formatListIDs[i] = formatListIDs[i];
-
-            std::memcpy(this->formatListName[i], formatListName[i], formatListNameLen[i]);
-        }
+         memcpy(this->formatUTF8Name, formatUTF8Name, 16);
+         this->formatUTF8Name[15] = 0;
+         ::UTF8toUTF16(
+            byte_ptr_cast(formatUTF8Name),
+            this->formatUTF16Name, 32);
     }
 
     FormatListPDU_ShortName() = default;
 
     void emit(OutStream & stream) const {
 
-        this->header.emit(stream);
-
-        for (std::size_t i = 0; i < this->formatListSize; i++) {
-
-            stream.out_uint32_le(this->formatListIDs[i]);
-
-            stream.out_copy_bytes(reinterpret_cast<uint8_t const*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
-        }
+        stream.out_uint32_le(this->formatID);
+        stream.out_copy_bytes(this->formatUTF16Name, 32);
     }
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
 
-        this->formatListSize = this->header.dataLen() / 36;
-
-        if (this->formatListSize > FORMAT_LIST_MAX_SIZE) {
-            this->formatListSize = FORMAT_LIST_MAX_SIZE;
+        if (!stream.in_check_rem(36)) {
+            LOG( LOG_INFO
+                , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
+                , 36, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        LOG(LOG_INFO, " formatListSize =  %zu bytes", this->formatListSize);
+        this->formatID = stream.in_uint32_le();
 
-        for (size_t i = 0; i < this->formatListSize; i++) {
-            this->formatListIDs[i] = stream.in_uint32_le();
-            stream.in_copy_bytes(reinterpret_cast<uint8_t*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
-        }
+        stream.in_copy_bytes(this->formatUTF16Name, 32);
+
+        ::UTF16toUTF8(
+        this->formatUTF16Name+1,
+        32,
+        this->formatUTF8Name,
+        16);
+
     }
 
     void log() const {
-        this->header.log();
-        LOG(LOG_INFO, "     Format List PDU Short Name:");;
-        for (size_t i = 0; i < this->formatListSize; i++) {
-            LOG(LOG_INFO, "         Short Format Name:");
-            uint8_t utf8_string[SHORT_NAME_MAX_SIZE * 4 + 1];
-
-            auto const len = ::UTF16toUTF8(
-                reinterpret_cast<uint8_t const*>(this->formatListName[i]), /*NOLINT*/
-                SHORT_NAME_MAX_SIZE,
-                utf8_string,
-                sizeof(utf8_string) - 1);
-            utf8_string[len] = 0;
-
-            LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatListIDs[i], get_Format_name(this->formatListIDs[i]));
-            LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", char_ptr_cast(utf8_string));
-        }
+        LOG(LOG_INFO, "     Format List PDU Short Name:");
+        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
     }
+
 };
+
+// struct FormatListPDU_ShortName  {
+//
+//     CliprdrHeader header;
+//     uint32_t    formatListIDs[FORMAT_LIST_MAX_SIZE];
+//     uint16_t    formatListName[FORMAT_LIST_MAX_SIZE][SHORT_NAME_MAX_SIZE] = { {0} };
+//     std::size_t formatListSize = 0;
+//
+//     explicit FormatListPDU_ShortName( const uint32_t * formatListIDs
+//                                    , const uint16_t ** formatListName
+//                                    , const std::size_t * formatListNameLen
+//                                    , const std::size_t formatListSize)
+//     : header(CB_FORMAT_LIST, 0, 0)
+//     , formatListSize(formatListSize)
+//     {
+//         assert(this->formatListSize <= FORMAT_LIST_MAX_SIZE);
+//
+//         this->header.dataLen_ = this->formatListSize * (4 + SHORT_NAME_MAX_SIZE);    /* formatId(4) + formatName(32) */
+//
+//         for (std::size_t i = 0; i < this->formatListSize; i++) {
+//
+//             this->formatListIDs[i] = formatListIDs[i];
+//
+//             std::memcpy(this->formatListName[i], formatListName[i], formatListNameLen[i]);
+//         }
+//     }
+//
+//     FormatListPDU_ShortName() = default;
+//
+//     void emit(OutStream & stream) const {
+//
+//         this->header.emit(stream);
+//
+//         for (std::size_t i = 0; i < this->formatListSize; i++) {
+//
+//             stream.out_uint32_le(this->formatListIDs[i]);
+//
+//             stream.out_copy_bytes(reinterpret_cast<uint8_t const*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
+//         }
+//     }
+//
+//     void recv(InStream & stream) {
+//         this->header.recv(stream);
+//
+//         this->formatListSize = this->header.dataLen() / 36;
+//
+//         if (this->formatListSize > FORMAT_LIST_MAX_SIZE) {
+//             this->formatListSize = FORMAT_LIST_MAX_SIZE;
+//         }
+//
+//         LOG(LOG_INFO, " formatListSize =  %zu bytes", this->formatListSize);
+//
+//         for (size_t i = 0; i < this->formatListSize; i++) {
+//             this->formatListIDs[i] = stream.in_uint32_le();
+//             stream.in_copy_bytes(reinterpret_cast<uint8_t*>(this->formatListName[i]), SHORT_NAME_MAX_SIZE); /*NOLINT*/
+//         }
+//     }
+//
+//     void log() const {
+//         this->header.log();
+//         LOG(LOG_INFO, "     Format List PDU Short Name:");;
+//         for (size_t i = 0; i < this->formatListSize; i++) {
+//             LOG(LOG_INFO, "         Short Format Name:");
+//             uint8_t utf8_string[SHORT_NAME_MAX_SIZE * 4 + 1];
+//
+//             auto const len = ::UTF16toUTF8(
+//                 reinterpret_cast<uint8_t const*>(this->formatListName[i]), /*NOLINT*/
+//                 SHORT_NAME_MAX_SIZE,
+//                 utf8_string,
+//                 sizeof(utf8_string) - 1);
+//             utf8_string[len] = 0;
+//
+//             LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatListIDs[i], get_Format_name(this->formatListIDs[i]));
+//             LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", char_ptr_cast(utf8_string));
+//         }
+//     }
+// };
 
 
 

@@ -452,7 +452,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_UNICODETEXT, "\0", 1);
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -468,7 +468,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_OEMTEXT);
+        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_TEXT);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -860,7 +860,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         StaticOutStream<1600> out_stream;
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
         format_list_header.emit(out_stream);
-        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_UNICODETEXT, "\0", 1);
+        RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
@@ -876,7 +876,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         expected_log_metrics += expected_log_metrics_next;
         epoch += 5s;
         StaticOutStream<1600> out_stream;
-        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_OEMTEXT);
+        RDPECLIP::FormatDataRequestPDU format(RDPECLIP::CF_TEXT);
         format.emit(out_stream);
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
