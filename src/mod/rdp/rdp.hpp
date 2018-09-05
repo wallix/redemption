@@ -696,9 +696,6 @@ protected:
 
     ModRdpVariables vars;
 
-    RDPMetrics metrics;
-
-
 public:
     using Verbose = RDPVerbose;
 
@@ -709,6 +706,7 @@ public:
 private:
     RDPMetrics metrics;
 
+public:
     mod_rdp( Transport & trans
            , SessionReactor& session_reactor
            , FrontAPI & front
@@ -754,7 +752,7 @@ private:
         , connection_finalization_state(EARLY)
         , state(MOD_RDP_NEGO_INITIATE)
         , gen(gen)
-        , verbose(/*RDPVerbose::export_metrics*/mod_rdp_params.verbose)
+        , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
         , auth_channel_flags(0)
         , auth_channel_chanid(0)
@@ -854,8 +852,9 @@ private:
         , client_window_list_caps(info.window_list_caps)
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
-                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( true                                     //vars.get<cfg::rdp_metrics::activate_log_metrics>()
+        , "/tmp"
+                 //, vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>()
                  , hmac_user(vars.get<cfg::globals::auth_user>(),
                              vars.get<cfg::rdp_metrics::sign_key>())

@@ -1257,6 +1257,25 @@ struct FormatListPDU_LongName {
         LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", name_string.c_str(), this->formatDataNameUTF16Len);
     }
 
+    std::string formatDataNameUTF8() {
+        char utf8_string[500];
+
+        size_t size = ::UTF16toUTF8(
+            this->formatUTF16Name+1,
+            this->formatDataNameUTF16Len,
+            reinterpret_cast<uint8_t*>(utf8_string),
+            500);
+
+        if (size > 500) {
+            size = 500;
+        }
+        utf8_string[size-1] = 0;
+
+        std::string name_string(utf8_string);
+
+        return name_string;
+    }
+
 };
 
 struct FormatListPDU_ShortName  {

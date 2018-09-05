@@ -30,13 +30,13 @@
 inline MetricsHmacSha256Encrypt hmac_user(
     array_view_const_char user, std::array<uint8_t, 32> const& key)
 {
-    return MetricsHmacSha256Encrypt(user, key);
+    return MetricsHmacSha256Encrypt(user.data(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_account(
     array_view_const_char account, std::array<uint8_t, 32> const& key)
 {
-    return MetricsHmacSha256Encrypt(account, key);
+    return MetricsHmacSha256Encrypt(account.data(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_device_service(
@@ -44,7 +44,7 @@ inline MetricsHmacSha256Encrypt hmac_device_service(
 {
     service += " ";
     service.append(device.data(), device.size());
-    return MetricsHmacSha256Encrypt(service, key);
+    return MetricsHmacSha256Encrypt(service.data(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_client_info(
@@ -55,7 +55,7 @@ inline MetricsHmacSha256Encrypt hmac_client_info(
     int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
         info.bpp, info.width, info.height);
     client_host.append(session_info, session_info_size);
-    return MetricsHmacSha256Encrypt(client_host, key);
+    return MetricsHmacSha256Encrypt(client_host.data(), key.data());
 }
 
 
@@ -294,9 +294,9 @@ public:
                             break;
                         default:
                             // TODO string_view
-                            std::string format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
-                            if (format_name_string == RDPECLIP::FILECONTENTS.data()
-                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW.data()
+                            std::string format_name_string(fl_ln.formatDataNameUTF8());
+                            if (format_name_string == RDPECLIP::FILECONTENTS
+                             || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
                             ) {
                                 this->file_contents_format_ID = fl_ln.formatID;
                                 this->metrics.add_to_current_data(nb_copy_file_from_server, 1);
@@ -395,9 +395,9 @@ public:
                                 break;
                             default:
                                 // TODO string_view
-                                std::string format_name_string(char_ptr_cast(fl_ln.formatUTF8Name));
-                                if (format_name_string == RDPECLIP::FILECONTENTS.data()
-                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW.data()
+                                std::string format_name_string(fl_ln.formatDataNameUTF8());
+                                if (format_name_string == RDPECLIP::FILECONTENTS
+                                 || format_name_string == RDPECLIP::FILEGROUPDESCRIPTORW
                                 ) {
                                     this->file_contents_format_ID = fl_ln.formatID;
                                     this->metrics.add_to_current_data(nb_copy_file_from_client, 1);

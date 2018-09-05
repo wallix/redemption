@@ -239,7 +239,7 @@ public:
             LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_file_path, strerror(errnum));
         }
 
-        this->write_event_to_logindex(text_date, this->connection_time, " connection "_av);
+        this->write_event_to_logindex(text_date, this->connection_time, " connection ");
     }
 
     void rotate(std::chrono::seconds now)
