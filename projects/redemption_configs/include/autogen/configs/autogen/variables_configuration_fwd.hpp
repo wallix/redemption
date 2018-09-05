@@ -166,6 +166,14 @@ namespace cfg {
         struct experimental_fix_too_long_cookie;
     };
 
+    struct rdp_metrics {
+        struct activate_log_metrics;
+        struct log_dir_path;
+        struct log_interval;
+        struct log_file_turnover_interval;
+        struct sign_key;
+    };
+
     struct mod_vnc {
         struct clipboard_up;
         struct clipboard_down;

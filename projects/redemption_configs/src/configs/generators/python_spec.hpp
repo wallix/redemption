@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 #include <locale>
 #include <vector>
