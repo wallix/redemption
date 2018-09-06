@@ -907,6 +907,8 @@
                     case RDPECLIP::FILECONTENTS_RANGE:
 
                         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+
+
                             cb_filesList.itemslist[cb_filesList.lindexToRequest].size = chunk.in_uint32_le();
                             cb_filesList.streamIDToRequest = chunk.in_uint32_le();
                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -935,10 +937,12 @@
 
                                 this->send_UnlockPDU(cb_filesList.streamIDToRequest);
 
+                                 this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
+
                             } else {
                                 cb_filesList.lindexToRequest++;
 
-                                this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
+                                 this->file_content_flag = RDPECLIP::FILECONTENTS_SIZE;
 
                                 StaticOutStream<32> out_streamRequest;
                                 RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
