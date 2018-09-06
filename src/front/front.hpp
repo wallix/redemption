@@ -3149,8 +3149,6 @@ private:
                 }
                 break;
             case CAPSTYPE_BITMAPCACHE_REV2: {
-                    this->client_info.use_bmp_cache_2 = true;
-
                     this->client_info.bmp_cache_2_caps.recv(stream, capset_length);
                     if (bool(this->verbose)) {
                         this->client_info.bmp_cache_2_caps.log("Front::process_confirm_active: Receiving from client");

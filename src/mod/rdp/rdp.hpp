@@ -169,7 +169,6 @@ private:
 
     bool remote_apps_not_enabled = false;
 
-protected:
     FrontAPI& front;
 
     class ToClientSender : public VirtualChannelDataSender
@@ -285,16 +284,6 @@ protected:
     int  last_key_flags_sent = 0;
     bool first_scancode = true;
 
-    enum ModState : uint8_t {
-          MOD_RDP_NEGO_INITIATE
-        , MOD_RDP_NEGO
-        , MOD_RDP_BASIC_SETTINGS_EXCHANGE
-        , MOD_RDP_CHANNEL_CONNECTION_ATTACH_USER
-        , MOD_RDP_CHANNEL_JOIN_CONFIRME
-        , MOD_RDP_GET_LICENSE
-        , MOD_RDP_CONNECTED
-    };
-
     enum : uint8_t {
         EARLY,
         WAITING_SYNCHRONIZE,
@@ -304,7 +293,6 @@ protected:
         UP_AND_RUNNING
     } connection_finalization_state;
 
-    ModState state;
     Pointer cursors[32];
 
     Random& gen;
@@ -656,8 +644,6 @@ protected:
     std::string client_execute_working_dir;
     std::string client_execute_arguments;
 
-    bool use_client_provided_remoteapp;
-
     bool should_ignore_first_client_execute = false;
 
     uint16_t    real_client_execute_flags = 0;
@@ -688,8 +674,6 @@ protected:
     GlyphCacheCaps const     client_glyph_cache_caps;
     RailCaps const           client_rail_caps;
     WindowListCaps const     client_window_list_caps;
-
-    bool client_use_bmp_cache_2 = false;
 
     bool is_server_auto_reconnec_packet_received = false;
 
@@ -753,7 +737,6 @@ public:
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
         , connection_finalization_state(EARLY)
-        , state(MOD_RDP_NEGO_INITIATE)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -838,7 +821,6 @@ public:
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
-        , use_client_provided_remoteapp(mod_rdp_params.use_client_provided_remoteapp)
         , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
         , beginning(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
@@ -854,7 +836,6 @@ public:
         , client_glyph_cache_caps(info.glyph_cache_caps)
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
-        , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
         , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
                  , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
@@ -1192,7 +1173,7 @@ public:
         }
     }
 
-protected:
+private:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name) const
     {

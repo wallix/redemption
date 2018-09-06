@@ -128,8 +128,6 @@ struct ClientInfo {
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
 
-    bool use_bmp_cache_2 = false;
-
     ClientInfo() = default;
 
     void process_logon_info( InStream & stream
