@@ -1180,6 +1180,139 @@ constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorw";
 constexpr const char * FILECONTENTS         = "FileContents";
 constexpr const char * PREFERRED_DROPEFFECT = "Preferred DropEffect";
 
+struct FormatListPDU_LongName_metrics {
+
+    //  FORMAT_LIST_MAX_SIZE
+
+    uint32_t    formatID = 0;
+    uint8_t     formatUTF16Name[500] = {0};
+    uint8_t     formatUTF8Name[500] = {0};
+    std::size_t formatDataNameUTF8Len = 0;
+    std::size_t formatDataNameUTF16Len = 0;
+
+    explicit FormatListPDU_LongName_metrics( const uint32_t  formatID
+                                   , const char * formatUTF8Name
+                                   , const std::size_t formatNameUTF8Len)
+    : formatID(formatID)
+    , formatDataNameUTF8Len(formatNameUTF8Len > 500 ? 500:formatNameUTF8Len)
+    {
+         memcpy(this->formatUTF8Name, formatUTF8Name, this->formatDataNameUTF8Len);
+         this->formatDataNameUTF16Len = ::UTF8toUTF16(
+            byte_ptr_cast(formatUTF8Name),
+            this->formatUTF16Name, formatNameUTF8Len*2);
+
+        this->formatDataNameUTF16Len += 2;
+
+        if (this->formatDataNameUTF16Len > 500) {
+            this->formatUTF16Name[498] = 0x0;
+            this->formatUTF16Name[499] = 0x0;
+            this->formatDataNameUTF16Len = 500;
+        }
+    }
+
+    FormatListPDU_LongName_metrics() = default;
+
+    void emit(OutStream & stream) const {
+
+        stream.out_uint32_le(this->formatID);
+        stream.out_copy_bytes(this->formatUTF16Name, this->formatDataNameUTF16Len);
+    }
+
+    void recv(InStream & stream) {
+
+        this->formatID = stream.in_uint32_le();
+
+        uint16_t c = -1;
+
+        size_t name_len = 0;
+        while ((c != 0x00) && (stream.in_remain() >= 2) && (name_len <= 498)) {
+            c = stream.in_uint16_le();
+            this->formatUTF16Name[name_len] = c >> 8;
+            name_len ++;
+            this->formatUTF16Name[name_len] = c;
+            name_len ++;
+        }
+        this->formatDataNameUTF16Len = name_len;
+
+        this->formatDataNameUTF8Len = ::UTF16toUTF8(
+        this->formatUTF16Name+1,
+        this->formatDataNameUTF16Len,
+        this->formatUTF8Name,
+        500);
+
+        if (this->formatDataNameUTF8Len  > 500) {
+            this->formatDataNameUTF8Len  = 500;
+        }
+
+        this->formatUTF8Name[this->formatDataNameUTF8Len -1] = 0;
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Format List PDU Long Name:");
+        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)", this->formatUTF8Name, this->formatDataNameUTF16Len);
+    }
+
+};
+
+struct FormatListPDU_ShortName_metrics {
+
+    //  FORMAT_LIST_MAX_SIZE
+
+    uint32_t    formatID = 0;
+    uint8_t     formatUTF16Name[32] = {0};
+    uint8_t     formatUTF8Name[16] = {0};
+
+
+    explicit FormatListPDU_ShortName_metrics( const uint32_t  formatID
+                                    , const char * formatUTF8Name
+                                    , const std::size_t )
+    : formatID(formatID)
+    {
+         memcpy(this->formatUTF8Name, formatUTF8Name, 16);
+         this->formatUTF8Name[15] = 0;
+         ::UTF8toUTF16(
+            byte_ptr_cast(formatUTF8Name),
+            this->formatUTF16Name, 32);
+    }
+
+    FormatListPDU_ShortName_metrics() = default;
+
+    void emit(OutStream & stream) const {
+
+        stream.out_uint32_le(this->formatID);
+        stream.out_copy_bytes(this->formatUTF16Name, 32);
+    }
+
+    void recv(InStream & stream) {
+
+        if (!stream.in_check_rem(36)) {
+            LOG( LOG_INFO
+                , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
+                , 36, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        this->formatID = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->formatUTF16Name, 32);
+
+        ::UTF16toUTF8(
+        this->formatUTF16Name+1,
+        32,
+        this->formatUTF8Name,
+        16);
+
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Format List PDU Short Name:");
+        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
+        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
+    }
+
+};
+
 
 struct FormatListPDU_LongName {
 
