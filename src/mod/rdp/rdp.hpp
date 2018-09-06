@@ -2273,6 +2273,7 @@ public:
                 if (this->metrics.active()) {
                     this->metrics.server_other_channel_data(length);
                 }
+
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
