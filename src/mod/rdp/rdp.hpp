@@ -853,7 +853,7 @@ public:
         , client_use_bmp_cache_2(info.use_bmp_cache_2)
         , vars(vars)
         , metrics( true                                     //vars.get<cfg::rdp_metrics::activate_log_metrics>()
-        , "/tmp"
+        , "/tmp/"
                  //, vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>()
                  , hmac_user(vars.get<cfg::globals::auth_user>(),
