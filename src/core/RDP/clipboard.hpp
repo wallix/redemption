@@ -1197,7 +1197,7 @@ struct FormatListPDU_ShortName {
         if (!stream.in_check_rem(36)) {
             LOG( LOG_INFO
                 , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
-                , 36, stream.in_remain());
+                , 36u, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
