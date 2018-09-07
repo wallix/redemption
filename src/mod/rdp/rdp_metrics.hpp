@@ -161,6 +161,8 @@ private:
     bool cliprdr_init_format_list_done = false;
     bool use_long_format_names     = true;
 
+    uint32_t flag_filecontents = 0;
+
 
 public:
     Metrics metrics;
@@ -378,13 +380,18 @@ public:
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
                     chunk.in_skip_bytes(8); // streamId(4 bytes) + lindex(4 bytes)
-                    uint32_t flag_filecontents = chunk.in_uint32_le();
-                    if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        uint64_t nPositionLow = chunk.in_uint32_le();
-                        uint64_t nPositionHigh = chunk.in_uint32_le();
-                        this->metrics.add_to_current_data(total_data_paste_on_server, nPositionLow + (nPositionHigh << 32));
-                    }
+                    this->flag_filecontents = chunk.in_uint32_le();
                     break;
+                }
+
+                case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                {
+                    if (this->flag_filecontents == RDPECLIP::FILECONTENTS_SIZE) {
+                        chunk.in_skip_bytes(4);             // streamId(4 bytes)
+                        uint32_t nPositionLow = chunk.in_uint32_le();
+                        uint64_t nPositionHigh = chunk.in_uint32_le();
+                        this->metrics.add_to_current_data(total_data_paste_on_client, nPositionLow + (nPositionHigh << 32));
+                    }
                 }
             }
         }
@@ -516,14 +523,20 @@ public:
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
-                    chunk.in_skip_bytes(8);    // streamId(4 bytes) + lindex(4 bytes)
-                    uint32_t flag_filecontents = chunk.in_uint32_le();
-                    if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        uint64_t size = chunk.in_uint64_le();
-                        this->metrics.add_to_current_data(total_data_paste_on_client, size);
+                    chunk.in_skip_bytes(8); // streamId(4 bytes) + lindex(4 bytes)
+                    this->flag_filecontents = chunk.in_uint32_le();
+                    break;
+                }
+
+                case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                {
+                    if (this->flag_filecontents == RDPECLIP::FILECONTENTS_SIZE) {
+                        chunk.in_skip_bytes(4);             // streamId(4 bytes)
+                        uint32_t nPositionLow = chunk.in_uint32_le();
+                        uint64_t nPositionHigh = chunk.in_uint32_le();
+                        this->metrics.add_to_current_data(total_data_paste_on_server, nPositionLow + (nPositionHigh << 32));
                     }
                 }
-                    break;
             }
         }
     }
