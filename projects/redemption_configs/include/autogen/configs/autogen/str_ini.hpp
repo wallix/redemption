@@ -555,6 +555,26 @@
 "#_advanced\n"
 "#experimental_fix_input_event_sync = 1\n\n"
 
+"[rdp_metrics]\n\n"
+
+"#_advanced\n"
+"#activate_log_metrics = 0\n\n"
+
+"#_advanced\n"
+"#log_dir_path = " << app_path(AppPath::Record_Metrics) << "\n\n"
+
+"# (is in second)\n"
+"#_advanced\n"
+"#log_interval = 5\n\n"
+
+"# (is in hour)\n"
+"#_advanced\n"
+"#log_file_turnover_interval = 24\n\n"
+
+"# signature key to digest log metrics header info\n"
+"#_advanced\n"
+"#sign_key = 000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F\n\n"
+
 "[mod_vnc]\n\n"
 
 "# Enable or disable the clipboard from client (client to server).\n"

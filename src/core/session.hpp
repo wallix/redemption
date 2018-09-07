@@ -445,6 +445,10 @@ public:
 
                     mm.invoke_close_box(auth_error_message, signal, now, authentifier, authentifier);
                 };
+
+                if (mm.mod) {
+                    mm.mod->log_metrics();
+                }
             }
             if (mm.mod) {
                 mm.mod->disconnect(time(nullptr));

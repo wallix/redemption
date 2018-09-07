@@ -211,7 +211,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
             // if event is a Make
             if (this->keys_down[extendedKeyCode]){
                 if (this->verbose){
-                    LOG(LOG_INFO, "Event is Make for key: Ox%#02x", static_cast<unsigned>(extendedKeyCode));
+//                     LOG(LOG_INFO, "Event is Make for key: Ox%#02x", static_cast<unsigned>(extendedKeyCode));
                 }
 
                 //this->last_char_key = extendedKeyCode;
@@ -224,7 +224,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                   || ( (extendedKeyCode >= 0x4f) && (extendedKeyCode <= 0x53) )
                    ){
                     if (this->verbose){
-                        LOG(LOG_INFO, "Key from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
+//                         LOG(LOG_INFO, "Key from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                     }
 
                     // if numlock is activated AND shift is up, keys are printable characters
@@ -306,7 +306,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                 else {
 
                     if (this->verbose){
-                        LOG(LOG_INFO, "Key not from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
+//                         LOG(LOG_INFO, "Key not from keypad: 0x%02x", static_cast<unsigned>(extendedKeyCode));
                     }
 
                     // Set the layout block to be used, depending on active modifier keys and capslock status
@@ -352,7 +352,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                     uint32_t uchar = (*layout)[sym];
 
                     if (this->verbose){
-                        LOG(LOG_INFO, "uchar=0x%02" PRIx32, uchar);
+//                         LOG(LOG_INFO, "uchar=0x%02" PRIx32, uchar);
                     }
                     //----------------------------------------------
                     // uchar is in Printable unicode character range
@@ -362,7 +362,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                     //           are not actually printable characters and that we don't want to track
                     //  * And not delete (0x7f) nor a dead key (0x5e, 0xa8, 0x60)
                     if (this->verbose){
-                        LOG(LOG_INFO, "nb chars in buffer: %u nb events in buffer %u\n", this->nbuf, this->nbuf_kevent);
+//                         LOG(LOG_INFO, "nb chars in buffer: %u nb events in buffer %u\n", this->nbuf, this->nbuf_kevent);
                     }
                     if (  (uchar >= 0x20)                                               // Not an ASCII Control
                        && (uchar != 0x7F)                                               // Not the Backspace ASCII code
@@ -370,12 +370,12 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                        )
                     {
                         if (this->verbose){
-                            LOG(LOG_INFO, "Printable key : uchar=Ox%x02\n", uchar);
+//                             LOG(LOG_INFO, "Printable key : uchar=Ox%x02\n", uchar);
                         }
                         // If previous key was a dead key, push a translated unicode char
                         if (this->deadkey == DEADKEY_FOUND){
                             if (this->verbose){
-                                LOG(LOG_INFO, "Dead key : uchar=0x%02x", uchar);
+//                                 LOG(LOG_INFO, "Dead key : uchar=0x%02x", uchar);
                             }
                             bool deadkeyTranslated = false;
                             // Search for uchar to translate in the current DEADKEY entry
@@ -402,7 +402,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                         // If previous key wasn't a dead key, simply push
                         else {
                             if (this->verbose){
-                                LOG(LOG_INFO, "not dead key - so pushing char %02x", uchar);
+//                                 LOG(LOG_INFO, "not dead key - so pushing char %02x", uchar);
                             }
                             decoded_key.set_uchar(uchar);
                             this->push(uchar);
@@ -413,7 +413,7 @@ Keymap2::DecodedKeys Keymap2::event(const uint16_t keyboardFlags, const uint16_t
                     //--------------------------------------------------
                     else {
                         if (this->verbose) {
-                            LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", static_cast<unsigned>(extendedKeyCode));
+//                             LOG(LOG_INFO, "pushing event extendedKeyCode = >0x%02x<", static_cast<unsigned>(extendedKeyCode));
                         }
 
                         // Test if the extendedKeyCode is a deadkey in the current keyboard layout
@@ -767,7 +767,7 @@ void Keymap2::init_layout(int LCID)
         }
     }
     if (!found){
-        LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", static_cast<unsigned>(LCID));
+//         LOG(LOG_INFO, "Unknown keyboard layout #0x%02x. Reverting to default (English - United States)", static_cast<unsigned>(LCID));
     }
 } // END METHOD - init_layout
 

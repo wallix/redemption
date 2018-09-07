@@ -214,4 +214,8 @@ public:
     virtual void send_input(int/* time*/, int/* message_type*/, int/* device_flags*/, int/* param1*/, int/* param2*/) {}
 
     virtual Dimension get_dim() const { return Dimension(); }
+
+    virtual void set_last_tram_len(size_t ) {}
+
+    virtual void log_metrics() {}
 };

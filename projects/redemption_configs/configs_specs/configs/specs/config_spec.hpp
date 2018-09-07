@@ -69,6 +69,12 @@ operator | (spec_attr_t<v1>, spec_attr_t<v2>)
 template<cfg_attributes::sesman::io value>
 using sesman_io_t = std::integral_constant<cfg_attributes::sesman::io, value>;
 
+constexpr char default_key[] =
+    "\x00\x01\x02\x03\x04\x05\x06\x07"
+    "\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+    "\x10\x11\x12\x13\x14\x15\x16\x17"
+    "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+;
 
 template<class Writer>
 void config_spec_definition(Writer && W)
@@ -91,6 +97,7 @@ void config_spec_definition(Writer && W)
             "session_log",
             "client",
             "mod_rdp",
+            "rdp_metrics",
             "mod_vnc",
             "mod_replay",
             "ocr",
@@ -428,6 +435,15 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_fix_input_event_sync", set(true));
+    });
+
+    W.section("rdp_metrics", [&]
+    {
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "activate_log_metrics", set(false));
+        W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "log_dir_path", set(CPP_EXPR(app_path(AppPath::Record_Metrics))));
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "log_interval", set(5));
+        W.member(advanced_in_gui, no_sesman, type_<std::chrono::hours>(), "log_file_turnover_interval", set(24));
+        W.member(advanced_in_gui, no_sesman, type_<types::fixed_binary<32>>(), "sign_key", desc{"signature key to digest log metrics header info"}, set(default_key));
     });
 
     W.section("mod_vnc", [&]

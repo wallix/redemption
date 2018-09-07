@@ -1605,6 +1605,73 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
         }
     }
+    else if (0 == strcmp(context, "rdp_metrics")) {
+        if (0) {}
+        else if (0 == strcmp(key, "activate_log_metrics")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::activate_log_metrics&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "log_dir_path")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::log_dir_path&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::directory_path>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::log_dir_path&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "log_interval")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::log_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::seconds>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::log_interval&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "log_file_turnover_interval")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::log_file_turnover_interval&>(this->variables).value,
+                ::configs::spec_type<std::chrono::hours>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::log_file_turnover_interval&>(this->variables)
+            );
+        }
+        else if (0 == strcmp(key, "sign_key")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::rdp_metrics::sign_key&>(this->variables).value,
+                ::configs::spec_type<::configs::spec_types::fixed_binary>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::rdp_metrics::sign_key&>(this->variables)
+            );
+        }
+
+        else if (static_cast<cfg::debug::config>(this->variables).value) {
+            LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);
+        }
+    }
     else if (0 == strcmp(context, "mod_vnc")) {
         if (0) {}
         else if (0 == strcmp(key, "clipboard_up")) {
