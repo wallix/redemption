@@ -27,14 +27,14 @@
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 
 
-
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
-    int argc = 2;
+    char * arg_ext = "arg";
+    char * argv[] = {arg_ext};
+    int argc = 1;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
@@ -120,8 +120,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
    SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
-    int argc = 2;
+   char * arg_ext = "arg";
+    char * argv[2] = {arg_ext};
+    int argc = 1;
    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
    FakeClientIOClipboard clip_io;
    RDPClipboardConfig conf;
@@ -210,8 +211,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromClientToServer)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
-    int argc = 2;
+    char * arg_ext = "arg";
+    char * argv[2] = {arg_ext};
+    int argc = 1;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
