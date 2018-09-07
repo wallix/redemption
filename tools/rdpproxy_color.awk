@@ -1,5 +1,5 @@
 #!/usr/bin/awk  -OSf
-# colout '-po' '-ER' '^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
+# colout '-po' '-ER' '^rdpproxy: (INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* -- (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
 # gawk profile, created Tue Jun 26 18:54:24 2018
 
 # BEGIN rule(s)
@@ -53,7 +53,7 @@ BEGIN {
 
 {
 	s = ""
-	if (match($0, /^rdpproxy: (INFO [^-]+--  [-=]{3,}>? )([^-=<]*)(.*)?/, a)) {
+	if (match($0, /^rdpproxy: (INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0
@@ -75,7 +75,7 @@ BEGIN {
 		}
 		$0 = substr($0, RLENGTH + RSTART) esc_reset
 	}
-	if (match($0, /^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* --  (error:)?([a-zA-Z0-9_]+:)?(.*)/, a)) {
+	if (match($0, /^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* -- (error:)?([a-zA-Z0-9_]+:)?(.*)/, a)) {
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0

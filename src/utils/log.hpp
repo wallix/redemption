@@ -135,7 +135,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
     BOOST_PP_CAT(REDEMPTION_LOG_VALUE_PARAM_, BOOST_PP_BOOL(BOOST_PP_GREATER(r, 2)))(elem)
 
 #  define LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(...) \
-    " " BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)           \
+    "" BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)            \
     BOOST_PP_LIST_FOR_EACH(                              \
         REDEMPTION_LOG_VALUE_PARAM,                      \
         BOOST_PP_NIL,                                    \
@@ -185,7 +185,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
         LOG__REDEMPTION__INTERNAL(                           \
-            priority, "%s (%d/%d) --  In %s:%d",             \
+            priority, "%s (%d/%d) -- ◢ In %s:%d",            \
             __FILE__, __LINE__                               \
         );                                                   \
     }                                                        \

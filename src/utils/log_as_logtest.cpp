@@ -101,10 +101,10 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         REDEMPTION_DIAGNOSTIC_POP
         log_buf.back() = '\n';
 
-        // replace "priority (31905/31905) --  message" by "priority - message"
+        // replace "priority (31905/31905) -- message" by "priority - message"
         auto p = log_buf.find('(', log_buf.size() - sz + 5);
         auto e = log_buf.find('-', p);
-        log_buf.replace(p, e-p+3, "-");
+        log_buf.replace(p, e-p+2, "-");
     }
     else if (LOG__REDEMPTION__AS__LOGPRINT())
     {
