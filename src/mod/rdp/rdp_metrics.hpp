@@ -318,10 +318,7 @@ public:
                                 break;
                             default:
                                 // TODO string_view
-                                if (formatName == RDPECLIP::FILECONTENTS.data()
-                                    || formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()
-                                    || formatName == RDPECLIP::PREFERRED_DROPEFFECT.data()
-                                ) {
+                                if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                                     this->file_contents_format_ID = formatID;
                                     this->metrics.add_to_current_data(nb_copy_file_from_server, 1);
                                     known_format_not_found = false;
@@ -460,10 +457,7 @@ public:
                                     known_format_not_found = false;
                                     break;
                                 default:
-                                    if (formatName == RDPECLIP::FILECONTENTS.data()
-                                     || formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()
-                                     || formatName == RDPECLIP::PREFERRED_DROPEFFECT.data()
-                                    ) {
+                                    if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                                         this->file_contents_format_ID = formatID;
                                         this->metrics.add_to_current_data(nb_copy_file_from_client, 1);
                                         known_format_not_found = false;
