@@ -1153,7 +1153,7 @@ struct FormatListPDU_LongName_Metrics {
 
 };
 
-constexpr char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
+constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
 
 struct FormatListPDU_ShortName_Metrics  {
 
