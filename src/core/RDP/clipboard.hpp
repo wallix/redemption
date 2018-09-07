@@ -1176,7 +1176,7 @@ struct FormatListPDU
 //
 // };
 
-constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorw";
+constexpr const char * FILEGROUPDESCRIPTORW = "FileGroupDescriptorW";
 constexpr const char * FILECONTENTS         = "FileContents";
 constexpr const char * PREFERRED_DROPEFFECT = "Preferred DropEffect";
 

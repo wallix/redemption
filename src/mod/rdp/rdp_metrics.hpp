@@ -161,6 +161,8 @@ private:
     bool cliprdr_init_format_list_done = false;
     bool use_long_format_names     = true;
 
+    uint32_t flag_filecontents = 0;
+
 
 public:
     Metrics metrics;
@@ -285,9 +287,10 @@ public:
                         if (this->use_long_format_names) {
                             RDPECLIP::FormatListPDU_LongName_metrics fl_ln;
                             fl_ln.recv(chunk);
+                            fl_ln.log();
                             formatID = fl_ln.formatID;
                             formatName = reinterpret_cast<char *>(fl_ln.formatUTF8Name);
-                            if (chunk.in_remain() < 6) {
+                            if (chunk.in_remain() <= 6) {
                                 known_format_not_found = false;
                             }
                         } else {
@@ -295,7 +298,7 @@ public:
                             fl_sn.recv(chunk);
                             formatID = fl_sn.formatID;
                             formatName = reinterpret_cast<char *>(fl_sn.formatUTF8Name);
-                            if (chunk.in_remain() < 36) {
+                            if (chunk.in_remain() <= 36) {
                                 known_format_not_found = false;
                             }
                         }
@@ -303,9 +306,9 @@ public:
                         switch (formatID) {
 
                             case RDPECLIP::CF_TEXT:
-                            case RDPECLIP::CF_OEMTEXT:
-                            case RDPECLIP::CF_UNICODETEXT:
                             case RDPECLIP::CF_LOCALE:
+                            case RDPECLIP::CF_UNICODETEXT:
+                            case RDPECLIP::CF_OEMTEXT:
                                 this->metrics.add_to_current_data(nb_copy_text_from_server, 1);
                                 known_format_not_found = false;
                                 break;
@@ -315,10 +318,7 @@ public:
                                 break;
                             default:
                                 // TODO string_view
-                                if (formatName == RDPECLIP::FILECONTENTS
-                                    || formatName == RDPECLIP::FILEGROUPDESCRIPTORW
-                                    || formatName == RDPECLIP::PREFERRED_DROPEFFECT
-                                ) {
+                                if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW) {
                                     this->file_contents_format_ID = formatID;
                                     this->metrics.add_to_current_data(nb_copy_file_from_server, 1);
                                     known_format_not_found = false;
@@ -377,14 +377,20 @@ public:
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
                     chunk.in_skip_bytes(8); // streamId(4 bytes) + lindex(4 bytes)
-                    uint32_t flag_filecontents = chunk.in_uint32_le();
-                    if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        uint64_t nPositionLow = chunk.in_uint32_le();
-                        uint64_t nPositionHigh = chunk.in_uint32_le();
-                        this->metrics.add_to_current_data(total_data_paste_on_server, nPositionLow + (nPositionHigh << 32));
-                    }
+                    this->flag_filecontents = chunk.in_uint32_le();
                     break;
                 }
+
+                case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                {
+                    if (this->flag_filecontents == RDPECLIP::FILECONTENTS_SIZE) {
+                        chunk.in_skip_bytes(4);             // streamId(4 bytes)
+                        uint32_t nPositionLow = chunk.in_uint32_le();
+                        uint64_t nPositionHigh = chunk.in_uint32_le();
+                        this->metrics.add_to_current_data(total_data_paste_on_client, nPositionLow + (nPositionHigh << 32));
+                    }
+                }
+                    break;
             }
         }
     }
@@ -400,7 +406,7 @@ public:
 
                 case RDPECLIP::CB_CLIP_CAPS:
                 {
-                    chunk.in_skip_bytes(4); //                     RDPECLIP::ClipboardCapabilitiesPDU
+                    chunk.in_skip_bytes(4);                 // RDPECLIP::ClipboardCapabilitiesPDU
 
                     RDPECLIP::GeneralCapabilitySet pdu2;
                     pdu2.recv(chunk);
@@ -418,11 +424,14 @@ public:
                             uint32_t formatID = 0;
                             std::string formatName;
                             if (this->use_long_format_names) {
+
                                 RDPECLIP::FormatListPDU_LongName_metrics fl_ln;
                                 fl_ln.recv(chunk);
+                                fl_ln.log();
+
                                 formatID = fl_ln.formatID;
                                 formatName = reinterpret_cast<char *>(fl_ln.formatUTF8Name);
-                                if (chunk.in_remain() < 6) {
+                                if (chunk.in_remain() <= 6) {
                                     known_format_not_found = false;
                                 }
                             } else {
@@ -430,7 +439,7 @@ public:
                                 fl_sn.recv(chunk);
                                 formatID = fl_sn.formatID;
                                 formatName = reinterpret_cast<char *>(fl_sn.formatUTF8Name);
-                                if (chunk.in_remain() < 36) {
+                                if (chunk.in_remain() <= 36) {
                                     known_format_not_found = false;
                                 }
                             }
@@ -438,9 +447,9 @@ public:
                             switch (formatID) {
 
                                 case RDPECLIP::CF_TEXT:
-                                case RDPECLIP::CF_OEMTEXT:
-                                case RDPECLIP::CF_UNICODETEXT:
                                 case RDPECLIP::CF_LOCALE:
+                                case RDPECLIP::CF_UNICODETEXT:
+                                case RDPECLIP::CF_OEMTEXT:
                                     this->metrics.add_to_current_data(nb_copy_text_from_client, 1);
                                     known_format_not_found = false;
                                     break;
@@ -449,11 +458,7 @@ public:
                                     known_format_not_found = false;
                                     break;
                                 default:
-                                    // TODO string_view
-                                    if (formatName == RDPECLIP::FILECONTENTS
-                                     || formatName == RDPECLIP::FILEGROUPDESCRIPTORW
-                                     || formatName == RDPECLIP::PREFERRED_DROPEFFECT
-                                    ) {
+                                    if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW) {
                                         this->file_contents_format_ID = formatID;
                                         this->metrics.add_to_current_data(nb_copy_file_from_client, 1);
                                         known_format_not_found = false;
@@ -483,7 +488,6 @@ public:
                             this->metrics.add_to_current_data(nb_paste_image_on_client, 1);
                             break;
                         default:
-                            LOG(LOG_INFO, "rdp_metrics::set_client_cliprdr_metrics file_contents_format_ID=%u last_formatID=%u", this->file_contents_format_ID, this->last_formatID);
                             if (this->file_contents_format_ID == this->last_formatID){
                                 this->metrics.add_to_current_data(nb_paste_file_on_client, 1);
                             }
@@ -515,10 +519,17 @@ public:
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
                 {
                     chunk.in_skip_bytes(8);    // streamId(4 bytes) + lindex(4 bytes)
-                    uint32_t flag_filecontents = chunk.in_uint32_le();
-                    if (flag_filecontents == RDPECLIP::FILECONTENTS_RANGE) {
-                        uint64_t size = chunk.in_uint64_le();
-                        this->metrics.add_to_current_data(total_data_paste_on_client, size);
+                    this->flag_filecontents = chunk.in_uint32_le();
+                }
+                    break;
+
+                case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+                {
+                    if (this->flag_filecontents == RDPECLIP::FILECONTENTS_SIZE) {
+                        chunk.in_skip_bytes(4);             // streamId(4 bytes)
+                        uint32_t nPositionLow = chunk.in_uint32_le();
+                        uint64_t nPositionHigh = chunk.in_uint32_le();
+                        this->metrics.add_to_current_data(total_data_paste_on_server, nPositionLow + (nPositionHigh << 32));
                     }
                 }
                     break;
