@@ -1508,16 +1508,14 @@ struct FileContentsRequestPDU     // Resquest RANGE
                                    , int lindex
                                    , uint64_t sizeRequested
                                    , uint32_t cbRequested)
-    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
+    : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
     , streamID(streamID)
     , flag(flag)
     , lindex(lindex)
     , sizeRequested(sizeRequested)
     , cbRequested(cbRequested)
-    , clipDataId(streamID)
-    {
-
-    }
+    , clipDataId(0)
+    {}
 
     explicit FileContentsRequestPDU()
     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
@@ -1567,6 +1565,142 @@ struct FileContentsRequestPDU     // Resquest RANGE
         }
     }
 
+};
+
+class FileContentsRequestPDUEx {
+    uint32_t streamId_      = 0;
+    uint32_t lindex_        = 0;
+    uint32_t dwFlags_       = 0;
+    uint32_t nPositionLow_  = 0;
+    uint32_t nPositionHigh_ = 0;
+    uint32_t cbRequested_   = 0;
+    uint32_t clipDataId_    = 0;
+
+    bool has_optional_clipDataId_ = false;
+
+public:
+    explicit FileContentsRequestPDUEx() = default;
+
+private:
+    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
+        uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
+        uint32_t cbRequested, uint32_t clipDataId, bool has_optional_clipDataId) :
+            streamId_(streamId), lindex_(lindex), dwFlags_(dwFlags),
+            nPositionLow_(nPositionLow), nPositionHigh_(nPositionHigh),
+            cbRequested_(cbRequested), clipDataId_(clipDataId),
+            has_optional_clipDataId_(has_optional_clipDataId) {}
+
+public:
+    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
+        uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
+        uint32_t cbRequested) :
+            FileContentsRequestPDUEx(streamId, lindex, dwFlags, nPositionLow,
+                nPositionHigh, cbRequested, 0, false) {}
+
+    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
+        uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
+        uint32_t cbRequested, uint32_t clipDataId) :
+            FileContentsRequestPDUEx(streamId, lindex, dwFlags, nPositionLow,
+                nPositionHigh, cbRequested, clipDataId, true) {}
+
+    void emit(OutStream& stream) const {
+        stream.out_uint32_le(this->streamId_);
+        stream.out_uint32_le(this->lindex_);
+        stream.out_uint32_le(this->dwFlags_);
+        stream.out_uint32_le(this->nPositionLow_);
+        stream.out_uint32_le(this->nPositionHigh_);
+        stream.out_uint32_le(this->cbRequested_);
+        if (this->has_optional_clipDataId_) {
+            stream.out_uint32_le(this->clipDataId_);
+        }
+    }
+
+    void receive(InStream& stream) {
+        {
+            const unsigned int expected = this->minimum_size();
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "FileContentsRequestPDUEx::recv: "
+                        "Truncated File Contents Request PDU, "
+                        "need=%u remains=%zu",
+                    expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        this->streamId_      = stream.in_uint32_le();
+        this->lindex_        = stream.in_uint32_le();
+        this->dwFlags_       = stream.in_uint32_le();
+        this->nPositionLow_  = stream.in_uint32_le();
+        this->nPositionHigh_ = stream.in_uint32_le();
+        this->cbRequested_   = stream.in_uint32_le();
+
+        if (stream.in_remain() > 4 /* clipDataId(4) */) {
+            this->clipDataId_ = stream.in_uint32_le();
+
+            this->has_optional_clipDataId_ = true;
+        }
+        else {
+            this->has_optional_clipDataId_ = false;
+        }
+
+    }
+
+    uint32_t streamId() const { return this->streamId_; }
+    uint32_t lindex() const { return this->lindex_; }
+    uint32_t dwFlags() const { return this->dwFlags_; }
+
+    uint64_t position() const {
+            return (this->nPositionLow_ | (static_cast<uint64_t>(this->nPositionHigh_) << 32));
+        }
+
+    uint32_t cbRequested() const { return this->cbRequested_; }
+    uint32_t clipDataId() const { return this->clipDataId_; }
+
+    bool has_optional_clipDataId() const { return this->has_optional_clipDataId_; }
+
+    size_t size() const {
+        return this->minimum_size()
+             + (  this->has_optional_clipDataId_
+                ? 4     /* clipDataId(4) */
+                : 0);
+    }
+
+    constexpr static size_t minimum_size() {
+        return 24;  // streamId(4) + lindex(4) + dwFlags(4) +
+                    //     nPositionLow(4) + nPositionHigh(4) +
+                    //     cbRequested(4)
+    }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length,
+            "FileContentsRequestPDU: streamId=%u lindex=%u dwFlags=%u "
+                "nPositionLow=%u nPositionHigh=%u cbRequested=%u",
+            this->streamId_, this->lindex_, this->dwFlags_,
+            this->nPositionLow_, this->nPositionHigh_, this->cbRequested_);
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        if (this->has_optional_clipDataId_) {
+            result = ::snprintf(buffer + length, size - length,
+                " clipDataId=%u",
+                this->clipDataId_);
+            length +=
+                ((result < size - length) ? result : (size - length - 1));
+        }
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };
 
 

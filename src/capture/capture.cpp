@@ -967,7 +967,7 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 
         else if (cstr_equal("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", order)
               || cstr_equal("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", order)) {
-            line_with_2_var("file_name", "size");
+            line_with_3_var("file_name", "size", "sha256");
         }
 
         else if (cstr_equal("CLIENT_EXECUTE_REMOTEAPP", order)) {
