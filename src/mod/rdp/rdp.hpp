@@ -837,8 +837,8 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
-                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( /*true*/                                     vars.get<cfg::rdp_metrics::activate_log_metrics>()
+                 , /*"/tmp/"*/                                  vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>()
                  , hmac_user(vars.get<cfg::globals::auth_user>(),
                              vars.get<cfg::rdp_metrics::sign_key>())
