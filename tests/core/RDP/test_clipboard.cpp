@@ -499,7 +499,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     const char exp_data[] =
         "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
-        "\x01\x00\x00\x00";
+        "\x00\x00\x00\x00";
 
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
@@ -548,7 +548,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     const char exp_data[] =
         "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
-        "\x01\x00\x00\x00";
+        "\x00\x00\x00\x00";
 
     std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
     std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
