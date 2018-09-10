@@ -46,3 +46,10 @@ else {
     alias ffmpeg : ;
 }
 ## }
+
+## boost_stacktrace {
+if $(BOOST_STACKTRACE) = 1
+{
+    lib boost_stacktrace : boost_stacktrace_backtrace ;
+}
+## }

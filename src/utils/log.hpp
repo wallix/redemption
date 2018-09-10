@@ -157,7 +157,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 # ifndef REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING
 #   if defined __GNUC__ || defined __clang__
-#       pragma GCC warning "Cannot check format in 'LOG' (no boost preprocessor headers or unsupported variadic macro)"
+#       pragma GCC warning "Cannot check format in 'LOG' (no boost preprocessor headers or unsupported variadic macro). Disable this warning with -DREDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING."
 #   else
 #       warning "Cannot check format in 'LOG' (no boost preprocessor headers or unsupported variadic macro)"
 #   endif
