@@ -25,8 +25,13 @@
 
 
 #include "acl/acl_serializer.hpp"
+#include "utils/genfstat.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/mwrm_reader.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/lcg_random.hpp"
+#include "test_only/get_file_contents.hpp"
+
 // Class ACL Serializer is used to Modify config file content from a remote ACL manager
 // - Send given fields from config
 // - Recover fields from network and update Config
@@ -704,11 +709,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     acl.close_session_log();
 }
 
-
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include "test_only/get_file_contents.hpp"
 
 RED_AUTO_TEST_CASE(TestSessionLogFile)
 {

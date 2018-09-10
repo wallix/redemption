@@ -22,42 +22,35 @@
 #define RED_TEST_MODULE TestRDPDrawable
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
-#include <memory>
-
-#include "utils/sugar/cast.hpp"
-#include "utils/png.hpp"
-#include "utils/drawable.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "test_only/check_sig.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/out_filename_sequence_transport.hpp"
+#include "utils/bitmap_shrink.hpp"
+#include "utils/drawable.hpp"
+#include "utils/fileutils.hpp"
 #include "utils/png.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "utils/difftimeval.hpp"
-#include "gdi/capture_api.hpp"
-#include "core/RDP/RDPDrawable.hpp"
-#include "utils/bitmap_shrink.hpp"
-#include "utils/fileutils.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/timestamp_tracer.hpp"
+
+#include <chrono>
+
 
 // #define STRINGIFY_I(x) #x
 // #define STRINGIFY(x) STRINGIFY_I(x)
 // #define DUMP_PNG(prefix, data) dump_png24(prefix STRINGIFY(__LINE__) ".png", data, true)
 
-inline void server_add_char( GlyphCache & gly_cache, uint8_t cacheId, uint16_t cacheIndex
-                    , int16_t offset, int16_t baseline
-                    , uint16_t width, uint16_t height, const uint8_t * data)
+inline void server_add_char(
+    GlyphCache & gly_cache, uint8_t cacheId, uint16_t cacheIndex
+  , int16_t offset, int16_t baseline, uint16_t width, uint16_t height, const uint8_t * data)
 {
     FontChar fi(offset, baseline, width, height, 0);
     memcpy(fi.data.get(), data, fi.datasize());
-
-
-LOG(LOG_INFO, "cacheId=%u cacheIndex=%u", cacheId, cacheIndex);
+    // LOG(LOG_INFO, "cacheId=%u cacheIndex=%u", cacheId, cacheIndex);
     gly_cache.set_glyph(std::move(fi), cacheId, cacheIndex);
 }
 
@@ -583,7 +576,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         const DrawablePointer * current_pointer;
         DrawablePointer dynamic_pointer;
         DrawablePointer default_pointer;
-        
+
         TimestampTracer timestamp_tracer;
 
     public:
@@ -593,7 +586,7 @@ RED_AUTO_TEST_CASE(TestOneRedScreen)
         , mouse_cursor_pos_x(800 / 2)
         , mouse_cursor_pos_y(600 / 2)
         , dont_show_mouse_cursor(false)
-        , current_pointer(&this->default_pointer)        
+        , current_pointer(&this->default_pointer)
         , timestamp_tracer(gdi::get_mutable_image_view(drawable))
         {}
 

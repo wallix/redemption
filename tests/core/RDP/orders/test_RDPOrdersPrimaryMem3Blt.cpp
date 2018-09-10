@@ -26,4 +26,5 @@
 
 RED_AUTO_TEST_CASE(TestXXX)
 {
+    RDPMem3Blt(0, {}, 0, 0, 0, RDPColor{}, RDPColor{}, RDPBrush(), 0);
 }

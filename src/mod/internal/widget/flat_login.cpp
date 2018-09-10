@@ -27,6 +27,7 @@
 #include "utils/theme.hpp"
 #include "utils/sugar/update_lock.hpp"
 
+
 enum {
     WIDGET_MULTILINE_BORDER_X = 10,
     WIDGET_MULTILINE_BORDER_Y = 4

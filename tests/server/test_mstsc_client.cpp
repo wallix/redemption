@@ -30,7 +30,6 @@
 
 #include "test_only/transport/test_transport.hpp"
 #include "capture/cryptofile.hpp"
-#include "core/font.hpp"
 #include "mod/null/null.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "configs/config.hpp"

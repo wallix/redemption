@@ -21,9 +21,6 @@
 #define RED_TEST_MODULE TestLib
 #include "system/redemption_unit_tests.hpp"
 
-
-#include "utils/crypto/ssl_lib.hpp"
-
 #include "utils/stream.hpp"
 #include "core/RDP/gcc.hpp"
 

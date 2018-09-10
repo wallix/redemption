@@ -18,6 +18,7 @@
    Author(s): Christophe Grosjean, Jonatan Poelen
 */
 
+#include "capture/capture_params.hpp"
 #include "capture/video_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/video_capture.hpp"
@@ -40,10 +41,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
-
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
 
 namespace

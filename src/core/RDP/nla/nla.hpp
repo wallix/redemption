@@ -182,9 +182,7 @@ protected:
         switch (secInter) {
             case NTLM_Interface:
                 LOG(LOG_INFO, "Credssp: NTLM Authentication");
-                {
-                    this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
-                }
+                this->table = std::make_unique<Ntlm_SecurityFunctionTable>(this->rand, this->timeobj, this->set_password_cb);
                 break;
             case Kerberos_Interface:
                 LOG(LOG_INFO, "Credssp: KERBEROS Authentication");

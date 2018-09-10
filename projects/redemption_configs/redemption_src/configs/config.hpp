@@ -32,7 +32,6 @@
 
 #include <cstdint>
 #include <cassert>
-#include <cstdio>
 
 
 namespace configs

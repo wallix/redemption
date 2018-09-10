@@ -23,7 +23,7 @@
 
 #include "system/ssl_sha1.hpp"
 #include "system/ssl_md5.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <algorithm>
 
@@ -32,10 +32,10 @@
 class Sign
 {
     SslSha1 sha1;
-    const const_byte_array key;
+    const const_bytes_view key;
 
 public:
-    Sign(const_byte_array key)
+    Sign(const_bytes_view key)
         : key(key)
     {
         this->sha1.update(this->key);
@@ -49,7 +49,7 @@ public:
         sha1.update(make_array_view(sha1const));
     }
 
-    void update(const_byte_array data) {
+    void update(const_bytes_view data) {
         this->sha1.update(data);
     }
 

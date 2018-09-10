@@ -24,15 +24,10 @@
 
 
 #include "gdi/graphic_api.hpp"
-#include "transport/in_file_transport.hpp"
 #include "utils/log.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/get_file_contents.hpp"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 
 class TestToServerSender : public VirtualChannelDataSender {

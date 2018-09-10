@@ -21,7 +21,7 @@
 #pragma once
 
 #include "system/redemption_unit_tests.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/cast.hpp"
 
 RED_AUTO_TEST_CASE(TestModExp)
 {

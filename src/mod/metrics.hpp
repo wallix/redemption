@@ -42,7 +42,7 @@ class MetricsHmacSha256Encrypt
     std::array<char, SslSha256::DIGEST_LENGTH*2+1> dest;
 
 public:
-    MetricsHmacSha256Encrypt(const_byte_array src, const_byte_array key_crypt)
+    MetricsHmacSha256Encrypt(const_bytes_view src, const_bytes_view key_crypt)
     {
         SslHMAC_Sha256 sha256(key_crypt);
         sha256.update(src);
@@ -230,7 +230,7 @@ public:
         auto text_date = (now % 24h == 0s) ? text_gmdate(now) : filename_gmdatetime(now);
 
         ::snprintf(this->complete_file_path, sizeof(this->complete_file_path),
-            "%s/%s_metrics-%s-%s.logmetrics",
+            "%s%s_metrics-%s-%s.logmetrics",
             this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
 
         this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);

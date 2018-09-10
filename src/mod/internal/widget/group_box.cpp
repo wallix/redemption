@@ -20,6 +20,7 @@
 
 #include "mod/internal/widget/group_box.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 #include "utils/sugar/cast.hpp"
 
 WidgetGroupBox::WidgetGroupBox(

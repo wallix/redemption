@@ -50,7 +50,7 @@ public:
         this->ctx.count[1] = 0;
     }
 
-    void update(const_byte_array data) noexcept
+    void update(const_bytes_view data) noexcept
     {
         uint32_t i;
 

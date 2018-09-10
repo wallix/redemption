@@ -22,7 +22,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "utils/log.hpp"
 #include "core/RDP/remote_programs.hpp"
 
 /*

@@ -50,7 +50,7 @@ namespace redemption_unit_test__
 {
     struct hexdump
     {
-        const_byte_array sig;
+        const_bytes_view sig;
 
         std::size_t size() const
         {
@@ -125,7 +125,7 @@ namespace redemption_unit_test__
 
 struct GeneratorTransport : Transport
 {
-    GeneratorTransport(cbyte_array buffer)
+    GeneratorTransport(cbytes_view buffer)
     : GeneratorTransport(buffer.data(), buffer.size())
     {}
 
@@ -323,7 +323,7 @@ private:
 
 struct TestTransport : public Transport
 {
-    TestTransport(cbyte_array indata, cbyte_array outdata)
+    TestTransport(cbytes_view indata, cbytes_view outdata)
     : TestTransport(indata.data(), indata.size(), outdata.data(), outdata.size())
     {}
 

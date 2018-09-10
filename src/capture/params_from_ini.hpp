@@ -27,7 +27,6 @@
 #include "capture/pattern_params.hpp"
 #include "capture/wrm_params.hpp"
 
-#include <cstdint>
 
 class CryptoContext;
 class Fstat;

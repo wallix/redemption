@@ -173,7 +173,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 
 #ifdef IN_IDE_PARSER
-# define LOG(priority, ...) compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
+# define LOG(priority, ...) ::compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
 # define LOG_UNCHECKED_FORMAT 1
 
 #else

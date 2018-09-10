@@ -25,9 +25,8 @@
 
 #include "core/RDP/RDPDrawable.hpp"
 #include "test_only/check_sig.hpp"
-#include "transport/out_filename_sequence_transport.hpp"
-#include "utils/png.hpp"
 #include "utils/video_cropper.hpp"
+
 
 RED_AUTO_TEST_CASE(TestVideoCropperFull)
 {

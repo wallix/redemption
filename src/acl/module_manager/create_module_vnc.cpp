@@ -24,7 +24,6 @@
 
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/vnc/vnc.hpp"
 #include "utils/sugar/unique_fd.hpp"

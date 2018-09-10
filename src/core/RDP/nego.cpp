@@ -23,12 +23,11 @@
 
 #include "core/RDP/nego.hpp"
 #include "core/RDP/nla/nla.hpp"
+#include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
 
 #include "utils/sugar/strutils.hpp"
 
-#include "utils/verbose_flags.hpp"
-#include "core/RDP/tpdu_buffer.hpp"
 
 // Protocol Security Negotiation Protocols
 // NLA : Network Level Authentication (TLS implicit)

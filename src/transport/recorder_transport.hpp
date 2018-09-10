@@ -23,9 +23,11 @@
 
 #include "transport/transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "utils/difftimeval.hpp"
 
 #include <chrono>
+
+class TimeObj;
+
 
 /**
  * @brief a file containing a capture
@@ -53,7 +55,7 @@ public:
 
 	~RecorderFile();
 
-	void write_packet(PacketType type, const_byte_array buffer);
+	void write_packet(PacketType type, const_bytes_view buffer);
 
 protected:
     TimeObj& timeobj;
@@ -71,7 +73,7 @@ public:
 
 	explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
 
-	void add_info(byte_array info);
+	void add_info(bytes_view info);
 
     TlsResult enable_client_tls(
         bool server_cert_store, ServerCertCheck server_cert_check,

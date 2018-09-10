@@ -22,12 +22,12 @@
   find out the next module to run from context reading
 */
 
-
 #pragma once
 
 #include "utils/log.hpp"
 #include "configs/config.hpp"
 #include "acl/acl_serializer.hpp"
+#include "acl/auth_api.hpp"
 
 #include "utils/verbose_flags.hpp"
 

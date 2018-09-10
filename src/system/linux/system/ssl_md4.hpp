@@ -20,11 +20,12 @@
 
 #pragma once
 
+#include "system/basic_hmac.hpp"
+
 #include <cstdint>
 #include <cstring>
 
-#include "openssl_crypto.hpp"
-#include "system/basic_hmac.hpp"
+#include <openssl/md4.h>
 
 
 class SslMd4
@@ -39,7 +40,7 @@ public:
         MD4_Init(&this->md4);
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         MD4_Update(&this->md4, data.to_u8p(), data.size());
     }

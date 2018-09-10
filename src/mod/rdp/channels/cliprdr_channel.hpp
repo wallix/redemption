@@ -26,17 +26,57 @@
 #include "core/RDP/clipboard.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "system/linux/system/ssl_sha256.hpp"
+#include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
-#include "utils/key_qvalue_pairs.hpp"
 
+#include <map>
 #include <memory>
+#include <vector>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
+    struct file_contents_request_info
+    {
+        uint32_t lindex;
+
+        uint64_t position;
+
+        uint32_t cbRequested;
+
+        uint32_t clipDataId;
+
+        uint32_t offset;
+    };
+    using file_contents_request_info_inventory_type = std::map<uint32_t /*streamId*/, file_contents_request_info>;
+
+    file_contents_request_info_inventory_type server_file_contents_request_info_inventory;
+    file_contents_request_info_inventory_type client_file_contents_request_info_inventory;
+
+    struct file_info_type
+    {
+        std::string file_name;
+
+        uint64_t size;
+
+        uint64_t sequential_access_offset;
+
+        SslSha256 sha256;
+    };
+    using file_info_inventory_type = std::vector<file_info_type>;
+
+    using file_stream_data_inventory_type = std::map<uint32_t /*clipDataId*/, file_info_inventory_type>;
+
+    uint32_t                        client_clipDataId = 0;
+    file_stream_data_inventory_type client_file_stream_data_inventory;
+
+    uint32_t                        server_clipDataId = 0;
+    file_stream_data_inventory_type server_file_stream_data_inventory;
+
     uint16_t client_message_type = 0;
     uint16_t server_message_type = 0;
 
@@ -54,6 +94,12 @@ private:
 
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
+
+    uint32_t client_dataLen = 0;
+    uint32_t client_streamId = 0;
+
+    uint32_t server_dataLen = 0;
+    uint32_t server_streamId = 0;
 
     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
@@ -225,6 +271,42 @@ private:
             this->send_pdu_to_client<RDPECLIP::FileContentsResponse>(false);
 
             return false;
+        }
+
+        {
+            const unsigned int expected = 6;    // msgFlags(2) +
+                                                //     dataLen(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_file_contents_request_pdu: "
+                        "Truncated CLIPRDR_HEADER, need=%u remains=%zu",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        chunk.in_skip_bytes(2); // msgFlags(2)
+        uint32_t const dataLen = chunk.in_uint32_le();
+
+        if (dataLen > RDPECLIP::FileContentsRequestPDUEx::minimum_size()) {
+            RDPECLIP::FileContentsRequestPDUEx file_contents_request_pdu;
+
+            file_contents_request_pdu.receive(chunk);
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                file_contents_request_pdu.log(LOG_INFO);
+            }
+
+            if ((RDPECLIP::FILECONTENTS_RANGE == file_contents_request_pdu.dwFlags()) &&
+                file_contents_request_pdu.has_optional_clipDataId()) {
+                this->client_file_contents_request_info_inventory[file_contents_request_pdu.streamId()] =
+                    {
+                        file_contents_request_pdu.lindex(),
+                        file_contents_request_pdu.position(),
+                        file_contents_request_pdu.cbRequested(),
+                        file_contents_request_pdu.clipDataId(),
+                        0                                           // offset
+                    };
+            }
         }
 
         return true;
@@ -424,7 +506,8 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                this->log_file_descriptor(fd);
+                const bool from_remote_session = false;
+                this->update_file_contents_request_inventory(fd, from_remote_session);
 
                 this->file_descriptor_stream.rewind();
             }
@@ -446,7 +529,8 @@ private:
                     fd.log(LOG_INFO);
                 }
 
-                this->log_file_descriptor(fd);
+                const bool from_remote_session = false;
+                this->update_file_contents_request_inventory(fd, from_remote_session);
             }
 
             if (chunk.in_remain()) {
@@ -469,26 +553,66 @@ private:
     }   // process_client_format_data_response_pdu
 
 private:
-    void log_file_descriptor(RDPECLIP::FileDescriptor const& fd)
+    void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd, bool from_remote_session)
     {
-        auto const file_size_str = std::to_string(fd.file_size());
+        if (from_remote_session) {
+            file_info_inventory_type& file_info_inventory =
+                this->server_file_stream_data_inventory[this->server_clipDataId];
+
+            file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
+        }
+        else {
+            file_info_inventory_type& file_info_inventory =
+                this->client_file_stream_data_inventory[this->client_clipDataId];
+
+            file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
+        }
+    }
+
+    void log_file_info(file_info_type & file_info, bool from_remote_session)
+    {
+        const char* type = (
+                  from_remote_session
+                ? "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"
+                : "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"
+            );
+
+        uint8_t digest[SslSha256::DIGEST_LENGTH] = { 0 };
+
+        file_info.sha256.final(digest);
+
+        char digest_s[128];
+        snprintf(digest_s, sizeof(digest_s),
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+            "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+            digest[ 0], digest[ 1], digest[ 2], digest[ 3], digest[ 4], digest[ 5], digest[ 6], digest[ 7],
+            digest[ 8], digest[ 9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15],
+            digest[16], digest[17], digest[18], digest[19], digest[20], digest[21], digest[22], digest[23],
+            digest[24], digest[25], digest[26], digest[27], digest[28], digest[29], digest[30], digest[31]);
+
+        auto const file_size_str = std::to_string(file_info.size);
+
         auto const info = key_qvalue_pairs({
-            {"type", "CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION"},
-            {"file_name", fd.fileName()},
-            {"size", file_size_str}
+                { "type", type },
+                { "file_name", file_info.file_name.c_str() },
+                { "size", file_size_str },
+                { "sha256", digest_s }
             });
 
         this->report_message.log5(info);
 
-        if (!this->param_dont_log_data_into_syslog){
+        if (!this->param_dont_log_data_into_syslog) {
             LOG(LOG_INFO, "%s", info);
         }
 
         if (!this->param_dont_log_data_into_wrm) {
-            std::string message("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION=");
-            message += fd.fileName();
+            std::string message(type);
+            message += "=";
+            message += file_info.file_name.c_str();
             message += "\x01";
             message += file_size_str;
+            message += "\x01";
+            message += digest_s;
 
             this->front.session_update(message);
         }
@@ -790,7 +914,7 @@ public:
                 }
             break;
 
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
@@ -799,7 +923,161 @@ public:
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
+
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_client_message: "
+                                    "Truncated CLIPRDR_HEADER (1), "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    chunk.in_skip_bytes(2); // msgFlags(2)
+                    this->client_dataLen = chunk.in_uint32_le();
+
+                    if (this->client_dataLen >= 4 /* streamId(4) */) {
+                        this->client_streamId = chunk.in_uint32_le();
+                    }
                 }
+
+                if (this->server_file_contents_request_info_inventory.end() !=
+                    this->server_file_contents_request_info_inventory.find(this->client_streamId))
+                {
+                    file_contents_request_info& file_contents_request =
+                        this->server_file_contents_request_info_inventory[this->client_streamId];
+
+                    {
+                        file_info_inventory_type& file_info_inventory =
+                            this->client_file_stream_data_inventory[
+                                file_contents_request.clipDataId];
+
+                        file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
+
+                        uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+
+                        if (chunk.in_remain()) {
+                            if (file_info.sequential_access_offset == file_contents_request_position_current) {
+                                uint32_t const length_ = std::min({
+                                        static_cast<uint32_t>(chunk.in_remain()),
+                                        static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
+                                        file_contents_request.cbRequested - file_contents_request.offset
+                                    });
+
+                                file_info.sha256.update({ chunk.get_current(), length_ });
+
+                                file_contents_request.offset       += length_;
+                                file_info.sequential_access_offset += length_;
+
+                                if (file_info.sequential_access_offset == file_info.size) {
+                                    const bool from_remote_session = false;
+                                    this->log_file_info(file_info, from_remote_session);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+
+            case RDPECLIP::CB_LOCK_CLIPDATA: {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "Lock Clipboard Data PDU");
+                }
+
+                {
+                    const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_client_message: "
+                                "Truncated CLIPRDR_HEADER (2), "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                chunk.in_skip_bytes(2); // msgFlags(2)
+                uint32_t const dataLen = chunk.in_uint32_le();
+
+                if (dataLen >= 4 /* clipDataId(4) */) {
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_client_message: "
+                                    "Truncated CLIPRDR_LOCK_CLIPDATA, "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    uint32_t const clipDataId = chunk.in_uint32_le();
+
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_client_message: "
+                                "clipDataId=%u", clipDataId);
+                    }
+
+                    this->server_clipDataId                             = clipDataId;
+                    this->server_file_stream_data_inventory[clipDataId] = file_info_inventory_type();
+                }
+            }
+            break;
+
+            case RDPECLIP::CB_UNLOCK_CLIPDATA: {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "Unlock Clipboard Data PDU");
+                }
+
+                {
+                    const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_client_message: "
+                                "Truncated CLIPRDR_HEADER (3), "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                chunk.in_skip_bytes(2); // msgFlags(2)
+                uint32_t const dataLen = chunk.in_uint32_le();
+
+                if (dataLen >= 4 /* clipDataId(4) */) {
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_client_message: "
+                                    "Truncated CLIPRDR_UNLOCK_CLIPDATA, "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    uint32_t const clipDataId = chunk.in_uint32_le();
+
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_client_message: "
+                                "clipDataId=%u", clipDataId);
+                    }
+
+                    this->server_file_stream_data_inventory.erase(clipDataId);
+                }
+            }
             break;
 
             default:
@@ -874,6 +1152,42 @@ public:
             return false;
         }
 
+        {
+            const unsigned int expected = 6;    // msgFlags(2) +
+                                                //     dataLen(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
+                        "Truncated CLIPRDR_HEADER, need=%u remains=%zu",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        chunk.in_skip_bytes(2); // msgFlags(2)
+        uint32_t const dataLen = chunk.in_uint32_le();
+
+        if (dataLen > RDPECLIP::FileContentsRequestPDUEx::minimum_size()) {
+            RDPECLIP::FileContentsRequestPDUEx file_contents_request_pdu;
+
+            file_contents_request_pdu.receive(chunk);
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                file_contents_request_pdu.log(LOG_INFO);
+            }
+
+            if ((RDPECLIP::FILECONTENTS_RANGE == file_contents_request_pdu.dwFlags()) &&
+                file_contents_request_pdu.has_optional_clipDataId()) {
+                this->server_file_contents_request_info_inventory[file_contents_request_pdu.streamId()] =
+                    {
+                        file_contents_request_pdu.lindex(),
+                        file_contents_request_pdu.position(),
+                        file_contents_request_pdu.cbRequested(),
+                        file_contents_request_pdu.clipDataId(),
+                        0                                           // offset
+                    };
+            }
+        }
+
         return true;
     }
 
@@ -882,6 +1196,18 @@ public:
     {
         (void)total_length;
         (void)flags;
+
+        {
+            const unsigned int expected = 6;    // msgFlags(2) +
+                                                //     dataLen(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                        "Truncated CLIPRDR_HEADER, need=%u remains=%zu",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
 
         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
@@ -918,7 +1244,7 @@ public:
         }
 
         return true;
-    }
+    }   // process_server_format_data_request_pdu
 
     bool process_server_format_data_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
@@ -934,7 +1260,7 @@ public:
             const uint32_t dataLen = chunk.in_uint32_le();
 
             LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                "ClipboardVirtualChannel::process_server_format_data_response_pdu: "
                     "Sending %s(%u) clipboard data to client (%u) bytes%s",
                 RDPECLIP::get_Format_name(this->requestedFormatId),
                 this->requestedFormatId, dataLen,
@@ -986,7 +1312,7 @@ public:
                     const uint32_t locale_identifier = chunk.in_uint32_le();
 
                     LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
+                        "ClipboardVirtualChannel::process_server_format_data_response_pdu: "
                             "locale_identifier=0x%04X",
                         locale_identifier);
                 }
@@ -1042,27 +1368,8 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                auto const file_size_str = std::to_string(fd.file_size());
-                auto const info = key_qvalue_pairs({
-                    {"type", "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"},
-                    {"file_name", fd.fileName()},
-                    {"size", file_size_str}
-                    });
-
-                this->report_message.log5(info);
-
-                if (!this->param_dont_log_data_into_syslog){
-                    LOG(LOG_INFO, "%s", info);
-                }
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION=");
-                    message += fd.fileName();
-                    message += "\x01";
-                    message += file_size_str;
-
-                    this->front.session_update(message);
-                }
+                const bool from_remote_session = true;
+                this->update_file_contents_request_inventory(fd, from_remote_session);
 
                 this->file_descriptor_stream.rewind();
             }
@@ -1075,27 +1382,8 @@ public:
                     fd.log(LOG_INFO);
                 }
 
-                auto const file_size_str = std::to_string(fd.file_size());
-                auto const info = key_qvalue_pairs({
-                    {"type", "CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION"},
-                    {"file_name", fd.fileName()},
-                    {"size", file_size_str}
-                    });
-
-                this->report_message.log5(info);
-
-                if (!this->param_dont_log_data_into_syslog){
-                    LOG(LOG_INFO, "%s", info);
-                }
-
-                if (!this->param_dont_log_data_into_wrm) {
-                    std::string message("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION=");
-                    message += fd.fileName();
-                    message += "\x01";
-                    message += file_size_str;
-
-                    this->front.session_update(message);
-                }
+                const bool from_remote_session = true;
+                this->update_file_contents_request_inventory(fd, from_remote_session);
             }
 
             if (chunk.in_remain()) {
@@ -1388,7 +1676,7 @@ public:
                         total_length, flags, chunk);
             break;
 
-            case RDPECLIP::CB_FILECONTENTS_RESPONSE:
+            case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
@@ -1397,7 +1685,64 @@ public:
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
+
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_server_message: "
+                                    "Truncated CLIPRDR_HEADER (1), "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    chunk.in_skip_bytes(2); // msgFlags(2)
+                    this->server_dataLen = chunk.in_uint32_le();
+
+                    if (this->server_dataLen >= 4 /* streamId(4) */) {
+                        this->server_streamId = chunk.in_uint32_le();
+                    }
                 }
+
+                if (this->client_file_contents_request_info_inventory.end() !=
+                    this->client_file_contents_request_info_inventory.find(this->server_streamId))
+                {
+                    file_contents_request_info& file_contents_request =
+                        this->client_file_contents_request_info_inventory[this->server_streamId];
+
+                    {
+                        file_info_inventory_type& file_info_inventory =
+                            this->server_file_stream_data_inventory[
+                                file_contents_request.clipDataId];
+
+                        file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
+
+                        uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+
+                        if (chunk.in_remain()) {
+                            if (file_info.sequential_access_offset == file_contents_request_position_current) {
+                                uint32_t const length_ = std::min({
+                                        static_cast<uint32_t>(chunk.in_remain()),
+                                        static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
+                                        file_contents_request.cbRequested - file_contents_request.offset
+                                    });
+
+                                file_info.sha256.update({ chunk.get_current(), length_ });
+
+                                file_contents_request.offset       += length_;
+                                file_info.sequential_access_offset += length_;
+
+                                if (file_info.sequential_access_offset == file_info.size) {
+                                    const bool from_remote_session = true;
+                                    this->log_file_info(file_info, from_remote_session);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
@@ -1466,6 +1811,55 @@ public:
                 }
             break;
 
+            case RDPECLIP::CB_LOCK_CLIPDATA: {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Lock Clipboard Data PDU");
+                }
+
+                {
+                    const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Truncated CLIPRDR_HEADER (2), "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                chunk.in_skip_bytes(2); // msgFlags(2)
+                uint32_t const dataLen = chunk.in_uint32_le();
+
+                if (dataLen >= 4 /* clipDataId(4) */) {
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_server_message: "
+                                    "Truncated CLIPRDR_LOCK_CLIPDATA, "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    uint32_t const clipDataId = chunk.in_uint32_le();
+
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "clipDataId=%u", clipDataId);
+                    }
+
+                    this->client_clipDataId                             = clipDataId;
+                    this->client_file_stream_data_inventory[clipDataId] = file_info_inventory_type();
+                }
+            }
+            break;
+
             case RDPECLIP::CB_MONITOR_READY:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
@@ -1476,6 +1870,54 @@ public:
                 send_message_to_client =
                     this->process_server_monitor_ready_pdu(
                         total_length, flags, chunk);
+            break;
+
+            case RDPECLIP::CB_UNLOCK_CLIPDATA: {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_message: "
+                            "Unlock Clipboard Data PDU");
+                }
+
+                {
+                    const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                    if (!chunk.in_check_rem(expected)) {
+                        LOG(LOG_ERR,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "Truncated CLIPRDR_HEADER (3), "
+                                "need=%u remains=%zu",
+                            expected, chunk.in_remain());
+                        throw Error(ERR_RDP_DATA_TRUNCATED);
+                    }
+                }
+
+                chunk.in_skip_bytes(2); // msgFlags(2)
+                uint32_t const dataLen = chunk.in_uint32_le();
+
+                if (dataLen >= 4 /* clipDataId(4) */) {
+                    {
+                        const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+                        if (!chunk.in_check_rem(expected)) {
+                            LOG(LOG_ERR,
+                                "ClipboardVirtualChannel::process_server_message: "
+                                    "Truncated CLIPRDR_UNLOCK_CLIPDATA, "
+                                    "need=%u remains=%zu",
+                                expected, chunk.in_remain());
+                            throw Error(ERR_RDP_DATA_TRUNCATED);
+                        }
+                    }
+
+                    uint32_t const clipDataId = chunk.in_uint32_le();
+
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO,
+                            "ClipboardVirtualChannel::process_server_message: "
+                                "clipDataId=%u", clipDataId);
+                    }
+
+                    this->client_file_stream_data_inventory.erase(clipDataId);
+                }
+            }
             break;
 
             default:

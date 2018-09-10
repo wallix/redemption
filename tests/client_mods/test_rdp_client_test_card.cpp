@@ -25,9 +25,6 @@
 #define RED_TEST_MODULE TestRdpClientTestCard
 #include "system/redemption_unit_tests.hpp"
 
-
-
-#include "core/error.hpp"
 #include "core/font.hpp"
 #include "core/client_info.hpp"
 #include "mod/internal/test_card_mod.hpp"

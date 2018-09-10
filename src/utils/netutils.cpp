@@ -26,7 +26,6 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
-#include "utils/sugar/array_view.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -38,8 +37,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-#include <csignal>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <netdb.h>
 #include <sys/un.h>

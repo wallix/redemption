@@ -29,10 +29,10 @@
 #include <memory>
 #include <utility>
 
+#include <cassert>
 #include <cstring>
 
 #include "utils/bitfu.hpp"
-#include "utils/sugar/not_null_ptr.hpp"
 
 
 struct FontCharView

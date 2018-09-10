@@ -23,23 +23,26 @@
 
 #include "utils/compression_transport_builder.hpp"
 
-#include <iostream>
-#include <sstream>
+#include <string>
+
+namespace
+{
+    std::string str;
+}
+
 
 RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
 {
-    std::stringbuf buf;
-    auto * oldbuf = std::cout.rdbuf(&buf);
     struct NoneTransport : Transport {
-        void flush() override { std::cout << "none\n"; }
+        void flush() override { str += "none\n"; }
     };
     struct GzipTransport : Transport {
         GzipTransport(Transport &, uint32_t) {}
-        void flush() override { std::cout << "gzip\n"; }
+        void flush() override { str += "gzip\n"; }
     };
     struct SnappyTransport : Transport {
         SnappyTransport(Transport &, uint32_t) {}
-        void flush() override { std::cout << "snappy\n"; }
+        void flush() override { str += "snappy\n"; }
     };
 
     NoneTransport trans;
@@ -50,9 +53,7 @@ RED_AUTO_TEST_CASE(TestCompressionTransportBuilder)
     CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::gzip).get().flush();
     CompressionTestTransportBuilder(trans, WrmCompressionAlgorithm::snappy).get().flush();
 
-    std::cout.rdbuf(oldbuf);
-
-    RED_CHECK_EQUAL(buf.str(), "none\ngzip\nsnappy\n");
+    RED_CHECK_EQUAL(str, "none\ngzip\nsnappy\n");
 
     CompressionTestTransportBuilder t(trans, WrmCompressionAlgorithm::gzip);
     RED_CHECK_EQUAL(t.get_algorithm(), WrmCompressionAlgorithm::gzip);

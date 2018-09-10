@@ -22,17 +22,11 @@
 #define RED_TEST_MODULE TestInFileTransport
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "core/error.hpp"
+#include "test_only/get_file_contents.hpp"
+
+#include <cstdlib>
+
 
 RED_AUTO_TEST_CASE(TestInFileTransport)
 {
@@ -43,17 +37,6 @@ RED_AUTO_TEST_CASE(TestInFileTransport)
         ft.send("and again, ", 11);
         ft.send("and so on.", 10);
     }
-    {
-        char buf[128];
-        char * pbuf = buf;
-        InFileTransport ft(unique_fd{::open(tmpname, O_RDONLY)});
-        ft.recv_boom(pbuf, 10);
-        pbuf += 10;
-        ft.recv_boom(pbuf, 11);
-        pbuf += 11;
-        ft.recv_boom(pbuf, 10);
-        RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
-        RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
-    }
+    RED_CHECK_EQUAL(get_file_contents(tmpname), "We write, and again, and so on.");
     ::unlink(tmpname);
 }

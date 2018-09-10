@@ -18,15 +18,15 @@
    Author(s): Christophe Grosjean, Javier Caverni, Xavier Dunat, Martin Potier
 */
 
-#include "utils/png.hpp"
 #include "cxx/cxx.hpp"
 #include "gdi/graphic_api.hpp"
 #include "transport/transport.hpp"
-#include "utils/drawable.hpp"
-#include "utils/sugar/array_view.hpp"
-#include "utils/sugar/numerics/safe_conversions.hpp"
-#include "utils/sugar/buf_maker.hpp"
 #include "utils/file.hpp"
+#include "utils/image_data_view.hpp"
+#include "utils/png.hpp"
+#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/buf_maker.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -338,7 +338,7 @@ void read_png24(Transport & trans, MutableImageDataView const & mutable_image_vi
         mutable_image_view.line_size());
 }
 
-// TODO void read_png24_by_line(read_fn:size_t(byte_array), f:void(byte_array))
+// TODO void read_png24_by_line(read_fn:size_t(bytes_view), f:void(bytes_view))
 void set_rows_from_image_chunk(
     Transport & trans,
     const WrmChunkType chunk_type,

@@ -22,12 +22,11 @@
 
 #include <algorithm>
 #include <chrono>
-#include <utility>
 #include <string>
+#include <type_traits>
 
 #include <ctime> // localtime_r
-#include <cstdio> //snprintf
-#include <cstdlib> //mkostemps
+#include <cstdio> // snprintf / sprintf
 #include <cerrno>
 #include <cassert>
 
@@ -36,10 +35,8 @@
 
 #include "utils/log.hpp"
 
-#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/byte.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/sugar/noncopyable.hpp"
 #include "utils/sugar/cast.hpp"
@@ -62,9 +59,6 @@
 #include "gdi/kbd_input_api.hpp"
 
 #include "capture/title_extractors/agent_title_extractor.hpp"
-#include "capture/title_extractors/ocr_title_filter.hpp"
-#include "capture/title_extractors/ocr_titles_extractor.hpp"
-#include "capture/title_extractors/ppocr_titles_extractor.hpp"
 #include "capture/title_extractors/ocr_title_extractor_builder.hpp"
 
 #include "capture/capture.hpp"
@@ -399,7 +393,7 @@ private:
         );
     }
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -479,7 +473,7 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     bool is_probe_enabled_session = false;
     ReportMessageApi & report_message;
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
         }
@@ -963,13 +957,17 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
               || cstr_equal("DRIVE_REDIRECTION_DELETE", order)) {
             line_with_1_var("file_name");
         }
+        else if (cstr_equal("DRIVE_REDIRECTION_READ_EX", order)
+              || cstr_equal("DRIVE_REDIRECTION_WRITE_EX", order)) {
+            line_with_3_var("file_name", "size", "sha256");
+        }
         else if (cstr_equal("DRIVE_REDIRECTION_RENAME", order)) {
             line_with_2_var("old_file_name", "new_file_name");
         }
 
         else if (cstr_equal("CB_COPYING_PASTING_FILE_TO_REMOTE_SESSION", order)
               || cstr_equal("CB_COPYING_PASTING_FILE_FROM_REMOTE_SESSION", order)) {
-            line_with_2_var("file_name", "size");
+            line_with_3_var("file_name", "size", "sha256");
         }
 
         else if (cstr_equal("CLIENT_EXECUTE_REMOTEAPP", order)) {
@@ -996,12 +994,10 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("STARTUP_APPLICATION_FAIL_TO_RUN_2", order)) {
             line_with_3_var("application_name", "raw_result", "raw_result_message");
         }
-
         else if (cstr_equal("PROCESS_BLOCKED", order)
               || cstr_equal("PROCESS_DETECTED", order)) {
             line_with_3_var("rule", "app_name", "app_cmd_line");
         }
-
         else {
             message.clear();
             LOG(LOG_WARNING,
@@ -1178,7 +1174,7 @@ private:
         );
     }
 
-    void copy_bytes(const_byte_array bytes) {
+    void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->send_kbd();
         }

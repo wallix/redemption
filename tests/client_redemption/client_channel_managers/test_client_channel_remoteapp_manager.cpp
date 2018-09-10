@@ -33,11 +33,17 @@
 RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 {
     SessionReactor session_reactor;
-    FakeClient client(session_reactor);
+    char * argv[2] = {"1234", "5678"};
+    int argc = 2;
+    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientOutputGraphic graph_io;
     FakeClientInputMouseKeyboard input_io;
 
     ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
+
+    RDPRemoteAppConfig config;
+
+    manager.set_configuration(800, 600, config);
 
 
     StaticOutStream<32> out_handshake;
@@ -72,12 +78,14 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRemoteAppChannel)
 {
-    SessionReactor session_reactor;
-    FakeClient client(session_reactor);
-    FakeClientOutputGraphic graph_io;
-    FakeClientInputMouseKeyboard input_io;
-
-    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
+//     SessionReactor session_reactor;
+//     char * argv[2] = {"1234", "5678"};
+//     int argc = 2;
+//     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+//     FakeClientOutputGraphic graph_io;
+//     FakeClientInputMouseKeyboard input_io;
+//
+//     ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
 
 
 //

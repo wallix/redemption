@@ -29,8 +29,10 @@
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
-#include "client_redemption/client_redemption_api.hpp"
 
+
+#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_redemption_controller.hpp"
 
 
 #include "../keymaps/qt_scancode_keymap.hpp"
@@ -65,9 +67,9 @@
 #include REDEMPTION_QT_INCLUDE_WIDGET(QWidget)
 #include REDEMPTION_QT_INCLUDE_WIDGET(QScrollArea)
 
+#define QT_ORANGE_WALLIX QColor(0xFF, 0x8C, 0x00)
+
 #undef REDEMPTION_QT_INCLUDE_WIDGET
-
-
 
 #include <vector>
 
@@ -80,6 +82,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
+    ClientRedemptionConfig * config;
     ClientInputMouseKeyboardAPI * controllers;
 
     int _width;
@@ -97,7 +100,7 @@ public:
     const long int movie_len;
 
 
-    IconMovie(ClientInputMouseKeyboardAPI * controllers
+    IconMovie(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers
       , const std::string & name
       , const std::string & path
       , const std::string & version,
@@ -106,6 +109,7 @@ public:
         const long int movie_len,
         QWidget * parent)
       : QWidget(parent)
+      , config(config)
       , controllers(controllers)
       , _width(385)
       , _height(60)
@@ -145,13 +149,12 @@ public:
         std::string line(this->checksum+"   "+this->reso);
         QString qchecksum(line.c_str());
 
-
         painter.drawText(QPoint(this->height()+6, 15), qname);
         painter.drawText(QPoint(this->height()+6, 25), qversion);
         painter.drawText(QPoint(this->height()+6, 35), qchecksum);
         painter.drawText(QPoint(this->height()+6, 45), toQStringData(this->movie_len));
 
-        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        pen.setBrush(QT_ORANGE_WALLIX);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-20, this->height()-1, 4, 4);
 
@@ -188,7 +191,7 @@ public:
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
         pen.setWidth(1);
-        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        pen.setBrush(QT_ORANGE_WALLIX);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-20, this->height()-1, 4, 4);
         painter.end();
@@ -220,8 +223,8 @@ public:
 
             std::string const movie_dir = path.substr(0, pos);
 
-            this->controllers->client->mod_state = ClientRedemptionAPI::MOD_RDP_REPLAY;
-            this->controllers->client->replay(movie_name, movie_dir);
+            this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
+            this->controllers->callback->replay(movie_name, movie_dir);
         }
     }
 
@@ -251,23 +254,25 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
+    ClientRedemptionConfig * config;
     ClientInputMouseKeyboardAPI * controllers;
     std::vector<IconMovie *> icons;
     QFormLayout lay;
 
 
-    QtMoviesPanel(ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtMoviesPanel(const std::vector<IconMovieData> & iconData, ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
       : QWidget(parent)
+      , config(config)
       , controllers(controllers)
       , lay(this)
     {
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        std::vector<ClientRedemptionAPI::IconMovieData> iconData = this->controllers->client->get_icon_movie_data();
+        //std::vector<IconMovieData> iconData = this->controllers->get_icon_movie_data();
 
         for (size_t i = 0; i < iconData.size(); i++) {
-            IconMovie* icon = new IconMovie(controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
+            IconMovie* icon = new IconMovie(this->config, controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
             this->icons.push_back(icon);
             icon->draw_account();
             this->lay.addRow(icon);
@@ -300,6 +305,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
+    ClientRedemptionConfig * config;
     ClientInputMouseKeyboardAPI * controllers;
 
     QFormLayout lay;
@@ -309,13 +315,14 @@ public:
     QtMoviesPanel movie_panel;
 
 
-    QtFormReplay(ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtFormReplay(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, const std::vector<IconMovieData> & iconData, QWidget * parent)
     : QWidget(parent)
+    , config(config)
     , controllers(controllers)
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
     , scroller(this)
-    , movie_panel(controllers, this)
+    , movie_panel(iconData, config, controllers, this)
     {
         this->scroller.setFixedSize(410,  250);
         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
@@ -337,7 +344,7 @@ private Q_SLOTS:
     void replayPressed() {
         QString filePath("");
         filePath = QFileDialog::getOpenFileName(this, tr("Open a Movie"),
-                                                this->controllers->client->REPLAY_DIR.c_str(),
+                                                this->config->REPLAY_DIR.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
 
@@ -350,7 +357,7 @@ private Q_SLOTS:
 
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
-        this->controllers->client->mod_state = ClientRedemptionAPI::MOD_RDP_REPLAY;
+        this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
         this->controllers->client->replay(movie_name, movie_dir);
     }
 
@@ -374,6 +381,7 @@ public:
     virtual void targetPicked(int ) {}
     virtual void drop_account() {}
     virtual void check_password_box() {}
+    virtual void delete_account(int ) {}
     virtual ~FormTabAPI() = default;
 };
 
@@ -416,7 +424,7 @@ public:
       , _IPField("", this)
       , _userNameField("", this)
       , _PWDField("", this)
-      , _portField((protocol_type == ClientRedemptionAPI::MOD_RDP) ? "3389" : "5900", this)
+      , _portField((protocol_type == ClientRedemptionConfig::MOD_RDP) ? "3389" : "5900", this)
       , _IPLabel(      QString("IP server :"), this)
       , _userNameLabel(QString("User name : "), this)
       , _PWDLabel(     QString("Password :  "), this)
@@ -440,7 +448,7 @@ public:
         this->line_edit_layout.addRow(&(this->_PWDLabel)     , &(this->_PWDField));
         this->line_edit_layout.addRow(&(this->_portLabel)    , &(this->_portField));
 
-        if (this->protocol_type == ClientRedemptionAPI::MOD_VNC) {
+        if (this->protocol_type == ClientRedemptionConfig::MOD_VNC) {
             this->_userNameField.hide();
             this->_userNameLabel.hide();
             this->_portField.setText("5900");
@@ -469,13 +477,13 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     FormTabAPI * main_tab;
-    const ClientRedemptionAPI::AccountData accountData;
+    const ClientRedemptionConfig::AccountData accountData;
     QPixmap pixmap;
     QRect drop_rect;
 
 
 
-    QtIconAccount(FormTabAPI * main_tab, const ClientRedemptionAPI::AccountData & accountData, QWidget * parent)
+    QtIconAccount(FormTabAPI * main_tab, const ClientRedemptionConfig::AccountData & accountData, QWidget * parent)
       : QWidget(parent)
       , main_tab(main_tab)
       , accountData(accountData)
@@ -502,15 +510,23 @@ public:
 
         QString qip(this->accountData.IP.c_str());
         QString qname(this->accountData.name.c_str());
+
         painter.drawText(QPoint(this->height()+6, 20), qip);
         painter.drawText(QPoint(this->height()+6, 30), qname);
 
-        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        painter.drawLine(128, 3, 134, 9);
+        painter.drawLine(128, 9, 134, 3);
+
+        pen.setBrush(QT_ORANGE_WALLIX);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-1, this->height()-1, 4, 4);
         pen.setBrush(Qt::white);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-1, this->height()-1, 4, 4);
+
+        pen.setBrush(Qt::gray);
+        painter.setPen(pen);
+        painter.drawRect(128, 3, 6, 6);
 
         painter.end();
 
@@ -523,7 +539,7 @@ public:
         QPainter             painter(&(this->pixmap));
         painter.setRenderHint(QPainter::Antialiasing);
         pen.setWidth(1);
-        pen.setBrush(QColor(0xFF, 0x8C, 0x00));
+        pen.setBrush(QT_ORANGE_WALLIX);
         painter.setPen(pen);
         painter.drawRoundedRect(0, 0, this->width()-1, this->height()-1, 4, 4);
         painter.end();
@@ -549,13 +565,18 @@ public:
             case Qt::LeftButton:
                 if (this->main_tab) {
 
-                    this->main_tab->account_index_to_drop = this->accountData.index;
-                    QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
-                    QPixmap map = QPixmap::fromImage(image);
+                    if (e->x() > 127 && e->x() < 135 && e->y() > 2 && e->y() < 9) {
+                        this->main_tab->delete_account(this->accountData.index);
+                    } else {
 
-                    QCursor qcursor(map, 10, 10);
+                        this->main_tab->account_index_to_drop = this->accountData.index;
+                        QImage image(this->pixmap.toImage().convertToFormat(QImage::Format_ARGB32));
+                        QPixmap map = QPixmap::fromImage(image);
 
-                    this->main_tab->setCursor(qcursor);
+                        QCursor qcursor(map, 10, 10);
+
+                        this->main_tab->setCursor(qcursor);
+                    }
                 }
                 break;
 
@@ -586,7 +607,7 @@ public:
         switch (e->button()) {
             case Qt::LeftButton:
                 if (this->main_tab) {
-                    this->main_tab->account_index_to_drop = this->accountData.index;
+                    this->main_tab->account_index_to_drop = this->accountData.index+1;
                     this->main_tab->drop_account();
                     this->main_tab->account_index_to_drop = -1;
                     this->main_tab->setCursor(Qt::ArrowCursor);
@@ -627,21 +648,23 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     QtIconAccount * icons[15];
     QFormLayout lay;
-    const ClientRedemptionAPI::AccountData * accountData;
-    const int nb_account;
+//     const std::vector<ClientRedemptionConfig::AccountData>  accountData;
+//     const int nb_account;
 
 
-    QtAccountPanel(FormTabAPI * main_tab, const ClientRedemptionAPI::AccountData * accountData, int nb_account, QWidget * parent, int protocol_type)
+    QtAccountPanel(FormTabAPI * main_tab, ClientRedemptionConfig * config,  QWidget * parent, int protocol_type)
       : QWidget(parent)
       , lay(this)
-      , accountData(accountData)
-      , nb_account(nb_account < 15 ?  nb_account : 15)
+//       , accountData(accountData)
+//       , nb_account(nb_account < 15 ?  nb_account : 15)
     {
+        this->setAttribute(Qt::WA_DeleteOnClose);
         this->setMinimumHeight(160);
 
-        for (int i = 0; i < this->nb_account; i++) {
-            if (this->accountData[i].protocol ==  protocol_type) {
-                this->icons[i] = new QtIconAccount(main_tab, this->accountData[i], this);
+        for (size_t i = 0; i < config->_accountData.size(); i++) {
+            if (config->_accountData[i].protocol ==  protocol_type) {
+
+                this->icons[i] = new QtIconAccount(main_tab, config->_accountData[i], this);
                 this->icons[i]->draw_account();
                 this->lay.addRow(this->icons[i]);
             }
@@ -670,7 +693,7 @@ class QtFormAccountConnectionPanel : public QWidget
 {
 
 public:
-    ClientRedemptionAPI       * _front;
+    ClientRedemptionConfig * config;
     ClientInputMouseKeyboardAPI * controllers;
     FormTabAPI * main_panel;
     ConnectionFormQt     line_edit_panel;
@@ -680,23 +703,16 @@ public:
     int protocol_type;
 
 
-    QtFormAccountConnectionPanel(ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type, ClientRedemptionAPI * front)
+    QtFormAccountConnectionPanel(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type)
       : QWidget(main_panel)
-      , _front(front)
+      , config(config)
       , controllers(controllers)
       , main_panel(main_panel)
       , line_edit_panel(main_panel, protocol_type, this)
       , scroller(this)
       , protocol_type(protocol_type)
     {
-        this->setAccountData();
-        this->account_panel = new QtAccountPanel(main_panel, this->_front->_accountData, this->_front->_accountNB, this, protocol_type);
-
-        this->scroller.setFixedSize(170,  160);
-        this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
-        "border-bottom-color: #FF8C00;");
-        this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
-        this->scroller.setWidget(this->account_panel);
+        this->set_account_panel();
 
         this->setFixedSize(this->scroller.width() + this->line_edit_panel.width(), this->scroller.height());
 
@@ -705,31 +721,36 @@ public:
         this->scroller.setGeometry(QRect(this->line_edit_panel.width()+1, 0, this->scroller.width(), this->scroller.height() ));
     }
 
+    void set_account_panel() {
+
+        this->scroller.setFixedSize(170,  160);
+        this->scroller.setStyleSheet("/*background-color: #FFFFFF;*/ border: 1px solid #FFFFFF;"
+        "border-bottom-color: #FF8C00;");
+        this->scroller.setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOn );
+        this->account_panel = new QtAccountPanel(this->main_panel, this->config, this, this->protocol_type);
+        this->scroller.setWidget(this->account_panel);
+
+        this->setAccountData();
+    }
 
     void setAccountData() {
-        if (this->_front) {
-            //TODO
-            //this->_front->setAccountData();
+        //this->config->setAccountData();
 
-            if (this->_front->_save_password_account) {
-                this->main_panel->check_password_box();
+        if (this->config->_save_password_account) {
+            this->main_panel->check_password_box();
+        }
+
+        this->line_edit_panel._IPCombobox.clear();
+        this->line_edit_panel._IPCombobox.addItem(QString(""), 0);
+
+        QStringList stringList;
+
+        for (int i = 0; i < this->config->_accountNB; i++) {
+            if (this->config->_accountData[i].protocol == this->protocol_type) {
+                std::string title(this->config->_accountData[i].title);
+                this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
+                stringList << title.c_str();
             }
-
-            this->line_edit_panel._IPCombobox.clear();
-            this->line_edit_panel._IPCombobox.addItem(QString(""), 0);
-
-            QStringList stringList;
-
-            for (int i = 0; i < this->_front->_accountNB; i++) {
-                if (this->_front->_accountData[i].protocol == this->protocol_type) {
-                    std::string title(this->_front->_accountData[i].title);
-                    this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
-                    stringList << title.c_str();
-                }
-            }
-            //this->_completer = new QCompleter(stringList, this);
-        } else {
-            LOG(LOG_INFO, "can't open login config file");
         }
     }
 
@@ -747,16 +768,13 @@ REDEMPTION_DIAGNOSTIC_POP
 
 
 public:
-
-
+    ClientRedemptionConfig * config;
     uint8_t protocol_type;
-    ClientRedemptionAPI         * _front;
     ClientInputMouseKeyboardAPI * controllers;
     const int            _width;
     const int            _height;
 
     QGridLayout         grid_layout;
-
 
     QLabel               _errorLabel;
     QCheckBox            _pwdCheckBox;
@@ -769,24 +787,24 @@ public:
     QtOptions * options;
 
 
-    QtFormTab(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionAPI  * front, uint8_t protocol_type, QWidget * parent)
+    QtFormTab(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, uint8_t protocol_type, QWidget * parent)
         : FormTabAPI(parent)
+        , config(config)
         , protocol_type(protocol_type)
-        , _front(front)
         , controllers(controllers)
         , _width(400)
         , _height(600)
         , grid_layout(this)
         , _errorLabel(   QString(""            ), this)
         , _pwdCheckBox(QString("Save password."), this)
-        , formAccountConnectionPanel(this->controllers, this, this->protocol_type, front)
+        , formAccountConnectionPanel(config, this->controllers, this, this->protocol_type)
         , _buttonConnexion("Connection", this)
         , _buttonOptions("Options", this)
     {
-        if (protocol_type & ClientRedemptionAPI::MOD_RDP) {
-            this->options = new QtRDPOptions(front, this->controllers, this);
+        if (protocol_type & ClientRedemptionConfig::MOD_RDP) {
+            this->options = new QtRDPOptions(config, this->controllers, this);
         } else {
-            this->options = new QtVNCOptions(front, this->controllers, this);
+            this->options = new QtVNCOptions(config, this->controllers, this);
         }
 //         this->setMinimumHeight(360);
 //         this->setAccountData();
@@ -905,45 +923,61 @@ public:
 
         } else {
             index--;
-            this->set_IPField(this->_front->_accountData[index].IP);
-            this->set_userNameField(this->_front->_accountData[index].name);
-            this->set_PWDField(this->_front->_accountData[index].pwd);
-            this->set_portField(this->_front->_accountData[index].port);
+            this->set_IPField(this->config->_accountData[index].IP);
+            this->set_userNameField(this->config->_accountData[index].name);
+            this->set_PWDField(this->config->_accountData[index].pwd);
+            this->set_portField(this->config->_accountData[index].port);
 
-            this->controllers->client->current_user_profil = this->_front->_accountData[index].options_profil;
+            this->config->current_user_profil = this->config->_accountData[index].options_profil;
         }
+    }
+
+    void delete_account(int index) override {
+//         this->config->_accountData.size();
+        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+        this->config->_accountData.erase(this->config->_accountData.begin()+index);
+        for (size_t i = 0; i < this->config->_accountData.size(); i++) {
+            this->config->_accountData[i].index = i;
+        }
+        this->config->_accountNB = this->config->_accountData.size();
+        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+        this->formAccountConnectionPanel.set_account_panel();
+       // this->show();
     }
 
 private Q_SLOTS:
     void connexionReleased() {
 
-        if (! (this->protocol_type == ClientRedemptionAPI::MOD_RDP && this->_front->mod_state == ClientRedemptionAPI::MOD_RDP_REMOTE_APP) ){
-            this->_front->mod_state = this->protocol_type;
+        if (! (this->protocol_type == ClientRedemptionConfig::MOD_RDP && this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) ){
+            this->config->mod_state = this->protocol_type;
         }
 
         QPoint points = this->mapToGlobal({0, 0});
-        this->controllers->client->windowsData.form_x = points.x()-14;
-        this->controllers->client->windowsData.form_y = points.y()-85;
-        this->controllers->client->writeWindowsData();
+        this->config->windowsData.form_x = points.x()-14;
+        this->config->windowsData.form_y = points.y()-85;
+        this->config->writeWindowsData();
 
         this->options->getConfigValues();
+
 //         this->_front->rdp_width = 1920;
 //         this->_front->rdp_height = 1080;
-        this->_front->writeAccoundData(
-            this->get_IPField(),
-            this->get_userNameField(),
-            this->get_PWDField(),
-            this->get_portField()
-        );
-        this->_front->writeCustomKeyConfig();
-        this->_front->writeClientInfo();
 
-        this->controllers->connexionReleased();
+        this->config->writeCustomKeyConfig();
+        this->config->writeClientInfo();
+
+        if (this->controllers->connexionReleased()) {
+            this->config->writeAccoundData(
+                this->get_IPField(),
+                this->get_userNameField(),
+                this->get_PWDField(),
+                this->get_portField()
+            );
+        }
 
         if (this->_pwdCheckBox.isChecked()) {
-            this->_front->_save_password_account = true;
+            this->config->_save_password_account = true;
         } else {
-            this->_front->_save_password_account = false;
+            this->config->_save_password_account = false;
         }
     }
 
@@ -963,6 +997,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
+    ClientRedemptionConfig * config;
     ClientInputMouseKeyboardAPI * controllers;
     const int _width;
     const int _height;
@@ -981,17 +1016,18 @@ public:
 
 
 
-    QtForm(ClientInputMouseKeyboardAPI * controllers, ClientRedemptionAPI  * front)
+    QtForm(ClientRedemptionConfig * config, const std::vector<IconMovieData> & iconData, ClientInputMouseKeyboardAPI * controllers)
         : QWidget()
+        , config(config)
         , controllers(controllers)
         , _width(460)
         , _height(375)
         , _long_height(690)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(controllers, front, ClientRedemptionAPI::MOD_RDP, this)
-        , VNC_tab(controllers, front, ClientRedemptionAPI::MOD_VNC, this)
-        , replay_tab(controllers, this)
+        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this)
+        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this)
+        , replay_tab(config, controllers, iconData, this)
         , is_option_open(false)
         , is_closing(false)
     {
@@ -1035,9 +1071,9 @@ public:
 
     ~QtForm() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->controllers->client->windowsData.form_x = points.x()-1;
-        this->controllers->client->windowsData.form_y = points.y()-39;
-        this->controllers->client->writeWindowsData();
+        this->config->windowsData.form_x = points.x()-1;
+        this->config->windowsData.form_y = points.y()-39;
+        this->config->writeWindowsData();
         this->is_closing = true;
 
         if (this->is_option_open) {
@@ -1093,12 +1129,12 @@ public:
     }
 
     void init_form() {
-        if (this->controllers->client->is_no_win_data()) {
+        if (this->config->is_no_win_data()) {
             QDesktopWidget* desktop = QApplication::desktop();
-            this->controllers->client->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
-            this->controllers->client->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
+            this->config->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
+            this->config->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
         }
-        this->move(this->controllers->client->windowsData.form_x, this->controllers->client->windowsData.form_y);
+        this->move(this->config->windowsData.form_x, this->config->windowsData.form_y);
     }
 
     void options() {

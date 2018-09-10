@@ -29,7 +29,7 @@
 #include "utils/log.hpp"
 #include "utils/hexdump.hpp"
 #include "core/error.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 
 #include <memory>
 #include <cstring>

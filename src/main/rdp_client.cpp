@@ -20,13 +20,10 @@
  *
  */
 
-#include "main/version.hpp"
-
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "front/client_front.hpp"
-#include "mod/mod_api.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/vnc/vnc.hpp"

@@ -23,8 +23,6 @@
 #define RED_TEST_MODULE Test_Bitmap_With_PNG
 #include "system/redemption_unit_tests.hpp"
 
-#include <memory>
-
 #include "utils/bitmap_shrink.hpp"
 
 

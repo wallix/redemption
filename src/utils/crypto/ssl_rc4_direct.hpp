@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
 
@@ -33,7 +33,7 @@ class SslRC4_direct
 public:
     SslRC4_direct() = default;
 
-    void set_key(const_byte_array key)
+    void set_key(const_bytes_view key)
     {
         this->RC4_set_key(key.size(), key.data());
     }

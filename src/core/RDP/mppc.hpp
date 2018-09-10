@@ -28,7 +28,6 @@
 #pragma once
 
 #include <memory>
-#include <cstdint>
 
 class OutStream;
 

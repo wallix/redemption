@@ -22,16 +22,14 @@
 #define RED_TEST_MODULE TestInCryptoTransport
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
 #include "transport/crypto_transport.hpp"
-#include "utils/parse.hpp"
-
-#include <snappy.h> // for SNAPPY_VERSION
 
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/fake_stat.hpp"
+
+#include <snappy.h> // for SNAPPY_VERSION
+
 
 namespace
 {

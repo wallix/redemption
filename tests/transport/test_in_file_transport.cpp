@@ -22,22 +22,16 @@
 #define RED_TEST_MODULE TestOutFileTransport
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
 #include "transport/in_file_transport.hpp"
 #include "transport/out_file_transport.hpp"
-#include "core/error.hpp"
+
+#include <cstdlib>
+
 
 RED_AUTO_TEST_CASE(TestOutFileTransport)
 {
-    char tmpname[128];
-    sprintf(tmpname, "/tmp/test_transportXXXXXX");
+    char tmpname[128] = "/tmp/test_transportXXXXXX";
+
     {
         OutFileTransport ft(unique_fd{::mkostemp(tmpname, O_WRONLY|O_CREAT)});
         ft.send("We write, ", 10);
@@ -56,5 +50,6 @@ RED_AUTO_TEST_CASE(TestOutFileTransport)
         RED_CHECK_EQUAL(0, strncmp(buf, "We write, and again, and so on.", 31));
         RED_CHECK_EXCEPTION_ERROR_ID(ft.recv_boom(buf, 1), ERR_TRANSPORT_NO_MORE_DATA);
     }
+
     ::unlink(tmpname);
 }

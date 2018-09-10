@@ -25,15 +25,13 @@
 
 
 #include "core/font.hpp"
-#include "utils/log.hpp"
 #include "mod/internal/widget/flat_interactive_target.hpp"
 #include "mod/internal/widget/screen.hpp"
-#include "utils/png.hpp"
-#include "system/ssl_calls.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "test_only/check_sig.hpp"
 
 #include "test_only/mod/fake_draw.hpp"
+
 
 RED_AUTO_TEST_CASE(TraceFlatInteractivePassword)
 {

@@ -30,11 +30,11 @@
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 
 
 #include "core/RDP/clipboard.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/byte_ptr.hpp"
 
 
 class FakeRDPChannelsMod : public mod_api
@@ -134,7 +134,7 @@ public:
 class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
 
 public:
-    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
+    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {(void)config;}
 
     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 
@@ -217,8 +217,8 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient(SessionReactor& session_reactor)
-      : ClientRedemptionAPI( session_reactor)
+    FakeClient(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
+      : ClientRedemptionAPI( session_reactor, argv, argc, verbose)
     {
         this->mod = &(this->fake_mod);
     }
@@ -299,7 +299,7 @@ public:
         return FileStatvfs{};
     }
 
-    void read_data(std::string const& file_to_tread, int offset, byte_array data) override {
+    void read_data(std::string const& file_to_tread, int offset, bytes_view data) override {
         (void)file_to_tread;
         (void)offset;
         (void)data;

@@ -20,11 +20,10 @@
 
 #define RED_TEST_MODULE TestTheme
 #include "system/redemption_unit_tests.hpp"
-#include <stdio.h>
-
 
 #include "utils/theme.hpp"
 #include "configs/config.hpp"
+
 
 RED_AUTO_TEST_CASE(TestColorFromFile)
 {

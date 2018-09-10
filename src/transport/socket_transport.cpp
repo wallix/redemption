@@ -25,7 +25,7 @@
 #include "utils/hexdump.hpp"
 #include "utils/select.hpp"
 #include "utils/difftimeval.hpp"
-#include "system/openssl.hpp"
+#include "system/tls_context.hpp"
 
 #include <sys/types.h>
 #include <sys/socket.h>

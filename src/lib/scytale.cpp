@@ -434,7 +434,7 @@ int scytale_reader_open_with_auto_detect_encryption_scheme(
     SCOPED_TRACE;
     CHECK_HANDLE(handle);
     handle->error_ctx.set_error(Error(NO_ERROR));
-    const_byte_array const derivator_array{derivator, strlen(derivator)};
+    const_bytes_view const derivator_array{derivator, strlen(derivator)};
     Error out_error{NO_ERROR};
     CHECK_NOTHROW(
         auto const r = open_if_possible_and_get_encryption_scheme_type(

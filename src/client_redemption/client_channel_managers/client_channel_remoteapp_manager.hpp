@@ -29,7 +29,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
@@ -156,10 +156,13 @@ class ClientChannelRemoteAppManager {
     RDPVerbose verbose;
 
     ClientRedemptionAPI * client;
-
     ClientOutputGraphicAPI * impl_graphic;
-
     ClientInputMouseKeyboardAPI * impl_input;
+
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+
 
 public:
 
@@ -175,6 +178,9 @@ public:
 
         int build_number = 0;
 
+        int width = 0;
+        int height = 0;
+
 //     } rail_channel_data;
 
 
@@ -188,6 +194,17 @@ public:
       , impl_graphic(impl_graphic)
       , impl_input(impl_input)
       {}
+
+
+
+    void set_configuration(int width, int height, RDPRemoteAppConfig & config) {
+        this->width  = width;
+        this->height = height;
+
+        this->source_of_ExeOrFile  = config.source_of_ExeOrFile;
+        this->source_of_WorkingDir = config.source_of_WorkingDir;
+        this->source_of_Arguments  = config.source_of_Arguments;
+    }
 
     void clear() {
         this->z_order.clear();
@@ -335,7 +352,11 @@ public:
 
 
     void receive(InStream & stream) {
-        if (this->impl_graphic && this->impl_input) {
+        if (!this->impl_graphic || !this->impl_input) {
+            return;
+        }
+
+        LOG(LOG_INFO,  "ClientChannelRemoteAppManager::receive");
         RAILPDUHeader header;
         header.receive(stream);
 
@@ -461,8 +482,8 @@ public:
                     out_stream.out_uint32_le(SPI_SETWORKAREA);
                     out_stream.out_uint16_le(0);
                     out_stream.out_uint16_le(0);
-                    out_stream.out_uint16_le(this->client->info.width);
-                    out_stream.out_uint16_le(this->client->info.height);
+                    out_stream.out_uint16_le(this->width);
+                    out_stream.out_uint16_le(this->height);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
@@ -498,7 +519,7 @@ public:
                     }
                     }
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(16);
@@ -679,15 +700,15 @@ public:
                     {
                     StaticOutStream<1600> out_stream;
 
-                    const char * source_of_ExeOrFile = this->client->source_of_ExeOrFile.c_str();
+                    const char * source_of_ExeOrFile = this->source_of_ExeOrFile.c_str();
                     uint8_t unicode_ExeOrFile[500];
                     const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(byte_ptr_cast(source_of_ExeOrFile), unicode_ExeOrFile, 500);
 
-                    const char * source_of_WorkingDir = this->client->source_of_WorkingDir.c_str();
+                    const char * source_of_WorkingDir = this->source_of_WorkingDir.c_str();
                     uint8_t unicode_WorkingDir[500];
                     const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(byte_ptr_cast(source_of_WorkingDir), unicode_WorkingDir, 500);
 
-                    const char * source_of_Arguments = this->client->source_of_Arguments.c_str();
+                    const char * source_of_Arguments = this->source_of_Arguments.c_str();
                     uint8_t unicode_Arguments[500];
                     const size_t size_of_unicode_Arguments = ::UTF8toUTF16(byte_ptr_cast(source_of_Arguments), unicode_Arguments, 500);
 
@@ -784,8 +805,6 @@ public:
                 }
                 break;
         }
-
-        }
-
     }
 };
+

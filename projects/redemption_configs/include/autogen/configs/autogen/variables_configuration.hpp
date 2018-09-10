@@ -851,17 +851,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// type: bool <br/>
-    /// value{false} <br/>
-    struct client::nla_support {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "client";
-        static constexpr char const * name = "nla_support";
-        using type = bool;
-        using mapped_type = type;
-        type value{false};
-    };
     /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
     /// type: bool <br/>
     /// value{false} <br/>
@@ -4660,7 +4649,6 @@ struct client
 , cfg::client::auto_adjust_performance_flags
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
-, cfg::client::nla_support
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts

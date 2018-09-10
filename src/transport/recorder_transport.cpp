@@ -21,6 +21,7 @@
 */
 
 #include "transport/recorder_transport.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/stream.hpp"
 
 
@@ -41,7 +42,7 @@ RecorderFile::~RecorderFile()
     }
 }
 
-void RecorderFile::write_packet(PacketType type, const_byte_array buffer)
+void RecorderFile::write_packet(PacketType type, const_bytes_view buffer)
 {
 	auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
 
@@ -63,7 +64,7 @@ RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char co
 }
 
 
-void RecorderTransport::add_info(byte_array info)
+void RecorderTransport::add_info(bytes_view info)
 {
     this->out.write_packet(RecorderFile::PacketType::Info, info);
 }

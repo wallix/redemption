@@ -23,9 +23,8 @@
 #define RED_TEST_MODULE Test_Bitmap_With_PNG
 #include "system/redemption_unit_tests.hpp"
 
-
-#include "utils/drawable.hpp"
 #include "utils/bitmap_from_file.hpp"
+
 
 RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
 {
@@ -60,6 +59,5 @@ RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
         RED_CHECK_EQUAL(bmp.cx(), 256);
         RED_CHECK_EQUAL(bmp.cy(), 150);
         RED_CHECK_EQUAL(bmp.bpp(), 24);
-
     }
 }

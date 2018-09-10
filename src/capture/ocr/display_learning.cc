@@ -5,10 +5,9 @@
 #include "io_char_box.hpp"
 
 #include <iostream>
-#include <iomanip>
-#include <vector>
 #include <cstring>
 #include <cerrno>
+
 
 inline void usage(char** argv)
 {

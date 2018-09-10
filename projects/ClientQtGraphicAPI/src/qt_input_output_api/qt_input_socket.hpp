@@ -67,7 +67,7 @@ public:
     }
 
 
-    virtual void disconnect() override {
+    void disconnect() override {
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);
             this->_sckListener = nullptr;
@@ -75,7 +75,7 @@ public:
     }
 
 
-    virtual bool start_to_listen(int client_sck, mod_api * mod) override {
+    bool start_to_listen(int client_sck, mod_api * mod) override {
 
         this->_callback = mod;
 
@@ -98,7 +98,7 @@ public:
 public Q_SLOTS:
     void call_draw_event_data() {
         // LOG(LOG_DEBUG, "draw_event_data");
-        if (this->client->mod) {
+        if (this->_callback) {
             this->client->callback(false);
             this->prepare_timer_event();
         }
@@ -106,7 +106,7 @@ public Q_SLOTS:
 
     void call_draw_event_timer() {
         // LOG(LOG_DEBUG, "draw_event_timer");
-        if (this->client->mod) {
+        if (this->_callback) {
             this->client->callback(true);
             this->prepare_timer_event();
         }

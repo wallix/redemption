@@ -24,7 +24,7 @@
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
-#include "gdi/graphic_api.hpp"
+
 
 enum {
     WIDGET_MULTILINE_BORDER_X = 10,

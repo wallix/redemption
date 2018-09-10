@@ -21,9 +21,11 @@
 
 #pragma once
 
-#include <openssl/bn.h>
 #include <cstdint>
 #include <cassert>
+
+#include <openssl/bn.h>
+
 
 /**
  * \pre  \a out_len >= \a modulus_size

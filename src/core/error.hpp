@@ -25,8 +25,6 @@
 
 #include "utils/translation.hpp"
 
-#include <cstdio>
-
 #define EACH_ERROR(f, fv)                                        \
     fv(NO_ERROR, 0)                                              \
                                                                  \

@@ -24,11 +24,10 @@
 
 #include <chrono>
 
+#include "configs/autogen/enums.hpp"
 #include "transport/transport.hpp"
 #include "utils/verbose_flags.hpp"
-#include "utils/invalid_socket.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "configs/autogen/enums.hpp"
 
 #include <string>
 #include <memory>

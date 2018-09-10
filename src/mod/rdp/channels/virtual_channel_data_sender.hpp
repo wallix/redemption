@@ -30,11 +30,11 @@ namespace
         uint32_t total_length, uint32_t flags,
         const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
-        const uint32_t dest = (from_or_to_client
-                            ? 0  // Client
-                            : 1  // Server
-                            );
-        LOG(LOG_INFO, "\\x00\\x00\\x00\\x0%d", dest);
+        const unsigned dest = (from_or_to_client
+                              ? 0  // Client
+                              : 1  // Server
+                              );
+        LOG(LOG_INFO, "\\x00\\x00\\x00\\x0%u", dest);
         LOG(LOG_INFO, "\\x%x\\x%x\\x%x\\x%x",
             (total_length >> 24), (total_length >> 16) & 0xffu,
             (total_length >> 8) & 0xffu, (total_length & 0xffu));

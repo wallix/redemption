@@ -29,5 +29,5 @@
 
 RED_AUTO_TEST_CASE(TestMultiScrBlt)
 {
-
+    RDP::RDPMultiScrBlt();
 }

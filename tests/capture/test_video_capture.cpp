@@ -25,15 +25,13 @@
 
 #include "capture/video_capture.hpp"
 
-
 #ifndef REDEMPTION_NO_FFMPEG
 
+#include "capture/full_video_params.hpp"
+#include "capture/capture_params.hpp"
 #include "core/RDP/RDPDrawable.hpp"
-#include "utils/drawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
-
-#include <memory>
 
 
 inline void simple_movie(

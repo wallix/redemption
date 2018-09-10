@@ -33,4 +33,3 @@ REDEMPTION_ETC_DH_GLOG ?=
     $(REDEMPTION_SYS_PATH)/etc/rdpproxy/dh*pem
     $(REDEMPTION_SYS_PATH)/etc/rdpproxy/rdpproxy.crt
     $(REDEMPTION_SYS_PATH)/etc/rdpproxy/rdpproxy.key ;
-

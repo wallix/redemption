@@ -20,8 +20,7 @@
 
 #include "mod/internal/widget/labelgrid.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "gdi/graphic_api.hpp"
-#include "utils/log.hpp"
+
 
 WidgetLabelGrid::WidgetLabelGrid(
     gdi::GraphicApi & drawable, Widget & parent,

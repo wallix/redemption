@@ -17,7 +17,7 @@ Dependencies
 ============
 
 To compile ReDemPtion you need the following packages:
-- libboost-tools-dev (contains bjam: software build tool) (http://sourceforge.net/projects/boost/files/boost/)
+- libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
 - libboost-test-dev (unit-test dependency)
 - libssl-dev
 - libkrb5-dev
@@ -26,9 +26,6 @@ To compile ReDemPtion you need the following packages:
 - libpng12-dev
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
-
-<!--Optionally:
-- python (python-dev)-->
 
 Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/program_options
@@ -86,18 +83,15 @@ Well, that's pretty easy once you installed the required dependencies.
 
 Just run (as user):
 
-$ `bjam` or `bjam toolset=gcc`, `bjam toolset=clang` or `bjam toolset=your-compiler` (see http://www.boost.org/build/doc/html/bbv2/overview/configuration.html)
+$ `bjam` or `bjam toolset=your-compiler` (ex: `bjam toolset=gcc`) (see https://boostorg.github.io/build/manual/develop/index.html#bbv2.overview.configuration and `tools/bjam/user-config.jam`)
 
 Verbose tests:
 
 $ `export REDEMPTION_LOG_PRINT=1`\
-$ `bjam test`
+$ `bjam tests`
 
-or
+Note: `bjam tests.norec`, `bjam tests/front.norec` execute files directly in tests directory, but not recursively.
 
-$ `REDEMPTION_LOG_PRINT=1 bjam test`
-
-/!\ `bjam tests` execute files directly in tests directory, but not recursively.
 
 Compile executables without tests (as user):
 
@@ -107,15 +101,21 @@ and install (as administrator):
 
 \# `bjam install`
 
-Binaries are located in /usr/local/bin.
+Binaries are located in `/usr/local/bin`.
 
-## Modes
 
-$ `bjam [variant=]{release|debug|san}`
+## Modes and options
+
+$ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
 
 - `release`: default
 - `debug`: debug mode (compile with `-g -D_GLIBCXX_DEBUG`)
 - `san`: enable sanitizers: asan, lsan, usan
+
+- `cxx-color`: default auto never always
+- `cxx-lto`: off on fat
+- `cxx-relro`: default off on full
+- `cxx-stack-protector`: off on strong all
 
 
 Run ReDemPtion
@@ -158,7 +158,7 @@ Generate target and lib/obj dependencies
 
 When create a new test or when a target fail with link error:
 
-`bjam targets.jam` for updated `targets.jam` file.
+`bjam targets.jam` for updated `targets.jam` and `projects/ClientQtGraphicAPI/redemption_deps.jam` files.
 
 Or run `./tools/bjam/gen_targets.py > targets.jam`
 

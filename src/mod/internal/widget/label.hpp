@@ -22,7 +22,13 @@
 #pragma once
 
 #include "mod/internal/widget/widget.hpp"
-#include "gdi/graphic_api.hpp"
+
+
+class Font;
+namespace gdi
+{
+    class ColorCtx;
+}
 
 class WidgetLabel : public Widget
 {

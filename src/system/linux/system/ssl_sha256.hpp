@@ -20,13 +20,14 @@
 
 #pragma once
 
+#include "core/error.hpp"
+#include "system/basic_hmac.hpp"
+
 #include <cstdint>
 #include <cstring>
 #include <cassert>
 
-#include "core/error.hpp"
-#include "openssl_crypto.hpp"
-#include "system/basic_hmac.hpp"
+#include <openssl/sha.h>
 
 
 class SslSha256
@@ -43,7 +44,7 @@ public:
         }
     }
 
-    void update(const_byte_array data)
+    void update(const_bytes_view data)
     {
         if (0 == SHA256_Update(&this->sha256, data.to_u8p(), data.size())){
             throw Error(ERR_SSL_CALL_SHA256_UPDATE_FAILED);

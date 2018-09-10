@@ -25,18 +25,15 @@
 #include "utils/log.hpp"
 
 #include "lib/do_recorder.hpp"
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <fstream>
-#include <sstream>
-#include <iostream>
 #include "utils/fileutils.hpp"
 #include "transport/crypto_transport.hpp"
 
 #include "test_only/get_file_contents.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
 
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)

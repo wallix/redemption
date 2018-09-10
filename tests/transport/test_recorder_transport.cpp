@@ -27,13 +27,9 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/select.hpp"
 
-#include <utility>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 class ZeroTime : public TimeObj
 {

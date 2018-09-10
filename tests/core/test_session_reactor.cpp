@@ -23,6 +23,9 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include <string>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "core/session_reactor.hpp"
 #include "gdi/graphic_api.hpp"
@@ -177,12 +180,6 @@ RED_AUTO_TEST_CASE(TestSessionReactorSimpleEvent)
     RED_CHECK(!callback);
 }
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include "utils/select.hpp"
-#include "utils/sugar/scope_exit.hpp"
 
 RED_AUTO_TEST_CASE(TestSessionReactorFd)
 {
@@ -190,9 +187,9 @@ RED_AUTO_TEST_CASE(TestSessionReactorFd)
 
     std::string s;
 
-    int fd1 = ::open("/tmp/execute_graphics.test", O_CREAT | O_RDONLY, 0777);
+    unique_fd ufd("/tmp/execute_graphics.test", O_CREAT | O_RDONLY, 0777);
+    int const fd1 = ufd.fd();
     RED_REQUIRE_GT(fd1, 0);
-    SCOPE_EXIT(::close(fd1));
 
     SessionReactor::TopFdPtr fd_event = session_reactor.create_fd_event(fd1, std::ref(s))
     .on_action([](JLN_TOP_CTX ctx, std::string& s){

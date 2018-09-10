@@ -24,10 +24,8 @@
 
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/authorization_channels.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"

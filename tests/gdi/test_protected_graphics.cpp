@@ -35,8 +35,6 @@
 
 #include <chrono>
 
-#include <sys/time.h>
-
 
 RED_AUTO_TEST_CASE(TestModOSD)
 {

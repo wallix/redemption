@@ -21,6 +21,7 @@
 #pragma once
 
 #include "acl/authentifier.hpp"
+#include "acl/module_manager.hpp"
 #include "capture/capture.hpp"
 #include "configs/config.hpp"
 #include "core/server.hpp"
@@ -28,8 +29,7 @@
 #include "core/set_server_redirection_target.hpp"
 #include "front/front.hpp"
 #include "mod/mod_api.hpp"
-#include "system/ssl_calls.hpp"
-#include "transport/transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/colors.hpp"
 #include "utils/file.hpp"
@@ -169,8 +169,7 @@ public:
                 io_fd_zero(rfds);
                 timeval timeout = time_mark;
 
-                if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)
-                 && !front.wait_ntlm_password) {
+                if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
                     wait_on_sck(front_trans, rfds, max);
                 }
 
@@ -316,17 +315,6 @@ public:
                     return io_fd_isset(fd, rfds);
                 });
 
-                if (front.wait_ntlm_password) {
-                    if (sck_is_set(acl->auth_trans, rfds)) {
-                        // authentifier received updated values
-                        acl->acl_serial.receive();
-                    }
-
-                    if (!ini.changed_field_size()) {
-                        session_reactor.execute_sesman(ini);
-                    }
-                }
-
                 bool const front_is_set = sck_is_set(front_trans, rfds);
                 if (session_reactor.has_front_event() || front_is_set) {
                     try {
@@ -335,15 +323,6 @@ public:
                         }
                         if (front_is_set) {
                             front.incoming(mm.get_callback(), now);
-                            if (front.wait_ntlm_password && !acl) {
-                                // now is authentifier start time
-                                acl = std::make_unique<Acl>(
-                                    ini, this->acl_connect(), now, cctx, rnd, fstat
-                                );
-                                authentifier.set_acl_serial(&acl->acl_serial);
-                                session_reactor.set_next_event(BACK_EVENT_NEXT);
-                                acl->acl_serial.send_acl_data();
-                            }
                         }
                     } catch (Error const& e) {
                         if (ERR_DISCONNECT_BY_USER == e.id) {

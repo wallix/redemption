@@ -26,8 +26,8 @@
 #define RED_TEST_MODULE TestKeymap
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/stream.hpp"
 #include "keyboard/keymap2.hpp"
+
 
 RED_AUTO_TEST_CASE(TestKeymap)
 {

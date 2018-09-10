@@ -18,10 +18,7 @@
    Author(s): Clément Moroldo
 */
 
-#include "main/version.hpp"
-
 #include "front/rdpheadless.hpp"
-#include "utils/netutils.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/cli.hpp"

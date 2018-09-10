@@ -22,7 +22,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/numerics/safe_conversions.hpp"
-#include <string>
+
 
 RED_AUTO_TEST_CASE(TestTrim)
 {

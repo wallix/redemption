@@ -33,7 +33,7 @@
 #include "utils/bitmap_private_data.hpp"
 #include "utils/file.hpp"
 #include "utils/log.hpp"
-#include "utils/png.hpp"
+#include "utils/stream.hpp"
 #include "utils/sugar/buf_maker.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -42,10 +42,6 @@
 #include <png.h>
 
 #include <cerrno>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <cstdio>
 
 
 using std::size_t; /*NOLINT*/

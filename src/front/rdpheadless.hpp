@@ -68,8 +68,6 @@
 #include "utils/select.hpp"
 #include "utils/word_identification.hpp"
 
-#include "openssl_tls.hpp"
-
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
@@ -79,6 +77,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <openssl/ssl.h>
+
 
 struct RDPHeadlessFrontParams
 {

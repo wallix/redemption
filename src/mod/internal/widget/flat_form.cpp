@@ -21,7 +21,6 @@
 
 #include "mod/internal/widget/flat_form.hpp"
 #include "utils/translation.hpp"
-#include "gdi/graphic_api.hpp"
 #include "utils/theme.hpp"
 #include "keyboard/keymap2.hpp"
 #include "cxx/diagnostic.hpp"

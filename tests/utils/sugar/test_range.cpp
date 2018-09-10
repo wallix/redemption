@@ -20,11 +20,28 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE TestXXXXXXXXXX
+#define RED_TEST_MODULE TestRange
 #include "system/redemption_unit_tests.hpp"
 
 #include "utils/sugar/range.hpp"
 
-RED_AUTO_TEST_CASE(TestXXXXXXXXX)
+RED_AUTO_TEST_CASE(TestRange)
 {
+    char const* p = "test";
+    auto end = p + 2;
+
+    auto rng = make_range(p, end);
+
+    RED_CHECK_EQ(rng.size(), 2);
+
+    auto first = rng.begin();
+    auto last = rng.end();
+
+    RED_CHECK(first != last);
+    RED_CHECK_EQ(*first, 't');
+    ++first;
+    RED_CHECK(first != last);
+    RED_CHECK_EQ(*first, 'e');
+    ++first;
+    RED_CHECK(first == last);
 }

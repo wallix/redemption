@@ -1,417 +1,516 @@
-variant san : debug : ;
+# https://boostorg.github.io/build/manual/develop/index.html
+
+CXXFLAGS =
+  <cxxflags>-std=c++17
+  <variant>debug:<cxx-libcxx-debug>allow_broken_abi
+  # <variant>debug:<cxxflags>-O2
+  <variant>debug:<linkflags>-rdynamic # boost.stacktrace
+  <variant>san:<linkflags>-rdynamic # boost.stacktrace
+  <toolset>clang:<cxxflags>-Wno-overlength-strings
+  <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
+  <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
+
+  <define>ZLIB_CONST
+;
+
+#
+# https://github.com/jonathanpoelen/cpp-compiler-options
+#
+
+import feature : feature ;
+import modules ;
+
+CXX_BJAM_YEAR_VERSION = [ modules.peek : JAMVERSION ] ;
+
+feature <cxx-color> : default auto never always : incidental ;
+feature <cxx-coverage> : off on : propagated ;
+feature <cxx-debug> : off on : propagated ;
+feature <cxx-fast-math> : off on : propagated ;
+feature <cxx-libcxx-debug> : off on allow_broken_abi assert_as_exception : propagated ;
+feature <cxx-lto> : off on fat : propagated ;
+feature <cxx-optimize> : default off on size speed full : propagated ;
+feature <cxx-pedantic> : on off as_error : incidental ;
+feature <cxx-relro> : default off on full : propagated ;
+feature <cxx-report-template> : off on : incidental ;
+feature <cxx-sanitizers> : off on : propagated ;
+feature <cxx-sanitizers-extra> : off thread pointer : propagated ;
+feature <cxx-stack-protector> : off on strong all : propagated ;
+feature <cxx-suggests> : off on : incidental ;
+feature <cxx-warnings> : on off strict : incidental ;
+
+if $(CXX_BJAM_YEAR_VERSION) < 2016.00 {
+  import toolset ;
+  toolset.flags cxx-coverage CXX_COVERAGE : <cxx-coverage> ;
+  toolset.flags cxx-debug CXX_DEBUG : <cxx-debug> ;
+  toolset.flags cxx-fast-math CXX_FAST_MATH : <cxx-fast-math> ;
+  toolset.flags cxx-libcxx-debug CXX_LIBCXX_DEBUG : <cxx-libcxx-debug> ;
+  toolset.flags cxx-lto CXX_LTO : <cxx-lto> ;
+  toolset.flags cxx-optimize CXX_OPTIMIZE : <cxx-optimize> ;
+  toolset.flags cxx-relro CXX_RELRO : <cxx-relro> ;
+  toolset.flags cxx-sanitizers CXX_SANITIZERS : <cxx-sanitizers> ;
+  toolset.flags cxx-sanitizers-extra CXX_SANITIZERS_EXTRA : <cxx-sanitizers-extra> ;
+  toolset.flags cxx-stack-protector CXX_STACK_PROTECTOR : <cxx-stack-protector> ;
+}
 
 import property-set ;
-import feature ;
-import toolset ;
-
-# http://www.boost.org/build/doc/html/index.html
-# http://www.boost.org/build/doc/html/bbv2/reference/definitions.html#bbv2.reference.features.attributes
-
-feature.feature <warn-mode> : normal none strict : incidental ;
-toolset.flags warn-mode WARN_MODE : <warn-mode> ;
-
-# feature.feature <lto> : off on : incidental ;
-feature.feature <lto> : off on : propagated ;
-toolset.flags lto LTO : <lto> ;
-
-# feature.feature <san> : off on : symmetric ;
-feature.feature <san> : off on : ;
-toolset.flags san SAN : <san> ;
-
-feature.feature <suggest> : off on : incidental ;
-toolset.flags suggest SUGGEST : <suggest> ;
-
-feature.feature <pedantic> : on off : incidental ;
-toolset.flags pedantic PEDANTIC : <pedantic> ;
-
-# feature.feature <stack-protector> : off on strong all : incidental ;
-feature.feature <stack-protector> : off on strong all : propagated ;
-toolset.flags stack-protector STACK_PROTECTOR : <stack-protector> ;
-
-# feature.feature <canary> : tls global : ; # depends to fstack-protector
-# toolset.flags canary CANARY : <canary> ;
-
-# feature.feature <relro> : off on all : incidental ;
-feature.feature <relro> : off on all : propagated ;
-toolset.flags relro RELRO : <relro> ;
-
-# feature.feature <security> : off on strong all : incidental ; # set stack-property and relro
-feature.feature <security> : off on strong all : propagated ; # set stack-property and relro
-toolset.flags security SECURITY : <security> ;
-
-# http://www.boost.org/build/tutorial.html#feature_reference
-# http://www.boost.org/doc/libs/1_63_0/doc/html/bbv2/reference.html
-# warnings-as-errors off, on
-# warnings        on, all, off
-# optimization    off, speed, space
-# profiling       off, on
-# toolset         gcc, msvc, intel-linux, intel-win, acc, borland, como-linux, cw, dmc, hp_cxx, sun
-# rtti            on, off
-
-GLIBCXX_ALLOW_BROKEN_ABI = 1 ; # for _GLIBCXX_DEBUG or _GLIBCXX_ASSERTIONS
-
-local ORIGINAL_TOOLSET = 0 ;
-local COMP_VERSION = 000.000 ;
-
 import string ;
 
-rule get-normalized-compiler-version ( toolset : ps )
+local ORIGINAL_TOOLSET = 0 ;
+local COMP_VERSION = 00.00 ;
+
+rule jln-get-normalized-compiler-version ( toolset : version )
 {
-    if $(ORIGINAL_TOOLSET) != $(toolset)
-    {
-        local version = [ MATCH "^[^0-9]*(.*)$" : [ $(ps).get <toolset-$(toolset):version> ] ] ;
-        local match = [ MATCH "^([0-9]+)(\\.([0-9]+))?" : $(version) ] ;
-        local major = [ MATCH "(..)$" : [ string.join 00 $(match[1]) ] ] ;
-        local minor = [ MATCH "(..)$" : [ string.join 00 $(match[3]) ] ] ;
-        COMP_VERSION = $(major).$(minor) ;
-        ORIGINAL_TOOLSET = $(toolset) ;
+  # TODO `version` is not the real version. For toolset=gcc-5, version is 5 ; for clang-scan, version is ''
+  # define PP_CAT_I(a,b) a##b
+  # define PP_CAT(a,b) PP_CAT_I(a,b)
+  # g++ -x c++ -E - <<<'PP_CAT(__GNUC__, PP_CAT(__GNUC_MINOR__, __GNUC_PATCHLEVEL__))'
+  # clang++ -x c++ -E - <<<'PP_CAT(__clang_major__, PP_CAT(__clang_minor__, __clang_patchlevel__))'
+  if $(ORIGINAL_TOOLSET) != $(toolset)
+  {
+    local version = [ MATCH "^[^0-9]*(.*)$" : $(version) ] ;
+    if ! $(version) {
+      # if $(toolset) = gcc {
+      #   version = [ SHELL "$(toolset) -dumpfullversion" ] ;
+      # }
+      # else {
+        version = [ MATCH ".*(\\d+\\.\\d+\\.\\d+).*" : [ SHELL "$(toolset) --version" ] ] ;
+      # }
     }
-    return $(COMP_VERSION) ;
+    local match = [ MATCH "^([0-9]+)(\\.([0-9]+))?" : $(version) ] ;
+    local major = [ MATCH "(..)$" : [ string.join 00 $(match[1]) ] ] ;
+    local minor = [ MATCH "(..)$" : [ string.join 00 $(match[3]) ] ] ;
+    COMP_VERSION = $(major).$(minor) ;
+    ORIGINAL_TOOLSET = $(toolset) ;
+  }
+  return $(COMP_VERSION) ;
 }
 
 rule flags ( properties * )
 {
-    local ps = [ property-set.create $(properties) ] ;
-    local toolset = [ $(ps).get <toolset> ] ;
-    # TODO is not the real version. For toolset=gcc-5, version is 5 ; for clang-scan, version is ''
-    # define PP_CAT_I(a,b) a##b
-    # define PP_CAT(a,b) PP_CAT_I(a,b)
-    # g++ -x c++ -E - <<<'PP_CAT(__GNUC__, PP_CAT(__GNUC_MINOR__, __GNUC_PATCHLEVEL__))'
-    # clang++ -x c++ -E - <<<'PP_CAT(__clang_major__, PP_CAT(__clang_minor__, __clang_patchlevel__))'
-    local version = [ get-normalized-compiler-version $(toolset) : $(ps) ] ;
+  local ps = [ property-set.create $(properties) ] ;
+  local toolset = [ $(ps).get <toolset> ] ;
+  local version = [ jln-get-normalized-compiler-version $(toolset)
+                  : [ $(ps).get <toolset-$(toolset):version> ] ] ;
 
-    local flags ;
-
-    if $(toolset) != gcc && $(toolset) != clang
-    {
-        return $(flags) ;
-    }
-
+  local flags = ;
+  if $(CXX_BJAM_YEAR_VERSION) >= 2016.00
+  {
     flags +=
-        <cxxflags>-Wno-switch-enum&&-Wswitch # -Wno-switch-enum followed by -Wswitch
+      # <relevant>cxx-coverage
+      # <relevant>cxx-debug
+      <relevant>cxx-fast-math
+      # <relevant>cxx-libcxx-debug
+      <relevant>cxx-lto
+      <relevant>cxx-optimize
+      <relevant>cxx-relro
+      <relevant>cxx-sanitizers
+      <relevant>cxx-sanitizers-extra
+      <relevant>cxx-stack-protector
     ;
+  }
 
-    ## Optimizations
-    # g++ -Q --help=optimizers -O3
-    #if <optimization>speed in $(properties)
-    #{
-    #    flags +=
-    #        # -O3 # by default
-    #        # -march=native
-    #        # -funroll-loops # not included in -O3
-    #        # -fpeel-loops # not included in -O3
-    #        # -ffast-math
-    #        # -ffat-lto-objects
-    #        # -flto
-    #    ;
-    #}
 
-    ## LTO (Link Time Optimization)
-    if <lto>on in $(properties)
+  if (  $(toolset) = gcc || $(toolset) = clang  )
+  {
+    if ! (  <cxx-lto>off in $(properties) )
     {
+      flags +=
+        <cxxflags>-flto
+        <linkflags>-flto
+      ;
+      if (  $(toolset) = gcc && ! (  $(version) < 05.00  )  )
+      {
         flags +=
-            <cxxflags>-flto
-            <linkflags>-flto
+          <cxxflags>-flto-odr-type-merging
+          <linkflags>-flto-odr-type-merging
         ;
-        if $(toolset) = gcc || $(version) >= 05.00
+        if <cxx-lto>fat in $(properties)
         {
-            flags +=
-                <cxxflags>-flto-odr-type-merging
-                <linkflags>-flto-odr-type-merging
-            ;
+          flags +=
+            <cxxflags>-ffat-lto-objects
+          ;
         }
+      }
     }
-
-    ## Pedantic
-    if ! <pedantic>off in $(properties)
+    if ! (  <cxx-coverage>off in $(properties) )
     {
+      flags +=
+        <cxxflags>--coverage
+        <linkflags>--coverage
+      ;
+      if $(toolset) = clang
+      {
         flags +=
-            <cxxflags>-pedantic
-            <cxxflags>-pedantic-errors
+          <linkflags>-lprofile_rt
         ;
+      }
     }
-
-    ## Security
-    ## @{
-    if ! <stack-protector>off in $(properties)
-    || ! <security>off in $(properties)
+    if ! (  <cxx-fast-math>off in $(properties) )
     {
+      flags +=
+        <cxxflags>-ffast-math
+      ;
+    }
+    if ! (  <cxx-pedantic>off in $(properties) )
+    {
+      flags +=
+        <cxxflags>-pedantic
+      ;
+      if <cxx-pedantic>as_error in $(properties)
+      {
         flags +=
-            <define>_FORTIFY_SOURCE=2
-            <cxxflags>-Wstack-protector
-            <cxxflags>-fstack-protector
-            <linkflags>-fstack-protector
+          <cxxflags>-pedantic-errors
         ;
-
-        if <stack-protector>strong in $(properties)
-        || <security>strong in $(properties)
+      }
+    }
+    if ! (  <cxx-stack-protector>off in $(properties) )
+    {
+      flags +=
+        <cxxflags>-Wstack-protector
+        <cxxflags>-fstack-protector
+        <linkflags>-fstack-protector
+        <define>_FORTIFY_SOURCE=2
+      ;
+      if <cxx-stack-protector>strong in $(properties)
+      {
+        if ! (  $(toolset) = gcc && $(version) < 04.09  )
         {
-            if $(toolset) != gcc || $(version) >= 04.09
+          flags +=
+            <cxxflags>-fstack-protector-strong
+            <linkflags>-fstack-protector-strong
+          ;
+        }
+      }
+      else if <cxx-stack-protector>all in $(properties)
+      {
+        flags +=
+          <cxxflags>-fstack-protector-all
+          <linkflags>-fstack-protector-all
+        ;
+      }
+    }
+    if ! (  <cxx-relro>default in $(properties) )
+    {
+      if <cxx-relro>off in $(properties)
+      {
+        flags +=
+          <linkflags>-Wl,-z,norelro
+        ;
+      }
+      else if <cxx-relro>on in $(properties)
+      {
+        flags +=
+          <linkflags>-Wl,-z,relro
+        ;
+      }
+      else if <cxx-relro>full in $(properties)
+      {
+        flags +=
+          <linkflags>-Wl,-z,relro,-z,now
+        ;
+      }
+    }
+    if ! (  <cxx-suggests>off in $(properties) )
+    {
+      if $(toolset) = gcc
+      {
+        flags +=
+          <cxxflags>-Wsuggest-attribute=pure
+          <cxxflags>-Wsuggest-attribute=const
+        ;
+        if ! (  $(version) < 05.00  )
+        {
+          flags +=
+            <cxxflags>-Wsuggest-final-types
+            <cxxflags>-Wsuggest-final-methods
+          ;
+          if ! (  $(version) < 05.01  )
+          {
+            flags +=
+              <cxxflags>-Wnoexcept
+            ;
+          }
+        }
+      }
+    }
+    if ! (  <cxx-libcxx-debug>off in $(properties) )
+    {
+ #     flags +=
+ #      <define>_LIBCPP_DEBUG=1
+ #    ;
+      if <cxx-libcxx-debug>assert_as_exception in $(properties)
+      {
+        flags +=
+          <define>_LIBCPP_DEBUG_USE_EXCEPTIONS
+        ;
+      }
+      if <cxx-libcxx-debug>allow_broken_abi in $(properties)
+      {
+        flags +=
+          <define>_GLIBCXX_DEBUG
+        ;
+      }
+      else
+      {
+        flags +=
+          <define>_GLIBCXX_ASSERTIONS
+        ;
+      }
+      if ! (  <cxx-pedantic>off in $(properties) )
+      {
+        flags +=
+          <define>_GLIBCXX_DEBUG_PEDANTIC
+        ;
+      }
+    }
+    if ! (  <cxx-warnings>off in $(properties) )
+    {
+      if $(toolset) = gcc
+      {
+        flags +=
+          <cxxflags>-Wall
+          <cxxflags>-Wextra
+          <cxxflags>-Wcast-align
+          <cxxflags>-Wcast-qual
+          <cxxflags>-Wdisabled-optimization
+          <cxxflags>-Wfloat-equal
+          <cxxflags>-Wformat-security
+          <cxxflags>-Wformat-signedness
+          <cxxflags>-Wformat=2
+          <cxxflags>-Wmissing-declarations
+          <cxxflags>-Wmissing-include-dirs
+          <cxxflags>-Wnon-virtual-dtor
+          <cxxflags>-Wold-style-cast
+          <cxxflags>-Woverloaded-virtual
+          <cxxflags>-Wpacked
+          <cxxflags>-Wredundant-decls
+          <cxxflags>-Wundef
+          <cxxflags>-Wuninitialized
+          <cxxflags>-Wunused-macros
+          <cxxflags>-Wvla
+        ;
+        if ! (  $(version) < 04.07  )
+        {
+          flags +=
+            <cxxflags>-Wsuggest-attribute=noreturn
+            <cxxflags>-Wzero-as-null-pointer-constant
+            <cxxflags>-Wlogical-op
+            <cxxflags>-Wvector-operation-performance
+            <cxxflags>-Wdouble-promotion
+            <cxxflags>-Wtrampolines
+          ;
+          if ! (  $(version) < 04.08  )
+          {
+            flags +=
+              <cxxflags>-Wuseless-cast
+            ;
+            if ! (  $(version) < 04.09  )
             {
-                flags +=
-                    <cxxflags>-fstack-protector-strong
-                    <linkflags>-fstack-protector-strong
-                ;
-            }
-        }
-
-        if <stack-protector>all in $(properties)
-        || <security>all in $(properties)
-        {
-            flags +=
-                <cxxflags>-fstack-protector-all
-                <linkflags>-fstack-protector-all
-            ;
-        }
-    }
-
-    if <relro>on in $(properties)
-    || <security>on in $(properties)
-    || <security>strong in $(properties)
-    {
-        flags += <linkflags>-Wl,-z,relro ;
-    }
-    else if <relro>all in $(properties)
-         || <security>all in $(properties)
-    {
-        flags += <linkflags>-Wl,-z,relro,-z,now ;
-    }
-    ## @}
-
-    ## Warning mode
-    ##@{
-    if <warn-mode>none in $(properties)
-    {
-        return $(flags) ;
-    }
-
-    if <warn-mode>strict in $(properties)
-    {
-        flags +=
-            <cxxflags>-Wconversion # imply -Wsign-conversion -Wfloat-conversion
-            # <cxxflags>-Wsign-conversion
-        ;
-    }
-    else if $(toolset) = clang
-    {
-        flags +=
-            <cxxflags>-Wno-conversion
-        ;
-    }
-    ##@}
-
-    ## Suggest attributes
-    if $(toolset) = gcc && <suggest>on in $(properties)
-    {
-        flags +=
-            <cxxflags>-Wsuggest-attribute=pure
-            <cxxflags>-Wsuggest-attribute=const
-        ;
-        if $(version) >= 05.00
-        {
-            flags +=
-                <cxxflags>-Wsuggest-final-types
-                <cxxflags>-Wsuggest-final-methods
-                #<cxxflags>-Wsuggest-attribute=format
-            ;
-        }
-    }
-
-    ## libstdc++ debugging
-    if <variant>debug in $(properties)
-    || <variant>san in $(properties)
-    || <san>on in $(properties)
-    {
-        if $(GLIBCXX_ALLOW_BROKEN_ABI) = 1
-        {
-            flags += <define>_GLIBCXX_DEBUG ;
-        }
-        else
-        {
-            flags += <define>_GLIBCXX_ASSERTIONS ;
-        }
-
-        if ! <pedantic>off in $(properties)
-        {
-            flags += <define>_GLIBCXX_DEBUG_PEDANTIC ;
-        }
-    }
-
-    ## Warnings
-    # g++ -Q --help=warnings -Wall -Wextra
-    if $(toolset) = gcc
-    {
-        flags +=
-            <cxxflags>-Wall
-            <cxxflags>-Wextra
-            #<cxxflags>-Warray-bounds # -Wall
-            <cxxflags>-Wcast-align
-            <cxxflags>-Wcast-qual
-            <cxxflags>-Wdisabled-optimization
-            <cxxflags>-Wfloat-equal
-            <cxxflags>-Wformat-security
-            <cxxflags>-Wformat=2
-            <cxxflags>-Wmissing-declarations
-            #<cxxflags>-Wmissing-format-attribute
-            <cxxflags>-Wmissing-include-dirs
-            <cxxflags>-Wnon-virtual-dtor
-            <cxxflags>-Wold-style-cast
-            <cxxflags>-Woverloaded-virtual
-            <cxxflags>-Wpacked
-            <cxxflags>-Wredundant-decls
-            #<cxxflags>-Wstrict-overflow=1 # -Wall
-            #<cxxflags>-Wstrict-overflow=2
-            #<cxxflags>-Wstrict-overflow=3
-            #<cxxflags>-Wstrict-overflow=4
-            #<cxxflags>-Wstrict-overflow=5
-            #<cxxflags>-Wstrict-default # bad idea
-            <cxxflags>-Wundef
-            <cxxflags>-Wuninitialized
-            <cxxflags>-Wunused-macros
-            <cxxflags>-Wvla
-            #<cxxflags>-Winline # perf
-
-            #<cxxflags>-Wconversion
-            #<cxxflags>-Wsign-conversion # -Wconversion
-            #<cxxflags>-Wfloat-conversion # -Wconversion
-            #<cxxflags>-Werror # warnings-as-errors=on
-        ;
-
-        if $(version) >= 07.01
-        {
-            flags +=
-                <cxxflags>-Wrestrict
-                <cxxflags>-Wduplicated-branches
-                <cxxflags>-Walloc-zero
-                <cxxflags>-Walloca
-                <cxxflags>-Wformat-overflow #=level
-                #<cxxflags>-Wformat-truncation=level #-Wall
-                #<cxxflags>-Wshadow=local
-                #<cxxflags>-Wshadow=compatible-local
-            ;
-        }
-        if $(version) >= 07.00
-        {
-            flags +=
-                <cxxflags>-Waligned-new
-                #<cxxflags>-Wregister # pedantic warning and register is removed in c++17
-            ;
-        }
-        if $(version) >= 06.01
-        {
-            flags +=
-                <cxxflags>-Wduplicated-cond
-                <cxxflags>-Wnull-dereference # This option is only active when -fdelete-null-pointer-checks is active, which is enabled by optimizations in most targets
-            ;
-        }
-        if $(version) >= 05.01
-        {
-            flags +=
-                <cxxflags>-fsized-deallocation
-                <cxxflags>-Warray-bounds=2
-                <cxxflags>-Wconditionally-supported
-                #<cxxflags>-Wctor-dtor-privacy
-                # <cxxflags>-Wnoexcept TODO gcc-7.2 -Wnoexcept everything... -_-
-                <cxxflags>-Wsized-deallocation
-                <cxxflags>-Wstrict-null-sentinel
-                <cxxflags>-Wsuggest-override
-                <cxxflags>-Wformat-signedness
-            ;
-        }
-        if $(version) >= 04.09
-        {
-            flags +=
+              flags +=
                 <cxxflags>-Wconditionally-supported
                 <cxxflags>-Wfloat-conversion
                 <cxxflags>-Wopenmp-simd
-            ;
+              ;
+              if ! (  $(version) < 05.01  )
+              {
+                flags +=
+                  <cxxflags>-fsized-deallocation
+                  <cxxflags>-Warray-bounds=2
+                  <cxxflags>-Wconditionally-supported
+                  <cxxflags>-Wsized-deallocation
+                  <cxxflags>-Wstrict-null-sentinel
+                  <cxxflags>-Wsuggest-override
+                ;
+                if ! (  $(version) < 06.01  )
+                {
+                  flags +=
+                    <cxxflags>-Wduplicated-cond
+                    <cxxflags>-Wnull-dereference
+                  ;
+                  if ! (  $(version) < 07.00  )
+                  {
+                    flags +=
+                      <cxxflags>-Waligned-new
+                    ;
+                    if ! (  $(version) < 07.01  )
+                    {
+                      flags +=
+                        <cxxflags>-Walloc-zero
+                        <cxxflags>-Walloca
+                        <cxxflags>-Wformat-overflow
+                        # <cxxflags>-Wshadow=compatible-local
+                      ;
+                      if ! (  $(version) < 08.00  )
+                      {
+                        flags +=
+                          <cxxflags>-Wclass-memaccess
+                        ;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
-        if $(version) >= 04.08
-        {
-            flags +=
-                <cxxflags>-Wuseless-cast
-            ;
-        }
-        if $(version) >= 04.07
-        {
-            flags +=
-                <cxxflags>-Wsuggest-attribute=noreturn
-                <cxxflags>-Wzero-as-null-pointer-constant
-                <cxxflags>-Wlogical-op
-                #<cxxflags>-Wno-aggressive-loop-optimizations
-                #<cxxflags>-Wnormalized=nfc ?
-                <cxxflags>-Wvector-operation-performance
-                <cxxflags>-Wdouble-promotion
-                <cxxflags>-Wtrampolines
-            ;
-        }
-    }
-
-    if $(toolset) = clang
-    {
+      }
+      if $(toolset) = clang
+      {
         flags +=
-            <cxxflags>-Weverything
-            <cxxflags>-Wno-documentation-unknown-command
-            #<cxxflags>-Wno-range-loop-analysis
-            #<cxxflags>-Wno-disabled-macro-expansion
-            <cxxflags>-Wno-c++98-compat
-            <cxxflags>-Wno-c++98-compat-pedantic
-            <cxxflags>-Wno-mismatched-tags
-            <cxxflags>-Wno-padded
-            <cxxflags>-Wno-shadow
-            <cxxflags>-Wno-global-constructors
-            <cxxflags>-Wno-weak-vtables
-            <cxxflags>-Wno-exit-time-destructors
-
-            <cxxflags>-Wno-overlength-strings
-            <cxxflags>-Wno-disabled-macro-expansion
-            <cxxflags>-Wno-covered-switch-default
-            #<cxxflags>-Wno-conversion
-
-            #<cxxflags>-Qunused-arguments
+          <cxxflags>-Weverything
+          <cxxflags>-Wno-c++98-compat
+          <cxxflags>-Wno-c++98-compat-pedantic
+          <cxxflags>-Wno-mismatched-tags
+          <cxxflags>-Wno-padded
+          <cxxflags>-Wno-shadow
+          <cxxflags>-Wno-global-constructors
+          <cxxflags>-Wno-weak-vtables
+          <cxxflags>-Wno-exit-time-destructors
+          <cxxflags>-Wno-covered-switch-default
+          <cxxflags>-Wno-switch-default
+          <cxxflags>-Wno-switch-enum
+          <cxxflags>-Wno-inconsistent-missing-destructor-override
         ;
-
-        if $(version) >= 05.00
+      }
+      if <cxx-warnings>strict in $(properties)
+      {
+        flags +=
+          <cxxflags>-Wconversion
+        ;
+        if (  $(toolset) = gcc && ! (  $(version) < 08.00  )  )
         {
-            flags +=
-                <cxxflags>-Wno-inconsistent-missing-destructor-override
-            ;
+          flags +=
+            <cxxflags>-Wcast-align=strict
+          ;
         }
+      }
+      else if $(toolset) = clang
+      {
+        flags +=
+          <cxxflags>-Wno-conversion
+          <cxxflags>-Wno-sign-conversion
+        ;
+      }
     }
-
-    ## Sanitizers
-    if <variant>san in $(properties) && ! <target-os>windows in $(properties)
+    if ! (  <cxx-sanitizers>off in $(properties) )
     {
-        if $(version) >= 06.01
+      if $(toolset) = clang
+      {
+        if ! (  $(version) < 03.01  )
         {
+          flags +=
+            <cxxflags>-fsanitize=undefined
+            <cxxflags>-fsanitize=address
+            <cxxflags>-fsanitize-address-use-after-scope
+            <cxxflags>-fno-omit-frame-pointer
+            <cxxflags>-fno-optimize-sibling-calls
+            <linkflags>-fsanitize=undefined
+            <linkflags>-fsanitize=address
+          ;
+          if ! (  $(version) < 03.04  )
+          {
             flags +=
-                <cxxflags>-fsanitize=bounds-strict
-                <linkflags>-fsanitize=bounds-strict
+              <cxxflags>-fsanitize=leak
+              <linkflags>-fsanitize=leak
             ;
-        }
-        if $(toolset) != gcc || $(version) >= 05.00
-        {
-            flags +=
+            if ! (  $(version) < 06.00  )
+            {
+              flags +=
                 <cxxflags>-fsanitize=bounds
                 <linkflags>-fsanitize=bounds
-            ;
+              ;
+            }
+          }
         }
-        if $(toolset) != gcc || $(version) >= 04.09
+      }
+      else
+      {
+        if ! (  $(version) < 04.08  )
         {
+          flags +=
+            <cxxflags>-fsanitize=address
+            <cxxflags>-fno-omit-frame-pointer
+            <cxxflags>-fno-optimize-sibling-calls
+            <linkflags>-fsanitize=address
+          ;
+          if ! (  $(version) < 04.09  )
+          {
             flags +=
-                <cxxflags>-fsanitize=address
-                <linkflags>-fsanitize=address
-
-                <cxxflags>-fsanitize=undefined
-                <linkflags>-fsanitize=undefined
-
-                <linkflags>-fsanitize=leak
-                <cxxflags>-fsanitize=leak
-
-                <cxxflags>-fno-omit-frame-pointer
+              <cxxflags>-fsanitize=undefined
+              <cxxflags>-fsanitize=leak
+              <linkflags>-fsanitize=undefined
+              <linkflags>-fsanitize=leak
             ;
+            if ! (  $(version) < 06.00  )
+            {
+              flags +=
+                <cxxflags>-fsanitize=bounds
+                <cxxflags>-fsanitize=bounds-strict
+              ;
+            }
+          }
         }
+      }
     }
-
-    return $(flags) ;
+    if ! (  <cxx-sanitizers-extra>off in $(properties) )
+    {
+      if <cxx-sanitizers-extra>thread in $(properties)
+      {
+        flags +=
+          <cxxflags>-fsanitize=thread
+        ;
+      }
+      else if <cxx-sanitizers-extra>pointer in $(properties)
+      {
+        if (  $(toolset) = gcc && ! (  $(version) < 08.00  )  )
+        {
+          flags +=
+            <cxxflags>-fsanitize=pointer-compare
+            <cxxflags>-fsanitize=pointer-subtract
+          ;
+        }
+      }
+    }
+    if ! (  <cxx-report-template>off in $(properties) )
+    {
+      if (  $(toolset) = gcc && ! (  $(version) < 08.00  )  )
+      {
+        flags +=
+          <cxxflags>-fno-elide-type
+          <cxxflags>-fdiagnostics-show-template-tree
+        ;
+      }
+      if (  $(toolset) = clang && ! (  $(version) < 03.04  )  )
+      {
+        flags +=
+          <cxxflags>-fno-elide-type
+        ;
+      }
+    }
+    if ! (  <cxx-color>default in $(properties) )
+    {
+      if (  (  $(toolset) = gcc && ! (  $(version) < 04.09  )  ) || $(toolset) = clang  )
+      {
+        if <cxx-color>auto in $(properties)
+        {
+          flags +=
+            <cxxflags>-fdiagnostics-color=auto
+          ;
+        }
+        else if <cxx-color>never in $(properties)
+        {
+          flags +=
+            <cxxflags>-fdiagnostics-color=never
+          ;
+        }
+        else if <cxx-color>always in $(properties)
+        {
+          flags +=
+            <cxxflags>-fdiagnostics-color=always
+          ;
+        }
+      }
+    }
+  }
+  return $(flags) ;
 }

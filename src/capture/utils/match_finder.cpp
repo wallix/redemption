@@ -28,7 +28,6 @@
 #include "utils/pattutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 
-#include <cstring>
 
 namespace utils
 {

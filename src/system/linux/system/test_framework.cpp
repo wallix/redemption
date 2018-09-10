@@ -4,10 +4,3 @@
 
 #include <boost/test/unit_test_monitor.hpp>
 #include <boost/test/included/unit_test.hpp>
-
-#include <cstdio>
-#include "core/error.hpp"
-
-#include "cxx/diagnostic.hpp"
-
-#include "./redemption_unit_tests.hpp"

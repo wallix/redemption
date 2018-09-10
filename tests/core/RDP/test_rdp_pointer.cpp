@@ -25,11 +25,7 @@
 #include "test_only/check_sig.hpp"
 
 #include "utils/bitmap.hpp"
-#include "utils/drawable.hpp"
-#include "utils/png.hpp"
 #include "test_only/fake_graphic.hpp"
-#include "mod/rdp/rdp_orders.hpp"
-#include "utils/verbose_flags.hpp"
 
 #include "core/RDP/rdp_pointer.hpp"
 

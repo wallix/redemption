@@ -32,10 +32,6 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
 #include "test_only/front/fake_front.hpp"
-#include "utils/sugar/byte.hpp"
-
-#include <sys/stat.h>
-#include <sys/types.h>
 
 
 class TestToClientSender : public VirtualChannelDataSender {

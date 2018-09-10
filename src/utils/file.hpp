@@ -21,7 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #include "utils/sugar/movable_ptr.hpp"
-#include "utils/sugar/byte.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <string>
 #include <cstdio>
@@ -68,12 +68,12 @@ struct File
         return std::ferror(f);
     }
 
-    byte_array read(byte_array buffer) noexcept
+    bytes_view read(bytes_view buffer) noexcept
     {
         return {buffer.data(), std::fread(buffer.data(), 1, buffer.size(), f)};
     }
 
-    size_t write(const_byte_array buffer) noexcept
+    size_t write(const_bytes_view buffer) noexcept
     {
         return std::fwrite(buffer.data(), 1, buffer.size(), f);
     }

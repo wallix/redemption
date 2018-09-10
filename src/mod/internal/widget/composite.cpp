@@ -21,7 +21,6 @@
 
 #include "mod/internal/widget/composite.hpp"
 #include "keyboard/keymap2.hpp"
-#include "utils/log.hpp"
 #include "utils/region.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"

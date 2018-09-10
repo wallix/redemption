@@ -22,7 +22,6 @@
 
 #include "mod/internal/widget/composite.hpp"
 #include "mod/internal/widget/module_host.hpp"
-#include "core/RDP/gcc/userdata/cs_monitor.hpp"
 
 #include <memory>
 

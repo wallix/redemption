@@ -31,7 +31,6 @@
 #include "core/mainloop.hpp"
 
 #include "main/version.hpp"
-#include "openssl_crypto.hpp"
 #include "program_options/program_options.hpp"
 #include "system/scoped_crypto_init.hpp"
 #include "transport/in_file_transport.hpp"
@@ -51,12 +50,8 @@
 #include <ctime>
 #include <csignal>
 
-#include <arpa/inet.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <sys/types.h>
-#include <sys/un.h>
+#include <dirent.h>
 
 
 inline void daemonize(const char * pid_file)

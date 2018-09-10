@@ -22,6 +22,7 @@
 
 #include "gdi/image_frame_api.hpp"
 #include "utils/bitfu.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 
 #include <memory>
 #include <cstring>

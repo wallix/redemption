@@ -56,7 +56,11 @@ int main(int argc, char** argv)
     //;           //RDPVerbose::graphics;
     //        to_verbose_flags(0x0);
     //RDPVerbose::graphics;
-    RDPVerbose verbose = to_verbose_flags(0xffffffff);             //(RDPVerbose::rdpdr_dump | RDPVerbose::rdpdr);
+    //(RDPVerbose::rdpdr_dump | RDPVerbose::rdpdr);
+    //
+    //RDPVerbose::remoteapp | RDPVerbose::rdpdr;
+    //to_verbose_flags(0xffffffff);
+    RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;              //to_verbose_flags(0x0);
 
     ClientRedemption client_qt( reactor, argv, argc, verbose
                               , graphic_qt

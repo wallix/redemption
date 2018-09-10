@@ -25,30 +25,24 @@
 
 #include "utils/log.hpp"
 
-#include <memory>
-
-#include "configs/config.hpp"
-
-#include "utils/png.hpp"
-#include "utils/drawable.hpp"
-#include "utils/stream.hpp"
-
-#include "transport/transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "transport/out_file_transport.hpp"
-#include "transport/in_file_transport.hpp"
-
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
 #include "capture/params_from_ini.hpp"
+#include "configs/config.hpp"
 #include "test_only/check_sig.hpp"
-#include "test_only/get_file_contents.hpp"
-#include "utils/fileutils.hpp"
-#include "utils/bitmap_shrink.hpp"
-
-#include "test_only/lcg_random.hpp"
 #include "test_only/fake_stat.hpp"
+#include "test_only/get_file_contents.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/transport/test_transport.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/out_file_transport.hpp"
+#include "transport/transport.hpp"
+#include "utils/drawable.hpp"
+#include "utils/fileutils.hpp"
+#include "utils/png.hpp"
+#include "utils/stream.hpp"
+
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -282,7 +276,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         RED_CHECK_EQUAL(3223, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(7);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {
@@ -2522,8 +2516,6 @@ RED_AUTO_TEST_CASE(TestPatternSearcher)
 }
 
 
-#include "utils/fileutils.hpp"
-
 RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
 {
     OutFilenameSequenceTransport fnt(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test_outfilenametransport", ".txt", getgid(), ReportError{});
@@ -2603,9 +2595,9 @@ extern "C" {
     }
 }
 
+#ifndef REDEMPTION_NO_FFMPEG
 #include "lib/do_recorder.hpp"
 
-#ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestMetaCapture)
 {
     const struct CheckFiles {
@@ -3134,7 +3126,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         RED_CHECK_EQUAL(4136, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {
@@ -3392,7 +3384,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         RED_CHECK_EQUAL(2341, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_EQUAL(false, file_exist(filename));
+        RED_CHECK_FILE_NOT_EXISTS((filename));
     }
 
     for (auto x: fileinfo) {

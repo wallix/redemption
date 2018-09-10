@@ -112,7 +112,7 @@ public:
     virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
 
     virtual void read_data(
-        std::string const& file_to_tread, int offset, byte_array data) = 0;
+        std::string const& file_to_tread, int offset, bytes_view data) = 0;
 
     virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) = 0;
 

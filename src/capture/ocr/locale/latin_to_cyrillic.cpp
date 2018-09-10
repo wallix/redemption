@@ -19,6 +19,7 @@
 */
 
 #include "capture/ocr/locale/latin_to_cyrillic.hpp"
+#include "utils/utf.hpp"
 
 
 namespace

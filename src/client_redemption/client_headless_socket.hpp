@@ -22,10 +22,8 @@
 
 #include "utils/log.hpp"
 
-
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-//#include "client_redemption/client_input_output_api/client"
+
 
 
 class ClientHeadlessSocket : public ClientInputSocketAPI {
@@ -38,38 +36,15 @@ public:
       : session_reactor(session_reactor)
     {}
 
-    virtual bool start_to_listen(int client_sck, mod_api * mod) override {
-//         (void) client_sck;
-//         (void) mod;
+    virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override {
 
-//         LOG(LOG_INFO, "start_to_listen()");
-
-//         try {
-            while (!mod->is_up_and_running()) {
-                std::cout << " Early negociations...\n";
-                if (int err = this->client->wait_and_draw_event({3, 0})) {
-                    std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
-                }
+        while (!mod->is_up_and_running()) {
+//                 std::cout << " Early negociations...\n";
+            if (int err = this->client->wait_and_draw_event({3, 0})) {
+                std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
             }
-
-//         } catch (const Error & e) {
-//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-//             return true;
-//         }
-//                                 try {
-
-// //             this->primary_connection_finished = true;
-// //             this->start_wab_session_time = tvtime();
-//
-//         } catch (const Error & e) {
-//             std::cout << " Error: Failed during RDP early negociations step. " << e.errmsg() << "\n";
-//             return false;
-//         }
-        LOG(LOG_INFO, " Early negociations completes.\n");
-
-
-//         timeval now = tvtime();
-//         this->session_reactor.set_current_time(now);
+        }
+        //std::cout << " Early negociations completes.\n";
 
         return true;
     }
@@ -78,18 +53,18 @@ public:
 };
 
 
-class ClientHeadlessInput : public ClientInputMouseKeyboardAPI
-{
-    virtual void update_keylayout() override {}
-
-    virtual void init_form() override {}
-
-
-    // TODO string_view
-    void virtual keyPressEvent(const int /*key*/, std::string const& /*text*/) override {}
-
-    // TODO string_view
-    void virtual keyReleaseEvent(const int /*key*/, std::string const& /*text*/) override {}
-};
+// class ClientHeadlessInput : public ClientInputMouseKeyboardAPI
+// {
+//     virtual void update_keylayout() override {}
+//
+//     virtual void init_form() override {}
+//
+//
+//     // TODO string_view
+//     void virtual keyPressEvent(const int /*key*/, std::string const& /*text*/) override {}
+//
+//     // TODO string_view
+//     void virtual keyReleaseEvent(const int /*key*/, std::string const& /*text*/) override {}
+// };
 
 

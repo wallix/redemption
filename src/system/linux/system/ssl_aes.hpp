@@ -29,7 +29,8 @@
 #include <cstdint>
 #include <cstring>
 
-#include "openssl_crypto.hpp"
+#include <openssl/aes.h>
+
 
 enum class AES_direction : bool {
     SSL_AES_ENCRYPT = 0,

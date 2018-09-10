@@ -23,8 +23,6 @@
 
 #include "utils/texttime.hpp"
 
-#include <sys/time.h>
-
 RED_AUTO_TEST_CASE(TestTextdate)
 {
     using namespace std::literals::chrono_literals;
