@@ -4993,6 +4993,8 @@ public:
                 stream.out_uint16_le(device_flags);
                 stream.out_uint16_le(param1);
                 stream.out_uint16_le(param2);
+
+                this->metrics.client_main_channel_data(stream.tailroom());
             }
         );
 
@@ -5034,6 +5036,7 @@ public:
                     LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
                     throw Error(ERR_RDP_FASTPATH);
                 }
+                this->metrics.client_main_channel_data(stream.tailroom());
             },
             [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
                 FastPath::ClientInputEventPDU_Send out_cie(
