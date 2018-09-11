@@ -4889,8 +4889,6 @@ public:
             }
         );
 
-        this->metrics.client_main_channel_data(16);
-
         if (bool(this->verbose & RDPVerbose::input)) {
             LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
         }
