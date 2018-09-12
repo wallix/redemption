@@ -58,6 +58,9 @@ using kv_pair = const kv_pair_;
 // internal pointers should never be nullptr
 inline std::string key_qvalue_pairs(std::string & buffer, array_view<kv_pair> pairs)
 {
+    if (!buffer.empty()) {
+        buffer += " ";
+    }
     for (auto p: pairs){
         buffer.append(p.key.data(), p.key.size());
         buffer += "=\"";
