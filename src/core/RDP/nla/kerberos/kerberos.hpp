@@ -47,7 +47,14 @@ namespace {
     //     Kerberos_Comment        // Comment
     // };
 
-    gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
+    // gss_OID_desc GSS_MECH_KRB5        = {  9, const_cast<void *>(static_cast<const void *>("\x2A\x86\x48\x86\xF7\x12\x01\x02\x02")) };
+    // gss_OID_desc GSS_MECH_KRB5_LEGACY = {  9, const_cast<void *>(static_cast<const void *>("\x2A\x86\x48\x82\xF7\x12\x01\x02\x02")) };
+    // gss_OID_desc GSS_MECH_KRB5_OLD    = {  5, const_cast<void *>(static_cast<const void *>("\x2B\x05\x01\x05\x02")) };
+    // gss_OID_desc GSS_MECH_SPNEGO      = {  6, const_cast<void *>(static_cast<const void *>("\x2b\x06\x01\x05\x05\x02")) };
+    // gss_OID_desc GSS_MECH_IAKERB      = {  6, const_cast<void *>(static_cast<const void *>("\x2b\x06\x01\x05\x02\x05")) };
+    // gss_OID_desc GSS_MECH_NTLMSSP     = { 10, const_cast<void *>(static_cast<const void *>("\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a")) };
+
+    gss_OID_desc gss_spnego_krb5_mechanism_oid_desc =
     { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) }; /*NOLINT*/
 
     // SecPkgContext_Sizes ContextSizes;
@@ -59,21 +66,18 @@ namespace {
 
 
 
-struct KERBEROSContext final {
-    gss_ctx_id_t gss_ctx;
-    gss_name_t target_name;
-    OM_uint32 actual_services;
-    OM_uint32 actual_time;
-    OM_uint32 actual_flag;
-    gss_OID actual_mech;
-    gss_cred_id_t deleg_cred;
-    KERBEROSContext()
-        : gss_ctx(GSS_C_NO_CONTEXT)
-        , target_name(GSS_C_NO_NAME)
-        , deleg_cred(GSS_C_NO_CREDENTIAL)
-    {}
+struct KERBEROSContext final
+{
+    gss_ctx_id_t gss_ctx = GSS_C_NO_CONTEXT;
+    gss_name_t target_name = GSS_C_NO_NAME;
+    OM_uint32 actual_services = 0;
+    OM_uint32 actual_time = 0;
+    OM_uint32 actual_flag = 0;
+    gss_OID actual_mech = nullptr;
+    gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
 
-    ~KERBEROSContext() {
+    ~KERBEROSContext()
+    {
         OM_uint32 major_status, minor_status;
         if (this->target_name != GSS_C_NO_NAME) {
             major_status = gss_release_name(&minor_status, &this->target_name);
@@ -130,7 +134,6 @@ public:
             pvLogonID->copy(byte_ptr_cast(pszPrincipal), length);
             pvLogonID->get_data()[length] = 0;
         }
-        this->credentials = Krb5CredsPtr(new Krb5Creds);
 
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
@@ -142,6 +145,7 @@ public:
         setenv("KRB5CCNAME", cache, 1);
         LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
         if (pAuthData) {
+            this->credentials = Krb5CredsPtr(new Krb5Creds);
             int ret = this->credentials->get_credentials(pAuthData->princname,
                                                          pAuthData->princpass, nullptr);
             return ret ? SEC_E_NO_CREDENTIALS : SEC_E_OK;
@@ -200,7 +204,8 @@ public:
         input_tok.length = input_buffer.size();
         input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-        gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
+        gss_OID desired_mech = &gss_spnego_krb5_mechanism_oid_desc;
+
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
             return SEC_E_CRYPTO_SYSTEM_INVALID;
@@ -284,7 +289,8 @@ public:
         input_tok.length = input_buffer.size();
         input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-        gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
+        gss_OID desired_mech = &gss_spnego_krb5_mechanism_oid_desc;
+
         if (!this->mech_available(desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
             return SEC_E_CRYPTO_SYSTEM_INVALID;
@@ -313,15 +319,15 @@ public:
                                               gss_no_cred,
                                               &input_tok,
                                               GSS_C_NO_CHANNEL_BINDINGS,
+                                              &this->krb_ctx->target_name,
                                               nullptr,
-                                              &this->krb_ctx->actual_mech,
                                               &output_tok,
                                               &this->krb_ctx->actual_flag,
-                                              &this->krb_ctx->actual_time,
+                                              nullptr,
                                               &this->krb_ctx->deleg_cred);
 
         if (GSS_ERROR(major_status)) {
-            LOG(LOG_INFO, "MAJOR ERROR");
+            LOG(LOG_ERR, "MAJOR ERROR");
             this->report_error(GSS_C_GSS_CODE, "CredSSP: SPNEGO negotiation failed.",
                                major_status, minor_status);
             return SEC_E_OUT_OF_SEQUENCE;
@@ -429,14 +435,14 @@ public:
         gss_buffer_desc status_string;
 
         LOG(LOG_ERR, "GSS error [%u:%u:%u]: %s\n",
-            (major_status & 0xff000000) >> 24,	// Calling error
-            (major_status & 0xff0000) >> 16,	// Routine error
-            major_status & 0xffff,	// Supplementary info bits
+            (major_status >> 24) & 0xff, // Calling error
+            (major_status >> 16) & 0xff, // Routine error
+            major_status & 0xffff,	     // Supplementary info bits
             str);
 
         LOG(LOG_ERR, "GSS Minor status error [%u:%u:%u]:%u %s\n",
-            (minor_status & 0xff000000) >> 24,	// Calling error
-            (minor_status & 0xff0000) >> 16,	// Routine error
+            (minor_status >> 24) & 0xff, // Calling error
+            (minor_status >> 16) & 0xff, // Routine error
             minor_status & 0xffff,	// Supplementary info bits
             minor_status,
             str);
@@ -446,12 +452,12 @@ public:
                 &minor_status, major_status,
                 code, GSS_C_NULL_OID, &msgctx, &status_string);
         	if (ms != GSS_S_COMPLETE) {
-                continue;
+                break;
             }
 
-            LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
+            LOG(LOG_ERR," - %s\n", static_cast<char const*>(status_string.value));
         }
-        while (ms == GSS_S_COMPLETE && msgctx);
+        while (msgctx);
     }
 
     bool mech_available(gss_OID mech)
