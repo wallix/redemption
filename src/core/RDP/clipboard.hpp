@@ -1635,7 +1635,7 @@ public:
         this->nPositionHigh_ = stream.in_uint32_le();
         this->cbRequested_   = stream.in_uint32_le();
 
-        if (stream.in_remain() > 4 /* clipDataId(4) */) {
+        if (stream.in_remain() >= 4 /* clipDataId(4) */) {
             this->clipDataId_ = stream.in_uint32_le();
 
             this->has_optional_clipDataId_ = true;
