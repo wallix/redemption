@@ -56,7 +56,11 @@ if $(BOOST_STACKTRACE) = 1
     # boost_stacktrace_basic
     # boost_stacktrace_noop
     lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
-    REDEMPTION_CXXFLAGS += <define>BOOST_STACKTRACE_DYN_LINK <linkflags>-rdynamic ;
+    CXXFLAGS +=
+        <define>BOOST_STACKTRACE_DYN_LINK
+        <variant>debug:<linkflags>-rdynamic
+        <variant>san:<linkflags>-rdynamic
+    ;
 }
 else
 {

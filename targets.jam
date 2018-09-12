@@ -315,6 +315,7 @@ lib libiametrics :
 :
   $(LIB_DEPENDENCIES)
   <library>log.o
+  <library>app_path_exe.o
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
@@ -2401,6 +2402,7 @@ test-run tests/lib/test_iametrics :
 :
   <covfile>src/lib/iametrics.cpp
   <covfile>src/lib/iametrics.hpp
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
@@ -3584,6 +3586,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
 :
   <covfile>src/mod/rdp/rdp_metrics.hpp
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/RDP/mppc.o

@@ -60,8 +60,6 @@ if $(qtversion) = 5
     constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
 }
 
-lib gssglue : : <name>gssglue <link>shared ;
-
 constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
@@ -85,6 +83,8 @@ else
         return ;
     }
 }
+
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption_qt_client
     : requirements
@@ -113,8 +113,6 @@ project redemption_qt_client
 
    : default-build release
 ;
-
-include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit install instexe install-bin ;
 

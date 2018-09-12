@@ -4,8 +4,6 @@ CXXFLAGS =
   <cxxflags>-std=c++17
   <variant>debug:<cxx-libcxx-debug>allow_broken_abi
   # <variant>debug:<cxxflags>-O2
-  <variant>debug:<linkflags>-rdynamic # boost.stacktrace
-  <variant>san:<linkflags>-rdynamic # boost.stacktrace
   <toolset>clang:<cxxflags>-Wno-overlength-strings
   <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
   <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
