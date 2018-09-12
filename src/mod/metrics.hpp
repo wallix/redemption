@@ -22,7 +22,7 @@
 
 #include <sys/io.h>
 #include <sys/types.h>
-#include <sys/stat.h>  
+#include <sys/stat.h>
 
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
@@ -46,10 +46,10 @@ class MetricsHmacSha256Encrypt
     std::array<char, SslSha256::DIGEST_LENGTH*2+1> dest;
 
 public:
-    MetricsHmacSha256Encrypt(const_byte_ptr src, const_byte_ptr key_crypt)
+    MetricsHmacSha256Encrypt(const_byte_ptr src, size_t src_len, const_byte_ptr key_crypt)
     {
         SslHMAC_Sha256 sha256(key_crypt, 32);
-        sha256.update(src, sizeof(src));
+        sha256.update(src, src_len);
         uint8_t sig[SslSha256::DIGEST_LENGTH];
         sha256.final(sig);
 
