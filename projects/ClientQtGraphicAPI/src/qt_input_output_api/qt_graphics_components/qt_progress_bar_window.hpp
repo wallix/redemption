@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "utils/log.hpp"
+#include "cxx/diagnostic.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
 #   define REDEMPTION_QT_INCLUDE_WIDGET(name) <QtGui/name>
@@ -65,11 +65,8 @@ public:
         this->show();
     }
 
-    ~ProgressBarWindow() {}
-
-
-
-    void setValue(int val) {
+    void setValue(int val)
+    {
         this->load_bar.setValue(val);
         if (val >= this->load_bar.maximum()) {
             this->close();
