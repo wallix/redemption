@@ -33,7 +33,7 @@
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientOutPutSound snd_io;
@@ -126,7 +126,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientOutPutSound snd_io;

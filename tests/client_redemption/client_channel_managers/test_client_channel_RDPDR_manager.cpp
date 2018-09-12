@@ -44,163 +44,163 @@ namespace rdpdr
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 {
-   SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    SessionReactor session_reactor;
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
-   FakeIODisk fakeIODisk;
-   RDPDiskConfig config;
-   config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
-   ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    FakeIODisk fakeIODisk;
+    RDPDiskConfig config;
+    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
-   StaticOutStream<512> out_serverAnnounce;
-   rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
-   header_serverAnnounce.emit(out_serverAnnounce);
-   out_serverAnnounce.out_uint16_le(0x0001);
-   out_serverAnnounce.out_uint16_le(0x000c);
-   out_serverAnnounce.out_uint32_le(0x00000002);
-   InStream chunk_serverAnnounce(out_serverAnnounce.get_data(), out_serverAnnounce.get_offset());
+    StaticOutStream<512> out_serverAnnounce;
+    rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
+    header_serverAnnounce.emit(out_serverAnnounce);
+    out_serverAnnounce.out_uint16_le(0x0001);
+    out_serverAnnounce.out_uint16_le(0x000c);
+    out_serverAnnounce.out_uint32_le(0x00000002);
+    InStream chunk_serverAnnounce(out_serverAnnounce.get_data(), out_serverAnnounce.get_offset());
 
-   RED_CHECK_EQUAL(manager.protocol_minor_version, 0);
+    RED_CHECK_EQUAL(manager.protocol_minor_version, 0);
 
-   manager.receive(chunk_serverAnnounce);
-   RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
+    manager.receive(chunk_serverAnnounce);
+    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
 
-   RED_CHECK_EQUAL(manager.protocol_minor_version, 0x000c);
+    RED_CHECK_EQUAL(manager.protocol_minor_version, 0x000c);
 
-   FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
-   RED_CHECK_EQUAL(pdu_data->size, 12);
-   InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
-   RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
-   RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::PAKID_CORE_CLIENTID_CONFIRM);
-   RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x0001);
-   RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x000c);
-   RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint32_le(), 0x00000002);
+    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
+    RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::PAKID_CORE_CLIENTID_CONFIRM);
+    RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x0001);
+    RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x000c);
+    RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint32_le(), 0x00000002);
 
-   pdu_data = client.stream();
-   InStream stream_clientName(pdu_data->data, pdu_data->size);
-   RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
-   RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::PAKID_CORE_CLIENT_NAME);
-   RED_CHECK_EQUAL(stream_clientName.in_uint32_le(), 0x00000001);
-   RED_CHECK_EQUAL(stream_clientName.in_uint32_le(), 0x00000000);
-   RED_CHECK_EQUAL(pdu_data->size, 16+stream_clientName.in_uint32_le());
-
-
-   StaticOutStream<512> out_serverCapabilityRequest;
-   rdpdr::SharedHeader header_serverCapabilityRequest(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY);
-   header_serverCapabilityRequest.emit(out_serverCapabilityRequest);
-   out_serverCapabilityRequest.out_uint16_le(5);
-   out_serverCapabilityRequest.out_skip_bytes(2);
-   out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
-   out_serverCapabilityRequest.out_uint16_le(44);
-   out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
-   out_serverCapabilityRequest.out_uint32_le(0x00000002);
-   out_serverCapabilityRequest.out_uint32_le(0x00000000);
-   out_serverCapabilityRequest.out_uint16_le(0x0001);
-   out_serverCapabilityRequest.out_uint16_le(0x000c);
-   out_serverCapabilityRequest.out_uint32_le(0x0000ffff);
-   out_serverCapabilityRequest.out_uint32_le(0x00000000);
-   out_serverCapabilityRequest.out_uint32_le(0x00000007);
-   out_serverCapabilityRequest.out_uint32_le(0x00000000);
-   out_serverCapabilityRequest.out_uint32_le(0x00000000);
-   out_serverCapabilityRequest.out_uint32_le(0x00000002);
-
-   out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
-   out_serverCapabilityRequest.out_uint16_le(8);
-   out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
-
-   out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_PORT_TYPE);
-   out_serverCapabilityRequest.out_uint16_le(8);
-   out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
-
-   out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_DRIVE_TYPE);
-   out_serverCapabilityRequest.out_uint16_le(8);
-   out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
-
-   out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_SMARTCARD_TYPE);
-   out_serverCapabilityRequest.out_uint16_le(8);
-   out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
-
-   InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_data(), out_serverCapabilityRequest.get_offset());
-
-   manager.receive(chunk_serverCapabilityRequest);
-
-   RED_CHECK_EQUAL(manager.server_capability_number, 5);
-   //RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PORT_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE], true);
-   RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE], true);
+    pdu_data = client.stream();
+    InStream stream_clientName(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
+    RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::PAKID_CORE_CLIENT_NAME);
+    RED_CHECK_EQUAL(stream_clientName.in_uint32_le(), 0x00000001);
+    RED_CHECK_EQUAL(stream_clientName.in_uint32_le(), 0x00000000);
+    RED_CHECK_EQUAL(pdu_data->size, 16+stream_clientName.in_uint32_le());
 
 
-   StaticOutStream<512> out_serverClientIDConfirm;
-   rdpdr::SharedHeader header_serverClientIDConfirm(rdpdr::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
-   header_serverClientIDConfirm.emit(out_serverClientIDConfirm);
-   out_serverAnnounce.out_uint16_le(0x0001);
-   out_serverAnnounce.out_uint16_le(0x000c);
-   out_serverAnnounce.out_uint32_le(0x00000002);
+    StaticOutStream<512> out_serverCapabilityRequest;
+    rdpdr::SharedHeader header_serverCapabilityRequest(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_CAPABILITY);
+    header_serverCapabilityRequest.emit(out_serverCapabilityRequest);
+    out_serverCapabilityRequest.out_uint16_le(5);
+    out_serverCapabilityRequest.out_skip_bytes(2);
+    out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_GENERAL_TYPE);
+    out_serverCapabilityRequest.out_uint16_le(44);
+    out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
+    out_serverCapabilityRequest.out_uint32_le(0x00000002);
+    out_serverCapabilityRequest.out_uint32_le(0x00000000);
+    out_serverCapabilityRequest.out_uint16_le(0x0001);
+    out_serverCapabilityRequest.out_uint16_le(0x000c);
+    out_serverCapabilityRequest.out_uint32_le(0x0000ffff);
+    out_serverCapabilityRequest.out_uint32_le(0x00000000);
+    out_serverCapabilityRequest.out_uint32_le(0x00000007);
+    out_serverCapabilityRequest.out_uint32_le(0x00000000);
+    out_serverCapabilityRequest.out_uint32_le(0x00000000);
+    out_serverCapabilityRequest.out_uint32_le(0x00000002);
 
-   InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_data(), out_serverClientIDConfirm.get_offset());
+    out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_PRINTER_TYPE);
+    out_serverCapabilityRequest.out_uint16_le(8);
+    out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-   manager.receive(chunk_serverClientIDConfirm);
+    out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_PORT_TYPE);
+    out_serverCapabilityRequest.out_uint16_le(8);
+    out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-   RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
+    out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_DRIVE_TYPE);
+    out_serverCapabilityRequest.out_uint16_le(8);
+    out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_02);
 
-   pdu_data = client.stream();
-   InStream stream_clientCapability(pdu_data->data, pdu_data->size);
-   RED_CHECK_EQUAL(pdu_data->size, 84);
-   rdpdr::SharedHeader header_clientCapability;
-   header_clientCapability.receive(stream_clientCapability);
-   RED_CHECK_EQUAL(header_clientCapability.component, rdpdr::RDPDR_CTYP_CORE);
-   RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
+    out_serverCapabilityRequest.out_uint16_le(rdpdr::CAP_SMARTCARD_TYPE);
+    out_serverCapabilityRequest.out_uint16_le(8);
+    out_serverCapabilityRequest.out_uint32_le(rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-   RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
+    InStream chunk_serverCapabilityRequest(out_serverCapabilityRequest.get_data(), out_serverCapabilityRequest.get_offset());
 
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 5);
-   stream_clientCapability.in_skip_bytes(2);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_GENERAL_TYPE);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 44);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_02);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000002);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 0x0001);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 0x000c);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x0000ffff);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000007);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000001);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
+    manager.receive(chunk_serverCapabilityRequest);
 
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_PRINTER_TYPE);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+    RED_CHECK_EQUAL(manager.server_capability_number, 5);
+    //RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_GENERAL_TYPE], true);
+    RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PRINTER_TYPE], true);
+    RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_PORT_TYPE], true);
+    RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_DRIVE_TYPE], true);
+    RED_CHECK_EQUAL(manager.fileSystemCapacity[rdpdr::CAP_SMARTCARD_TYPE], true);
 
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_PORT_TYPE);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_DRIVE_TYPE);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+    StaticOutStream<512> out_serverClientIDConfirm;
+    rdpdr::SharedHeader header_serverClientIDConfirm(rdpdr::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_CLIENTID_CONFIRM);
+    header_serverClientIDConfirm.emit(out_serverClientIDConfirm);
+    out_serverAnnounce.out_uint16_le(0x0001);
+    out_serverAnnounce.out_uint16_le(0x000c);
+    out_serverAnnounce.out_uint32_le(0x00000002);
 
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_SMARTCARD_TYPE);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
-   RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+    InStream chunk_serverClientIDConfirm(out_serverClientIDConfirm.get_data(), out_serverClientIDConfirm.get_offset());
 
-   pdu_data = client.stream();
-   InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
-   rdpdr::SharedHeader header_deviceListAnnounce;
-   header_deviceListAnnounce.receive(stream_deviceListAnnounce);
-   RED_CHECK_EQUAL(header_deviceListAnnounce.component, rdpdr::RDPDR_CTYP_CORE);
-   RED_CHECK_EQUAL(header_deviceListAnnounce.packet_id, rdpdr::PAKID_CORE_DEVICELIST_ANNOUNCE);
+    manager.receive(chunk_serverClientIDConfirm);
+
+    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
+
+    pdu_data = client.stream();
+    InStream stream_clientCapability(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(pdu_data->size, 84);
+    rdpdr::SharedHeader header_clientCapability;
+    header_clientCapability.receive(stream_clientCapability);
+    RED_CHECK_EQUAL(header_clientCapability.component, rdpdr::RDPDR_CTYP_CORE);
+    RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
+
+    RED_CHECK_EQUAL(header_clientCapability.packet_id, rdpdr::PAKID_CORE_CLIENT_CAPABILITY);
+
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 5);
+    stream_clientCapability.in_skip_bytes(2);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_GENERAL_TYPE);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 44);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_02);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000002);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 0x0001);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 0x000c);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x0000ffff);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000007);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000001);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), 0x00000000);
+
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_PRINTER_TYPE);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_PORT_TYPE);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_DRIVE_TYPE);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), rdpdr::CAP_SMARTCARD_TYPE);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
+    RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
+
+    pdu_data = client.stream();
+    InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
+    rdpdr::SharedHeader header_deviceListAnnounce;
+    header_deviceListAnnounce.receive(stream_deviceListAnnounce);
+    RED_CHECK_EQUAL(header_deviceListAnnounce.component, rdpdr::RDPDR_CTYP_CORE);
+    RED_CHECK_EQUAL(header_deviceListAnnounce.packet_id, rdpdr::PAKID_CORE_DEVICELIST_ANNOUNCE);
 }
 
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -258,7 +258,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -301,7 +301,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -357,7 +357,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -413,7 +413,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -466,7 +466,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -509,7 +509,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;
@@ -559,7 +559,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeIODisk fakeIODisk;

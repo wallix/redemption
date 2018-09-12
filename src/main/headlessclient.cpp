@@ -39,7 +39,7 @@
 int run_mod(ClientRedemption & front);
 
 
-int main(int argc, char** argv)
+int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
 

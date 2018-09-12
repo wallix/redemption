@@ -290,7 +290,7 @@ public:
 
 
 
-    ClientRedemptionConfig(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose, FrontAPI &front)
+    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front)
 //     : ClientRedemptionAPI()
     : verbose(verbose)
     //, _recv_disconnect_ultimatum(false)

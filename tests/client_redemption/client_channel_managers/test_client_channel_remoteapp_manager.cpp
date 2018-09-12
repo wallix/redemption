@@ -33,7 +33,7 @@
 RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 {
     SessionReactor session_reactor;
-    char * argv[2] = {"1234", "5678"};
+    char const * argv[2] = {"1234", "5678"};
     int argc = 2;
     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
     FakeClientOutputGraphic graph_io;
@@ -75,11 +75,10 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 }
 
 
-
-RED_AUTO_TEST_CASE(TestRemoteAppChannel)
-{
+// RED_AUTO_TEST_CASE(TestRemoteAppChannel)
+// {
 //     SessionReactor session_reactor;
-//     char * argv[2] = {"1234", "5678"};
+//     char const * argv[2] = {"1234", "5678"};
 //     int argc = 2;
 //     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
 //     FakeClientOutputGraphic graph_io;
@@ -113,6 +112,4 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannel)
 //     rdpsnd::RDPSNDPDUHeader header_waveConfirm;
 //     header_waveConfirm.receive(stream_waveconfirm);
 //     RED_CHECK_EQUAL(header_waveConfirm.msgType, rdpsnd::SNDC_WAVECONFIRM);
-}
-
-
+// }

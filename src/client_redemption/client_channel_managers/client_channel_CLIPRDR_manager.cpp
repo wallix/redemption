@@ -113,8 +113,8 @@
       , total_format_list_pdu_size(config.total_format_list_pdu_size)
       , server_use_long_format_names(config.server_use_long_format_names)
       , cCapabilitiesSets(config.cCapabilitiesSets)
-      , generalFlags(config.generalFlags)
       , path(config.path)
+      , generalFlags(config.generalFlags)
       {
         if (!dir_exist(this->path.c_str())){
             mkdir(this->path.c_str(), 0777);

@@ -71,7 +71,7 @@ private:
 
 public:
 
-    ClientRedemptionAPI(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
+    ClientRedemptionAPI(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
       : config(session_reactor, argv, argc, verbose, *(this)){}
 
     virtual ~ClientRedemptionAPI() = default;
@@ -104,7 +104,7 @@ public:
     virtual void update_keylayout() {}
 
     bool can_be_start_capture() override { return true; }
-    
+
 
     // Replay functions
     virtual time_t get_movie_time_length(char const * /*unused*/) { return time_t{}; }

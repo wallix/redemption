@@ -48,7 +48,7 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    ClientRedemptionController(SessionReactor& session_reactor, char* argv[], int argc, RDPVerbose verbose)
+    ClientRedemptionController(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
       : ClientRedemptionAPI(session_reactor, argv, argc, verbose)
       , _timer(0)
     {

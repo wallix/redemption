@@ -215,7 +215,7 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
-                     char* argv[], int argc, RDPVerbose verbose,
+                     char const* argv[], int argc, RDPVerbose verbose,
                      ClientOutputGraphicAPI * impl_graphic,
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
