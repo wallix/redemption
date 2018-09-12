@@ -44,6 +44,7 @@ if $(NO_FFMPEG) = 0
 }
 else {
     alias ffmpeg : ;
+    REDEMPTION_CXXFLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
 }
 ## }
 
@@ -56,7 +57,7 @@ if $(BOOST_STACKTRACE) = 1
     # boost_stacktrace_basic
     # boost_stacktrace_noop
     lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
-    CXXFLAGS +=
+    REDEMPTION_CXXFLAGS +=
         <define>BOOST_STACKTRACE_DYN_LINK
         <variant>debug:<linkflags>-rdynamic
         <variant>san:<linkflags>-rdynamic
@@ -67,3 +68,5 @@ else
     alias boost_stacktrace : ;
 }
 ## }
+
+alias ocr : ocr.o ppocr ;

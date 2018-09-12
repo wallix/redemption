@@ -1,14 +1,17 @@
 # https://boostorg.github.io/build/manual/develop/index.html
 
-CXXFLAGS =
-  <cxxflags>-std=c++17
-  <variant>debug:<cxx-libcxx-debug>allow_broken_abi
-  # <variant>debug:<cxxflags>-O2
-  <toolset>clang:<cxxflags>-Wno-overlength-strings
-  <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
-  <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
+REDEMPTION_CXXFLAGS =
+    <cxxflags>-std=c++17
+    <variant>debug:<cxx-libcxx-debug>allow_broken_abi
+    # <variant>debug:<cxxflags>-O2
+    <toolset>clang:<cxxflags>-Wno-overlength-strings
+    <toolset>clang:<cxxflags>-Wno-disabled-macro-expansion
+    <toolset>clang:<cxxflags>-Wno-documentation-unknown-command
 
-  <define>ZLIB_CONST
+    <define>_FILE_OFFSET_BITS=64
+    <define>_LARGEFILE64_SOURCE
+
+    <define>ZLIB_CONST
 ;
 
 #

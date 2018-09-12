@@ -40,15 +40,6 @@ include $(JAM_INCLUDE_PATH)/includes.jam ;
 #
 #############################
 
-if $(NO_FFMPEG) = 1 {
-    REDEMPTION_CXXFLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
-}
-
-REDEMPTION_CXXFLAGS +=
-    <define>_FILE_OFFSET_BITS=64
-    <define>_LARGEFILE64_SOURCE
-;
-
 variant coverage : debug : ;
 variant san : debug : <variant>debug <cxx-libcxx-debug>allow_broken_abi <cxx-sanitizers>on ;
 
@@ -68,13 +59,11 @@ constant GCOV :
     <variant>coverage:<library>gcov
 ;
 
-include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption
     : requirements
 
-    <conditional>@includes
     <conditional>@flags
     $(GCOV)
     # <lto>on
@@ -83,17 +72,16 @@ project redemption
     # <relro>on
     # <security>on # strong, all
 
-    $(CXXFLAGS)
-
     # <cxxflags>-fpie
     <cxxflags>-fPIC
-    # <cxxflags>-fno-rtti
+    <cxxflags>-fno-rtti
 
     $(REDEMPTION_CXXFLAGS)
 
    : default-build release
 ;
 
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
 include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 
 explicit

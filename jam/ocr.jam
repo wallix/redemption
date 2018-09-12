@@ -58,5 +58,3 @@ create_ppocr_rule
 ;
 
 ## } ppocr
-
-alias ocr : ocr.o ppocr ;
