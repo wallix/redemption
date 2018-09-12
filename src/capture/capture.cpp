@@ -952,6 +952,15 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
             line_with_3_var("rule", "app_name", "app_cmd_line");
         }
 
+        else if (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION", order)
+              || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION", order)) {
+            line_with_2_var("format", "size");
+        }
+        else if (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX", order)
+              || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX", order)) {
+            line_with_3_var("format", "size", "partial_data");
+        }
+
         else {
             message.clear();
             LOG(LOG_WARNING,
