@@ -50,17 +50,17 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         const char * filename;
         ssize_t size;
     } fileinfo[] = {
-        {"./capture-000000.wrm", 1646},
-        {"./capture-000001.wrm", 3508},
-        {"./capture-000002.wrm", 3463},
-        {"./capture-000003.wrm", -1},
-        {"./capture.mwrm", 165},
+        {"./test_capture-000000.wrm", 1646},
+        {"./test_capture-000001.wrm", 3508},
+        {"./test_capture-000002.wrm", 3463},
+        {"./test_capture-000003.wrm", -1},
+        {"./test_capture.mwrm", 180},
         // hash
-        {"/tmp/capture-000000.wrm", 40},
-        {"/tmp/capture-000001.wrm", 40},
-        {"/tmp/capture-000002.wrm", 40},
-        {"/tmp/capture-000003.wrm", -1},
-        {"/tmp/capture.mwrm", 34},
+        {"/tmp/test_capture-000000.wrm", 45},
+        {"/tmp/test_capture-000001.wrm", 45},
+        {"/tmp/test_capture-000002.wrm", 45},
+        {"/tmp/test_capture-000003.wrm", -1},
+        {"/tmp/test_capture.mwrm", 39},
     };
 
     for (auto & f : fileinfo) {
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         ini.set<cfg::video::record_tmp_path>("./");
         ini.set<cfg::video::record_path>("./");
         ini.set<cfg::video::hash_path>("/tmp/");
-        ini.set<cfg::globals::movie_path>("capture");
+        ini.set<cfg::globals::movie_path>("test_capture");
 
         LCGRandom rnd(0);
         FakeFstat fstat;
@@ -249,7 +249,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         FilenameGenerator png_seq(
 //            FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION
             FilenameGenerator::PATH_FILE_COUNT_EXTENSION
-          , "./" , "capture", ".png"
+          , "./" , "test_capture", ".png"
         );
 
         const char * filename;
@@ -319,7 +319,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     ini.set<cfg::video::record_tmp_path>("./");
     ini.set<cfg::video::record_path>("./");
     ini.set<cfg::video::hash_path>("/tmp");
-    ini.set<cfg::globals::movie_path>("capture");
+    ini.set<cfg::globals::movie_path>("test_capture");
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -436,7 +436,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     now.tv_sec++;
     capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
-    const char * filename = "./capture-000000.png";
+    const char * filename = "./test_capture-000000.png";
 
     auto s = get_file_contents<std::string>(filename);
     RED_CHECK_SIG(
@@ -2604,18 +2604,18 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         const char * filename;
         ssize_t size;
     } fileinfo1[] = {
-        {"./capture-000000.wrm", 226},
-        {"./capture-000001.wrm", 174},
-        {"./capture.mwrm", 198},
+        {"./test_capture-000000.wrm", 226},
+        {"./test_capture-000001.wrm", 174},
+        {"./test_capture.mwrm", 198},
     };
 
     const struct CheckFiles fileinfo2[] = {
-        {"/tmp/capture-000000.mp4", 3565},
-        {"/tmp/capture-000000.png", 244},
-        {"/tmp/capture-000000.wrm", 80},
-        {"/tmp/capture-000001.wrm", 80},
-        {"/tmp/capture.mwrm", 74},
-        {"/tmp/capture.pgs", 37},
+        {"/tmp/test_capture-000000.mp4", 3565},
+        {"/tmp/test_capture-000000.png", 244},
+        {"/tmp/test_capture-000000.wrm", 80},
+        {"/tmp/test_capture-000001.wrm", 80},
+        {"/tmp/test_capture.mwrm", 74},
+        {"/tmp/test_capture.pgs", 37},
     };
 
     for (auto & f : fileinfo1) {
@@ -2649,7 +2649,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     ini.set<cfg::video::record_tmp_path>("./");
     ini.set<cfg::video::record_path>("./");
     ini.set<cfg::video::hash_path>("/tmp");
-    ini.set<cfg::globals::movie_path>("capture");
+    ini.set<cfg::globals::movie_path>("test_capture");
 
     LCGRandom rnd(0);
     Fstat fstat;
@@ -2792,7 +2792,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
 //        capture.periodic_snapshot(now, 0, 5, ignore_frame_in_timeval);
 
-    //    const char * filename = "./capture-000000.png";
+    //    const char * filename = "./test_capture-000000.png";
 
     //    auto s = get_file_contents<std::string>(filename);
     //    RED_CHECK_SIG2(
@@ -2810,10 +2810,10 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "recorder.py",
             "redrec",
             "-i",
-                "./capture.mwrm",
+                "./test_capture.mwrm",
             "--mwrm-path", FIXTURES_PATH,
             "-o",
-                "/tmp/capture",
+                "/tmp/test_capture",
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
@@ -2823,10 +2823,10 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         CoutBuf cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
         EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/capture.mwrm\".\n\n");
+        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");
         RED_CHECK_EQUAL(0, res);
 
-        RED_CHECK_FILE_CONTENTS("/tmp/capture.meta",
+        RED_CHECK_FILE_CONTENTS("/tmp/test_capture.meta",
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
@@ -2843,12 +2843,12 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
             "recorder.py",
             "redrec",
             "-i",
-                "./capture.mwrm",
+                "./test_capture.mwrm",
             "--config-file",
                 FIXTURES_PATH "/disable_kbd_inpit_in_meta.ini",
             "--mwrm-path", FIXTURES_PATH,
             "-o",
-                "/tmp/capture",
+                "/tmp/test_capture",
             "--chunk",
             "--video-codec", "mp4",
             "--json-pgs",
@@ -2858,10 +2858,10 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         CoutBuf cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
         EVP_cleanup();
-        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/capture.mwrm\".\n\n");
+        RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");
         RED_CHECK_EQUAL(0, res);
 
-        RED_CHECK_FILE_CONTENTS("/tmp/capture.meta",
+        RED_CHECK_FILE_CONTENTS("/tmp/test_capture.meta",
             "1970-01-01 01:16:50 - type=\"NEW_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:51 - type=\"COMPLETED_PROCESS\" command_line=\"def\"\n"
             "1970-01-01 01:16:53 - type=\"NEW_PROCESS\" command_line=\"abc\"\n"
