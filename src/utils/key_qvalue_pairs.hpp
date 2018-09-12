@@ -32,7 +32,7 @@ struct charp_or_string
 {
     const array_view_const_char data;
 
-    charp_or_string(const char * const data) 
+    charp_or_string(const char * const data)
         : data(data, strlen(data)){}
     charp_or_string(const array_view_const_char data)
         : data(data) {}
@@ -58,6 +58,9 @@ typedef const kv_pair_ kv_pair;
 // internal pointers should never be nullptr
 inline std::string key_qvalue_pairs(std::string & buffer, array_view<kv_pair> pairs)
 {
+    if (!buffer.empty()) {
+        buffer += " ";
+    }
     for (auto p: pairs){
         buffer.append(p.key.data(), p.key.size());
         buffer += "=\"";
