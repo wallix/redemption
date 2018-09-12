@@ -30,13 +30,13 @@
 inline MetricsHmacSha256Encrypt hmac_user(
     array_view_const_char user, std::array<uint8_t, 32> const& key)
 {
-    return MetricsHmacSha256Encrypt(user.data(), key.data());
+    return MetricsHmacSha256Encrypt(user.data(), user.size(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_account(
     array_view_const_char account, std::array<uint8_t, 32> const& key)
 {
-    return MetricsHmacSha256Encrypt(account.data(), key.data());
+    return MetricsHmacSha256Encrypt(account.data(), account.size(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_device_service(
@@ -44,7 +44,7 @@ inline MetricsHmacSha256Encrypt hmac_device_service(
 {
     service += " ";
     service.append(device.data(), device.size());
-    return MetricsHmacSha256Encrypt(service.data(), key.data());
+    return MetricsHmacSha256Encrypt(service.data(), service.size(), key.data());
 }
 
 inline MetricsHmacSha256Encrypt hmac_client_info(
@@ -55,7 +55,7 @@ inline MetricsHmacSha256Encrypt hmac_client_info(
     int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
         info.bpp, info.width, info.height);
     client_host.append(session_info, session_info_size);
-    return MetricsHmacSha256Encrypt(client_host.data(), key.data());
+    return MetricsHmacSha256Encrypt(client_host.data(), client_host.size(), key.data());
 }
 
 
