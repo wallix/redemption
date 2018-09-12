@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include <sys/io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
@@ -35,6 +39,8 @@
 #include <cstring>
 #include <fcntl.h>
 #include <sys/uio.h>
+
+#include "core/app_path.hpp"
 
 
 class MetricsHmacSha256Encrypt
@@ -136,6 +142,10 @@ public:
     , log_delay(log_delay)
     , next_log_time{to_timeval(this->log_delay+now)}
     {
+        if (!access(this->path.c_str(), 0)) {
+            mkdir(path.c_str(), ACCESSPERMS);
+        }
+
         if (activate) {
             this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
                 "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
