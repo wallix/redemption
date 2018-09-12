@@ -20,6 +20,10 @@
 
 #pragma once
 
+#include <sys/io.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
