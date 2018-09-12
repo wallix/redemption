@@ -27,6 +27,10 @@ To compile ReDemPtion you need the following packages:
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
+```sh
+apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng12-dev
+```
+
 Submodule ($ `git submodule update --init`):
 - https://github.com/wallix/program_options
 - https://github.com/wallix/ppocr
@@ -41,6 +45,11 @@ Submodule ($ `git submodule update --init`):
 - libswscale-dev
 - libx264-dev
 - libbz2-dev
+
+```sh
+apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libbz2-dev
+```
+
 <!-- ok with 53 (?) and 54 version-->
 <!-- - libavcodec-ffmpeg56 -->
 <!-- - libavformat-ffmpeg56 -->
