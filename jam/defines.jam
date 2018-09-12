@@ -96,6 +96,8 @@ _FFMPEG_LINK_MODE ?= "shared" ;
 ## }
 
 constant FFMPEG_INC_PATH : [ setvar FFMPEG_INC_PATH : $(_FFMPEG_INC_PATH) ] ;
-constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ;
-constant FFMPEG_LINK_MODE : [ setvar FFMPEG_LINK_MODE : $(_FFMPEG_LINK_MODE) ] ;
+constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ; # /!\ without `/` terminal
+constant FFMPEG_LINK_MODE : [ setvar FFMPEG_LINK_MODE : $(_FFMPEG_LINK_MODE) ] ; # static or shared
 constant NO_FFMPEG : [ setvar NO_FFMPEG : 0 ] ;
+
+constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTRACE=1` require libboost_stacktrace_backtrace (apt install libboost-stacktrace-dev)

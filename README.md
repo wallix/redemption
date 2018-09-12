@@ -27,6 +27,10 @@ To compile ReDemPtion you need the following packages:
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
+Extra packet:
+- libboost-stacktrace-dev) (only if -sBOOST_STACKTRACE=1)
+
+
 ```sh
 apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng12-dev
 ```
@@ -71,7 +75,7 @@ Disable ffmpeg with `NO_FFMPEG=1`.
 
 ## Environment variable setting
 
-List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
+List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*\] ;/\1/' jam/defines.jam`
 
     export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
     bjam ....

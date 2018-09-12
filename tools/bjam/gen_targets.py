@@ -99,6 +99,7 @@ sys_lib_assoc = dict((
     ('snappy-c.h', '<library>snappy'),
     ('zlib.h', '<library>z'),
     ('openssl/ssl.h', '<library>openssl'),
+    ('boost/stacktrace.hpp', '<library>boost_stacktrace'),
 ))
 sys_lib_prefix = (
     ('libavformat/', '<library>ffmpeg'),

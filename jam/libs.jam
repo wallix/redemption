@@ -1,7 +1,7 @@
 import property-set ;
 import feature ;
 import toolset ;
-
+import os ;
 
 lib bz2 ;
 lib crypto ;
@@ -47,9 +47,19 @@ else {
 }
 ## }
 
+
 ## boost_stacktrace {
 if $(BOOST_STACKTRACE) = 1
 {
-    lib boost_stacktrace : boost_stacktrace_backtrace ;
+    # boost_stacktrace_addr2line
+    # boost_stacktrace_backtrace
+    # boost_stacktrace_basic
+    # boost_stacktrace_noop
+    lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
+    REDEMPTION_CXXFLAGS += <define>BOOST_STACKTRACE_DYN_LINK <linkflags>-rdynamic ;
+}
+else
+{
+    alias boost_stacktrace : ;
 }
 ## }

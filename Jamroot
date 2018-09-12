@@ -68,6 +68,9 @@ constant GCOV :
     <variant>coverage:<library>gcov
 ;
 
+include $(JAM_INCLUDE_PATH)/ocr.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
+
 project redemption
     : requirements
 
@@ -90,9 +93,6 @@ project redemption
 
    : default-build release
 ;
-
-include $(JAM_INCLUDE_PATH)/ocr.jam ;
-include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 

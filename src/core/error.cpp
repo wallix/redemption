@@ -52,6 +52,71 @@ namespace
 //#  include <iostream>
 #  include <boost/stacktrace.hpp>
 #  define REDEMPTION_ERROR_WITH_STACKTRACE
+
+#  include <iostream>
+#  include <csignal>
+namespace
+{
+    struct DefaultPrintLine
+    {
+        void operator()(int i, std::string const& line)
+        {
+            LOG(LOG_DEBUG, "#%d %s", i, line);
+        }
+    };
+
+    template<class F = DefaultPrintLine>
+    void print_stacktrace(F f = {})
+    {
+        int i = 0;
+#       ifdef BOOST_STACKTRACE_DYN_LINK
+        bool is_test = false;
+#       endif
+        auto&& frames = boost::stacktrace::stacktrace();
+        auto&& first = frames.begin();
+        auto&& last = frames.end();
+        if (first == last) {
+            return ;
+        }
+        while (++first != last) {
+            auto&& frame = *first;
+            if (!frame.empty()){
+#               ifdef BOOST_STACKTRACE_DYN_LINK
+                auto&& file = frame.source_file();
+                if (0 == file.compare(0, 6, "tests/")) {
+                    is_test = true;
+                }
+                else if (is_test) {
+                    // abort stacktrace
+                    break;
+                }
+#               endif
+                auto line = boost::stacktrace::to_string(frame);
+                f(i, line);
+                ++i;
+            }
+        }
+        // std::cerr << boost::stacktrace::stacktrace() << std::flush;
+    }
+
+    struct SEGV_Handler
+    {
+        SEGV_Handler()
+        {
+            auto handler = [](int signum) {
+                ::signal(signum, SIG_DFL);
+                print_stacktrace([](int i, auto const& line) {
+                    std::cerr << "#" << i << " " << line << "\n";
+                });
+                std::cerr.flush();
+                //boost::stacktrace::safe_dump_to("./backtrace.dump");
+                // ::raise(SIGSEGV);
+            };
+            ::signal(SIGSEGV, handler);
+            ::signal(SIGABRT, handler);
+        }
+    } SEGV_Handler;
+}
 # endif
 #endif
 
@@ -72,15 +137,7 @@ Error::Error(error_type id, int errnum) noexcept
     }
 
 # ifdef REDEMPTION_ERROR_WITH_STACKTRACE
-    int i = 0;
-    for (auto && frame: boost::stacktrace::stacktrace()){
-        if (!frame.empty()){
-            auto line = boost::stacktrace::to_string(frame);
-            LOG(LOG_DEBUG, "#%d %s", i, line);
-            ++i;
-        }
-    }
-//    std::cerr << boost::stacktrace::stacktrace() << std::flush;
+    print_stacktrace();
 # endif
 #endif
 }
