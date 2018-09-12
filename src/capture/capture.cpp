@@ -1791,7 +1791,7 @@ void Capture::visibility_rects_event(Rect rect) {
     uint16_t const drawable_width  = this->gd_drawable->width();
     uint16_t const drawable_height = this->gd_drawable->height();
 
-    Rect const image_frame_rect = this->video_cropper->get();
+    Rect const image_frame_rect = this->video_cropper->get_rect();
 
     assert((image_frame_rect.cx <= drawable_width) && (image_frame_rect.cy <= drawable_height));
 

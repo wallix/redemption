@@ -208,7 +208,7 @@ public:
         return result;
     }
 
-    Rect get() const override {
+    Rect get_rect() const override {
         return Rect(this->x, this->y, this->out_width, this->out_height);
     }
 };

@@ -55,7 +55,7 @@ struct ImageFrameApi : private noncopyable
     virtual bool reset(unsigned int x, unsigned int y,
                unsigned int out_width, unsigned int out_height) = 0;
 
-    virtual Rect get() const = 0;
+    virtual Rect get_rect() const = 0;
 };
 
 inline ImageFrameApi::ConstImageView get_image_view(ImageFrameApi const & image_frame)

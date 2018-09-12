@@ -990,7 +990,7 @@ public:
         unsigned int /*out_width*/, unsigned int /*out_height*/) noexcept
         override { return false; }
 
-    Rect get() const override {
+    Rect get_rect() const override {
         return Rect(0, 0, this->drawable.width(), this->drawable.height());
     }
 };
