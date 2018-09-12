@@ -1,3 +1,9 @@
+redemption (1.1.62%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * "rdp metrics tag 6.1"
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 12 Sep 2018 16:06:00 +0200
+
 redemption (1.1.61%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * "rdp metrics tag 6.1"
