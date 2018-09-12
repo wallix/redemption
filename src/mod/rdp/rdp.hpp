@@ -6851,6 +6851,7 @@ public:
                 if (this->metrics.active()) {
                     this->metrics.client_main_channel_data(stream.tailroom());
                 }
+            }
         );
 
         if (bool(this->verbose & RDPVerbose::input)){
