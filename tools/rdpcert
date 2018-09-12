@@ -23,7 +23,7 @@ GetOptions (
 if (not $key and not $x509){
     print STDERR "usage: rdpcert confpath [parameters]\n\n"
         ."--key          : set RDP Proxy server private key (x509 is mandatory if changing key)\n"
-        ."--inkey=<file> : user provided file containing private 2048 bit rsa key, PEM format\n"
+        ."--inkey=<file> : user provided file containing private 4096 bit rsa key, PEM format\n"
         ."--x509         : set RDP Proxy server X509 certificate\n"
         ."--inx509=<file>: user provided X509 certificate matching private key, PEM format\n"
         ."--force        : force erasing existing key or user provided certificate\n"
@@ -68,7 +68,7 @@ if ($key){
         }
         else {
             print STDERR "Setting new RDP proxy server private key\n";
-            `openssl genrsa -out $pkey -des3 -passout "pass:$pass" 2048`;
+            `openssl genrsa -out $pkey -des3 -passout "pass:$pass" 4096`;
              die "rdpproxy:failed to create ReDemPtion server private key" if $?;
         }
         $x509 = 1; # force regeneration of key
