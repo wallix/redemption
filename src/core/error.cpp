@@ -55,6 +55,8 @@ namespace
 
 #  include <iostream>
 #  include <csignal>
+#  include <cstdlib>
+
 namespace
 {
     struct DefaultPrintLine
@@ -64,6 +66,34 @@ namespace
             LOG(LOG_DEBUG, "#%d %s", i, line);
         }
     };
+
+    std::string const filter_error = []{
+        auto s = std::getenv("REDEMPTION_FILTER_ERROR");
+        return s ? std::string{s} : std::string{};
+    }();
+
+    bool error_is_filtered(error_type error)
+    {
+        if (filter_error.empty()) {
+            return false;
+        }
+
+        if (filter_error[0] == '*') {
+            return true;
+        }
+
+        char const* s_err = nullptr;
+        #define MAKE_CASE_V(e, x) case e: s_err = #e; break;
+        #define MAKE_CASE(e) case e: s_err = #e; break;
+        switch (error) {
+            EACH_ERROR(MAKE_CASE, MAKE_CASE_V)
+            default: return false;
+        }
+        #undef MAKE_CASE
+        #undef MAKE_CASE_V
+
+        return std::string::npos != filter_error.find(s_err);
+    }
 
     template<class F = DefaultPrintLine>
     void print_stacktrace(F f = {})
@@ -137,7 +167,9 @@ Error::Error(error_type id, int errnum) noexcept
     }
 
 # ifdef REDEMPTION_ERROR_WITH_STACKTRACE
-    print_stacktrace();
+    if (!error_is_filtered(this->id)) {
+        print_stacktrace();
+    }
 # endif
 #endif
 }
