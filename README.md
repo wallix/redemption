@@ -177,6 +177,22 @@ Or run `./tools/bjam/gen_targets.py > targets.jam`
 
 Specific deps (libs, header, cpp, etc) in `./tools/bjam/gen_targets.py`.
 
+Compile proxy_recorder
+======================
+
+Proxy recorder is a tools used to record dialog between a client and an RDP server without
+any modification of the data by redemption. This allows to record reference traffic for
+replaying it later. It is useful for having available new parts or the RDP protocol in a
+reproducible way and replaying traffic when implementing the new orders. This tools is
+not (yet) packaged with redemption and delivered as stand-alone.
+
+It can be compiled using static c++ libraries (usefull to use the runtime on systems
+where reference compiler is older) using the command line below. Links with openssl
+and kerberos are still dynamic and using shared libraries.
+
+`bjam -a -d2 toolset=gcc-7 proxy_recorder linkflags=-static-libstdc++`
+
+
 
 Packaging
 =========
