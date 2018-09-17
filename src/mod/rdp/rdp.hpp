@@ -4343,8 +4343,8 @@ public:
                                         this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
                                         this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
-                                        if (this->remoteapp_bypass_legal_notice_delay.count()) {
-                                            ctx.set_delay(this->remoteapp_bypass_legal_notice_delay);
+                                        if (this->remoteapp_bypass_legal_notice_timeout.count()) {
+                                            ctx.set_delay(this->remoteapp_bypass_legal_notice_timeout);
 
                                             return ctx.next();
                                         }
