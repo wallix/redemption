@@ -153,6 +153,11 @@ private:
     }
 
     const char * rdp_protocol_name = "rdp";
+
+    Metrics metrics;
+
+
+
     // RDP context Info
     int last_x = -1;
     int last_y = -1;
@@ -165,8 +170,6 @@ private:
 
 
 public:
-    Metrics metrics;
-
     RDPMetrics( const bool activate                         // do nothing if false
               , std::string path
               , std::string session_id

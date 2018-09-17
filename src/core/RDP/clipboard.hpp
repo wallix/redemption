@@ -1083,8 +1083,6 @@ struct FormatListPDU
 constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW");
 constexpr auto FILECONTENTS         = cstr_array_view("FileContents");
 constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect");
-// constexpr const uint16_t * FILEGROUPDESCRIPTORW_UNICODE = "F\x00i\x00l\x00e\x00G\x00r\x00o\x00u\x00p\x00D\x00e\x00s\x00c\x00r\x00i\x00p\x00t\x00o\x00r\x00W\x00";
-// constexpr const uint16_t * FILECONTENTS_UNICODE         = "F\x00i\x00l\x00e\x00C\x00o\x00n\x00t\x00e\x00n\x00t\x00s\x00";
 
 
 

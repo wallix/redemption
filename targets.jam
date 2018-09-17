@@ -3683,6 +3683,19 @@ test-run tests/mod/vnc/test_vnc :
   <library>z
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
+test-run tests/mod/vnc/test_vnc_metrics :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc_metrics.cpp
+:
+  <covfile>src/mod/vnc/vnc_metrics.hpp
+  <library>app_path_test.o
+  <library>boost_stacktrace
+  <library>crypto
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/utils/fileutils.o
+  <library>tests/includes/test_only/working_directory.o
+  <variant>debug:<library>dl <variant>san:<library>dl
+;
 test-run tests/mod/xup/test_xup :
   $(REDEMPTION_TEST_PATH)/mod/xup/test_xup.cpp
 :
@@ -5119,6 +5132,8 @@ alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
 alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc.coverage : tests/mod/vnc/test_vnc.coverage ;
+alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
+alias test_vnc_metrics.coverage : tests/mod/vnc/test_vnc_metrics.coverage ;
 alias test_xup : tests/mod/xup/test_xup ;
 alias test_xup.coverage : tests/mod/xup/test_xup.coverage ;
 alias test_regex : tests/regex/test_regex ;
@@ -5620,6 +5635,7 @@ alias tests/mod/vnc/encoder.norec :
 ;
 alias tests/mod/vnc.norec :
   tests/mod/vnc/test_vnc
+  tests/mod/vnc/test_vnc_metrics
 ;
 alias tests/mod/xup.norec :
   tests/mod/xup/test_xup
