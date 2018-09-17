@@ -1,24 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-DEFAULT_CONF_DIR = "/var/wab/etc/"
-DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
 
 from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
+    from wabengine.common.exception import MultiFactorAuthentication
     from wabengine.common.exception import LicenseException
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
     from wabengine.common.exception import SessionAlreadyStopped
     from wallixgenericnotifier import Notify, CX_EQUIPMENT, PATTERN_FOUND, \
-        PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT, WRONG_FINGERPRINT, \
-        RDP_PATTERN_FOUND, RDP_PROCESS_FOUND, RDP_OUTCXN_FOUND, FILESYSTEM_FULL
+        PRIMARY_CX_FAILED, SECONDARY_CX_FAILED, NEW_FINGERPRINT,\
+        WRONG_FINGERPRINT, RDP_PATTERN_FOUND, RDP_PROCESS_FOUND, \
+        RDP_OUTCXN_FOUND, FILESYSTEM_FULL
     from wabconfig import Config
     from wabengine.client.sync_client import SynClient
-    from wallixconst.authentication import PASSWORD_VAULT, PASSWORD_INTERACTIVE, \
-        PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, KERBEROS_FORWARDING, \
-        PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
+    from wallixconst.authentication import PASSWORD_VAULT, \
+        PASSWORD_INTERACTIVE, PUBKEY_VAULT, PUBKEY_AGENT_FORWARDING, \
+        KERBEROS_FORWARDING, PASSWORD_MAPPING, SUPPORTED_AUTHENTICATION_METHODS
     from wallixconst.account import AM_IL_DOMAIN
     from wallixconst.trace import LOCAL_TRACE_PATH_RDP
     from wabx509 import AuthX509
@@ -27,7 +27,7 @@ try:
     CRED_INDEX = "credentials"
     APPREQ_REQUIRED = 1
     APPREQ_OPTIONAL = 0
-except Exception, e:
+except Exception as e:
     import traceback
     tracelog = traceback.format_exc(e)
     try:
@@ -36,8 +36,9 @@ except Exception, e:
         Logger().info("================================")
         Logger().info("==== Load Fake PROXY ENGINE ====")
         Logger().info("================================")
-    except Exception, e:
-        # Logger().info("FAKE LOADING FAILED>>>>>> %s" % traceback.format_exc(e))
+    except Exception as e:
+        # Logger().info("FAKE LOADING FAILED>>>>>> %s" %
+        #               traceback.format_exc(e))
         Logger().info("WABENGINE LOADING FAILED>>>>>> %s" % tracelog)
 
 import time
@@ -50,10 +51,14 @@ from checkout import (
     APPROVAL_NONE
 )
 
+DEFAULT_CONF_DIR = "/var/wab/etc/"
+DEFAULT_SPEC_DIR = "/opt/wab/share/conf/"
+
 FINGERPRINT_SHA1 = 0
 FINGERPRINT_MD5 = 1
 FINGERPRINT_MD5_LEN = 16
 FINGERPRINT_SHA1_LEN = 20
+
 
 def tounicode(item):
     if not item:
@@ -62,12 +67,14 @@ def tounicode(item):
         return item.decode('utf8')
     return item
 
+
 def _binary_ip(network, bits):
     # TODO need Ipv6 support
     # This is a bit too resilient, add check for obviously bad values
-    a,b,c,d = [ int(x)&0xFF for x in network.split('.')]
+    a, b, c, d = [int(x) & 0xFF for x in network.split('.')]
     mask = (0xFFFFFFFF >> bits) ^ 0xFFFFFFFF
     return ((a << 24) + (b << 16) + (c << 8) + d) & mask
+
 
 def is_device_in_subnet(device, subnet):
     if subnet is None:
@@ -78,18 +85,22 @@ def is_device_in_subnet(device, subnet):
             network_bits = _binary_ip(network, int(bits))
             device_bits = _binary_ip(device, int(bits))
             result = network_bits == device_bits
-        except Exception, e:
-            Logger().error("Bad host definition device '%s' subnet '%s': %s" % (device, subnet, str(e)))
+        except Exception as e:
+            Logger().error("Bad host definition device '%s' subnet '%s': %s" %
+                           (device, subnet, str(e)))
             result = False
     else:
         result = device == subnet
-    Logger().debug("checking if device %s is in subnet %s -> %s" % (device, subnet, ['No', 'Yes'][result]))
+    Logger().debug("checking if device %s is in subnet %s -> %s" %
+                   (device, subnet, ['No', 'Yes'][result]))
     return result
+
 
 def read_config_file(modulename="sesman",
                      confdir=DEFAULT_CONF_DIR,
                      specdir=DEFAULT_SPEC_DIR):
     return Config(modulename=modulename, confdir=confdir, specdir=specdir)
+
 
 class Engine(object):
     def __init__(self):
@@ -98,8 +109,10 @@ class Engine(object):
         self.wabuser = None
         self.wabengine_conf = Config('wabengine')
         self.client = SynClient('localhost',
-                                self.wabengine_conf.get('port',
-                                                        'unix:/run/wabengine/wabengine.sock'))
+                                self.wabengine_conf.get(
+                                    'port',
+                                    'unix:/run/wabengine/wabengine.sock'
+                                ))
         self.session_id = None
         self.auth_x509 = None
         self._trace_type = None                 # local ?
@@ -147,7 +160,7 @@ class Engine(object):
             if self.wabuser:
                 return self.wabuser.preferredLanguage
             return self.wabengine.who_am_i().preferredLanguage
-        except Exception, e:
+        except Exception as e:
             return 'en'
 
     def get_username(self):
@@ -155,25 +168,27 @@ class Engine(object):
             if not self.wabuser:
                 self.wabuser = self.wabengine.who_am_i()
             return self.wabuser.cn
-        except Exception, e:
+        except Exception as e:
             return self.wabuser.cn if self.wabuser else ""
 
     def check_license(self):
         res = self.wabengine.is_session_management_license()
         if not res:
-            Logger().info("License Error: Session management License is not available.")
+            Logger().info("License Error: "
+                          "Session management License is not available.")
         return res
 
     def get_force_change_password(self):
         try:
             return self.wabuser.forceChangePwd
-        except Exception, e:
+        except Exception as e:
             return False
 
     def get_ssh_banner(self, lang=None):
         if not lang:
             lang = self.get_language()
-        banner = "Warning! Your remote session may be recorded and kept in electronic format.\n"
+        banner = ("Warning! Your remote session may be recorded and "
+                  "kept in electronic format.\n")
         try:
             with open('/var/wab/etc/proxys/messages/motd.%s' % lang) as f:
                 banner = f.read()
@@ -184,21 +199,39 @@ class Engine(object):
         banner = banner.replace('\n', '\r\n')
         return banner
 
+    def get_warning_message(self, lang=None):
+        if not lang:
+            lang = self.get_language()
+        msg = (u"Warning! Unauthorized access to this system is"
+               u" forbidden and will be prosecuted by law.\n")
+        try:
+            with open('/var/wab/etc/proxys/messages/login.%s' % lang) as f:
+                msg = f.read()
+                msg += '\n'
+        except IOError:
+            pass
+        msg = msg.replace('\n', '\r\n')
+        return msg
+
     def get_deconnection_time_msg(self, lang):
         message = ""
         if self.deconnection_time and self.deconnection_time != '-':
             if lang == 'fr':
-                message = (u'\033[1mAttention\033[0m: Cette connexion sera coupée à %s.\r\n'
-                    % str(self.deconnection_time)).encode('utf8')
+                message = (u"\033[1mAttention\033[0m: Cette connexion sera "
+                           u"coupée à %s.\r\n" %
+                           str(self.deconnection_time)).encode('utf8')
             else:
-                message = (u'\033[1mWarning\033[0m: This connection will be closed at %s.\r\n'
-                    % str(self.deconnection_time)).encode('utf8')
+                message = (u"\033[1mWarning\033[0m: This connection will "
+                           u"be closed at %s.\r\n" %
+                           str(self.deconnection_time)).encode('utf8')
         return message
 
     def check_device_fingerprint(self, hname, service_cn, finger_raw,
                                  hash_type=FINGERPRINT_SHA1):
         finger_host = ''
-        fingerprint_len = FINGERPRINT_SHA1_LEN if hash_type == FINGERPRINT_SHA1 else FINGERPRINT_MD5_LEN
+        fingerprint_len = (FINGERPRINT_SHA1_LEN
+                           if hash_type == FINGERPRINT_SHA1
+                           else FINGERPRINT_MD5_LEN)
         for i, char in enumerate(finger_raw):
             finger_host += '%02x' % ord(char)
             if i < fingerprint_len - 1:
@@ -206,7 +239,11 @@ class Engine(object):
 
         finger = self.wabengine.get_fingerprint(hname, service_cn)
         if not finger:
-            self.wabengine.save_fingerprint(hname, service_cn, finger_host.decode("ascii"))
+            self.wabengine.save_fingerprint(
+                hname,
+                service_cn,
+                finger_host.decode("ascii")
+            )
             Notify(self.wabengine,
                    NEW_FINGERPRINT,
                    {'device': hname})
@@ -214,7 +251,8 @@ class Engine(object):
             Notify(self.wabengine,
                    WRONG_FINGERPRINT,
                    {'device': hname})
-            return False, "Host Key received is different from host key in DB, please contact your administrator"
+            return False, ("Host Key received is different from host key in "
+                           "DB, please contact your administrator")
         return True, "OK"
 
     def init_timeframe(self, auth):
@@ -233,11 +271,15 @@ class Engine(object):
 
     def get_trace_type(self):
         try:
-            self._trace_type = self.wabengine_conf.get('trace', u'localfile_hashed')
+            self._trace_type = self.wabengine_conf.get('trace',
+                                                       u'localfile_hashed')
             return self._trace_type
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine get_trace_type failed: configuration file section 'wabengine', key 'trace', (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine get_trace_type failed: "
+                          "configuration file section "
+                          "'wabengine', key 'trace', (((%s)))" %
+                          traceback.format_exc(e))
         return u'localfile_hashed'
 
     def get_trace_encryption_key(self, path, old_scheme=False):
@@ -252,28 +294,31 @@ class Engine(object):
             if _data[2]:
                 Logger().info("Engine password_expiration_date=%s" % _data[0])
                 return True, _data[0]
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine password_expiration_date failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine password_expiration_date failed: "
+                          "(((%s)))" % traceback.format_exc(e))
         return False, 0
 
-    def is_x509_connected(self, wab_login, ip_client, proxy_type, target, ip_server):
+    def is_x509_connected(self, wab_login, ip_client, proxy_type, target,
+                          ip_server):
         """
         Ask if we are authentifying using x509
         (and ask user by opening confirmation popup if we are,
         session ticket will be asked later in x509_authenticate)
         """
         try:
-            self.auth_x509 = AuthX509(username = wab_login,
-                                      ip = ip_client,
-                                      requestor = proxy_type,
-                                      target = target,
-                                      server_ip = ip_server)
+            self.auth_x509 = AuthX509(username=wab_login,
+                                      ip=ip_client,
+                                      requestor=proxy_type,
+                                      target=target,
+                                      server_ip=ip_server)
             result = self.auth_x509.is_connected()
             return result
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine is_x509_connected failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine is_x509_connected failed: "
+                          "(((%s)))" % traceback.format_exc(e))
         return False
 
     def is_x509_validated(self):
@@ -281,7 +326,7 @@ class Engine(object):
             result = False
             if self.auth_x509 is not None:
                 result = self.auth_x509.is_validated()
-        except Exception, e:
+        except Exception as e:
             import traceback
             Logger().info("Engine is_x509_validated failed: (((%s)))" %
                           traceback.format_exc(e))
@@ -293,15 +338,16 @@ class Engine(object):
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationChallenged, e:
+        except AuthenticationChallenged as e:
             self.challenge = e.challenge
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             self.challenge = None
-        except LicenseException, e:
+        except LicenseException as e:
             self.challenge = None
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine x509_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine x509_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc(e))
         return False
 
     def password_authenticate(self, wab_login, ip_client, password, ip_server):
@@ -315,83 +361,96 @@ class Engine(object):
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationChallenged, e:
+        except AuthenticationChallenged as e:
             self.challenge = e.challenge
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             self.challenge = None
-        except LicenseException, e:
+        except LicenseException as e:
             self.challenge = None
-        except Exception, e:
+        except Exception as e:
             self.challenge = None
             import traceback
-            Logger().info("Engine password_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine password_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc(e))
             raise
         return False
 
     def passthrough_authenticate(self, wab_login, ip_client, ip_server):
         try:
-            self.wabengine = self.client.authenticate_gssapi(username = wab_login,
-                                                             realm = "realm",
-                                                             ip_source = ip_client,
-                                                             server_ip = ip_server)
+            self.wabengine = self.client.authenticate_gssapi(
+                username=wab_login,
+                realm="realm",
+                ip_source=ip_client,
+                server_ip=ip_server
+            )
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             self.challenge = None
-        except LicenseException, e:
+        except LicenseException as e:
             self.challenge = None
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine passthrough_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc(e))
             raise
         return False
 
     def gssapi_authenticate(self, wab_login, ip_client, ip_server):
         try:
-            self.wabengine = self.client.authenticate_gssapi(username = wab_login,
-                                                             realm = "realm",
-                                                             ip_source = ip_client,
-                                                             server_ip = ip_server)
+            self.wabengine = self.client.authenticate_gssapi(
+                username=wab_login,
+                realm="realm",
+                ip_source=ip_client,
+                server_ip=ip_server
+            )
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationChallenged, e:
+        except AuthenticationChallenged as e:
             self.challenge = e.challenge
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             self.challenge = None
-        except LicenseException, e:
+        except LicenseException as e:
             self.challenge = None
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine passthrough_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine passthrough_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc(e))
             raise
         return False
 
     def pubkey_authenticate(self, wab_login, ip_client, pubkey, ip_server):
         try:
-            self.wabengine = self.client.authenticate(username = wab_login,
-                                                      password = pubkey,
-                                                      ip_source = ip_client,
-                                                      challenge = self.challenge,
-                                                      publicKey = True,
-                                                      server_ip = ip_server)
+            self.wabengine = self.client.authenticate(
+                username=wab_login,
+                password=pubkey,
+                ip_source=ip_client,
+                challenge=self.challenge,
+                publicKey=True,
+                server_ip=ip_server
+            )
             self.challenge = None
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
-        except AuthenticationChallenged, e:
+        except AuthenticationChallenged as e:
             self.challenge = e.challenge
-        except AuthenticationFailed, e:
+        except AuthenticationFailed as e:
             self.challenge = None
-        except LicenseException, e:
+        except LicenseException as e:
             self.challenge = None
-        except Exception, e:
+        except Exception as e:
             self.challenge = None
             import traceback
-            Logger().info("Engine pubkey_authenticate failed: (((%s)))" % traceback.format_exc(e))
+            Logger().info("Engine pubkey_authenticate failed: "
+                          "(((%s)))" % traceback.format_exc(e))
             raise
         return False
+
+    def get_challenge(self):
+        return self.challenge
 
     def resolve_target_host(self, target_device, target_login, target_service,
                             target_group, real_target_device, target_context,
@@ -420,7 +479,9 @@ class Engine(object):
             if not valid:
                 # target_device might be a hostname
                 try:
-                    login_filter, service_filter, group_filter = None, None, None
+                    login_filter, service_filter, group_filter = (
+                        None, None, None
+                    )
                     dnsname = None
                     if (target_login and not passthrough_mode):
                         login_filter = target_login
@@ -429,8 +490,8 @@ class Engine(object):
                     if (target_group and not passthrough_mode):
                         group_filter = target_group
                     host_ip = socket.getaddrinfo(target_device, None)[0][4][0]
-                    Logger().info("Resolve DNS Hostname %s -> %s" % (target_device,
-                                                                     host_ip))
+                    Logger().info("Resolve DNS Hostname %s -> %s" %
+                                  (target_device, host_ip))
                     try:
                         socket.inet_pton(socket.AF_INET, target_device)
                     except socket.error:
@@ -442,9 +503,10 @@ class Engine(object):
                                                    group=group_filter,
                                                    show=target_device)
                     target_device = None
-                except Exception, e:
+                except Exception as e:
                     # import traceback
-                    # Logger().info("resolve_hostname: (((%s)))" % (traceback.format_exc(e)))
+                    # Logger().info("resolve_hostname: (((%s)))" %
+                    #               (traceback.format_exc(e)))
                     Logger().info("target_device is not a hostname")
         return target_device, target_context
 
@@ -461,65 +523,70 @@ class Engine(object):
                 u'device': device,
                 u'ip': ip,
                 u'time': time
-                }
+            }
 
             if not (url is None):
                 notif_data[u'url'] = url
 
             Notify(self.wabengine, CX_EQUIPMENT, notif_data)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine NotifyConnectionToCriticalEquipment failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyConnectionToCriticalEquipment failed: "
+                          "(((%s)))" % (traceback.format_exc(e)))
 
     def NotifyPrimaryConnectionFailed(self, user, ip):
         try:
             notif_data = {
                 u'user': user,
                 u'ip': ip
-                }
+            }
 
             Notify(self.wabengine, PRIMARY_CX_FAILED, notif_data)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine NotifyPrimaryConnectionFailed failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyPrimaryConnectionFailed failed: "
+                          "(((%s)))" % (traceback.format_exc(e)))
 
     def NotifySecondaryConnectionFailed(self, user, ip, account, device):
         try:
             notif_data = {
-                   u'user'   : user
-                 , u'ip'     : ip
-                 , u'account': account
-                 , u'device' : device
-             }
+                u'user': user,
+                u'ip': ip,
+                u'account': account,
+                u'device': device,
+            }
 
             Notify(self.wabengine, SECONDARY_CX_FAILED, notif_data)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine NotifySecondaryConnectionFailed failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifySecondaryConnectionFailed failed: "
+                          "(((%s)))" % (traceback.format_exc(e)))
 
     def NotifyFilesystemIsFullOrUsedAtXPercent(self, filesystem, used):
         try:
             notif_data = {
                 u'filesystem': filesystem,
                 u'used': used
-                }
+            }
 
             Notify(self.wabengine, FILESYSTEM_FULL, notif_data)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine NotifyFilesystemIsFullOrUsedAtXPercent "
+                          "failed: (((%s)))" % (traceback.format_exc(e)))
 
-    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user, host, cn, service):
+    def NotifyFindPatternInRDPFlow(self, regexp, string, user_login, user,
+                                   host, cn, service):
         try:
             notif_data = {
-                   u'regexp'     : regexp
-                 , u'string'     : string
-                 , u'user_login' : user_login
-                 , u'user'       : user
-                 , u'host'       : host
-                 , u'device'     : cn
-                 , u'service'    : service
-             }
+                u'regexp': regexp,
+                u'string': string,
+                u'user_login': user_login,
+                u'user': user,
+                u'host': host,
+                u'device': cn,
+                u'service': service,
+            }
 
             Notify(self.wabengine, RDP_PATTERN_FOUND, notif_data)
 
@@ -554,8 +621,8 @@ class Engine(object):
             }
             Notify(self.wabengine, RDP_OUTCXN_FOUND, notif_data)
             text = (
-                "%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' has been "
-                "detected in the following RDP connection: "
+                "%(rule)s: The connection '%(dst_addr)s:%(dst_port)s' "
+                "has been detected in the following RDP connection: "
                 "%(user)s@%(device)s:%(service)s:%(user_login)s "
                 "(%(host)s)\n"
             ) % notif_data
@@ -592,11 +659,12 @@ class Engine(object):
             Logger().info("Engine NotifyFindProcessInRDPFlow failed: "
                           "(((%s)))" % (traceback.format_exc(err)))
 
-    def get_targets_list(self, group_filter, device_filter, protocol_filter, case_sensitive):
+    def get_targets_list(self, group_filter, device_filter, protocol_filter,
+                         case_sensitive):
         targets = []
         item_filtered = False
         for target_info in self.displaytargets:
-            temp_service_login                = target_info.service_login
+            temp_service_login = target_info.service_login
             temp_resource_service_protocol_cn = target_info.protocol
             if not target_info.protocol == u"APP":
                 if (target_info.target_name == u'autotest' or
@@ -604,8 +672,9 @@ class Engine(object):
                     target_info.target_name == u'widget2_message' or
                     target_info.target_name == u'widgettest' or
                     target_info.target_name == u'test_card'):
-                    temp_service_login = target_info.service_login.replace(u':RDP',
-                                                                           u':INTERNAL', 1)
+                    temp_service_login = target_info.service_login.replace(
+                        u':RDP',
+                        u':INTERNAL', 1)
                     temp_resource_service_protocol_cn = 'INTERNAL'
 
             def fc(string):
@@ -617,11 +686,9 @@ class Engine(object):
                 item_filtered = True
                 continue
 
-            targets.append((target_info.group # ( = concatenated list)
-                            , temp_service_login
-                            , temp_resource_service_protocol_cn
-                            )
-                           )
+            targets.append((target_info.group,  # ( = concatenated list)
+                            temp_service_login,
+                            temp_resource_service_protocol_cn))
         # Logger().info("targets list = %s'" % targets)
         return targets, item_filtered
 
@@ -652,10 +719,11 @@ class Engine(object):
         self.checktarget_infos_cache = None
 
     def get_proxy_user_rights(self, protocols, target_device, **kwargs):
-        Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s" % (protocols, target_device))
+        Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s"
+                       % (protocols, target_device))
         urights = self.wabengine.get_proxy_user_rights(protocols,
-                                target_device,
-                                **kwargs)
+                                                       target_device,
+                                                       **kwargs)
         Logger().debug("** END Get_proxy_right **")
         if urights and (type(urights[0]) == str):
             import json
@@ -664,14 +732,16 @@ class Engine(object):
 
     def valid_device_name(self, protocols, target_device):
         try:
-            # Logger().debug("** CALL VALIDATOR DEVICE NAME Get_proxy_right target=%s **"
+            # Logger().debug("** CALL VALIDATOR DEVICE NAME "
+            #                "Get_proxy_right target=%s **"
             #                % target_device)
             prights = self.get_proxy_user_rights(
                 protocols, target_device)
             # Logger().debug("** END VALIDATOR DEVICE NAME Get_proxy_right **")
-        except Exception, e:
+        except Exception as e:
             # import traceback
-            # Logger().info("valid_device_name failed: (((%s)))" % (traceback.format_exc(e)))
+            # Logger().info("valid_device_name failed: (((%s)))" %
+            #               (traceback.format_exc(e)))
             return False
         rights = prights
         if rights:
@@ -683,8 +753,8 @@ class Engine(object):
         from collections import defaultdict
         self.rights = self.proxy_rights
         # targets{(account, target)}{domain}[(service, group, right)]
-        self.targets = defaultdict(lambda:defaultdict(list))
-        self.targets_alias = defaultdict(lambda:defaultdict(list))
+        self.targets = defaultdict(lambda: defaultdict(list))
+        self.targets_alias = defaultdict(lambda: defaultdict(list))
         self.displaytargets = []
         for right in self.rights:
             account_name = right['account_name']
@@ -724,7 +794,7 @@ class Engine(object):
                     account_login and
                     target_context.login not in [
                         account_login, account_logindom,
-                        account_name, account_namedom ]):
+                        account_name, account_namedom]):
                     # match context login with login or name
                     # (with or without domain)
                     continue
@@ -742,7 +812,9 @@ class Engine(object):
             self.targets[tuple_index][account_domain].append(target_value)
             if alias:
                 alias_index = (account_name, alias)
-                self.targets_alias[alias_index][account_domain].append(target_value)
+                self.targets_alias[alias_index][account_domain].append(
+                    target_value
+                )
 
             self.displaytargets.append(DisplayInfo(account_namedom,
                                                    target_name,
@@ -755,25 +827,31 @@ class Engine(object):
             self._filter_subnet()
 
     def _filter_subnet(self):
-        # in transparent mode, targets rights are already filtered by a unique host
-        filtered_subnet = [ dit for dit in self.displaytargets if '/' not in dit.host ]
+        # in transparent mode, targets rights are already
+        # filtered by a unique host
+        filtered_subnet = [dit for dit in self.displaytargets
+                           if '/' not in dit.host]
         if filtered_subnet:
             self.displaytargets = filtered_subnet
 
     def filter_app_rights(self, app_rights, account_name, app_name):
-        _rs = [ r for r in app_rights if (
+        _rs = [r for r in app_rights if (
             r['account_name'] == account_name
-            and r['application_cn'] == app_name) ]
+            and r['application_cn'] == app_name)]
         return _rs
 
-    def get_proxy_rights(self, protocols, target_device=None, target_context=None):
+    def get_proxy_rights(self, protocols, target_device=None,
+                         target_context=None):
         if self.proxy_rights is None:
             try:
-                # Logger().debug("** CALL Get_proxy_right ** proto=%s, target_device=%s, checktimeframe=%s" % (protocols, target_device))
+                # Logger().debug("** CALL Get_proxy_right ** "
+                #                "proto=%s, target_device=%s, "
+                #                "checktimeframe=%s" %
+                #                (protocols, target_device))
                 self.proxy_rights = self.get_proxy_user_rights(
                     protocols, target_device)
                 # Logger().debug("** END Get_proxy_right **")
-            except Exception, e:
+            except Exception as e:
                 # import traceback
                 # Logger().info("traceback = %s" % traceback.format_exc(e))
                 self.proxy_rights = None
@@ -783,8 +861,8 @@ class Engine(object):
         # start = time.time()
         # Logger().debug("** BEGIN Filter_rights **")
         self._filter_rights(target_context)
-        # Logger().debug("** END Filter_rights in %s sec **" % (time.time() - start))
-
+        # Logger().debug("** END Filter_rights in %s sec **" %
+        #                (time.time() - start))
 
     def _get_target_right_htable(self, target_account, target_device,
                                  t_htable):
@@ -806,7 +884,8 @@ class Engine(object):
             if not results:
                 # domain might not be provided in target_account
                 if domain:
-                    # domain field is not empty so try again with target_account
+                    # domain field is not empty so try again
+                    # with target_account
                     domres = t_htable.get((target_account, target_device), {})
                 if len(domres) == 1:
                     # no ambiguity
@@ -814,7 +893,7 @@ class Engine(object):
                 else:
                     # ambiguity on domain
                     results = []
-        except Exception, e:
+        except Exception as e:
             results = []
         return results
 
@@ -829,12 +908,13 @@ class Engine(object):
             if not results:
                 results = self._get_target_right_htable(
                     target_account, target_device, self.targets_alias)
-        except Exception, e:
+        except Exception as e:
             results = []
         right = None
-        filtered = [ (r_service, r) for (r_service, r_groups, r) in results if (
+        filtered = [(r_service, r)
+                    for (r_service, r_groups, r) in results if (
             ((not target_service) or (r_service == target_service)) and
-            ((not target_group) or (r_groups == target_group))) ]
+            ((not target_group) or (r_groups == target_group)))]
         if filtered:
             filtered_service, right = filtered[0]
             # if ambiguity in group but not in service,
@@ -855,10 +935,11 @@ class Engine(object):
         if self.wabuser.forceChangePwd:
             msg = "You must change your password to access your accounts"
             if self.get_language() == "fr":
-                msg = "Vous devez changer votre mot de passe pour accèder à vos comptes"
+                msg = ("Vous devez changer votre mot de passe pour accèder "
+                       "à vos comptes")
             return None, msg
         try:
-            self.get_proxy_rights([u'SSH', u'TELNET', u'RLOGIN'],
+            self.get_proxy_rights([u'SSH', u'TELNET', u'RLOGIN', u'RAWTCPIP'],
                                   target_device=target_device,
                                   target_context=target_context)
             right = self._find_target_right(target_login, target_device,
@@ -867,45 +948,51 @@ class Engine(object):
                 return right, "OK"
 
             Logger().error("Bastion account %s couldn't log into %s@%s%s" % (
-                    self.wabuser.cn,
-                    target_login,
-                    target_device,
-                    ":%s" % target_service if target_service else ""
-                    ))
-        except Exception, e:
+                self.wabuser.cn,
+                target_login,
+                target_device,
+                ":%s" % target_service if target_service else ""
+            ))
+        except Exception as e:
             import traceback
             Logger().info("traceback = %s" % traceback.format_exc(e))
 
         invalid_str = u"Invalid target %s\r\n"
         if self.get_language() == "fr":
             invalid_str = u"Cible %s invalide\r\n"
-        target_str = u"%s@%s:%s (%s)" % (target_login, target_device, target_service, target_group)
+        target_str = u"%s@%s:%s (%s)" % (target_login, target_device,
+                                         target_service, target_group)
         msg = invalid_str % target_str
         return (None, msg.encode('utf8'))
 
     def get_selected_target(self, target_login, target_device, target_service,
                             target_group, target_context=None):
-        # Logger().info(">>==GET_SELECTED_TARGET %s@%s:%s:%s" % (target_device, target_login, target_service, target_group))
-        right = None
+        # Logger().info(
+        #     ">>==GET_SELECTED_TARGET %s@%s:%s:%s" %
+        #     (target_device, target_login, target_service, target_group)
+        # )
         self.get_proxy_rights([u'RDP', u'VNC'], target_device,
                               target_context=target_context)
-        return self._find_target_right(target_login, target_device, target_service,
-                                      target_group)
+        return self._find_target_right(target_login, target_device,
+                                       target_service, target_group)
 
     def get_effective_target(self, selected_target):
         application = selected_target['application_cn']
         try:
             if application:
-                effective_target = self.wabengine.get_effective_target(selected_target)
+                effective_target = self.wabengine.get_effective_target(
+                    selected_target
+                )
                 Logger().info("Engine get_effective_target done (application)")
                 return effective_target
             else:
                 Logger().info("Engine get_effective_target done (physical)")
                 return [selected_target]
 
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine get_effective_target failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine get_effective_target failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         return []
 
     def secondary_failed(self, reason, wabuser, ip_source, user, host):
@@ -919,21 +1006,27 @@ class Engine(object):
                 self.session_diag = reason.decode('latin_1')
         self.session_result = False
         Notify(self.wabengine, SECONDARY_CX_FAILED, {
-            'user':    wabuser,
-            'ip':      ip_source,
+            'user': wabuser,
+            'ip': ip_source,
             'account': user,
-            'device':  host,
+            'device': host,
         })
 
     def get_app_params(self, selected_target, effective_target):
-#         Logger().info("Engine get_app_params: service_login=%s effective_target=%s" % (service_login, effective_target))
+        # Logger().info("Engine get_app_params: "
+        #               "service_login=%s effective_target=%s" %
+        #               (service_login, effective_target))
         try:
-            app_params = self.wabengine.get_app_params(selected_target, effective_target)
+            app_params = self.wabengine.get_app_params(
+                selected_target,
+                effective_target
+            )
             Logger().info("Engine get_app_params done")
             return app_params
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine get_app_params failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine get_app_params failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         return None
 
     def get_primary_password(self, target_device):
@@ -942,7 +1035,7 @@ class Engine(object):
             password = self.checkout.get_primary_password(target_device)
             Logger().debug("Engine get_primary_password done")
             return password
-        except Exception, e:
+        except Exception as e:
             import traceback
             Logger().debug("Engine get_primary_password failed: "
                            "(((%s)))" % (traceback.format_exc(e)))
@@ -1019,8 +1112,10 @@ class Engine(object):
             try:
                 from wabengine.common.interface import IPBSessionHandler
                 from wabengine.common.utils import ProcessSessionHandler
-                self.pidhandler = IPBSessionHandler(ProcessSessionHandler(int(pid)))
-            except Exception, e:
+                self.pidhandler = IPBSessionHandler(
+                    ProcessSessionHandler(int(pid))
+                )
+            except Exception as e:
                 self.pidhandler = None
         return self.pidhandler
 
@@ -1037,10 +1132,11 @@ class Engine(object):
         except LicenseException:
             Logger().info("Engine start_session failed: License Exception")
             self.session_id, self.start_time = None, None
-        except Exception, e:
+        except Exception as e:
             import traceback
             self.session_id, self.start_time = None, None
-            Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine start_session failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         Logger().debug("**** END wabengine START SESSION ")
         return self.session_id, self.start_time
 
@@ -1067,10 +1163,11 @@ class Engine(object):
         except LicenseException:
             Logger().info("Engine start_session failed: License exception")
             self.session_id = None
-        except Exception, e:
+        except Exception as e:
             import traceback
             self.session_id = None
-            Logger().info("Engine start_session failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine start_session failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         Logger().debug("**** END wabengine START SESSION ")
         if self.session_id is None:
             return None
@@ -1096,9 +1193,8 @@ class Engine(object):
         }
 
         Notify(self.wabengine,
-            CX_EQUIPMENT,
-            notif_data
-        )
+               CX_EQUIPMENT,
+               notif_data)
 
         return self.session_id, self.start_time
 
@@ -1119,9 +1215,10 @@ class Engine(object):
                 self.wabengine.update_session(self.session_id,
                                               hosttarget=hosttarget,
                                               **kwargs)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine update_session_target failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine update_session_target failed: (((%s)))" %
+                          (traceback.format_exc(e)))
 
     def update_session(self, **kwargs):
         """Update current session parameters to base.
@@ -1132,9 +1229,10 @@ class Engine(object):
             if self.session_id:
                 self.wabengine.update_session(self.session_id,
                                               **kwargs)
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine update_session failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine update_session failed: (((%s)))" %
+                          (traceback.format_exc(e)))
 
     def stop_session(self, title=u"End session"):
         try:
@@ -1151,9 +1249,11 @@ class Engine(object):
                 self.trace_hash = None
         except SessionAlreadyStopped:
             pass
-        except Exception, e:
+        except Exception as e:
             import traceback
-            Logger().info("Engine stop_session failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine stop_session failed: (((%s)))" %
+                          (traceback.format_exc(e)))
+        Logger().debug("Engine stop session end")
 
     # RESTRICTIONS
     def get_all_restrictions(self, auth, proxytype):
@@ -1178,7 +1278,9 @@ class Engine(object):
                     continue
                 subproto = restriction.subprotocol.cn
                 if matchproto(subproto):
-                    # Logger().debug("adding restriction %s %s %s" % (restriction.action, restriction.data, restriction.subprotocol.cn))
+                    # Logger().debug("adding restriction %s %s %s" %
+                    #                (restriction.action, restriction.data,
+                    #                 restriction.subprotocol.cn))
                     if restriction.action == 'kill':
                         if not kill_patterns.get(subproto):
                             kill_patterns[subproto] = []
@@ -1190,11 +1292,12 @@ class Engine(object):
 
             Logger().info("patterns_kill = [%s]" % (kill_patterns))
             Logger().info("patterns_notify = [%s]" % (notify_patterns))
-        except Exception, e:
+        except Exception as e:
             kill_patterns = {}
             notify_patterns = {}
             import traceback
-            Logger().info("Engine get_restrictions failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine get_restrictions failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         return (kill_patterns, notify_patterns)
 
     def get_restrictions(self, auth, proxytype):
@@ -1220,7 +1323,9 @@ class Engine(object):
                     Logger().error("No subprotocol in restriction!")
                     continue
                 if matchproto(restriction.subprotocol.cn):
-                    Logger().debug("adding restriction %s %s %s" % (restriction.action, restriction.data, restriction.subprotocol.cn))
+                    Logger().debug("adding restriction %s %s %s" %
+                                   (restriction.action, restriction.data,
+                                    restriction.subprotocol.cn))
                     if restriction.action == 'kill':
                         kill_patterns.append(restriction.data)
                     elif restriction.action == 'notify':
@@ -1230,13 +1335,13 @@ class Engine(object):
             self.pattern_notify = separator.join(notify_patterns)
             Logger().info("pattern_kill = [%s]" % (self.pattern_kill))
             Logger().info("pattern_notify = [%s]" % (self.pattern_notify))
-        except Exception, e:
+        except Exception as e:
             self.pattern_kill = None
             self.pattern_notify = None
             import traceback
-            Logger().info("Engine get_restrictions failed: (((%s)))" % (traceback.format_exc(e)))
+            Logger().info("Engine get_restrictions failed: (((%s)))" %
+                          (traceback.format_exc(e)))
         return (self.pattern_kill, self.pattern_notify)
-
 
     # RESTRICTIONS: NOTIFIER METHODS
     def pattern_found_notify(self, action, regex_found, current_line):
@@ -1252,16 +1357,19 @@ class Engine(object):
             "device": self.hname,
             "service": self.service,
             "action": action
-            }
+        }
         Notify(self.wabengine, PATTERN_FOUND, data)
-        text = (u"%(action)s: The string '%(string)s' has been detected in the "
-                "following SSH connection: "
-                "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % data
+        text = (
+            u"%(action)s: The string '%(string)s' has been detected "
+            u"in the following SSH connection: "
+            u"%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n"
+        ) % data
         Logger().info("%s" % text)
         if action.lower() == "kill":
             self.session_result = False
 
-    def filesize_limit_notify(self, action, filesize, filename, limit_filesize):
+    def filesize_limit_notify(self, action, filesize, filename,
+                              limit_filesize):
         restrictstr = u"file %s > %s" % (filename, limit_filesize)
         self.session_diag = u'Filesize restriction detected (%s)' % restrictstr
         data = {
@@ -1275,9 +1383,11 @@ class Engine(object):
             "action": action
         }
         Notify(self.wabengine, PATTERN_FOUND, data)
-        text = (u"%(action)s: The restriction '%(string)s' has been detected in the "
-                "following SSH connection: "
-                "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % data
+        text = (
+            u"%(action)s: The restriction '%(string)s' has been detected "
+            u"in the following SSH connection: "
+            u"%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n"
+        ) % data
         Logger().info("%s" % text)
         if action.lower() == "kill":
             self.session_result = False
@@ -1295,9 +1405,11 @@ class Engine(object):
             "action": action
         }
         Notify(self.wabengine, PATTERN_FOUND, data)
-        text = (u"%(action)s: The restriction '%(string)s' has been detected in the "
-                "following SSH connection: "
-                "%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n") % data
+        text = (
+            u"%(action)s: The restriction '%(string)s' has been detected "
+            u"in the following SSH connection: "
+            u"%(user)s@%(device)s:%(service)s:%(user_login)s (%(host)s)\n"
+        ) % data
         Logger().info("%s" % text)
         if action.lower() == "kill":
             self.session_result = False
@@ -1335,11 +1447,10 @@ class Engine(object):
                 rec_hash = self.session_record.end()
                 self.session_record = None
                 return rec_hash
-            except Exception, e:
+            except Exception as e:
                 Logger().info("Stop record failed: %s", e)
             self.session_record = None
         return None
-
 
     def write_trace(self, video_path):
         try:
@@ -1352,9 +1463,9 @@ class Engine(object):
                     trace_type=u"rdptrc"
                 )
                 trace.initialize()
-                trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8')) ) )
+                trace.writeframe(str("%s.mwrm" % (video_path.encode('utf-8'))))
                 self.trace_hash = trace.end()
-        except Exception, e:
+        except Exception as e:
             Logger().info("Engine write_trace failed: %s" % e)
             _status, _error = False, u"Exception"
         return _status, _error
@@ -1453,10 +1564,15 @@ class Engine(object):
         return conn_opts
 
     def get_physical_target_info(self, physical_target):
-        return PhysicalTarget(device_host=physical_target['device_host'],
-                              account_login=self.get_account_login(physical_target),
-                              service_port=int(physical_target['service_port']),
-                              device_id=physical_target['device_uid'])
+        port = physical_target['service_port']
+        if isinstance(port, basestring):
+            port = int(port)
+        return PhysicalTarget(
+            device_host=physical_target['device_host'],
+            account_login=self.get_account_login(physical_target),
+            service_port=port,
+            device_id=physical_target['device_uid']
+        )
 
     def get_target_login_info(self, selected_target=None):
         target = selected_target or self.target_right
@@ -1500,9 +1616,17 @@ class Engine(object):
         if not login and right['domain_cn'] == AM_IL_DOMAIN:
             # Interactive Login
             return login
-        trule = right['connection_policy_data'].get("general", {}).get("transformation_rule")
+        trule = right['connection_policy_data'].get(
+            "general", {}
+        ).get(
+            "transformation_rule"
+        )
         if (trule and '${LOGIN}' in trule):
-            return trule.replace('${LOGIN}', login).replace('${DOMAIN}', domain or '')
+            return trule.replace(
+                '${LOGIN}', login
+            ).replace(
+                '${DOMAIN}', domain or ''
+            )
         if not domain:
             return login
         return "%s@%s" % (login, domain)
@@ -1511,11 +1635,14 @@ class Engine(object):
         class crypto_methods(object):
             def __init__(self, proxy):
                 self.proxy = proxy
+
             def get_trace_sign_key(self):
                 return self.proxy.get_trace_sign_key()
+
             def get_trace_encryption_key(self, name, flag):
                 return self.proxy.get_trace_encryption_key(name, flag)
         return crypto_methods(self.wabengine)
+
 
 # Information Structs
 class TargetContext(object):
@@ -1528,14 +1655,18 @@ class TargetContext(object):
         self.group = group
         self.show = show
         self.strict_transparent = False
+
     def showname(self):
         return self.show or self.dnsname or self.host
+
     def is_empty(self):
         return not (self.host or self.login or self.service or self.group)
+
 
 class DisplayInfo(object):
     __slots__ = ("target_login", "target_name", "service_name", "protocol",
                  "group", "subprotocols", "service_login", "host")
+
     def __init__(self, target_login, target_name, service_name,
                  protocol, group, subproto, host):
         self.target_login = target_login
@@ -1544,23 +1675,30 @@ class DisplayInfo(object):
         self.protocol = protocol
         self.group = group
         self.subprotocols = subproto or []
-        self.service_login = "%s@%s:%s" % (self.target_login, self.target_name, self.service_name)
+        self.service_login = "%s@%s:%s" % (
+            self.target_login, self.target_name, self.service_name
+        )
         self.host = host
 
     def get_target_tuple(self):
-        return (self.target_login.encode('utf-8'), self.target_name.encode('utf-8'),
-                self.service_name.encode('utf-8'), self.group.encode('utf-8'))
+        return (self.target_login.encode('utf-8'),
+                self.target_name.encode('utf-8'),
+                self.service_name.encode('utf-8'),
+                self.group.encode('utf-8'))
+
 
 class ProtocolInfo(object):
     def __init__(self, protocol, subprotocols=[]):
         self.protocol = protocol
         self.subprotocols = subprotocols
 
+
 class ExtraInfo(object):
     def __init__(self, is_recorded, is_critical, has_approval):
         self.is_recorded = is_recorded
         self.is_critical = is_critical
         self.has_approval = has_approval
+
 
 class PhysicalTarget(object):
     def __init__(self, device_host, account_login, service_port, device_id):
@@ -1569,9 +1707,11 @@ class PhysicalTarget(object):
         self.service_port = service_port
         self.device_id = device_id
 
+
 class LoginInfo(object):
     def __init__(self, account_login, account_name, domain_name, target_name,
-                 service_name, auth_name, device_host, service_port, conn_opts):
+                 service_name, auth_name, device_host, service_port,
+                 conn_opts):
         self.account_login = account_login
         self.account_name = account_name
         self.domain_name = domain_name
@@ -1586,4 +1726,6 @@ class LoginInfo(object):
         return "%s%s@%s:%s:%s" % (self.account_name,
                                   "@%s" % self.domain_name if self.domain_name
                                   else '',
-                                  self.target_name, self.service_name, self.auth_name)
+                                  self.target_name,
+                                  self.service_name,
+                                  self.auth_name)
