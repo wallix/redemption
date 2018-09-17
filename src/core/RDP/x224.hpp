@@ -612,18 +612,18 @@ namespace X224
 
         size_t _header_size;
 
-        size_t cookie_len;
+        size_t cookie_len = 0;
         char cookie[1024];
 
-        uint8_t rdp_neg_type;
-        uint8_t rdp_neg_flags;
-        uint16_t rdp_neg_length;
-        uint32_t rdp_neg_requestedProtocols;
+        uint8_t rdp_neg_type = 0;
+        uint8_t rdp_neg_flags = 0;
+        uint16_t rdp_neg_length = 0;
+        uint32_t rdp_neg_requestedProtocols = 0;
 
-        uint8_t rdp_cinfo_type;
-        uint8_t rdp_cinfo_flags;
-        uint16_t rdp_cinfo_length;
-        uint8_t rdp_cinfo_correlationid[16];
+        uint8_t rdp_cinfo_type = 0;
+        uint8_t rdp_cinfo_flags = 0;
+        uint16_t rdp_cinfo_length = 0;
+        uint8_t rdp_cinfo_correlationid[16]{};
 
         CR_TPDU_Recv(InStream & stream, bool bogus_neg_req, uint32_t verbose = 0)
         : Recv(stream)
@@ -650,16 +650,7 @@ namespace X224
                 return CR_Header{LI, code, dst_ref, src_ref, class_option};
             }())
         , _header_size(X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1)
-        , rdp_neg_type(0)
-        , rdp_neg_flags(0)
-        , rdp_neg_length(0)
-        , rdp_neg_requestedProtocols(0)
-        , rdp_cinfo_type(0)
-        , rdp_cinfo_flags(0)
-        , rdp_cinfo_length(0)
-        , rdp_cinfo_correlationid()
         {
-
             if (stream.get_capacity() < this->_header_size){
                 LOG(LOG_ERR, "Truncated CR TPDU header: expected %zu, got %zu",
                     this->_header_size, stream.get_capacity());
@@ -669,9 +660,7 @@ namespace X224
             // TODO CGR: we should fix the code here to support routingtoken (or we may have some troubles with load balancing RDP hardware
 
             // extended negotiation header
-            this->cookie_len = 0;
             this->cookie[0] = 0;
-            this->rdp_neg_type = 0;
 
             // TODO We should have some reading function in stream to read this
             uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
