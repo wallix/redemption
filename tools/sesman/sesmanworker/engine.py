@@ -5,7 +5,6 @@ from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
-    from wabengine.common.exception import MultiFactorAuthentication
     from wabengine.common.exception import LicenseException
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
