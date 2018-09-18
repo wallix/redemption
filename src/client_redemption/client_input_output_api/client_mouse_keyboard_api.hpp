@@ -31,11 +31,9 @@ class ClientInputMouseKeyboardAPI : public ClientIO {
 
 
 public:
-    ClientRedemptionController * callback;
+    ClientRedemptionController * callback = nullptr;
 
-    ClientInputMouseKeyboardAPI()
-      : callback(nullptr)
-      {}
+    ClientInputMouseKeyboardAPI() = default;
 
     virtual ~ClientInputMouseKeyboardAPI() = default;
 

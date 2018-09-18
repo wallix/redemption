@@ -1006,7 +1006,6 @@ class RDPBmpCache {
         //    hexdump_d(palette.data(), palette.data_size());
         //    LOG(LOG_INFO, "Bitmap");
         //    hexdump_d(bitmapDataStream, bitmapLength);
-        //    LOG(LOG_INFO, "");
         //}
         this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
             bitmapDataStream, bitmapLength, false);
@@ -1090,7 +1089,6 @@ class RDPBmpCache {
         //    hexdump_d(palette.data(), palette.data_size());
         //    LOG(LOG_INFO, "Bitmap");
         //    hexdump_d(buf, bufsize);
-        //    LOG(LOG_INFO, "");
         //}
         this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, buf, bufsize);
 
@@ -1164,7 +1162,6 @@ class RDPBmpCache {
             //    hexdump_d(palette.data(), palette.data_size());
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(bitmapDataStream, bitmapLength);
-            //    LOG(LOG_INFO, "");
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, bitmapLength, true);
@@ -1186,7 +1183,6 @@ class RDPBmpCache {
             //    hexdump_d(palette.data(), palette.data_size());
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(bitmapDataStream, cbCompMainBodySize);
-            //    LOG(LOG_INFO, "");
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, bitmapWidth, bitmapHeight,
                 bitmapDataStream, cbCompMainBodySize, true);
@@ -1225,7 +1221,6 @@ class RDPBmpCache {
             //    hexdump_d(palette.data(), palette.data_size());
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(data, bufsize);
-            //    LOG(LOG_INFO, "");
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, bufsize, true);
         }
@@ -1244,7 +1239,6 @@ class RDPBmpCache {
             //    hexdump_d(palette.data(), palette.data_size());
             //    LOG(LOG_INFO, "Bitmap");
             //    hexdump_d(data, size);
-            //    LOG(LOG_INFO, "");
             //}
             this->bmp = Bitmap(session_color_depth, bpp, &palette, width, height, data, size, true);
             if (row_size != (this->bmp.bmp_size() / this->bmp.cy())){

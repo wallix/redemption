@@ -685,7 +685,6 @@ public:
             //            "bmp_cache.cache_bitmap(*bmp_%d));",
             //        this->finding_counter - 1);
             //    LOG(LOG_INFO, "delete bmp_%d;", this->finding_counter - 1);
-            //    LOG(LOG_INFO, "");
             //}
             return (FOUND_IN_CACHE << 24) | (id_real << 16) | cache_index_32;
         }
@@ -773,7 +772,6 @@ public:
         //            "bmp_cache.cache_bitmap(bmp_%d));",
         //        this->finding_counter - 1);
         //    LOG(LOG_INFO, "}");
-        //    LOG(LOG_INFO, "");
         //}
 
         return (ADDED_TO_CACHE << 24) | (id << 16) | oldest_cidx;

@@ -1378,7 +1378,6 @@ static inline void streamLogClient(InStream & stream, int flag) {
             default: LOG(LOG_WARNING, "Client RDPSND Unknown PDU with length = %zu", header.BodySize);
                 break;
         }
-        LOG(LOG_INFO, "");
     }
 }
 
@@ -1469,7 +1468,6 @@ static inline void streamLogServer(InStream & stream, int flag) {
                 }
                 break;
         }
-        LOG(LOG_INFO, "");
     }
 }
 

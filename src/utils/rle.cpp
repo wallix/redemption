@@ -1151,7 +1151,6 @@ void get_run(
         raw_bytes = 0;
         run_length++;
     }
-    //LOG(LOG_INFO, "");
 }
 
 void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8_t * color_plane)

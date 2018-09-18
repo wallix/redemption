@@ -733,6 +733,7 @@ namespace X224
                 stream.in_skip_bytes(16);
                 hexdump_c(this->rdp_cinfo_correlationid, 16);
             }
+                hexdump_c(stream.get_data(), stream.get_capacity());
             if (end_of_header != stream.get_current()){
                 LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %" PRIdPTR, end_of_header - stream.get_current());
                 hexdump_c(stream.get_data(), stream.get_capacity());

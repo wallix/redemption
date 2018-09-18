@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "utils/sugar/cast.hpp"
 #include "mod/metrics.hpp"
 
 #include "core/client_info.hpp"
@@ -292,7 +293,7 @@ public:
                             fl_ln.recv(chunk);
                             fl_ln.log();
                             formatID = fl_ln.formatID;
-                            formatName = reinterpret_cast<char *>(fl_ln.formatUTF8Name);
+                            formatName = char_ptr_cast(fl_ln.formatUTF8Name);
                             if (chunk.in_remain() <= 6) {
                                 known_format_not_found = false;
                             }
@@ -300,7 +301,7 @@ public:
                             RDPECLIP::FormatListPDU_ShortName fl_sn;
                             fl_sn.recv(chunk);
                             formatID = fl_sn.formatID;
-                            formatName = reinterpret_cast<char *>(fl_sn.formatUTF8Name);
+                            formatName = char_ptr_cast(fl_sn.formatUTF8Name);
                             if (chunk.in_remain() <= 36) {
                                 known_format_not_found = false;
                             }
@@ -432,7 +433,7 @@ public:
                                 fl_ln.log();
 
                                 formatID = fl_ln.formatID;
-                                formatName = reinterpret_cast<char *>(fl_ln.formatUTF8Name);
+                                formatName = char_ptr_cast(fl_ln.formatUTF8Name);
                                 if (chunk.in_remain() <= 6) {
                                     known_format_not_found = false;
                                 }
@@ -440,7 +441,7 @@ public:
                                 RDPECLIP::FormatListPDU_ShortName fl_sn;
                                 fl_sn.recv(chunk);
                                 formatID = fl_sn.formatID;
-                                formatName = reinterpret_cast<char *>(fl_sn.formatUTF8Name);
+                                formatName = char_ptr_cast(fl_sn.formatUTF8Name);
                                 if (chunk.in_remain() <= 36) {
                                     known_format_not_found = false;
                                 }

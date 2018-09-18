@@ -67,4 +67,4 @@ namespace cpack
             return this->av();
         }
     };
-}
+} // namespace cpack

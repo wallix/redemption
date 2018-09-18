@@ -2673,7 +2673,7 @@ public:
         std::string file_path;
 
         if (this->device_io_target_info_inventory.end() != target_iter) {
-            file_path = target_iter->file_path.c_str();
+            file_path = target_iter->file_path;
         }
 
         if ((this->server_device_io_request.MajorFunction() == rdpdr::IRP_MJ_READ) ||
@@ -2735,7 +2735,7 @@ public:
                     this->server_device_io_request.DeviceId(),
                     this->server_device_io_request.FileId(),
                     completion_id,
-                    file_path.c_str(),
+                    file_path,
                     rdpdr::IRP_MJ_QUERY_INFORMATION,
                     rdpdr::FileStandardInformation,
                     0,                                          // offset

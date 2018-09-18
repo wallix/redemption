@@ -194,7 +194,7 @@ public:
 class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
 
 public:
-    FakeClientInputMouseKeyboard() : ClientInputMouseKeyboardAPI() {}
+    FakeClientInputMouseKeyboard() = default;
 
     // TODO string_view
     void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }

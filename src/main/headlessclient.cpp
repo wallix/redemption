@@ -22,7 +22,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wfloat-equal"
 
-#include <signal.h>
+#include <csignal>
 
 #include "utils/log.hpp"
 

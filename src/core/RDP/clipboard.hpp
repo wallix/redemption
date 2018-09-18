@@ -1169,29 +1169,14 @@ struct FormatListPDU_ShortName {
     uint8_t     formatUTF16Name[32] = {0};
     uint8_t     formatUTF8Name[16] = {0};
 
-
-    explicit FormatListPDU_ShortName( const uint32_t  formatID
-                                    , const char * formatUTF8Name
-                                    , const std::size_t )
-    : formatID(formatID)
-    {
-         memcpy(this->formatUTF8Name, formatUTF8Name, 16);
-         this->formatUTF8Name[15] = 0;
-         ::UTF8toUTF16(
-            byte_ptr_cast(formatUTF8Name),
-            this->formatUTF16Name, 32);
-    }
-
     FormatListPDU_ShortName() = default;
 
     void emit(OutStream & stream) const {
-
         stream.out_uint32_le(this->formatID);
         stream.out_copy_bytes(this->formatUTF16Name, 32);
     }
 
     void recv(InStream & stream) {
-
         if (!stream.in_check_rem(36)) {
             LOG( LOG_INFO
                 , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
@@ -1208,7 +1193,6 @@ struct FormatListPDU_ShortName {
         32,
         this->formatUTF8Name,
         16);
-
     }
 
     void log() const {
@@ -1499,7 +1483,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
     uint32_t lindex;
     uint64_t sizeRequested;
     uint32_t cbRequested;
-    uint32_t clipDataId;
+    uint32_t clipDataId = 0;
 
     explicit FileContentsRequestPDU( int streamID
                                    , int flag
@@ -1512,12 +1496,10 @@ struct FileContentsRequestPDU     // Resquest RANGE
     , lindex(lindex)
     , sizeRequested(sizeRequested)
     , cbRequested(cbRequested)
-    , clipDataId(0)
     {}
 
     explicit FileContentsRequestPDU()
     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
-    , clipDataId(0)
     {}
 
     void emit(OutStream & stream) const {
@@ -2735,7 +2717,6 @@ struct CliprdrLogState
 
 static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        LOG(LOG_INFO, "");
         InStream chunk =  stream.clone();
         CliprdrHeader header;
         header.recv(chunk);

@@ -970,8 +970,6 @@ public:
             this->config.is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                //LOG(LOG_INFO, "", this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                //this->impl_graphic->reset_cache(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->impl_graphic->create_screen(this->config._movie_dir, this->config._movie_name);
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {

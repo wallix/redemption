@@ -29,8 +29,8 @@ Author(s): Jonathan Poelen
 
 struct File
 {
-    File(std::nullptr_t) noexcept
-      : f()
+    File(std::nullptr_t p) noexcept
+      : f(p)
     {}
 
     File(File&&) = default;

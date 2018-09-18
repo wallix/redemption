@@ -452,7 +452,7 @@ private:
                         info,
                         {
                             { "type", type },
-                            { "format", format_name.c_str() },
+                            { "format", format_name },
                             { "size", size_str }
                         }
                     );
@@ -474,7 +474,7 @@ private:
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message(type);
                     message += "=";
-                    message += format_name.c_str();
+                    message += format_name;
                     message += "\x01";
                     message += size_str;
                     if (!data_to_dump.empty()) {
@@ -639,7 +639,7 @@ private:
 
         auto const info = key_qvalue_pairs({
                 { "type", type },
-                { "file_name", file_info.file_name.c_str() },
+                { "file_name", file_info.file_name },
                 { "size", file_size_str },
                 { "sha256", digest_s }
             });
@@ -653,7 +653,7 @@ private:
         if (!this->param_dont_log_data_into_wrm) {
             std::string message(type);
             message += "=";
-            message += file_info.file_name.c_str();
+            message += file_info.file_name;
             message += "\x01";
             message += file_size_str;
             message += "\x01";
@@ -1374,7 +1374,7 @@ public:
                         info,
                         {
                             { "type", type },
-                            { "format", format_name.c_str() },
+                            { "format", format_name },
                             { "size", size_str }
                         }
                     );
@@ -1396,7 +1396,7 @@ public:
                 if (!this->param_dont_log_data_into_wrm) {
                     std::string message(type);
                     message += "=";
-                    message += format_name.c_str();
+                    message += format_name;
                     message += "\x01";
                     message += size_str;
                     if (!data_to_dump.empty()) {
