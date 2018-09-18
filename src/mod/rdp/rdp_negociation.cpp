@@ -845,7 +845,6 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             // ------------------------------------------------------------
 
             GCC::UserData::CSCluster cs_cluster;
-            // TODO CGR: values used for setting console_session looks crazy. It's old code and actual validity of these values should be checked. It should only be about REDIRECTED_SESSIONID_FIELD_VALID and shouldn't touch redirection version. Shouldn't it ?
             {
                 LOG(LOG_INFO, "CS_Cluster: Server Redirection Supported");
                 if (!this->nego.tls){
@@ -864,22 +863,9 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 if (this->console_session) {
                     cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID;
                     cs_cluster.redirectedSessionID = 0;
+                    LOG(LOG_INFO, "Redirection of Console (SessionId=0)");
                 }
             }
-            // if (!this->nego.tls){
-            //     if (this->console_session){
-            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID | (3 << 2) ; // REDIRECTION V4
-            //     }
-            //     else {
-            //         cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED            | (2 << 2) ; // REDIRECTION V3
-            //     }
-            //     }
-            // else {
-            //     cs_cluster.flags = GCC::UserData::CSCluster::REDIRECTION_SUPPORTED * ((3 << 2)|1);  // REDIRECTION V4
-            //     if (this->console_session){
-            //         cs_cluster.flags |= GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID ;
-            //     }
-            // }
             if (bool(this->verbose & RDPVerbose::security)) {
                 cs_cluster.log("Sending to server");
             }

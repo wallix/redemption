@@ -68,7 +68,7 @@ RdpNego::RdpNego(
     LOG(LOG_INFO, "RdpNego: TLS=%s NLA=%s adminMode=%s",
         ((this->enabled_protocols & RdpNegoProtocols::Tls) ? "Enabled" : "Disabled"),
         ((this->enabled_protocols & RdpNegoProtocols::Nla) ? "Enabled" : "Disabled"),
-		(this->restricted_admin_mode ? "Enabled" : "Disabled")
+        (this->restricted_admin_mode ? "Enabled" : "Disabled")
         );
 
     strncpy(this->username, username, 127);

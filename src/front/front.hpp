@@ -1466,7 +1466,8 @@ public:
                             GCC::UserData::CSCluster cs_cluster;
                             cs_cluster.recv(f.payload);
                             this->client_info.console_session =
-                                (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID));
+                                (0 != (cs_cluster.flags & GCC::UserData::CSCluster::REDIRECTED_SESSIONID_FIELD_VALID))
+                                && (0 == cs_cluster.redirectedSessionID == 0);
                             if (bool(this->verbose & Verbose::basic_trace)) {
                                 cs_cluster.log("Front::incoming: Receiving from Client");
                             }
