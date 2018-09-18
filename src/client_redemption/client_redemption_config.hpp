@@ -1126,23 +1126,23 @@ public:
                 if (line.compare(0, pos, "title") == 0) {
                     AccountData new_account;
                     this->_accountData.push_back(new_account);
-                    this->_accountData[accountNB].title = info;
+                    this->_accountData.back().title = info;
                 } else
                 if (line.compare(0, pos, "IP") == 0) {
-                    this->_accountData[accountNB].IP = info;
+                    this->_accountData.back().IP = info;
                 } else
                 if (line.compare(0, pos, "name") == 0) {
-                    this->_accountData[accountNB].name = info;
+                    this->_accountData.back().name = info;
                 } else if (line.compare(0, pos, "protocol") == 0) {
-                    this->_accountData[accountNB].protocol = std::stoi(info);
+                    this->_accountData.back().protocol = std::stoi(info);
                 } else
                 if (line.compare(0, pos, "pwd") == 0) {
-                    this->_accountData[accountNB].pwd = info;
+                    this->_accountData.back().pwd = info;
                 } else
                 if (line.compare(0, pos, "options_profil") == 0) {
 
-                    this->_accountData[accountNB].options_profil = std::stoi(info);
-                    this->_accountData[accountNB].index = accountNB;
+                    this->_accountData.back().options_profil = std::stoi(info);
+                    this->_accountData.back().index = accountNB;
 
                     accountNB++;
                     if (accountNB == MAX_ACCOUNT_DATA) {
@@ -1151,7 +1151,7 @@ public:
                     }
                 } else
                 if (line.compare(0, pos, "port") == 0) {
-                    this->_accountData[accountNB].port = std::stoi(info);
+                    this->_accountData.back().port = std::stoi(info);
                 }
             }
 
@@ -1159,10 +1159,12 @@ public:
                 this->_accountNB = accountNB;
             }
 
-            this->target_IP = this->_accountData[this->_last_target_index].IP;
-            this->user_name = this->_accountData[this->_last_target_index].name;
-            this->user_password = this->_accountData[this->_last_target_index].pwd;
-            this->port = this->_accountData[this->_last_target_index].port;
+            if (this->_accountData.size() > 0) {
+                this->target_IP = this->_accountData[this->_last_target_index].IP;
+                this->user_name = this->_accountData[this->_last_target_index].name;
+                this->user_password = this->_accountData[this->_last_target_index].pwd;
+                this->port = this->_accountData[this->_last_target_index].port;
+            }
         }
     }
 

@@ -195,6 +195,7 @@ public:
         // copied into the reassembly buffer in the order in which they are received. Upon receiving the
         // last chunk of virtual channel data, the reassembled data is processed by the virtual channel endpoint.
 
+
         if (data.size() > first_part_data_size ) {
 
             int real_total = data.size() - first_part_data_size;
@@ -214,7 +215,7 @@ public:
                                                     , CHANNELS::CHANNEL_FLAG_FIRST | flags
                                                     );
 
-    //             msgdump_c(false, false, total_length, 0, out_stream_first_part.get_data(), out_stream_first_part.get_offset());
+//             ::hexdump(out_stream_first_part.get_data(), out_stream_first_part.get_offset());
 
 
             for (int i = 0; i < cmpt_PDU_part; i++) {
@@ -232,7 +233,7 @@ public:
                                                     , flags
                                                     );
 
-    //             msgdump_c(false, false, total_length, 0, out_stream_next_part.get_data(), out_stream_next_part.get_offset());
+//             ::hexdump(out_stream_next_part.get_data(), out_stream_next_part.get_offset());
             }
 
             // Last part
@@ -247,7 +248,7 @@ public:
                                                     , CHANNELS::CHANNEL_FLAG_LAST | flags
                                                     );
 
-    //             msgdump_c(false, false, total_length, 0, out_stream_last_part.get_data(), out_stream_last_part.get_offset());
+//         ::hexdump(out_stream_last_part.get_data(), out_stream_last_part.get_offset());
 
         } else {
 

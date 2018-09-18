@@ -479,7 +479,6 @@
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
                             }
 
-
                             switch(this->clientIOClipboardAPI->get_buffer_type_id()) {
 
                                 case RDPECLIP::CF_METAFILEPICT:
@@ -491,7 +490,7 @@
                                     total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
                                     auto image = this->clientIOClipboardAPI->get_image();
                                     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
-                                            this->clientIOClipboardAPI->get_cliboard_data_length()
+                                          this->clientIOClipboardAPI->get_cliboard_data_length()
                                         , image.width()
                                         , image.height()
                                         , image.bits_per_pixel()
@@ -548,7 +547,7 @@
                                     fdr.emit(out_stream_first_part);
 
                                     RDPECLIP::FileDescriptor fdf(
-                                        this->clientIOClipboardAPI->get_file_item_name(0)
+                                          this->clientIOClipboardAPI->get_file_item_name(0)
                                         , this->clientIOClipboardAPI->get_file_item(0).size()
                                         , fscc::FILE_ATTRIBUTE_ARCHIVE
                                     );

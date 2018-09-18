@@ -29,7 +29,7 @@
 namespace ClientCLIPRDRConfig {
 
 // Arbitrary format ID client redemption specifique must be superior to 0xbb00, else collision is a risk
-enum : uint16_t {
+enum : uint32_t {
       CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
     , CF_QT_CLIENT_FILECONTENTS         = 48026
 };

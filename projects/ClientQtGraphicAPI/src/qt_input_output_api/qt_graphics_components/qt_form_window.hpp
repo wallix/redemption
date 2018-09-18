@@ -662,6 +662,7 @@ public:
         this->setMinimumHeight(160);
 
         for (size_t i = 0; i < config->_accountData.size(); i++) {
+//             LOG(LOG_INFO, "loooooooooooooooooooooooooool");
             if (config->_accountData[i].protocol ==  protocol_type) {
 
                 this->icons[i] = new QtIconAccount(main_tab, config->_accountData[i], this);
@@ -745,7 +746,7 @@ public:
 
         QStringList stringList;
 
-        for (int i = 0; i < this->config->_accountNB; i++) {
+        for (int i = 0; i < this->config->_accountData.size(); i++) {
             if (this->config->_accountData[i].protocol == this->protocol_type) {
                 std::string title(this->config->_accountData[i].title);
                 this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
