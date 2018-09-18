@@ -97,7 +97,17 @@ class FakeClientIOClipboard : public ClientIOClipboardAPI
 public:
     std::string data_text;
     std::unique_ptr<uint8_t[]>  _chunk;
+    size_t offset = 0;
+    size_t size;
+    std::string fileName;
+
+
     void emptyBuffer() override {}
+
+    void resize_chunk(size_t size) {
+        this->size = size;
+        this->_chunk = std::make_unique<uint8_t[]>(size);
+    }
 
     //  set distant clipboard data
     void setClipboard_text(std::string const& str) override {
@@ -115,10 +125,14 @@ public:
         (void) bpp;
     }
     void setClipboard_files(std::string const& /*name*/) override {}
+
     void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
-        (void) fileName;
-        (void) data;
-        (void) data_len;
+        this->fileName = fileName;
+        size_t data_end = this->offset + data_len;
+        for (size_t i = this->offset; i < this->size && i < data_end; i++) {
+            this->_chunk.get()[i] = data[i];
+        }
+        this->offset += data_len;
     }
 };
 
