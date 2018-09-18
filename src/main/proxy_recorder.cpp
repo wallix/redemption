@@ -161,104 +161,62 @@ public:
                         x224_stream.get_capacity() - x224._header_size);
                 }
 
-                bool const is_nla
-                  = (x224.rdp_neg_requestedProtocols & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX));
+                bool const is_tls = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
 
-                if (is_nla || !nla_password.empty() || enable_kerberos) {
-                    StaticOutStream<256> new_x224_stream;
-                    X224::CC_TPDU_Send(
-                        new_x224_stream,
-                        X224::RDP_NEG_RSP,
-                        RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-                        is_nla ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
-                    outFile.write_packet(PacketType::DataIn, stream_to_avu8(new_x224_stream));
-                    frontConn.send(stream_to_avu8(new_x224_stream));
+                StaticOutStream<256> front_x224_stream;
+                X224::CC_TPDU_Send(
+                    front_x224_stream,
+                    X224::RDP_NEG_RSP,
+                    RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
+                    is_tls ? X224::PROTOCOL_TLS : X224::PROTOCOL_RDP);
+                outFile.write_packet(PacketType::DataIn, stream_to_avu8(front_x224_stream));
+                frontConn.send(stream_to_avu8(front_x224_stream));
+
+                if (is_tls) {
+                    LOG(LOG_INFO, "start NegoServer");
                     frontConn.enable_server_tls("inquisition", nullptr);
                 }
 
-                if (is_nla) {
-                    LOG(LOG_INFO, "start NegoServer");
-                    nego_server = std::make_unique<NegoServer>(
-                        frontConn, outFile, nla_username, nla_password, verbosity);
-
-                    rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
-                    while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
-                        InStream in_stream(frontBuffer.current_pdu_buffer());
-                        st = nego_server->recv_next_data(in_stream);
-                    }
-
-                    if (rdpCredsspServer::State::Err == st) {
-                        throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-                    }
-
-                    state = NEGOCIATING_FRONT_NLA;
-                }
-                else if (!nla_password.empty() || enable_kerberos) {
-                    LOG(LOG_INFO, "start NegoClient");
-                    nego_client = std::make_unique<NegoClient>(
-                        backConn, outFile,
-                        host.c_str(), nla_username.c_str(),
-                        nla_password.empty() ? "\0" : nla_password.c_str(),
-                        enable_kerberos, verbosity);
-                    nego_client->send_negotiation_request();
-
-                    state = NEGOCIATING_BACK_NLA;
-                }
-                else {
-                    outFile.write_packet(PacketType::DataOut, currentPacket);
-                    backConn.send(currentPacket);
-
-                    state = NEGOCIATING_BACK_STEP1;
-                }
-            }
-            break;
-
-        case NEGOCIATING_FRONT_NLA: {
-            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
-            frontBuffer.load_data(this->frontConn);
-            while (frontBuffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
-                InStream in_stream(frontBuffer.current_pdu_buffer());
-                st = nego_server->recv_next_data(in_stream);
-            }
-
-            switch (st) {
-            case rdpCredsspServer::State::Err:
-                throw Error(ERR_NLA_AUTHENTICATION_FAILED);
-            case rdpCredsspServer::State::Cont:
-                break;
-            case rdpCredsspServer::State::Finish:
-                LOG(LOG_INFO, "stop NegoServer");
-                LOG(LOG_INFO, "start NegoClient");
-                nego_server.reset();
                 nego_client = std::make_unique<NegoClient>(
-                    this->backConn, this->outFile,
-                    this->host.c_str(), nla_username.c_str(),
+                    !nla_username.empty(),
+                    x224.rdp_cinfo_flags & X224::RESTRICTED_ADMIN_MODE_REQUIRED,
+                    backConn, outFile,
+                    host.c_str(), nla_username.c_str(),
                     nla_password.empty() ? "\0" : nla_password.c_str(),
                     enable_kerberos, verbosity);
-                nego_client->send_negotiation_request();
-                state = NEGOCIATING_BACK_STEP1;
-                break;
-            }
 
+                // equivalent to nego_client->send_negotiation_request()
+                StaticOutStream<256> back_x224_stream;
+                X224::CR_TPDU_Send(
+                    back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
+                    !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
+                outFile.write_packet(PacketType::DataOut, stream_to_avchar(back_x224_stream));
+                backConn.send(stream_to_avchar(back_x224_stream));
+
+                state = NEGOCIATING_BACK_NLA;
+            }
             break;
-        }
 
         // force X224::PROTOCOL_HYBRID
         case NEGOCIATING_FRONT_INITIAL_PDU:
             frontBuffer.load_data(this->frontConn);
             if (frontBuffer.next_pdu()) {
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
-                InStream new_x224_stream(currentPacket);
-                X224::DT_TPDU_Recv x224(new_x224_stream);
-                MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
-                GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
-                GCC::UserData::RecvFactory f(gcc_cr.payload);
-                GCC::UserData::CSCore cs_core;
-                cs_core.recv(f.payload);
 
-                outFile.write_packet(PacketType::DataOut, currentPacket);
+                if (!nla_username.empty()) {
+                    LOG(LOG_INFO, "force PROTOCOL_HYBRID");
+                    InStream new_x224_stream(currentPacket);
+                    X224::DT_TPDU_Recv x224(new_x224_stream);
+                    MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
+                    GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
+                    GCC::UserData::RecvFactory f(gcc_cr.payload);
+                    GCC::UserData::CSCore cs_core;
+                    cs_core.recv(f.payload);
 
-                currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
+                    outFile.write_packet(PacketType::DataOut, currentPacket);
+
+                    currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
+                }
 
                 backConn.send(currentPacket);
 
@@ -279,7 +237,6 @@ public:
             }
             break;
         }
-        case NEGOCIATING_BACK_STEP1:
         case NEGOCIATING_BACK_NLA:
             REDEMPTION_UNREACHABLE();
         }
@@ -298,46 +255,6 @@ public:
             }
             break;
         }
-        case NEGOCIATING_BACK_STEP1: {
-            backBuffer.load_data(this->backConn);
-            if (backBuffer.next_pdu()) {
-                array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
-                outFile.write_packet(PacketType::DataIn, currentPacket);
-
-                InStream x224_stream(currentPacket);
-                X224::CC_TPDU_Recv x224(x224_stream);
-
-                if (x224.rdp_neg_type == X224::RDP_NEG_NONE) {
-                    LOG(LOG_INFO, "RdpNego::recv_connection_confirm done (legacy, no TLS)");
-                }
-
-                frontConn.send(currentPacket);
-
-                switch (x224.rdp_neg_code) {
-                case X224::PROTOCOL_TLS:
-                case X224::PROTOCOL_HYBRID:
-                case X224::PROTOCOL_HYBRID_EX: {
-                    frontConn.enable_server_tls("inquisition", nullptr);
-                    NullServerNotifier null_notifier;
-
-                    switch(backConn.enable_client_tls(false, ServerCertCheck::always_succeed, null_notifier, "/tmp")) {
-                    case Transport::TlsResult::Ok:
-                        outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
-                        break;
-                    case Transport::TlsResult::Fail:
-                        break;
-                    case Transport::TlsResult::Want:
-                        break;
-                    }
-                    break;
-                }
-                case X224::PROTOCOL_RDP: break;
-                }
-
-                state = FORWARD;
-            }
-            break;
-        }
         case FORWARD: {
             size_t ret = backConn.partial_read(make_array_view(tmpBuffer));
             if (ret > 0) {
@@ -346,7 +263,6 @@ public:
             }
             break;
         }
-        case NEGOCIATING_FRONT_NLA:
         case NEGOCIATING_FRONT_INITIAL_PDU:
         case NEGOCIATING_FRONT_STEP1:
             REDEMPTION_UNREACHABLE();
@@ -365,10 +281,8 @@ public:
             switch(state) {
             case NEGOCIATING_FRONT_STEP1:
             case NEGOCIATING_FRONT_INITIAL_PDU:
-            case NEGOCIATING_FRONT_NLA:
                 FD_SET(front_fd, &rset);
                 break;
-            case NEGOCIATING_BACK_STEP1:
             case NEGOCIATING_BACK_NLA:
                 FD_SET(back_fd, &rset);
                 break;
@@ -461,9 +375,14 @@ private:
             this->credssp.credssp_server_authenticate_init();
         }
 
-        rdpCredsspServer::State recv_next_data(InStream& in_stream)
+        rdpCredsspServer::State recv_data(TpduBuffer& buffer)
         {
-            return this->credssp.credssp_server_authenticate_next(in_stream);
+            rdpCredsspServer::State st = rdpCredsspServer::State::Cont;
+            while (buffer.next_credssp() && rdpCredsspServer::State::Cont == st) {
+                InStream in_stream(buffer.current_pdu_buffer());
+                st = this->credssp.credssp_server_authenticate_next(in_stream);
+            }
+            return st;
         }
     };
 
@@ -477,11 +396,12 @@ private:
 
     public:
         NegoClient(
+            bool is_nla, bool is_admin_mode,
             Transport& trans, RecorderFile& outFile,
             char const* host, char const* target_user, char const* password,
             bool enable_kerberos, uint64_t verbosity
         )
-        : nego(true, target_user, true, false, host, enable_kerberos,
+        : nego(true, target_user, is_nla, is_admin_mode, host, enable_kerberos,
             this->random, this->timeobj, this->extra_message, Translation::EN,
             to_verbose_flags(verbosity))
         , trans(trans, outFile, NlaTeeTransport::Type::Client)
@@ -509,10 +429,8 @@ private:
 
     enum {
         NEGOCIATING_FRONT_STEP1,
-        NEGOCIATING_BACK_STEP1,
         NEGOCIATING_BACK_NLA,
         NEGOCIATING_FRONT_INITIAL_PDU,
-        NEGOCIATING_FRONT_NLA,
         FORWARD
     } state = NEGOCIATING_FRONT_STEP1;
 
