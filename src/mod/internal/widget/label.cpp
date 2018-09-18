@@ -28,7 +28,7 @@
 
 WidgetLabel::WidgetLabel(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, const char * text,
+    NotifyApi* notifier, std::string_view text,
     int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
     int xtext, int ytext
 )
@@ -65,15 +65,14 @@ WidgetLabel::WidgetLabel(WidgetLabel const & other)
 
 WidgetLabel::~WidgetLabel() = default;
 
-void WidgetLabel::set_text(const char * text)
+void WidgetLabel::set_text(std::string_view text)
 {
     this->buffer[0] = 0;
-    if (text) {
+    if (!text.empty()) {
         const size_t remain_n = buffer_size - 1;
-        const size_t n = strlen(text);
-        const size_t max = ((remain_n >= n) ? n :
-                            ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text), remain_n));
-        memcpy(this->buffer, text, max);
+        const size_t max = ((remain_n >= text.size()) ? text.size() :
+                            ::UTF8StringAdjustedNbBytes(::byte_ptr_cast(text.data()), remain_n));
+        memcpy(this->buffer, text.data(), max);
         this->buffer[max] = 0;
     }
 }

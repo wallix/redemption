@@ -23,6 +23,8 @@
 
 #include "mod/internal/widget/widget.hpp"
 
+#include <string_view>
+
 
 class Font;
 namespace gdi
@@ -50,7 +52,7 @@ public:
 
 public:
     WidgetLabel(gdi::GraphicApi & drawable, Widget& parent,
-                NotifyApi* notifier, const char * text,
+                NotifyApi* notifier, std::string_view text,
                 int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
                 int xtext = 0, int ytext = 0);
 
@@ -58,7 +60,7 @@ public:
 
     ~WidgetLabel() override;
 
-    void set_text(const char * text);
+    void set_text(std::string_view text);
 
     const char * get_text() const;
 

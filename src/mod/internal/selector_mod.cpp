@@ -257,9 +257,9 @@ void SelectorMod::refresh_context()
 
 void SelectorMod::refresh_device()
 {
-    char * groups    = const_cast<char *>(this->vars.get<cfg::globals::target_user>().c_str());
-    char * targets   = const_cast<char *>(this->vars.get<cfg::globals::target_device>().c_str());
-    char * protocols = const_cast<char *>(this->vars.get<cfg::context::target_protocol>().c_str());
+    char const* groups    = this->vars.get<cfg::globals::target_user>().c_str();
+    char const* targets   = this->vars.get<cfg::globals::target_device>().c_str();
+    char const* protocols = this->vars.get<cfg::context::target_protocol>().c_str();
     for (unsigned index = 0; index < this->vars.get<cfg::context::selector_lines_per_page>(); index++) {
         size_t size_groups = proceed_item(groups);
         if (!size_groups) {
@@ -268,25 +268,17 @@ void SelectorMod::refresh_device()
         size_t size_targets = proceed_item(targets);
         size_t size_protocols = proceed_item(protocols);
 
-        char c_group = groups[size_groups];
-        char c_target = targets[size_targets];
-        char c_protocol = protocols[size_protocols];
-
-        groups[size_groups] = '\0';
-        targets[size_targets] = '\0';
-        protocols[size_protocols] = '\0';
-
-        const char * texts[] = { groups, targets, protocols, nullptr };
+        std::string_view const texts[] {
+            {groups, size_groups},
+            {targets, size_targets},
+            {protocols, size_protocols},
+        };
         this->selector.add_device(texts);
 
-        groups[size_groups] = c_group;
-        targets[size_targets] = c_target;
-        protocols[size_protocols] = c_protocol;
-
-        if (c_group    == '\n' || !c_group
-            ||  c_target   == '\n' || !c_target
-            ||  c_protocol == '\n' || !c_protocol
-            ){
+        if (groups[size_groups]       == '\n' || !groups[size_groups]
+         || targets[size_targets]     == '\n' || !targets[size_targets]
+         || protocols[size_protocols] == '\n' || !protocols[size_protocols]
+        ){
             break;
         }
 
@@ -299,14 +291,16 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
-        const char * texts[] = { "", TR(trkeys::no_results, language(this->vars)), nullptr };
+        std::string_view const texts[] {{}, TR(trkeys::no_results, language(this->vars)),};
         this->selector.add_device(texts);
-    } else {
+    }
+    else {
         this->selector.selector_lines.tab_flag = Widget::NORMAL_TAB;
         this->selector.selector_lines.focus_flag = Widget::NORMAL_FOCUS;
         this->selector.selector_lines.set_selection(0);
         this->selector.set_widget_focus(&this->selector.selector_lines, Widget::focus_reason_tabkey);
     }
+
     this->selector.move_size_widget(
         this->selector.x(),
         this->selector.y(),

@@ -438,7 +438,7 @@ void WidgetSelector::notify(Widget* widget, notify_event_t event)
     }
 }
 
-void WidgetSelector::add_device(const char ** entries)
+void WidgetSelector::add_device(array_view<const std::string_view> entries)
 {
     this->selector_lines.add_line(entries);
 }

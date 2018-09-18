@@ -58,9 +58,9 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
-    const char * texts0[] = { "target_group", "target", "protocol", "timeframe" };
+    std::string_view const texts0[] = { "target_group", "target", "protocol", "timeframe" };
     wgrid.add_line(texts0);
-    const char * texts1[] = { "win", "admin@device", "RDP", "never" };
+    std::string_view const texts1[] = { "win", "admin@device", "RDP", "never" };
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);
     wgrid.add_line(texts1);

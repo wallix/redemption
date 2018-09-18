@@ -60,21 +60,23 @@ void WidgetLabelGrid::clean_labels()
     }
 }
 
-uint16_t WidgetLabelGrid::add_line(const char ** entries)
+uint16_t WidgetLabelGrid::add_line(array_view<const std::string_view> entries)
 {
-    uint16_t const  old_nb_row = this->get_nb_rows();
+    uint16_t const old_nb_row = this->get_nb_rows();
 
     assert(old_nb_row < GRID_NB_ROWS_MAX);
 
     this->set_nb_rows(old_nb_row + 1);
-    for (int i = 0; i < this->get_nb_columns() && entries[i]; i++) {
-        bool odd = this->get_nb_rows() & 1;
+
+    bool const odd = this->get_nb_rows() & 1;
+    auto const fg_color = odd ? this->fg_color_1 : this->fg_color_2;
+    auto const bg_color = odd ? this->bg_color_1 : this->bg_color_2;
+    auto const max_column = std::min(std::size_t(this->get_nb_columns()), entries.size());
+
+    for (std::size_t i = 0; i < max_column; ++i) {
         WidgetLabel * label = new WidgetLabel(
-            this->drawable, *this, this,
-            entries[i], this->group_id,
-            odd ? this->fg_color_1 : this->fg_color_2,
-            odd ? this->bg_color_1 : this->bg_color_2,
-            this->font, x_padding_label, y_padding_label
+            this->drawable, *this, this, entries[i], this->group_id,
+            fg_color, bg_color, this->font, x_padding_label, y_padding_label
         );
 
         Dimension dim = label->get_optimal_dim();
