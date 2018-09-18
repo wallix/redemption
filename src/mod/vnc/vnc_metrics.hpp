@@ -72,7 +72,7 @@ private:
         COUNT_FIELD
     };
 
-        const char * vnc_metrics_name(int index) {
+    const char * vnc_metrics_name(int index) {
 
         switch (index) {
             // TODO add some vars names
@@ -114,8 +114,7 @@ public:
             activate, COUNT_FIELD, std::move(path), std::move(session_id),
             primary_user_sig, account_sig, target_service_sig, session_info_sig,
             now, file_interval, log_delay)
-    {
-    }
+    {}
 
     bool active() const {
         return this->metrics.active_;

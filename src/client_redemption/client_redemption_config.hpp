@@ -317,16 +317,19 @@ public:
 
         this->rDPRemoteAppConfig.full_cmd_line = this->rDPRemoteAppConfig.source_of_ExeOrFile + " " + this->rDPRemoteAppConfig.source_of_Arguments;
 
-        for (auto* pstr : {
-            &this->DATA_DIR,
-            &this->REPLAY_DIR,
-            &this->CB_TEMP_DIR,
-            &this->DATA_CONF_DIR,
-            &this->SOUND_TEMP_DIR
-        }) {
-            if (!file_exist(pstr->c_str())) {
-                LOG(LOG_INFO, "Create file \"%s\".", pstr->c_str());
-                mkdir(pstr->c_str(), 0775);
+
+        if (!this->MAIN_DIR.empty()) {
+            for (auto* pstr : {
+                &this->DATA_DIR,
+                &this->REPLAY_DIR,
+                &this->CB_TEMP_DIR,
+                &this->DATA_CONF_DIR,
+                &this->SOUND_TEMP_DIR
+            }) {
+                if (!file_exist(pstr->c_str())) {
+                    LOG(LOG_INFO, "Create file \"%s\".", pstr->c_str());
+                    mkdir(pstr->c_str(), 0775);
+                }
             }
         }
 

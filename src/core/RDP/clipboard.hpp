@@ -2420,8 +2420,6 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
             }
         }
     }
-
-
 };
 
 struct FormatDataResponsePDU_Text : FormatDataResponsePDU {

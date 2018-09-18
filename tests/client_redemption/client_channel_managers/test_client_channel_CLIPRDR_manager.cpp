@@ -114,8 +114,20 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 }
 
 
+constexpr uint8_t clip_data_part1[1592] = {97};
+constexpr uint8_t clip_data_part2[208] = {97};
+constexpr uint8_t clip_data_total[1800] = {97};
 
-RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
+constexpr char clip_txt_part1[1592] = {'a'};
+constexpr char clip_txt_part2[208] = {'a'};
+constexpr char clip_txt_total[1800] = {'a'};
+
+// constexpr size_t clip_data_len = 1800;
+// constexpr size_t clip_data_part1_len = 1592;
+// constexpr size_t clip_data_part2_len = 208;
+
+
+RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
@@ -131,20 +143,19 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &client, &clip_io, conf);
+    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump/*to_verbose_flags(0x0)*/, &client, &clip_io, conf);
 
+    // Format List PDU
     StaticOutStream<512> out_FormatListPDU;
     RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 6);
     format_list_header.emit(out_FormatListPDU);
-
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long(RDPECLIP::CF_TEXT, "", 0);
     format_list_pdu_long.emit(out_FormatListPDU);
-
     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
-
     manager.receive(chunk_FormatListPDU, flag_channel);
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
 
+    // Format List Response PDU
     FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
     RED_CHECK_EQUAL(pdu_data->size, 8);
     InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
@@ -154,6 +165,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     RED_CHECK_EQUAL(header_formatListResponse.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(header_formatListResponse.dataLen(), 0);
 
+    // Lock Clipboard Data PDU (Optional)
     pdu_data = client.stream();
     InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(pdu_data->size, 12);
@@ -164,6 +176,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     RED_CHECK_EQUAL(lcd.header.dataLen(), 4);
     RED_CHECK_EQUAL(lcd.streamDataID, 0x00000000);
 
+    // Format Data Request PDU
     pdu_data = client.stream();
     RED_CHECK_EQUAL(pdu_data->size, 12);
     InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
@@ -174,18 +187,35 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     RED_CHECK_EQUAL(fdreq.header.dataLen(), 4);
     RED_CHECK_EQUAL(fdreq.requestedFormatId, RDPECLIP::CF_TEXT);
 
-    StaticOutStream<512> out_FormatDataResponse;
-    RDPECLIP::FormatDataResponsePDU_Text fdr(5);
-    fdr.emit(out_FormatDataResponse);
-    uint8_t data_resp[] = {97, 99, 97, 98};
-    out_FormatDataResponse.out_copy_bytes(data_resp, sizeof(data_resp));
-    InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), out_FormatDataResponse.get_offset());
+    // Format Data Response PDU part 1
+    StaticOutStream<1600> out_FormatDataResponsep_part1;
+    RDPECLIP::FormatDataResponsePDU_Text fdr(sizeof(clip_data_total));
+    fdr.emit(out_FormatDataResponsep_part1);
+    out_FormatDataResponsep_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
+    InStream chunk_FormatDataResponse_part1(out_FormatDataResponsep_part1.get_data(), out_FormatDataResponsep_part1.get_offset());
+    manager.receive(chunk_FormatDataResponse_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
 
-    manager.receive(chunk_FormatDataResponse, flag_channel);
+    RED_CHECK_EQUAL(sizeof(clip_data_part1), manager._cb_buffers.size);
+    RED_CHECK_EQUAL(sizeof(clip_data_total), manager._cb_buffers.sizeTotal);
+    std::string data_sent_to_local_clipboard_part1(reinterpret_cast<char *>( manager._cb_buffers.data.get()));
+    std::string data_sent_expected_part1(clip_txt_part1);
+    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+
+    // Format Data Response PDU part 2
+    StaticOutStream<1600> out_FormatDataResponsep_part2;
+    out_FormatDataResponsep_part2.out_copy_bytes(clip_data_part2, sizeof(clip_data_part2));
+    InStream chunk_FormatDataResponse_part2(out_FormatDataResponsep_part2.get_data(), out_FormatDataResponsep_part2.get_offset());
+    manager.receive(chunk_FormatDataResponse_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
     RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
 
+    RED_CHECK_EQUAL(0, manager._cb_buffers.size);
+    RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
+    std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( manager._cb_buffers.data.get()));
+    std::string data_sent_expected(clip_txt_total);
+    RED_CHECK_EQUAL(data_sent_to_local_clipboard, data_sent_expected);
 
-
+    // Unlock Clipboard Data PDU
     pdu_data = client.stream();
     RED_CHECK_EQUAL(pdu_data->size, 12);
     InStream stream_unlock(pdu_data->data, pdu_data->size);
@@ -195,11 +225,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelCopyFromServerToCLient)
     RED_CHECK_EQUAL(ucdp.header.msgFlags(), RDPECLIP::CB_RESPONSE_NONE);
     RED_CHECK_EQUAL(ucdp.header.dataLen(), 4);
     RED_CHECK_EQUAL(ucdp.streamDataID, 0x00000000);
-    /* uint8_t * data_manager = manager._cb_buffers.data;*/
-
-    std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( manager._cb_buffers.data.get()));
-    std::string data_sent_expected("acab");
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard, data_sent_expected);
 }
 
 
