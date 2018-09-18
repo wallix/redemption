@@ -155,9 +155,9 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
         return bool(x) ? "1" : "0";
     }
 
-    static std::string stringize_bool(cpp::macro x)
+    static auto stringize_bool(cpp::expr e)
     {
-        return base_type_::stringize_integral(x);
+        return base_type_::stringize_bool(e);
     }
 
 

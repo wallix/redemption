@@ -111,9 +111,6 @@ namespace cpp
     template<class T>
     using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
 
-    struct macro { char const * name; };
-    #define CPP_MACRO(name) ::cfg_attributes::cpp::macro{#name}
-
     struct expr { char const * value; };
     #define CPP_EXPR(name) ::cfg_attributes::cpp::expr{#name}
 }

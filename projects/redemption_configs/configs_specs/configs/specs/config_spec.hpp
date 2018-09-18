@@ -151,7 +151,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "nomouse", set(false));
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "notimestamp", set(false));
         W.member(advanced_in_gui, no_sesman, type_<Level>(), "encryptionLevel", set(Level::low));
-        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "authfile", set(CPP_MACRO(REDEMPTION_CONFIG_AUTHFILE)));
+        W.member(advanced_in_gui, no_sesman, type_<std::string>(), "authfile", set(CPP_EXPR(REDEMPTION_CONFIG_AUTHFILE)));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
@@ -181,7 +181,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<types::dirpath>(), "persistent_path", set(CPP_EXPR(app_path(AppPath::Persistent))));
         W.sep();
-        W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set((CPP_MACRO(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
+        W.member(hidden_in_gui, no_sesman, type_<bool>(), "enable_wab_integration", set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<bool>(), "allow_using_multiple_monitors", set(true));
         W.sep();
@@ -382,7 +382,7 @@ void config_spec_definition(Writer && W)
         }, set(0));
 
         W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_exe_or_file", set("||CMD"));
-        W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_MACRO(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
+        W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
         W.sep();
 
         W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));

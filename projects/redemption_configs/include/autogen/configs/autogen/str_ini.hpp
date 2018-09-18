@@ -1,9 +1,5 @@
 #include "config_variant.hpp"
 
-#define CONFIG_PP_STRINGIZE_I(x) #x
-#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)
-
-
 "## Config file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
@@ -27,7 +23,7 @@
 "#encryptionLevel = low\n\n"
 
 "#_advanced\n"
-"#authfile = " REDEMPTION_CONFIG_AUTHFILE "\n\n"
+"#authfile = " << (REDEMPTION_CONFIG_AUTHFILE) << "\n\n"
 
 "# Time out during RDP handshake stage.\n"
 "# (is in second)\n"
@@ -78,10 +74,10 @@
 "#certificate_password = inquisition\n\n"
 
 "#_advanced\n"
-"#png_path = " << app_path(AppPath::Png) << "\n\n"
+"#png_path = " << (app_path(AppPath::Png)) << "\n\n"
 
 "#_advanced\n"
-"#wrm_path = " << app_path(AppPath::Wrm) << "\n\n"
+"#wrm_path = " << (app_path(AppPath::Wrm)) << "\n\n"
 
 "#_advanced\n"
 "#movie_path = \n\n"
@@ -100,10 +96,10 @@
 "#enable_osd_display_remote_target = 1\n\n"
 
 "#_advanced\n"
-"#persistent_path = " << app_path(AppPath::Persistent) << "\n\n"
+"#persistent_path = " << (app_path(AppPath::Persistent)) << "\n\n"
 
 "#_hidden\n"
-"#enable_wab_integration = " CONFIG_PP_STRINGIZE(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) "\n\n"
+"#enable_wab_integration = " << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << "\n\n"
 
 "#allow_using_multiple_monitors = 1\n\n"
 
@@ -437,7 +433,7 @@
 "#session_probe_exe_or_file = ||CMD\n\n"
 
 "#_hidden\n"
-"#session_probe_arguments = " REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS "\n\n"
+"#session_probe_arguments = " << (REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS) << "\n\n"
 
 "# (is in millisecond)\n"
 "#_hidden\n"
@@ -563,7 +559,7 @@
 "#activate_log_metrics = 0\n\n"
 
 "#_advanced\n"
-"#log_dir_path = " << app_path(AppPath::Record_Metrics) << "\n\n"
+"#log_dir_path = " << (app_path(AppPath::Record_Metrics)) << "\n\n"
 
 "# (is in second)\n"
 "#_advanced\n"
@@ -676,13 +672,13 @@
 "#replay_path = /tmp/\n\n"
 
 "#_advanced\n"
-"#hash_path = " << app_path(AppPath::Hash) << "\n\n"
+"#hash_path = " << (app_path(AppPath::Hash)) << "\n\n"
 
 "#_advanced\n"
-"#record_tmp_path = " << app_path(AppPath::RecordTmp) << "\n\n"
+"#record_tmp_path = " << (app_path(AppPath::RecordTmp)) << "\n\n"
 
 "#_advanced\n"
-"#record_path = " << app_path(AppPath::Record) << "\n\n"
+"#record_path = " << (app_path(AppPath::Record)) << "\n\n"
 
 "# Disable keyboard log:\n"
 "#   0: none\n"
@@ -925,5 +921,3 @@
 "#_advanced\n"
 "#load_theme = \n\n"
 
-#undef CONFIG_PP_STRINGIZE_I
-#undef CONFIG_PP_STRINGIZE

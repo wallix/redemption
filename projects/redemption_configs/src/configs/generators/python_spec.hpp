@@ -59,17 +59,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     {
         this->out_file_ <<
             "#include \"config_variant.hpp\"\n\n"
-            "#define CONFIG_PP_STRINGIZE_I(x) #x\n"
-            "#define CONFIG_PP_STRINGIZE(x) CONFIG_PP_STRINGIZE_I(x)\n\n\n"
             "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
-        ;
-    }
-
-    void do_finish()
-    {
-        this->out_file_ <<
-            "#undef CONFIG_PP_STRINGIZE_I\n"
-            "#undef CONFIG_PP_STRINGIZE\n"
         ;
     }
 
@@ -111,19 +101,12 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
     }
 
 
-    struct macroio {
-        const char * name;
-        friend std::ostream & operator << (std::ostream & os, macroio const & mio) {
-            return os << "\" " << mio.name << " \"";
-        }
-    };
     struct exprio {
-        const char * name;
-        friend std::ostream & operator << (std::ostream & os, exprio const & mio) {
-            return os << "\" << " << mio.name << " << \"";
+        const char * value;
+        friend std::ostream & operator << (std::ostream & os, exprio const & eio) {
+            return os << "\" << (" << eio.value << ") << \"";
         }
     };
-    static macroio quoted2(cpp::macro m) { return {m.name}; }
     static exprio quoted2(cpp::expr e) { return {e.value}; }
     template<class T> static io_quoted2 quoted2(T const & s) { return s; }
     template<class T> static char const * quoted2(types::list<T> const &) { return ""; }
@@ -146,11 +129,9 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         return {};
     }
 
-    static std::string stringize_integral(cpp::macro x)
+    static exprio stringize_integral(cpp::expr e)
     {
-        std::ostringstream out;
-        out << "\" CONFIG_PP_STRINGIZE(" << x.name << ") \"";
-        return out.str();
+        return {e.value};
     }
 
 
@@ -159,9 +140,9 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         return bool(x) ? "True" : "False";
     }
 
-    static std::string stringize_bool(cpp::macro x)
+    static exprio stringize_bool(cpp::expr e)
     {
-        return stringize_integral(x);
+        return {e.value};
     }
 
 
