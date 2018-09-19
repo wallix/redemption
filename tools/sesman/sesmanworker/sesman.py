@@ -2053,6 +2053,9 @@ class Sesman():
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
                 u'session_probe_memory_usage_limit' : 'memory_usage_limit',
                 u'session_probe_public_session'     : 'public_session',
+                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
+                u'session_probe_disconnected_session_limit'     : 'disconnected_session_limit',
+                u'session_probe_idle_session_limit'             : 'idle_session_limit',
 
                 # Deprecated. For compatibility only.
                 u'enable_session_probe_launch_mask' : 'enable_launch_mask'

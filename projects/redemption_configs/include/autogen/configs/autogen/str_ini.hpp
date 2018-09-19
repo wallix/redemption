@@ -287,10 +287,12 @@
 "#extra_orders = 15,16,17,18,22\n\n"
 
 "# NLA authentication in secondary target.\n"
+"#_hidden\n"
 "#enable_nla = 1\n\n"
 
 "# If enabled, NLA authentication will try Kerberos before NTLM.\n"
 "# (if enable_nla is disabled, this value is ignored).\n"
+"#_hidden\n"
 "#enable_kerberos = 0\n\n"
 
 "# Persistent Disk Bitmap Cache on the mod side.\n"
@@ -319,6 +321,7 @@
 "#fast_path = 1\n\n"
 
 "# Enables Server Redirection Support.\n"
+"#_hidden\n"
 "#server_redirection_support = 0\n\n"
 
 "# Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block.\n"
@@ -346,13 +349,13 @@
 "#_hidden\n"
 "#shell_working_directory = \n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#use_client_provided_alternate_shell = 0\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#use_client_provided_remoteapp = 0\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#use_native_remoteapp_capability = 1\n\n"
 
 "#_hidden\n"
@@ -455,13 +458,13 @@
 "#_advanced\n"
 "#session_probe_allow_multiple_handshake = 0\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#session_probe_enable_crash_dump = 0\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#session_probe_handle_usage_limit = 0\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#session_probe_memory_usage_limit = 0\n\n"
 
 "#_hidden\n"

@@ -113,6 +113,9 @@ void config_spec_definition(Writer && W)
     spec_attr_t<spec::attr::iptables_in_gui>  const iptables_in_gui{};
     spec_attr_t<spec::attr::password_in_gui>  const password_in_gui{};
 
+    spec_attr_t<spec::attr::connection_policy_with_ini>    const connection_policy_with_ini{};
+    spec_attr_t<spec::attr::connection_policy_without_ini> const connection_policy_without_ini{};
+
     sesman_io_t<sesman::io::none>            const no_sesman{};
     sesman_io_t<sesman::io::proxy_to_sesman> const proxy_to_sesman{};
     sesman_io_t<sesman::io::sesman_to_proxy> const sesman_to_proxy{};
@@ -152,7 +155,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "handshake_timeout", desc{"Time out during RDP handshake stage."}, set(10));
         W.member(ini_and_gui, no_sesman, type_<std::chrono::seconds>(), "session_timeout", desc{"No traffic auto disconnection."}, set(900));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection."}, sesman::name{"inactivity_timeout"}, set(0));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::seconds>(), "inactivity_timeout", desc{"No traffic auto disconnection."}, sesman::name{"inactivity_timeout"}, set(0));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "keepalive_grace_delay", desc{"Keepalive."}, set(30));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "authentication_timeout", desc{"Specifies the time to spend on the login screen of proxy RDP before closing client window (0 to desactivate)."}, set(120));
         W.member(advanced_in_gui, no_sesman, type_<std::chrono::seconds>(), "close_timeout", desc{"Specifies the time to spend on the close box of proxy RDP before closing client window (0 to desactivate)."}, set(600));
@@ -299,8 +302,8 @@ void config_spec_definition(Writer && W)
             "  22: Polyline"
         }, set("15,16,17,18,22"));
         W.sep();
-        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
-        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "enable_kerberos", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "enable_kerberos", desc{
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
@@ -314,10 +317,10 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
         W.sep();
-        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, sesman::name{"server_redirection"}, set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, sesman::name{"server_redirection"}, set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, type_<RedirectionInfo>(), "redir_info");
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "load_balance_info");
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<std::string>(), "load_balance_info");
         W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));
         W.sep();
@@ -332,47 +335,48 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::string>(), "shell_arguments");
         W.member(hidden_in_gui, sesman_to_proxy, type_<std::string>(), "shell_working_directory");
         W.sep();
-        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "use_client_provided_alternate_shell", set(false));
-        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "use_client_provided_remoteapp", set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "use_client_provided_alternate_shell", set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "use_client_provided_remoteapp", set(false));
         W.sep();
-        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "use_native_remoteapp_capability", set(true));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "use_native_remoteapp_capability", set(true));
         W.sep();
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_use_smart_launcher", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_use_smart_launcher", desc{
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."
         }, cpp::name{"session_probe_use_clipboard_based_launcher"}, set(true));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_launch_mask", set(true));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", set(SessionProbeOnLaunchFailure::retry_without_session_probe));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_launch_timeout", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_enable_launch_mask", set(true));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<SessionProbeOnLaunchFailure>(), "session_probe_on_launch_failure", set(SessionProbeOnLaunchFailure::retry_without_session_probe));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_launch_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n"
             "0 to disable timeout."
         }, set(20000));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_launch_fallback_timeout", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_launch_fallback_timeout", desc{
             "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
             "0 to disable timeout."
         }, set(7000));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_start_launch_timeout_timer_only_after_logon", desc{
             "Minimum supported server : Windows Server 2008."
         }, set(true));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_keepalive_timeout", set(5000));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<SessionProbeOnKeepaliveTimeout>(), "session_probe_on_keepalive_timeout", set(SessionProbeOnKeepaliveTimeout::disconnect_user));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_keepalive_timeout", set(5000));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<SessionProbeOnKeepaliveTimeout>(), "session_probe_on_keepalive_timeout", set(SessionProbeOnKeepaliveTimeout::disconnect_user));
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_end_disconnected_session", desc{"End automatically a disconnected session"}, set(false));
+
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_customize_executable_name", set(false));
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_log", set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_log_rotation", set(true));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_enable_log", set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_enable_log_rotation", set(true));
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", desc{
             "This policy setting allows you to configure a time limit for disconnected application sessions.\n"
             "0 to disable timeout."
         }, set(0));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_disconnected_session_limit", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_disconnected_session_limit", desc{
             "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
             "0 to disable timeout."
         }, set(0));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_idle_session_limit", desc{
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_idle_session_limit", desc{
             "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
             "0 to disable timeout."
         }, set(0));
@@ -381,27 +385,27 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_MACRO(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
         W.sep();
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, set(0));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, set(2000));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, set(0));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
         W.sep();
 
-        W.member(advanced_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_enable_crash_dump", set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_enable_crash_dump", set(false));
         W.sep();
 
-        W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_handle_usage_limit", set(0));
-        W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<types::u32>(), "session_probe_handle_usage_limit", set(0));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
         W.sep();
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_public_session", set(false));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "session_probe_public_session", set(false));
         W.sep();
 
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
+        W.member(connection_policy_with_ini, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
         struct P { char const * name; char const * desc; };
         for (P p : {
@@ -411,7 +415,7 @@ void config_spec_definition(Writer && W)
             P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
             P{"server_cert_error_message", "Warn that server certificate check raised some internal error."},
         }) {
-            W.member(hidden_in_gui, sesman_to_proxy, type_<ServerNotification>(), p.name, desc{p.desc}, set(ServerNotification::syslog));
+            W.member(connection_policy_with_ini, sesman_to_proxy, type_<ServerNotification>(), p.name, desc{p.desc}, set(ServerNotification::syslog));
         }
         W.sep();
 
@@ -684,9 +688,9 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "login_message");
         W.sep();
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_outbound_connection_monitoring_rules");
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<std::string>(), "session_probe_outbound_connection_monitoring_rules");
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "disconnect_reason_ack", set(false));
@@ -713,10 +717,10 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "auth_command_rail_exec_password");
         W.sep();
 
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::chrono::milliseconds>(), "rail_disconnect_message_delay", set(3000));
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<std::chrono::milliseconds>(), "rail_disconnect_message_delay", set(3000));
         W.sep();
 
-        W.member(no_ini_no_gui, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));
+        W.member(connection_policy_without_ini, sesman_to_proxy, type_<bool>(), "use_session_probe_to_launch_remote_program", set(true));
         W.sep();
 
         W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "session_probe_launch_error_message");

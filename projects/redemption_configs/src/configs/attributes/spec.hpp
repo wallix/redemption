@@ -134,6 +134,9 @@ namespace spec
         advanced_in_gui = 1 << 4,
         iptables_in_gui = 1 << 5,
         password_in_gui = 1 << 6,
+
+        connection_policy_with_ini    = hidden_in_gui,
+        connection_policy_without_ini = no_ini_no_gui
     };
 
     constexpr attr operator | (attr x, attr y) {
