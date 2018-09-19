@@ -204,7 +204,7 @@ public:
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
 
                 if (!nla_username.empty()) {
-                    LOG(LOG_INFO, "force PROTOCOL_HYBRID");
+                    LOG(LOG_INFO, "send back: force PROTOCOL_HYBRID");
                     InStream new_x224_stream(currentPacket);
                     X224::DT_TPDU_Recv x224(new_x224_stream);
                     MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
@@ -212,21 +212,15 @@ public:
                     GCC::UserData::RecvFactory f(gcc_cr.payload);
                     GCC::UserData::CSCore cs_core;
                     cs_core.recv(f.payload);
-
-                    outFile.write_packet(PacketType::DataOut, currentPacket);
-
-                    currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
+                    if (cs_core.length > 216) {
+                        currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
+                    }
                 }
 
-                backConn.send(currentPacket);
+                outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
+                backConn.send(frontBuffer.remaining_data());
 
-                this->state = FORWARD;
-
-                frontBuffer.consume_current_packet();
-                if (frontBuffer.remaining()) {
-                    outFile.write_packet(PacketType::DataOut, frontBuffer.remaining_data());
-                    backConn.send(frontBuffer.remaining_data());
-                }
+                state = NEGOCIATING_BACK_INITIAL_PDU;
             }
             break;
         case FORWARD: {
@@ -238,6 +232,7 @@ public:
             break;
         }
         case NEGOCIATING_BACK_NLA:
+        case NEGOCIATING_BACK_INITIAL_PDU:
             REDEMPTION_UNREACHABLE();
         }
     }
@@ -252,6 +247,33 @@ public:
                 this->nego_client.reset();
                 state = NEGOCIATING_FRONT_INITIAL_PDU;
                 outFile.write_packet(PacketType::ClientCert, backConn.get_public_key());
+            }
+            break;
+        }
+        case NEGOCIATING_BACK_INITIAL_PDU: {
+            backBuffer.load_data(this->backConn);
+            if (backBuffer.next_pdu()) {
+                array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
+
+                if (!nla_username.empty()) {
+                    LOG(LOG_INFO, "send front: force PROTOCOL_TLS");
+                    InStream new_x224_stream(currentPacket);
+                    X224::DT_TPDU_Recv x224(new_x224_stream);
+                    MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
+                    GCC::Create_Response_Recv gcc_cr(mcs.payload);
+                    GCC::UserData::RecvFactory f(gcc_cr.payload);
+                    GCC::UserData::SCCore sc_core;
+                    sc_core.recv(f.payload);
+                    if (sc_core.length >= 12) {
+                        auto offset = (sc_core.length >= 16) ? 8 : 4;
+                        currentPacket[f.payload.get_current() - currentPacket.data() - offset] = X224::PROTOCOL_TLS;
+                    }
+                }
+
+                outFile.write_packet(PacketType::DataIn, backBuffer.remaining_data());
+                frontConn.send(backBuffer.remaining_data());
+
+                state = FORWARD;
             }
             break;
         }
@@ -275,6 +297,9 @@ public:
         int const front_fd = frontConn.get_fd();
         int const back_fd = backConn.get_fd();
 
+        frontConn.enable_trace = bool(verbosity & 1);
+        backConn.enable_trace = bool(verbosity & 1);
+
         for (;;) {
             FD_ZERO(&rset);
 
@@ -284,6 +309,7 @@ public:
                 FD_SET(front_fd, &rset);
                 break;
             case NEGOCIATING_BACK_NLA:
+            case NEGOCIATING_BACK_INITIAL_PDU:
                 FD_SET(back_fd, &rset);
                 break;
             case FORWARD:
@@ -431,11 +457,37 @@ private:
         NEGOCIATING_FRONT_STEP1,
         NEGOCIATING_BACK_NLA,
         NEGOCIATING_FRONT_INITIAL_PDU,
+        NEGOCIATING_BACK_INITIAL_PDU,
         FORWARD
     } state = NEGOCIATING_FRONT_STEP1;
 
-    SocketTransport frontConn;
-    SocketTransport backConn;
+    struct TraceTransport final : SocketTransport
+    {
+        using SocketTransport::SocketTransport;
+
+        Transport::Read do_atomic_read(uint8_t * buffer, std::size_t len) override
+        {
+            LOG(LOG_DEBUG, "%s do_atomic_read", name);
+            return SocketTransport::do_atomic_read(buffer, len);
+        }
+
+        std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
+        {
+            LOG(LOG_DEBUG, "%s do_partial_read", name);
+            return SocketTransport::do_partial_read(buffer, len);
+        }
+
+        void do_send(const uint8_t * buffer, std::size_t len) override
+        {
+            LOG(LOG_DEBUG, "%s do_send", name);
+            SocketTransport::do_send(buffer, len);
+        }
+
+        bool enable_trace = false;
+    };
+
+    TraceTransport frontConn;
+    TraceTransport backConn;
 
     RecorderFile outFile;
 

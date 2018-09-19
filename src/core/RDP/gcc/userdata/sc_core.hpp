@@ -164,9 +164,7 @@ struct SCCore {
     uint32_t clientRequestedProtocols{0};
     uint32_t earlyCapabilityFlags{0};
 
-    SCCore()
-
-    = default;
+    SCCore() = default;
 
     void emit(OutStream & stream) const
     {

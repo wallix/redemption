@@ -506,8 +506,8 @@ struct CSCore {
         }
 
         LOG(LOG_INFO, "cs_core::version [%04x] %s", this->version,
-              (this->version==0x00080001) ? "RDP 4 client"
-             :(this->version==0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
+              (this->version == 0x00080001) ? "RDP 4 client"
+             :(this->version == 0x00080004) ? "RDP 5.0, 5.1, 5.2, and 6.0 clients)"
                                           : "Unknown client");
         LOG(LOG_INFO, "cs_core::desktopWidth  = %u",  this->desktopWidth);
         LOG(LOG_INFO, "cs_core::desktopHeight = %u", this->desktopHeight);
@@ -593,11 +593,11 @@ struct CSCore {
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:Unknown early capability flag");
         }
         if (this->length < 210) { return; }
-        LOG(LOG_INFO, "cs_core::clientDigProductId=[%s", log_array_02x_format(this->clientDigProductId));
+        LOG(LOG_INFO, "cs_core::clientDigProductId=[%s]", log_array_02x_format(this->clientDigProductId));
         if (this->length < 211) { return; }
-        LOG(LOG_INFO, "cs_core::connectionType  = %u", this->connectionType);
+        LOG(LOG_INFO, "cs_core::connectionType = %u", this->connectionType);
         if (this->length < 212) { return; }
-        LOG(LOG_INFO, "cs_core::pad1octet  = %u", this->pad1octet);
+        LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length < 216) { return; }
         LOG(LOG_INFO, "cs_core::serverSelectedProtocol = %u", this->serverSelectedProtocol);
     }
