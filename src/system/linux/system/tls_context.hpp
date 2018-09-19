@@ -59,7 +59,7 @@ namespace
         char buf[1024];
         while ((error = ERR_get_error()) != 0) {
             ERR_error_string_n(error, buf, sizeof(buf));
-            LOG(LOG_ERR, "%s", buf);
+            LOG(LOG_ERR, "print_error %s", buf);
             if (error_message) {
                 *error_message += buf;
             }
@@ -925,7 +925,7 @@ public:
                 default:
                 {
                     do {
-                        LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
+                        LOG(LOG_INFO, "partial_recv_tls %s", ERR_error_string(error, nullptr));
                     } while ((error = ERR_get_error()) != 0);
 
                     // TODO if recv fail with partial read we should return the amount of data received, close socket and store some delayed error value that will be sent back next call
@@ -966,10 +966,10 @@ public:
                     LOG(LOG_INFO, "Failure in SSL library, error=%lu, %s [%d]", error, strerror(errno), errno);
                     uint32_t errcount = 0;
                     errcount++;
-                    LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
+                    LOG(LOG_INFO, "send_tls %s", ERR_error_string(error, nullptr));
                     while ((error = ERR_get_error()) != 0){
                         errcount++;
-                        LOG(LOG_INFO, "%s", ERR_error_string(error, nullptr));
+                        LOG(LOG_INFO, "send_tls (2) %s", ERR_error_string(error, nullptr));
                     }
                     return -1;
                 }

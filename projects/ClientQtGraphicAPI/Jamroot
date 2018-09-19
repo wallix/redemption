@@ -129,7 +129,7 @@ rule add_lib ( lib )
 
 add_src core/app_path.cpp :
     <conditional>@defines
-    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)$(CLIENT_REDEMPTION_MAIN_PATH)\"'
     ;
 
