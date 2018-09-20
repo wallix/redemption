@@ -39,14 +39,14 @@ enum : uint32_t {
 
 
 struct RDPClipboardConfig {
-
-    // Arbitrary picture resolution ratio, a 40 value empirically keep native resolution.
-    // Data are last if to low.
-
     std::string path;
 
-	double arbitrary_scale = 40;
-	size_t total_format_list_pdu_size = 0;
+    // Arbitrary picture resolution ratio, a 40 value empirically keep native resolution.
+    // because we are using MM_ANISOTROPIC mapping mode
+    // Data are lost if to low.
+    double arbitrary_scale = 40; 
+
+    size_t total_format_list_pdu_size = 0;
     bool server_use_long_format_names = true;
     uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;
@@ -64,10 +64,10 @@ struct RDPClipboardConfig {
           {}
     };
 
-	std::vector<ClipboardFormat> formats;
+    std::vector<ClipboardFormat> formats;
 
-	void add_format(uint32_t ID, std::string name) {
-		this->formats.emplace_back(ID, std::move(name));
-	}
+    void add_format(uint32_t ID, std::string name) {
+        this->formats.emplace_back(ID, std::move(name));
+    }
 };
 

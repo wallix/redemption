@@ -30,7 +30,9 @@
 //
 // 1.3.2.1 Initialization Sequence
 //
-// The goal of the Initialization Sequence is to establish the client and the server capabilities, exchange settings, and synchronize the initial state of the client and server clipboards.
+// The goal of the Initialization Sequence is to establish the client and the 
+// server capabilities, exchange settings, and synchronize the initial state of
+// the client and server clipboards.
 //
 // +-----------+                                                 +-----------+
 // |  Client   |                                                 |  Server   |
@@ -53,22 +55,32 @@
 //
 // Figure 1: Clipboard Redirection Initialization Sequence
 //
-//     The server sends a Clipboard Capabilities PDU to the client to advertise the capabilities that it supports.
+//     The server sends a Clipboard Capabilities PDU to the client to advertise
+//     the capabilities that it supports.
 //
 //      The server sends a Monitor Ready PDU to the client.
 //
-//     Upon receiving the Monitor Ready PDU, the client transmits its capabilities to the server by using a Clipboard Capabilities PDU.
+//     Upon receiving the Monitor Ready PDU, the client transmits its capabilities
+//     to the server by using a Clipboard Capabilities PDU.
 //
-//     The client sends the Temporary Directory PDU to inform the server of a location on the client file system that can be used to deposit files being copied to the client. To make use of this location, the server has to be able to access it directly. At this point, the client and the server capability negotiation is complete.
+//     The client sends the Temporary Directory PDU to inform the server of a
+//     location on the client file system that can be used to deposit files being
+//     copied to the client. To make use of this location, the server has to be
+//     able to access it directly. At this point, the client and the server 
+//     capability negotiation is complete.
 //
-//     The final stage of the Initialization Sequence involves synchronizing the Clipboard Formats on the server clipboard with the client. This is accomplished by effectively mimicking a copy operation on the client by forcing it to send a Format List PDU.
+//     The final stage of the Initialization Sequence involves synchronizing the
+//     Clipboard Formats on the server clipboard with the client. This is 
+//     accomplished by effectively mimicking a copy operation on the client by
+//     forcing it to send a Format List PDU.
 //
 //     The server responds with a Format List Response PDU.
 //
 //
 // 1.3.2.2 Data Transfer Sequences
 //
-// The goal of the Data Transfer Sequences is to perform a copy or paste operation. The diagram that follows presents a possible data transfer sequence.
+// The goal of the Data Transfer Sequences is to perform a copy or paste operation.
+// The diagram that follows presents a possible data transfer sequence.
 //
 // +-----------+                                                 +-----------+
 // |  Shared   |                                                 |   Local   |

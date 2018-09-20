@@ -108,9 +108,12 @@
 //
 // Figure 2: Data transfer using the shared clipboard
 //
-//     The sequence of messages for a copy operation is the same for all format types, as specified in section 1.3.2.2.1.
+//     The sequence of messages for a copy operation is the same for all format
+//     types, as specified in section 1.3.2.2.1.
 //
-//     However, the messages exchanged to transfer File Stream data during a paste operation differs from those used to transfer other format data, as specified in section 1.3.2.2.3.
+//     However, the messages exchanged to transfer File Stream data during a 
+//     paste operation differs from those used to transfer other format data, 
+//     as specified in section 1.3.2.2.3.
 
 
 

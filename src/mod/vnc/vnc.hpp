@@ -2685,9 +2685,11 @@ private:
             RDPECLIP::FormatListPDU format_list_pdu;
             StaticOutStream<256>    out_s;
 
-            format_list_pdu.emit_ex(
+            bool use_long_format_name = false;
+            format_list_pdu.emit_2(
                 out_s,
-                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()
+                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded(),
+                use_long_format_name
             );
 
             size_t length     = out_s.get_offset();
@@ -2820,14 +2822,8 @@ private:
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
                 //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
-                RDPECLIP::FormatListPDU format_list_pdu;
-
-                if (!this->client_use_long_format_names) {
-                    format_list_pdu.recv(chunk);
-                }
-                else {
-                    format_list_pdu.recv_long(chunk);
-                }
+                RDPECLIP::FormatListPDU format_list_pdu(this->client_use_long_format_names);
+                format_list_pdu.recv(chunk);
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
@@ -2945,7 +2941,8 @@ private:
 
                             const bool unicodetext = (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT);
 
-                            format_list_pdu.emit_ex(out_s, unicodetext);
+                            bool use_long_format_name = false;
+                            format_list_pdu.emit_2(out_s, unicodetext, use_long_format_name);
 
                             size_t length     = out_s.get_offset();
                             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);

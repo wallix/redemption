@@ -269,10 +269,11 @@ struct RecvPredictor {
 };
 
 
-struct CliprdrHeader {
+class CliprdrHeader {
 
     uint16_t msgType_{0};
     uint16_t msgFlags_{0};
+public:
     uint32_t dataLen_{0};
 
 public:
@@ -873,33 +874,36 @@ enum : size_t {
 
 struct FormatListPDU
 {
-    CliprdrHeader header;
+    CliprdrHeader header = CliprdrHeader(CB_FORMAT_LIST, 0, 0);
+
     bool contains_data_in_text_format        = false;
     bool contains_data_in_unicodetext_format = false;
 
     uint32_t const    * formatListDataIDs;
     std::string const * formatListDataName;
     std::size_t         formatListDataSize;
+    
+    bool _client_uses_long_format_names = false;
 
 
     FormatListPDU( uint32_t const * formatListDataIDs
                  , std::string const * formatListDataName
                  , std::size_t formatListDataSize)
-        : header(CB_FORMAT_LIST, 0, 0)
-        , formatListDataIDs(formatListDataIDs)
+        : formatListDataIDs(formatListDataIDs)
         , formatListDataName(formatListDataName)
         , formatListDataSize(formatListDataSize)
         {
             assert(this->formatListDataSize <= FORMAT_LIST_MAX_SIZE);
         }
 
-    FormatListPDU()
-        : header(CB_FORMAT_LIST, 0, 0)
-
+    FormatListPDU(bool client_uses_long_format_names)
+        : _client_uses_long_format_names(client_uses_long_format_names)
         {}
 
+    FormatListPDU(){}
+
     void emit(OutStream & stream) /* TODO const*/ {
-        this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
+        CliprdrHeader header(CB_FORMAT_LIST, 0, 36 /* formatId(4) + formatName(32) */);
         this->header.emit(stream);
 
         // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
@@ -907,175 +911,172 @@ struct FormatListPDU
         stream.out_clear_bytes(SHORT_NAME_MAX_SIZE); // formatName(32)
     }
 
+    // TODO: that log is not logging anything useful
     void log() const {
-        this->header.log();
-
+        CliprdrHeader header(CB_FORMAT_LIST, 0, 0);
+        header.log();
     }
 
-    void emit_ex(OutStream & stream, bool unicodetext) /* TODO const*/ {
-        this->header.dataLen_ = 36;    /* formatId(4) + formatName(32) */
-        this->header.emit(stream);
-
-        // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
-        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
-        stream.out_clear_bytes(32); // formatName(32)
-    }
-
-    void emit_long(OutStream & stream, bool unicodetext) /* TODO const*/ {
-        this->header.dataLen_ = 6; /* formatId(4) + formatName(2) */
-        this->header.emit(stream);
-
-        // 1 CLIPRDR_LONG_FORMAT_NAMES structures.
-        stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
-        stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
-    }
-
+    // TODO: we should probably only have one emit, move other parameters to constructor
     void emit_2(OutStream & stream, bool unicodetext, bool use_long_format_names) /* TODO const*/ {
         if (use_long_format_names) {
-            this->emit_long(stream, unicodetext);
+            CliprdrHeader header(CB_FORMAT_LIST, 0, 6 /* formatId(4) + formatName(2) */);
+            this->header.emit(stream);
+
+            // 1 CLIPRDR_LONG_FORMAT_NAMES structures.
+            stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
+            stream.out_clear_bytes(2); // formatName(2) - a single Unicode null character.
         }
         else {
-            this->emit_ex(stream, unicodetext);
+            CliprdrHeader header(CB_FORMAT_LIST, 0, 36 /* formatId(4) + formatName(32) */);
+            this->header.emit(stream);
+
+            // 1 CLIPRDR_SHORT_FORMAT_NAMES structures.
+            stream.out_uint32_le(unicodetext ? CF_UNICODETEXT : CF_TEXT);
+            stream.out_clear_bytes(32); // formatName(32)
         }
     }
 
+    // TODO: we should probably only have one emit, move other parameters to constructor
     void emit_empty(OutStream & stream) /* TODO const*/ {
-        this->header.dataLen_ = 0;
+        CliprdrHeader header(CB_FORMAT_LIST, 0, 0);
         this->header.emit(stream);
     }
 
     void recv(InStream & stream) {
+        if (this->_client_uses_long_format_names) {
 //        LOG(LOG_INFO, "RDPECLIP::FormatListPDU::recv");
-        this->header.recv(stream);
+            this->header.recv(stream);
 
-        // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
-        // =======================================================================
+            // [MS-RDPECLIP] 2.2.3.1.1.1 Short Format Name (CLIPRDR_SHORT_FORMAT_NAME)
+            // =======================================================================
 
-        // The CLIPRDR_SHORT_FORMAT_NAME structure holds a Clipboard Format ID
-        //  and Clipboard Format name pair.
+            // The CLIPRDR_SHORT_FORMAT_NAME structure holds a Clipboard Format ID
+            //  and Clipboard Format name pair.
 
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
-        // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-        // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-        // |                            formatId                           |
-        // +---------------------------------------------------------------+
-        // |                      formatName (32 bytes)                    |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
-        // |                              ...                              |
-        // +---------------------------------------------------------------+
+            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
+            // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
+            // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+            // |                            formatId                           |
+            // +---------------------------------------------------------------+
+            // |                      formatName (32 bytes)                    |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
+            // |                              ...                              |
+            // +---------------------------------------------------------------+
 
-        // formatId (4 bytes): An unsigned, 32-bit integer specifying the
-        //  Clipboard Format ID.
+            // formatId (4 bytes): An unsigned, 32-bit integer specifying the
+            //  Clipboard Format ID.
 
-        // formatName (32 bytes): A 32-byte block containing the
-        //  null-terminated name assigned to the Clipboard Format (32 ASCII 8
-        //  characters or 16 Unicode characters). If the name does not fit, it
-        //  MUST be truncated. Not all Clipboard Formats have a name, and in
-        //  that case the formatName field MUST contain only zeros.
-        const uint32_t short_format_name_structure_size = 36; /* formatId(4) + formatName(32) */
+            // formatName (32 bytes): A 32-byte block containing the
+            //  null-terminated name assigned to the Clipboard Format (32 ASCII 8
+            //  characters or 16 Unicode characters). If the name does not fit, it
+            //  MUST be truncated. Not all Clipboard Formats have a name, and in
+            //  that case the formatName field MUST contain only zeros.
+            const uint32_t short_format_name_structure_size = 36; /* formatId(4) + formatName(32) */
 
-        // Parse PDU to find if clipboard data is available in a TEXT format.
-        for (uint32_t i = 0; i < (this->header.dataLen() / short_format_name_structure_size); i++) {
-            if (!stream.in_check_rem(short_format_name_structure_size)) {
-                LOG( LOG_INFO
-                   , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
-                   , short_format_name_structure_size, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
+            // Parse PDU to find if clipboard data is available in a TEXT format.
+            for (uint32_t i = 0; i < (this->header.dataLen() / short_format_name_structure_size); i++) {
+                if (!stream.in_check_rem(short_format_name_structure_size)) {
+                    LOG( LOG_INFO
+                       , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
+                       , short_format_name_structure_size, stream.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+
+                uint32_t formatId = stream.in_uint32_le();
+                //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
+
+                if (formatId == CF_TEXT) {
+                    this->contains_data_in_text_format = true;
+                }
+                else if (formatId == CF_UNICODETEXT) {
+                    this->contains_data_in_unicodetext_format = true;
+                }
+
+                stream.in_skip_bytes(32);   // formatName(32)
             }
+        } // short format names
+        else {
+            // 2.2.3.1.2 Long Format Names (CLIPRDR_LONG_FORMAT_NAMES)
+            // =======================================================
 
-            uint32_t formatId = stream.in_uint32_le();
-            //LOG(LOG_INFO, "RDPECLIP::FormatListPDU formatId=%u", formatId);
+            // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of
+            // CLIPRDR_LONG_FORMAT_NAME structures.
+            // longFormatNames (variable): An array of CLIPRDR_LONG_FORMAT_NAME structures.
 
-            if (formatId == CF_TEXT) {
-                this->contains_data_in_text_format = true;
-            }
-            else if (formatId == CF_UNICODETEXT) {
-                this->contains_data_in_unicodetext_format = true;
-            }
+            // 2.2.3.1.2.1 Long Format Name (CLIPRDR_LONG_FORMAT_NAME)
+            // =======================================================
 
-            stream.in_skip_bytes(32);   // formatName(32)
-        }
+            // The CLIPRDR_LONG_FORMAT_NAME structure holds a Clipboard Format ID and a Clipboard Format name pair.
+
+            // formatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID.
+
+            // wszFormatName (variable): A variable length null-terminated Unicode
+            // string name that contains the Clipboard Format name. Not all
+            // Clipboard Formats have a name; in such cases, the formatName field
+            // MUST consist of a single Unicode null character.
+
+    // length: 0x24, 0x00, 0x00, 0x00,
+    // flags:  0x13, 0x00, 0x00, 0x00,
+
+            this->header.recv(stream);
+    // msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
+    // msgFlags: 0                  | 0x00, 0x00,
+    // datalen: 24 (after headers)| 0x18, 0x00, 0x00, 0x00,
+
+            const size_t max_length_of_format_name = 256;
+    // FormatId[]: CF_UNICODETEXT 0x0d, 0x00, 0x00, 0x00,
+    // 0x00, 0x00,
+    // FormatId[]: CF_LOCALE 0x10, 0x00, 0x00, 0x00,
+    // 0x00, 0x00,
+    // FormatId[]: CF_TEXT 0x01, 0x00, 0x00, 0x00,
+    // 0x00, 0x00,
+    // FormatId[]: CF_OEMTEXT 0x07, 0x00, 0x00, 0x00,
+    // 0x00, 0x00,
+
+    // Padding ? : 0x00, 0x00, 0x00, 0x00,
+
+            InStream fns(stream.get_current(), this->header.dataLen());
+            while (fns.in_remain()) {
+                if (fns.in_remain() < 6){
+                    // Minimal Possible remaining data: FormatId + 0 + 0
+                    // TODO: this should probably raise an error, as it is
+                    // an incorrent clipboard format is we don't have exactly
+                    // the expected datas
+                    stream.in_skip_bytes(fns.in_remain());
+                    return;
+                }
+                const uint32_t formatId = fns.in_uint32_le();
+                switch (formatId){
+                case CF_UNICODETEXT:
+                    this->contains_data_in_unicodetext_format = true;
+                break;
+                case CF_TEXT:
+                    this->contains_data_in_text_format = true;
+                break;
+                default:
+                 ;   // other formats unsupported
+                }
+                uint16_t buffer[max_length_of_format_name];
+                (void)fns.in_utf16_sz(buffer,
+                        std::min(fns.in_remain(),max_length_of_format_name-2)/2);
+            }        
+        } // long format names
     }   // void recv(InStream & stream)
 
-    void recv_long(InStream & stream) {
-        // 2.2.3.1.2 Long Format Names (CLIPRDR_LONG_FORMAT_NAMES)
-        // =======================================================
-
-        // The CLIPRDR_LONG_FORMAT_NAMES structure holds a collection of
-        // CLIPRDR_LONG_FORMAT_NAME structures.
-        // longFormatNames (variable): An array of CLIPRDR_LONG_FORMAT_NAME structures.
-
-        // 2.2.3.1.2.1 Long Format Name (CLIPRDR_LONG_FORMAT_NAME)
-        // =======================================================
-
-        // The CLIPRDR_LONG_FORMAT_NAME structure holds a Clipboard Format ID and a Clipboard Format name pair.
-
-        // formatId (4 bytes): An unsigned, 32-bit integer that specifies the Clipboard Format ID.
-
-        // wszFormatName (variable): A variable length null-terminated Unicode
-        // string name that contains the Clipboard Format name. Not all
-        // Clipboard Formats have a name; in such cases, the formatName field
-        // MUST consist of a single Unicode null character.
-
-// length: 0x24, 0x00, 0x00, 0x00,
-// flags:  0x13, 0x00, 0x00, 0x00,
-
-        this->header.recv(stream);
-// msgType:  2 = CB_FORMAT_LIST | 0x02, 0x00,
-// msgFlags: 0                  | 0x00, 0x00,
-// datalen: 24 (after headers)| 0x18, 0x00, 0x00, 0x00,
-
-        const size_t max_length_of_format_name = 256;
-// FormatId[]: CF_UNICODETEXT 0x0d, 0x00, 0x00, 0x00,
-// 0x00, 0x00,
-// FormatId[]: CF_LOCALE 0x10, 0x00, 0x00, 0x00,
-// 0x00, 0x00,
-// FormatId[]: CF_TEXT 0x01, 0x00, 0x00, 0x00,
-// 0x00, 0x00,
-// FormatId[]: CF_OEMTEXT 0x07, 0x00, 0x00, 0x00,
-// 0x00, 0x00,
-
-// Padding ? : 0x00, 0x00, 0x00, 0x00,
-
-        InStream fns(stream.get_current(), this->header.dataLen());
-        while (fns.in_remain()) {
-            if (fns.in_remain() < 6){
-                // Minimal Possible remaining data: FormatId + 0 + 0
-                // TODO: this should probably raise an error, as it is
-                // an incorrent clipboard format is we don't have exactly
-                // the expected datas
-                stream.in_skip_bytes(fns.in_remain());
-                return;
-            }
-            const uint32_t formatId = fns.in_uint32_le();
-            switch (formatId){
-            case CF_UNICODETEXT:
-                this->contains_data_in_unicodetext_format = true;
-            break;
-            case CF_TEXT:
-                this->contains_data_in_text_format = true;
-            break;
-            default:
-             ;   // other formats unsupported
-            }
-            uint16_t buffer[max_length_of_format_name];
-            (void)fns.in_utf16_sz(buffer,
-                    std::min(fns.in_remain(),max_length_of_format_name-2)/2);
-        }
-    }   // void recv_long(InStream & stream)
 };  // struct FormatListPDU
 
 
@@ -1122,6 +1123,10 @@ struct FormatListPDU_LongName {
 
         stream.out_uint32_le(this->formatID);
         stream.out_copy_bytes(this->formatUTF16Name, this->formatDataNameUTF16Len);
+    }
+
+    uint16_t len() const {
+        return sizeof(this->formatID)+this->formatDataNameUTF16Len;
     }
 
     void recv(InStream & stream) {
@@ -2071,7 +2076,7 @@ enum {
     MM_HIENGLISH   = 0x00000005, // Each logical unit is mapped to 0.001 inch. Positive x is to the right; positive y is up.
     MM_TWIPS       = 0x00000006, // Each logical unit is mapped to 1/20 of a printer's point (1/1440 of an inch), also called a twip. Positive x is to the right; positive y is up.
     MM_ISOTROPIC   = 0x00000007, // ogical units are mapped to arbitrary units with equally scaled axes; one unit along the x-axis is equal to one unit along the y-axis.
-    MM_ANISOTROPIC = 0x00000008  // Logical units are mapped to arbitrary units with arbitrarily scaled axes.
+    MM_ANISOTROPIC = 0x00000008  // LoFormatDataResponsePDUgical units are mapped to arbitrary units with arbitrarily scaled axes.
 };
 
 //    For MM_ISOTROPIC and MM_ANISOTROPIC modes, which can be scaled, the xExt and yExt fields contain an optional suggested size in MM_HIMETRIC units. For MM_ANISOTROPIC pictures, xExt and yExt SHOULD be zero when no suggested size is given. For MM_ISOTROPIC pictures, an aspect ratio MUST be supplied even when no suggested size is given. If a suggested size is given, the aspect ratio is implied by the size. To give an aspect ratio without implying a suggested size, the xExt and yExt fields are set to negative values whose ratio is the appropriate aspect ratio. The magnitude of the negative xExt and yExt values is ignored; only the ratio is used.
@@ -2081,11 +2086,6 @@ enum {
 //yExt (4 bytes): An unsigned, 32-bit integer that specifies the height of the rectangle within which the picture is drawn, except in the MM_ISOTROPIC and MM_ANISOTROPIC modes. The coordinates are in units that correspond to the mapping mode.
 
 //metaFileData (variable): The variable sized contents of the metafile as specified in [MS-WMF] section 2
-
-
-
-
-
 
 
 // [MS-RDPECLIP] 2.2.5.2 Format Data Response PDU (CLIPRDR_FORMAT_DATA_RESPONSE)
@@ -2099,7 +2099,7 @@ enum {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
 // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+FormatDataResponsePDU-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                           clipHeader                          |
 // +---------------------------------------------------------------+
 // |                              ...                              |
