@@ -29,17 +29,6 @@
 #include "lib/iametrics.hpp"
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsH)
-{
-    uint8_t key[32] = {0};
-    auto data = cstr_array_view("primaryuser");
-    char * sig = new_hmac_sha256_hex(data.data(), data.size(), key);
-
-    RED_CHECK_EQUAL(sig, "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58");
-
-    delete_hmac_sha256_hex(sig);
-}
-
 constexpr const char * fields_rdp_metrics_version = "v1.0";
 constexpr const char * protocol_name = "rdp";
 

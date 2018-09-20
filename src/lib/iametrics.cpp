@@ -37,19 +37,6 @@ extern "C"
         return VERSION;
     }
 
-    char* new_hmac_sha256_hex(
-        const char * src, const unsigned src_len, const uint8_t * key_crypt) noexcept
-    {
-        return reinterpret_cast<char*>( /*NOLINT*/
-            new(std::nothrow) MetricsHmacSha256Encrypt({src, src_len}, {key_crypt, 32u}));
-    }
-
-    void delete_hmac_sha256_hex(char* sign) noexcept /*NOLINT*/
-    {
-        delete reinterpret_cast<MetricsHmacSha256Encrypt*>(sign); /*NOLINT*/
-    }
-
-
     Metrics * metrics_new( const char * version             // fields version
                          , const char * protocol_name
                          , const unsigned nbitems
