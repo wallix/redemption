@@ -2682,15 +2682,12 @@ private:
                     RDPECLIP::CB_FORMAT_LIST);
             }
 
-            RDPECLIP::FormatListPDU format_list_pdu;
-            StaticOutStream<256>    out_s;
-
+            // TODO: very suspicious: if data is utf8 encoded then it is not 16 bits unicode text
             bool use_long_format_name = false;
-            format_list_pdu.emit_2(
-                out_s,
-                this->clipboard_data_ctx.clipboard_data_is_utf8_encoded(),
-                use_long_format_name
-            );
+            RDPECLIP::FormatListPDU format_list_pdu(use_long_format_name,
+                                                    this->clipboard_data_ctx.clipboard_data_is_utf8_encoded());
+            StaticOutStream<256>    out_s;
+            format_list_pdu.emit(out_s);
 
             size_t length     = out_s.get_offset();
             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -2822,7 +2819,8 @@ private:
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
                 //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
-                RDPECLIP::FormatListPDU format_list_pdu(this->client_use_long_format_names);
+                bool unicodetext = false;
+                RDPECLIP::FormatListPDU format_list_pdu(this->client_use_long_format_names, unicodetext);
                 format_list_pdu.recv(chunk);
 
                 //---- Beginning of clipboard PDU Header ----------------------------
@@ -2936,13 +2934,12 @@ private:
                                     RDPECLIP::CB_FORMAT_LIST);
                             }
 
-                            RDPECLIP::FormatListPDU format_list_pdu;
-                            StaticOutStream<256>    out_s;
-
-                            const bool unicodetext = (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT);
-
                             bool use_long_format_name = false;
-                            format_list_pdu.emit_2(out_s, unicodetext, use_long_format_name);
+                            const bool unicodetext = (this->clipboard_requested_format_id == RDPECLIP::CF_UNICODETEXT);
+                            RDPECLIP::FormatListPDU format_list_pdu(use_long_format_name, unicodetext);
+
+                            StaticOutStream<256>    out_s;
+                            format_list_pdu.emit(out_s);
 
                             size_t length     = out_s.get_offset();
                             size_t chunk_size = std::min<size_t>(length, CHANNELS::CHANNEL_CHUNK_LENGTH);

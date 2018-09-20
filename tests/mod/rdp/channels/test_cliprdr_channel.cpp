@@ -506,13 +506,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     InStream virtual_channel_stream(virtual_channel_data);
 
 
-    RDPECLIP::FormatListPDU format_list_pdu;
-    StaticOutStream<256>    out_s;
-
     const bool unicodetext           = false;
     const bool use_long_format_names = true;    // Malformation
 
-    format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+    RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+
+    StaticOutStream<256>    out_s;
+    format_list_pdu.emit(out_s);
 
     const size_t totalLength = out_s.get_offset();
 

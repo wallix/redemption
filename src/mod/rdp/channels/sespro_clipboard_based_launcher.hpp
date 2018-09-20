@@ -249,16 +249,12 @@ public:
                              this->cliprdr_channel->use_long_format_names() :
                              false);
 
-                        RDPECLIP::FormatListPDU format_list_pdu;
-                        StaticOutStream<256>    out_s;
-
                         const bool unicodetext = false;
-
-                        format_list_pdu.emit_2(out_s, unicodetext,
-                            use_long_format_names);
+                        RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+                        StaticOutStream<256>    out_s;
+                        format_list_pdu.emit(out_s);
 
                         const size_t totalLength = out_s.get_offset();
-
                         InStream in_s(out_s.get_data(), totalLength);
 
                         this->mod.send_to_mod_channel(channel_names::cliprdr,
@@ -422,12 +418,11 @@ public:
                          self.cliprdr_channel->use_long_format_names() :
                          false);
 
-                    RDPECLIP::FormatListPDU format_list_pdu;
+                    const bool unicodetext = false;
+                    RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
                     StaticOutStream<256>    out_s;
 
-                    const bool unicodetext = false;
-
-                    format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+                    format_list_pdu.emit(out_s);
 
                     const size_t totalLength = out_s.get_offset();
 
@@ -578,17 +573,16 @@ public:
             const uint16_t msgType = chunk.in_uint16_le();
             chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
             if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+
                 const bool use_long_format_names =
                     (this->cliprdr_channel ?
                      this->cliprdr_channel->use_long_format_names() :
                      false);
-
-                RDPECLIP::FormatListPDU format_list_pdu;
-                StaticOutStream<256>    out_s;
-
                 const bool unicodetext = false;
-
-                format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+                RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+                StaticOutStream<256>    out_s;
+                
+                format_list_pdu.emit(out_s);
 
                 const size_t totalLength = out_s.get_offset();
 
@@ -697,16 +691,13 @@ private:
             (this->cliprdr_channel ?
              this->cliprdr_channel->use_long_format_names() :
              false);
-
-        RDPECLIP::FormatListPDU format_list_pdu;
-        StaticOutStream<256>    out_s;
-
         const bool unicodetext = false;
+        RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
 
-        format_list_pdu.emit_2(out_s, unicodetext, use_long_format_names);
+        StaticOutStream<256>    out_s;
+        format_list_pdu.emit(out_s);
 
         const size_t totalLength = out_s.get_offset();
-
         InStream in_s(out_s.get_data(), totalLength);
 
         this->mod.send_to_mod_channel(channel_names::cliprdr,
