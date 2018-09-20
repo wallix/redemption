@@ -192,7 +192,9 @@ and kerberos are still dynamic and using shared libraries.
 
 `bjam -a -d2 toolset=gcc-7 proxy_recorder linkflags=-static-libstdc++`
 
+Exemple call line for proxy_recorder:
 
+`proxy_recorder --target-host 10.10.47.252 -p 3389 -P 8000 --nla-username myusername --nla-password mypassword -t dump-%d.out`
 
 Packaging
 =========
