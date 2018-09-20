@@ -33,7 +33,7 @@
 // bjam debug rdpheadless && bin/gcc-4.9.2/debug/rdpheadless --user admin --pwd $mdp --ip 10.10.47.54 --port 3389 --script /home/cmoroldo/Bureau/redemption/script_rdp_test.txt --show_all
 
 
-int run_mod(not_null_ptr<mod_api> /*mod_ptr*/, RDPHeadlessFront & /*front*/, bool /*quick_connection_test*/, std::chrono::milliseconds /*time_out_response*/, bool /*time_set_connection_test*/);
+int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test);
 
 ///////////////////////////////
 // APPLICATION
@@ -89,9 +89,6 @@ int main(int argc, char** argv)
     bool quick_connection_test = true;
     bool time_set_connection_test = false;
     std::string script_file_path;
-    uint32_t encryptionMethods
-      = GCC::UserData::CSSecurity::_40BIT_ENCRYPTION_FLAG
-      | GCC::UserData::CSSecurity::_128BIT_ENCRYPTION_FLAG;
     uint8_t input_connection_data_complete(0);
 
     auto options = cli::options(
@@ -263,10 +260,6 @@ int main(int argc, char** argv)
         cli::option("height")
         .help("Set screen height")
         .action(cli::arg([&](int h){ info.height = h; })),
-
-        cli::option("encrypt_methds")/*(1, 2, 8, 16)*/
-        .help("Set encryption methods as any addition of 1, 2, 8 and 16")
-        .action(cli::arg("encryption", [&](int enc){ encryptionMethods = enc; })),
 
         cli::helper("========= CONFIG ========="),
 
@@ -461,7 +454,7 @@ int main(int argc, char** argv)
             REDEMPTION_DIAGNOSTIC_POP
         }
 
-        front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params, encryptionMethods);
+        front.connect(ip.c_str(), userName.c_str(), userPwd.c_str(), port, protocol_is_VNC, mod_rdp_params);
 
         //===========================================
         //             Scripted Events

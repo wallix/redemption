@@ -681,18 +681,12 @@ private:
 
     ModRdpVariables vars;
 
+    RDPMetrics metrics;
+
 
 public:
     using Verbose = RDPVerbose;
 
-    GCC::UserData::SCCore sc_core;
-    GCC::UserData::SCSecurity sc_sec1;
-    GCC::UserData::CSSecurity cs_security;
-
-private:
-    RDPMetrics metrics;
-
-public:
     explicit mod_rdp(
         Transport & trans
       , SessionReactor& session_reactor
