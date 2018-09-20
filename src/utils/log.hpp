@@ -204,7 +204,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
  } while (0)
 #endif
 
-#define COND_LOG(cond, priority, ...) if (cond) LOG(priority, __VA_ARGS__)
+#define LOG_IF(cond, priority, ...) if (cond) LOG(priority, __VA_ARGS__)
 
 namespace {
     inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)

@@ -161,20 +161,32 @@ public:
                         x224_stream.get_capacity() - x224._header_size);
                 }
 
-                bool const is_tls = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
+                is_tls_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_TLS);
+                is_nla_client = (x224.rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID);
 
                 StaticOutStream<256> front_x224_stream;
                 X224::CC_TPDU_Send(
                     front_x224_stream,
                     X224::RDP_NEG_RSP,
                     RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
-                    is_tls ? X224::PROTOCOL_TLS : X224::PROTOCOL_RDP);
+                    select_client_protocol());
                 outFile.write_packet(PacketType::DataIn, stream_to_avu8(front_x224_stream));
                 frontConn.send(stream_to_avu8(front_x224_stream));
 
-                if (is_tls) {
-                    LOG(LOG_INFO, "start NegoServer");
+                if (is_tls_client || is_nla_client) {
                     frontConn.enable_server_tls("inquisition", nullptr);
+                }
+
+                if (is_nla_client) {
+                    LOG(LOG_INFO, "start NegoServer");
+                    nego_server = std::make_unique<NegoServer>(
+                        frontConn, outFile, nla_username, nla_password, verbosity);
+
+                    rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
+
+                    if (rdpCredsspServer::State::Err == st) {
+                        throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+                    }
                 }
 
                 nego_client = std::make_unique<NegoClient>(
@@ -193,9 +205,25 @@ public:
                 outFile.write_packet(PacketType::DataOut, stream_to_avchar(back_x224_stream));
                 backConn.send(stream_to_avchar(back_x224_stream));
 
-                state = NEGOCIATING_BACK_NLA;
+                state = nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
             }
             break;
+
+        case NEGOCIATING_FRONT_NLA: {
+            frontBuffer.load_data(frontConn);
+            rdpCredsspServer::State st = nego_server->recv_data(frontBuffer);
+            switch (st) {
+            case rdpCredsspServer::State::Err: throw Error(ERR_NLA_AUTHENTICATION_FAILED);
+            case rdpCredsspServer::State::Cont: break;
+            case rdpCredsspServer::State::Finish:
+                LOG(LOG_INFO, "stop NegoServer");
+                LOG(LOG_INFO, "start NegoClient");
+                nego_server.reset();
+                state = NEGOCIATING_BACK_NLA;
+                break;
+            }
+            break;
+        }
 
         // force X224::PROTOCOL_HYBRID
         case NEGOCIATING_FRONT_INITIAL_PDU:
@@ -204,16 +232,19 @@ public:
                 array_view_u8 currentPacket = frontBuffer.current_pdu_buffer();
 
                 if (!nla_username.empty()) {
-                    LOG(LOG_INFO, "send back: force PROTOCOL_HYBRID");
+                    LOG(LOG_INFO, "Back: force protocol PROTOCOL_HYBRID");
                     InStream new_x224_stream(currentPacket);
                     X224::DT_TPDU_Recv x224(new_x224_stream);
                     MCS::CONNECT_INITIAL_PDU_Recv mcs_ci(x224.payload, MCS::BER_ENCODING);
                     GCC::Create_Request_Recv gcc_cr(mcs_ci.payload);
                     GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    GCC::UserData::CSCore cs_core;
-                    cs_core.recv(f.payload);
-                    if (cs_core.length > 216) {
-                        currentPacket[f.payload.get_current() - currentPacket.data() - 4] = X224::PROTOCOL_HYBRID;
+                    if (f.tag == CS_CORE) {
+                        GCC::UserData::CSCore cs_core;
+                        cs_core.recv(f.payload);
+                        if (cs_core.length > 216) {
+                            auto const idx = f.payload.get_current() - currentPacket.data() - 4;
+                            currentPacket[idx] = X224::PROTOCOL_HYBRID;
+                        }
                     }
                 }
 
@@ -256,17 +287,22 @@ public:
                 array_view_u8 currentPacket = backBuffer.current_pdu_buffer();
 
                 if (!nla_username.empty()) {
-                    LOG(LOG_INFO, "send front: force PROTOCOL_TLS");
+                    LOG(LOG_INFO, "Front: force protocol tls=%d nla=%d", is_tls_client, is_nla_client);
                     InStream new_x224_stream(currentPacket);
                     X224::DT_TPDU_Recv x224(new_x224_stream);
                     MCS::CONNECT_RESPONSE_PDU_Recv mcs(x224.payload, MCS::BER_ENCODING);
                     GCC::Create_Response_Recv gcc_cr(mcs.payload);
                     GCC::UserData::RecvFactory f(gcc_cr.payload);
-                    GCC::UserData::SCCore sc_core;
-                    sc_core.recv(f.payload);
-                    if (sc_core.length >= 12) {
-                        auto offset = (sc_core.length >= 16) ? 8 : 4;
-                        currentPacket[f.payload.get_current() - currentPacket.data() - offset] = X224::PROTOCOL_TLS;
+                    if (f.tag == SC_CORE) {
+                        GCC::UserData::SCCore sc_core;
+                        sc_core.recv(f.payload);
+                        if (sc_core.length >= 12) {
+                            hexdump(f.payload.get_data(), f.payload.get_capacity());
+                            auto const offset = (sc_core.length >= 16) ? 8 : 4;
+                            auto const idx = f.payload.get_current() - currentPacket.data() - offset;
+                            currentPacket[idx] = select_client_protocol();
+                            hexdump(f.payload.get_data(), f.payload.get_capacity());
+                        }
                     }
                 }
 
@@ -287,6 +323,7 @@ public:
         }
         case NEGOCIATING_FRONT_INITIAL_PDU:
         case NEGOCIATING_FRONT_STEP1:
+        case NEGOCIATING_FRONT_NLA:
             REDEMPTION_UNREACHABLE();
         }
     }
@@ -304,6 +341,7 @@ public:
             FD_ZERO(&rset);
 
             switch(state) {
+            case NEGOCIATING_FRONT_NLA:
             case NEGOCIATING_FRONT_STEP1:
             case NEGOCIATING_FRONT_INITIAL_PDU:
                 FD_SET(front_fd, &rset);
@@ -334,6 +372,13 @@ public:
     }
 
 private:
+    uint8_t select_client_protocol() const
+    {
+        return is_nla_client ? X224::PROTOCOL_HYBRID :
+               is_tls_client ? X224::PROTOCOL_TLS
+                             : X224::PROTOCOL_RDP;
+    }
+
     static std::pair<std::string, std::string>
     extract_user_domain(char const* target_user)
     {
@@ -434,7 +479,7 @@ private:
         {
             auto [username, domain] = extract_user_domain(target_user);
             nego.set_identity(username.c_str(), domain.c_str(), password, "ProxyRecorder");
-            // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions";
+            // static char ln_info[] = "tsv://MS Terminal Services Plugin.1.Sessions\x0D\x0A";
             // nego.set_lb_info(byte_ptr_cast(ln_info), sizeof(ln_info)-1);
         }
 
@@ -455,6 +500,7 @@ private:
 
     enum {
         NEGOCIATING_FRONT_STEP1,
+        NEGOCIATING_FRONT_NLA,
         NEGOCIATING_BACK_NLA,
         NEGOCIATING_FRONT_INITIAL_PDU,
         NEGOCIATING_BACK_INITIAL_PDU,
@@ -467,19 +513,19 @@ private:
 
         Transport::Read do_atomic_read(uint8_t * buffer, std::size_t len) override
         {
-            LOG(LOG_DEBUG, "%s do_atomic_read", name);
+            LOG_IF(enable_trace, LOG_DEBUG, "%s do_atomic_read", name);
             return SocketTransport::do_atomic_read(buffer, len);
         }
 
         std::size_t do_partial_read(uint8_t * buffer, std::size_t len) override
         {
-            LOG(LOG_DEBUG, "%s do_partial_read", name);
+            LOG_IF(enable_trace, LOG_DEBUG, "%s do_partial_read", name);
             return SocketTransport::do_partial_read(buffer, len);
         }
 
         void do_send(const uint8_t * buffer, std::size_t len) override
         {
-            LOG(LOG_DEBUG, "%s do_send", name);
+            LOG_IF(enable_trace, LOG_DEBUG, "%s do_send", name);
             SocketTransport::do_send(buffer, len);
         }
 
@@ -503,6 +549,8 @@ private:
     std::string nla_username;
     std::string nla_password;
     bool enable_kerberos;
+    bool is_tls_client = false;
+    bool is_nla_client = false;
     uint64_t verbosity;
 };
 
