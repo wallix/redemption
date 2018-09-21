@@ -130,7 +130,7 @@ public:
         this->fileName = fileName;
         size_t data_end = this->offset + data_len;
         for (size_t i = this->offset; i < this->size && i < data_end; i++) {
-            this->_chunk.get()[i] = data[i];
+            this->_chunk.get()[i] = data[i-this->offset];
         }
         this->offset += data_len;
     }

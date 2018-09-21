@@ -1083,6 +1083,8 @@ struct FormatListPDU_LongName {
     : formatID(formatID)
     , formatDataNameUTF8Len(formatNameUTF8Len > 500 ? 500:formatNameUTF8Len)
     {
+    
+         LOG(LOG_INFO, "%u %s %u", unsigned(formatID), formatUTF8Name, unsigned(formatNameUTF8Len));
          memcpy(this->formatUTF8Name, formatUTF8Name, this->formatDataNameUTF8Len);
          this->formatDataNameUTF16Len = ::UTF8toUTF16(
             byte_ptr_cast(formatUTF8Name),

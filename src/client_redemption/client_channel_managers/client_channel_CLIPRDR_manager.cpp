@@ -132,7 +132,7 @@
             mkdir(this->path.c_str(), 0777);
         }
         if (!dir_exist(this->path.c_str())){
-            LOG(LOG_WARNING, "Can't enable shared clipboard, %s directory doesn't exist.", this->path);
+            LOG(LOG_WARNING, "Can't enable shared clipboard, \"%s\" directory doesn't exist.", this->path);
         }
 
         for (auto const& format : config.formats) {
@@ -161,6 +161,9 @@
 // msgType : 16 bits
 // msgFlags : 16 bits
 // dataLen : 32 bits integer
+
+// msgType (2 bytes): An unsigned, 16-bit integer that specifies the type of the
+// clipboard PDU that follows the dataLen field.
 
 //             Value                    Description
 // ------------------------------------+-------------------------------
@@ -205,13 +208,19 @@
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in bytes, of the data which
 //  follows the Clipboard PDU Header.<1>
 
+// <1> Section 2.2.1:  The operating systems Windows Server 2003, Windows Vista, Windows Server 2008,
+// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012, Windows 8.1, and 
+// Windows Server 2012 R2 append four bytes to the end of clipboard PDUs. These four bytes are not
+// included in the PDU size specified by the dataLen field and can be ignored.
+
     void ClientChannelCLIPRDRManager::receive(InStream & chunk, int flags) {
-        if (!clientIOClipboardAPI) {
+        if (!this->clientIOClipboardAPI) {
             return;
         }
 
         InStream chunk_series = chunk.clone();
 
+        // TODO: from the above documentation, are we not expecting at least 8 bytes ?
         if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
             LOG(LOG_ERR,
                 "ClipboardVirtualChannel::process_client_message: "
@@ -220,10 +229,14 @@
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        const uint16_t server_message_type = chunk.in_uint16_le();
-
-        if (!this->_waiting_for_data) {
-
+        if (this->_waiting_for_data) {
+        
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
+            }
+            this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
+        } else {
+            const uint16_t server_message_type = chunk.in_uint16_le();
             switch (server_message_type) {
 
                 case RDPECLIP::CB_CLIP_CAPS:
@@ -241,14 +254,14 @@
                 break;
 
 
-//    2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
+    //    2.2.2.2 Server Monitor Ready PDU (CLIPRDR_MONITOR_READY)
 
-//    The Monitor Ready PDU is sent from the server to the client to indicate that the server is
-//    initialized and ready. This PDU is transmitted by the server after it has sent the Clipboard
-//    Capabilities PDU to the client.
-//
-//    clipHeader (8 bytes):  A Clipboard PDU Header. The msgType field of the Clipboard PDU Header
-//    MUST be set to CB_MONITOR_READY (0x0001), while the msgFlags field MUST be set to 0x0000.
+    //    The Monitor Ready PDU is sent from the server to the client to indicate that the server is
+    //    initialized and ready. This PDU is transmitted by the server after it has sent the Clipboard
+    //    Capabilities PDU to the client.
+    //
+    //    clipHeader (8 bytes):  A Clipboard PDU Header. The msgType field of the Clipboard PDU Header
+    //    MUST be set to CB_MONITOR_READY (0x0001), while the msgFlags field MUST be set to 0x0000.
 
                 case RDPECLIP::CB_MONITOR_READY:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -303,14 +316,14 @@
 
                 break;
 
-// 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
+    // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 
-// The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
-// whether processing of the Format List PDU was successful.
+    // The Format List Response PDU is sent as a reply to the Format List PDU. It is used to indicate
+    // whether processing of the Format List PDU was successful.
 
-// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST
-// be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002)
-// flag MUST be set in the msgFlags field of the Clipboard PDU Header.
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST
+    // be set to CB_FORMAT_LIST_RESPONSE (0x0003). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002)
+    // flag MUST be set in the msgFlags field of the Clipboard PDU Header.
 
                 case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -322,21 +335,21 @@
                     }
                 break;
 
-// 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
+    // 2.2.3.1 Format List PDU (CLIPRDR_FORMAT_LIST)
 
-// clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be
-// set to CB_FORMAT_LIST (0x0002), while the msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004)
-// depending on the type of data present in the formatListData field.
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be
+    // set to CB_FORMAT_LIST (0x0002), while the msgFlags field MUST be set to 0x0000 or CB_ASCII_NAMES (0x0004)
+    // depending on the type of data present in the formatListData field.
 
-// formatListData (variable): An array consisting solely of either Short Format Names or Long Format Names.
-// The type of structure used in the array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
-// flag in the generalFlags field of the General Capability Set (section 2.2.2.1.1.1).
+    // formatListData (variable): An array consisting solely of either Short Format Names or Long Format Names.
+    // The type of structure used in the array is determined by the presence of the CB_USE_LONG_FORMAT_NAMES (0x00000002)
+    // flag in the generalFlags field of the General Capability Set (section 2.2.2.1.1.1).
 
-// Each array holds a list of the Clipboard Format ID and name pairs available on the local system clipboard
-// of the sender.
+    // Each array holds a list of the Clipboard Format ID and name pairs available on the local system clipboard
+    // of the sender.
 
-// If Short Format Names are being used, and the embedded Clipboard Format names are in ASCII 8 format, then
-// the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
+    // If Short Format Names are being used, and the embedded Clipboard Format names are in ASCII 8 format, then
+    // the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
 
                 case RDPECLIP::CB_FORMAT_LIST:
                     {
@@ -360,8 +373,8 @@
 
                                 if (!this->server_use_long_format_names) {
                                     formatID = chunk.in_uint32_le();
-//                                     formatAvailable -=  4;
-//                                     formatAvailable -=  32;
+    //                                     formatAvailable -=  4;
+    //                                     formatAvailable -=  32;
                                     uint8_t utf16_string[32];
                                     chunk.in_copy_bytes(utf16_string, 32);
                                     format_name = std::string(char_ptr_cast(utf16_string), 32);
@@ -633,9 +646,9 @@
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
                     } else {
-//                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-//                             LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
-//                         }
+    //                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
+    //                             LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
+    //                         }
 
                         chunk.in_skip_bytes(4);                 // data_len
                         int streamID(chunk.in_uint32_le());
@@ -716,19 +729,13 @@
 
                 default:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> Process sever next part PDU data");
+                        LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
                     }
                     this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
 
 
                 break;
             }
-
-        } else {
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO, "SERVER >> Process sever next part PDU data");
-            }
-            this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
         }
     }
 
@@ -767,7 +774,8 @@
         // If the embedded flags field of the channelPduHeader field (the Channel PDU Header structure is specified
         // in section 2.2.6.1.1) does not contain the CHANNEL_FLAG_FIRST (0x00000001) flag or CHANNEL_FLAG_LAST
         // (0x00000002) flag, and the data is not part of a chunked sequence (that is, a start chunk has not been
-        // received), then the data in the virtualChannelDmanagerd by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL
+        // received), then the data in the virtualChannelData field can be dispatched to the virtual channel 
+        // endpoint (no reassembly is required by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL
         // (0x00000010) flag is specified in the Channel PDU Header, then the channelPduHeader field MUST also
         // be dispatched to the virtual channel endpoint.
 
