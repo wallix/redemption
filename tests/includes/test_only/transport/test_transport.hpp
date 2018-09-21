@@ -363,11 +363,13 @@ private:
         return this->gen.atomic_read(buffer, len);
     }
 
+protected:
     size_t do_partial_read(uint8_t* buffer, size_t len) override
     {
         return this->gen.partial_read(buffer, len);
     }
 
+private:
     void do_send(const uint8_t * const buffer, size_t len) override
     {
         this->check.send(buffer, len);
