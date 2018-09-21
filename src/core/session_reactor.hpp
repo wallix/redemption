@@ -2328,6 +2328,9 @@ namespace jln
                         node = node->next;
                     }
                     else {
+                        while ((node->next != cur) && node->next) {
+                            node = node->next;
+                        }
                         node->next = cur->next;
                         cur->free_value();
                         cur->delete_self();
@@ -2445,6 +2448,9 @@ namespace jln
                         node = node->next;
                     }
                     else {
+                        while ((node->next != cur) && node->next) {
+                            node = node->next;
+                        }
                         node->next = cur->next;
                         cur->free_value();
                         cur->delete_self();

@@ -176,8 +176,16 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     //                     , &error_message
     //                     );
 
+    class LimitedTestTransport : public TestTransport {
+        using TestTransport::TestTransport;
+
+        size_t do_partial_read(uint8_t * buffer, size_t len) override {
+            return TestTransport::do_partial_read(buffer, std::min(len, size_t(11)));
+        }
+    };
+
     #include "fixtures/dump_TLSw2008_2.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+    LimitedTestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");

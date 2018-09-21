@@ -26,6 +26,7 @@ Author(s): Jonathan Poelen
 struct Private_RdpNegociation
 {
     RdpNegociation rdp_negociation;
+    SessionReactor::GraphicEventPtr graphic_event;
 
     template<class... Ts>
     Private_RdpNegociation(char const* program, char const* directory, Ts&&... xs)
@@ -108,8 +109,9 @@ void mod_rdp::init_negociate_event_(
         rdp_negociation.start_negociation();
 
         return ctx.replace_action([this](
-            JLN_TOP_CTX ctx, gdi::GraphicApi&, RdpNegociation& rdp_negociation
+            JLN_TOP_CTX ctx, gdi::GraphicApi&, Private_RdpNegociation& private_rdp_negociation
         ){
+            RdpNegociation& rdp_negociation = private_rdp_negociation;
             bool const is_finish = rdp_negociation.recv_data(this->buf);
 
             // RdpNego::recv_next_data set a new fd if tls
@@ -123,10 +125,18 @@ void mod_rdp::init_negociate_event_(
             }
 
             this->negociation_result = rdp_negociation.get_result();
+            if (this->buf.remaining()) {
+                private_rdp_negociation.graphic_event = ctx.get_reactor().create_graphic_event()
+                .on_action(jln::one_shot([this, &rdp_negociation](gdi::GraphicApi& gd){
+                    this->draw_event_impl(this->session_reactor.get_current_time().tv_sec, gd);
+                }));
+            }
+
             // TODO replace_event()
             return ctx.disable_timeout()
             .replace_exit(jln::propagate_exit())
-            .replace_action([this](auto ctx, gdi::GraphicApi& gd, RdpNegociation&){
+            .replace_action([this](auto ctx, gdi::GraphicApi& gd, Private_RdpNegociation& private_rdp_negociation){
+                private_rdp_negociation.graphic_event.reset();
                 this->draw_event(ctx.get_current_time().tv_sec, gd);
                 return ctx.need_more_data();
             });
