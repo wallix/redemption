@@ -698,6 +698,8 @@ public:
               , userName
               , userPwd
               , *(this)
+              , this->_info
+              , this->timeSystem
               , this->_info.width
               , this->_info.height
               , this->_info.keylayout
@@ -710,6 +712,7 @@ public:
               , this->report_message
               , false
               , nullptr
+              , ini
               , to_verbose_flags(this->_verbose)
               );
         } else {

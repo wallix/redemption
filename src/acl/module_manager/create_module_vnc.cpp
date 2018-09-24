@@ -29,6 +29,7 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include "acl/module_manager.hpp"
+#include "mod/vnc/vnc_params.hpp"
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -55,6 +56,8 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::globals::target_user>().c_str(),
             ini.get<cfg::context::target_password>().c_str(),
             front,
+            client_info,
+            this->timeobj,            
             client_info.width,
             client_info.height,
             client_info.keylayout,
@@ -70,6 +73,7 @@ void ModuleManager::create_mod_vnc(
             report_message,
             ini.get<cfg::mod_vnc::server_is_apple>(),
             (client_info.remote_program ? &client_execute : nullptr),
+            ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>())
         ));
 

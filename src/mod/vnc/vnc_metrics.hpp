@@ -22,48 +22,23 @@
 
 #include "mod/metrics.hpp"
 
-#include "core/client_info.hpp"
-
-
-
-inline MetricsHmacSha256Encrypt hmac_user(
-    array_view_const_char user, std::array<uint8_t, 32> const& key)
-{
-    return MetricsHmacSha256Encrypt(user, key);
-}
-
-inline MetricsHmacSha256Encrypt hmac_account(
-    array_view_const_char account, std::array<uint8_t, 32> const& key)
-{
-    return MetricsHmacSha256Encrypt(account, key);
-}
-
-inline MetricsHmacSha256Encrypt hmac_device_service(
-    array_view_const_char device, std::string service, std::array<uint8_t, 32> const& key)
-{
-    service += " ";
-    service.append(device.data(), device.size());
-    return MetricsHmacSha256Encrypt(service, key);
-}
-
-inline MetricsHmacSha256Encrypt hmac_client_info(
-    std::string client_host, const ClientInfo & info,
-    std::array<uint8_t, 32> const& key)
-{
-    char session_info[128];
-    int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
-        info.bpp, info.width, info.height);
-    client_host.append(session_info, session_info_size);
-    return MetricsHmacSha256Encrypt(client_host, key);
-}
-
 
 class VNCMetrics
 {
 
+//-> minimum: data quantity (up/down)
+//-> copy-paste: up/down
+//-> redrawn surface
+//-> mouse metrics same as RDP (displacement, clicks)
+//-> data quantity transfered per data type (codec)
+//-> keyboard metrics (special characters, total characters)
+
+
 private:
     enum : int {
-        // TODO add some vars
+        data_from_client,     // number of byte sent from client to server
+        data_from_server,     // number of byte sent from server to client
+
         mouse_displacement,
         keys_pressed,
         right_click,
@@ -75,7 +50,8 @@ private:
     const char * vnc_metrics_name(int index) {
 
         switch (index) {
-            // TODO add some vars names
+            case data_from_client:   return "data_from_client";
+            case data_from_server:   return "data_from_server";
             case mouse_displacement: return "mouse_displacement";
             case keys_pressed:       return "keys_pressed";
             case right_click:        return "right_click";

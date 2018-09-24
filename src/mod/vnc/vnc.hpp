@@ -23,6 +23,8 @@ h
 
 #pragma once
 
+#include <cstdlib>
+
 #include "core/buf64k.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
@@ -52,6 +54,8 @@ h
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+#include "mod/vnc/vnc_params.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/encoder/raw.hpp"
@@ -59,9 +63,7 @@ h
 #include "mod/vnc/encoder/copyrect.hpp"
 #include "mod/vnc/encoder/cursor.hpp"
 #include "mod/vnc/encoder/hextile.hpp"
-
-#include <cstdlib>
-
+#include "configs/config.hpp"
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -205,12 +207,19 @@ private:
     SessionReactor::GraphicFdPtr fd_event;
     SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
+    ModVncVariables vars;
+
+    VNCMetrics metrics;
+
 public:
     mod_vnc( Transport & t
            , SessionReactor& session_reactor
            , const char * username
            , const char * password
            , FrontAPI & front
+           // TODO: front width and front height should be provided through info
+           , const ClientInfo & info
+           , TimeObj & timeobj
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout
@@ -223,6 +232,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , ClientExecute* client_execute
+           , ModVncVariables vars          
            , VNCVerbose verbose
            )
     : mod_name{0}
@@ -248,6 +258,19 @@ public:
     , keylayout(keylayout)
     , client_execute(client_execute)
     , session_reactor(session_reactor)
+    , vars(vars)
+    , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
+         , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+         , vars.get<cfg::context::session_id>()
+         , hmac_user(vars.get<cfg::globals::auth_user>(), vars.get<cfg::rdp_metrics::sign_key>())
+         , hmac_account({username, strlen(username)}, vars.get<cfg::rdp_metrics::sign_key>())
+         , hmac_device_service(vars.get<cfg::globals::target_device>(),
+                               vars.get<cfg::context::target_service>(),
+                               vars.get<cfg::rdp_metrics::sign_key>())
+         , hmac_client_info(vars.get<cfg::globals::host>(), info, vars.get<cfg::rdp_metrics::sign_key>())
+         , std::chrono::seconds(timeobj.get_time().tv_sec)
+         , vars.get<cfg::rdp_metrics::log_file_turnover_interval>()
+         , vars.get<cfg::rdp_metrics::log_interval>())
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
     {

@@ -172,6 +172,17 @@ int main(int argc, char** argv)
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
+    Inifile ini;
+    if (!ini_file.empty()) {
+        configuration_load(ini.configuration_holder(), ini_file);
+    }
+
+    UdevRandom system_gen;
+    FixedRandom lcg_gen;
+    LCGTime lcg_timeobj;
+    NullAuthentifier authentifier;
+    RedirectionInfo redir_info;
+
     if (is_vnc) {
         return run([&](Transport& trans){
             return mod_vnc(
@@ -180,6 +191,8 @@ int main(int argc, char** argv)
               , username.c_str()
               , password.c_str()
               , front
+              , client_info
+              , lcg_timeobj
               , 800
               , 600
               , 0x04C         /* keylayout */
@@ -192,13 +205,9 @@ int main(int argc, char** argv)
               , report_message
               , false
               , nullptr
+              , ini
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace);
         }) ? 1 : 0;
-    }
-
-    Inifile ini;
-    if (!ini_file.empty()) {
-        configuration_load(ini.configuration_holder(), ini_file);
     }
 
     ini.set<cfg::mod_rdp::server_redirection_support>(true);
@@ -237,12 +246,6 @@ int main(int argc, char** argv)
     if (verbose > 128) {
         mod_rdp_params.log();
     }
-
-    UdevRandom system_gen;
-    FixedRandom lcg_gen;
-    LCGTime lcg_timeobj;
-    NullAuthentifier authentifier;
-    RedirectionInfo redir_info;
 
     bool const use_system_obj = record_output.empty() && !options.count("lcg");
 

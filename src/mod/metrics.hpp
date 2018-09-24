@@ -41,6 +41,7 @@
 #include <sys/uio.h>
 
 #include "core/app_path.hpp"
+#include "core/client_info.hpp"
 
 
 class MetricsHmacSha256Encrypt
@@ -79,6 +80,36 @@ public:
     }
 };
 
+inline MetricsHmacSha256Encrypt hmac_user(
+    array_view_const_char user, std::array<uint8_t, 32> const& key)
+{
+    return MetricsHmacSha256Encrypt(user, key);
+}
+
+inline MetricsHmacSha256Encrypt hmac_account(
+    array_view_const_char account, std::array<uint8_t, 32> const& key)
+{
+    return MetricsHmacSha256Encrypt(account, key);
+}
+
+inline MetricsHmacSha256Encrypt hmac_device_service(
+    array_view_const_char device, std::string service, std::array<uint8_t, 32> const& key)
+{
+    service += " ";
+    service.append(device.data(), device.size());
+    return MetricsHmacSha256Encrypt(service, key);
+}
+
+inline MetricsHmacSha256Encrypt hmac_client_info(
+    std::string client_host, const ClientInfo & info,
+    std::array<uint8_t, 32> const& key)
+{
+    char session_info[128];
+    int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
+        info.bpp, info.width, info.height);
+    client_host.append(session_info, session_info_size);
+    return MetricsHmacSha256Encrypt(client_host, key);
+}
 
 class Metrics
 {
