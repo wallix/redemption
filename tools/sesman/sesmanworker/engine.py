@@ -5,6 +5,7 @@ from logger import Logger
 try:
     from wabengine.common.exception import AuthenticationFailed
     from wabengine.common.exception import AuthenticationChallenged
+    from wabengine.common.exception import MultiFactorAuthentication
     from wabengine.common.exception import LicenseException
     from wabengine.common.exception import MustChangePassword
     from wabengine.common.exception import AccountLocked
@@ -331,14 +332,22 @@ class Engine(object):
                           traceback.format_exc(e))
         return result
 
-    def x509_authenticate(self):
+    def x509_authenticate(self, ip_client=None, ip_server=None):
         try:
             self.wabengine = self.auth_x509.get_proxy()
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = e.challenge
+            self.challenge = wchallenge_to_challenge(
+                e.challenge,
+                self.challenge.token if self.challenge else None
+            )
+        except MultiFactorAuthentication as mfa:
+            self.challenge = mfa_to_challenge(mfa)
+            if self.challenge and self.challenge.recall:
+                return self.password_authenticate(
+                    self.challenge.username, ip_client, "", ip_server)
         except AuthenticationFailed as e:
             self.challenge = None
         except LicenseException as e:
@@ -351,17 +360,32 @@ class Engine(object):
 
     def password_authenticate(self, wab_login, ip_client, password, ip_server):
         try:
-            self.wabengine = self.client.authenticate(username = wab_login,
-                                                      password = password,
-                                                      ip_source = ip_client,
-                                                      challenge = self.challenge,
-                                                      server_ip = ip_server)
+            challenge = self.challenge.challenge if self.challenge else None
+            token = self.challenge.token if self.challenge else None
+            if self.challenge:
+                wab_login = self.challenge.username or wab_login
+            self.wabengine = self.client.authenticate(
+                username=wab_login,
+                password=password,
+                ip_source=ip_client,
+                challenge=challenge,
+                server_ip=ip_server,
+                mfa_token=token
+            )
             self.challenge = None
             if self.wabengine is not None:
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = e.challenge
+            self.challenge = wchallenge_to_challenge(
+                e.challenge,
+                token
+            )
+        except MultiFactorAuthentication as mfa:
+            self.challenge = mfa_to_challenge(mfa)
+            if self.challenge and self.challenge.recall:
+                return self.password_authenticate(
+                    wab_login, ip_client, "", ip_server)
         except AuthenticationFailed as e:
             self.challenge = None
         except LicenseException as e:
@@ -408,7 +432,15 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = e.challenge
+            self.challenge = wchallenge_to_challenge(
+                e.challenge,
+                self.challenge.token if self.challenge else None
+            )
+        except MultiFactorAuthentication as mfa:
+            self.challenge = mfa_to_challenge(mfa)
+            if self.challenge and self.challenge.recall:
+                return self.password_authenticate(
+                    wab_login, ip_client, "", ip_server)
         except AuthenticationFailed as e:
             self.challenge = None
         except LicenseException as e:
@@ -435,7 +467,15 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = e.challenge
+            self.challenge = wchallenge_to_challenge(
+                e.challenge,
+                self.challenge.token if self.challenge else None
+            )
+        except MultiFactorAuthentication as mfa:
+            self.challenge = mfa_to_challenge(mfa)
+            if self.challenge and self.challenge.recall:
+                return self.password_authenticate(
+                    wab_login, ip_client, "", ip_server)
         except AuthenticationFailed as e:
             self.challenge = None
         except LicenseException as e:
@@ -450,6 +490,9 @@ class Engine(object):
 
     def get_challenge(self):
         return self.challenge
+
+    def reset_challenge(self):
+        self.challenge = None
 
     def resolve_target_host(self, target_device, target_login, target_service,
                             target_group, real_target_device, target_context,
@@ -1644,6 +1687,54 @@ class Engine(object):
 
 
 # Information Structs
+class Challenge(object):
+    def __init__(self, challenge_type, title, message, fields, echos,
+                 username=None, challenge=None, token=None, recall=False):
+        self.challenge_type = challenge_type
+        self.title = title
+        self.message = message
+        self.token = token
+        self.fields = fields
+        self.echos = echos
+        self.challenge = challenge
+        self.username = username
+        self.recall = recall
+
+
+def wchallenge_to_challenge(challenge, previous_token=None):
+    title = "= Challenge = "
+    message = ""
+    fields = [challenge.message]
+    echos = [challenge.promptEcho]
+    token = challenge.mfa_token if hasattr(
+        challenge, "mfa_token"
+    ) else previous_token
+    return Challenge("CHALLENGE", title, message, fields, echos,
+                     username=challenge.username, challenge=challenge,
+                     token=token)
+
+
+def mfa_to_challenge(mfa):
+    if not mfa.fields:
+        return None
+    title = "= MultiFactor Authentication ="
+    message_list = []
+    echos = [False for x in mfa.fields]
+    fields = mfa.fields
+    recall = False
+    if hasattr(mfa, "auth_type"):
+        message_list.append("Authentication type: %s" % mfa.auth_type)
+    if mfa.fields[0] == "username":
+        fields = fields[1:]
+        echos = echos[1:]
+        message_list.append("Username: %s" % mfa.username)
+    message = "\n".join(message_list)
+    if len(fields) == 0:
+        recall = True
+    return Challenge("MFA", title, message, fields, echos,
+                     username=mfa.username, token=mfa.token, recall=recall)
+
+
 class TargetContext(object):
     def __init__(self, host=None, dnsname=None, login=None, service=None,
                  group=None, show=None):

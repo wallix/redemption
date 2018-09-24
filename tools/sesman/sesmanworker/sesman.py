@@ -666,7 +666,10 @@ class Sesman():
                 # Wait for confirmation from GUI (or timeout)
                 if not ((self.engine.is_x509_validated()
                          or self.interactive_ask_x509_connection())
-                        and self.engine.x509_authenticate()):
+                        and self.engine.x509_authenticate(
+                            self.shared.get(u'ip_client'),
+                            self.shared.get(u'ip_target')
+                        )):
                     return False, TR(u"x509 browser authentication not validated by user")
             elif self.passthrough_mode:
                 # Passthrough Authentification
@@ -685,7 +688,7 @@ class Sesman():
                         rvalue(self.shared.get(u'password')),
                         self.shared.get(u'ip_target'))):
                     if self.shared.get(u'password') == MAGICASK:
-                        self.engine.challenge = None
+                        self.engine.reset_challenge()
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
@@ -1253,12 +1256,22 @@ class Sesman():
             # [ LOGIN ]
             _status, _error = self.authentify()
 
-            if _status is None and self.engine.challenge:
+            if _status is None and self.engine.get_challenge():
+                challenge = self.engine.get_challenge()
                 # submit challenge:
-                data_to_send = { u'authentication_challenge' : self.engine.challenge.promptEcho
-                               , u'message' : cut_message(self.engine.challenge.message)
-                               , u'module' : u'challenge'
-                                 }
+                message = challenge.fields[0] if challenge.fields else ""
+                echo = challenge.echos[0] if challenge.echos else False
+                if not message:
+                    message = challenge.message
+                elif challenge.challenge_type == "MFA":
+                    message = "%s:" % message
+                    if challenge.message:
+                        message = "%s\n%s" % (challenge.message, message)
+                data_to_send = {
+                    u'authentication_challenge' : echo,
+                    u'message' : cut_message(message),
+                    u'module' : u'challenge'
+                }
                 self.send_data(data_to_send)
                 continue
 
