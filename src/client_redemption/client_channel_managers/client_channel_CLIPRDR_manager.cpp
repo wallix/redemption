@@ -30,7 +30,7 @@
 //
 // 1.3.2.1 Initialization Sequence
 //
-// The goal of the Initialization Sequence is to establish the client and the 
+// The goal of the Initialization Sequence is to establish the client and the
 // server capabilities, exchange settings, and synchronize the initial state of
 // the client and server clipboards.
 //
@@ -66,11 +66,11 @@
 //     The client sends the Temporary Directory PDU to inform the server of a
 //     location on the client file system that can be used to deposit files being
 //     copied to the client. To make use of this location, the server has to be
-//     able to access it directly. At this point, the client and the server 
+//     able to access it directly. At this point, the client and the server
 //     capability negotiation is complete.
 //
 //     The final stage of the Initialization Sequence involves synchronizing the
-//     Clipboard Formats on the server clipboard with the client. This is 
+//     Clipboard Formats on the server clipboard with the client. This is
 //     accomplished by effectively mimicking a copy operation on the client by
 //     forcing it to send a Format List PDU.
 //
@@ -209,7 +209,7 @@
 //  follows the Clipboard PDU Header.<1>
 
 // <1> Section 2.2.1:  The operating systems Windows Server 2003, Windows Vista, Windows Server 2008,
-// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012, Windows 8.1, and 
+// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012, Windows 8.1, and
 // Windows Server 2012 R2 append four bytes to the end of clipboard PDUs. These four bytes are not
 // included in the PDU size specified by the dataLen field and can be ignored.
 
@@ -230,12 +230,13 @@
         }
 
         if (this->_waiting_for_data) {
-        
+
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
             }
             this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
         } else {
+
             const uint16_t server_message_type = chunk.in_uint16_le();
             switch (server_message_type) {
 
@@ -373,8 +374,6 @@
 
                                 if (!this->server_use_long_format_names) {
                                     formatID = chunk.in_uint32_le();
-    //                                     formatAvailable -=  4;
-    //                                     formatAvailable -=  32;
                                     uint8_t utf16_string[32];
                                     chunk.in_copy_bytes(utf16_string, 32);
                                     format_name = std::string(char_ptr_cast(utf16_string), 32);
@@ -393,12 +392,11 @@
                                         this->_requestedFormatId = formatID;
                                         this->_requestedFormatName = format_name;
                                         isSharedFormat = true;
-                                        //formatAvailable = 0;
                                     }
                                 }
 
                                 auto const filedescunicode = RDPECLIP::FILEGROUPDESCRIPTORW;
-                                LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode.data(), formatID, format_name);
+//                                 LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode.data(), formatID, format_name);
 
                                 if ((format_name == filedescunicode.data()) && !isSharedFormat) {
                                     this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
@@ -774,7 +772,7 @@
         // If the embedded flags field of the channelPduHeader field (the Channel PDU Header structure is specified
         // in section 2.2.6.1.1) does not contain the CHANNEL_FLAG_FIRST (0x00000001) flag or CHANNEL_FLAG_LAST
         // (0x00000002) flag, and the data is not part of a chunked sequence (that is, a start chunk has not been
-        // received), then the data in the virtualChannelData field can be dispatched to the virtual channel 
+        // received), then the data in the virtualChannelData field can be dispatched to the virtual channel
         // endpoint (no reassembly is required by the endpoint). If the CHANNEL_FLAG_SHOW_PROTOCOL
         // (0x00000010) flag is specified in the Channel PDU Header, then the channelPduHeader field MUST also
         // be dispatched to the virtual channel endpoint.

@@ -882,7 +882,7 @@ struct FormatListPDU
     uint32_t const    * formatListDataIDs;
     std::string const * formatListDataName;
     std::size_t         formatListDataSize;
-    
+
     bool _use_long_format_names = false;
     bool _unicodetext = false;
 
@@ -920,7 +920,7 @@ struct FormatListPDU
         this->header.emit(stream);
         stream.out_uint32_le(this->_unicodetext ? CF_UNICODETEXT : CF_TEXT);
         // formatName(2 to 32) - at least a single Unicode null character.
-        stream.out_clear_bytes(trailing_data); 
+        stream.out_clear_bytes(trailing_data);
     }
 
     void recv(InStream & stream) {
@@ -1053,7 +1053,7 @@ struct FormatListPDU
                 uint16_t buffer[max_length_of_format_name];
                 (void)fns.in_utf16_sz(buffer,
                         std::min(fns.in_remain(),max_length_of_format_name-2)/2);
-            }        
+            }
         } // long format names
     }   // void recv(InStream & stream)
 
@@ -1083,8 +1083,6 @@ struct FormatListPDU_LongName {
     : formatID(formatID)
     , formatDataNameUTF8Len(formatNameUTF8Len > 500 ? 500:formatNameUTF8Len)
     {
-    
-         LOG(LOG_INFO, "%u %s %u", unsigned(formatID), formatUTF8Name, unsigned(formatNameUTF8Len));
          memcpy(this->formatUTF8Name, formatUTF8Name, this->formatDataNameUTF8Len);
          this->formatDataNameUTF16Len = ::UTF8toUTF16(
             byte_ptr_cast(formatUTF8Name),
