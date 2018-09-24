@@ -590,6 +590,7 @@
                                                                         , total_length
                                                                         , flag_first
                                                                         );
+
                                     data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
                                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                         LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
@@ -644,9 +645,9 @@
                     if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
                     } else {
-    //                         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-    //                             LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
-    //                         }
+                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
+                        }
 
                         chunk.in_skip_bytes(4);                 // data_len
                         int streamID(chunk.in_uint32_le());
@@ -719,7 +720,6 @@
                                 this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
                             }
 
-                            //this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
                             this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                         }
                     }
@@ -1091,12 +1091,10 @@
         StaticOutStream<1600> out_stream;
 
         std::string format_name = this->formats_map[this->clientIOClipboardAPI->get_buffer_type_id()];
-
         RDPECLIP::FormatListPDU_LongName format_list(this->clientIOClipboardAPI->get_buffer_type_id(), format_name.c_str(), format_name.size());
 
         RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, format_list.formatDataNameUTF16Len+4);
         format_list_header.emit(out_stream);
-
 
         format_list.emit(out_stream);
 

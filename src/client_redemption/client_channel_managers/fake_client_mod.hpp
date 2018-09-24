@@ -134,6 +134,15 @@ public:
         }
         this->offset += data_len;
     }
+
+    array_view_char get_file_item(int index) override {
+        return {reinterpret_cast<char *>(this->_chunk.get()), this->size};
+    }
+
+    std::string get_file_item_name(int index) override {
+        return this->fileName;
+    }
+
 };
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
