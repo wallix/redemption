@@ -71,6 +71,7 @@ class ClientRedemption : public ClientRedemptionController
 {
 
 private:
+    ClientRedemptionConfig config;
 
     CryptoContext     cctx;
 
@@ -222,8 +223,8 @@ public:
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
-        : ClientRedemptionController(session_reactor, argv, argc, verbose)
-//         , config(session_reactor, argv, argc, verbose, *(this))
+        : ClientRedemptionController(/*session_reactor, argv, argc, verbose*/)
+        , config(session_reactor, argv, argc, verbose, *(this))
         , client_sck(-1)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
@@ -362,7 +363,7 @@ public:
 
     // std::vector<IconMovieData> & iconData
 
-    std::vector<IconMovieData> get_icon_movie_data() override {
+    std::vector<IconMovieData> get_icon_movie_data() {
 
         this->config.icons_movie_data.clear();
 

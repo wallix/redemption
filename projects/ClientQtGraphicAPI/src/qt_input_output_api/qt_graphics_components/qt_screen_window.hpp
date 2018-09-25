@@ -23,6 +23,7 @@
 
 
 #include "utils/log.hpp"
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_redemption_controller.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
@@ -414,8 +415,8 @@ public:
 
 
 public:
-    ReplayQtScreen ( ClientRedemptionController * controller, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie)
-        : QtScreen(&(controller->config), controller, impl_input, cache, cache->width(), cache->height())
+    ReplayQtScreen ( ClientRedemptionController * controller, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
+        : QtScreen(config, controller, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)

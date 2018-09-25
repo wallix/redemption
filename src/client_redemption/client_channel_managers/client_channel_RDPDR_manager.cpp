@@ -142,13 +142,15 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
         std::string file_to_write = this->paths.at(this->file_to_write_id);
 
-        std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
-        if (oFile.good()) {
-            oFile.write(char_ptr_cast(chunk.get_current()), length);
-            oFile.close();
-        }  else {
-            LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
-        }
+        this->impl_io_disk->write_file(file_to_write.c_str(), char_ptr_cast(chunk.get_current()), length);
+
+//         std::ofstream oFile(file_to_write.c_str(), std::ios::binary | std::ios::app);
+//         if (oFile.good()) {
+//             oFile.write(char_ptr_cast(chunk.get_current()), length);
+//             oFile.close();
+//         }  else {
+//             LOG(LOG_WARNING, "  Can't open such file : \'%s\'.", file_to_write.c_str());
+//         }
 
         return;
     }
@@ -587,8 +589,6 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                                     }
                                     {
                                         std::string file_to_request = this->paths.at(id);
-
-                                        std::ifstream file(file_to_request.c_str());
                                         if (!(this->impl_io_disk->ifile_good(file_to_request.c_str()))) {
                                             deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_ACCESS_DENIED);
                                             //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", file_to_request.c_str());

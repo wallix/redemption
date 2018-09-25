@@ -22,6 +22,7 @@
 
 #include "utils/log.hpp"
 
+#include "client_redemption/client_redemption_config.hpp"
 #include "client_redemption/client_redemption_controller.hpp"
 
 

@@ -43,7 +43,7 @@
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
 
-#include "client_redemption/client_redemption_config.hpp"
+
 #include "mod/internal/replay_mod.hpp"
 #include "transport/replay_transport.hpp"
 
@@ -52,14 +52,14 @@
 
 
 
-
+//#include "client_redemption/client_redemption_config.hpp"
 
 
 class ClientRedemptionAPI : public FrontAPI
 {
 public:
 
-    ClientRedemptionConfig config;
+//     ClientRedemptionConfig config;
 
 
     mod_api            * mod = nullptr;
@@ -71,8 +71,8 @@ private:
 
 public:
 
-    ClientRedemptionAPI(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
-      : config(session_reactor, argv, argc, verbose, *(this)){}
+    ClientRedemptionAPI(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
+     /* : config(session_reactor, argv, argc, verbose, *(this))*/{}
 
     virtual ~ClientRedemptionAPI() = default;
 
@@ -118,7 +118,7 @@ public:
     virtual void delete_replay_mod() {}
     virtual void replay_set_pause(timeval /*unused*/) {}
     virtual void replay_set_sync() {}
-    virtual std::vector<IconMovieData> get_icon_movie_data() { std::vector<IconMovieData> icons; return icons; }
+    //virtual std::vector<IconMovieData> get_icon_movie_data() { std::vector<IconMovieData> icons; return icons; }
 };
 
 

@@ -117,7 +117,7 @@ public:
             this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
         }
 
-        this->form = new QtForm(this->config, this->controller->get_icon_movie_data(), this);
+        this->form = new QtForm(this->config, this);
     }
 
     void show_screen() override {
@@ -169,7 +169,7 @@ public:
 
     void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(this->controller->get_mwrm_filename()), 0);
+        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(this->controller->get_mwrm_filename()), 0, this->config);
     }
 
     QWidget * get_static_qwidget() {
@@ -458,7 +458,7 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie);
+                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie, this->config);
 
                         this->screen->show();
                     }

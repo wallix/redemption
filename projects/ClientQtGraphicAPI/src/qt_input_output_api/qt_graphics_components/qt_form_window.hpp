@@ -746,10 +746,10 @@ public:
 
         QStringList stringList;
 
-        for (int i = 0; i < this->config->_accountData.size(); i++) {
+        for (size_t i = 0; i < this->config->_accountData.size(); i++) {
             if (this->config->_accountData[i].protocol == this->protocol_type) {
                 std::string title(this->config->_accountData[i].title);
-                this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), i+1);
+                this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), int(i+1));
                 stringList << title.c_str();
             }
         }
@@ -1017,7 +1017,7 @@ public:
 
 
 
-    QtForm(ClientRedemptionConfig * config, const std::vector<IconMovieData> & iconData, ClientInputMouseKeyboardAPI * controllers)
+    QtForm(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers)
         : QWidget()
         , config(config)
         , controllers(controllers)
@@ -1028,7 +1028,7 @@ public:
         , tabs(this)
         , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this)
         , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this)
-        , replay_tab(config, controllers, iconData, this)
+        , replay_tab(config, controllers, config->icons_movie_data, this)
         , is_option_open(false)
         , is_closing(false)
     {

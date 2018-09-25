@@ -48,8 +48,8 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    ClientRedemptionController(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
-      : ClientRedemptionAPI(session_reactor, argv, argc, verbose)
+    ClientRedemptionController(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
+      : ClientRedemptionAPI(/*session_reactor, argv, argc, verbose*/)
       , _timer(0)
     {
         //this->keymap.init_layout(LICD);
@@ -60,10 +60,10 @@ public:
     }
 
     void refreshPressed() {
-        if (this->mod != nullptr) {
-            Rect rect(0, 0, this->config.info.width, this->config.info.height);
-            this->mod->rdp_input_invalidate(rect);
-        }
+//         if (this->mod != nullptr) {
+//             Rect rect(0, 0, this->config.info.width, this->config.info.height);
+//             this->mod->rdp_input_invalidate(rect);
+//         }
     }
 
     void CtrlAltDelPressed() {
@@ -100,7 +100,7 @@ public:
 
     bool mouseMouveEvent(int x, int y) {
 
-        if (this->mod != nullptr && y < this->config.info.height) {
+        if (this->mod != nullptr /*&& y < this->config.info.height*/) {
             this->mouse_data.x = x;
             this->mouse_data.y = y;
             this->mod->rdp_input_mouse(MOUSE_FLAG_MOVE, this->mouse_data.x, this->mouse_data.y, &(this->keymap));
