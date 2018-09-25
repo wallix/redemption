@@ -474,6 +474,8 @@ protected:
         }
     }
 
+    void draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd);
+
 public:
     void set_pointer(const Pointer & cursor) override {
         if (this->capture_drawable) {

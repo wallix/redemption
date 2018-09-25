@@ -1492,7 +1492,6 @@ void Capture::Graphic::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
     }
 }
 
-
 void Capture::TitleChangedFunctions::notify_title_changed(
     timeval const & now, array_view_const_char title
 ) {
@@ -1847,6 +1846,14 @@ Capture::Microseconds Capture::periodic_snapshot(
         this->capture_event.update_trigger_time(time.count());
     }
     return time;
+}
+
+void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd) {
+    if (this->capture_drawable) {
+        for (gdi::CaptureApi & cap : this->caps) {
+            cap.visibility_rects_event(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
+        }
+    }
 }
 
 void Capture::set_pointer_display() {
