@@ -270,14 +270,14 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) {}
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) = 0;
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
     virtual void draw(RDPColCache   const & /*unused*/) {}

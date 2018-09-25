@@ -2034,6 +2034,15 @@ void Capture::draw_impl(const RDP::RAIL::DeletedWindow & cmd)
     }
 }
 
+void Capture::draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd)
+{
+    if (this->capture_drawable) {
+        this->graphic_api->draw(cmd);
+
+        this->visibility_rects_event(Rect(0, 0, this->gd_drawable->width(), this->gd_drawable->height()));
+    }
+}
+
 void Capture::set_pointer_display() {
     if (this->capture_drawable) {
         this->gd_drawable->show_mouse_cursor(false);

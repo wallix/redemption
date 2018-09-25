@@ -499,8 +499,11 @@ public:
         }
     }
 
-    void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override
-    {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop & order) override {
+        if (this->drawable) {
+            this->drawable->draw(order);
+        }
+    }
 
 private:
     void dialog_box_create(DialogBoxType type) {
