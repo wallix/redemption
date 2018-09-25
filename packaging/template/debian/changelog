@@ -1,3 +1,9 @@
+redemption (1.1.71%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support Windows Screenlocker in RemoteApp mode.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 25 Sep 2018 16:51:22 +0200
+
 redemption (1.1.69%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * "rdp metrics tag 1.1.69"
