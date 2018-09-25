@@ -2527,7 +2527,7 @@ struct LockClipboardDataPDU
 
     uint32_t streamDataID;
 
-    explicit LockClipboardDataPDU(): header(CB_UNLOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
+    explicit LockClipboardDataPDU(): header(CB_LOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
     {}
 
     explicit LockClipboardDataPDU(uint32_t streamDataID)

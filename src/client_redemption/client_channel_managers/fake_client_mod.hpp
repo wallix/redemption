@@ -135,11 +135,11 @@ public:
         this->offset += data_len;
     }
 
-    array_view_char get_file_item(int index) override {
+    array_view_char get_file_item(int ) override {
         return {reinterpret_cast<char *>(this->_chunk.get()), this->size};
     }
 
-    std::string get_file_item_name(int index) override {
+    std::string get_file_item_name(int ) override {
         return this->fileName;
     }
 
