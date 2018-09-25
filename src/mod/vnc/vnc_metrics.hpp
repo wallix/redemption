@@ -26,23 +26,25 @@
 class VNCMetrics
 {
 
-//-> minimum: data quantity (up/down)
+
 //-> copy-paste: up/down
 //-> redrawn surface
-//-> mouse metrics same as RDP (displacement, clicks)
 //-> data quantity transfered per data type (codec)
 //-> keyboard metrics (special characters, total characters)
 
 
 private:
     enum : int {
-        data_from_client,     // number of byte sent from client to server
-        data_from_server,     // number of byte sent from server to client
+        DATA_FROM_CLIENT,     // number of byte sent from client to server
+        DATA_FROM_SERVER,     // number of byte sent from server to client
+        
+        CLIPBOARD_DATA_FROM_CLIENT,     // number of byte sent from client to server
+        CLIPBOARD_DATA_FROM_SERVER,     // number of byte sent from server to client
 
-        mouse_displacement,
-        keys_pressed,
-        right_click,
-        left_click,
+        MOUSE_MOVE,
+        KEY_PRESSED,
+        RIGHT_CLICK,
+        LEFT_CLICK,
 
         COUNT_FIELD
     };
@@ -50,12 +52,14 @@ private:
     const char * vnc_metrics_name(int index) {
 
         switch (index) {
-            case data_from_client:   return "data_from_client";
-            case data_from_server:   return "data_from_server";
-            case mouse_displacement: return "mouse_displacement";
-            case keys_pressed:       return "keys_pressed";
-            case right_click:        return "right_click";
-            case left_click:         return "left_click";
+            case DATA_FROM_CLIENT:   return "data_from_client";
+            case DATA_FROM_SERVER:   return "data_from_server";
+            case CLIPBOARD_DATA_FROM_CLIENT:   return "clipboard_data_from_client";
+            case CLIPBOARD_DATA_FROM_SERVER:   return "clipboard_data_from_server";
+            case MOUSE_MOVE:         return "mouse_move";
+            case KEY_PRESSED:       return  "key_pressed";
+            case RIGHT_CLICK:        return "right_click";
+            case LEFT_CLICK:         return "left_click";
             case COUNT_FIELD: break;
         }
 
@@ -100,7 +104,23 @@ public:
         this->metrics.log(now);
     }
 
-    void mouse_mouve(const int x, const int y) {
+    void data_from_client(long int len) {
+        this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
+    }
+
+    void data_from_server(long int len) {
+        this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
+    }
+
+    void clipboard_data_from_client(long int len) {
+        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
+    }
+
+    void clipboard_data_from_server(long int len) {
+        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
+    }
+
+    void mouse_move(const int x, const int y) {
         if (this->last_x >= 0 && this->last_y >= 0) {
             int x_shift = x - this->last_x;
             if (x_shift < 0) {
@@ -110,22 +130,22 @@ public:
             if (y_shift < 0) {
                 y_shift *=  -1;
             }
-            this->metrics.add_to_current_data(mouse_displacement, x_shift + y_shift);
+            this->metrics.add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
         }
         this->last_x = x;
         this->last_y = y;
     }
 
     void key_pressed() {
-        this->metrics.add_to_current_data(keys_pressed, 1);
+        this->metrics.add_to_current_data(KEY_PRESSED, 1);
     }
 
-    void right_click_pressed() {
-        this->metrics.add_to_current_data(right_click, 1);
+    void right_click() {
+        this->metrics.add_to_current_data(RIGHT_CLICK, 1);
     }
 
-    void left_click_pressed() {
-        this->metrics.add_to_current_data(left_click, 1);
+    void left_click() {
+        this->metrics.add_to_current_data(LEFT_CLICK, 1);
     }
 
 

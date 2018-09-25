@@ -78,13 +78,13 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
     RED_CHECK_EQUAL(get_file_contents(wd[logindex1]), expected_log_index);
 
     {
-        metrics.right_click_pressed();
+        metrics.right_click();
         metrics.log(to_timeval(epoch));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
         metrics.log(to_timeval(epoch+1s));
-        metrics.right_click_pressed();
+        metrics.right_click();
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
@@ -92,19 +92,19 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
-        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 2 0\n");
+        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         metrics.log(to_timeval(epoch+5s));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);;
     }
     {
-        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 2 0\n");
+        std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         metrics.log(to_timeval(epoch+7s));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         std::string expected_log_metrics(
-            "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 2 0\n"
-            "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 2 0\n");
+            "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"
+            "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         metrics.log(to_timeval(epoch+10s));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
@@ -137,7 +137,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
 
         {
-            metrics.right_click_pressed();
+            metrics.right_click();
             metrics.log(to_timeval(epoch+0s));
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
@@ -150,7 +150,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
-            std::string expected_log_metrics("2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 0 0 0 1 0\n");
+            std::string expected_log_metrics("2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n");
             metrics.log(to_timeval(epoch+3s));
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
         }
@@ -181,33 +181,33 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
 
     RED_CHECK_FILE_EXISTS(wd[logindex1]);
 
-    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 1 0\n");
+    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n");
 
     {
         epoch += 5s;
-        metrics.right_click_pressed();
+        metrics.right_click();
         metrics.log(to_timeval(epoch));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         epoch += 5s;
-        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 2 0\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         expected_log_metrics += expected_log_metrics_next;
-        metrics.right_click_pressed();
+        metrics.right_click();
         metrics.log(to_timeval(epoch));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         epoch += 5s;
-        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 2 1\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
-        metrics.left_click_pressed();
+        metrics.left_click();
         metrics.log(to_timeval(epoch));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         epoch += 5s;
-        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 1 2 1\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 1 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.key_pressed();
         metrics.log(to_timeval(epoch));
@@ -215,10 +215,10 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
     }
     {
         epoch += 5s;
-        std::string expected_log_metrics_next("2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 4 1 2 1\n");
+        std::string expected_log_metrics_next("2018-08-02 12:08:26 164d89c1a56957b752540093e178 0 0 0 0 4 1 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
-        metrics.mouse_mouve(0, 0);
-        metrics.mouse_mouve(2, 2);
+        metrics.mouse_move(0, 0);
+        metrics.mouse_move(2, 2);
         metrics.log(to_timeval(epoch));
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
