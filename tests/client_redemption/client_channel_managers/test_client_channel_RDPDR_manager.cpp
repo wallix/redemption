@@ -44,13 +44,10 @@ namespace rdpdr
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     StaticOutStream<512> out_serverAnnounce;
@@ -199,13 +196,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
@@ -257,13 +251,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
@@ -300,13 +291,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
@@ -356,13 +344,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
@@ -412,13 +397,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
@@ -465,13 +447,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
@@ -508,13 +487,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
@@ -558,13 +534,10 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 {
-    SessionReactor session_reactor;
-    char const * argv[2] = {"1234", "5678"};
-    int argc = 2;
-    FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+    FakeClient client;
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
-    config.add_drive(client.config.SHARE_DIR.c_str(), rdpdr::RDPDR_DTYP_FILESYSTEM);
+    config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
     ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");

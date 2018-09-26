@@ -32,9 +32,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    SessionReactor session_reactor;
-    char const * argv[] = {nullptr};
-    FakeClient client(session_reactor, argv, 0, to_verbose_flags(0x0));
+
+    FakeClient client;
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
@@ -121,9 +120,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST
                            | CHANNELS::CHANNEL_FLAG_FIRST
                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    SessionReactor session_reactor;
-    char const * argv[2] = {nullptr};
-    FakeClient client(session_reactor, argv, 0, to_verbose_flags(0x0));
+
+    FakeClient client;
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
@@ -232,9 +230,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    SessionReactor session_reactor;
-    char const * argv[2] = {nullptr};
-    FakeClient client(session_reactor, argv, 0, to_verbose_flags(0x0));
+
+    FakeClient client;
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
@@ -329,9 +326,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    SessionReactor session_reactor;
-    char const * argv[2] = {nullptr};
-    FakeClient client(session_reactor, argv, 0, to_verbose_flags(0x0));
+    FakeClient client;
     FakeClientIOClipboard clip_io;
     clip_io.resize_chunk(sizeof(clip_data_total));
     RDPClipboardConfig conf;
@@ -525,9 +520,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-    SessionReactor session_reactor;
-    char const * argv[2] = {nullptr};
-    FakeClient client(session_reactor, argv, 0, to_verbose_flags(0x0));
+    FakeClient client;
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());

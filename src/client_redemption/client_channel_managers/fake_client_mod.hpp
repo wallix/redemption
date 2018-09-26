@@ -240,8 +240,8 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
-      : ClientRedemptionAPI( session_reactor, argv, argc, verbose)
+    FakeClient(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
+      : ClientRedemptionAPI()
     {
         this->mod = &(this->fake_mod);
     }
@@ -284,6 +284,15 @@ public:
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(timeval /*timeout*/) override { return 0; }
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
+    virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
+    virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedWindow & ) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
 };
 
 
