@@ -32,7 +32,7 @@
 
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 
 
 #include "../keymaps/qt_scancode_keymap.hpp"
@@ -966,7 +966,7 @@ private Q_SLOTS:
         this->config->writeCustomKeyConfig();
         this->config->writeClientInfo();
 
-        if (this->controllers->connexionReleased()) {
+        if (this->controllers->connect()) {
             this->config->writeAccoundData(
                 this->get_IPField(),
                 this->get_userNameField(),

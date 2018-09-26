@@ -85,6 +85,10 @@ public:
         return this->_bufferTypeNameIndex;
     }
 
+    virtual void start_to_listen() = 0;
+    virtual void stop_to_listen()  = 0;
+
+
     virtual ConstImageDataView get_image()
     {
         return ConstImageDataView(

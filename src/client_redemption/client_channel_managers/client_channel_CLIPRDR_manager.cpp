@@ -114,10 +114,10 @@
 
 
 
-    ClientChannelCLIPRDRManager::ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
-      : ClientChannelManager(client)
-      , verbose(verbose)
+    ClientChannelCLIPRDRManager::ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
+      :  verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
+      , callback(callback)
       , _waiting_for_data(false)
       , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)
       , arbitrary_scale(config.arbitrary_scale)
@@ -127,7 +127,7 @@
       , server_use_long_format_names(config.server_use_long_format_names)
       , cCapabilitiesSets(config.cCapabilitiesSets)
       , generalFlags(config.generalFlags)
-      {
+    {
         if (!dir_exist(this->path.c_str())){
             mkdir(this->path.c_str(), 0777);
         }
@@ -283,7 +283,7 @@
                         const uint32_t total_length = out_stream.get_offset();
                         InStream chunk(out_stream.get_data(), total_length);
 
-                        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                        this->callback->send_to_mod_channel( channel_names::cliprdr
                                                             , chunk
                                                             , total_length
                                                             , this->channel_flags
@@ -306,7 +306,7 @@
 
                         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-                        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                        this->callback->send_to_mod_channel( channel_names::cliprdr
                                     , chunk
                                     , out_stream.get_offset()
                                     , this->channel_flags
@@ -409,7 +409,7 @@
                             formatListResponsePDU.emit(out_stream);
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                            this->callback->send_to_mod_channel( channel_names::cliprdr
                                                             , chunk
                                                             , out_stream.get_offset()
                                                             , this->channel_flags
@@ -423,7 +423,7 @@
                             lockClipboardDataPDU.emit(out_stream_lock);
                             InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                            this->callback->send_to_mod_channel( channel_names::cliprdr
                                                             , chunk_lock
                                                             , out_stream_lock.get_offset()
                                                             , this->channel_flags
@@ -437,7 +437,7 @@
                             formatDataRequestPDU.emit(out_streamRequest);
                             InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                            this->callback->send_to_mod_channel( channel_names::cliprdr
                                                             , chunkRequest
                                                             , out_streamRequest.get_offset()
                                                             , this->channel_flags
@@ -521,7 +521,7 @@
                                     );
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_channel_out_data(
+                                    this->callback->process_client_channel_out_data(
                                             channel_names::cliprdr
                                         , total_length
                                         , out_stream_first_part
@@ -547,7 +547,7 @@
 
                                     fdr.emit(out_stream_first_part);
 
-                                    this->process_client_channel_out_data(
+                                    this->callback->process_client_channel_out_data(
                                         channel_names::cliprdr
                                         , total_length
                                         , out_stream_first_part
@@ -585,7 +585,7 @@
                                                             , out_stream_first_part.get_offset()
                                                             );
 
-                                    this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                    this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunk_first_part
                                                                         , total_length
                                                                         , flag_first
@@ -619,7 +619,7 @@
                                                                 , out_stream_next_part.get_offset()
                                                                 );
 
-                                        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                        this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunk_next_part
                                                                         , total_length
                                                                         , flag_next
@@ -665,7 +665,7 @@
                                 fileSize.emit(out_stream);
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-                                this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                 , chunk_to_send
                                                                 , out_stream.get_offset()
                                                                 , this->channel_flags
@@ -692,7 +692,7 @@
                                 }
                                 fileRange.emit(out_stream_first_part);
 
-                                this->process_client_channel_out_data(
+                                this->callback->process_client_channel_out_data(
                                     channel_names::cliprdr
                                     , total_length
                                     , out_stream_first_part
@@ -871,7 +871,7 @@
 
                     InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
-                    this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                    this->callback->send_to_mod_channel( channel_names::cliprdr
                                                   , chunkRequest
                                                   , total_length_FormatDataRequestPDU
                                                   , this->channel_flags
@@ -909,7 +909,7 @@
 
                         InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
-                        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                        this->callback->send_to_mod_channel( channel_names::cliprdr
                                                               , chunkRequest
                                                               , total_length_FormatDataRequestPDU
                                                               , this->channel_flags
@@ -972,7 +972,7 @@
 
                                 InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
 
-                                this->client->mod->send_to_mod_channel( channel_names::cliprdr
+                                this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunkRequest
                                                                         , total_length_FormatDataRequestPDU
                                                                         , this->channel_flags
@@ -1016,7 +1016,7 @@
         unlockClipboardDataPDU.emit(out_stream_unlock);
         InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
-        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+        this->callback->send_to_mod_channel( channel_names::cliprdr
                                         , chunk_unlock
                                         , out_stream_unlock.get_offset()
                                         , this->channel_flags
@@ -1100,7 +1100,7 @@
 
         InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-        this->client->mod->send_to_mod_channel( channel_names::cliprdr
+        this->callback->send_to_mod_channel( channel_names::cliprdr
                     , chunk
                     , out_stream.get_offset()
                     , this->channel_flags

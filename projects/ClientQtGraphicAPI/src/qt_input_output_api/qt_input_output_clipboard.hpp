@@ -71,6 +71,8 @@ public:
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
 
+    bool is_listenning = false;
+
 
     struct CB_out_File {
         uint64_t     size;
@@ -99,6 +101,14 @@ public:
         //this->clean_CB_temp_dir();
         this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
+    }
+
+    void start_to_listen() override {
+
+    }
+
+    void stop_to_listen() {
+
     }
 
     void set_client(ClientRedemptionAPI * client, std::string & path) {

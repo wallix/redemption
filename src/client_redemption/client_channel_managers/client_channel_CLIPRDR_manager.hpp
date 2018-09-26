@@ -30,7 +30,7 @@
 #include "utils/fileutils.hpp"
 #include "core/RDP/clipboard.hpp"
 
-#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 
@@ -111,18 +111,19 @@
 //     The sequence of messages for a copy operation is the same for all format
 //     types, as specified in section 1.3.2.2.1.
 //
-//     However, the messages exchanged to transfer File Stream data during a 
-//     paste operation differs from those used to transfer other format data, 
+//     However, the messages exchanged to transfer File Stream data during a
+//     paste operation differs from those used to transfer other format data,
 //     as specified in section 1.3.2.2.3.
 
 
 
-class ClientChannelCLIPRDRManager : public ClientChannelManager
+class ClientChannelCLIPRDRManager
 {
 
 public:
     RDPVerbose verbose;
     ClientIOClipboardAPI * clientIOClipboardAPI;
+    ClientCallback * callback;
 
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
@@ -178,7 +179,7 @@ public:
 
 
 
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
 
     ~ClientChannelCLIPRDRManager();
 

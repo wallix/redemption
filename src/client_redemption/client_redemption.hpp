@@ -56,7 +56,7 @@
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
 #include "client_redemption/client_redemption_api.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
@@ -83,7 +83,7 @@ private:
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
 
-    ClientModController controller;
+    ClientCallback _callback;
 
 public:
     SessionReactor& session_reactor;
@@ -228,7 +228,7 @@ public:
         : ClientRedemptionAPI(/*session_reactor, argv, argc, verbose*/)
         , config(session_reactor, argv, argc, verbose, *(this))
         , client_sck(-1)
-        , controller(this)
+        , _callback(this)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
         , impl_clipboard(impl_clipboard)
@@ -238,10 +238,10 @@ public:
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
-        , clientChannelRDPSNDManager(this->config.verbose, this, this->impl_sound, this->config.rDPSoundConfig)
-        , clientChannelCLIPRDRManager(this->config.verbose, this, this->impl_clipboard, this->config.rDPClipboardConfig)
-        , clientChannelRDPDRManager(this->config.verbose, this, this->impl_io_disk, this->config.rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->config.verbose, this, this->impl_graphic, this->impl_mouse_keyboard)
+        , clientChannelRDPSNDManager(this->config.verbose, &(this->_callback), this->impl_sound, this->config.rDPSoundConfig)
+        , clientChannelCLIPRDRManager(this->config.verbose, &(this->_callback), this->impl_clipboard, this->config.rDPClipboardConfig)
+        , clientChannelRDPDRManager(this->config.verbose, &(this->_callback), this->impl_io_disk, this->config.rDPDiskConfig)
+        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), this->impl_graphic, this->impl_mouse_keyboard)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -270,12 +270,12 @@ public:
             LOG(LOG_WARNING, "No socket lister implementation.");
         }
         if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->set_callback(&(this->controller));
+            this->impl_mouse_keyboard->set_callback(&(this->_callback));
         } else {
             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
-            this->impl_graphic->set_drawn_client(&(this->controller), &(this->config));
+            this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config));
         } else {
             LOG(LOG_WARNING, "No graphic output implementation.");
         }
@@ -310,6 +310,10 @@ public:
 
     ~ClientRedemption() = default;
 
+   virtual bool is_connected() override {
+        return this->config.connected;
+   }
+
     int wait_and_draw_event(timeval timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
@@ -327,8 +331,8 @@ public:
             std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
 
             if ( ((duration.count() / 1000000) % this->config.keep_alive_freq) == 0) {
-                this->controller.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
-                this->controller.send_rdp_scanCode(0x1e, 0);
+                this->_callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
+                this->_callback.send_rdp_scanCode(0x1e, 0);
             }
         }
     }
@@ -340,10 +344,10 @@ public:
 
         switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:
-                this->controller.init_layout(this->config.vnc_conf.keylayout);
+                this->_callback.init_layout(this->config.vnc_conf.keylayout);
                 break;
 
-            default: this->controller.init_layout(this->config.info.keylayout);
+            default: this->_callback.init_layout(this->config.info.keylayout);
                 break;
         }
     }
@@ -365,8 +369,6 @@ public:
             this->impl_graphic->closeFromScreen();
         }
     }
-
-    // std::vector<IconMovieData> & iconData
 
     std::vector<IconMovieData> get_icon_movie_data() {
 
@@ -618,7 +620,7 @@ public:
             return false;
         }
 
-        this->controller.set_mod(this->mod);
+        this->_callback.set_mod(this->mod);
 
          return true;
     }
@@ -1600,7 +1602,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.begin_update();
                 this->capture->wrm_capture.begin_update();
-                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->controller.mouse_data.x, this->controller.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
             }
         }
     }
@@ -1616,7 +1618,7 @@ public:
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.end_update();
                 this->capture->wrm_capture.end_update();
-                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->controller.mouse_data.x, this->controller.mouse_data.y, false);
+                this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
             }
         }
     }
@@ -1640,7 +1642,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order);
             this->capture->wrm_capture.draw(order);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->controller.mouse_data.x, this->controller.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 
@@ -1662,7 +1664,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->controller.mouse_data.x, this->controller.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 
@@ -1684,7 +1686,7 @@ private:
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
             this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
-            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->controller.mouse_data.x, this->controller.mouse_data.y, false);
+            this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }
 

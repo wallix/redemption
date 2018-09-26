@@ -30,6 +30,7 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
@@ -156,7 +157,7 @@ class ClientChannelRemoteAppManager {
 
     RDPVerbose verbose;
 
-    ClientRedemptionAPI * client;
+    ClientCallback * callback;
     ClientOutputGraphicAPI * impl_graphic;
     ClientInputMouseKeyboardAPI * impl_input;
 
@@ -166,32 +167,21 @@ class ClientChannelRemoteAppManager {
 
 
 public:
-
-//     struct RailChannelData {
-//         uint32_t clientWindowID;
-        uint32_t ServerWindowID;
-
-        uint32_t WindowIDToShow = 0;
-
-        bool ExecuteResult = false;
-
-        std::vector<uint32_t> z_order;
-
-        int build_number = 0;
-
-        int width = 0;
-        int height = 0;
-
-//     } rail_channel_data;
+    uint32_t ServerWindowID;
+    uint32_t WindowIDToShow = 0;
+    bool ExecuteResult = false;
+    std::vector<uint32_t> z_order;
+    int build_number = 0;
+    int width = 0;
+    int height = 0;
 
 
-// public:
     ClientChannelRemoteAppManager(RDPVerbose verbose,
-                                  ClientRedemptionAPI * client,
+                                  ClientCallback * callback,
                                   ClientOutputGraphicAPI * impl_graphic,
                                   ClientInputMouseKeyboardAPI * impl_input)
       : verbose(verbose)
-      , client(client)
+      , callback(callback)
       , impl_graphic(impl_graphic)
       , impl_input(impl_input)
       {}
@@ -227,7 +217,7 @@ public:
 //                 this->z_order.clear();
 //                 this->impl_graphic->clear_remote_app_screen();
 //                 //LOG(LOG_INFO, "RAIL::DeletedWindow  Last App has been close - mod rdp disconnection.");
-//                 this->client->disconnect("", false);
+//                 this->callback->disconnect("", false);
 //                 break;
 
             default:
@@ -345,7 +335,7 @@ public:
 
         if ( this->z_order.size() <= 1) {
             this->impl_graphic->clear_remote_app_screen();
-            this->client->disconnect("", false);
+            this->callback->disconnexionReleased();
         } else {
             this->impl_input->refreshPressed();
         }
@@ -399,7 +389,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -422,7 +412,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -443,7 +433,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -464,7 +454,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -488,7 +478,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -509,7 +499,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -533,7 +523,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -554,7 +544,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -575,7 +565,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -596,7 +586,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -621,7 +611,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -644,7 +634,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -664,7 +654,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                   , chunk_to_send
                                                   , out_stream.get_offset()
                                                   , CHANNELS::CHANNEL_FLAG_LAST |
@@ -687,7 +677,7 @@ public:
 //                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 //
 //                     // this->mod_rail_hosted
-//                     this->client->mod->send_to_mod_channel( channel_names::rail
+//                     this->callback->send_to_mod_channel( channel_names::rail
 //                                                 , chunk_to_send
 //                                                 , out_stream.get_offset()
 //                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -726,7 +716,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rail
+                    this->callback->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -769,7 +759,7 @@ public:
 //
 //                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 //
-//                     this->client->mod->send_to_mod_channel( channel_names::rail
+//                     this->callback->send_to_mod_channel( channel_names::rail
 //                                                     , chunk_to_send
 //                                                     , out_stream.get_offset()
 //                                                     , CHANNELS::CHANNEL_FLAG_LAST |

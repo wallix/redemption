@@ -199,10 +199,10 @@
 
 
 
-ClientChannelRDPSNDManager::ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
+ClientChannelRDPSNDManager::ClientChannelRDPSNDManager(RDPVerbose verbose, ClientCallback * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
     : verbose(verbose)
     , impl_sound(impl_sound)
-    , client(client)
+    , callback(callback)
     , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST)
     , last_cBlockNo(0)
     , last_wTimeStamp(0)
@@ -251,7 +251,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
 
             InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-            this->client->mod->send_to_mod_channel( channel_names::rdpsnd
+            this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                     , chunk_to_send
                                                     , out_stream.get_offset()
                                                     , this->channel_flags
@@ -311,7 +311,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
 
                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                this->client->mod->send_to_mod_channel( channel_names::rdpsnd
+                this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , this->channel_flags
@@ -331,7 +331,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
 
                 InStream chunk_to_send2(quality_stream.get_data(), quality_stream.get_offset());
 
-                this->client->mod->send_to_mod_channel( channel_names::rdpsnd
+                this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send2
                                                 , quality_stream.get_offset()
                                                 , this->channel_flags
@@ -362,7 +362,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
 
                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                this->client->mod->send_to_mod_channel( channel_names::rdpsnd
+                this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , this->channel_flags

@@ -98,11 +98,10 @@
 
 
 
-ClientChannelRDPDRManager::ClientChannelRDPDRManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
-    : ClientChannelManager(client)
-    , verbose(verbose)
-//       , client(client)
+ClientChannelRDPDRManager::ClientChannelRDPDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
+    : verbose(verbose)
     , impl_io_disk(impl_io_disk)
+    , callback(callback)
     , ioCode1(config.ioCode1)
     , extendedPDU(config.extendedPDU)
     , extraFlags1(config.extraFlags1)
@@ -187,7 +186,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                     int total_length(stream.get_offset());
                     InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                     , chunk_to_send
                                                     , total_length
                                                     , this->channel_flags
@@ -212,7 +211,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                     int total_length(stream.get_offset());
                     InStream chunk_to_send(stream.get_data(), stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
                                                         , this->channel_flags
@@ -318,7 +317,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                     int total_length(out_stream.get_offset());
                     InStream chunk_to_send(out_stream.get_data(), total_length);
 
-                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                         , chunk_to_send
                                                         , total_length
                                                         , CHANNELS::CHANNEL_FLAG_LAST |
@@ -373,7 +372,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                     int total_length(out_stream.get_offset());
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                     , chunk_to_send
                                                     , total_length
                                                     , this->channel_flags
@@ -434,7 +433,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                             InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                            this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                 , chunk_to_send
                                                                 , out_stream.get_offset()
                                                                 , this->channel_flags
@@ -495,7 +494,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                             InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                            this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                 , chunk_to_send
                                                                 , out_stream.get_offset()
                                                                 , this->channel_flags
@@ -540,7 +539,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                    this->client->mod->send_to_mod_channel(
+                                    this->callback->send_to_mod_channel(
                                         channel_names::rdpdr,
                                         chunk_to_send,
                                         out_stream.get_offset(),
@@ -572,7 +571,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                         , chunk_to_send
                                                                         , out_stream.get_offset()
                                                                         , this->channel_flags
@@ -609,7 +608,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                         InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                        this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                        this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
                                                                             , this->channel_flags
@@ -642,7 +641,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                             InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                            this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                            this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                 , chunk_to_send
                                                                 , out_stream.get_offset()
                                                                 , this->channel_flags
@@ -684,7 +683,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                             rdpdr::DeviceReadResponse deviceReadResponse(portion_length);
                             deviceReadResponse.emit(out_stream);
 
-                            this->process_client_channel_out_data( channel_names::rdpdr
+                            this->callback->process_client_channel_out_data( channel_names::rdpdr
                                                                 , 20 + portion_length
                                                                 , out_stream
                                                                 , out_stream.get_capacity() - 20
@@ -843,7 +842,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                    this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                             , chunk_to_send
                                                                             , out_stream.get_offset()
                                                                             , this->channel_flags
@@ -871,7 +870,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 //
 //                                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 //
-//                                                 this->client->mod->send_to_mod_channel( channel_names::rdpdr
+//                                                 this->callback->send_to_mod_channel( channel_names::rdpdr
 //                                                                                     , chunk_to_send
 //                                                                                     , out_stream.get_offset()
 //                                                                                     , CHANNELS::CHANNEL_FLAG_LAST |
@@ -989,7 +988,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , this->channel_flags
@@ -1031,7 +1030,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , this->channel_flags
@@ -1124,7 +1123,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                 , chunk_to_send
                                                                 , out_stream.get_offset()
                                                                 , this->channel_flags
@@ -1185,7 +1184,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
 
                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                                this->client->mod->send_to_mod_channel( channel_names::rdpdr
+                                this->callback->send_to_mod_channel( channel_names::rdpdr
                                                                     , chunk_to_send
                                                                     , out_stream.get_offset()
                                                                     , this->channel_flags
@@ -1351,7 +1350,7 @@ void ClientChannelRDPDRManager::FremoveDriveDevice(const DeviceData * devices, c
     int total_length(out_stream.get_offset());
     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-    this->client->mod->send_to_mod_channel( channel_names::rdpdr
+    this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
                                         , total_length
                                         , CHANNELS::CHANNEL_FLAG_LAST  |

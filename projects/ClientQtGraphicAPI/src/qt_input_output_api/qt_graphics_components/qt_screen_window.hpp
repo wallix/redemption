@@ -24,7 +24,7 @@
 
 #include "utils/log.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
@@ -64,7 +64,7 @@ public:
     };
 
     ClientRedemptionConfig * config;
-    ClientModController       * controller;
+    ClientCallback       * controller;
     ClientInputMouseKeyboardAPI * impl_input;
 
     int            _width;
@@ -81,7 +81,7 @@ public:
      QRect clip;
 
 
-    QtScreen(ClientRedemptionConfig * config, ClientModController * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
+    QtScreen(ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
     : QWidget()
     , config(config)
     , controller(controller)
@@ -239,7 +239,7 @@ public:
 
 
 
-    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientModController * controller, ClientInputMouseKeyboardAPI * impl_input, int width, int height, int x, int y, QPixmap * cache)
+    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, int width, int height, int x, int y, QPixmap * cache)
         : QtScreen(config, controller, impl_input, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
@@ -288,7 +288,7 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (ClientRedemptionConfig * config, ClientModController * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
+    RDPQtScreen (ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
         : QtScreen(config, controller, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
@@ -415,7 +415,7 @@ public:
 
 
 public:
-    ReplayQtScreen ( ClientModController * controller, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
+    ReplayQtScreen ( ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
         : QtScreen(config, controller, impl_input, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)

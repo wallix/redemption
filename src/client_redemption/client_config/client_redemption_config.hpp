@@ -25,10 +25,6 @@
 #include <sstream>
 #include <cstdio>
 #include <dirent.h>
-// #include <unistd.h>
-// #include <sys/types.h>
-// #include <sys/stat.h>
-// #include <unistd.h>
 
 #include "main/version.hpp"
 #include "utils/cli.hpp"
@@ -49,15 +45,11 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 
-// #include <sys/stat.h>
-
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
-// #include "client_redemption/client_redemption_api.hpp"
 
 #include <algorithm>
-// #include <string>
 
 #include <climits>
 #include <cstdint>
@@ -291,7 +283,6 @@ public:
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front)
-//     : ClientRedemptionAPI()
     : verbose(verbose)
     //, _recv_disconnect_ultimatum(false)
     , wab_diag_question(false)
@@ -1439,7 +1430,7 @@ public:
         }
     }
 
-    
+
 };
 
 

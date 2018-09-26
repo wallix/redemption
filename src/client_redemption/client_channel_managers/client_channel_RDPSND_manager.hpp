@@ -25,9 +25,10 @@
 #include "mod/rdp/rdp_log.hpp"
 #include "utils/log.hpp"
 
-#include "client_redemption/client_input_output_api/client_sound_api.hpp"
-#include "client_redemption/client_redemption_api.hpp"
 #include "core/RDPEA/audio_output.hpp"
+
+#include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/client_input_output_api/client_sound_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
 
@@ -210,7 +211,7 @@ class ClientChannelRDPSNDManager {
 
     RDPVerbose verbose;
     ClientOutputSoundAPI * impl_sound;
-    ClientRedemptionAPI * client;
+    ClientCallback * callback;
 
     const uint32_t channel_flags;
 
@@ -229,7 +230,7 @@ class ClientChannelRDPSNDManager {
 
 
 public:
-    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientRedemptionAPI * client, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config);
+    ClientChannelRDPSNDManager(RDPVerbose verbose, ClientCallback * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config);
 
     void receive(InStream & chunk);
 };

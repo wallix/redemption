@@ -23,28 +23,25 @@
 #include "utils/log.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
-
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 
 
 
 class ClientInputMouseKeyboardAPI : public ClientIO {
 
 
-public:
-    ClientModController * callback = nullptr;
+private:
+    ClientCallback * callback = nullptr;
 
+public:
     ClientInputMouseKeyboardAPI() = default;
 
     virtual ~ClientInputMouseKeyboardAPI() = default;
 
 
-    void set_callback(ClientModController * callback) {
+    void set_callback(ClientCallback * callback) {
         this->callback = callback;
     }
-//     virtual ClientRedemptionAPI * get_client() {
-//         return this->client;
-//     }
 
     virtual void update_keylayout() = 0;
 
@@ -56,13 +53,17 @@ public:
         this->callback->replay(movie_name, movie_dir);
     }
 
-
     // CONTROLLER
-    virtual bool connexionReleased() {
+
+    void send_rdp_scanCode(int keycode,  int flag) {
+        this->callback->send_rdp_scanCode(keycode, flag);
+    }
+
+    bool connect() {
         return this->callback->connect();
     }
 
-    virtual void disconnexionReleased() {
+    void disconnexionReleased() {
         this->callback->disconnexionReleased();
     }
 

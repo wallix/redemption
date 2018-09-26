@@ -21,7 +21,7 @@
 #pragma once
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
@@ -30,7 +30,7 @@
 class ClientOutputGraphicAPI : public gdi::GraphicApi
 {
 public:
-    ClientModController * controller;
+    ClientCallback * controller;
     ClientRedemptionConfig * config;
 
     const int screen_max_width;
@@ -48,7 +48,7 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientModController * controller, ClientRedemptionConfig * config) {
+    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
         this->config = config;
         this->controller = controller;
     }

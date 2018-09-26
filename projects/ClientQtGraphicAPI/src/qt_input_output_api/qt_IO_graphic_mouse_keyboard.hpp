@@ -35,7 +35,6 @@
 
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -64,11 +63,10 @@ class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInp
 {
 
 public:
-//
     int                  mod_bpp;
-    QtForm            * form;
+    QtForm             * form;
     QtScreen           * screen;
-    QPixmap             cache;
+    QPixmap              cache;
     ProgressBarWindow  * bar;
     QPainter             painter;
     QImage cursor_image;
@@ -97,7 +95,6 @@ public:
       , qtRDPKeymap()
     {}
 
-
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
     virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
     virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
@@ -114,10 +111,10 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    void set_drawn_client(ClientModController * controller, ClientRedemptionConfig * config) override
+    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override
     {
         ClientOutputGraphicAPI::set_drawn_client(controller, config);
-        this->callback = controller;
+        this->set_callback(controller);
 
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
@@ -1485,7 +1482,7 @@ private:
 //         } else {
         this->qtRDPKeymap.keyEvent(0, key, text);
         if (this->qtRDPKeymap.scanCode != 0) {
-            this->callback->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+            this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
         }
 //         }
     }
@@ -1496,12 +1493,12 @@ private:
 //         } else {
             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
             if (this->qtRDPKeymap.scanCode != 0) {
-                this->callback->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+                this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
             }
 //         }
     }
 
-    bool connexionReleased() override {
+    bool connexionReleased() {
         bool conn_res = false;
         if (this->form) {
             this->form->setCursor(Qt::WaitCursor);
@@ -1515,7 +1512,7 @@ private:
 
 
             if (!this->config->target_IP.empty()){
-                conn_res = this->callback->connect();
+                conn_res = this->connect();
             }
             this->form->setCursor(Qt::ArrowCursor);
         }
