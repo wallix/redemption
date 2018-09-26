@@ -32,10 +32,12 @@
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;
-    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io, config);
+    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &callback, &snd_io, config);
 
 
     StaticOutStream<512> out_ServerAudioFormatsandVersion;
@@ -59,9 +61,9 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
 
     manager.receive(chunk_ServerAudioFormatsandVersion);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 2);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
     InStream stream_formats(pdu_data->data, pdu_data->size);
     rdpsnd::RDPSNDPDUHeader header_formats;
@@ -83,7 +85,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     RED_CHECK_EQUAL(af_received.wFormatTag, 0x0001);
 
 
-    pdu_data = client.stream();
+    pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
     InStream stream_qualitymode(pdu_data->data, pdu_data->size);
     rdpsnd::RDPSNDPDUHeader header_qualitymode;
@@ -104,9 +106,9 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     InStream chunk_TrainingPDU(out_TrainingPDU.get_data(), out_TrainingPDU.get_offset());
 
     manager.receive(chunk_TrainingPDU);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 3);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
 
-    pdu_data = client.stream();
+    pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
     InStream stream_clientTraining(pdu_data->data, pdu_data->size);
     rdpsnd::RDPSNDPDUHeader header_clientTraining;
@@ -122,10 +124,12 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;
-    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &client, &snd_io, config);
+    ClientChannelRDPSNDManager manager(to_verbose_flags(0x0), &callback, &snd_io, config);
 
     StaticOutStream<512> out_WaveInfoPDU;
     rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVE, 12);
@@ -141,9 +145,9 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     InStream chunk_WavePDU(out_WavePDU.get_data(), out_WavePDU.get_offset());
     manager.receive(chunk_WavePDU);
 
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
     InStream stream_waveconfirm(pdu_data->data, pdu_data->size);
     rdpsnd::RDPSNDPDUHeader header_waveConfirm;

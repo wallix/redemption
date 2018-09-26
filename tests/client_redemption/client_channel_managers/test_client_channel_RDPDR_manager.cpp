@@ -44,11 +44,13 @@ namespace rdpdr
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     StaticOutStream<512> out_serverAnnounce;
     rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
@@ -61,11 +63,11 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(manager.protocol_minor_version, 0);
 
     manager.receive(chunk_serverAnnounce);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 2);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 2);
 
     RED_CHECK_EQUAL(manager.protocol_minor_version, 0x000c);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 12);
     InStream stream_clientIDConfirm(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
@@ -74,7 +76,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint16_le(), 0x000c);
     RED_CHECK_EQUAL(stream_clientIDConfirm.in_uint32_le(), 0x00000002);
 
-    pdu_data = client.stream();
+    pdu_data = mod.stream();
     InStream stream_clientName(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::RDPDR_CTYP_CORE);
     RED_CHECK_EQUAL(stream_clientName.in_uint16_le(), rdpdr::PAKID_CORE_CLIENT_NAME);
@@ -141,9 +143,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 
     manager.receive(chunk_serverClientIDConfirm);
 
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 4);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
 
-    pdu_data = client.stream();
+    pdu_data = mod.stream();
     InStream stream_clientCapability(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(pdu_data->size, 84);
     rdpdr::SharedHeader header_clientCapability;
@@ -185,7 +187,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     RED_CHECK_EQUAL(stream_clientCapability.in_uint16_le(), 8);
     RED_CHECK_EQUAL(stream_clientCapability.in_uint32_le(), rdpdr::GENERAL_CAPABILITY_VERSION_01);
 
-    pdu_data = client.stream();
+    pdu_data = mod.stream();
     InStream stream_deviceListAnnounce(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceListAnnounce;
     header_deviceListAnnounce.receive(stream_deviceListAnnounce);
@@ -196,11 +198,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -229,9 +233,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 
     manager.receive(chunk_create);
 
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 21);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -251,11 +255,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -271,9 +277,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 21);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -291,11 +297,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
 
@@ -316,9 +324,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 56);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -344,11 +352,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
 
@@ -369,9 +379,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 42);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -397,11 +407,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
 
@@ -422,9 +434,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 28);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -447,11 +459,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
 
@@ -469,9 +483,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 20);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -487,11 +501,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
     fakeIODisk.fil_size = 4;
@@ -513,9 +529,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 24);
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
@@ -534,11 +550,13 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &client, &fakeIODisk, config);
+    ClientChannelRDPDRManager manager(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
 
     manager.paths.emplace(1, "test");
 
@@ -555,9 +573,9 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
     manager.receive(chunk);
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     InStream stream_deviceIOCompletion(pdu_data->data, pdu_data->size);
     rdpdr::SharedHeader header_deviceIOCompletion;
     header_deviceIOCompletion.receive(stream_deviceIOCompletion);

@@ -49,6 +49,19 @@ public:
     int index_in = 0;
     int index_out = 0;
 
+    size_t get_total_stream_produced() {
+        return this->index_in;
+    }
+
+    FakeRDPChannelsMod::PDUData * stream() {
+        if (this->index_out < 10) {
+            this->index_out++;
+            return &(this->last_pdu[this->index_out-1]);
+        }
+
+        return nullptr;
+    }
+
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream & chunk, std::size_t length, uint32_t flags) override {
         (void) front_channel_name;

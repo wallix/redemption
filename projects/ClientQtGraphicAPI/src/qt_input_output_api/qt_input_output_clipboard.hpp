@@ -103,14 +103,6 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void start_to_listen() override {
-
-    }
-
-    void stop_to_listen() {
-
-    }
-
     void set_client(ClientRedemptionAPI * client, std::string & path) {
         this->client = client;
         this->tmp_path = path;

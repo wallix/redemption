@@ -32,11 +32,13 @@
 
 RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 {
-    FakeClient client;
+    FakeRDPChannelsMod mod;
+    ClientCallback callback(nullptr);
+    callback.set_mod(&mod);
     FakeClientOutputGraphic graph_io;
     FakeClientInputMouseKeyboard input_io;
 
-    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
+    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &callback, &graph_io, &input_io);
 
     RDPRemoteAppConfig config;
 
@@ -61,11 +63,11 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     InStream chunk_sspu(out_sspu.get_data(), out_sspu.get_offset());
     manager.receive(chunk_sspu);
 
-    RED_CHECK_EQUAL(client.get_total_stream_produced(), 10);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 10);
 
     RED_CHECK_EQUAL(manager.build_number, 1);
 
-    FakeRDPChannelsMod::PDUData * pdu_data = client.stream();
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
 
 
@@ -74,10 +76,9 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 
 // RED_AUTO_TEST_CASE(TestRemoteAppChannel)
 // {
-//     SessionReactor session_reactor;
-//     char const * argv[2] = {"1234", "5678"};
-//     int argc = 2;
-//     FakeClient client(session_reactor, argv, argc, to_verbose_flags(0x0));
+//     FakeRDPChannelsMod mod;
+//     ClientCallback callback(nullptr);
+//     callback.set_mod(&mod);
 //     FakeClientOutputGraphic graph_io;
 //     FakeClientInputMouseKeyboard input_io;
 //
