@@ -966,6 +966,11 @@ private Q_SLOTS:
         this->config->writeCustomKeyConfig();
         this->config->writeClientInfo();
 
+        this->config->port = this->get_portField();
+        this->config->target_IP = this->get_IPField();
+        this->config->user_name = this->get_userNameField();
+        this->config->user_password = this->get_PWDField();
+
         if (this->controllers->connect()) {
             this->config->writeAccoundData(
                 this->get_IPField(),
