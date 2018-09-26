@@ -319,6 +319,8 @@ lib libiametrics :
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/utils/fileutils.o
   <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libscytale :
@@ -2406,6 +2408,7 @@ test-run tests/lib/test_iametrics :
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
+  <library>src/core/font.o
   <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
   <library>tests/includes/test_only/working_directory.o
@@ -3668,6 +3671,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>boost_stacktrace
   <library>crypto
   <library>png
+  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3677,7 +3681,9 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/mod/internal/client_execute.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>z
@@ -4366,6 +4372,10 @@ test-run tests/utils/test_difftimeval :
   $(REDEMPTION_TEST_PATH)/utils/test_difftimeval.cpp
 :
   <covfile>src/utils/difftimeval.hpp
+;
+test-run tests/utils/test_divers :
+  $(REDEMPTION_TEST_PATH)/utils/test_divers.cpp
+:
 ;
 test-run tests/utils/test_drawable :
   $(REDEMPTION_TEST_PATH)/utils/test_drawable.cpp
@@ -5277,6 +5287,7 @@ alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_difftimeval : tests/utils/test_difftimeval ;
 alias test_difftimeval.coverage : tests/utils/test_difftimeval.coverage ;
+alias test_divers : tests/utils/test_divers ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse : tests/utils/test_ellipse ;
@@ -5730,6 +5741,7 @@ alias tests/utils.norec :
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
   tests/utils/test_difftimeval
+  tests/utils/test_divers
   tests/utils/test_drawable
   tests/utils/test_ellipse
   tests/utils/test_fileutils
