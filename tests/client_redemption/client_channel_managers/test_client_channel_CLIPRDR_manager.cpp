@@ -28,6 +28,9 @@
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 
 
+
+
+
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |

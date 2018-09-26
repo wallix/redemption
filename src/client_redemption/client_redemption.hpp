@@ -70,9 +70,10 @@
 class ClientRedemption : public ClientRedemptionController
 {
 
-private:
+public:
     ClientRedemptionConfig config;
 
+private:
     CryptoContext     cctx;
 
     std::unique_ptr<Transport> socket;
@@ -1262,28 +1263,17 @@ public:
 
     void callback(bool is_timeout) override {
 
-//          LOG(LOG_INFO, "Socket Event callback");
-//         if (this->_recv_disconnect_ultimatum) {
-//             if (this->impl_graphic) {
-//                 this->impl_graphic->dropScreen();
-//             }
-//             std::string labelErrorMsg("<font color='Red'>Disconnected by server</font>");
-//             this->disconnect(labelErrorMsg, false);
-//             this->capture = nullptr;
-//             this->_recv_disconnect_ultimatum = false;
-//         }
-
         if (this->mod != nullptr) {
             try {
                 auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
                 if (is_timeout) {
-                    session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+                    this->session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
                 } else {
                     auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
                         return true /*this->socket->get_fd() == fd*/;
                     };
-                    session_reactor.execute_events(is_mod_fd);
-                    session_reactor.execute_graphics(is_mod_fd, get_gd());
+                    this->session_reactor.execute_events(is_mod_fd);
+                    this->session_reactor.execute_graphics(is_mod_fd, get_gd());
                 }
             } catch (const Error & e) {
                 if (this->impl_graphic) {

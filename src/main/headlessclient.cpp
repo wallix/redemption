@@ -30,7 +30,7 @@
 #include "client_redemption/client_redemption.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 
-#include "client_redemption/client_headless_socket.hpp"
+#include "client_redemption/client_input_output_api/client_headless_socket.hpp"
 
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 

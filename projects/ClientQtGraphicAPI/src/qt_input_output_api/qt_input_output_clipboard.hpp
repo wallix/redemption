@@ -30,7 +30,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/fileutils.hpp"
 
-#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 
 #include <QtCore/QMimeData>

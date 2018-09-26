@@ -30,7 +30,7 @@
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
-#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 
 
 #include "core/RDP/clipboard.hpp"

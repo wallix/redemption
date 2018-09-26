@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "client_redemption/client_redemption_config.hpp"
+#include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_redemption_controller.hpp"
 #include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_api.hpp"

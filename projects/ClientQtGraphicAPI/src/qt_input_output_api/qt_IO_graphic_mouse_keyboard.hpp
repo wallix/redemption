@@ -97,6 +97,16 @@ public:
     {}
 
 
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
+    virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
+    virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedWindow & ) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
+
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //-----------------------------
