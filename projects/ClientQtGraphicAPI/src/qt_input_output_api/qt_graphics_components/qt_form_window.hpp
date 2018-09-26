@@ -1028,7 +1028,7 @@ public:
         , tabs(this)
         , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this)
         , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this)
-        , replay_tab(config, controllers, config->icons_movie_data, this)
+        , replay_tab(config, controllers, config->get_icon_movie_data(), this)
         , is_option_open(false)
         , is_closing(false)
     {

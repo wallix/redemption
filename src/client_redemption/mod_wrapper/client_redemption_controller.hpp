@@ -26,21 +26,22 @@
 
 #include "keyboard/keymap2.hpp"
 
-
 #include "client_redemption/client_redemption_api.hpp"
+// # include "client_redemption/client_config/client_redemption_config.hpp
 
 #endif
 
 
 
-class ClientRedemptionController : public ClientRedemptionAPI
+class ClientModController /*: public ClientRedemptionAPI*/
 {
 private:
     Keymap2           keymap;
     StaticOutStream<256> decoded_data;    // currently not initialised
     int                  _timer;
 
-
+    mod_api            * mod = nullptr;
+    ClientRedemptionAPI * client;
 
 public:
     struct MouseData {
@@ -48,15 +49,78 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    ClientRedemptionController(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
-      : ClientRedemptionAPI(/*session_reactor, argv, argc, verbose*/)
-      , _timer(0)
+    ClientModController(ClientRedemptionAPI * client)
+//       : ClientRedemptionAPI(/*session_reactor, argv, argc, verbose*/)
+  :  _timer(0)
+  , client(client)
     {
         //this->keymap.init_layout(LICD);
     }
 
+    void replay(const std::string & movie_name, const std::string & movie_dir) {
+        this->client->replay(movie_name, movie_dir);
+    }
+
+    timeval reload_replay_mod(int begin, timeval now_stop) {
+        return this->client->reload_replay_mod(begin, now_stop);
+    }
+
+    void replay_set_sync() {
+        this->client->replay_set_sync();
+    }
+
+    bool is_replay_on() {
+        return this->client->is_replay_on();
+    }
+
+    bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval time_1, timeval time_2) {
+        return this->load_replay_mod(movie_dir, movie_name, time_1, time_2);
+    }
+
+    void delete_replay_mod() {
+        this->delete_replay_mod();
+    }
+
+    void closeFromScreen() {
+        this->client->closeFromScreen();
+    }
+
+    time_t get_real_time_movie_begin() {
+        return this->client->get_real_time_movie_begin();
+    }
+
+    void replay_set_pause(timeval time) {
+        this->client->replay_set_pause(time);
+    }
+
+    time_t get_movie_time_length(char const * movie_path) {
+        return this->client->get_movie_time_length(movie_path);
+    }
+
+    char const * get_mwrm_filename() {
+        return this->client->get_mwrm_filename();
+    }
+
+//     std::vector<IconMovieData> get_icon_movie_data() {
+//         this->client->get_icon_movie_data();
+//     }
+
+
+
+    void set_mod(mod_api * mod) {
+        this->mod = mod;
+    }
+
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
+    }
+
+    bool connect() {
+        return this->client->connect();
+    }
+
+    void disconnexionReleased() {
+        this->client->disconnexionReleased();
     }
 
     void refreshPressed() {
