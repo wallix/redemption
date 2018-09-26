@@ -28,6 +28,7 @@
 #include "utils/log.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
+#include "utils/fileutils.hpp"
 #include "system/linux/system/ssl_sha256.hpp"
 
 #include <vector>
@@ -174,7 +175,7 @@ public:
     , next_log_time{to_timeval(this->log_delay+now)}
     {
         if (!access(this->path.c_str(), 0)) {
-            mkdir(path.c_str(), ACCESSPERMS);
+            recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
         }
 
         if (activate) {
@@ -220,6 +221,62 @@ public:
 
         this->rotate(std::chrono::seconds(now.tv_sec));
 
+        this->write_event_to_logmetrics(now);
+    }
+
+    void disconnect()
+    {
+        if (!this->active_) {
+            return ;
+        }
+
+        using namespace std::literals::chrono_literals;
+
+        this->rotate(std::chrono::seconds(this->next_log_time.tv_sec));
+
+        this->write_event_to_logmetrics(this->next_log_time);
+
+        auto text_date = (this->current_file_date % 24h == 0s)
+          ? text_gmdate(this->current_file_date)
+          : filename_gmdatetime(this->current_file_date);
+
+        this->write_event_to_logindex(
+            text_date,
+            std::chrono::seconds(this->next_log_time.tv_sec),
+            " disconnection "_av);
+    }
+
+    void new_file(std::chrono::seconds now)
+    {
+        using namespace std::literals::chrono_literals;
+
+        auto text_date = (now % 24h == 0s) ? text_gmdate(now) : filename_gmdatetime(now);
+
+        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path),
+            "%s/%s_metrics-%s-%s.logmetrics",
+            this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
+
+        this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (!this->fd.is_open()) {
+            int const errnum = errno;
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_file_path, strerror(errnum));
+        }
+
+        this->write_event_to_logindex(text_date, this->connection_time, " connection "_av);
+    }
+
+    void rotate(std::chrono::seconds now)
+    {
+        auto next_file_date = now - now % this->file_interval;
+        if (this->current_file_date != next_file_date) {
+            this->current_file_date = next_file_date;
+            this->new_file(next_file_date);
+        }
+    }
+
+private:
+    void write_event_to_logmetrics(timeval const& now)
+    {
         auto text_datetime = text_gmdatetime(std::chrono::seconds(now.tv_sec));
 
         char sentence[4096];
@@ -244,55 +301,6 @@ public:
         }
     }
 
-    void disconnect()
-    {
-        if (!this->active_) {
-            return ;
-        }
-
-        using namespace std::literals::chrono_literals;
-
-        this->rotate(std::chrono::seconds(this->next_log_time.tv_sec));
-
-        auto text_date = (this->current_file_date % 24h == 0s)
-          ? text_gmdate(this->current_file_date)
-          : filename_gmdatetime(this->current_file_date);
-
-        this->write_event_to_logindex(
-            text_date,
-            std::chrono::seconds(this->next_log_time.tv_sec),
-            " disconnection "_av);
-    }
-
-    void new_file(std::chrono::seconds now)
-    {
-        using namespace std::literals::chrono_literals;
-
-        auto text_date = (now % 24h == 0s) ? text_gmdate(now) : filename_gmdatetime(now);
-
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path),
-            "%s%s_metrics-%s-%s.logmetrics",
-            this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
-
-        this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        if (!this->fd.is_open()) {
-            int const errnum = errno;
-            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_file_path, strerror(errnum));
-        }
-
-        this->write_event_to_logindex(text_date, this->connection_time, " connection "_av);
-    }
-
-    void rotate(std::chrono::seconds now)
-    {
-        auto next_file_date = now - now % this->file_interval;
-        if (this->current_file_date != next_file_date) {
-            this->current_file_date = next_file_date;
-            this->new_file(next_file_date);
-        }
-    }
-
-private:
     void write_event_to_logindex(
         array_view_const_char date_for_file,
         std::chrono::seconds event_time,
@@ -300,7 +308,7 @@ private:
     {
         char index_file_path[4096];
         ::snprintf(index_file_path, sizeof(index_file_path),
-            "%s%s_metrics-%s-%s.logindex",
+            "%s/%s_metrics-%s-%s.logindex",
             this->path.c_str(),
             this->protocol_name.c_str(),
             this->version.c_str(),

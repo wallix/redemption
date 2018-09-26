@@ -165,7 +165,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 
     std::string expected_disconnected_index("2018-08-02 12:08:06 disconnection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
+    std::string expected_log_metrics1("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
+
+    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics1);
     RED_CHECK_EQUAL(get_file_contents(wd[logindex1]), expected_log_index+expected_disconnected_index);
 
     RED_CHECK_WORKSPACE(wd);
@@ -220,4 +222,3 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
 
     RED_CHECK_WORKSPACE(wd);
 }
-
