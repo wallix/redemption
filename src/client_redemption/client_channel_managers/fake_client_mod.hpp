@@ -212,6 +212,15 @@ public:
     void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
+
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
+    virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
+    virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedWindow & ) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
 };
 
 class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
