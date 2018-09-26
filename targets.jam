@@ -4373,10 +4373,6 @@ test-run tests/utils/test_difftimeval :
 :
   <covfile>src/utils/difftimeval.hpp
 ;
-test-run tests/utils/test_divers :
-  $(REDEMPTION_TEST_PATH)/utils/test_divers.cpp
-:
-;
 test-run tests/utils/test_drawable :
   $(REDEMPTION_TEST_PATH)/utils/test_drawable.cpp
 :
@@ -5287,7 +5283,6 @@ alias test_diffiehellman : tests/utils/test_diffiehellman ;
 alias test_diffiehellman.coverage : tests/utils/test_diffiehellman.coverage ;
 alias test_difftimeval : tests/utils/test_difftimeval ;
 alias test_difftimeval.coverage : tests/utils/test_difftimeval.coverage ;
-alias test_divers : tests/utils/test_divers ;
 alias test_drawable : tests/utils/test_drawable ;
 alias test_drawable.coverage : tests/utils/test_drawable.coverage ;
 alias test_ellipse : tests/utils/test_ellipse ;
@@ -5741,7 +5736,6 @@ alias tests/utils.norec :
   tests/utils/test_d3des
   tests/utils/test_diffiehellman
   tests/utils/test_difftimeval
-  tests/utils/test_divers
   tests/utils/test_drawable
   tests/utils/test_ellipse
   tests/utils/test_fileutils
