@@ -250,6 +250,8 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
+        this->set_icon_movie_data();
+
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
             this->impl_clipboard->set_path(this->config.CB_TEMP_DIR);
@@ -420,6 +422,7 @@ public:
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
 
+
         if (this->mod != nullptr) {
             if (!pipe_broken) {
                 this->mod->disconnect(this->timeSystem.get_time().tv_sec);
@@ -456,6 +459,7 @@ public:
                 this->impl_graphic->set_ErrorMsg(error);
             }
         }
+        this->set_icon_movie_data();
         if (this->impl_mouse_keyboard) {
             this->impl_mouse_keyboard->init_form();
         }
@@ -1106,6 +1110,55 @@ public:
     char const * get_mwrm_filename() override {
         this->config._movie_full_path = this->config._movie_dir + this->config._movie_name;
         return this->config._movie_full_path.c_str();
+    }
+
+    void set_icon_movie_data() {
+
+        this->config.icons_movie_data.clear();
+
+        DIR *dir;
+        struct dirent *ent;
+        std::string extension(".mwrm");
+
+        if ((dir = opendir (this->config.REPLAY_DIR.c_str())) != nullptr) {
+
+            try {
+                while ((ent = readdir (dir)) != nullptr) {
+
+                    std::string current_name = std::string (ent->d_name);
+
+                    if (current_name.length() > 5) {
+
+                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
+                        if (end_string == extension) {
+
+                            std::string file_path = this->config.REPLAY_DIR + "/" + current_name;
+
+                            std::fstream ofile(file_path.c_str(), std::ios::in);
+                            if(ofile) {
+                                std::string file_name(current_name.substr(0, current_name.length()-5));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+                                long int movie_len = this->get_movie_time_length(file_path.c_str());
+
+                                std::getline(ofile, file_version);
+                                std::getline(ofile, file_resolution);
+                                std::getline(ofile, file_checksum);
+
+                                this->config.icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
+
+                            } else {
+                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
+                            }
+                        }
+                    }
+                }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
     }
 
     time_t get_movie_time_length(char const * mwrm_filename) override  {
