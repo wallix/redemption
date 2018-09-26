@@ -246,7 +246,7 @@ public:
     std::vector<AccountData> _accountData;
     int  _accountNB = 0;
     bool _save_password_account = false;
-    int  _last_target_index = 0;
+    size_t  _last_target_index = 0;
 
     int current_user_profil = 0;
 
@@ -1151,7 +1151,7 @@ public:
             }
 
             if (this->_accountData.size() > 0 && this->_last_target_index < this->_accountData.size()) {
-            
+
                 this->target_IP = this->_accountData[this->_last_target_index].IP;
                 this->user_name = this->_accountData[this->_last_target_index].name;
                 this->user_password = this->_accountData[this->_last_target_index].pwd;
