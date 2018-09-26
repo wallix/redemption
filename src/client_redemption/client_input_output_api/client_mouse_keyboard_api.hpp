@@ -23,7 +23,7 @@
 #include "utils/log.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_redemption_controller.hpp"
+#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
 
 
 
@@ -32,14 +32,14 @@ class ClientInputMouseKeyboardAPI : public ClientIO {
 
 
 public:
-    ClientRedemptionController * callback = nullptr;
+    ClientModController * callback = nullptr;
 
     ClientInputMouseKeyboardAPI() = default;
 
     virtual ~ClientInputMouseKeyboardAPI() = default;
 
 
-    void set_callback(ClientRedemptionController * callback) {
+    void set_callback(ClientModController * callback) {
         this->callback = callback;
     }
 //     virtual ClientRedemptionAPI * get_client() {
@@ -51,6 +51,10 @@ public:
     virtual void init_form() = 0;
 
     virtual void pre_load_movie() {}
+
+    void replay(const std::string & movie_name, const std::string & movie_dir) {
+        this->callback->replay(movie_name, movie_dir);
+    }
 
 
     // CONTROLLER

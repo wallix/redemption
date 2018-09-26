@@ -35,6 +35,7 @@
 
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/mod_wrapper/client_redemption_controller.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -113,7 +114,7 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    void set_drawn_client(ClientRedemptionController * controller, ClientRedemptionConfig * config) override
+    void set_drawn_client(ClientModController * controller, ClientRedemptionConfig * config) override
     {
         ClientOutputGraphicAPI::set_drawn_client(controller, config);
         this->callback = controller;
