@@ -226,3 +226,14 @@ The main drawback of bjam is the smaller user base.
 But keeping in mind the complexity of make (or worse autotools + make), bjam is
 a great help. We also used to have an alternative cmake build system, but it was
 more complex than bjam and not maintained, so was removed.
+
+Q - How to add configuration variables in rdpproxy.ini ?
+--------------------------------------------------------
+
+Just edit config_spec.hpp (./projects/redemption_configs/configs_specs/configs/specs/config_spec.hpp).
+
+The necessary changes should be simple using the surrounding code as exemple.
+
+Then enter directory `projects/redemption_configs` and type `bjam`
+the needed files will be generated.
+

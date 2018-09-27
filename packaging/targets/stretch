@@ -1,7 +1,8 @@
 PREFIX=/usr/local
 ETC_PREFIX=/etc/rdpproxy
 CERT_PREFIX=/etc/rdpproxy/cert
-RECORD_PATH=/var/rdpproxy/recorded
+METRICS_PATH=/var/rdpproxy/recorded/metrics
+RECORD_PATH=/var/rdpproxy/recorded/rdp
 RECORD_TMP_PATH=/var/rdpproxy/tmp
 HASH_PATH=/var/rdpproxy/hash
 SPEC_PATH=/var/rdpproxy

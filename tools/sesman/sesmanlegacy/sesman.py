@@ -32,7 +32,8 @@ import socket
 from socket     import gethostname
 
 #TODO : remove these hardcoded strings
-RECORD_PATH = u'/var/wab/recorded/rdp/'
+METRICS_PATH = u'/var/wab/recorded/metrics'
+RECORD_PATH = u'/var/wab/recorded/rdp'
 
 from sesmanconf import TR, SESMANCONF
 import engine

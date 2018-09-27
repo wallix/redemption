@@ -22,6 +22,7 @@
 #include <cassert>
 
 #ifdef IN_IDE_PARSER
+# define METRICS_PATH "/var/rdpproxy/recorded/metrics"
 # define RECORD_PATH "/var/rdpproxy/recorded"
 # define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 # define VIDEO_PATH "/tmp"
@@ -48,6 +49,7 @@ char const * app_path(AppPath k) noexcept
 {
     switch (k)
     {
+        case AppPath::Metrics: return METRICS_PATH;
         case AppPath::Record: return RECORD_PATH;
         case AppPath::RecordTmp: return RECORD_TMP_PATH;
         case AppPath::Video: return VIDEO_PATH;
@@ -72,7 +74,6 @@ char const * app_path(AppPath k) noexcept
         case AppPath::LockDir: return PID_PATH "/redemption";
         case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE;
         case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME;
-        case AppPath::Record_Metrics: return RECORD_PATH "/metrics/";
     }
 
     assert(false);

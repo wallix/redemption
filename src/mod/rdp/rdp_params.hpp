@@ -45,11 +45,11 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::globals::auth_user,                         vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                              vcfg::accessmode::get>,
     vcfg::var<cfg::globals::target_device,                     vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::log_dir_path,                  vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::sign_key,                      vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::activate_log_metrics,          vcfg::accessmode::get>,
-    vcfg::var<cfg::rdp_metrics::log_interval,                  vcfg::accessmode::get>
+    vcfg::var<cfg::metrics::log_dir_path,                  vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::sign_key,                      vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::activate_log_metrics,          vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>
 >;
 
 struct ModRDPParams {

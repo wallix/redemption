@@ -831,21 +831,21 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
-        , metrics( vars.get<cfg::rdp_metrics::activate_log_metrics>()
-                 , vars.get<cfg::rdp_metrics::log_dir_path>().to_string()
+        , metrics( vars.get<cfg::metrics::activate_log_metrics>()
+                 , vars.get<cfg::metrics::log_dir_path>().to_string()
                  , vars.get<cfg::context::session_id>()
                  , hmac_user(vars.get<cfg::globals::auth_user>(),
-                             vars.get<cfg::rdp_metrics::sign_key>())
+                             vars.get<cfg::metrics::sign_key>())
                  , hmac_account({mod_rdp_params.target_user, strlen(mod_rdp_params.target_user)},
-                                vars.get<cfg::rdp_metrics::sign_key>())
+                                vars.get<cfg::metrics::sign_key>())
                  , hmac_device_service(vars.get<cfg::globals::target_device>(),
                                        vars.get<cfg::context::target_service>(),
-                                       vars.get<cfg::rdp_metrics::sign_key>())
+                                       vars.get<cfg::metrics::sign_key>())
                  , hmac_client_info(vars.get<cfg::globals::host>(),
-                                    info, vars.get<cfg::rdp_metrics::sign_key>())
+                                    info, vars.get<cfg::metrics::sign_key>())
                  , std::chrono::seconds(timeobj.get_time().tv_sec)
-                 , vars.get<cfg::rdp_metrics::log_file_turnover_interval>()
-                 , vars.get<cfg::rdp_metrics::log_interval>())
+                 , vars.get<cfg::metrics::log_file_turnover_interval>()
+                 , vars.get<cfg::metrics::log_interval>())
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");

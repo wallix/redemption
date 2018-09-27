@@ -553,13 +553,13 @@
 "#_advanced\n"
 "#experimental_fix_too_long_cookie = 1\n\n"
 
-"[rdp_metrics]\n\n"
+"[metrics]\n\n"
 
 "#_advanced\n"
 "#activate_log_metrics = 0\n\n"
 
 "#_advanced\n"
-"#log_dir_path = " << (app_path(AppPath::Record_Metrics)) << "\n\n"
+"#log_dir_path = " << (app_path(AppPath::Metrics)) << "\n\n"
 
 "# (is in second)\n"
 "#_advanced\n"

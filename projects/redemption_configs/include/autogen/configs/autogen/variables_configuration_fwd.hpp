@@ -166,7 +166,7 @@ namespace cfg {
         struct experimental_fix_too_long_cookie;
     };
 
-    struct rdp_metrics {
+    struct metrics {
         struct activate_log_metrics;
         struct log_dir_path;
         struct log_interval;

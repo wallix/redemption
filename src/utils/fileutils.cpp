@@ -278,6 +278,7 @@ static int _internal_make_directory(const char *directory, mode_t mode, const in
 int recursive_create_directory(const char * directory, mode_t mode, const int groupid)
 {
     if (!directory) {
+        LOG(LOG_ERR, "Call to recursive create directory without directory path (null)");
         return -1;
     }
 

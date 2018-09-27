@@ -174,7 +174,9 @@ public:
     , log_delay(log_delay)
     , next_log_time{to_timeval(this->log_delay+now)}
     {
+        LOG(LOG_INFO, "Metrics recording is enabled (%s)", this->path.c_str());
         if (!access(this->path.c_str(), 0)) {
+            LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
             recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
         }
 

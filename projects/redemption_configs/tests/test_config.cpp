@@ -290,6 +290,9 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::context::authentication_challenge>());
+    
+    RED_CHECK_EQUAL(to_string_path(METRICS_PATH),      ini.get<cfg::metrics::log_dir_path>());
+
 }
 
 

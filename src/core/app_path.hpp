@@ -24,6 +24,7 @@
 
 enum class AppPath
 {
+    Metrics, 
     Record,
     RecordTmp,
     Video,
@@ -48,7 +49,6 @@ enum class AppPath
     LockDir,
     LockFile,
     DefaultFontFile,
-    Record_Metrics, 
 };
 char const * app_path(AppPath) noexcept;
 std::string app_path_s(AppPath);
