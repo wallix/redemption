@@ -20,35 +20,23 @@
 
 #pragma once
 
-
 #ifndef Q_MOC_RUN
-
-// #include <fstream>
-// #include <iostream>
-// #include <sstream>
-// #include <cstdio>
-// #include <dirent.h>
-// #include <unistd.h>
-
 
 #include "utils/log.hpp"
 #include "mod/rdp/rdp_log.hpp"
 
 #include "configs/config.hpp"
 
-// #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
 
-
 #include "mod/internal/replay_mod.hpp"
 #include "transport/replay_transport.hpp"
 
 #endif
-
 
 
 class ClientRedemptionAPI : public FrontAPI
@@ -93,8 +81,6 @@ public:
 };
 
 
-
-
 class ClientIO
 {
 public:
@@ -105,19 +91,3 @@ public:
     }
 };
 
-
-
-// #include "core/channel_list.hpp"
-//
-//
-// class ClientChannelManager
-// {
-// public:
-//     ClientRedemptionAPI * client;
-//
-//     ClientChannelManager(ClientRedemptionAPI * client)
-//       : client(client) {}
-//
-//
-//
-// };
