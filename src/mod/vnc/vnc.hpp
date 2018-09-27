@@ -3359,6 +3359,15 @@ private:
         }
     } // clipboard_send_to_vnc
 
+
+    void log_metrics() override {
+        if (this->metrics.active()) {
+            timeval now = tvtime();
+            this->metrics.log(now);
+        }
+    }
+
+
     // Front calls this member function when it became up and running.
 public:
     void rdp_input_up_and_running() override {
