@@ -237,20 +237,20 @@ inline static const char * get_format_short_name(uint16_t formatID) {
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
 //  bytes, of the data which follows the Clipboard PDU Header.
 
-struct RecvFactory {
-    uint16_t msgType;
+// struct RecvFactory {
+//     uint16_t msgType;
 
-    explicit RecvFactory(InStream & stream) {
-        const unsigned expected = 2;    /* msgType(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%zu"
-               , expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+//     explicit RecvFactory(InStream & stream) {
+//         const unsigned expected = 2;    /* msgType(2) */
+//         if (!stream.in_check_rem(expected)) {
+//             LOG( LOG_INFO, "RDPECLIP::RecvFactory truncated msgType, need=%u remains=%zu"
+//                , expected, stream.in_remain());
+//             throw Error(ERR_RDP_DATA_TRUNCATED);
+//         }
 
-        this->msgType = stream.in_uint16_le();
-    }   // RecvFactory(InStream & stream)
-};
+//         this->msgType = stream.in_uint16_le();
+//     }   // RecvFactory(InStream & stream)
+// };
 
 
 struct RecvPredictor {
@@ -270,25 +270,27 @@ struct RecvPredictor {
 
 
 class CliprdrHeader {
-
     uint16_t msgType_{0};
     uint16_t msgFlags_{0};
-public:
     uint32_t dataLen_{0};
 
 public:
     uint16_t msgType()  const { return this->msgType_; }
+
     uint16_t msgFlags() const { return this->msgFlags_; }
+
     uint32_t dataLen()  const { return this->dataLen_; }
 
+    void dataLen(uint32_t dataLen) {
+        this->dataLen_ = dataLen;
+    }
 
     CliprdrHeader() = default; // CliprdrHeader()
 
     CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
         : msgType_(msgType)
         , msgFlags_(msgFlags)
-        , dataLen_(dataLen) {
-    }   // CliprdrHeader(uint16_t msgType, uint16_t msgFlags, uint32_t dataLen)
+        , dataLen_(dataLen) {}
 
     CliprdrHeader(CliprdrHeader const &) = delete;
     CliprdrHeader& operator=(CliprdrHeader const &) = delete;

@@ -428,23 +428,23 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long0(48026,
                                                            name1.c_str(),
                                                            name1.size());
-    header.dataLen_ += format_list_pdu_long0.formatDataNameUTF16Len + 4;
+    header.dataLen(header.dataLen() + format_list_pdu_long0.formatDataNameUTF16Len + 4);
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long1(48025,
                                                            name2.c_str(),
                                                            name2.size());
-    header.dataLen_ += format_list_pdu_long1.formatDataNameUTF16Len + 4;
+    header.dataLen(header.dataLen() + format_list_pdu_long1.formatDataNameUTF16Len + 4);
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long2(RDPECLIP::CF_UNICODETEXT,
                                                            name3.c_str(),
                                                            name3.size());
-    header.dataLen_ += format_list_pdu_long2.formatDataNameUTF16Len + 4;
+    header.dataLen(header.dataLen() + format_list_pdu_long2.formatDataNameUTF16Len + 4);
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long3(RDPECLIP::CF_TEXT,
                                                            name3.c_str(),
                                                            name3.size());
-    header.dataLen_ += format_list_pdu_long3.formatDataNameUTF16Len + 4;
+    header.dataLen(header.dataLen() + format_list_pdu_long3.formatDataNameUTF16Len + 4);
     RDPECLIP::FormatListPDU_LongName format_list_pdu_long4(RDPECLIP::CF_METAFILEPICT,
                                                            name3.c_str(),
                                                            name3.size());
-    header.dataLen_ += format_list_pdu_long4.formatDataNameUTF16Len + 4;
+    header.dataLen(header.dataLen() + format_list_pdu_long4.formatDataNameUTF16Len + 4);
 
     header.emit(out_stream);
     format_list_pdu_long0.emit(out_stream);
@@ -462,7 +462,6 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
 //
 //     hexdump(out_stream.get_data(), out_stream.get_offset(), 16);
 
-
     const char exp_data[] =
         "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.
         "\x6c\x00\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00" //l.e.C.o.n.t.e.n.
@@ -472,14 +471,9 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
         "\x57\x00\x00\x00\x0d\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00" //W...............
         "\x03\x00\x00\x00\x00\x00";
 
-
-
-    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
-    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
-
-    RED_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_EQUAL(out_stream.get_offset(), sizeof(exp_data) - 1);
+    RED_CHECK_EQUAL(::memcmp(out_stream.get_data(), exp_data, std::min(out_stream.get_offset(), sizeof(exp_data) - 1)), 0);
 }
-
 
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
