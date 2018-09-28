@@ -1672,12 +1672,14 @@ public:
                 if (bool(this->verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_monitor_ready_pdu: "
-                            "Send Clipboard Capabilities PDU.");
+                            "Send Format List PDU.");
                 }
 
                 const bool unicodetext = false;
                 RDPECLIP::FormatListPDU format_list_pdu(this->use_long_format_names(), unicodetext);
                 StaticOutStream<1024> out_stream;
+
+                format_list_pdu.emit(out_stream);
 
                 const uint32_t total_length      = out_stream.get_offset();
                 const uint32_t flags             =

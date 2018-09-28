@@ -915,9 +915,10 @@ struct FormatListPDU
     }
 
     void emit(OutStream & stream) const {
-        uint32_t trailing_data = this->_use_long_format_names?2:uint32_t(SHORT_NAME_MAX_SIZE);
-        CliprdrHeader header(CB_FORMAT_LIST, 0, 4 + trailing_data /* formatId(4) + formatName(2+textlen) */);
-        this->header.emit(stream);
+        uint32_t trailing_data = (this->_use_long_format_names ? 2 : uint32_t(SHORT_NAME_MAX_SIZE));
+        CliprdrHeader header(CB_FORMAT_LIST, (this->_unicodetext ? 0 : CB_ASCII_NAMES),
+            4 + trailing_data /* formatId(4) + formatName(2+textlen) */);
+        header.emit(stream);
         stream.out_uint32_le(this->_unicodetext ? CF_UNICODETEXT : CF_TEXT);
         // formatName(2 to 32) - at least a single Unicode null character.
         stream.out_clear_bytes(trailing_data);
