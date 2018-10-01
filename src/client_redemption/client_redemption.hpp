@@ -265,7 +265,7 @@ public:
             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
-            this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config), this);
+            this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config));
         } else {
             LOG(LOG_WARNING, "No graphic output implementation.");
         }

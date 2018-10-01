@@ -218,6 +218,10 @@ public:
         return this->client->get_mwrm_filename().c_str();
     }
 
+    void instant_play_client(std::chrono::microseconds time) {
+        this->client->instant_play_client(time);
+    }
+
 
 
     void set_mod(mod_api * mod) {

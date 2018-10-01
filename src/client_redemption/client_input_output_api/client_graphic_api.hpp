@@ -49,8 +49,7 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config, ClientRedemptionAPI * client) {
-        this->client_replay = client;
+    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
         this->config = config;
         this->controller = controller;
     }

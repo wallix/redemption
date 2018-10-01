@@ -111,10 +111,10 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config, ClientRedemptionAPI * client) override
+    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override
     {
 //         this->client_replay = client;
-        ClientOutputGraphicAPI::set_drawn_client(controller, config, client);
+        ClientOutputGraphicAPI::set_drawn_client(controller, config);
         this->set_callback(controller);
 
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
@@ -524,7 +524,7 @@ private:
 
             while (endin_frame < movie_length) {
 
-                this->client_replay->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+                this->controller->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
                 this->balises.push_back(this->cache);
                 endin_frame += ClientRedemptionConfig::BALISED_FRAME;
