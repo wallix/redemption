@@ -111,7 +111,7 @@ public:
     std::string data_text;
     std::unique_ptr<uint8_t[]>  _chunk;
     size_t offset = 0;
-    size_t size;
+    size_t size = 42;
     std::string fileName;
 
 

@@ -175,6 +175,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
 
+    // Not necessary for to set buffer size for file copy cause data append on local file
+    clip_io.resize_chunk(/*sizeof(clip_data_total)*/ 1800);
+
     // Format Data Response PDU part 1
     StaticOutStream<1600> out_FormatDataResponsep_part1;
     out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
@@ -202,10 +205,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     // Manager state check
     RED_CHECK_EQUAL(0, manager._cb_buffers.size);
     RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
-    // TODO: Fix following test case
-//    std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( manager._cb_buffers.data.get()), sizeof(clip_txt_total));
-//    std::string data_sent_expected(clip_txt_total);
-//    RED_CHECK_EQUAL(data_sent_to_local_clipboard, data_sent_expected);
+
+    // check clip io data
+    std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( clip_io._chunk.get()), sizeof(clip_txt_total));
+    std::string data_sent_expected(clip_txt_total, sizeof(clip_txt_total));
+    RED_CHECK_EQUAL(clip_io.data_text, data_sent_expected);
 
     // Unlock Clipboard Data PDU
     pdu_data = mod.stream();
