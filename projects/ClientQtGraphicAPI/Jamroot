@@ -1,18 +1,18 @@
 REDEMPTION_PUBLIC_PATH ?= [ SHELL "readlink -n -f ../.." ] ;
 
-ECHO redemption-src: $(REDEMPTION_PUBLIC_PATH) ;
+ECHO "redemption-src: $(REDEMPTION_PUBLIC_PATH)" ;
 
 JAM_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/jam ;
 REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 REDEMPTION_MODULES_SRC_PATH ?= $(REDEMPTION_PUBLIC_PATH)/modules ;
 
-
 include $(JAM_INCLUDE_PATH)/redemption-config.jam ;
-include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/defines.jam ;
-include $(JAM_INCLUDE_PATH)/includes.jam ;
 
+# qt4: bjam -sqt=4
+# qt5: bjam -sqt=5
 
+## Qt version {
 # select best Qt version
 ## @{
 import os ;
@@ -32,7 +32,7 @@ if ! $(qtversion)
     }
 }
 
-if $(qtversion) != 4 && $(qtversion) != 5 && $(qtversion) != 6
+if $(qtversion) != 4 && $(qtversion) != 5
 {
     echo "Unknown Qt$(qtversion)." ;
     qtversion = ;
@@ -59,9 +59,15 @@ if $(qtversion) = 5
 
     constant QT_INCLUDES : $(QT5_INCLUDE) $(QT5_PHONON_INCLUDE) ;
 }
+## } Qt version
 
-constant SHELL_PWD : [ SHELL "echo -n $PWD" ] ; # rule location
 
+include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
+include $(JAM_INCLUDE_PATH)/includes.jam ;
+include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
+
+
+constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/ClientQtGraphicAPI ; # rule location
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
 
 if $(qtversion) = 4
@@ -70,8 +76,6 @@ if $(qtversion) = 4
         <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
     ;
 }
-
-include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption_qt_client
     : requirements
@@ -92,7 +96,9 @@ project redemption_qt_client
    : default-build release
 ;
 
-include $(JAM_INCLUDE_PATH)/ocr.jam ;
+constant NO_FFMPEG : 1 ;
+
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit install instexe install-bin ;
 
