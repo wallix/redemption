@@ -15,9 +15,6 @@ rule setvar ( env : default )
     }
 }
 
-constant ARCH : [ SHELL "uname -m" ] ;
-# constant ARCH : [ SHELL "lscpu | perl -ne 'if (/^Architecture.*(x86_64|i386|i686)/) {print $1};'" ] ;
-
 INSTALLDIR_DEFAULT ?= "" ;
 PREFIX_DEFAULT ?= /usr/local ;
 
