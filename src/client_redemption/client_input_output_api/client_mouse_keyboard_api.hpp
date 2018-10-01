@@ -47,7 +47,7 @@ public:
 
     virtual void init_form() = 0;
 
-    virtual void pre_load_movie() {}
+    virtual void pre_load_movie(std::string & /*movie_dir*/, std::string & /*movie_name*/) {}
 
     void replay(const std::string & movie_name, const std::string & movie_dir) {
         this->callback->replay(movie_name, movie_dir);

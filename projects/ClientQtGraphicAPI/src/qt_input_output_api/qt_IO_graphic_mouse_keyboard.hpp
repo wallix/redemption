@@ -178,7 +178,8 @@ public:
 
     void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
-        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(this->controller->get_mwrm_filename()), 0, this->config);
+        std::string filename = movie_dir+movie_path;/*this->controller->get_mwrm_filename();*/
+        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(filename.c_str()), 0, this->config);
     }
 
     QWidget * get_static_qwidget() {
@@ -467,7 +468,8 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client_replay->get_movie_time_length(this->client_replay->get_mwrm_filename().c_str()), current_time_movie, this->config);
+                        std::string filename = this->config->_movie_dir + this->config->_movie_name;
+                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->controller->get_movie_time_length(filename.c_str()), current_time_movie, this->config);
 
                         this->screen->show();
                     }
@@ -506,17 +508,12 @@ private:
     }
 
 
-    void pre_load_movie() override {
+    void pre_load_movie(std::string & movie_dir, std::string & movie_name) override {
 
-    LOG(LOG_INFO, "!!!! pre_load_movie !!!!");
         this->balises.clear();
 
-//         std::string filename = this->client_replay->get_mwrm_filename();
-        this->config->_movie_full_path = this->config->_movie_dir + this->config->_movie_name;
-        std::string filename = this->config->_movie_full_path;
-        LOG(LOG_INFO, "!!!! filename=%s !!!!", filename);
-
-        long int movie_length = this->client_replay->get_movie_time_length(filename.c_str());
+        std::string filename = movie_dir + movie_name;
+        long int movie_length = this->controller->get_movie_time_length(filename.c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;

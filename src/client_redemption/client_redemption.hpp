@@ -941,7 +941,7 @@ public:
                 this->impl_graphic->create_screen(this->config._movie_dir, this->config._movie_name);
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     if (this->impl_mouse_keyboard) {
-                        this->impl_mouse_keyboard->pre_load_movie();
+                        this->impl_mouse_keyboard->pre_load_movie(this->config._movie_dir, this->config._movie_name);
                         LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
                           /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
                          LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/
@@ -1116,10 +1116,8 @@ public:
         }
     }
 
-    time_t get_movie_time_length(char const * mwrm_filename) override  {
+    time_t get_movie_time_length(const char * mwrm_filename) override  {
         // TODO RZ: Support encrypted recorded file.
-
-        LOG(LOG_INFO, "!!!! mwrm_filename=%s !!!!", mwrm_filename);
 
         CryptoContext cctx;
         Fstat fsats;
