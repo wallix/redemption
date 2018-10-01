@@ -22,23 +22,19 @@
 */
 
 #define RED_TEST_MODULE TestRdpClientLargePointer
-
 #include "system/redemption_unit_tests.hpp"
 
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
 
+#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-// Uncomment the code block below to generate testing data.
-// include "transport/socket_transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
-#include "mod/rdp/rdp.hpp"
-
-#include "test_only/lcg_random.hpp"
-
+#include "core/report_message_api.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/session_reactor_executor.hpp"
+#include "test_only/transport/test_transport.hpp"
+
 
 RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
 {
@@ -127,8 +123,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto mod = new_mod_rdp(t, session_reactor, front, info,
+        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -136,7 +133,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    execute_mod(session_reactor, mod, front, 72);
+    execute_mod(session_reactor, *mod, front, 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_disabled_");
 }
@@ -232,8 +229,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto mod = new_mod_rdp(t, session_reactor, front, info,
+        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -241,7 +239,7 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    execute_mod(session_reactor, mod, front, 72);
+    execute_mod(session_reactor, *mod, front, 72);
 
     //front.dump_png("trace_test_rdp_client_large_pointer_enabled_");
 }

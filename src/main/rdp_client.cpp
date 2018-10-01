@@ -20,23 +20,23 @@
  *
  */
 
+#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
 #include "core/set_server_redirection_target.hpp"
 #include "front/client_front.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/rdp/rdp_params.hpp"
-#include "mod/vnc/vnc.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/vnc/new_mod_vnc.hpp"
 #include "program_options/program_options.hpp"
+#include "test_only/get_file_contents.hpp"
 #include "transport/recorder_transport.hpp"
 #include "transport/socket_transport.hpp"
 #include "utils/cfgloader.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/netutils.hpp"
-#include "utils/redirection_info.hpp"
 #include "utils/redemption_info_version.hpp"
-#include "test_only/get_file_contents.hpp"
+#include "utils/redirection_info.hpp"
 
 #include <iostream>
 #include <string>
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
         auto mod = create_mod(*trans);
         using Ms = std::chrono::milliseconds;
         return run_test_client(
-            is_vnc ? "VNC" : "RDP", session_reactor, mod, front,
+            is_vnc ? "VNC" : "RDP", session_reactor, *mod, front,
             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
     };
 
@@ -185,7 +185,7 @@ int main(int argc, char** argv)
 
     if (is_vnc) {
         return run([&](Transport& trans){
-            return mod_vnc(
+            return new_mod_vnc(
                 trans
               , session_reactor
               , username.c_str()
@@ -200,8 +200,6 @@ int main(int argc, char** argv)
               , true          /* clipboard */
               , true          /* clipboard */
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
-              , mod_vnc::ClipboardEncodingType::UTF8
-              , VncBogusClipboardInfiniteLoop::delayed
               , report_message
               , false
               , nullptr
@@ -253,7 +251,7 @@ int main(int argc, char** argv)
         return run([&](Transport& trans){
             using TimeObjRef = TimeObj&;
             using RandomRef = Random&;
-            return mod_rdp(
+            return new_mod_rdp(
                 trans, session_reactor, front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,

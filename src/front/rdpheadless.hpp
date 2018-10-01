@@ -20,6 +20,9 @@
 
 
 #pragma once
+
+#include "acl/auth_api.hpp"
+
 #include "configs/config.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
@@ -28,6 +31,7 @@
 #include "core/RDP/caches/glyphcache.hpp"
 #include "core/RDP/capabilities/cap_glyphcache.hpp"
 #include "core/RDP/capabilities/colcache.hpp"
+#include "core/RDP/channels/rdpdr.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
@@ -58,8 +62,9 @@
 #include "front/execute_events.hpp"
 
 #include "keyboard/keymap2.hpp"
-#include "mod/rdp/rdp.hpp"
-#include "mod/vnc/vnc.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/vnc/new_mod_vnc.hpp"
 #include "test_only/lcg_random.hpp"
 #include "transport/socket_transport.hpp"
 
@@ -527,9 +532,6 @@ private:
     ReportMessageApi & report_message;
 //     EventList eventList;
 
-    // for VNC
-    Theme      theme;
-
     //  RDP
     LCGRandom gen;
     TimeSystem timeSystem;
@@ -692,7 +694,7 @@ public:
         Inifile ini;
 
         if (protocol_is_VNC) {
-            this->_callback = std::make_unique<mod_vnc>(
+            this->_callback = new_mod_vnc(
                 *this->socket
               , this->session_reactor
               , userName
@@ -707,8 +709,6 @@ public:
               , true
               , true
               , "0,1,-239"
-              , mod_vnc::ClipboardEncodingType::UTF8
-              , VncBogusClipboardInfiniteLoop::delayed
               , this->report_message
               , false
               , nullptr
@@ -716,7 +716,7 @@ public:
               , to_verbose_flags(this->_verbose)
               );
         } else {
-            this->_callback = std::make_unique<mod_rdp>(
+            this->_callback = new_mod_rdp(
                 *this->socket
               , this->session_reactor
               , *this

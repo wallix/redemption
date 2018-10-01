@@ -35,8 +35,10 @@ exe headlessclient :
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/recorder_transport.o
@@ -181,8 +183,10 @@ exe rdpheadless :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
@@ -255,8 +259,10 @@ exe rdpclient :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
@@ -693,6 +699,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -756,6 +763,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -791,6 +799,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -2295,6 +2304,7 @@ test-run tests/front/test_front :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
@@ -3568,6 +3578,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
+  <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/utils/authorization_channels.o
@@ -4665,8 +4676,10 @@ obj src/mod/internal/widget/selector.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/internal/widget/tooltip.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/tooltip.cpp ;
 obj src/mod/internal/widget/widget_rect.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/widget_rect.cpp ;
 obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget_test_mod.cpp ;
+obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;

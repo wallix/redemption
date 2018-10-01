@@ -24,22 +24,16 @@
 #define RED_TEST_MODULE TestRdpClientWab
 #include "system/redemption_unit_tests.hpp"
 
-
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
-#include "test_only/check_sig.hpp"
-#include "test_only/session_reactor_executor.hpp"
+#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-// Comment the code block below to generate testing data.
-#include "test_only/transport/test_transport.hpp"
 #include "core/client_info.hpp"
-#include "mod/rdp/rdp.hpp"
-
-#include "test_only/lcg_random.hpp"
-
+#include "core/report_message_api.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
+#include "test_only/check_sig.hpp"
 #include "test_only/front/fake_front.hpp"
-// Uncomment the code block below to generate testing data.
+#include "test_only/lcg_random.hpp"
+#include "test_only/session_reactor_executor.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
@@ -123,8 +117,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto mod = new_mod_rdp(t, session_reactor, front, info,
+        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -133,7 +128,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     RED_CHECK_EQUAL(front.info.width, 1024);
     RED_CHECK_EQUAL(front.info.height, 768);
 
-    execute_mod(session_reactor, mod, front, 8);
+    execute_mod(session_reactor, *mod, front, 8);
 
     RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");

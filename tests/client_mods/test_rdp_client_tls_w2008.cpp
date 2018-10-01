@@ -22,25 +22,17 @@
 */
 
 #define RED_TEST_MODULE TestRdpClientTLSW2008
-
-
 #include "system/redemption_unit_tests.hpp"
 
-
-// Comment the code block below to generate testing data.
-// Uncomment the code block below to generate testing data.
-
+#include "acl/auth_api.hpp"
 #include "configs/config.hpp"
-// Uncomment the code block below to generate testing data.
-//include "transport/socket_transport.hpp"
-#include "test_only/transport/test_transport.hpp"
-#include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
-#include "mod/rdp/rdp.hpp"
-
-#include "test_only/lcg_random.hpp"
-
+#include "core/report_message_api.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/lcg_random.hpp"
+#include "test_only/session_reactor_executor.hpp"
+#include "test_only/transport/test_transport.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
@@ -127,8 +119,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto mod = new_mod_rdp(t, session_reactor, front, info,
+        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -138,7 +131,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
     t.disable_remaining_error();
 
-    execute_mod(session_reactor, mod, front, 70);
+    execute_mod(session_reactor, *mod, front, 70);
 
     // t.disable_remaining_error();
     //front.dump_png("trace_w2008_tls_");
@@ -231,8 +224,9 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     NullAuthentifier authentifier;
     NullReportMessage report_message;
     SessionReactor session_reactor;
-    mod_rdp mod(t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    auto mod = new_mod_rdp(t, session_reactor, front, info,
+        ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
+        mod_rdp_params, authentifier, report_message, ini);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -243,7 +237,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     t.disable_remaining_error();
 
-    execute_mod(session_reactor, mod, front, 40);
+    execute_mod(session_reactor, *mod, front, 40);
 
     // t.disable_remaining_error();
 //    front.dump_png("trace_w2008_tls_");

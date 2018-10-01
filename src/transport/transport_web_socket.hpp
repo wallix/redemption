@@ -31,7 +31,7 @@
 
 
 #include "transport/transport.hpp"
-#include "mod/rdp/rdp.hpp"
+#include "mod/mod_api.hpp"
 
 
 // bjam -a test_transport_web_socket |& grep error || iceweasel file:///home/cmoroldo/Bureau/redemption/projects/browser_client_JS/sandbox/test_transport_web_socket.html
@@ -48,7 +48,7 @@ class TransportWebSocket :  public Transport
     size_t      pduSize;
 
     size_t      sentSize;
-    mod_rdp  *  callback;
+    mod_api  *  callback;
     FrontAPI *  drawable;
 
     enum : uint8_t {
@@ -142,7 +142,7 @@ public:
       , drawable(draw)
       {}
 
-    void setMod(mod_rdp * mod) {
+    void setMod(mod_api * mod) {
         this->callback = mod;
     }
 

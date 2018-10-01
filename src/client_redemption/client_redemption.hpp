@@ -23,46 +23,36 @@
 
 
 #include "utils/log.hpp"
+#include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
-#include "utils/netutils.hpp"
-#include "utils/fileutils.hpp"
 #include "utils/genfstat.hpp"
-
-#include "configs/autogen/enums.hpp"
+#include "utils/netutils.hpp"
 
 #include "acl/auth_api.hpp"
 
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 
-
-#include "mod/rdp/rdp.hpp"
-#include "mod/vnc/vnc.hpp"
+#include "mod/internal/replay_mod.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/vnc/new_mod_vnc.hpp"
 
 #include "transport/crypto_transport.hpp"
-#include "transport/socket_transport.hpp"
 #include "transport/recorder_transport.hpp"
+#include "transport/replay_transport.hpp"
+#include "transport/socket_transport.hpp"
 
-
-#include "capture/full_video_params.hpp"
-#include "capture/video_params.hpp"
 #include "capture/wrm_capture.hpp"
 
-#include "mod/internal/replay_mod.hpp"
-#include "transport/replay_transport.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_socket_api.hpp"
-
-#include "client_redemption/client_redemption_api.hpp"
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
-
-#include "utils/fixed_random.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_socket_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
+#include "client_redemption/mod_wrapper/client_callback.hpp"
 
 #include "front/execute_events.hpp"
 
@@ -473,78 +463,40 @@ public:
             this->mod = nullptr;
 
             switch (this->config.mod_state) {
-                case ClientRedemptionConfig::MOD_RDP:
-                {
-                    ModRDPParams mod_rdp_params( this->config.user_name.c_str()
-                                    , this->config.user_password.c_str()
-                                    , this->config.target_IP.c_str()
-                                    , this->local_IP.c_str()
-                                    , 2
-                                    , ini.get<cfg::font>()
-                                    , ini.get<cfg::theme>()
-                                    , this->server_auto_reconnect_packet_ref
-                                    , this->close_box_extra_message_ref
-                                    , this->config.verbose
-                                    );
+            case ClientRedemptionConfig::MOD_RDP:
+            case ClientRedemptionConfig::MOD_RDP_REMOTE_APP:
+            {
+                ModRDPParams mod_rdp_params(
+                    this->config.user_name.c_str()
+                  , this->config.user_password.c_str()
+                  , this->config.target_IP.c_str()
+                  , this->local_IP.c_str()
+                  , 2
+                  , ini.get<cfg::font>()
+                  , ini.get<cfg::theme>()
+                  , this->server_auto_reconnect_packet_ref
+                  , this->close_box_extra_message_ref
+                  , this->config.verbose
+                  //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
+                  //, RDPVerbose::basic_trace | RDPVerbose::connection
+                );
 
-                    mod_rdp_params.device_id                       = "device_id";
-                    mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
-                    mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
-                    mod_rdp_params.enable_fastpath                 = true;
-                    mod_rdp_params.enable_mem3blt                  = true;
-                    mod_rdp_params.enable_new_pointer              = true;
-                    mod_rdp_params.enable_glyph_cache              = true;
-                    mod_rdp_params.enable_ninegrid_bitmap          = true;
-                    std::string allow_channels                     = "*";
-                    mod_rdp_params.allow_channels                  = &allow_channels;
-                    mod_rdp_params.deny_channels = nullptr;
-                    mod_rdp_params.enable_rdpdr_data_analysis = false;
+                mod_rdp_params.device_id                       = "device_id";
+                mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
+                mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
+                mod_rdp_params.enable_fastpath                 = true;
+                mod_rdp_params.enable_mem3blt                  = true;
+                mod_rdp_params.enable_new_pointer              = true;
+                mod_rdp_params.enable_glyph_cache              = true;
+                mod_rdp_params.enable_ninegrid_bitmap          = true;
+                std::string allow_channels                     = "*";
+                mod_rdp_params.allow_channels                  = &allow_channels;
+                mod_rdp_params.deny_channels = nullptr;
+                mod_rdp_params.enable_rdpdr_data_analysis = false;
 
-                    this->unique_mod = std::make_unique<mod_rdp>(
-                      *this->socket
-                      , session_reactor
-                      , *this
-                      , this->config.info
-                      , ini.get_ref<cfg::mod_rdp::redir_info>()
-                      , *this->gen
-                      , this->timeSystem
-                      , mod_rdp_params
-                      , this->authentifier
-                      , this->reportMessage
-                      , this->ini
-                    );
-                }
-                    break;
+                const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
 
-                case ClientRedemptionConfig::MOD_RDP_REMOTE_APP:
-                {
-                    ModRDPParams mod_rdp_params( this->config.user_name.c_str()
-                                    , this->config.user_password.c_str()
-                                    , this->config.target_IP.c_str()
-                                    , this->local_IP.c_str()
-                                    , 2
-                                    , ini.get<cfg::font>()
-                                    , ini.get<cfg::theme>()
-                                    , this->server_auto_reconnect_packet_ref
-                                    , this->close_box_extra_message_ref
-                                    , this->config.verbose
-                                    //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
-                                    //, RDPVerbose::basic_trace | RDPVerbose::connection
-                                    );
-
-                    mod_rdp_params.device_id                       = "device_id";
-                    mod_rdp_params.enable_tls                      = this->config.modRDPParamsData.enable_tls;
-                    mod_rdp_params.enable_nla                      = this->config.modRDPParamsData.enable_nla;
-                    mod_rdp_params.enable_fastpath                 = true;
-                    mod_rdp_params.enable_mem3blt                  = true;
-                    mod_rdp_params.enable_new_pointer              = true;
-                    mod_rdp_params.enable_glyph_cache              = true;
-                    mod_rdp_params.enable_ninegrid_bitmap          = true;
-                    std::string allow_channels = "*";
-                    mod_rdp_params.allow_channels                  = &allow_channels;
-                    mod_rdp_params.deny_channels = nullptr;
-                    mod_rdp_params.enable_rdpdr_data_analysis = false;
-
+                if (is_remote_app) {
                     this->client_execute.enable_remote_program(true);
                     mod_rdp_params.remote_program = true;
                     mod_rdp_params.client_execute = &(this->client_execute);
@@ -558,59 +510,60 @@ public:
                         this->config.info.height = this->impl_graphic->screen_max_height;
                     }
 
-                    this->clientChannelRemoteAppManager.set_configuration(this->config.info.width, this->config.info.height, this->config.rDPRemoteAppConfig);
+                    this->clientChannelRemoteAppManager.set_configuration(
+                        this->config.info.width, this->config.info.height,
+                        this->config.rDPRemoteAppConfig);
+                }
 
-                    this->unique_mod = std::make_unique<mod_rdp>(
-                        *(this->socket)
-                      , session_reactor
-                      , *(this)
-                      , this->config.info
-                      , ini.get_ref<cfg::mod_rdp::redir_info>()
-                      , *this->gen
-                      , this->timeSystem
-                      , mod_rdp_params
-                      , this->authentifier
-                      , this->reportMessage
-                      , this->ini
-                    );
+                this->unique_mod = new_mod_rdp(
+                    *this->socket
+                  , session_reactor
+                  , *this
+                  , this->config.info
+                  , ini.get_ref<cfg::mod_rdp::redir_info>()
+                  , *this->gen
+                  , this->timeSystem
+                  , mod_rdp_params
+                  , this->authentifier
+                  , this->reportMessage
+                  , this->ini
+                );
 
+                if (is_remote_app) {
                     std::string target_info = this->ini.get<cfg::context::target_str>();
                     target_info += ":";
                     target_info += this->ini.get<cfg::globals::primary_user_id>();
 
                     this->client_execute.set_target_info(target_info.c_str());
                 }
-                    break;
+
+                break;
+            }
 
             case ClientRedemptionConfig::MOD_VNC:
-            {
-                 this->unique_mod = std::make_unique<mod_vnc>(
-                     *this->socket
-                    , this->session_reactor
-                    , this->config.user_name.c_str()
-                    , this->config.user_password.c_str()
-                    , *this
-                    , this->config.info
-                    , this->timeSystem
-                    , this->config.vnc_conf.width
-                    , this->config.vnc_conf.height
-                    , this->config.vnc_conf.keylayout
-                    , 0
-                    , true
-                    , true
-                    , this->config.vnc_conf.vnc_encodings.c_str()
-                    , mod_vnc::ClipboardEncodingType::UTF8
-                    , VncBogusClipboardInfiniteLoop::delayed
-                    , this->reportMessage
-                    , this->config.vnc_conf.is_apple
-                    , &this->config.vnc_conf.exe
-                    , this->ini
-                    // , to_verbose_flags(0xfffffffd)
-                    , to_verbose_flags(0)
-                  );
-            }
+                this->unique_mod = new_mod_vnc(
+                    *this->socket
+                  , this->session_reactor
+                  , this->config.user_name.c_str()
+                  , this->config.user_password.c_str()
+                  , *this
+                  , this->config.info
+                  , this->timeSystem
+                  , this->config.vnc_conf.width
+                  , this->config.vnc_conf.height
+                  , this->config.vnc_conf.keylayout
+                  , 0
+                  , true
+                  , true
+                  , this->config.vnc_conf.vnc_encodings.c_str()
+                  , this->reportMessage
+                  , this->config.vnc_conf.is_apple
+                  , &this->config.vnc_conf.exe
+                  , this->ini
+                  // , to_verbose_flags(0xfffffffd)
+                  , to_verbose_flags(0)
+                );
                 break;
-
             }
 
             this->mod = this->unique_mod.get();
@@ -622,7 +575,7 @@ public:
 
         this->_callback.set_mod(this->mod);
 
-         return true;
+        return true;
     }
 
     bool init_socket() {
@@ -1706,7 +1659,3 @@ private:
         }
     }
 };
-
-
-
-

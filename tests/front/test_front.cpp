@@ -26,6 +26,7 @@
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.
 
+#include "acl/auth_api.hpp"
 #include "capture/cryptofile.hpp"
 #include "configs/config.hpp"
 // Uncomment the code block below to generate testing data.
@@ -33,10 +34,10 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
-#include "mod/rdp/rdp.hpp"
 
 #include "front/front.hpp"
 #include "mod/null/null.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
 
 #include "test_only/lcg_random.hpp"
 
@@ -223,7 +224,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.clear_channels();
     NullAuthentifier authentifier;
-    mod_rdp mod(
+    auto mod = new_mod_rdp(
         t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
 
@@ -242,7 +243,7 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.can_be_start_capture();
 
-    execute_mod(session_reactor, mod, front, 38);
+    execute_mod(session_reactor, *mod, front, 38);
 
     front.must_be_stop_capture();
 
@@ -464,7 +465,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // front.clear_channels();
     //
     // NullAuthentifier authentifier;
-    // mod_rdp mod(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
     // RED_CHECK(true);
     //
     // if (verbose > 2){
@@ -473,8 +474,8 @@ RED_AUTO_TEST_CASE(TestFront2)
     // RED_CHECK_EQUAL(front.client_info.width, 800);
     // RED_CHECK_EQUAL(front.client_info.height, 600);
     //
-    // while (!mod.is_up_and_running())
-    //     mod.draw_event(now, front);
+    // while (!mod->is_up_and_running())
+    //     mod->draw_event(now, front);
     //
     // // Force Front to be up and running after Deactivation-Reactivation
     // //  Sequence initiated by mod_rdp.
@@ -489,7 +490,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // while (res == BACK_EVENT_NONE){
     //     LOG(LOG_INFO, "===================> count = %u", count);
     //     if (count++ >= 38) break;
-    //     mod.draw_event(now, front);
+    //     mod->draw_event(now, front);
     //     now++;
     //     LOG(LOG_INFO, "Calling Snapshot");
     //     front.periodic_snapshot();
