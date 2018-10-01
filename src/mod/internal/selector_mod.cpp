@@ -268,7 +268,7 @@ void SelectorMod::refresh_device()
         size_t size_targets = proceed_item(targets);
         size_t size_protocols = proceed_item(protocols);
 
-        std::string_view const texts[] {
+        array_view_const_char const texts[] {
             {groups, size_groups},
             {targets, size_targets},
             {protocols, size_protocols},
@@ -291,7 +291,8 @@ void SelectorMod::refresh_device()
         this->selector.selector_lines.tab_flag = Widget::IGNORE_TAB;
         this->selector.selector_lines.focus_flag = Widget::IGNORE_FOCUS;
 
-        std::string_view const texts[] {{}, TR(trkeys::no_results, language(this->vars)),};
+        auto no_result = TR(trkeys::no_results, language(this->vars));
+        array_view_const_char const texts[] {{}, {no_result, strlen(no_result)}, {}};
         this->selector.add_device(texts);
     }
     else {

@@ -42,7 +42,7 @@ struct WidgetLabelGrid : public WidgetGrid
     void clear() override;
     void clean_labels();
 
-    uint16_t add_line(array_view<const std::string_view> entries);
+    uint16_t add_line(array_view<const array_view_const_char> entries);
 
     const char * get_cell_text(uint16_t row_index, uint16_t column_index);
 };

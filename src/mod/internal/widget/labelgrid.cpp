@@ -60,7 +60,7 @@ void WidgetLabelGrid::clean_labels()
     }
 }
 
-uint16_t WidgetLabelGrid::add_line(array_view<const std::string_view> entries)
+uint16_t WidgetLabelGrid::add_line(array_view<const array_view_const_char> entries)
 {
     uint16_t const old_nb_row = this->get_nb_rows();
 

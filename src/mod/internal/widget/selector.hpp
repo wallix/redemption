@@ -125,7 +125,7 @@ public:
 
     void notify(Widget* widget, notify_event_t event) override;
 
-    void add_device(array_view<const std::string_view> entries);
+    void add_device(array_view<const array_view_const_char> entries);
 
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
 

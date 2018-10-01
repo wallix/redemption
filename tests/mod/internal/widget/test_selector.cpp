@@ -55,24 +55,29 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
-    std::string_view const add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add1[] = {
+        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    std::string_view const add2[] = {"rdp", "administrateur@qa@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add2[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    std::string_view const add3[] = {"rdp", "administrateur@qa@10.10.14.27",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add3[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    std::string_view const add4[] = {"rdp", "administrateur@qa@10.10.14.103",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add4[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    std::string_view const add5[] = {"rdp", "administrateur@qa@10.10.14.33",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add5[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
 
     selector.selector_lines.set_selection(0);
@@ -122,24 +127,29 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
                                 "1", "1",  extra_button, params, font, Theme(), Translation::EN);
 
-    std::string_view const add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add1[] = {
+        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    std::string_view const add2[] = {"rdp", "administrateur@qa@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add2[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    std::string_view const add3[] = {"rdp", "administrateur@qa@10.10.14.27",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add3[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    std::string_view const add4[] = {"rdp", "administrateur@qa@10.10.14.103",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add4[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    std::string_view const add5[] = {"rdp", "administrateur@qa@10.10.14.33",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add5[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
 
     selector.selector_lines.set_selection(0);
@@ -295,24 +305,29 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
-    std::string_view const add1[] = {"rdp", "qa\\administrateur@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add1[] = {
+        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    std::string_view const add2[] = {"rdp", "administrateur@qa@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add2[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    std::string_view const add3[] = {"rdp", "administrateur@qa@10.10.14.27",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add3[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    std::string_view const add4[] = {"rdp", "administrateur@qa@10.10.14.103",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add4[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    std::string_view const add5[] = {"rdp", "administrateur@qa@10.10.14.33",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add5[] = {
+        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
 
     selector.set_widget_focus(&selector.selector_lines, Widget::focus_reason_tabkey);
@@ -426,24 +441,29 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
 
-    std::string_view const add1[] = {"reptile", "snake@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add1[] = {
+        "reptile", "snake@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add1);
 
-    std::string_view const add2[] = {"bird", "raven@10.10.14.111",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add2[] = {
+        "bird", "raven@10.10.14.111"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add2);
 
-    std::string_view const add3[] = {"reptile", "lezard@10.10.14.27",
-                                     "VNC", "", "", "", "", "", "", ""};
+    array_view_const_char const add3[] = {
+        "reptile", "lezard@10.10.14.27"_av,
+        "VNC", ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add3);
 
-    std::string_view const add4[] = {"fish", "shark@10.10.14.103",
-                                     "RDP", "", "", "", "", "", "", ""};
+    array_view_const_char const add4[] = {
+        "fish", "shark@10.10.14.103"_av,
+        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add4);
 
-    std::string_view const add5[] = {"bird", "eagle@10.10.14.33",
-                                     "VNC", "", "", "", "", "", "", ""};
+    array_view_const_char const add5[] = {
+        "bird", "eagle@10.10.14.33"_av,
+        "VNC", ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
     selector.add_device(add5);
 
     int curx = 0;
