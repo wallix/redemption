@@ -175,9 +175,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
 
-    // Not necessary for to set buffer size for file copy cause data append on local file
-    clip_io.resize_chunk(/*sizeof(clip_data_total)*/ 1800);
-
     // Format Data Response PDU part 1
     StaticOutStream<1600> out_FormatDataResponsep_part1;
     out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
