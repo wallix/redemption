@@ -140,6 +140,7 @@ protected:
         }
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
+        hexdump(ts_request_emit.get_data(), ts_request_emit.get_offset());
         this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
     }
 
@@ -641,7 +642,7 @@ public:
             true, byte_ptr_cast("Tester"), byte_ptr_cast("PROXY.CORP.WALLIX.COM"),
             byte_ptr_cast("SecureLinux$42"), byte_ptr_cast("jpowab6-1.proxy.corp.wallix.com"),
             "10.10.44.89", krb, restricted_admin_mode, rand, timeobj, extra_message, lang,
-            transport, "rdpCredsspServer", std::move(set_password_cb), verbose)
+            transport, "rdpCredsspServer", std::move(set_password_cb), verbose || true)
     {
     }
 
@@ -721,7 +722,9 @@ private:
 public:
     Res sm_credssp_server_authenticate_recv(InStream & in_stream)
     {
-        hexdump_av(this->ts_request.negoTokens.av());
+        LOG(LOG_DEBUG, "sm_credssp_server_authenticate_recv");
+        hexdump(in_stream.get_data(), in_stream.in_remain());
+        // hexdump_av(this->ts_request.negoTokens.av());
         if (this->state_accept_security_context != SEC_I_LOCAL_LOGON) {
             /* receive authentication token */
             this->ts_request.recv(in_stream);
@@ -740,11 +743,20 @@ public:
         //     | ASC_REQ_REPLAY_DETECT
         //     | ASC_REQ_SEQUENCE_DETECT
         //     | ASC_REQ_EXTENDED_ERROR;
-        hexdump_av(this->ts_request.negoTokens.av());
+        // hexdump_av(this->ts_request.negoTokens.av());
+        // TODO optional tmp_ar
+        LOG(LOG_DEBUG, "service name: %s", char_ptr_cast(this->ServicePrincipalName.get_data()));
+        SecBuffer tmp_ar;
+        tmp_ar.init(0);
         SEC_STATUS status = this->table->AcceptSecurityContext(
-            this->ts_request.negoTokens.av(),
-            /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
+            this->ts_request.negoTokens.av(), tmp_ar);
+        this->ts_request.negoTokens.copy(tmp_ar);
         this->state_accept_security_context = status;
+
+        hexdump_av(tmp_ar.av());
+        LOG(LOG_DEBUG, "SEC_I_COMPLETE_AND_CONTINUE %d  SEC_I_COMPLETE_NEEDED %d  SEC_I_CONTINUE_NEEDED %d  SEC_E_OK %d", SEC_I_COMPLETE_AND_CONTINUE, SEC_I_COMPLETE_NEEDED, SEC_I_CONTINUE_NEEDED, SEC_E_OK);
+        LOG(LOG_DEBUG, "status: %d", status);
+
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;
         }
@@ -790,6 +802,7 @@ public:
 
     Res sm_credssp_server_authenticate_final(InStream & in_stream)
     {
+        hexdump(in_stream.get_data(), in_stream.in_remain());
         /* Receive encrypted credentials */
         this->ts_request.recv(in_stream);
 

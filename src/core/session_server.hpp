@@ -201,6 +201,7 @@ public:
                 else {
                     LOG(LOG_ERR, "Failed to set socket TCP_NODELAY option on client socket");
                 }
+if (forkable)
                 _exit(0);
             }
             break;

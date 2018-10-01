@@ -46,11 +46,11 @@ public:
     int get_credentials(const char * princname, const char * password,
                         const char * cache_name)
     {
-        char* name;
-        krb5_error_code ret;
-        krb5_creds creds;
-        krb5_principal client_princ;
-        krb5_ccache ccache;
+        char* name {};
+        krb5_error_code ret {};
+        krb5_creds creds {};
+        krb5_principal client_princ {};
+        krb5_ccache ccache {};
         if (cache_name) {
             ret = krb5_cc_resolve(this->ctx, cache_name, &ccache);
             if (ret) {

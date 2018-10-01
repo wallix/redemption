@@ -89,7 +89,7 @@ enum SecIdFlag {
     SEC_WINNT_AUTH_IDENTITY_ANSI = 0x1,
     SEC_WINNT_AUTH_IDENTITY_UNICODE = 0x2
 };
-
+#include "utils/log.hpp"
 struct SEC_WINNT_AUTH_IDENTITY
 {
     // kerberos only
@@ -111,6 +111,9 @@ struct SEC_WINNT_AUTH_IDENTITY
     {
         this->princname[0] = 0;
         this->princpass[0] = 0;
+
+        LOG(LOG_DEBUG, "princname %p %s", &princname, princname);
+        LOG(LOG_DEBUG, "princpass %s", princpass);
     }
 
     void SetUserFromUtf8(const uint8_t * user)
@@ -139,8 +142,14 @@ struct SEC_WINNT_AUTH_IDENTITY
             }
         };
 
+        LOG(LOG_DEBUG, "user %s", user);
+        LOG(LOG_DEBUG, "pass %s", pass);
+
         copy(this->princname, user);
         copy(this->princpass, pass);
+
+        LOG(LOG_DEBUG, "princname %s", princname);
+        LOG(LOG_DEBUG, "princpass %s", princpass);
     }
 
     void clear()

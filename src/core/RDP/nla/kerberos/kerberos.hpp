@@ -22,6 +22,7 @@
 #pragma once
 
 #include <gssapi/gssapi.h>
+#include <gssapi/gssapi_krb5.h>
 #include "core/RDP/nla/sspi.hpp"
 #include "core/RDP/nla/kerberos/credentials.hpp"
 #include "cxx/diagnostic.hpp"
@@ -74,6 +75,7 @@ struct KERBEROSContext final
     OM_uint32 actual_time = 0;
     OM_uint32 actual_flag = 0;
     gss_OID actual_mech = nullptr;
+    gss_cred_id_t server_cred = GSS_C_NO_CREDENTIAL;
     gss_cred_id_t deleg_cred = GSS_C_NO_CREDENTIAL;
 
     ~KERBEROSContext()
@@ -94,6 +96,11 @@ struct KERBEROSContext final
             major_status = gss_release_cred(&minor_status, &this->deleg_cred);
             (void) major_status;
             this->deleg_cred = GSS_C_NO_CREDENTIAL;
+        }
+        if (this->server_cred != GSS_C_NO_CREDENTIAL) {
+            major_status = gss_release_cred(&minor_status, &this->server_cred);
+            (void) major_status;
+            this->server_cred = GSS_C_NO_CREDENTIAL;
         }
     }
 };
@@ -138,13 +145,13 @@ public:
         // set KRB5CCNAME cache name to specific with PID,
         // call kinit to get tgt with identity credentials
 
-        int pid = getpid();
-        char cache[256];
-        snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
-        cache[255] = 0;
-        setenv("KRB5CCNAME", cache, 1);
-        LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
         if (pAuthData) {
+            int pid = getpid();
+            char cache[256];
+            snprintf(cache, 255, "FILE:/tmp/krb_red_%d", pid);
+            cache[255] = 0;
+            setenv("KRB5CCNAME", cache, 1);
+            LOG(LOG_INFO, "set KRB5CCNAME to %s", cache);
             this->credentials = Krb5CredsPtr(new Krb5Creds);
             int ret = this->credentials->get_credentials(pAuthData->princname,
                                                          pAuthData->princpass, nullptr);
@@ -262,6 +269,62 @@ public:
         return SEC_I_COMPLETE_NEEDED;
     }
 
+    bool server_acquire_creds(char const *service_name)
+    {
+        gss_buffer_desc name_buf;
+        gss_name_t server_name;
+        OM_uint32 maj_stat, min_stat;
+
+        name_buf.value = const_cast<char*>(service_name);
+        name_buf.length = strlen(service_name) + 1;
+        // GSS_C_NT_HOSTBASED_SERVICE = {10, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"}
+        maj_stat = gss_import_name(&min_stat, &name_buf,
+                                // (gss_OID)GSS_C_NT_HOSTBASED_SERVICE, &server_name);
+                                (gss_OID)GSS_KRB5_NT_PRINCIPAL_NAME, &server_name);
+        if (maj_stat != GSS_S_COMPLETE) {
+            this->report_error(GSS_C_GSS_CODE, "importing name", maj_stat, min_stat);
+            return false;
+        }
+
+        gss_OID_set both_supported = GSS_C_NULL_OID_SET;
+        // gss_create_empty_oid_set(&min_stat, &both_supported);
+        // gss_OID_set supported;
+        //
+        // maj_stat = gss_indicate_mechs(&min_stat, &supported);
+        //
+        // for (i=0 ; i< n_oid ; ++i){
+        //     unsigned char *oid_s = (unsigned char *) ssh_string_data(oids[i]);
+        //     size_t len = ssh_string_len(oids[i]);
+        //     if(len < 2 || oid_s[0] != SSH_OID_TAG || ((size_t)oid_s[1]) != len - 2){
+        //         SSH_LOG(SSH_LOG_WARNING,"GSSAPI: received invalid OID");
+        //         continue;
+        //     }
+        //     oid.elements = &oid_s[2];
+        //     oid.length = len - 2;
+        //     gss_test_oid_set_member(&min_stat,&oid,supported,&present);
+        //     if(present){
+        //         gss_add_oid_set_member(&min_stat,&oid,&both_supported);
+        //         oid_count++;server_acquire_creds
+        //     }
+        // }
+        // gss_release_oid_set(&min_stat, &ported);
+        //
+        // gss_create_empty_oid_set(&min_stat, &both_supported);
+
+        maj_stat = gss_acquire_cred(&min_stat, server_name, 0,
+                                    both_supported, GSS_C_ACCEPT,
+                                    &this->krb_ctx->server_cred, NULL, NULL);
+        if (maj_stat != GSS_S_COMPLETE) {
+            this->report_error(GSS_C_GSS_CODE, "acquiring credentials", maj_stat, min_stat);
+            return false;
+        }
+
+        (void)gss_release_name(&min_stat, &server_name);
+        gss_release_oid_set(&min_stat, &both_supported);
+
+        return true;
+    }
+
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
@@ -270,31 +333,35 @@ public:
     {
         OM_uint32 major_status, minor_status;
 
-        gss_cred_id_t gss_no_cred = GSS_C_NO_CREDENTIAL;
         if (!this->krb_ctx) {
             // LOG(LOG_INFO, "Initialiaze Sec Ctx: NO CONTEXT");
             this->krb_ctx = std::make_unique<KERBEROSContext>();
+            // TODO
+            // if (!this->server_acquire_creds("TERMSRV/" + target + "@" + domain)) {
+            // // if (!this->server_acquire_creds("TERMSRV")) {
+            //     return SEC_E_NO_CREDENTIALS;
+            // }
         }
         // else {
         //     LOG(LOG_INFO, "Initialiaze Sec CTX: USE FORMER CONTEXT");
         // }
 
-
         // Token Buffer
-        gss_buffer_desc input_tok, output_tok;
-        output_tok.length = 0;
+        gss_buffer_desc output_tok = GSS_C_EMPTY_BUFFER;
+        gss_buffer_desc input_tok {
+            input_buffer.size(),
+            const_cast<uint8_t*>(input_buffer.data()) /*NOLINT*/
+        };
 
         // LOG(LOG_INFO, "GOT INPUT BUFFER: length %d",
         //     input_buffer->Buffer.size());
-        input_tok.length = input_buffer.size();
-        input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-        gss_OID desired_mech = &gss_spnego_krb5_mechanism_oid_desc;
-
-        if (!this->mech_available(desired_mech)) {
-            LOG(LOG_ERR, "Desired Mech unavailable");
-            return SEC_E_CRYPTO_SYSTEM_INVALID;
-        }
+        // gss_OID desired_mech = &gss_spnego_krb5_mechanism_oid_desc;
+        //
+        // if (!this->mech_available(desired_mech)) {
+        //     LOG(LOG_ERR, "Desired Mech unavailable");
+        //     return SEC_E_CRYPTO_SYSTEM_INVALID;
+        // }
 
         // acquire delegated credential handle if client has tgt with delegation flag
         // should be freed with gss_release_cred()
@@ -316,7 +383,7 @@ public:
 
         major_status = gss_accept_sec_context(&minor_status,
                                               &this->krb_ctx->gss_ctx,
-                                              gss_no_cred,
+                                              this->krb_ctx->server_cred/*GSS_C_NO_NAME*/,
                                               &input_tok,
                                               GSS_C_NO_CHANNEL_BINDINGS,
                                               &this->krb_ctx->target_name,
@@ -325,6 +392,9 @@ public:
                                               &this->krb_ctx->actual_flag,
                                               nullptr,
                                               &this->krb_ctx->deleg_cred);
+
+        LOG(LOG_INFO, "major_status: %d", major_status);
+        LOG(LOG_INFO, "minor_status: %d", minor_status);
 
         if (GSS_ERROR(major_status)) {
             LOG(LOG_ERR, "MAJOR ERROR");
@@ -339,7 +409,7 @@ public:
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
-        if (major_status & GSS_S_CONTINUE_NEEDED) {
+        if (major_status == GSS_S_CONTINUE_NEEDED) {
             // LOG(LOG_INFO, "MAJOR CONTINUE NEEDED");
             return SEC_I_CONTINUE_NEEDED;
         }
@@ -447,15 +517,31 @@ public:
             minor_status,
             str);
 
+        auto x = major_status;
+        auto y = minor_status;
+
         do {
             ms = gss_display_status(
-                &minor_status, major_status,
-                code, GSS_C_NULL_OID, &msgctx, &status_string);
+                &minor_status, x,
+                GSS_C_GSS_CODE, GSS_C_NULL_OID, &msgctx, &status_string);
+
+            LOG(LOG_ERR," - %s\n", static_cast<char const*>(status_string.value));
         	if (ms != GSS_S_COMPLETE) {
                 break;
             }
+        }
+        while (msgctx);
+
+        msgctx = 0;
+        do {
+            ms = gss_display_status(
+                &minor_status, y,
+                GSS_C_MECH_CODE, GSS_C_NULL_OID, &msgctx, &status_string);
 
             LOG(LOG_ERR," - %s\n", static_cast<char const*>(status_string.value));
+        	if (ms != GSS_S_COMPLETE) {
+                break;
+            }
         }
         while (msgctx);
     }

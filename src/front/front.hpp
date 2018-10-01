@@ -1313,6 +1313,7 @@ public:
 
                 if ((bool(this->clientRequestedProtocols
                     & (X224::PROTOCOL_HYBRID | X224::PROTOCOL_HYBRID_EX)))
+                    //&& false
                     // TODO && this->ini.get<cfg::client::nla_support>()
                 ) {
                     this->nla_client_active = true;
@@ -1375,6 +1376,8 @@ public:
                 if (this->nla_client_active) {
                     this->credssp_server.start(*this);
                 }
+
+                LOG(LOG_DEBUG, "enable krb = %d", this->nla_client_active);
 
                 this->state = this->nla_client_active
                   ? CONNECTION_INITIATION_NLA
