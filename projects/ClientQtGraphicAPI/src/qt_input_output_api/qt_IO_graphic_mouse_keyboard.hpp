@@ -512,6 +512,7 @@ private:
         this->balises.clear();
 
         long int movie_length = this->client->get_movie_time_length(this->client->get_mwrm_filename());
+        LOG(LOG_INFO, "!!!!!!!!! %ld !!!!!!", movie_length);
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
