@@ -1,5 +1,7 @@
 obj ocr.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
 
+alias ocr : ocr.o ppocr ;
+
 ## ppocr {
 
 rule create_ppocr_rule ( srcs * )
@@ -58,3 +60,63 @@ create_ppocr_rule
 ;
 
 ## } ppocr
+
+
+## ppocr resources {
+
+exe ppocr_write_glyphs :
+    $(PPOCR_SRC_PATH)/ppocr/write_glyphs.cpp
+    ppocr
+:
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
+;
+
+exe ppocr_normalize_glyphs :
+    $(PPOCR_SRC_PATH)/ppocr/normalize_glyphs.cpp
+    ppocr
+:
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
+;
+
+exe ppocr_write_datas :
+    $(PPOCR_SRC_PATH)/ppocr/write_datas.cpp
+    ppocr
+:
+    $(EXE_DEPENDENCIES_NO_SYSLOG)
+;
+
+
+actions make_ppocr_resources {
+    $(PPOCR_MODULE_PATH)/learning "$(>)"
+    # latin
+    cp $(PPOCR_MODULE_PATH)/resources/glyphs/normalized-glyphs-latin.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin/glyphs.txt
+    cp $(PPOCR_MODULE_PATH)/resources/datas/latin.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin/datas.txt
+    cp $(PPOCR_MODULE_PATH)/resources/dict_fr.trie \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin/dict.trie.txt
+    cp $(PPOCR_MODULE_PATH)/resources/words_lines-latin.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin/words_lines.txt
+
+    # latin-cyrillic
+    cp $(PPOCR_MODULE_PATH)/resources/glyphs/normalized-glyphs-latin-cyrillic.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/glyphs.txt
+    cp $(PPOCR_MODULE_PATH)/resources/datas/latin-cyrillic.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/datas.txt
+    cp $(PPOCR_MODULE_PATH)/resources/words_lines-latin-cyrillic.txt \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/words_lines.txt
+    cp $(PPOCR_MODULE_PATH)/resources/dict_fr.trie \
+       $(REDEMPTION_SYS_PATH)/etc/rdpproxy/ppocr.latin-cyrillic/dict.trie.txt
+}
+
+explicit ppocr_resources ppocr_write_glyphs ppocr_normalize_glyphs ppocr_write_datas ;
+
+make ppocr_resources :
+    ppocr_write_glyphs
+    ppocr_normalize_glyphs
+    ppocr_write_datas
+:
+    @make_ppocr_resources
+;
+
+## } ppocr resources

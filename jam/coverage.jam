@@ -1,0 +1,17 @@
+variant coverage : debug : ;
+
+#gcov -a -c -b -f -o bin/gcc-4.6/coverage/tests/test_stream.gcno bin/gcc-4.6/coverage/test_stream
+
+lib gcov : : <name>gcov : ;
+
+constant GCOV_NO_BUILD : <variant>coverage:<build>no ;
+
+constant GCOV :
+    <variant>coverage:<cxxflags>--profile-arcs
+    <variant>coverage:<cxxflags>--test-coverage
+    <variant>coverage:<cxxflags>--coverage
+    <variant>coverage:<cxxflags>-pg
+    <variant>coverage:<linkflags>-pg
+    #<variant>coverage:<link>shared
+    <variant>coverage:<library>gcov
+;

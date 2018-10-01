@@ -1,0 +1,1 @@
+variant san : debug : <variant>debug <cxx-libcxx-debug>allow_broken_abi <cxx-sanitizers>on ;

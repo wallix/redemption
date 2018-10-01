@@ -1,0 +1,44 @@
+obj log.o : $(REDEMPTION_SRC_PATH)/utils/log_as_syslog.cpp ;
+obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+obj log_print.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
+
+obj app_path_exe.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
+    <conditional>@defines
+    <define>SHARE_PATH='\"$(SHARE_PREFIX)\"'
+    <define>CFG_PATH='\"$(ETC_PREFIX)\"'
+;
+
+obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
+    <conditional>@defines-for-test
+    <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
+;
+
+
+constant LIB_DEPENDENCIES :
+    <library>app_path_exe.o
+    <cxxflags>-fPIC
+    <variant>release:<cxxflags>-fvisibility=hidden
+    <link>shared
+    <linkflags>-Wl,-Bsymbolic
+    $(GCOV_NO_BUILD)
+;
+
+constant OBJ_EXE_DEPENDENCIES :
+    $(GCOV_NO_BUILD)
+;
+
+constant EXE_DEPENDENCIES :
+    <library>app_path_exe.o
+    <library>log.o
+    $(OBJ_EXE_DEPENDENCIES)
+;
+
+constant EXE_DEPENDENCIES_NO_SYSLOG :
+    <library>app_path_exe.o
+    <library>log_print.o
+    $(OBJ_EXE_DEPENDENCIES)
+;
+
+
+obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;

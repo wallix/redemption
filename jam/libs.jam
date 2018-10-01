@@ -1,8 +1,3 @@
-import property-set ;
-import feature ;
-import toolset ;
-import os ;
-
 lib bz2 ;
 lib crypto ;
 lib dl ;
@@ -58,8 +53,9 @@ if $(BOOST_STACKTRACE) = 1
     # boost_stacktrace_noop
     lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
     REDEMPTION_CXXFLAGS +=
-        <define>BOOST_STACKTRACE_DYN_LINK
+        <variant>debug:<define>BOOST_STACKTRACE_DYN_LINK
         <variant>debug:<linkflags>-rdynamic
+        <variant>san:<define>BOOST_STACKTRACE_DYN_LINK
         <variant>san:<linkflags>-rdynamic
     ;
 }
@@ -68,5 +64,3 @@ else
     alias boost_stacktrace : ;
 }
 ## }
-
-alias ocr : ocr.o ppocr ;

@@ -28,7 +28,7 @@ To compile ReDemPtion you need the following packages:
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
 Extra packet:
-- libboost-stacktrace-dev) (only if -sBOOST_STACKTRACE=1)
+- libboost-stacktrace-dev (only if -sBOOST_STACKTRACE=1)
 
 
 ```sh
@@ -88,6 +88,14 @@ Or with `-s` to bjam
 
     bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
 
+### Special compilation variables
+
+- `BOOST_STACKTRACE=1`: (debug only) compile with `boost_stacktrace_backtrace`.
+
+### Special runtime variables
+
+- `REDEMPTION_FILTER_ERROR`: Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA`.
+
 
 Compilation
 ===========
@@ -129,6 +137,8 @@ $ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
 - `cxx-lto`: off on fat
 - `cxx-relro`: default off on full
 - `cxx-stack-protector`: off on strong all
+
+(`cxx-*` options list with `sed -E 's/^feature <([^>]+)> .*/\1/;t;d' jam/cxxflags.jam`)
 
 
 Run ReDemPtion
