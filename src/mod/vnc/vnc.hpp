@@ -232,7 +232,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , ClientExecute* client_execute
-           , ModVncVariables vars          
+           , ModVncVariables vars
            , VNCVerbose verbose
            )
     : mod_name{0}
@@ -2059,9 +2059,9 @@ private:
                     stream.out_uint32_be(CURSOR_PSEUDO_ENCODING);
                 }   // (-239) cursor
 
-                assert(4 + number_of_encodings * 4 ==  stream.get_offset());
-                
-                this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
+                assert(4u + number_of_encodings * 4u == stream.get_offset());
+
+                this->t.send(stream.get_data(), 4u + number_of_encodings * 4u);
                 if (this->metrics.active()){
                     this->metrics.data_from_client(stream.get_offset());
                 }
@@ -3114,7 +3114,7 @@ private:
 
                     format_data_response_pdu.emit_ex(out_stream, this->to_vnc_clipboard_data.get_offset());
                     out_stream.out_copy_bytes(this->to_vnc_clipboard_data.get_data(), this->to_vnc_clipboard_data.get_offset());
-                    
+
                     send_format_data_response(out_stream);
 
                     break;

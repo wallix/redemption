@@ -127,7 +127,7 @@ void mod_rdp::init_negociate_event_(
             this->negociation_result = rdp_negociation.get_result();
             if (this->buf.remaining()) {
                 private_rdp_negociation.graphic_event = ctx.get_reactor().create_graphic_event()
-                .on_action(jln::one_shot([this, &rdp_negociation](gdi::GraphicApi& gd){
+                .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
                     this->draw_event_impl(this->session_reactor.get_current_time().tv_sec, gd);
                 }));
             }
