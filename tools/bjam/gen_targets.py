@@ -160,6 +160,10 @@ def HFile(d, f):
 def CFile(d, f):
     return File(d, d+'/'+f, 'C')
 
+
+is_filtered_target = bool(len(sys.argv) > 1)
+
+
 ###
 ### Get files
 ###
@@ -224,14 +228,16 @@ for t in ((mains, 'src/main'), (libs, 'src/lib')):
         append_file(t[0], t[1], path, 'C')
 
 files_on_tests = []
-get_files(files_on_tests, 'tests')
-tests = [f for f in files_on_tests \
-    if f.type != 'H' \
-    and not start_with(f.path, 'tests/includes/') \
-    and not start_with(f.path, 'tests/system/emscripten/system/') \
-    and not start_with(f.path, 'tests/web_video/') \
-    and f.path not in disable_tests
-]
+
+if not is_filtered_target:
+    get_files(files_on_tests, 'tests')
+    tests = [f for f in files_on_tests \
+        if f.type != 'H' \
+        and not start_with(f.path, 'tests/includes/') \
+        and not start_with(f.path, 'tests/system/emscripten/system/') \
+        and not start_with(f.path, 'tests/web_video/') \
+        and f.path not in disable_tests
+    ]
 
 libs = [f for f in libs if f.path not in disable_srcs]
 mains = [f for f in mains if f.path not in disable_srcs]
@@ -513,6 +519,16 @@ def generate_obj(files):
             requirement_action(f, lambda r: print(' :', r, end=''))
             print(' ;')
 
+# filter target
+if is_filtered_target:
+    mains = []
+    tests = []
+    keep_paths = sys.argv[1:]
+    libs = [pf for pf in libs if pf.path in keep_paths]
+    sources = set()
+    for f in libs:
+        sources.update(f.all_source_deps)
+
 generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], '$(EXE_DEPENDENCIES)')
 generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], '$(EXE_DEPENDENCIES_NO_SYSLOG)')
 print()
@@ -577,14 +593,17 @@ for name,aliases in dir_rec_tests.items():
     explicit_rec.append(name)
     print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
-print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
-print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
+if explicit_no_rec:
+    print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
+if explicit_rec:
+    print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
 
 
-for f in all_files.values():
-    if f.type == 'C' and not f.used and \
-    f.path != 'src/capture/ocr/display_learning.cc' and \
-    f.path != 'src/capture/ocr/extract_text.cc' and \
-    f.path != 'src/capture/ocr/learning.cc' and \
-    f.path != 'src/capture/ocr/ppocr_extract_text.cpp':
-        print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')
+if not is_filtered_target:
+    for f in all_files.values():
+        if f.type == 'C' and not f.used and \
+        f.path != 'src/capture/ocr/display_learning.cc' and \
+        f.path != 'src/capture/ocr/extract_text.cc' and \
+        f.path != 'src/capture/ocr/learning.cc' and \
+        f.path != 'src/capture/ocr/ppocr_extract_text.cpp':
+            print('\x1B[1;31m', f.path, ' is unused\x1B[0m', file=sys.stderr, sep='')
