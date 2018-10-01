@@ -60,10 +60,10 @@ RED_AUTO_TEST_CASE(TestServerRedirectionPDU)
     RED_CHECK_EQUAL(rinfo_init.host_is_fqdn, rinfo_target.host_is_fqdn);
     RED_CHECK_EQUAL(rinfo_init.smart_card_logon, rinfo_target.smart_card_logon);
 
-    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.host),
-                                reinterpret_cast<char*>(rinfo_target.host)));
-    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.username),
-                                reinterpret_cast<char*>(rinfo_target.username)));
-    RED_CHECK_EQUAL(0, strcmp(reinterpret_cast<char*>(rinfo_init.domain),
-                                reinterpret_cast<char*>(rinfo_target.domain)));
+    RED_CHECK_EQUAL(0, strcmp(char_ptr_cast(rinfo_init.host),
+                                char_ptr_cast(rinfo_target.host)));
+    RED_CHECK_EQUAL(0, strcmp(char_ptr_cast(rinfo_init.username),
+                                char_ptr_cast(rinfo_target.username)));
+    RED_CHECK_EQUAL(0, strcmp(char_ptr_cast(rinfo_init.domain),
+                                char_ptr_cast(rinfo_target.domain)));
 }

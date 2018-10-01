@@ -21,7 +21,7 @@
 #define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/hexdump.hpp"
+#include "utils/sugar/cast.hpp"
 #include "core/RDP/clipboard.hpp"
 
 
@@ -33,8 +33,8 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         uint8_t UTF16nameData[20];
         std::string nameUTF8("abcde.txt");
-        int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
-        std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+        int UTF16nameSize = ::UTF8toUTF16(byte_ptr_cast(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
+        std::string nameUTF16 = std::string(char_ptr_cast(UTF16nameData), UTF16nameSize);
         std::string name = nameUTF16 ;
         //uint64_t size = 17 ;
         const int cItems = 1;
@@ -45,8 +45,8 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         const uint8_t file_list_data[] =
             "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00";
 
-        std::string const out_data(reinterpret_cast<char *>(ou_stream_fileList.get_data()), 12);
-        std::string const expected(reinterpret_cast<const char *>(file_list_data), 12);
+        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 12);
+        std::string const expected(char_ptr_cast(file_list_data), 12);
         RED_CHECK_EQUAL(expected, out_data);
     }
 
@@ -55,8 +55,8 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         //  recv_fileList
         uint8_t UTF16nameData[20];
         std::string nameUTF8("abcde.txt");
-        int UTF16nameSize = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
-        std::string nameUTF16 = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+        int UTF16nameSize = ::UTF8toUTF16(byte_ptr_cast(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
+        std::string nameUTF16 = std::string(char_ptr_cast(UTF16nameData), UTF16nameSize);
 
         std::string name = nameUTF16 ;
         const int cItems = 1;
@@ -115,9 +115,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
         fdr.emit(ou_stream_metaFilePic);
 
-        std::string out_data(reinterpret_cast<char *>(ou_stream_metaFilePic.get_data()), 132);
-
-        const char metafilepic_out_data[] =
+        auto metafilepic_out_data = cstr_array_view(
             "\x05\x00\x01\x00\xb6\xbc\x00\x00\x08\x00\x00\x00\x60\x22\x00\x00"
             "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
             "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
@@ -126,12 +124,9 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
             "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
             "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00";
+            "\x00\x00\x00\x00");
 
-        std::string expected(reinterpret_cast<const char *>(metafilepic_out_data), 132);
-
-        RED_CHECK_EQUAL(expected, out_data);
-
+        RED_CHECK_MEM(metafilepic_out_data, stream_to_avu8(ou_stream_metaFilePic));
     }
 
 
@@ -490,16 +485,12 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size);
     fileContentsRequest.emit(out_stream);
 
-    const char exp_data[] =
+    auto exp_data = cstr_array_view(
         "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
-        "\x00\x00\x00\x00";
+        "\x00\x00\x00\x00");
 
-    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
-    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
-//    hexdump(out_stream.get_data(), out_stream.get_offset());
-
-    RED_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
 
 
@@ -539,15 +530,12 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size);
     fileContentsRequest.emit(out_stream);
 
-    const char exp_data[] =
+    auto exp_data = cstr_array_view(
         "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
-        "\x00\x00\x00\x00";
+        "\x00\x00\x00\x00");
 
-    std::string expected(reinterpret_cast<const char *>(exp_data), sizeof(exp_data)-1);
-    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), out_stream.get_offset());
-
-    RED_CHECK_EQUAL(expected, out_data);
+    RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
 
 
@@ -574,7 +562,4 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     }
 }
-
-
-
 

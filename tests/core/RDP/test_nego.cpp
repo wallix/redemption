@@ -102,7 +102,7 @@ RED_AUTO_TEST_CASE(TestNego)
 
         ;
     TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
+    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
     char user[] = "Ulysse";
     char domain[] = "Ithaque";
     char pass[] = "Pénélope\x00";

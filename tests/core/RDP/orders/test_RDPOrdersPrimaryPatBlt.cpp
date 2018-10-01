@@ -57,7 +57,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                  RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
+                  RDPBrush(3, 4, 3, 0xDD, byte_ptr_cast("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[30] = {
@@ -158,7 +158,7 @@ RED_AUTO_TEST_CASE(TestPatBlt)
         RDPPatBlt(Rect(300, 400, 50, 60),
                   0xFF,
                   encode_color24()(BGRColor{0x102030}), encode_color24()(BGRColor{0x112233}),
-                  RDPBrush(3, 4, 3, 0xDD, reinterpret_cast<const uint8_t*>("\1\2\3\4\5\6\7"))
+                  RDPBrush(3, 4, 3, 0xDD, byte_ptr_cast("\1\2\3\4\5\6\7"))
                   ).emit(out_stream, newcommon, state_common, state_patblt);
 
         uint8_t datas[28] = {

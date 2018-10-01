@@ -215,7 +215,7 @@ struct BufTransport : Transport
 private:
     void do_send(const uint8_t * const data, size_t len) override
     {
-        this->buf.append(reinterpret_cast<char const *>(data), len);
+        this->buf.append(char_ptr_cast(data), len);
     }
 };
 

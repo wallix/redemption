@@ -31,7 +31,7 @@ RED_AUTO_TEST_CASE(TestFilePatternFindNextWildcardA)
     {
         unsigned int pFlags = 0;
         const char * posWildcard = FilePatternFindNextWildcardA("toto.exe", &pFlags);
-        RED_CHECK(reinterpret_cast<const void*>(posWildcard) == nullptr);
+        RED_CHECK(posWildcard == nullptr);
         RED_CHECK(pFlags == 0);
     }
 

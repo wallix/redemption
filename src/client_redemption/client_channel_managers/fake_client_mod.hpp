@@ -149,7 +149,7 @@ public:
     }
 
     array_view_char get_file_item(int ) override {
-        return {reinterpret_cast<char *>(this->_chunk.get()), this->size};
+        return {char_ptr_cast(this->_chunk.get()), this->size};
     }
 
     std::string get_file_item_name(int ) override {

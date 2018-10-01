@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(ChangeNotifyResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 

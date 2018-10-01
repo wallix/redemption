@@ -474,7 +474,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
 
 RED_AUTO_TEST_CASE(TestUTF32toUTF8) {
     uint8_t buf[5]{};
-    RED_REQUIRE_EQUAL(1, UTF32toUTF8(reinterpret_cast<uint8_t const *>("a\0\0\0"), 1, buf, 5));
+    RED_REQUIRE_EQUAL(1, UTF32toUTF8(byte_ptr_cast("a\0\0\0"), 1, buf, 5));
     RED_REQUIRE_EQUAL('a', buf[0]);
     RED_REQUIRE_EQUAL(1, UTF32toUTF8('a', buf, 4));
     RED_REQUIRE_EQUAL('a', buf[0]);
@@ -574,7 +574,7 @@ RED_AUTO_TEST_CASE(TestUTF32toUTF8) {
 //     uint8_t   source[] = "aÉ€𝄞";
 //     uint8_t * p        = source;
 //
-//     RED_CHECK_EQUAL(10, strlen(reinterpret_cast<char *>(p)));
+//     RED_CHECK_EQUAL(10, strlen(char_ptr_cast(p)));
 //
 //     RED_CHECK_EQUAL(1, UTF8GetFirstCharLen(p));
 //     p++;
@@ -602,56 +602,56 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF8LCopy)
         uint8_t dest[11] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(4, res);
-        RED_CHECK_EQUAL(10, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(10, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[10] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(6, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[9] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(6, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[7] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(3, res);
-        RED_CHECK_EQUAL(6, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(6, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[6] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(2, res);
-        RED_CHECK_EQUAL(3, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(3, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[5] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(2, res);
-        RED_CHECK_EQUAL(3, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(3, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[2] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(1, res);
-        RED_CHECK_EQUAL(1, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(1, strlen(char_ptr_cast(dest)));
     }
 
     {
         uint8_t dest[1] = {};
         int res = UTF8ToUTF8LCopy(dest, sizeof(dest), source);
         RED_CHECK_EQUAL(0, res);
-        RED_CHECK_EQUAL(0, strlen(reinterpret_cast<char *>(dest)));
+        RED_CHECK_EQUAL(0, strlen(char_ptr_cast(dest)));
     }
 }
 

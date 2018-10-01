@@ -101,7 +101,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     /* 0050 */ "\x73\x00\x00\x00\x01\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00" // s...............
     ;
     std::string expected_init_format_list_str(expected_init_format_list_pdu, 96);
-    std::string init_format_list_str(reinterpret_cast<const char *>(stream_formatList.get_data()), 96);
+    std::string init_format_list_str(char_ptr_cast(stream_formatList.get_data()), 96);
     RED_CHECK_EQUAL(expected_init_format_list_str, init_format_list_str);
 }
 
@@ -188,7 +188,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), manager._cb_buffers.size);
     RED_CHECK_EQUAL(sizeof(clip_data_total), manager._cb_buffers.sizeTotal);
-    std::string data_sent_to_local_clipboard_part1(reinterpret_cast<char *>( manager._cb_buffers.data.get()));
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(manager._cb_buffers.data.get()));
     std::string data_sent_expected_part1(clip_txt_part1);
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
 
@@ -305,14 +305,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total));
-    std::string data_sent_to_local_clipboard_part1(reinterpret_cast<const char *>( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
     std::string data_sent_expected_part1(clip_txt_part1, sizeof(clip_txt_part1));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
     InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    std::string data_sent_to_local_clipboard_part2(reinterpret_cast<const char *>( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
+    std::string data_sent_to_local_clipboard_part2(char_ptr_cast( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
     std::string data_sent_expected_part2(clip_txt_part2, sizeof(clip_txt_part2));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part2, data_sent_expected_part2);
 }
@@ -404,7 +404,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatDataResponse.out_uint32_le(sizeof(clip_data_total));
     std::string file_name("file_name.name");
     uint8_t utf16_file_name[520] = { 0 };
-    size_t utf16_len = ::UTF8toUTF16(reinterpret_cast<const uint8_t *>(file_name.data()), utf16_file_name, file_name.size() *2);
+    size_t utf16_len = ::UTF8toUTF16(byte_ptr_cast(file_name.data()), utf16_file_name, file_name.size() *2);
     out_FormatDataResponse.out_copy_bytes(utf16_file_name, utf16_len);
     out_FormatDataResponse.out_clear_bytes(520-utf16_len);
     InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), 608/*out_FormatDataResponse.get_offset()*/);
@@ -479,7 +479,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(manager._waiting_for_data, true);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-    std::string data_sent_to_local_clipboard_part1(reinterpret_cast<char *>( clip_io._chunk.get()),  sizeof(clip_txt_part1));
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_part1));
     std::string data_sent_expected_part1(clip_txt_part1,  sizeof(clip_txt_part1));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
@@ -509,7 +509,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
     RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
-    std::string data_sent_to_local_clipboard_total(reinterpret_cast<char *>(clip_io._chunk.get()),  sizeof(clip_txt_total));
+    std::string data_sent_to_local_clipboard_total(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_total));
     std::string data_sent_expected_total(clip_txt_total,  sizeof(clip_txt_total));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_total, data_sent_expected_total);
 }
@@ -569,7 +569,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     /* 0030 */ "\x72\x00\x57\x00\x00\x00"                                         // r.W...
     ;
     std::string expected_format_list_str(expected_format_list_pdu, sizeof(expected_format_list_pdu));
-    std::string format_list_str(reinterpret_cast<const char *>(stream_formatListPDU.get_data()), sizeof(expected_format_list_pdu));
+    std::string format_list_str(char_ptr_cast(stream_formatListPDU.get_data()), sizeof(expected_format_list_pdu));
     RED_CHECK_EQUAL(expected_format_list_str, format_list_str);
 
     // Format List Response PDU
@@ -664,14 +664,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total)+4);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), 1);
-    std::string data_sent_to_local_clipboard_part1(reinterpret_cast<const char *>( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
     std::string data_sent_expected_part1(clip_txt_part1, sizeof(clip_txt_part1));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
     InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    std::string data_sent_to_local_clipboard_part2(reinterpret_cast<const char *>( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
+    std::string data_sent_to_local_clipboard_part2(char_ptr_cast( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
     std::string data_sent_expected_part2(clip_txt_part2, sizeof(clip_txt_part2));
     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part2, data_sent_expected_part2);
 }

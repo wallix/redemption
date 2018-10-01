@@ -464,7 +464,7 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
     for (auto & k: keys){
         if ((k.scheme == oldscheme)
         && (k.base.length() == static_cast<size_t>(len))
-        && (strncmp(k.base.c_str(), reinterpret_cast<char const*>(base), static_cast<size_t>(len)) == 0))
+        && (strncmp(k.base.c_str(), char_ptr_cast(base), static_cast<size_t>(len)) == 0))
         {
             if (oldscheme){
                 LOG(LOG_INFO, "old key (derived from main master)");

@@ -195,13 +195,8 @@ RED_AUTO_TEST_CASE(ClientAnnounceReply) {
     rdpdr::ClientAnnounceReply clientAnnounceReply(0x0001, 0x0002, 0x00000001);
     clientAnnounceReply.emit(out_stream);
 
-    std::string out_data(reinterpret_cast<char *>(out_stream.get_data()), 12);
-
-    const char expected_data[] =
-        "\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00";
-    std::string expected(reinterpret_cast<const char *>(expected_data), 12);
-
-    RED_CHECK_EQUAL(expected, out_data);
+    auto expected_data = cstr_array_view("\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00");
+    RED_CHECK_MEM(expected_data, stream_to_avchar(out_stream));
 }
 
 
@@ -352,7 +347,7 @@ RED_AUTO_TEST_CASE(CapabilityHeaderEmit)
     ch.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -385,7 +380,7 @@ RED_AUTO_TEST_CASE(ClientDriveDeviceListRemoveEmit)
     cddlr.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -419,7 +414,7 @@ RED_AUTO_TEST_CASE(DeviceAnnounceHeaderEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -453,7 +448,7 @@ RED_AUTO_TEST_CASE(DeviceIORequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -487,7 +482,7 @@ RED_AUTO_TEST_CASE(DeviceIORequestReceive)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     for (int i = 0; i < 32; i++) {
         std::cout << int(data[i]) <<  " " << int(stream.get_data()[i]) << std::endl;
     }
@@ -506,7 +501,7 @@ RED_AUTO_TEST_CASE(ClientDriveNotifyChangeDirectoryResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -534,7 +529,7 @@ RED_AUTO_TEST_CASE(ServerDriveNotifyChangeDirectoryRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -563,7 +558,7 @@ RED_AUTO_TEST_CASE(RDP_Lock_InfoEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -614,7 +609,7 @@ RED_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -645,7 +640,7 @@ RED_AUTO_TEST_CASE(ClientDriveSetInformationResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -674,7 +669,7 @@ RED_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -704,7 +699,7 @@ RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -732,7 +727,7 @@ RED_AUTO_TEST_CASE(ServerDriveSetInformationRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -760,7 +755,7 @@ RED_AUTO_TEST_CASE(ClientDriveQueryVolumeInformationResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -788,7 +783,7 @@ RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -825,7 +820,7 @@ RED_AUTO_TEST_CASE(GeneralCapabilitySetEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -864,7 +859,7 @@ RED_AUTO_TEST_CASE(ServerAnnounceRequestEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -894,7 +889,7 @@ RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -923,7 +918,7 @@ RED_AUTO_TEST_CASE(DeviceWriteResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 
@@ -952,7 +947,7 @@ RED_AUTO_TEST_CASE(DeviceReadResponseEmit)
     pdu.emit(stream);
 
     std::string const out_data(data, len);
-    std::string const expected(reinterpret_cast<const char *>(stream.get_data()), len);
+    std::string const expected(char_ptr_cast(stream.get_data()), len);
     RED_CHECK_EQUAL(expected, out_data);
 }
 

@@ -90,7 +90,7 @@ RED_AUTO_TEST_CASE(TestNlaclient)
     LOG(LOG_INFO, "TEST CLIENT SIDE");
 
     TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
-    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
+    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";
@@ -178,7 +178,7 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
-    logtrans.set_public_key(reinterpret_cast<const uint8_t*>("1245789652325415"), 16);
+    logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
     uint8_t domain[] = "Ithaque";
     uint8_t pass[] = "Pénélope";

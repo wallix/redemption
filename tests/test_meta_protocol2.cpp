@@ -207,7 +207,7 @@ void test_new()
         void send(iovec_array iovs) const {
             RED_CHECK_EQUAL(iovs.size(), 1);
             CHECK_RANGE(
-                make_array_view(reinterpret_cast<uint8_t const *>(iovs[0].iov_base), iovs[0].iov_len),
+                make_array_view(byte_ptr_cast(iovs[0].iov_base), iovs[0].iov_len),
                 cstr_array_view("\x03\x00\x00\x0b\x02\xf0\x80\xf7\xff\xff\xff")
             );
             log_policy::send(iovs);

@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestGlyphIndex2)
         // TODO " actual data is much more complex  than a text  we should create a specialized object to store  serialize and replay it. This should be done after the RDP layer include cache management primitives"
 
         RDPOrderCommon state_common(RDP::PATBLT, Rect(0, 0, 1024, 768));
-        RDPGlyphIndex  statecmd(0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, reinterpret_cast<const uint8_t *>(""));
+        RDPGlyphIndex  statecmd(0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0, byte_ptr_cast(""));
         RDPOrderCommon newcommon(GLYPHINDEX, Rect(0, 0, 1024, 768));
         const uint8_t nullbrush_extra[] = {0,0,0,0,0,0,0};
         const uint8_t data[] = { 0x00, 0x00, 0x01, 0x08, 0x02, 0x07, 0x03, 0x07

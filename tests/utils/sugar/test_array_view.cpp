@@ -32,6 +32,8 @@ int test_ambiguous(array_view_const_char) { return 1; }
 int test_ambiguous(array_view_const_s8) { return 2; }
 int test_ambiguous(array_view_const_u8) { return 3; }
 
+using voidp = void const*;
+
 }
 
 RED_AUTO_TEST_CASE(TestArrayView)
@@ -104,8 +106,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     auto const avi = make_array_view(left, right);
 
     RED_CHECK_EQUAL(avi.size(), 1);
-    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-                      reinterpret_cast<const void*>(&ca8[1]));
+    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
@@ -115,8 +116,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     auto const avi = make_array_view(left, right);
 
     RED_CHECK_EQUAL(avi.size(), 1);
-    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-                      reinterpret_cast<const void*>(&ca8[1]));
+    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
@@ -125,8 +125,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     auto const avi = make_const_array_view(left, 2);
 
     RED_CHECK_EQUAL(avi.size(), 2);
-    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-                      reinterpret_cast<const void*>(&ca8[1]));
+    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
@@ -136,8 +135,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     auto const avi = make_const_array_view(left, right);
 
     RED_CHECK_EQUAL(avi.size(), 0);
-    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-                      reinterpret_cast<const void*>(&ca8[1]));
+    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
     {
@@ -145,15 +143,13 @@ RED_AUTO_TEST_CASE(TestArrayView)
     auto const avi = make_const_array_view(ca8);
 
     RED_CHECK_EQUAL(avi.size(), 4);
-    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-                      reinterpret_cast<const void*>(&ca8[0]));
+    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
     }
 
     {
     auto const avi = cstr_array_view("0123456789");
     RED_CHECK_EQUAL(avi.size(), 10);
-//    RED_CHECK_EQUAL(reinterpret_cast<const void*>(avi.data()),
-//                      reinterpret_cast<const void*>(&ca8[0]));
+//    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
     }
 }
 

@@ -354,12 +354,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     RED_CHECK_EQUAL(ts_cred_received.passCreds.domainName_length, sizeof(domain));
     RED_CHECK_EQUAL(ts_cred_received.passCreds.userName_length,   sizeof(user));
     RED_CHECK_EQUAL(ts_cred_received.passCreds.password_length,   sizeof(pass));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.domainName),
-                      reinterpret_cast<const char*>(domain));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.userName),
-                      reinterpret_cast<const char*>(user));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.passCreds.password),
-                      reinterpret_cast<const char*>(pass));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.domainName),
+                      char_ptr_cast(domain));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.userName),
+                      char_ptr_cast(user));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.passCreds.password),
+                      char_ptr_cast(pass));
 
 
 
@@ -370,12 +370,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
     ts_cred.set_credentials(domain2, sizeof(domain2),
                             user2, sizeof(user2),
                             pass2, sizeof(pass2));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.domainName),
-                      reinterpret_cast<const char*>(domain2));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.userName),
-                      reinterpret_cast<const char*>(user2));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred.passCreds.password),
-                      reinterpret_cast<const char*>(pass2));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.domainName),
+                      char_ptr_cast(domain2));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.userName),
+                      char_ptr_cast(user2));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred.passCreds.password),
+                      char_ptr_cast(pass2));
 }
 
 RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
@@ -417,12 +417,12 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
                       sizeof(userHint));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.domainHint_length,
                       sizeof(domainHint));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.pin),
-                      reinterpret_cast<const char*>(pin));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.userHint),
-                      reinterpret_cast<const char*>(userHint));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.domainHint),
-                      reinterpret_cast<const char*>(domainHint));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.pin),
+                      char_ptr_cast(pin));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.userHint),
+                      char_ptr_cast(userHint));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.domainHint),
+                      char_ptr_cast(domainHint));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.keySpec,
                       keySpec);
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cardName_length,
@@ -433,13 +433,13 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
                       sizeof(containerName));
     RED_CHECK_EQUAL(ts_cred_received.smartcardCreds.cspData.cspName_length,
                       sizeof(cspName));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cardName),
-                      reinterpret_cast<const char*>(cardName));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.readerName),
-                      reinterpret_cast<const char*>(readerName));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.containerName),
-                      reinterpret_cast<const char*>(containerName));
-    RED_CHECK_EQUAL(reinterpret_cast<const char*>(ts_cred_received.smartcardCreds.cspData.cspName),
-                      reinterpret_cast<const char*>(cspName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cardName),
+                      char_ptr_cast(cardName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.readerName),
+                      char_ptr_cast(readerName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.containerName),
+                      char_ptr_cast(containerName));
+    RED_CHECK_EQUAL(char_ptr_cast(ts_cred_received.smartcardCreds.cspData.cspName),
+                      char_ptr_cast(cspName));
 
 }
