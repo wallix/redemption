@@ -1111,7 +1111,6 @@ public:
 
     std::string get_mwrm_filename() override {
         this->config._movie_full_path = this->config._movie_dir + this->config._movie_name;
-        LOG(LOG_INFO, "this->config._movie_full_path=%s", this->config._movie_full_path);
         return this->config._movie_full_path;
     }
 
@@ -1124,7 +1123,7 @@ public:
         std::string extension(".mwrm");
 
         if ((dir = opendir (this->config.REPLAY_DIR.c_str())) != nullptr) {
-
+//
             try {
                 while ((ent = readdir (dir)) != nullptr) {
 
@@ -1167,6 +1166,8 @@ public:
     time_t get_movie_time_length(char const * mwrm_filename) override  {
         // TODO RZ: Support encrypted recorded file.
 
+        LOG(LOG_INFO, "!!!! mwrm_filename=%s !!!!", mwrm_filename);
+
         CryptoContext cctx;
         Fstat fsats;
         InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
@@ -1176,9 +1177,7 @@ public:
         time_t start_time = 0;
         time_t stop_time = 0;
 
-        const char *mwrm_filename_j = "/home/cmoroldo/Bureau/redemption/projects/ClientQtGraphicAPI/DATA/replay/Mon Nov 20 16:08:04 2017-Replay.mwrm";
-
-        trans.open(mwrm_filename_j);
+        trans.open(mwrm_filename);
         mwrm_reader.read_meta_headers();
 
         Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);

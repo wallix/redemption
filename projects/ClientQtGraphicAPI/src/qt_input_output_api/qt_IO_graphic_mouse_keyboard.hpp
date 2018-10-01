@@ -494,8 +494,6 @@ private:
         // this->cursor_image is used when client is replaying
         this->cursor_image = QImage(av_alpha_q.data(), dimensions.width, dimensions.height, dimensions.width * 4, QImage::Format_ARGB32_Premultiplied);
 
-
-
         if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
             for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
                 if (it->second) {
@@ -508,12 +506,14 @@ private:
     }
 
 
-
     void pre_load_movie() override {
 
+    LOG(LOG_INFO, "!!!! pre_load_movie !!!!");
         this->balises.clear();
 
-        std::string filename = this->client_replay->get_mwrm_filename();
+//         std::string filename = this->client_replay->get_mwrm_filename();
+        this->config->_movie_full_path = this->config->_movie_dir + this->config->_movie_name;
+        std::string filename = this->config->_movie_full_path;
         LOG(LOG_INFO, "!!!! filename=%s !!!!", filename);
 
         long int movie_length = this->client_replay->get_movie_time_length(filename.c_str());

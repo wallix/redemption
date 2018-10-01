@@ -204,7 +204,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
 
     // check clip io data
-    std::string data_sent_to_local_clipboard(reinterpret_cast<char *>( clip_io._chunk.get()), sizeof(clip_txt_total));
+    std::string data_sent_to_local_clipboard(clip_io.data_text);
     std::string data_sent_expected(clip_txt_total, sizeof(clip_txt_total));
     RED_CHECK_EQUAL(clip_io.data_text, data_sent_expected);
 
