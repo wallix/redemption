@@ -2415,12 +2415,9 @@ test-run tests/lib/test_iametrics :
 :
   <covfile>src/lib/iametrics.cpp
   <covfile>src/lib/iametrics.hpp
-  <library>app_path_test.o
   <library>boost_stacktrace
-  <library>crypto
+  <library>libiametrics
   <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
   <library>tests/includes/test_only/working_directory.o
   <variant>debug:<library>dl <variant>san:<library>dl
@@ -2432,9 +2429,9 @@ test-run tests/lib/test_scytale :
   <covfile>src/lib/scytale.hpp
   <library>boost_stacktrace
   <library>crypto
+  <library>libscytale
   <library>snappy
   <library>src/core/error.o
-  <library>src/lib/scytale.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o

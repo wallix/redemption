@@ -91,6 +91,12 @@ dir_nocoverage = set([
 ])
 file_nocoverage = set(glob.glob('tests/*.cpp'))
 
+# lib/*.cpp -> <library>lib*
+replace_deps = dict([
+    (f, '<library>lib' + f[8:-4]) for f in glob.glob('src/lib/*.cpp')
+        if f != 'src/lib/do_recorder.cpp' # depends of app_path...
+])
+
 sys_lib_assoc = dict((
     ('png.h', '<library>png'),
     ('krb5.h', '<library>krb5'),
@@ -109,6 +115,7 @@ user_lib_assoc = dict((
     ('program_options/program_options.hpp', '<library>program_options'),
     ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
 ))
+
 user_lib_prefix = (
     ('ppocr/', '<library>ppocr'),
 )
@@ -319,6 +326,7 @@ for name, f in all_files.items():
 
 for name, f in all_files.items():
     deps = []
+    dispatch_deps = []
     for pf in f.user_includes:
         if pf.path in src_deps:
             for path in src_deps[pf.path]:
@@ -326,10 +334,13 @@ for name, f in all_files.items():
         for ext in ('.cpp', '.cc'):
             cpp_name = pf.path[:-4]+ext
             if cpp_name in all_files:
-                deps.append(all_files[cpp_name])
+                if cpp_name in replace_deps and f.path != cpp_name:
+                    dispatch_deps.append(replace_deps[cpp_name])
+                else:
+                    deps.append(all_files[cpp_name])
     f.direct_source_deps = set(deps)
 
-    deps = []
+    deps = dispatch_deps
     for name in f.system_includes:
         syslib = get_system_lib(name)
         if syslib:
