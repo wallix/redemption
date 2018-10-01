@@ -26,6 +26,7 @@
 #include "test_only/working_directory.hpp"
 
 #include "mod/vnc/vnc_metrics.hpp"
+#include "mod/metrics_hmac.hpp"
 
 
 RED_AUTO_TEST_CASE(TestVNCMetricsH)

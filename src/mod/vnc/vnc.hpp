@@ -52,8 +52,9 @@ h
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
-#include "mod/vnc/vnc_verbose.hpp"
 
+#include "mod/metrics_hmac.hpp"
+#include "mod/vnc/vnc_verbose.hpp"
 #include "mod/vnc/vnc_params.hpp"
 #include "mod/vnc/vnc_metrics.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"

@@ -322,13 +322,7 @@ lib libiametrics :
 :
   $(LIB_DEPENDENCIES)
   <library>log.o
-  <library>app_path_exe.o
-  <library>boost_stacktrace
-  <library>crypto
-  <library>src/core/error.o
-  <library>src/core/font.o
   <library>src/utils/fileutils.o
-  <variant>debug:<library>dl <variant>san:<library>dl
 ;
 lib libscytale :
   src/lib/scytale.cpp.lib.o
@@ -3598,7 +3592,6 @@ test-run tests/mod/rdp/test_rdp_metrics :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
 :
   <covfile>src/mod/rdp/rdp_metrics.hpp
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/RDP/mppc.o
@@ -3702,7 +3695,6 @@ test-run tests/mod/vnc/test_vnc_metrics :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc_metrics.cpp
 :
   <covfile>src/mod/vnc/vnc_metrics.hpp
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
