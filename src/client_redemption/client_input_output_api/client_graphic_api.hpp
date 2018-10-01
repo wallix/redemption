@@ -37,6 +37,7 @@ public:
     const int screen_max_height;
 
     bool is_pre_loading;
+    ClientRedemptionAPI * client_replay;
 
     ClientOutputGraphicAPI(int max_width, int max_height)
       : controller(nullptr)
@@ -48,7 +49,8 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
+    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config, ClientRedemptionAPI * client) {
+        this->client_replay = client;
         this->config = config;
         this->controller = controller;
     }

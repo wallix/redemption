@@ -111,9 +111,10 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //-----------------------------
 
-    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override
+    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config, ClientRedemptionAPI * client) override
     {
-        ClientOutputGraphicAPI::set_drawn_client(controller, config);
+//         this->client_replay = client;
+        ClientOutputGraphicAPI::set_drawn_client(controller, config, client);
         this->set_callback(controller);
 
         //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
@@ -466,7 +467,7 @@ private:
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client->get_movie_time_length(this->client->get_mwrm_filename()), current_time_movie, this->config);
+                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->client_replay->get_movie_time_length(this->client_replay->get_mwrm_filename().c_str()), current_time_movie, this->config);
 
                         this->screen->show();
                     }
@@ -507,12 +508,15 @@ private:
     }
 
 
+
     void pre_load_movie() override {
 
         this->balises.clear();
 
-        long int movie_length = this->client->get_movie_time_length(this->client->get_mwrm_filename());
-        LOG(LOG_INFO, "!!!!!!!!! %ld !!!!!!", movie_length);
+        std::string filename = this->client_replay->get_mwrm_filename();
+        LOG(LOG_INFO, "!!!! filename=%s !!!!", filename);
+
+        long int movie_length = this->client_replay->get_movie_time_length(filename.c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
@@ -523,7 +527,7 @@ private:
 
             while (endin_frame < movie_length) {
 
-                this->client->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+                this->client_replay->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
 
                 this->balises.push_back(this->cache);
                 endin_frame += ClientRedemptionConfig::BALISED_FRAME;
@@ -1478,8 +1482,8 @@ private:
     //------------------------
 
     void keyPressEvent(const int key, std::string const& text) override {
-//         if (this->client->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-//             this->client->send_rdp_unicode(text, 0);
+//         if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
+//             this->client_replay->send_rdp_unicode(text, 0);
 //         } else {
         this->qtRDPKeymap.keyEvent(0, key, text);
         if (this->qtRDPKeymap.scanCode != 0) {
@@ -1489,8 +1493,8 @@ private:
     }
 
     void keyReleaseEvent(const int key, std::string const& text) override {
-//          if (this->client->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-//             this->client->send_rdp_unicode(text, KBD_FLAG_UP);
+//          if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
+//             this->client_replay->send_rdp_unicode(text, KBD_FLAG_UP);
 //         } else {
             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
             if (this->qtRDPKeymap.scanCode != 0) {

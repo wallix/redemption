@@ -155,7 +155,6 @@ public:
     std::string get_file_item_name(int ) override {
         return this->fileName;
     }
-
 };
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {

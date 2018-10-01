@@ -275,7 +275,7 @@ public:
             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
         }
         if (this->impl_graphic) {
-            this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config));
+            this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config), this);
         } else {
             LOG(LOG_WARNING, "No graphic output implementation.");
         }
@@ -1109,9 +1109,10 @@ public:
         return this->replay_mod->get_real_time_movie_begin();
     }
 
-    char const * get_mwrm_filename() override {
+    std::string get_mwrm_filename() override {
         this->config._movie_full_path = this->config._movie_dir + this->config._movie_name;
-        return this->config._movie_full_path.c_str();
+        LOG(LOG_INFO, "this->config._movie_full_path=%s", this->config._movie_full_path);
+        return this->config._movie_full_path;
     }
 
     void set_icon_movie_data() {
@@ -1175,7 +1176,9 @@ public:
         time_t start_time = 0;
         time_t stop_time = 0;
 
-        trans.open(mwrm_filename);
+        const char *mwrm_filename_j = "/home/cmoroldo/Bureau/redemption/projects/ClientQtGraphicAPI/DATA/replay/Mon Nov 20 16:08:04 2017-Replay.mwrm";
+
+        trans.open(mwrm_filename_j);
         mwrm_reader.read_meta_headers();
 
         Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);

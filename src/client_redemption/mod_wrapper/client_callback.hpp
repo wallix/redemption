@@ -215,7 +215,7 @@ public:
     }
 
     char const * get_mwrm_filename() {
-        return this->client->get_mwrm_filename();
+        return this->client->get_mwrm_filename().c_str();
     }
 
 
@@ -317,6 +317,6 @@ public:
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-    
+
 
 };

@@ -73,7 +73,7 @@ public:
     virtual bool load_replay_mod(std::string const & /*unused*/, std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual bool is_replay_on() { return false; }
-    virtual char const * get_mwrm_filename() { return ""; }
+    virtual std::string get_mwrm_filename() { return ""; }
     virtual time_t get_real_time_movie_begin() { return time_t{}; }
     virtual void delete_replay_mod() {}
     virtual void replay_set_pause(timeval /*unused*/) {}
