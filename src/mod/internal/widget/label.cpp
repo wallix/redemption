@@ -28,7 +28,7 @@
 
 WidgetLabel::WidgetLabel(
     gdi::GraphicApi & drawable, Widget& parent,
-    NotifyApi* notifier, std::string_view text,
+    NotifyApi* notifier, array_view_const_char text,
     int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
     int xtext, int ytext
 )
@@ -48,6 +48,16 @@ WidgetLabel::WidgetLabel(
     this->set_text(text);
 }
 
+WidgetLabel::WidgetLabel(
+    gdi::GraphicApi & drawable, Widget& parent,
+    NotifyApi* notifier, char const* text,
+    int group_id, BGRColor fgcolor, BGRColor bgcolor, Font const & font,
+    int xtext, int ytext
+)
+: WidgetLabel(drawable, parent, notifier, {text, text ? strlen(text) : 0u},
+    group_id, fgcolor, bgcolor, font, xtext, ytext)
+{}
+
 WidgetLabel::WidgetLabel(WidgetLabel const & other)
     : Widget(other)
     , initial_x_text(other.initial_x_text)
@@ -65,7 +75,12 @@ WidgetLabel::WidgetLabel(WidgetLabel const & other)
 
 WidgetLabel::~WidgetLabel() = default;
 
-void WidgetLabel::set_text(std::string_view text)
+void WidgetLabel::set_text(char const* text)
+{
+    this->set_text({text, text ? strlen(text) : 0u});
+}
+
+void WidgetLabel::set_text(array_view_const_char text)
 {
     this->buffer[0] = 0;
     if (!text.empty()) {
