@@ -84,11 +84,11 @@ target_nosyslog = set([
 #))
 
 dir_nocoverage = set([
-    'tests/server/',
-    'tests/system/common/',
-    'tests/system/emscripten/',
-    'tests/client_mods'
-    'tests/lib'
+    'tests/server',
+    'tests/system/common',
+    'tests/system/emscripten',
+    'tests/client_mods',
+    'tests/lib',
 ])
 file_nocoverage = set(glob.glob('tests/*.cpp'))
 
