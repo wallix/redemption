@@ -2137,7 +2137,11 @@ class Sesman():
 
     def parse_app(self, value):
         acc_name, sep, app_name = value.rpartition('@')
-        return acc_name, app_name
+        if acc_name:
+            acc, sep, dom = acc_name.rpartition('@')
+            if sep:
+                return acc, dom, app_name
+        return acc_name, '', app_name
 
     def check_application(self, effective_target, flags, exe_or_file):
         kv = {
@@ -2151,15 +2155,16 @@ class Sesman():
             app_right, app_params = app_right_params
             kv = self._complete_app_infos(kv, app_right, app_params)
             return kv
-        acc_name, app_name = self.parse_app(exe_or_file)
+        acc_name, dom_name, app_name = self.parse_app(exe_or_file)
         if not app_name or not acc_name:
             Logger().debug("check_application: Parsing failed")
             return kv
         app_rights = self.engine.get_proxy_user_rights(['RDP'], app_name)
-        app_rights = self.engine.filter_app_rights(app_rights, acc_name, app_name)
+        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        app_rights = self.engine.filter_app_rights(app_rights, acc_name, dom_name, app_name)
         app_params = None
         app_right = None
-        Logger().debug("check_application: app rights len = %s" % len(app_rights))
+        Logger().debug("check_application: after filter app rights len = %s" % len(app_rights))
         for ar in app_rights:
             if not self.engine.check_effective_target(ar, effective_target):
                 Logger().debug("check_application: jump server not compatible")
