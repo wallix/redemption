@@ -674,7 +674,6 @@ test-run tests/capture/utils/test_match_finder :
 test-run tests/client_mods/test_rdp_client_large_pointer :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_large_pointer.cpp
 :
-  <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
@@ -710,7 +709,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
 test-run tests/client_mods/test_rdp_client_test_card :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_test_card.cpp
 :
-  <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
@@ -738,7 +736,6 @@ test-run tests/client_mods/test_rdp_client_test_card :
 test-run tests/client_mods/test_rdp_client_tls_w2008 :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_tls_w2008.cpp
 :
-  <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
@@ -774,7 +771,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
 test-run tests/client_mods/test_rdp_client_wab :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_wab.cpp
 :
-  <covflag>nocover $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
