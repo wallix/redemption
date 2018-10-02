@@ -33,7 +33,7 @@
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 
 // [MS-RDPERP]: Remote Desktop Protocol: Remote Programs Virtual Channel Extension
@@ -159,7 +159,6 @@ class ClientChannelRemoteAppManager {
 
     ClientCallback * callback;
     ClientOutputGraphicAPI * impl_graphic;
-    ClientInputMouseKeyboardAPI * impl_input;
 
     std::string source_of_ExeOrFile;
     std::string source_of_WorkingDir;
@@ -178,12 +177,10 @@ public:
 
     ClientChannelRemoteAppManager(RDPVerbose verbose,
                                   ClientCallback * callback,
-                                  ClientOutputGraphicAPI * impl_graphic,
-                                  ClientInputMouseKeyboardAPI * impl_input)
+                                  ClientOutputGraphicAPI * impl_graphic)
       : verbose(verbose)
       , callback(callback)
       , impl_graphic(impl_graphic)
-      , impl_input(impl_input)
       {}
 
 
@@ -230,7 +227,7 @@ public:
                         if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
                                 this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
-                                this->impl_input->refreshPressed();
+                                this->callback->refreshPressed();
                         }
                     }
 
@@ -299,7 +296,7 @@ public:
                         this->impl_graphic->set_screen_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
                         this->impl_graphic->set_mem_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
 
-                        this->impl_input->refreshPressed();
+                        this->callback->refreshPressed();
                     }
                 }
                 break;
@@ -337,13 +334,13 @@ public:
             this->impl_graphic->clear_remote_app_screen();
             this->callback->disconnexionReleased();
         } else {
-            this->impl_input->refreshPressed();
+            this->callback->refreshPressed();
         }
     }
 
 
     void receive(InStream & stream) {
-        if (!this->impl_graphic || !this->impl_input) {
+        if (!this->impl_graphic || !this->callback) {
             return;
         }
 

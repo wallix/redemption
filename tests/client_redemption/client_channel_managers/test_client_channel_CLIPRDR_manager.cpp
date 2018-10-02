@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
@@ -241,7 +241,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;
@@ -338,7 +338,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     clip_io.resize_chunk(sizeof(clip_data_total));
@@ -534,7 +534,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientIOClipboard clip_io;
     RDPClipboardConfig conf;

@@ -70,11 +70,13 @@
 
 
     struct KeyCustomDefinition {
-        int qtKeyID;
-        int scanCode;
+        int qtKeyID = 0;
+        int scanCode = 0;
         std::string ASCII8;
-        int extended;
+        int extended = 0;
         std::string name;
+
+        KeyCustomDefinition() = default;
 
         KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
           : qtKeyID(qtKeyID)
@@ -1225,8 +1227,6 @@ public:
             }
         }
     }
-
-
 
 
 

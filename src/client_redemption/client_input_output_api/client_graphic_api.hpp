@@ -44,8 +44,9 @@ public:
       , config(nullptr)
       , screen_max_width(max_width)
       , screen_max_height(max_height)
-      , is_pre_loading(false) {
-    }
+      , is_pre_loading(false) {}
+
+    virtual void init_form() = 0;
 
     virtual ~ClientOutputGraphicAPI() = default;
 
@@ -106,4 +107,9 @@ public:
 
     // TODO bpp -> gdi::Depth TODO inner GraphicApi ?
     virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
+
+
+    virtual void open_options() {}
+
+    virtual void pre_load_movie(std::string & /*movie_dir*/, std::string & /*movie_name*/) {}
 };

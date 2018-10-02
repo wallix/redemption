@@ -29,7 +29,7 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 
 #include "../keymaps/qt_scancode_keymap.hpp"
@@ -112,7 +112,9 @@ public:
     };
     ClientRedemptionConfig * config;
 //     ClientRedemptionAPI   * _front;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
+    ClientOutputGraphicAPI * graphic;
+
     const int            _width;
     const int            _height;
 
@@ -157,11 +159,12 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionConfig * config/*, ClientRedemptionAPI * front*/, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config/*, ClientRedemptionAPI * front*/, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
         : QWidget(parent)
         , config(config)
 //         , _front(front)
         , controllers(controllers)
+        , graphic(graphic)
         , _width(410)
         , _height(330)
 
@@ -371,7 +374,6 @@ public:
             int extended(0);
 //             static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->print();
             qtKeyID = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->q_key_code;
-//                 LOG(LOG_INFO, "qtKeyID=%d !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", qtKeyID);
             if (qtKeyID != 0) {
                 scanCode = this->_tableKeySetting->item(i, 1)->text().toInt();
                 ASCII8 = this->_tableKeySetting->item(i, 2)->text().toStdString();
@@ -552,8 +554,8 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-        : QtOptions(config, controllers, parent)
+    QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
+        : QtOptions(config, controllers, graphic, parent)
         , _tlsBox(this)
         , _nlaBox(this)
         , _labelTls("TLS :", this)
@@ -859,8 +861,8 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionConfig* config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
-      : QtOptions(config, controllers, parent)
+    QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
+      : QtOptions(config, controllers, graphic, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
     {

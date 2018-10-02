@@ -24,11 +24,12 @@
 
 #ifndef Q_MOC_RUN
 
+#include "core/callback.hpp"
 #include "keyboard/keymap2.hpp"
 #include "core/channel_names.hpp"
 #include "core/channel_list.hpp"
 #include "client_redemption/client_redemption_api.hpp"
-// # include "client_redemption/client_config/client_redemption_config.hpp
+#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 
 #endif
 
@@ -43,17 +44,21 @@ private:
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
 
+    ClientKeyLayoutAPI * keyLayout;
+
 public:
     struct MouseData {
         uint16_t x = 0;
         uint16_t y = 0;
     } mouse_data;
 
-    ClientCallback(ClientRedemptionAPI * client)
+    ClientCallback(ClientRedemptionAPI * client, ClientKeyLayoutAPI * keyLayout)
     :  _timer(0)
     , client(client)
+    , keyLayout(keyLayout)
     {}
 
+    // CHANNELS
     void send_to_mod_channel(CHANNELS::ChannelNameId channel_name, InStream & stream, size_t size, uint32_t flag) {
         this->mod->send_to_mod_channel(channel_name, stream, size, flag);
     }
@@ -174,6 +179,8 @@ public:
         }
     }
 
+
+    // REPLAY
     void replay(const std::string & movie_name, const std::string & movie_dir) {
         this->client->replay(movie_name, movie_dir);
     }
@@ -230,6 +237,23 @@ public:
 
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
+    }
+    // TODO string_view
+    void keyPressEvent(const int key, std::string const& text) {
+        this->keyLayout->init(0, key, text);
+        int keyCode = this->keyLayout->get_scancode();
+        if (keyCode != 0) {
+            this->send_rdp_scanCode(keyCode, this->keyLayout->get_flag());
+        }
+    }
+
+    // TODO string_view
+    void keyReleaseEvent(const int key, std::string const& text) {
+        this->keyLayout->init(KBD_FLAG_UP, key, text);
+        int keyCode = this->keyLayout->get_scancode();
+        if (keyCode != 0) {
+            this->send_rdp_scanCode(keyCode, this->keyLayout->get_flag());
+        }
     }
 
     bool connect() {
@@ -321,6 +345,8 @@ public:
         this->mod->rdp_input_unicode(unicode, flag);
     }
 
-
+    KeyCustomDefinition get_key_info(int keyCode, std::string const& text) {
+        return this->keyLayout->get_key_info(keyCode, text);
+    }
 
 };

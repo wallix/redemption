@@ -33,7 +33,7 @@
 RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;
@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
 RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;

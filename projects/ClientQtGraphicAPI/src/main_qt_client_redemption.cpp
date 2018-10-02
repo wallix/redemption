@@ -27,7 +27,7 @@
 #include "qt_input_output_api/qt_IO_graphic_mouse_keyboard.hpp"
 #include "qt_input_output_api/qt_input_socket.hpp"
 #include "qt_input_output_api/IO_disk.hpp"
-
+#include "qt_input_output_api/keymaps/qt_client_rdp_keylayout.hpp"
 
 
 int main(int argc, char** argv)
@@ -44,12 +44,15 @@ int main(int argc, char** argv)
     QtOutputSound sound_api_obj(qwidget_parent);
     IODisk ioDisk_api_obj;
     QtInputSocket socket_api_obj(reactor, qwidget_parent);
+    QtClientRDPKeyLayout keylayout_obj;
+
+
 
     ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
-    ClientInputMouseKeyboardAPI * control_qt = &graphic_control_qt_obj;
     ClientIOClipboardAPI * clipboard_api = &clipboard_api_obj;
     ClientOutputSoundAPI * sound_api     = &sound_api_obj;
     ClientInputSocketAPI * socket_api    = &socket_api_obj;
+    ClientKeyLayoutAPI   * keylayout_api = &keylayout_obj;
     ClientIODiskAPI      * ioDisk_api    = &ioDisk_api_obj;
 
     //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
@@ -68,7 +71,7 @@ int main(int argc, char** argv)
                               , clipboard_api
                               , sound_api
                               , socket_api
-                              , control_qt
+                              , keylayout_api
                               , ioDisk_api);
 
     app.exec();

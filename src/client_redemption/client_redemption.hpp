@@ -48,8 +48,8 @@
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+
+#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
@@ -85,7 +85,7 @@ public:
     ClientIOClipboardAPI        * impl_clipboard;
     ClientOutputSoundAPI        * impl_sound;
     ClientInputSocketAPI        * impl_socket_listener;
-    ClientInputMouseKeyboardAPI * impl_mouse_keyboard;
+    ClientKeyLayoutAPI          * impl_keylayout;
     ClientIODiskAPI             * impl_io_disk;
 
 
@@ -213,24 +213,24 @@ public:
                      ClientIOClipboardAPI * impl_clipboard,
                      ClientOutputSoundAPI * impl_sound,
                      ClientInputSocketAPI * impl_socket_listener,
-                     ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
+                     ClientKeyLayoutAPI * impl_keylayout,
                      ClientIODiskAPI * impl_io_disk)
         : config(session_reactor, argv, argc, verbose, *(this))
         , client_sck(-1)
-        , _callback(this)
+        , _callback(this, impl_keylayout)
         , session_reactor(session_reactor)
         , impl_graphic(impl_graphic)
         , impl_clipboard(impl_clipboard)
         , impl_sound (impl_sound)
         , impl_socket_listener (impl_socket_listener)
-        , impl_mouse_keyboard(impl_mouse_keyboard)
+        , impl_keylayout(impl_keylayout)
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
         , clientChannelRDPSNDManager(this->config.verbose, &(this->_callback), this->impl_sound, this->config.rDPSoundConfig)
         , clientChannelCLIPRDRManager(this->config.verbose, &(this->_callback), this->impl_clipboard, this->config.rDPClipboardConfig)
         , clientChannelRDPDRManager(this->config.verbose, &(this->_callback), this->impl_io_disk, this->config.rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), this->impl_graphic, this->impl_mouse_keyboard)
+        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), this->impl_graphic)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -258,11 +258,11 @@ public:
         } else {
             LOG(LOG_WARNING, "No socket lister implementation.");
         }
-        if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->set_callback(&(this->_callback));
-        } else {
-            LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
-        }
+//         if (this->impl_keylayout) {
+//             this->impl_keylayout->set_callback(&(this->_callback));
+//         } else {
+//             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
+//         }
         if (this->impl_graphic) {
             this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config));
         } else {
@@ -291,8 +291,8 @@ public:
             }
             std::cout << std::endl;
 
-            if (this->impl_mouse_keyboard && this->impl_graphic) {
-                this->impl_mouse_keyboard->init_form();
+            if (this->impl_graphic) {
+                this->impl_graphic->init_form();
             }
         }
     }
@@ -327,8 +327,14 @@ public:
     }
 
     virtual void update_keylayout() override {
-        if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->update_keylayout();
+        if (this->impl_keylayout) {
+            this->impl_keylayout->update_keylayout(this->config.info.keylayout);
+
+            this->impl_keylayout->clearCustomKeyCode();
+            for (size_t i = 0; i < this->config.keyCustomDefinitions.size(); i++) {
+                KeyCustomDefinition & key = this->config.keyCustomDefinitions[i];
+                this->impl_keylayout->setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
+            }
         }
 
         switch (this->config.mod_state) {
@@ -451,8 +457,8 @@ public:
             }
         }
         this->set_icon_movie_data();
-        if (this->impl_mouse_keyboard) {
-            this->impl_mouse_keyboard->init_form();
+        if (this->impl_graphic) {
+            this->impl_graphic->init_form();
         }
     }
 
@@ -651,9 +657,9 @@ public:
     virtual bool connect() override {
 
         if (this->config.is_full_capturing || this->config.is_full_replaying) {
-            gen = std::make_unique<FixedRandom>();
+            this->gen = std::make_unique<FixedRandom>();
         } else {
-            gen = std::make_unique<UdevRandom>();
+            this->gen = std::make_unique<UdevRandom>();
         }
 
         this->clientChannelRemoteAppManager.clear();
@@ -794,13 +800,6 @@ public:
                     }
                 }
             }
-
-/*            const std::string errorMsgfail("Error: Mod Initialization failed.");
-            std::string labelErrorMsg("<font color='Red'>"+errorMsgfail+"</font>");
-            if (this->impl_graphic) {
-                this->impl_graphic->dropScreen();
-            }
-            this->disconnect(labelErrorMsg, false)*/;
         }
 
         return false;
@@ -939,8 +938,8 @@ public:
             if (impl_graphic) {
                 this->impl_graphic->create_screen(this->config._movie_dir, this->config._movie_name);
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                    if (this->impl_mouse_keyboard) {
-                        this->impl_mouse_keyboard->pre_load_movie(this->config._movie_dir, this->config._movie_name);
+                    if (this->impl_graphic) {
+                        this->impl_graphic->pre_load_movie(this->config._movie_dir, this->config._movie_name);
                         LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
                           /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
                          LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/

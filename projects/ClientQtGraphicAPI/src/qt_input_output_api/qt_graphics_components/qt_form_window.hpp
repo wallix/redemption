@@ -38,7 +38,9 @@
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
 
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+
+#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
@@ -83,7 +85,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientRedemptionConfig * config;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
 
     int _width;
     int _height;
@@ -100,7 +102,7 @@ public:
     const long int movie_len;
 
 
-    IconMovie(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers
+    IconMovie(ClientRedemptionConfig * config, ClientCallback * controllers
       , const std::string & name
       , const std::string & path
       , const std::string & version,
@@ -255,12 +257,12 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientRedemptionConfig * config;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
     std::vector<IconMovie *> icons;
     QFormLayout lay;
 
 
-    QtMoviesPanel(const std::vector<IconMovieData> & iconData, ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, QWidget * parent)
+    QtMoviesPanel(const std::vector<IconMovieData> & iconData, ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
       : QWidget(parent)
       , config(config)
       , controllers(controllers)
@@ -306,7 +308,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientRedemptionConfig * config;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
 
     QFormLayout lay;
     QPushButton buttonReplay;
@@ -315,7 +317,7 @@ public:
     QtMoviesPanel movie_panel;
 
 
-    QtFormReplay(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, const std::vector<IconMovieData> & iconData, QWidget * parent)
+    QtFormReplay(ClientRedemptionConfig * config, ClientCallback * controllers, const std::vector<IconMovieData> & iconData, QWidget * parent)
     : QWidget(parent)
     , config(config)
     , controllers(controllers)
@@ -358,7 +360,7 @@ private Q_SLOTS:
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
         this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
-        this->controllers->client->replay(movie_name, movie_dir);
+        this->controllers->replay(movie_name, movie_dir);
     }
 
 };
@@ -648,21 +650,16 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     QtIconAccount * icons[15];
     QFormLayout lay;
-//     const std::vector<ClientRedemptionConfig::AccountData>  accountData;
-//     const int nb_account;
 
 
     QtAccountPanel(FormTabAPI * main_tab, ClientRedemptionConfig * config,  QWidget * parent, int protocol_type)
       : QWidget(parent)
       , lay(this)
-//       , accountData(accountData)
-//       , nb_account(nb_account < 15 ?  nb_account : 15)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setMinimumHeight(160);
 
         for (size_t i = 0; i < config->_accountData.size(); i++) {
-//             LOG(LOG_INFO, "loooooooooooooooooooooooooool");
             if (config->_accountData[i].protocol ==  protocol_type) {
 
                 this->icons[i] = new QtIconAccount(main_tab, config->_accountData[i], this);
@@ -695,7 +692,7 @@ class QtFormAccountConnectionPanel : public QWidget
 
 public:
     ClientRedemptionConfig * config;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
     FormTabAPI * main_panel;
     ConnectionFormQt     line_edit_panel;
     QtAccountPanel  *   account_panel;
@@ -704,7 +701,7 @@ public:
     int protocol_type;
 
 
-    QtFormAccountConnectionPanel(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, FormTabAPI * main_panel,  uint8_t protocol_type)
+    QtFormAccountConnectionPanel(ClientRedemptionConfig * config, ClientCallback * controllers, FormTabAPI * main_panel,  uint8_t protocol_type)
       : QWidget(main_panel)
       , config(config)
       , controllers(controllers)
@@ -771,7 +768,9 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     ClientRedemptionConfig * config;
     uint8_t protocol_type;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
+    ClientOutputGraphicAPI * graphic;
+
     const int            _width;
     const int            _height;
 
@@ -788,11 +787,12 @@ public:
     QtOptions * options;
 
 
-    QtFormTab(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers, uint8_t protocol_type, QWidget * parent)
+    QtFormTab(ClientRedemptionConfig * config, ClientCallback * controllers, uint8_t protocol_type, QWidget * parent, ClientOutputGraphicAPI * graphic)
         : FormTabAPI(parent)
         , config(config)
         , protocol_type(protocol_type)
         , controllers(controllers)
+        , graphic(graphic)
         , _width(400)
         , _height(600)
         , grid_layout(this)
@@ -803,9 +803,9 @@ public:
         , _buttonOptions("Options", this)
     {
         if (protocol_type & ClientRedemptionConfig::MOD_RDP) {
-            this->options = new QtRDPOptions(config, this->controllers, this);
+            this->options = new QtRDPOptions(config, this->controllers, this->graphic, this);
         } else {
-            this->options = new QtVNCOptions(config, this->controllers, this);
+            this->options = new QtVNCOptions(config, this->controllers, this->graphic, this);
         }
 //         this->setMinimumHeight(360);
 //         this->setAccountData();
@@ -988,7 +988,7 @@ private Q_SLOTS:
     }
 
     void optionsReleased() {
-        this->controllers->open_options();
+        this->graphic->open_options();
     }
 };
 
@@ -1004,7 +1004,9 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     ClientRedemptionConfig * config;
-    ClientInputMouseKeyboardAPI * controllers;
+    ClientCallback * controllers;
+    ClientOutputGraphicAPI * graphic;
+
     const int _width;
     const int _height;
 
@@ -1022,17 +1024,18 @@ public:
 
 
 
-    QtForm(ClientRedemptionConfig * config, ClientInputMouseKeyboardAPI * controllers)
+    QtForm(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic)
         : QWidget()
         , config(config)
         , controllers(controllers)
+        , graphic(graphic)
         , _width(460)
         , _height(375)
         , _long_height(690)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this)
-        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this)
+        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
+        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
         , replay_tab(config, controllers, config->icons_movie_data, this)
         , is_option_open(false)
         , is_closing(false)

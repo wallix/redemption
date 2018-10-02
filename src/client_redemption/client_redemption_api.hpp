@@ -48,8 +48,8 @@ public:
 public:
 
     ClientRedemptionAPI() {}
-
     virtual ~ClientRedemptionAPI() = default;
+
     virtual void send_clipboard_format() {}
     virtual bool is_connected() {return false;}
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *

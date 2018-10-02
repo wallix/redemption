@@ -26,7 +26,7 @@
 
 
 
-#include "keymaps/qt_scancode_keymap.hpp"
+
 
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
@@ -34,7 +34,7 @@
 #include "qt_graphics_components/qt_form_window.hpp"
 
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -59,7 +59,7 @@
 
 
 
-class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI, public ClientInputMouseKeyboardAPI
+class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI/*, public ClientInputMouseKeyboardAPI*/
 {
 
 public:
@@ -72,7 +72,7 @@ public:
     QImage cursor_image;
     std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
     //     QPixmap            * trans_cache;
-    Qt_ScanCode_KeyMap   qtRDPKeymap;
+//     Qt_ScanCode_KeyMap   qtRDPKeymap;
 
     std::vector<QPixmap> balises;
 
@@ -85,14 +85,14 @@ public:
 
     QtIOGraphicMouseKeyboard()
       : ClientOutputGraphicAPI(QApplication::desktop()->width(), QApplication::desktop()->height())
-      , ClientInputMouseKeyboardAPI()
+      //, ClientInputMouseKeyboardAPI()
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
      // , cache(nullptr)
       , bar(nullptr)
 //       , trans_cache(nullptr)
-      , qtRDPKeymap()
+//       , qtRDPKeymap()
     {}
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
@@ -107,26 +107,15 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //-----------------------------
+    //----------------------------------
     // MAIN WINDOW MANAGEMENT FUNCTIONS
-    //-----------------------------
+    //----------------------------------
 
     void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override
     {
-//         this->client_replay = client;
         ClientOutputGraphicAPI::set_drawn_client(controller, config);
-        this->set_callback(controller);
 
-        //this->qtRDPKeymap._verbose = (this->drawn_client->verbose == RDPVerbose::input) ? 1 : 0;
-        this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
-
-        this->qtRDPKeymap.clearCustomKeyCode();
-        for (size_t i = 0; i < this->config->keyCustomDefinitions.size(); i++) {
-            KeyCustomDefinition & key = this->config->keyCustomDefinitions[i];
-            this->qtRDPKeymap.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
-        }
-
-        this->form = new QtForm(this->config, this);
+        this->form = new QtForm(this->config, this->controller, this);
     }
 
     void show_screen() override {
@@ -162,8 +151,6 @@ public:
 
         this->cache = QPixmap(w, h);
 
-        LOG(LOG_INFO, "reset_cache this->cache.width()=%d this->cache.height()=%d", this->cache.width(), this->cache.height());
-
         if (!(this->cache.isNull())) {
             this->painter.begin(&(this->cache));
         }
@@ -173,13 +160,13 @@ public:
 
     void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(this->config, this->controller, this, map);
+        this->screen = new RDPQtScreen(this->config, this->controller, map);
     }
 
     void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
         QPixmap * map = &(this->cache);
         std::string filename = movie_dir+movie_path;/*this->controller->get_mwrm_filename();*/
-        this->screen = new ReplayQtScreen(this->controller, this, movie_dir, movie_path, map, this->controller->get_movie_time_length(filename.c_str()), 0, this->config);
+        this->screen = new ReplayQtScreen(this->controller, movie_dir, movie_path, map, this->controller->get_movie_time_length(filename.c_str()), 0, this->config);
     }
 
     QWidget * get_static_qwidget() {
@@ -187,7 +174,6 @@ public:
     }
 
     void open_options() override {
-//         new DialogOptions_Qt(this->drawn_client, this->form);
         if (this->form) {
             this->form->options();
         }
@@ -200,9 +186,9 @@ public:
         }
     }
 
-    void update_keylayout() override {
-        this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
-    }
+//     void update_keylayout() override {
+//         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
+//     }
 
     void readError(std::string const & movie_path) {
         const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
@@ -242,7 +228,7 @@ public:
     void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->controller, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->controller, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
@@ -435,7 +421,7 @@ private:
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->controller, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->controller, &(this->cache));
                 this->screen->show();
                     break;
 
@@ -447,7 +433,7 @@ private:
                 this->config->vnc_conf.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->controller, this, &(this->cache));
+                this->screen = new RDPQtScreen(this->config, this->controller, &(this->cache));
                 this->screen->show();
                     break;
 
@@ -469,7 +455,7 @@ private:
 
                     if (!this->is_pre_loading) {
                         std::string filename = this->config->_movie_dir + this->config->_movie_name;
-                        this->screen = new ReplayQtScreen(this->controller, this, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->controller->get_movie_time_length(filename.c_str()), current_time_movie, this->config);
+                        this->screen = new ReplayQtScreen(this->controller, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->controller->get_movie_time_length(filename.c_str()), current_time_movie, this->config);
 
                         this->screen->show();
                     }
@@ -1478,27 +1464,27 @@ private:
     //      CONTROLLERS
     //------------------------
 
-    void keyPressEvent(const int key, std::string const& text) override {
-//         if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-//             this->client_replay->send_rdp_unicode(text, 0);
-//         } else {
-        this->qtRDPKeymap.keyEvent(0, key, text);
-        if (this->qtRDPKeymap.scanCode != 0) {
-            this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
-        }
+//     void keyPressEvent(const int key, std::string const& text) override {
+// //         if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
+// //             this->client_replay->send_rdp_unicode(text, 0);
+// //         } else {
+//         this->qtRDPKeymap.keyEvent(0, key, text);
+//         if (this->qtRDPKeymap.scanCode != 0) {
+//             this->controller->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
 //         }
-    }
-
-    void keyReleaseEvent(const int key, std::string const& text) override {
-//          if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-//             this->client_replay->send_rdp_unicode(text, KBD_FLAG_UP);
-//         } else {
-            this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
-            if (this->qtRDPKeymap.scanCode != 0) {
-                this->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
-            }
-//         }
-    }
+// //         }
+//     }
+//
+//     void keyReleaseEvent(const int key, std::string const& text) override {
+// //          if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
+// //             this->client_replay->send_rdp_unicode(text, KBD_FLAG_UP);
+// //         } else {
+//             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
+//             if (this->qtRDPKeymap.scanCode != 0) {
+//                 this->controller->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
+//             }
+// //         }
+//     }
 
     bool connexionReleased() {
         bool conn_res = false;
@@ -1512,9 +1498,8 @@ private:
             this->config->is_full_capturing = true;
             this->config->full_capture_file_name = "/tmp/capture.dump";
 
-
             if (!this->config->target_IP.empty()){
-                conn_res = this->connect();
+                conn_res = this->controller->connect();
             }
             this->form->setCursor(Qt::ArrowCursor);
         }
@@ -1523,26 +1508,26 @@ private:
 
     void closeFromScreen() override {
 
-        this->disconnexionReleased();
+        this->controller->disconnexionReleased();
 
         if (this->form != nullptr && this->config->connected) {
             this->form->close();
         }
     }
 
-    KeyCustomDefinition get_key_info(int key, std::string const& text) override {
-        this->qtRDPKeymap.keyEvent(0, key, text);
-        KeyCustomDefinition key_info(
-            this->qtRDPKeymap.qKeyCode,
-            this->qtRDPKeymap.scanCode,
-            this->qtRDPKeymap.ascii,
-            this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
-            this->qtRDPKeymap.qKeyName
-          );
-
-       // key_info.name = this->qtRDPKeymap.name;
-
-        return key_info;
-    }
+//     KeyCustomDefinition get_key_info(int key, std::string const& text) override {
+//         this->qtRDPKeymap.keyEvent(0, key, text);
+//         KeyCustomDefinition key_info(
+//             this->qtRDPKeymap.qKeyCode,
+//             this->qtRDPKeymap.scanCode,
+//             this->qtRDPKeymap.ascii,
+//             this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
+//             this->qtRDPKeymap.qKeyName
+//           );
+//
+//        // key_info.name = this->qtRDPKeymap.name;
+//
+//         return key_info;
+//     }
 
 };

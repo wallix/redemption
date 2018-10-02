@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Clément Moroldo
-
 */
 
 #pragma once
@@ -26,7 +25,7 @@
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtCore/QTimer>
 #include <QtGui/QMouseEvent>
@@ -64,8 +63,7 @@ public:
     };
 
     ClientRedemptionConfig * config;
-    ClientCallback       * controller;
-    ClientInputMouseKeyboardAPI * impl_input;
+    ClientCallback * callback;
 
     int            _width;
     int            _height;
@@ -81,11 +79,10 @@ public:
      QRect clip;
 
 
-    QtScreen(ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache, int w, int h)
+    QtScreen(ClientRedemptionConfig * config, ClientCallback * callback, QPixmap * cache, int w, int h)
     : QWidget()
     , config(config)
-    , controller(controller)
-    , impl_input(impl_input)
+    , callback(callback)
     , _width(w)
     , _height(h)
     , _penColor(Qt::black)
@@ -106,7 +103,7 @@ public:
         this->config->writeWindowsData();
 
         if (!this->_connexionLasted) {
-            this->controller->closeFromScreen();
+            this->callback->closeFromScreen();
         }
     }
 
@@ -134,19 +131,19 @@ public:
             y = mouseLoc.y();
         }
 
-        this->controller->mouseButtonEvent(x, y, flag);
+        this->callback->mouseButtonEvent(x, y, flag);
     }
 
     void keyPressEvent(QKeyEvent *e) override {
-        this->impl_input->keyPressEvent(e->key(), e->text().toStdString());
+        this->callback->keyPressEvent(e->key(), e->text().toStdString());
     }
 
     void keyReleaseEvent(QKeyEvent *e) override {
-        this->impl_input->keyReleaseEvent(e->key(), e->text().toStdString());
+        this->callback->keyReleaseEvent(e->key(), e->text().toStdString());
     }
 
     void wheelEvent(QWheelEvent *e) override {
-        this->controller->wheelEvent(e->x(), e->y(), e->delta());
+        this->callback->wheelEvent(e->x(), e->y(), e->delta());
     }
 
     void setPenColor(QColor color) {
@@ -167,7 +164,7 @@ public:
                 y = std::max(0, mouseLoc.y());
             }
 
-            this->controller->mouseMouveEvent(x, y);
+            this->callback->mouseMouveEvent(x, y);
         }
 
         return false;
@@ -213,7 +210,7 @@ public:
             y = mouseLoc.y();
         }
 
-        this->controller->mouseButtonEvent(x, y, flag | MOUSE_FLAG_DOWN);
+        this->callback->mouseButtonEvent(x, y, flag | MOUSE_FLAG_DOWN);
     }
 
 
@@ -239,8 +236,8 @@ public:
 
 
 
-    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(config, controller, impl_input, cache, width, height)
+    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientCallback * callback, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(config, callback, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -288,8 +285,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (ClientRedemptionConfig * config, ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, QPixmap * cache)
-        : QtScreen(config, controller, impl_input, cache, cache->width(), cache->height())
+    RDPQtScreen (ClientRedemptionConfig * config, ClientCallback * callback, QPixmap * cache)
+        : QtScreen(config, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -359,19 +356,19 @@ public:
 public Q_SLOTS:
 
     void disconnexionRelease(){
-        this->controller->disconnexionReleased();
+        this->callback->disconnexionReleased();
     }
 
     void RefreshPressed() {
-        this->controller->refreshPressed();
+        this->callback->refreshPressed();
     }
 
     void CtrlAltDelPressed() {
-        this->controller->CtrlAltDelPressed();
+        this->callback->CtrlAltDelPressed();
     }
 
     void CtrlAltDelReleased() {
-        this->controller->CtrlAltDelReleased();
+        this->callback->CtrlAltDelReleased();
     }
 
 };
@@ -415,8 +412,8 @@ public:
 
 
 public:
-    ReplayQtScreen ( ClientCallback * controller, ClientInputMouseKeyboardAPI * impl_input, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
-        : QtScreen(config, controller, impl_input, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
+        : QtScreen(config, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
@@ -433,7 +430,7 @@ public:
         , reading_bar_len(this->_width - 60)
         , readding_bar(this->reading_bar_len+10, READING_BAR_H)
         , current_time_movie(current_time_movie)
-        , real_time_record(controller->get_real_time_movie_begin())
+        , real_time_record(callback->get_real_time_movie_begin())
     {
         std::string title = "ReDemPtion Client " + this->_movie_name;
         this->setWindowTitle(QString(title.c_str()));
@@ -640,7 +637,7 @@ private:
             this->barRepaint(this->current_time_movie, QColor(Qt::green));
             this->slotRepainMatch();
 
-            this->movie_time_start = this->controller->reload_replay_mod(this->begin, now_stop);
+            this->movie_time_start = this->callback->reload_replay_mod(this->begin, now_stop);
 
             this->_timer_replay.start(4);
         }
@@ -668,14 +665,14 @@ public Q_SLOTS:
                 timeval pause_duration = tvtime();
                 pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
                 this->movie_time_start.tv_sec += pause_duration.tv_sec;
-                this->controller->replay_set_pause(pause_duration);
+                this->callback->replay_set_pause(pause_duration);
 
                 this->is_paused = false;
             } else {
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
-                this->controller->replay_set_sync();
+                this->callback->replay_set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -687,7 +684,7 @@ public Q_SLOTS:
     void playReplay() {
         this->show_video_real_time();
 
-        if (this->controller->is_replay_on()) {
+        if (this->callback->is_replay_on()) {
             this->slotRepainMatch();
         }
 
@@ -703,13 +700,13 @@ public Q_SLOTS:
             this->movie_status.setText("  Stop ");
             this->_running = false;
             this->is_paused = false;
-            this->controller->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0});
+            this->callback->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0});
         }
     }
 
     void closeReplay() {
-        this->controller->delete_replay_mod();
-        this->controller->disconnexionReleased();
+        this->callback->delete_replay_mod();
+        this->callback->disconnexionReleased();
     }
 
     void stopRelease() override {
@@ -726,7 +723,7 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        if (this->controller->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+        if (this->callback->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
             //this->slotRepainMatch();
         }
     }

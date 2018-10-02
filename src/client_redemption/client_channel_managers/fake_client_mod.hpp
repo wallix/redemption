@@ -24,7 +24,7 @@
 
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-#include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_sound_api.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
@@ -191,6 +191,8 @@ public:
 
     void update_screen() override {}
 
+    void init_form() override {}
+
 
     // TODO bpp -> gdi::Depth
     FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override
@@ -235,20 +237,54 @@ public:
     virtual void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override {}
 };
 
-class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
+// class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
+//
+// public:
+//     FakeClientInputMouseKeyboard() = default;
+//
+//     // TODO string_view
+//     void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }
+//
+//     // TODO string_view
+//     void virtual keyReleaseEvent(const int key, std::string const& text) override { (void)key; (void)text; }
+//
+//     virtual void init_form() override {}
+//     virtual void update_keylayout() override {}
+// };
+
+class FakeClientKeyLayout : public ClientKeyLayoutAPI {
+
+// private:
+//     ClientCallback * callback = nullptr;
+//     ClientRedemptionConfig * config = nullptr;
 
 public:
-    FakeClientInputMouseKeyboard() = default;
 
-    // TODO string_view
-    void virtual keyPressEvent(const int key, std::string const& text) override { (void)key; (void)text; }
+    FakeClientKeyLayout() = default;
 
-    // TODO string_view
-    void virtual keyReleaseEvent(const int key, std::string const& text) override { (void)key; (void)text; }
 
-    virtual void init_form() override {}
-    virtual void update_keylayout() override {}
+    void update_keylayout(const int /*LCID*/) override {}
+
+    void setCustomKeyCode(const int /*qtKeyID*/, const int /*scanCode*/, const std::string & /*ASCII8*/, const int /*extended*/) override {}
+
+    void init(const int /*flag*/, const int /*key*/, std::string const& /*text*/) override {}
+
+    int get_scancode() override {
+        return 0;
+    }
+
+    int get_flag() override {
+        return 0;
+    }
+
+    void clearCustomKeyCode() override {}
+
+    KeyCustomDefinition get_key_info(int , std::string const& ) override {
+        KeyCustomDefinition key_info;
+        return key_info;
+    }
 };
+
 
 
 class FakeClient : public ClientRedemptionAPI
