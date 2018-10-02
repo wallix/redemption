@@ -111,9 +111,14 @@ sys_lib_prefix = (
     ('openssl/', '<library>crypto', ('openssl/ssl.h', 'openssl/err.h')),
 )
 
+
+is_filtered_target = bool(len(sys.argv) > 1)
+
 user_lib_assoc = dict((
     ('program_options/program_options.hpp', '<library>program_options'),
-    ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl'), # Boost.stacktrace
+    is_filtered_target and # Boost.stacktrace
+        ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl') or
+        ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl <variant>coverage:<library>dl'),
 ))
 
 user_lib_prefix = (
@@ -159,9 +164,6 @@ def HFile(d, f):
 
 def CFile(d, f):
     return File(d, d+'/'+f, 'C')
-
-
-is_filtered_target = bool(len(sys.argv) > 1)
 
 
 ###
