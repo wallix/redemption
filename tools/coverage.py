@@ -34,7 +34,7 @@ class Cover:
             print("================= Parsing etags (%s) ===============" % ftags)
         for line in open(ftags):
             if line[0] == '.':
-                res = re.match(r'^.*/src/(.*)$', line)
+                res = re.match(r'^.*/(src/.*)$', line)
                 if res:
                     filename = res.group(1)
                 continue
