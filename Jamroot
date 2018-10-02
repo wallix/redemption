@@ -45,6 +45,7 @@ include $(JAM_INCLUDE_PATH)/defines.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
 include $(JAM_INCLUDE_PATH)/coverage.jam ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 project redemption
     : requirements
@@ -72,7 +73,6 @@ project redemption
 include $(JAM_INCLUDE_PATH)/testing-coverage.jam ;
 
 include $(JAM_INCLUDE_PATH)/ocr.jam ;
-include $(JAM_INCLUDE_PATH)/libs.jam ;
 include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
 
