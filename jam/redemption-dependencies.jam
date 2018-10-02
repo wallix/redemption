@@ -24,21 +24,14 @@ constant LIB_DEPENDENCIES :
     $(GCOV_NO_BUILD)
 ;
 
-constant OBJ_EXE_DEPENDENCIES :
-    $(GCOV_NO_BUILD)
-;
-
 constant EXE_DEPENDENCIES :
     <library>app_path_exe.o
     <library>log.o
-    $(OBJ_EXE_DEPENDENCIES)
+    $(GCOV_NO_BUILD)
 ;
 
 constant EXE_DEPENDENCIES_NO_SYSLOG :
     <library>app_path_exe.o
     <library>log_print.o
-    $(OBJ_EXE_DEPENDENCIES)
+    $(GCOV_NO_BUILD)
 ;
-
-
-obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
