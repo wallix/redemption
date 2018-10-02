@@ -2890,6 +2890,18 @@ namespace cfg {
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
 
+    /// type: std::string <br/>
+    /// value = "" <br/>
+    struct debug::fake_target_ip {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "debug";
+        static constexpr char const * name = "fake_target_ip";
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value = "";
+    };
     /// type: uint32_t <br/>
     /// value{} <br/>
     struct debug::x224 {
@@ -4812,7 +4824,8 @@ struct crypto
 { static constexpr bool is_section = true; };
 
 struct debug
-: cfg::debug::x224
+: cfg::debug::fake_target_ip
+, cfg::debug::x224
 , cfg::debug::mcs
 , cfg::debug::sec
 , cfg::debug::rdp

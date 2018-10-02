@@ -123,6 +123,9 @@ public:
                 REDEMPTION_DIAGNOSTIC_POP
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+                if (ini.get<cfg::debug::fake_target_ip>() != ""){
+                    strcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
+                }
 
                 if (0 != strcmp(source_ip, "127.0.0.1")){
                     // do not log early messages for localhost (to avoid tracing in watchdog)

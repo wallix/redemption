@@ -2297,6 +2297,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "debug")) {
         if (0) {}
+        else if (0 == strcmp(key, "fake_target_ip")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::debug::fake_target_ip&>(this->variables).value,
+                ::configs::spec_type<std::string>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::debug::fake_target_ip&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "x224")) {
             ::configs::parse_and_log(
                 context, key,

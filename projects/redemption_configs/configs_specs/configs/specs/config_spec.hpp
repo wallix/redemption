@@ -565,6 +565,7 @@ void config_spec_definition(Writer && W)
 
     W.section("debug", [&]
     {
+        W.member(hidden_in_gui, no_sesman, type_<std::string>(), "fake_target_ip", set(""));
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "x224");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "mcs");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "sec");

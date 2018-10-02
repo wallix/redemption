@@ -598,8 +598,8 @@ private:
             : [&](){
                 // TODO: add some explicit error checking
                 char* end;
-                char const* ip = authtarget.c_str() + pos + 1;
-                long port = std::strtol(ip, &end, 10);
+                char const* ip = authtarget.substr(0, pos).c_str();
+                long port = std::strtol(authtarget.c_str() + pos + 1, &end, 10);
                 if (port > std::numeric_limits<int>::max()) {
                     return unique_fd{-1};
                 }

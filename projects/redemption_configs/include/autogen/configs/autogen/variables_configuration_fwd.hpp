@@ -238,6 +238,7 @@ namespace cfg {
     };
 
     struct debug {
+        struct fake_target_ip;
         struct x224;
         struct mcs;
         struct sec;

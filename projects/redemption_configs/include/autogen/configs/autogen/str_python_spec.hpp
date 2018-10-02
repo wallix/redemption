@@ -798,6 +798,9 @@
 
 "[debug]\n\n"
 
+"#_hidden\n"
+"fake_target_ip = string(default='')\n\n"
+
 "#_advanced\n"
 "#_hex\n"
 "x224 = integer(min=0, default=0)\n\n"
