@@ -21,7 +21,7 @@ constant LIB_DEPENDENCIES :
     <variant>release:<cxxflags>-fvisibility=hidden
     <link>shared
     <linkflags>-Wl,-Bsymbolic
-    $(GCOV_NO_BUILD)
+    # $(GCOV_NO_BUILD)
 ;
 
 constant EXE_DEPENDENCIES :
