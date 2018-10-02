@@ -215,8 +215,7 @@ public:
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientInputMouseKeyboardAPI * impl_mouse_keyboard,
                      ClientIODiskAPI * impl_io_disk)
-        : ClientRedemptionAPI(/*session_reactor, argv, argc, verbose*/)
-        , config(session_reactor, argv, argc, verbose, *(this))
+        : config(session_reactor, argv, argc, verbose, *(this))
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)

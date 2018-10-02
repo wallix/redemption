@@ -50,23 +50,20 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
-namespace
+inline bool tls_ctx_print_error(char const* error_msg, std::string* error_message)
 {
-    bool print_error(char const* error_msg, std::string* error_message)
-    {
-        LOG(LOG_ERR, "TLSContext::enable_client_tls: %s", error_msg);
-        unsigned long error;
-        char buf[1024];
-        while ((error = ERR_get_error()) != 0) {
-            ERR_error_string_n(error, buf, sizeof(buf));
-            LOG(LOG_ERR, "print_error %s", buf);
-            if (error_message) {
-                *error_message += buf;
-            }
+    LOG(LOG_ERR, "TLSContext::enable_client_tls: %s", error_msg);
+    unsigned long error;
+    char buf[1024];
+    while ((error = ERR_get_error()) != 0) {
+        ERR_error_string_n(error, buf, sizeof(buf));
+        LOG(LOG_ERR, "print_error %s", buf);
+        if (error_message) {
+            *error_message += buf;
         }
-        return false;
     }
-}  // namespace
+    return false;
+}
 
 class TLSContext
 {
@@ -147,7 +144,7 @@ public:
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
         if (ctx == nullptr) {
-            return print_error("SSL_CTX_new returned NULL", error_message);
+            return tls_ctx_print_error("SSL_CTX_new returned NULL", error_message);
         }
 
         this->allocated_ctx = ctx;
@@ -167,7 +164,7 @@ public:
         SSL* ssl = SSL_new(ctx);
 
         if (ctx == nullptr) {
-            return print_error("SSL_new returned NULL", error_message);
+            return tls_ctx_print_error("SSL_new returned NULL", error_message);
         }
 
         this->allocated_ssl = ssl;
@@ -178,7 +175,7 @@ public:
         fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
 
         if (0 == SSL_set_fd(ssl, sck)) {
-            return print_error("SSL_set_fd failed", error_message);
+            return tls_ctx_print_error("SSL_set_fd failed", error_message);
         }
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -209,7 +206,7 @@ public:
                     error_msg = "Unknown error";
                     break;
             }
-            print_error(error_msg, error_message);
+            tls_ctx_print_error(error_msg, error_message);
             return Transport::TlsResult::Fail;
         }
 

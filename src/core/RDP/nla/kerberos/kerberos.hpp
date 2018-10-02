@@ -34,28 +34,29 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
-namespace {
-    //const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
-    // const char Kerberos_Name[] = "Kerberos";
-    // const char Kerberos_Comment[] = "Kerberos Security Package";
-    // const SecPkgInfo KERBEROS_SecPkgInfo = {
-    //     0x00082B37,             // fCapabilities
-    //     1,                      // wVersion
-    //     0x000A,                 // wRPCID
-    //     0x00000B48,             // cbMaxToken
-    //     Kerberos_Name,          // Name
-    //     Kerberos_Comment        // Comment
-    // };
+//const char* KERBEROS_PACKAGE_NAME = "KERBEROS";
+// const char Kerberos_Name[] = "Kerberos";
+// const char Kerberos_Comment[] = "Kerberos Security Package";
+// const SecPkgInfo KERBEROS_SecPkgInfo = {
+//     0x00082B37,             // fCapabilities
+//     1,                      // wVersion
+//     0x000A,                 // wRPCID
+//     0x00000B48,             // cbMaxToken
+//     Kerberos_Name,          // Name
+//     Kerberos_Comment        // Comment
+// };
 
-    gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc =
-    { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) }; /*NOLINT*/
 
-    // SecPkgContext_Sizes ContextSizes;
-    // ContextSizes.cbMaxToken = 4096;
-    // ContextSizes.cbMaxSignature = 0;
-    // ContextSizes.cbBlockSize = 0;
-    // ContextSizes.cbSecurityTrailer = 16;
-}  // namespace
+inline gss_OID_desc _gss_spnego_krb5_mechanism_oid_desc()
+{
+    return { 9, const_cast<void *>(static_cast<const void *>("\x2a\x86\x48\x86\xf7\x12\x01\x02\x02")) }; /*NOLINT*/
+}
+
+// SecPkgContext_Sizes ContextSizes;
+// ContextSizes.cbMaxToken = 4096;
+// ContextSizes.cbMaxSignature = 0;
+// ContextSizes.cbBlockSize = 0;
+// ContextSizes.cbSecurityTrailer = 16;
 
 
 
@@ -202,8 +203,8 @@ public:
         input_tok.length = input_buffer.size();
         input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-        gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
-        if (!this->mech_available(desired_mech)) {
+        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+        if (!this->mech_available(&desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
             return SEC_E_CRYPTO_SYSTEM_INVALID;
         }
@@ -227,7 +228,7 @@ public:
                                             gss_no_cred,
                                             &this->krb_ctx->gss_ctx,
                                             this->krb_ctx->target_name,
-                                            desired_mech,
+                                            &desired_mech,
                                             GSS_C_MUTUAL_FLAG,
                                             GSS_C_INDEFINITE,
                                             GSS_C_NO_CHANNEL_BINDINGS,
@@ -286,8 +287,8 @@ public:
         input_tok.length = input_buffer.size();
         input_tok.value = const_cast<uint8_t*>(input_buffer.data()); /*NOLINT*/
 
-        gss_OID desired_mech = &_gss_spnego_krb5_mechanism_oid_desc;
-        if (!this->mech_available(desired_mech)) {
+        gss_OID_desc desired_mech = _gss_spnego_krb5_mechanism_oid_desc();
+        if (!this->mech_available(&desired_mech)) {
             LOG(LOG_ERR, "Desired Mech unavailable");
             return SEC_E_CRYPTO_SYSTEM_INVALID;
         }

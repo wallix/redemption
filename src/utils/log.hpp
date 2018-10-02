@@ -184,7 +184,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
     REDEMPTION_DIAGNOSTIC_PUSH                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
-        LOG__REDEMPTION__INTERNAL(                           \
+        ::detail::LOG__REDEMPTION__INTERNAL(                 \
             priority, "%s (%d/%d) -- ◢ In %s:%d",            \
             __FILE__, __LINE__                               \
         );                                                   \
@@ -192,33 +192,34 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
     REDEMPTION_DIAGNOSTIC_POP
 # endif
 
-# define LOG(priority, ...) do {                                 \
-    using ::log_value;                                           \
-    LOG_FILENAME(priority)                                       \
-    LOGCHECK__REDEMPTION__INTERNAL((                             \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                \
-        LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- "     \
-        LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
-        1                                                        \
-    ));                                                          \
+# define LOG(priority, ...) do {                                       \
+    using ::log_value;                                                 \
+    LOG_FILENAME(priority)                                             \
+    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                         \
+        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                      \
+        ::detail::LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " \
+        LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),       \
+        1                                                              \
+    ));                                                                \
  } while (0)
+
+namespace detail
+{
+    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)
+    {}
+}
 #endif
 
 #define LOG_IF(cond, priority, ...) if (cond) LOG(priority, __VA_ARGS__)
 
-namespace {
-    inline void LOGCHECK__REDEMPTION__INTERNAL(int /*unused*/)
-    {}
-
 #if defined(LOG_UNCHECKED_FORMAT)
-    namespace compiler_aux_
-    {
-        template<class... Ts>
-        void unused_variables(Ts const & ...)
-        {}
-    }
+namespace compiler_aux_
+{
+    template<class... Ts>
+    void unused_variables(Ts const & ...)
+    {}
+}
 #endif
-} // namespace
 
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
@@ -239,7 +240,7 @@ __attribute__ ((format (printf, 2, 3)))
 #endif
 void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
-namespace
+namespace detail
 {
     // LOG_EMERG      system is unusable
     // LOG_ALERT      action must be taken immediately
@@ -250,7 +251,7 @@ namespace
     // LOG_INFO       informational message
     // LOG_DEBUG      debug-level message
 
-    constexpr const char * const prioritynames[] =
+    inline const char * const prioritynames[] =
     {
         "EMERG"/*, LOG_EMERG*/,
         "ALERT"/*, LOG_ALERT*/,

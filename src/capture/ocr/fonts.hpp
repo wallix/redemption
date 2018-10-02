@@ -29,12 +29,7 @@
 
 namespace ocr {
 
-namespace {
-    struct unknown_addr_ {
-        static constexpr const char unknown_array[2] = "?";
-    };
-} // namespace
-static constexpr const char * const & unknown = unknown_addr_::unknown_array;
+inline const char unknown[2] = "?";
 
 namespace fonts {
     struct Pixel {
@@ -73,11 +68,9 @@ namespace fonts {
         //bool latin_to_cyrillic;
     };
 
-    namespace {
-#       include "ocr1/common_classifier.hxx"
-#       include "ocr1/latin_classifier.hxx"
-#       include "ocr1/cyrillic_classifier.hxx"
-    } // namespace
+#   include "ocr1/common_classifier.hxx"
+#   include "ocr1/latin_classifier.hxx"
+#   include "ocr1/cyrillic_classifier.hxx"
 
     static constexpr Font latin_fonts[] = {
 #       include "ocr1/common_classifier.names.hxx"

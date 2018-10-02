@@ -148,11 +148,11 @@ public:
         this->offset += data_len;
     }
 
-    array_view_char get_file_item(int ) override {
+    array_view_char get_file_item(int /*index*/) override {
         return {char_ptr_cast(this->_chunk.get()), this->size};
     }
 
-    std::string get_file_item_name(int ) override {
+    std::string get_file_item_name(int /*index*/) override {
         return this->fileName;
     }
 };
@@ -169,7 +169,7 @@ public:
 class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
 
 public:
-    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {(void)config;}
+    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
 
     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 
@@ -225,14 +225,14 @@ public:
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
-    virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
-    virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
-    virtual void draw(const RDP::RAIL::DeletedWindow & ) override {}
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::WindowIcon & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::CachedIcon & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::DeletedWindow & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override {}
 };
 
 class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
@@ -306,14 +306,14 @@ public:
     ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(timeval /*timeout*/) override { return 0; }
 
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
-    virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
-    virtual void draw(const RDP::RAIL::CachedIcon & ) override {}
-    virtual void draw(const RDP::RAIL::DeletedWindow & ) override {}
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & ) override {}
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & ) override {}
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & ) override {}
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & ) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::WindowIcon & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::CachedIcon & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::DeletedWindow & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*cmd*/) override {}
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop & /*cmd*/) override {}
 };
 
 

@@ -218,10 +218,10 @@ public:
         this->drawable.set_row(rownum, data, data_length);
     }
 
-    void draw(RDPColCache   const & /*unused*/) override {
+    void draw(RDPColCache   const & /*cmd*/) override {
     }
 
-    void draw(RDPBrushCache const & /*unused*/) override {
+    void draw(RDPBrushCache const & /*cmd*/) override {
     }
 
     void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -262,7 +262,7 @@ public:
         this->last_update_index++;
     }
 
-    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
+    void draw(RDPNineGrid const &  /*cmd*/, Rect  /*rect*/, gdi::ColorCtx  /*color_ctx*/, Bitmap const &  /*bmp*/) override {}
 
 private:
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member

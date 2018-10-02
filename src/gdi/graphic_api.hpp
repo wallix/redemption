@@ -270,18 +270,18 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) = 0;
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) = 0;
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::WindowIcon                     & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::CachedIcon                     & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::DeletedWindow                  & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*cmd*/) = 0;
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & /*cmd*/) = 0;
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
-    virtual void draw(RDPColCache   const & /*unused*/) {}
-    virtual void draw(RDPBrushCache const & /*unused*/) {}
+    virtual void draw(RDPColCache   const & /*cache*/) {}
+    virtual void draw(RDPBrushCache const & /*cache*/) {}
 
     virtual void begin_update() {}
     virtual void end_update() {}
