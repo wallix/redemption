@@ -1,6 +1,6 @@
 # https://boostorg.github.io/build/manual/develop/index.html
 
-REDEMPTION_CXXFLAGS =
+REDEMPTION_CXXFLAGS +=
     <cxxflags>-std=c++17
     <variant>debug:<cxx-libcxx-debug>allow_broken_abi
     # <variant>debug:<cxxflags>-O2
