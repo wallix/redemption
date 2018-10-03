@@ -10,8 +10,6 @@ REDEMPTION_CXXFLAGS =
 
     <define>_FILE_OFFSET_BITS=64
     <define>_LARGEFILE64_SOURCE
-
-    <define>ZLIB_CONST
 ;
 
 #

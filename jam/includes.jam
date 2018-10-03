@@ -11,9 +11,3 @@ REDEMPTION_CXXFLAGS += <include>$(PROGRAM_OPTIONS_INCLUDES_PATH) ;
 REDEMPTION_CXXFLAGS += <include>$(REDEMPTION_CONFIG_PATH)/redemption_src ;
 REDEMPTION_CXXFLAGS += <include>$(REDEMPTION_CONFIG_AUTOGEN_PATH) ;
 ## @}
-
-if $(FFMPEG_INC_PATH) != ""
-{
-    # echo ffmpeg include path: $(FFMPEG_INC_PATH) ;
-    REDEMPTION_CXXFLAGS += <cxxflags>-isystem" $(FFMPEG_INC_PATH)" ;
-}

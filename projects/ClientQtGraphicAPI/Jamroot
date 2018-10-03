@@ -66,6 +66,9 @@ include $(JAM_INCLUDE_PATH)/cxxflags.jam ;
 include $(JAM_INCLUDE_PATH)/includes.jam ;
 include $(JAM_INCLUDE_PATH)/sanitizer.jam ;
 
+constant NO_FFMPEG : 1 ;
+include $(JAM_INCLUDE_PATH)/libs.jam ;
+
 
 constant SHELL_PWD : $(REDEMPTION_PUBLIC_PATH)/projects/ClientQtGraphicAPI ; # rule location
 constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(SHELL_PWD) ] ;
@@ -83,6 +86,8 @@ project redemption_qt_client
     <conditional>@flags
 
     $(REDEMPTION_CXXFLAGS)
+    $(REDEMPTION_FFMPEG_FLAGS)
+    $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
 
     # <cxxflags>-fPIC
     <variant>debug:<cxxflags>-frtti
@@ -95,10 +100,6 @@ project redemption_qt_client
 
    : default-build release
 ;
-
-constant NO_FFMPEG : 1 ;
-
-include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 explicit install instexe install-bin ;
 

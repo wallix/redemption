@@ -36,22 +36,27 @@ src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
 ))
 
+class Dep:
+    def __init__(self, linkflags=[], cxxflags=[]):
+        self.linkflags = linkflags
+        self.cxxflags = cxxflags
+
+inc_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for lcg_random or fixed_random
+
 src_requirements = dict((
-    ('src/lib/scytale.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
-    ('src/main/rdpheadless.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
-    ('src/main/rdp_client.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for lcg_random
-    ('src/main/main_client_redemption.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'), # for fixed_random
-    ('tests/includes/test_only/front/fake_front.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
-    ('tests/includes/test_only/fake_graphic.cpp', '<include>$(REDEMPTION_TEST_PATH)/includes'),
-    ('src/capture/video_recorder.cpp', '<cxxflags>-Wno-deprecated-declarations'),
+    ('src/lib/scytale.cpp', inc_dep),
+    ('src/main/rdpheadless.cpp', inc_dep),
+    ('src/main/rdp_client.cpp', inc_dep),
+    ('src/main/main_client_redemption.cpp', inc_dep),
+    ('tests/includes/test_only/front/fake_front.cpp', inc_dep),
+    ('tests/includes/test_only/fake_graphic.cpp', inc_dep),
 ))
 
 dir_requirements = dict((
-    # ('tests/sashimi', '<cxxflags>-Wno-format <cxxflags>-Wno-format-security'),
 ))
 
 target_requirements = dict((
-    # ('libredrec', '<library>log.o'),
+    # ('libredrec', ['<library>log.o']),
 ))
 
 # because include a .cpp file...
@@ -94,36 +99,51 @@ file_nocoverage = set(glob.glob('tests/*.cpp'))
 
 # lib/*.cpp -> <library>lib*
 replace_deps = dict([
-    (f, '<library>lib' + f[8:-4]) for f in glob.glob('src/lib/*.cpp')
+    (f, Dep(linkflags=['<library>lib' + f[8:-4]])) for f in glob.glob('src/lib/*.cpp')
         if f != 'src/lib/do_recorder.cpp' # depends of app_path...
 ])
 
 sys_lib_assoc = dict((
-    ('png.h', '<library>png'),
-    ('krb5.h', '<library>krb5'),
-    ('gssapi/gssapi.h', '<library>gssapi_krb5'),
-    ('snappy-c.h', '<library>snappy'),
-    ('zlib.h', '<library>z'),
-    ('openssl/ssl.h', '<library>openssl'),
-    ('boost/stacktrace.hpp', '<library>boost_stacktrace'),
+    ('png.h', Dep(
+        linkflags=['<library>png'])),
+    ('krb5.h', Dep(
+        linkflags=['<library>krb5'])),
+    ('gssapi/gssapi.h', Dep(
+        linkflags=['<library>gssapi_krb5'])),
+    ('snappy-c.h', Dep(
+        linkflags=['<library>snappy'])),
+    ('zlib.h', Dep(
+        linkflags=['<library>z'],
+        cxxflags=['<define>ZLIB_CONST'])),
+    ('openssl/ssl.h', Dep(
+        linkflags=['<library>openssl'])),
+    ('boost/stacktrace.hpp', Dep(
+        linkflags=['<library>boost_stacktrace',
+                   '<variant>debug:<library>dl',
+                   '<variant>san:<library>dl',
+                   '<variant>coverage:<library>dl',],
+        cxxflags=['$(BOOST_STACKTRACE_CXXFLAGS)'])),
 ))
 sys_lib_prefix = (
-    ('libavformat/', '<library>ffmpeg'),
-    ('openssl/', '<library>crypto', ('openssl/ssl.h', 'openssl/err.h')),
+    ('libavformat/', Dep(
+        linkflags=['<library>ffmpeg',
+                   '$(FFMPEG_LINKFLAGS)'],
+        cxxflags=['$(FFMPEG_CXXFLAGS)'])),
+    ('openssl/', Dep(
+        linkflags=['<library>crypto'])),
 )
 
 
 is_filtered_target = bool(len(sys.argv) > 1)
 
 user_lib_assoc = dict((
-    ('program_options/program_options.hpp', '<library>program_options'),
-    is_filtered_target and # Boost.stacktrace
-        ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl') or
-        ('src/core/error.hpp', '<variant>debug:<library>dl <variant>san:<library>dl <variant>coverage:<library>dl'),
+    ('program_options/program_options.hpp', Dep(
+        linkflags=['<library>program_options'])),
 ))
 
 user_lib_prefix = (
-    ('ppocr/', '<library>ppocr'),
+    ('ppocr/', Dep(
+        linkflags=['<library>ppocr'])),
 )
 
 def get_lib(inc, lib_assoc, lib_prefix):
@@ -154,9 +174,11 @@ class File:
         #self.system_includes = set()
         #self.source_deps = set()
         #self.direct_source_deps = set()
-        #self.direct_lib_deps = set()
+        #self.direct_link_deps = set()
+        #self.direct_cxx_deps = set()
         self.all_source_deps = None # then set()
-        self.all_lib_deps = None # then set()
+        self.all_link_deps = None # then set()
+        self.all_cxx_deps = None # then set()
         self.have_coverage = False
         self.used = False #
 
@@ -183,7 +205,9 @@ def append_file(a, root, path, type):
         path = path[2:]
     root = root.replace('//', '/')
     path = path.replace('//', '/')
-    a.append(File(root, path, type))
+    f = File(root, path, type)
+    a.append(f)
+    return f
 
 def get_type(name):
     if name[-4:] == '.hpp':
@@ -216,7 +240,6 @@ get_files(sources, "src/core")
 get_files(sources, "src/front")
 get_files(sources, "src/gdi")
 get_files(sources, "src/keyboard")
-get_files(sources, "src/lib")
 get_files(sources, "src/mod")
 get_files(sources, "src/regex")
 get_files(sources, "src/system/linux/system")
@@ -228,7 +251,8 @@ for t in ((mains, 'src/main'), (libs, 'src/lib')):
     for path in glob.glob(t[1] + "/*.hpp"):
         append_file(sources, t[1], path, 'H')
     for path in glob.glob(t[1] + "/*.cpp"):
-        append_file(t[0], t[1], path, 'C')
+        f = append_file(sources, t[1], path, 'C')
+        t[0].append(f)
 
 files_on_tests = []
 
@@ -334,67 +358,86 @@ for name, f in all_files.items():
 ###
 
 for name, f in all_files.items():
-    deps = []
-    dispatch_deps = []
+    direct_link_deps = set()
+    direct_cxx_deps = set()
+
+    def append(direct_link_deps, direct_cxx_deps, l, k):
+        if k in l:
+            d = l[k]
+            direct_link_deps.update(d.linkflags)
+            direct_cxx_deps.update(d.cxxflags)
+
+    append(direct_link_deps, direct_cxx_deps, src_requirements, f.path)
+    append(direct_link_deps, direct_cxx_deps, dir_requirements, f.root)
+
+    direct_source_deps = set()
     for pf in f.user_includes:
         if pf.path in src_deps:
             for path in src_deps[pf.path]:
-                deps.append(all_files[path])
+                direct_source_deps.add(all_files[path])
         for ext in ('.cpp', '.cc'):
             cpp_name = pf.path[:-4]+ext
             if cpp_name in all_files:
                 if cpp_name in replace_deps and f.path != cpp_name:
-                    dispatch_deps.append(replace_deps[cpp_name])
+                    d = replace_deps[cpp_name]
+                    direct_link_deps.update(d.linkflags)
+                    direct_cxx_deps.update(d.cxxflags)
                 else:
-                    deps.append(all_files[cpp_name])
-    f.direct_source_deps = set(deps)
+                    direct_source_deps.add(all_files[cpp_name])
+    f.direct_source_deps = direct_source_deps
 
-    deps = dispatch_deps
+    def append(direct_link_deps, direct_cxx_deps, d):
+        if d:
+            direct_link_deps.update(d.linkflags)
+            direct_cxx_deps.update(d.cxxflags)
+
     for name in f.system_includes:
-        syslib = get_system_lib(name)
-        if syslib:
-            deps.append(syslib)
+        append(direct_link_deps, direct_cxx_deps, get_system_lib(name))
     for name in f.unknown_user_includes:
-        syslib = get_user_lib(name)
-        if syslib:
-            deps.append(syslib)
+        append(direct_link_deps, direct_cxx_deps, get_user_lib(name))
     for pf in f.user_includes:
-        syslib = get_user_lib(pf.path)
-        if syslib:
-            deps.append(syslib)
-    f.direct_lib_deps = set(deps)
+        append(direct_link_deps, direct_cxx_deps, get_user_lib(pf.path))
 
+    f.direct_link_deps = direct_link_deps
+    f.direct_cxx_deps = direct_cxx_deps
 
-def compute_all_source_deps(f, empty_array = []):
+empty_set = set()
+def compute_all_source_deps(f):
     if f.all_source_deps is None:
         srcs = f.direct_source_deps
-        libs = f.direct_lib_deps
+        libs = f.direct_link_deps
+        cxxs = f.direct_cxx_deps
         incs = f.user_includes
-        f.direct_source_deps = empty_array
-        f.direct_lib_deps = empty_array
-        f.user_includes = empty_array
+        f.direct_source_deps = empty_set
+        f.direct_link_deps = empty_set
+        f.direct_cxx_deps = empty_set
+        f.user_includes = empty_set
 
-        all_source_deps = list(srcs)
-        all_lib_deps = list(libs)
+        all_source_deps = srcs.copy()
+        all_cxx_deps = cxxs.copy()
+        all_link_deps = libs.copy()
 
         for pf in srcs:
             compute_all_source_deps(pf)
             if pf.all_source_deps is not None:
-                all_source_deps += pf.all_source_deps
-                all_lib_deps += pf.all_lib_deps
+                all_source_deps.update(pf.all_source_deps)
+                all_link_deps.update(pf.all_link_deps)
 
         for pf in incs:
             compute_all_source_deps(pf)
             if pf.all_source_deps is not None:
-                all_source_deps += pf.all_source_deps
-                all_lib_deps += pf.all_lib_deps
+                all_source_deps.update(pf.all_source_deps)
+                all_link_deps.update(pf.all_link_deps)
+                all_cxx_deps.update(pf.all_cxx_deps)
 
         f.direct_source_deps = srcs
-        f.direct_lib_deps = libs
+        f.direct_link_deps = libs
+        f.direct_cxx_deps = cxxs
         f.user_includes = incs
 
-        f.all_source_deps = set(all_source_deps)
-        f.all_lib_deps = set(all_lib_deps)
+        f.all_source_deps = all_source_deps
+        f.all_link_deps = all_link_deps
+        f.all_cxx_deps = all_cxx_deps
 
 
 for f in all_files.values():
@@ -445,19 +488,6 @@ def get_sources_deps(f, cat, exclude):
             a.append('<library>'+cpp_to_obj(pf))
     return a
 
-def requirement_action(f, act):
-    if f.path in src_requirements:
-        act(src_requirements[f.path])
-    if f.root in dir_requirements:
-        act(dir_requirements[f.root])
-
-def get_requirements(f):
-    a = []
-    for dep in f.all_lib_deps:
-        a.append(dep)
-    requirement_action(f, lambda r: a.append(r))
-    return a
-
 all_targets = []
 def mark_target(target, dep = None):
     all_targets.append([target, dep])
@@ -469,13 +499,16 @@ def generate(type, files, requirements, get_target_cb = get_target):
         src = f.path
         target = get_target_cb(f)
         deps = get_sources_deps(f, type, f)
-        deps += get_requirements(f)
+        deps += f.all_link_deps
+        deps += f.all_cxx_deps
+        deps += requirements
         if target in target_requirements:
-            deps.append(target_requirements[target])
+            deps += target_requirements[target]
 
         if type == 'test-run':
             if f.root in dir_nocoverage or f.path in file_nocoverage:
-                deps.append('<covflag>nocover $(GCOV_NO_BUILD)')
+                deps.append('$(GCOV_NO_BUILD)')
+                deps.append('$(GCOV_NO_BUILD)')
             else:
                 iright = len(f.root)
                 base = 'src/' + src[6:iright+1] + src[iright+6:-3]
@@ -493,16 +526,15 @@ def generate(type, files, requirements, get_target_cb = get_target):
 
         print(type, ' ', mark_target(target), ' :\n  ', src, '\n:', sep='')
 
-        if requirements:
-            print(' ', requirements)
+        deps = sorted(set(deps))
 
         if f.path in remove_requirements:
             l = remove_requirements[f.path]
-            for s in sorted(deps):
+            for s in deps:
                 if s not in l:
                     print(' ', s)
         else:
-            for s in sorted(deps):
+            for s in deps:
                 print(' ', s)
         print(';')
 
@@ -519,7 +551,8 @@ def generate_obj(files):
     for f in files:
         if f.type == 'C' and f != app_path_cpp:
             print('obj', mark_target(cpp_to_obj(f)), ':', inject_variable_prefix(f.path), end='')
-            requirement_action(f, lambda r: print(' :', r, end=''))
+            if f.all_cxx_deps:
+                print(' :', ' '.join(f.all_cxx_deps), end='')
             print(' ;')
 
 # filter target
@@ -532,18 +565,19 @@ if is_filtered_target:
     for f in libs:
         sources.update(f.all_source_deps)
 
-generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], '$(EXE_DEPENDENCIES)')
-generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], '$(EXE_DEPENDENCIES_NO_SYSLOG)')
+generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], ['$(EXE_DEPENDENCIES)'])
+generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], ['$(EXE_DEPENDENCIES_NO_SYSLOG)'])
 print()
 
-generate('lib', libs, '$(LIB_DEPENDENCIES)\n  <library>log.o', lambda f: 'lib'+get_target(f))
+generate('lib', libs, ['$(LIB_DEPENDENCIES)', '<library>log.o'], lambda f: 'lib'+get_target(f))
 for f in libs:
     print('obj ', mark_target(f.path), '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
-    requirement_action(f, lambda r: print(' ', r))
+    if f.all_cxx_deps:
+        print(' ', '\n  '.join(f.all_cxx_deps))
     print(';')
 print()
 
-generate('test-run', tests, '', unprefixed_file)
+generate('test-run', tests, [], unprefixed_file)
 print()
 
 generate_obj(sources)

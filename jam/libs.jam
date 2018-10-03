@@ -36,10 +36,17 @@ if $(NO_FFMPEG) = 0
     alias ffmpeg : pthread avcodec avformat swscale x264 avutil bz2 png z dl ;
 
     lib pthread ;
+
+    FFMPEG_CXXFLAGS = <cxxflags>-Wno-deprecated-declarations ;
+    if $(FFMPEG_INC_PATH) != ""
+    {
+        FFMPEG_CXXFLAGS += <cxxflags>-isystem" $(FFMPEG_INC_PATH)" ;
+    }
 }
-else {
+else
+{
     alias ffmpeg : ;
-    REDEMPTION_CXXFLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
+    REDEMPTION_FFMPEG_FLAGS += <define>REDEMPTION_NO_FFMPEG=1 ;
 }
 ## }
 
@@ -52,12 +59,8 @@ if $(BOOST_STACKTRACE) = 1
     # boost_stacktrace_basic
     # boost_stacktrace_noop
     lib boost_stacktrace : : <name>boost_stacktrace_backtrace ;
-    REDEMPTION_CXXFLAGS +=
-        <variant>debug:<define>BOOST_STACKTRACE_DYN_LINK
-        <variant>debug:<linkflags>-rdynamic
-        <variant>san:<define>BOOST_STACKTRACE_DYN_LINK
-        <variant>san:<linkflags>-rdynamic
-    ;
+    BOOST_STACKTRACE_CXXFLAGS = <define>BOOST_STACKTRACE_DYN_LINK ;
+    REDEMPTION_BOOST_STACKTRACE_FLAGS = <linkflags>-rdynamic ;
 }
 else
 {

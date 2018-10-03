@@ -51,6 +51,8 @@ project redemption
     : requirements
 
     $(REDEMPTION_CXXFLAGS)
+    $(REDEMPTION_FFMPEG_FLAGS)
+    $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
 
     <cxxflags>-fPIC
     <cxxflags>-fno-rtti
@@ -100,10 +102,10 @@ actions gen_targets
       /^exe headlessclient/,/^;/!d
       /\s*</!d
       /app_path|config\.o|program_options/d
+      /^\s*<variant>coverage:/d
       s#^\s*<library>src/([^.]+)\.o#add_src \1.cpp ;#
       s/^\s*<library>([^ ]+)/add_lib \1 ;/
-      s/\s*(<.*)/\nadd_requirements \1 ;/
-      s/<variant>coverage:[^ ]* ?//' \
+      s/^\s*(<.*)/\nadd_requirements \1 ;/' \
       targets.jam > projects/ClientQtGraphicAPI/redemption_deps.jam
 }
 
@@ -172,7 +174,7 @@ alias install :
     install-share
 ;
 alias exe     : rdpproxy rdpclient rdpheadless rdpinichecker ;
-alias libs    : libredrec libscytale libiametrics ;
+alias libs    : libredrec ;
 
 alias ocr_tools : display_learning extract_text ppocr_extract_text ;
 
