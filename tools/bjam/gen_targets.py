@@ -134,8 +134,6 @@ sys_lib_prefix = (
 )
 
 
-is_filtered_target = bool(len(sys.argv) > 1)
-
 user_lib_assoc = dict((
     ('program_options/program_options.hpp', Dep(
         linkflags=['<library>program_options'])),
@@ -255,6 +253,8 @@ for t in ((mains, 'src/main'), (libs, 'src/lib')):
         t[0].append(f)
 
 files_on_tests = []
+
+is_filtered_target = bool(len(sys.argv) > 1)
 
 if not is_filtered_target:
     get_files(files_on_tests, 'tests')
@@ -557,12 +557,14 @@ def generate_obj(files):
 
 # filter target
 if is_filtered_target:
-    mains = []
     tests = []
     keep_paths = sys.argv[1:]
+    mains = [pf for pf in mains if pf.path in keep_paths]
     libs = [pf for pf in libs if pf.path in keep_paths]
     sources = set()
     for f in libs:
+        sources.update(f.all_source_deps)
+    for f in mains:
         sources.update(f.all_source_deps)
 
 generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], ['$(EXE_DEPENDENCIES)'])
