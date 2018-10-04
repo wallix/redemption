@@ -1009,9 +1009,11 @@ public:
                             int flag_out = CHANNELS::CHANNEL_FLAG_LAST |
                                            CHANNELS::CHANNEL_FLAG_FIRST |
                                            CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-                            RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
                             RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_USE_LONG_FORMAT_NAMES | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
+                            RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
+                            RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0, clipboard_caps_pdu.size() + general_cap_set.size());
                             StaticOutStream<1024> out_stream;
+                            clipboard_header.emit(out_stream);
                             clipboard_caps_pdu.emit(out_stream);
                             general_cap_set.emit(out_stream);
 

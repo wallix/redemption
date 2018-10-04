@@ -214,6 +214,7 @@ inline static const char * get_msgFlag_name(uint16_t msgFlag) {
     switch (msgFlag) {
         case CB_RESPONSE_OK:   return "CB_RESPONSE_OK";
         case CB_RESPONSE_FAIL: return "CB_RESPONSE_FAIL";
+        case CB_ASCII_NAMES:   return "CB_ASCII_NAMES";
     }
 
     return "<unknown>";
@@ -226,7 +227,7 @@ enum {
 
 inline static const char * get_format_short_name(uint16_t formatID) {
     switch (formatID) {
-        case SF_TEXT_HTML:         return "text/html";
+        case SF_TEXT_HTML: return "text/html";
     }
 
     return "<unknown>";
@@ -302,7 +303,7 @@ public:
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        const unsigned expected = 6;    /* msgFlags_(2) + dataLen_(4) */
+        const unsigned expected = 8;    /* msgType(2) + msgFlags(2) + dataLen(4) */
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO, "RDPECLIP::CliprdrHeader::recv truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
@@ -315,7 +316,7 @@ public:
     }
 
     static size_t size() {
-        return 8;       // 2(msgType) + 2(msgFlags) + 4(dataLen) = 8
+        return 8;       // 2(msgType) + 2(msgFlags) + 4(dataLen)
     }
 
     void log() const {
@@ -368,31 +369,20 @@ public:
 
 struct ClipboardCapabilitiesPDU
 {
-    CliprdrHeader header;
-
-    uint16_t cCapabilitiesSets = 0;
+    uint16_t cCapabilitiesSets_ = 0;
 
     ClipboardCapabilitiesPDU() = default;
 
-    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets, uint32_t length_capabilities)
-        : header(CB_CLIP_CAPS,
-                      0,
-                      4 +   // cCapabilitiesSets(2) + pad1(2)
-                          length_capabilities
-                     )
-        , cCapabilitiesSets(cCapabilitiesSets)
+    ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets)
+        : cCapabilitiesSets_(cCapabilitiesSets)
     {}
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
-
-        stream.out_uint16_le(cCapabilitiesSets);
+        stream.out_uint16_le(this->cCapabilitiesSets_);
         stream.out_clear_bytes(2);  // pad1(2)
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
-
         const unsigned expected = 4;    // cCapabilitiesSets(2) + pad1(2)
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO,
@@ -401,15 +391,20 @@ struct ClipboardCapabilitiesPDU
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->cCapabilitiesSets = stream.in_uint16_le();
+        this->cCapabilitiesSets_ = stream.in_uint16_le();
 
         stream.in_skip_bytes(2);    // pad1(2)
     }
 
+    uint16_t cCapabilitiesSets() const { return this->cCapabilitiesSets_; }
+
+    static constexpr size_t size() {
+        return 4;   // cCapabilitiesSets(2) + pad1(2)
+    }
+
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Clipboard Capabilities PDU:");
-        LOG(LOG_INFO, "          * cCapabilitiesSets = %d (2 bytes)", this->cCapabilitiesSets);
+        LOG(LOG_INFO, "          * cCapabilitiesSets = %d (2 bytes)", this->cCapabilitiesSets_);
         LOG(LOG_INFO, "          * Padding - (2 byte) NOT USED");
     }
 };  // struct ClipboardCapabilitiesPDU
@@ -443,8 +438,9 @@ struct ClipboardCapabilitiesPDU
 //  +---------------------+------------------------+
 
 enum {
-  CB_CAPSTYPE_GENERAL        = 0x00000001,
+    CB_CAPSTYPE_GENERAL = 0x00000001
 };
+
 // lengthCapability (2 bytes): An unsigned, 16-bit integer that specifies the
 //  combined length, in bytes, of the capabilitySetType, capabilityData and
 //  lengthCapability fields.
@@ -452,9 +448,10 @@ enum {
 // capabilityData (variable): Capability set data specified by the type given
 //  in the capabilitySetType field. This field is a variable number of bytes.
 
-struct CapabilitySetRecvFactory {
-    uint16_t capabilitySetType;
+class CapabilitySetRecvFactory {
+    uint16_t capabilitySetType_;
 
+public:
     explicit CapabilitySetRecvFactory(InStream & stream) {
         const unsigned expected = 2;    /* capabilitySetType(2) */
         if (!stream.in_check_rem(expected)) {
@@ -464,8 +461,10 @@ struct CapabilitySetRecvFactory {
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->capabilitySetType = stream.in_uint16_le();
+        this->capabilitySetType_ = stream.in_uint16_le();
     }   // CapabilitySetRecvFactory(InStream & stream)
+
+    uint16_t capabilitySetType() const { return this->capabilitySetType_; }
 
     static const char * get_capabilitySetType_name(uint16_t capabilitySetType) {
         switch (capabilitySetType) {
@@ -584,14 +583,12 @@ static inline const std::string get_generalFlags_names(uint32_t generalFlags) {
 //  field, that is the generalFlags field is set to 0x00000000.
 
 class GeneralCapabilitySet {
-
-public:
     uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
-    uint16_t lengthCapability  = size();
+    uint16_t lengthCapability  = GeneralCapabilitySet::size();
     uint32_t version_          = CB_CAPS_VERSION_1;
     uint32_t generalFlags_     = 0;
 
-
+public:
     GeneralCapabilitySet() = default;
 
     GeneralCapabilitySet(uint32_t version, uint32_t generalFlags) {
@@ -607,41 +604,41 @@ public:
     }
 
     void recv(InStream & stream, const CapabilitySetRecvFactory & recv_factory) {
-        assert(recv_factory.capabilitySetType == CB_CAPSTYPE_GENERAL);
+        this->capabilitySetType = recv_factory.capabilitySetType();
+        assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
 
-        const unsigned expected = 10;   // lengthCapability(2) + version(4) +
-                                        //     generalFlags(4)
+        const unsigned expected = this->size() -
+                                  2;    // capabilitySetType(2)
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
-               , "RDPECLIP::GeneralCapabilitySet::recv truncated data, need=%u remains=%zu"
+               , "RDPECLIP::GeneralCapabilitySet::recv (1) truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->capabilitySetType = recv_factory.capabilitySetType;
         this->lengthCapability  = stream.in_uint16_le();
-
-        assert(this->lengthCapability == size());
+        assert(this->size() == this->lengthCapability);
 
         this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();
     }
 
     void recv(InStream & stream) {
-        const unsigned expected = 12;   // capabilitySetType(2) + lengthCapability(2) + version(4) +
-                                        //     generalFlags(4)
+        const unsigned expected = this->size(); // capabilitySetType(2) + lengthCapability(2) + version(4) +
+                                                //     generalFlags(4)
 
         if (!stream.in_check_rem(expected)) {
             LOG( LOG_INFO
-               , "RDPECLIP::GeneralCapabilitySet::recv truncated data, need=%u remains=%zu"
+               , "RDPECLIP::GeneralCapabilitySet::recv (2) truncated data, need=%u remains=%zu"
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
         this->capabilitySetType = stream.in_uint16_le();
-        this->lengthCapability  = stream.in_uint16_le();
+        assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
 
-        assert(this->lengthCapability == size());
+        this->lengthCapability  = stream.in_uint16_le();
+        assert(this->size() == this->lengthCapability);
 
         this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();
@@ -652,7 +649,7 @@ public:
 
     uint32_t generalFlags() const { return this->generalFlags_; }
 
-    static size_t size() {
+    static constexpr size_t size() {
         return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
                     //     generalFlags(4)
     }

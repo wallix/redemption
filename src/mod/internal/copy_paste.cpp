@@ -110,10 +110,15 @@ bool CopyPaste::ready(FrontAPI & front)
 
     if (this->channel_) {
         StaticOutStream<256> out_s;
-        RDPECLIP::ClipboardCapabilitiesPDU general_pdu(1, RDPECLIP::GeneralCapabilitySet::size());
-        general_pdu.emit(out_s);
-        RDPECLIP::GeneralCapabilitySet general_caps(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-        general_caps.emit(out_s);
+
+        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+        RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
+        RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0,
+            clip_cap_pdu.size() + general_cap_set.size());
+
+        clip_header.emit(out_s);
+        clip_cap_pdu.emit(out_s);
+        general_cap_set.emit(out_s);
 
         const size_t length     = out_s.get_offset();
         const size_t chunk_size = length;

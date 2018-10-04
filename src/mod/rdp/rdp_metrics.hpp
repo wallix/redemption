@@ -377,12 +377,17 @@ public:
 
                 case RDPECLIP::CB_CLIP_CAPS:
                 {
-                    chunk.in_skip_bytes(4);                 // RDPECLIP::ClipboardCapabilitiesPDU
+                    RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
+                    clipboard_caps_pdu.recv(chunk);
+                    assert(1 == clipboard_caps_pdu.cCapabilitiesSets());
 
-                    RDPECLIP::GeneralCapabilitySet pdu2;
-                    pdu2.recv(chunk);
+                    RDPECLIP::CapabilitySetRecvFactory cliboard_cap_set_recv_factory(chunk);
+                    assert(RDPECLIP::CB_CAPSTYPE_GENERAL == cliboard_cap_set_recv_factory.capabilitySetType());
 
-                    this->use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                    RDPECLIP::GeneralCapabilitySet general_cap_set;
+                    general_cap_set.recv(chunk, cliboard_cap_set_recv_factory);
+
+                    this->use_long_format_names = bool(general_cap_set.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
                 }
                     break;
 

@@ -245,11 +245,15 @@
                         LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                     }
                     {
+                    RDPECLIP::CliprdrHeader header;
+                    header.recv(chunk_series);
+
                     RDPECLIP::ClipboardCapabilitiesPDU pdu;
                     pdu.recv(chunk_series);
 
                     RDPECLIP::GeneralCapabilitySet pdu2;
                     pdu2.recv(chunk_series);
+
                     this->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
                     }
                 break;
@@ -270,13 +274,16 @@
                     }
 
                     {
-                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(this->cCapabilitiesSets, RDPECLIP::GeneralCapabilitySet::size());
                         if (this->server_use_long_format_names) {
                             this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
                         }
                         RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, this->generalFlags);
+                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(this->cCapabilitiesSets);
+                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0,
+                            clipboard_caps_pdu.size() + general_cap_set.size());
 
                         StaticOutStream<1024> out_stream;
+                        clipboard_header.emit(out_stream);
                         clipboard_caps_pdu.emit(out_stream);
                         general_cap_set.emit(out_stream);
 

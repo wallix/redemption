@@ -220,13 +220,18 @@ public:
 
                     // Client Clipboard Capabilities PDU.
                     {
-                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
-                            RDPECLIP::GeneralCapabilitySet::size());
                         RDPECLIP::GeneralCapabilitySet general_cap_set(
                             RDPECLIP::CB_CAPS_VERSION_1,
                             RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+
+                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
+
+                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0,
+                            clipboard_caps_pdu.size() + general_cap_set.size());
+
                         StaticOutStream<1024> out_s;
 
+                        clipboard_header.emit(out_s);
                         clipboard_caps_pdu.emit(out_s);
                         general_cap_set.emit(out_s);
 
@@ -581,7 +586,7 @@ public:
                 const bool unicodetext = false;
                 RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
                 StaticOutStream<256>    out_s;
-                
+
                 format_list_pdu.emit(out_s);
 
                 const size_t totalLength = out_s.get_offset();

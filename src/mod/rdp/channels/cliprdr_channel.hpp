@@ -237,7 +237,7 @@ private:
         for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
             RDPECLIP::CapabilitySetRecvFactory f(chunk);
 
-            if (f.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+            if (f.capabilitySetType() == RDPECLIP::CB_CAPSTYPE_GENERAL) {
                 RDPECLIP::GeneralCapabilitySet general_caps;
 
                 general_caps.recv(chunk, f);
@@ -1164,7 +1164,7 @@ public:
         for (uint16_t i = 0; i < cCapabilitiesSets; ++i) {
             RDPECLIP::CapabilitySetRecvFactory f(chunk);
 
-            if (f.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+            if (f.capabilitySetType() == RDPECLIP::CB_CAPSTYPE_GENERAL) {
                 RDPECLIP::GeneralCapabilitySet general_caps;
 
                 general_caps.recv(chunk, f);
@@ -1641,14 +1641,16 @@ public:
                             "Send Clipboard Capabilities PDU.");
                 }
 
-                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1,
-                    RDPECLIP::GeneralCapabilitySet::size());
                 RDPECLIP::GeneralCapabilitySet general_cap_set(
                     RDPECLIP::CB_CAPS_VERSION_1,
                     RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
+                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0,
+                    clipboard_caps_pdu.size() + general_cap_set.size());
 
                 StaticOutStream<1024> out_stream;
 
+                clipboard_header.emit(out_stream);
                 clipboard_caps_pdu.emit(out_stream);
                 general_cap_set.emit(out_stream);
 

@@ -836,7 +836,7 @@ public:
 
         RDPECLIP::GeneralCapabilitySet general_caps(
             RDPECLIP::CB_CAPS_VERSION_1,
-            this->server_use_long_format_names?RDPECLIP::CB_USE_LONG_FORMAT_NAMES:0);
+            (this->server_use_long_format_names ? RDPECLIP::CB_USE_LONG_FORMAT_NAMES : 0));
 
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             if (this->server_use_long_format_names){
@@ -847,13 +847,14 @@ public:
             }
         }
 
-        RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(
-                1,
-                RDPECLIP::GeneralCapabilitySet::size()
-            );
+        RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
+
+        RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0,
+            clip_cap_pdu.size() + general_caps.size());
 
         StaticOutStream<1024> out_s;
 
+        clip_header.emit(out_s);
         clip_cap_pdu.emit(out_s);
         general_caps.emit(out_s);
 
@@ -862,8 +863,8 @@ public:
 
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                RDPECLIP::get_msgType_name(clip_cap_pdu.header.msgType()),
-                clip_cap_pdu.header.msgType()
+                RDPECLIP::get_msgType_name(clip_header.msgType()),
+                clip_header.msgType()
                 );
         }
 
@@ -3328,13 +3329,15 @@ private:
 
             case RDPECLIP::CB_CLIP_CAPS:
             {
-                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
+                RDPECLIP::CliprdrHeader clipboard_header;
+                clipboard_header.recv(chunk);
 
+                RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
                 clipboard_caps_pdu.recv(chunk);
+                assert(1 == clipboard_caps_pdu.cCapabilitiesSets());
 
                 RDPECLIP::CapabilitySetRecvFactory caps_recv_factory(chunk);
-
-                if (caps_recv_factory.capabilitySetType == RDPECLIP::CB_CAPSTYPE_GENERAL) {
+                if (caps_recv_factory.capabilitySetType() == RDPECLIP::CB_CAPSTYPE_GENERAL) {
                     RDPECLIP::GeneralCapabilitySet general_caps;
                     general_caps.recv(chunk, caps_recv_factory);
 
