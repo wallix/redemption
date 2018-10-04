@@ -60,9 +60,8 @@ struct CopyPasteFront : FakeFront
 
         InStream stream(data, length);
         RDPECLIP::RecvPredictor rp(stream);
-        uint16_t msgType = rp.msgType;
 
-        switch (msgType) {
+        switch (rp.msgType()) {
             case RDPECLIP::CB_MONITOR_READY:
                 this->send_to_server(RDPECLIP::FormatListPDU());
             break;

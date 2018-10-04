@@ -2881,7 +2881,7 @@ private:
 
         // specific treatement depending on msgType
         RDPECLIP::RecvPredictor rp(chunk);
-        uint16_t msgType = rp.msgType;
+        uint16_t msgType = rp.msgType();
 
         if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) == 0) {
             msgType = RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE;

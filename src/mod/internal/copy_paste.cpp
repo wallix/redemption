@@ -195,7 +195,7 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
 
     RDPECLIP::RecvPredictor rp(stream);
 
-    switch (rp.msgType) {
+    switch (rp.msgType()) {
         case RDPECLIP::CB_FORMAT_LIST:
             RDPECLIP::FormatListPDU().recv(stream);
             send_to_front_channel(
@@ -250,7 +250,7 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
         }
         default:
             if (this->verbose) {
-                LOG(LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType));
+                LOG(LOG_INFO, "CopyPaste::send_to_mod_channel msgType=%u", unsigned(rp.msgType()));
             }
             break;
     }

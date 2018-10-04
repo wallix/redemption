@@ -254,9 +254,10 @@ inline static const char * get_format_short_name(uint16_t formatID) {
 // };
 
 
-struct RecvPredictor {
-    uint16_t msgType;
+class RecvPredictor {
+    uint16_t msgType_;
 
+public:
     explicit RecvPredictor(const InStream & stream) {
         InStream s = stream.clone();
         const unsigned expected = 2;    /* msgType(2) */
@@ -265,8 +266,10 @@ struct RecvPredictor {
                , expected, stream.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
-        this->msgType = s.in_uint16_le();
+        this->msgType_ = s.in_uint16_le();
     }   // RecvFactory(InStream & stream)
+
+    uint16_t msgType() const { return this->msgType_; }
 };
 
 
