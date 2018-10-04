@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <cinttypes>
-
 #include "core/FSCC/FileInformation.hpp"
 #include "core/WMF/MetaFileFormat.hpp"
 #include "core/channel_list.hpp"
@@ -30,6 +28,9 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
+
+#include <cinttypes>
+#include <sstream>
 
 
 namespace RDPECLIP {
@@ -204,21 +205,46 @@ inline static const char * get_msgType_name(uint16_t msgType) {
 // +------------------+--------------------------------------------------------+
 
 enum {
-      CB_RESPONSE_NONE = 0x0000
-    , CB_RESPONSE_OK   = 0x0001
-    , CB_RESPONSE_FAIL = 0x0002
-    , CB_ASCII_NAMES   = 0x0004
+      CB_RESPONSE__NONE_ = 0x0000
+
+    , CB_RESPONSE_OK     = 0x0001
+    , CB_RESPONSE_FAIL   = 0x0002
+    , CB_ASCII_NAMES     = 0x0004
 };
 
 inline static const char * get_msgFlag_name(uint16_t msgFlag) {
     switch (msgFlag) {
-        case CB_RESPONSE_NONE: return "CB_RESPONSE_NONE";
-        case CB_RESPONSE_OK:   return "CB_RESPONSE_OK";
-        case CB_RESPONSE_FAIL: return "CB_RESPONSE_FAIL";
-        case CB_ASCII_NAMES:   return "CB_ASCII_NAMES";
+        case CB_RESPONSE__NONE_: return "CB_RESPONSE__NONE_";
+
+        case CB_RESPONSE_OK:     return "CB_RESPONSE_OK";
+        case CB_RESPONSE_FAIL:   return "CB_RESPONSE_FAIL";
+        case CB_ASCII_NAMES:     return "CB_ASCII_NAMES";
     }
 
     return "<unknown>";
+}
+
+static inline const std::string msgFlags_to_string(uint16_t msgFlags) {
+    std::ostringstream stream;
+
+    if (!msgFlags) {
+        stream << "0x" << std::hex << 0;
+    }
+    else {
+        auto out_flag = [&stream, msgFlags](uint16_t msgFlag) {
+                if (msgFlags & msgFlag) {
+                    if (stream.tellp()) { stream << " | "; }
+                    stream << get_msgFlag_name(msgFlag) << "(0x" <<
+                        std::hex << msgFlag << ")";
+                }
+            };
+
+        out_flag(CB_RESPONSE_OK);
+        out_flag(CB_RESPONSE_FAIL);
+        out_flag(CB_ASCII_NAMES);
+    }
+
+    return stream.str();
 }
 
 // Short Format Name
@@ -233,8 +259,6 @@ inline static const char * get_format_short_name(uint16_t formatID) {
 
     return "<unknown>";
 }
-
-
 
 // dataLen (4 bytes): An unsigned, 32-bit integer that specifies the size, in
 //  bytes, of the data which follows the Clipboard PDU Header.
@@ -254,7 +278,6 @@ inline static const char * get_format_short_name(uint16_t formatID) {
 //     }   // RecvFactory(InStream & stream)
 // };
 
-
 class RecvPredictor {
     uint16_t msgType_;
 
@@ -272,7 +295,6 @@ public:
 
     uint16_t msgType() const { return this->msgType_; }
 };
-
 
 class CliprdrHeader {
     uint16_t msgType_{0};
@@ -321,6 +343,12 @@ public:
 
     static size_t size() {
         return 8;       // 2(msgType) + 2(msgFlags) + 4(dataLen)
+    }
+
+    void log(int level) const {
+        LOG(level, "CliprdrHeader: msgType=%s(0x%X) msgFlags=<%s> dataLen=%u",
+            get_msgType_name(this->msgType_), this->msgType_,
+            msgFlags_to_string(this->msgFlags_), this->dataLen_);
     }
 
     void log() const {
@@ -405,6 +433,10 @@ public:
 
     static constexpr size_t size() {
         return 4;   // cCapabilitiesSets(2) + pad1(2)
+    }
+
+    void log(int level) const {
+        LOG(level, "ClipboardCapabilitiesPDU: cCapabilitiesSets=%u", this->cCapabilitiesSets_);
     }
 
     void log() const {
@@ -530,56 +562,88 @@ enum {
 // generalFlags (4 bytes): An unsigned, 32-bit integer that specifies the
 //  general capability flags.
 
-//  +----------------------------+--------------------------------------------+
-//  | Value                      | Meaning                                    |
-//  +----------------------------+--------------------------------------------+
-//  | CB_USE_LONG_FORMAT_NAMES   | The Long Format Name variant of the Format |
-//  | 0x00000002                 | List PDU is supported for exchanging       |
-//  |                            | updated format names. If this flag is not  |
-//  |                            | set, the Short Format Name variant MUST be |
-//  |                            | used. If this flag is set by both protocol |
-//  |                            | endpoints, then the Long Format Name       |
-//  |                            | variant MUST be used.                      |
-//  +----------------------------+--------------------------------------------+
-//  | CB_STREAM_FILECLIP_ENABLED | File copy and paste using stream-based     |
-//  | 0x00000004                 | operations are supported using the File    |
-//  |                            | Contents Request PDU and File Contents     |
-//  |                            | Response PDU.                              |
-//  +----------------------------+--------------------------------------------+
-//  | CB_FILECLIP_NO_FILE_PATHS  | Indicates that any description of files to |
-//  | 0x00000008                 | copy and paste MUST NOT include the source |
-//  |                            | path of the files.                         |
-//  +----------------------------+--------------------------------------------+
-//  | CB_CAN_LOCK_CLIPDATA       | Locking and unlocking of File Stream data  |
-//  | 0x00000010                 | on the clipboard is supported using the    |
-//  |                            | Lock Clipboard Data PDU and Unlock         |
-//  |                            | Clipboard Data PDU.                        |
-//  +----------------------------+--------------------------------------------+
+//  +------------------------------+------------------------------------------+
+//  | Value                        | Meaning                                  |
+//  +------------------------------+------------------------------------------+
+//  | CB_USE_LONG_FORMAT_NAMES     | The Long Format Name variant of the      |
+//  | 0x00000002                   | Format List PDU is supported for         |
+//  |                              | exchanging updated format names. If this |
+//  |                              | flag is not set, the Short Format Name   |
+//  |                              | variant MUST be used. If this flag is    |
+//  |                              | set by both protocol endpoints, then the |
+//  |                              | Long Format Name variant MUST be used.   |
+//  +------------------------------+------------------------------------------+
+//  | CB_STREAM_FILECLIP_ENABLED   | File copy and paste using stream-based   |
+//  | 0x00000004                   | operations are supported using the File  |
+//  |                              | Contents Request PDU and File Contents   |
+//  |                              | Response PDU.                            |
+//  +------------------------------+------------------------------------------+
+//  | CB_FILECLIP_NO_FILE_PATHS    | Indicates that any description of files  |
+//  | 0x00000008                   | to copy and paste MUST NOT include the   |
+//  |                              | source path of the files.                |
+//  +------------------------------+------------------------------------------+
+//  | CB_CAN_LOCK_CLIPDATA         | Locking and unlocking of File Stream     |
+//  | 0x00000010                   | data on the clipboard is supported using |
+//  |                              | the Lock Clipboard Data PDU and Unlock   |
+//  |                              | Clipboard Data PDU.                      |
+//  +------------------------------+------------------------------------------+
+//  | CB_HUGE_FILE_SUPPORT_ENABLED | Indicates support for transferring files |
+//  | 0x00000020                   | that are larger than 4,294,967,296 bytes |
+//  |                              | in size. If this flag is not set, then   |
+//  |                              | only files of size less than or equal to |
+//  |                              | 4,294,967,296 bytes can be exchanged     |
+//  |                              | using the File Contents Request PDU and  |
+//  |                              | File Contents Response PDU.              |
+//  +------------------------------+------------------------------------------+
 
 enum {
-
-    CB_USE_LONG_FORMAT_NAMES   = 0x00000002,
-    CB_STREAM_FILECLIP_ENABLED = 0x00000004,
-    CB_FILECLIP_NO_FILE_PATHS  = 0x00000008,
-    CB_CAN_LOCK_CLIPDATA       = 0x00000010,
-
-    CB_ALL_GENERAL_CAPABILITY_FLAGS = (CB_USE_LONG_FORMAT_NAMES |
-                                       CB_STREAM_FILECLIP_ENABLED |
-                                       CB_FILECLIP_NO_FILE_PATHS |
-                                       CB_CAN_LOCK_CLIPDATA
-                                      )
+    CB_USE_LONG_FORMAT_NAMES     = 0x00000002,
+    CB_STREAM_FILECLIP_ENABLED   = 0x00000004,
+    CB_FILECLIP_NO_FILE_PATHS    = 0x00000008,
+    CB_CAN_LOCK_CLIPDATA         = 0x00000010,
+    CB_HUGE_FILE_SUPPORT_ENABLED = 0x00000020
 };
 
+enum {
+    CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_ =
+        (CB_USE_LONG_FORMAT_NAMES | CB_STREAM_FILECLIP_ENABLED |
+         CB_FILECLIP_NO_FILE_PATHS | CB_CAN_LOCK_CLIPDATA)
+};
 
-static inline const std::string get_generalFlags_names(uint32_t generalFlags) {
-        std::string str;
-        (generalFlags & CB_USE_LONG_FORMAT_NAMES) ? str+="CB_USE_LONG_FORMAT_NAMES " :str;
-        (generalFlags & CB_STREAM_FILECLIP_ENABLED) ? str+="CB_STREAM_FILECLIP_ENABLED " :str;
+inline static const char * get_generalFlag_name(uint16_t msgFlag) {
+    switch (msgFlag) {
+        case CB_USE_LONG_FORMAT_NAMES:   return "CB_USE_LONG_FORMAT_NAMES";
+        case CB_STREAM_FILECLIP_ENABLED: return "CB_STREAM_FILECLIP_ENABLED";
+        case CB_FILECLIP_NO_FILE_PATHS:  return "CB_FILECLIP_NO_FILE_PATHS";
+        case CB_CAN_LOCK_CLIPDATA:       return "CB_CAN_LOCK_CLIPDATA";
+    }
 
-        (generalFlags & CB_FILECLIP_NO_FILE_PATHS) ? str+="CB_FILECLIP_NO_FILE_PATHS " : str;
-        (generalFlags & CB_CAN_LOCK_CLIPDATA) ? str+="CB_CAN_LOCK_CLIPDATA " : str;
+    return "<unknown>";
+}
 
-        return str;
+static inline const std::string generalFlags_to_string(uint32_t generalFlags) {
+    std::ostringstream stream;
+
+    if (!generalFlags) {
+        stream << "0x" << std::hex << 0;
+    }
+    else {
+        auto out_flag = [&stream, generalFlags](uint16_t generalFlag) {
+                if (generalFlags & generalFlag) {
+                    if (stream.tellp()) { stream << " | "; }
+                    stream << get_generalFlag_name(generalFlag) << "(0x" <<
+                        std::hex << generalFlag << ")";
+                }
+            };
+
+        out_flag(CB_USE_LONG_FORMAT_NAMES);
+        out_flag(CB_STREAM_FILECLIP_ENABLED);
+        out_flag(CB_FILECLIP_NO_FILE_PATHS);
+        out_flag(CB_CAN_LOCK_CLIPDATA);
+        out_flag(CB_HUGE_FILE_SUPPORT_ENABLED);
+    }
+
+    return stream.str();
 }
 
 // If the General Capability Set is not present in the Clipboard Capabilities
@@ -649,7 +713,6 @@ public:
         this->generalFlags_ = stream.in_uint32_le();
     }
 
-
     uint32_t version() const { return this->version_; }
 
     uint32_t generalFlags() const { return this->generalFlags_; }
@@ -670,15 +733,17 @@ private:
     }
 
     size_t str(char * buffer, size_t size) const {
+        std::string const generalFlags_string = generalFlags_to_string(this->generalFlags_);
         size_t length = ::snprintf(buffer, size,
             "RDPECLIP::GeneralCapabilitySet: "
-                "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=0x%08X",
+                "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=<%s>",
             CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType),
             this->capabilitySetType,
             unsigned(this->lengthCapability),
             this->get_version_name(this->version_),
             this->version_,
-            this->generalFlags_);
+            generalFlags_string.c_str()
+            );
         return ((length < size) ? length : size - 1);
     }
 
@@ -695,7 +760,7 @@ public:
         LOG(LOG_INFO, "          * capabilitySetType = 0x%04x (2 bytes): CB_CAPSTYPE_GENERAL", this->capabilitySetType);
         LOG(LOG_INFO, "          * lengthCapability  = 0x%04x (2 bytes)", this->lengthCapability);
         LOG(LOG_INFO, "          * version           = 0x%08x (4 bytes)", this->version_);
-        LOG(LOG_INFO, "          * generalFlags      = 0x%08x (4 bytes): %s", this->generalFlags_, get_generalFlags_names(this->generalFlags_));
+        LOG(LOG_INFO, "          * generalFlags      = 0x%08x (4 bytes): %s", this->generalFlags_, generalFlags_to_string(this->generalFlags_));
     }
 };  // GeneralCapabilitySet
 
@@ -728,6 +793,10 @@ public:
 
     static constexpr size_t size() {
         return 0;
+    }
+
+    void log(int level) const {
+        LOG(level, "ServerMonitorReadyPDU");
     }
 
     void log() const {
@@ -1395,7 +1464,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
                                    , int lindex
                                    , uint64_t sizeRequested
                                    , uint32_t cbRequested)
-    : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
+    : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
     , streamID(streamID)
     , flag(flag)
     , lindex(lindex)
@@ -1404,7 +1473,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
     {}
 
     explicit FileContentsRequestPDU()
-    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE_NONE, 28)
+    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
     {}
 
     void emit(OutStream & stream) const {

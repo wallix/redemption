@@ -144,7 +144,7 @@ bool CopyPaste::ready(FrontAPI & front)
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-        send_to_front_channel_2(*this->front_, *this->channel_, RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, RDPECLIP::ServerMonitorReadyPDU());
+        send_to_front_channel_2(*this->front_, *this->channel_, RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, RDPECLIP::ServerMonitorReadyPDU());
         return true;
     }
 

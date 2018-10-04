@@ -877,7 +877,7 @@ public:
                                    );
 
         RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-        RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
+        RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, server_monitor_ready_pdu.size());
 
         out_s.rewind();
 
@@ -2537,7 +2537,7 @@ private:
         if (channel) {
             // Monitor ready PDU send to front
             RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-            RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
+            RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, server_monitor_ready_pdu.size());
 
             StaticOutStream<64> out_s;
 
@@ -2999,10 +2999,9 @@ private:
                                 std::chrono::duration_cast<std::chrono::milliseconds>(
                                     MINIMUM_TIMEVAL - timeval_diff));
                         }
-                        else if (this->bogus_clipboard_infinite_loop
-                            != VncBogusClipboardInfiniteLoop::duplicated
-                        && (this->clipboard_general_capability_flags
-                            & RDPECLIP::CB_ALL_GENERAL_CAPABILITY_FLAGS)) {
+                        else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated) &&
+                                 ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_) ==
+                                  RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)) {
                             if (bool(this->verbose & VNCVerbose::basic_trace)) {
                                 LOG( LOG_INFO
                                    , "mod_vnc::clipboard_send_to_vnc: "
