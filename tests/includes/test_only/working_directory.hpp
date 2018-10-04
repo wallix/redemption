@@ -26,7 +26,7 @@ Author(s): Jonathan Poelen
 
 
 #define RED_CHECK_WORKSPACE(wd) do {           \
-    auto const mess__ = wd.clean_and_get();    \
+    auto const mess__ = wd.check_final_state();    \
     RED_CHECK_MESSAGE(mess__.empty(), mess__); \
 } while (0)
 
@@ -51,6 +51,7 @@ struct WorkingDirectory
     std::string const& dirname() const noexcept;
 
     std::string clean_and_get();
+    std::string check_final_state();
 
     ~WorkingDirectory() noexcept(false);
 

@@ -129,6 +129,54 @@ std::string const& WorkingDirectory::dirname() const noexcept
     return this->directory;
 }
 
+
+std::string WorkingDirectory::check_final_state()
+{
+    assert(!this->is_checked);
+
+    this->is_checked = true;
+
+    std::string message;
+
+    if (DIR* dir = opendir(this->directory.c_str())) {
+        while (auto ent = readdir(dir)) {
+            if (0 == strcmp(ent->d_name, ".") 
+            ||  0 == strcmp(ent->d_name, "..")) {
+                continue;
+            }
+            std::size_t i = 0;
+            for (; i < this->paths.size(); ++i) {
+                auto& path = this->paths[i];
+                std::string entry(directory);
+                entry += ent->d_name;
+                if (0 == strcmp(path.name.c_str(), entry.c_str())){
+                    break;
+                }
+            }
+            if (i == this->paths.size()){
+                if (message.size() == 0){
+                    message = "Unexpected Files: \n";
+                }
+                message += '\"';
+                message += directory;
+                message += ent->d_name;
+                message += "\"";
+                message += "\n";
+            }
+        }
+        closedir(dir);
+    }
+    else {
+        message = "Can't access directory ";
+        message += '\"';
+        message += directory;
+        message += "\" ";
+    }
+
+    return message;
+}
+
+
 std::string WorkingDirectory::clean_and_get()
 {
     assert(!this->is_checked);

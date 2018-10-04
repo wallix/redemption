@@ -269,7 +269,7 @@ public:
                                vars.get<cfg::context::target_service>(),
                                vars.get<cfg::metrics::sign_key>())
          , hmac_client_info(vars.get<cfg::globals::host>(), info, vars.get<cfg::metrics::sign_key>())
-         , std::chrono::seconds(timeobj.get_time().tv_sec)
+         , timeobj.get_time()
          , vars.get<cfg::metrics::log_file_turnover_interval>()
          , vars.get<cfg::metrics::log_interval>())
     , frame_buffer_update_ctx(this->zd, verbose)

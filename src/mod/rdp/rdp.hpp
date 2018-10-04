@@ -844,7 +844,7 @@ public:
                                        vars.get<cfg::metrics::sign_key>())
                  , hmac_client_info(vars.get<cfg::globals::host>(),
                                     info, vars.get<cfg::metrics::sign_key>())
-                 , std::chrono::seconds(timeobj.get_time().tv_sec)
+                 , timeobj.get_time()
                  , vars.get<cfg::metrics::log_file_turnover_interval>()
                  , vars.get<cfg::metrics::log_interval>())
     {
@@ -1672,10 +1672,8 @@ public:
     }
 
     void log_metrics() override {
-        if (this->metrics.active()) {
-            timeval now = tvtime();
-            this->metrics.log(now);
-        }
+        timeval now = tvtime();
+        this->metrics.log(now);
     }
 
 private:

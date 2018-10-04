@@ -55,6 +55,7 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 
+// TODO: should return some std::duration object, not a timeval!
 inline timeval operator-(timeval const & endtime, timeval const & starttime)
 {
     assert(endtime >= starttime);
@@ -75,6 +76,7 @@ inline timeval operator-(timeval const & endtime, timeval const & starttime)
     return result;
 }
 
+// TODO: should not exist, adding two dates is meaningless
 inline timeval operator+(timeval const & a, timeval const & b)
 {
     timeval result;
@@ -87,6 +89,26 @@ inline timeval operator+(timeval const & a, timeval const & b)
         result.tv_usec -= 1000000LL;
     }
 
+    return result;
+}
+
+// Returns the beginning of the timeslice of width seconds containing timeval
+// origin of intervals is midnight 1 jan 1970
+inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
+{
+    return timeval{a.tv_sec - a.tv_sec % seconds.count(), 0};
+}
+
+inline bool is_midnight(timeval const & a)
+{
+    using namespace std::chrono_literals;
+    return (a.tv_sec % std::chrono::seconds(24h).count()) == 0;
+}
+
+inline timeval operator+(timeval const & a, std::chrono::seconds const& seconds)
+{
+    timeval result = a;
+    result.tv_sec  += seconds.count();
     return result;
 }
 

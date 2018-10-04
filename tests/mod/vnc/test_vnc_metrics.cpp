@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
     auto logmetrics1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logmetrics");
     auto logindex1   = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");
 
-    auto epoch = 1533211681s;
+    auto epoch = to_timeval(1533211681s);
 
     VNCMetrics metrics( true
                       , wd.dirname().c_str()
@@ -80,33 +80,33 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
 
     {
         metrics.right_click();
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
-        metrics.log(to_timeval(epoch+1s));
+        metrics.log(epoch+1s);
         metrics.right_click();
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
-        metrics.log(to_timeval(epoch+3s));
+        metrics.log(epoch+3s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(to_timeval(epoch+5s));
+        metrics.log(epoch+5s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);;
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(to_timeval(epoch+7s));
+        metrics.log(epoch+7s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         std::string expected_log_metrics(
             "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"
             "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(to_timeval(epoch+10s));
+        metrics.log(epoch+10s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
 
@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
     auto logindex1   = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");
 
     {
-        constexpr auto epoch = 1533211681s;
+        auto epoch = to_timeval(1533211681s);
 
         VNCMetrics metrics( true
                         , wd.dirname().c_str()
@@ -139,20 +139,20 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
 
         {
             metrics.right_click();
-            metrics.log(to_timeval(epoch+0s));
+            metrics.log(epoch+0s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
-            metrics.log(to_timeval(epoch+1s));
+            metrics.log(epoch+1s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
-            metrics.log(to_timeval(epoch+2s));
+            metrics.log(epoch+2s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
             std::string expected_log_metrics("2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n");
-            metrics.log(to_timeval(epoch+3s));
+            metrics.log(epoch+3s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
         }
     }
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
     auto logmetrics1 = wd.add_file("vnc_metrics-v1.0-2018-08-02.logmetrics");
     auto logindex1   = wd.add_file("vnc_metrics-v1.0-2018-08-02.logindex");
 
-    auto epoch = 1533211681s;
+    auto epoch = to_timeval(1533211681s);
 
     VNCMetrics metrics( true
                       , wd.dirname().c_str()
@@ -187,7 +187,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
     {
         epoch += 5s;
         metrics.right_click();
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -195,7 +195,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.right_click();
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -203,7 +203,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.left_click();
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -211,7 +211,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 1 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.key_pressed();
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         expected_log_metrics += expected_log_metrics_next;
         metrics.mouse_move(0, 0);
         metrics.mouse_move(2, 2);
-        metrics.log(to_timeval(epoch));
+        metrics.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
 

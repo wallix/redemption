@@ -21,6 +21,9 @@
 
 #define RED_TEST_MODULE Testiametrics
 #include "system/redemption_unit_tests.hpp"
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 #include "utils/fileutils.hpp"
 #include "test_only/get_file_contents.hpp"
@@ -40,8 +43,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     auto logmetrics2 = wd.add_file("rdp_metrics-v1.0-2018-08-03.logmetrics");
     auto logindex2   = wd.add_file("rdp_metrics-v1.0-2018-08-03.logindex");
 
-    // Should create rdp_metrics files if they do not exist
-    time_t epoch = 1533211681; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
+    std::chrono::seconds epoch = 1533211681s; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 
     Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
                       , wd.dirname().c_str()
@@ -50,7 +52,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
                       , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"
                       , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"
                       , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"
-                      , epoch
+                      , epoch.count()
                       , 24
                       , 5
                       );
@@ -58,17 +60,17 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
     RED_CHECK_FILE_EXISTS(wd[logindex1]);
 
-    metrics_log(metrics, (epoch + (3600*1)) * 1000);
-    metrics_log(metrics, (epoch + (3600*2)) * 1000);
-    metrics_log(metrics, (epoch + (3600*3)) * 1000);
-    metrics_log(metrics, (epoch + (3600*4)) * 1000);
-    metrics_log(metrics, (epoch + (3600*5)) * 1000);
-    metrics_log(metrics, (epoch + (3600*6)) * 1000);
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 1h).count());
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 2h).count());
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 3h).count());
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 4h).count());
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 5h).count());
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 6h).count());
 
     RED_CHECK_FILE_NOT_EXISTS(wd[logmetrics2]);
     RED_CHECK_FILE_NOT_EXISTS(wd[logindex2]);
 
-    metrics_log(metrics, (epoch + (3600*24)) * 1000);
+    metrics_log(metrics, std::chrono::milliseconds(epoch + 26h).count());
 
     RED_CHECK_FILE_EXISTS(wd[logmetrics2]);
     RED_CHECK_FILE_EXISTS(wd[logindex2]);

@@ -146,7 +146,7 @@ public:
               , array_view_const_char account_sig           // secondary account
               , array_view_const_char target_service_sig    // clear target service name + clear device name
               , array_view_const_char session_info_sig      // source_host + client info
-              , const std::chrono::seconds now              // time at beginning of metrics
+              , const timeval now                           // time at beginning of metrics
               , const std::chrono::hours file_interval      // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay        // delay between 2 logs
               )
@@ -155,6 +155,7 @@ public:
             primary_user_sig, account_sig, target_service_sig, session_info_sig,
             now, file_interval, log_delay)
     {
+        LOG(LOG_INFO, "starting RDP Metrics");
     }
 
     bool active() {

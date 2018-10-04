@@ -263,7 +263,6 @@ static int _internal_make_directory(const char *directory, mode_t mode, const in
                     LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                 }
             }
-
         }
         else if (!S_ISDIR(st.st_mode)) {
             errno = ENOTDIR;
@@ -298,7 +297,8 @@ int recursive_create_directory(const char * directory, mode_t mode, const int gr
         *pSearch = '/';
     }
 
-    if (status == 0) {
+    // creation of last directory in chain or nothing if path ending with slash
+    if (status == 0 && *directory != 0) {
         status = _internal_make_directory(directory, mode, groupid);
     }
 

@@ -124,6 +124,7 @@ public:
 //                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 if (ini.get<cfg::debug::fake_target_ip>() != ""){
+                    LOG(LOG_INFO, "fake_target_ip='%s'", ini.get<cfg::debug::fake_target_ip>().c_str());
                     strcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
                 }
 

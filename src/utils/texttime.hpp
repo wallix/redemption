@@ -24,10 +24,10 @@
 #include <chrono>
 #include <ctime>
 
-inline std::string text_gmdate(const std::chrono::seconds time_sec)
+inline std::string text_gmdate(const timeval tv)
 {
     struct tm t;
-    time_t time = time_sec.count();
+    time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
     char buf[11] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday);
@@ -35,10 +35,10 @@ inline std::string text_gmdate(const std::chrono::seconds time_sec)
 }
 
 
-inline std::string text_gmdatetime(const std::chrono::seconds time_sec)
+inline std::string text_gmdatetime(const timeval tv)
 {
     struct tm t;
-    time_t time = time_sec.count();
+    time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
     char buf[20] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
@@ -46,10 +46,10 @@ inline std::string text_gmdatetime(const std::chrono::seconds time_sec)
 }
 
 
-inline std::string filename_gmdatetime(const std::chrono::seconds time_sec)
+inline std::string filename_gmdatetime(const timeval tv)
 {
     struct tm t;
-    time_t time = time_sec.count();
+    time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
     char buf[20] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d_%02d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);

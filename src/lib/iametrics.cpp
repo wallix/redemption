@@ -54,10 +54,11 @@ extern "C"
         auto av = [](char const* s){ return array_view_const_char{s, strlen(s)}; };
         using std::chrono::seconds;
         using std::chrono::hours;
+        timeval now{static_cast<time_t>(now_seconds), 0};
         return new(std::nothrow) Metrics(
             version, protocol_name, true, nbitems, path, session_id,
             av(primary_user_sig), av(account_sig), av(target_service_sig),
-            av(session_info_sig), seconds(now_seconds), hours(file_interval_hours),
+            av(session_info_sig), now, hours(file_interval_hours),
             seconds(log_delay_seconds));
     }
 

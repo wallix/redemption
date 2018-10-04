@@ -40,6 +40,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <stdlib.h>
 
 class Metrics
 {
@@ -51,7 +52,7 @@ public:
 
     // output file info
     const std::chrono::hours file_interval;
-    std::chrono::seconds current_file_date;
+    timeval current_file_date;
     const std::string path;
     unique_fd fd = invalid_fd();
 
@@ -68,13 +69,17 @@ public:
     };
     Header header;
     const std::string session_id;
-    const bool active_ = false;
+    // TODO: if directory creation fails metrics will be disabled
+    // it means either move the directory check and creation to lambda
+    // or changing active to non const (I did that)
+    bool active_ = false; 
 
-    const std::chrono::seconds connection_time;
+    const timeval connection_time;
 
     const std::chrono::seconds log_delay;
     timeval next_log_time;
-    char complete_file_path[4096] = {'\0'};
+    char complete_metrics_file_path[4096] = {'\0'};
+    char complete_index_file_path[4096] = {'\0'};
 
 public:
     Metrics( std::string fields_version
@@ -87,7 +92,7 @@ public:
            , array_view_const_char account_sig              // hashed secondary account
            , array_view_const_char target_service_sig       // hashed (target service name + device name)
            , array_view_const_char session_info_sig         // hashed (source_host + client info)
-           , const std::chrono::seconds now                 // time at beginning of metrics
+           , const timeval now                              // time at beginning of metrics
            , const std::chrono::hours file_interval         // daily rotation of filename
            , const std::chrono::seconds log_delay           // delay between 2 logs flush
            )
@@ -95,21 +100,29 @@ public:
     , version(std::move(fields_version))
     , protocol_name(std::move(protocol_name))
     , file_interval{file_interval}
-    , current_file_date(now - (now % this->file_interval))
-    , path(std::move(path))
+    , current_file_date(timeslice(now, this->file_interval))
+    , path((path.back() == '/')?path.substr(0,path.size()-1):path)
     , session_id(std::move(session_id.insert(0, 1, ' ')))
     , active_(activate)
     , connection_time(now)
     , log_delay(log_delay)
-    , next_log_time{to_timeval(this->log_delay+now)}
+    , next_log_time{now+this->log_delay}
     {
-        LOG(LOG_INFO, "Metrics recording is enabled (%s)", this->path.c_str());
-        if (!access(this->path.c_str(), 0)) {
-            LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
-            recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
-        }
-
         if (activate) {
+            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
+                this->path.c_str(), this->log_delay.count(), this->file_interval.count());
+                
+            if (0 != access(this->path.c_str(), F_OK)) {
+                LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
+                int status = recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
+                LOG(LOG_INFO, "create status = %d", status);
+            }
+
+            if (0 != access(this->path.c_str(), F_OK)) {
+                LOG(LOG_INFO, "Creation of %s directory to store metrics failed, disabling metrics", this->path.c_str());
+                this->active_ = false;
+            }
+
             this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
                 "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
                 int(this->session_id.size()-1u), this->session_id.data()+1,
@@ -147,11 +160,9 @@ public:
             return ;
         }
 
-        this->next_log_time.tv_sec += to_timeval(this->log_delay).tv_sec;
-        this->next_log_time.tv_usec = now.tv_usec;
+        this->next_log_time += this->log_delay;
 
-        this->rotate(std::chrono::seconds(now.tv_sec));
-
+        this->rotate(now);
         this->write_event_to_logmetrics(now);
     }
 
@@ -163,42 +174,14 @@ public:
 
         using namespace std::literals::chrono_literals;
 
-        this->rotate(std::chrono::seconds(this->next_log_time.tv_sec));
-
+        this->rotate(this->next_log_time);
         this->write_event_to_logmetrics(this->next_log_time);
-
-        auto text_date = (this->current_file_date % 24h == 0s)
-          ? text_gmdate(this->current_file_date)
-          : filename_gmdatetime(this->current_file_date);
-
-        this->write_event_to_logindex(
-            text_date,
-            std::chrono::seconds(this->next_log_time.tv_sec),
-            " disconnection "_av);
+        this->write_event_to_logindex(this->next_log_time, " disconnection "_av);
     }
 
-    void new_file(std::chrono::seconds now)
+    void rotate(const timeval now)
     {
-        using namespace std::literals::chrono_literals;
-
-        auto text_date = (now % 24h == 0s) ? text_gmdate(now) : filename_gmdatetime(now);
-
-        ::snprintf(this->complete_file_path, sizeof(this->complete_file_path),
-            "%s/%s_metrics-%s-%s.logmetrics",
-            this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
-
-        this->fd = unique_fd(this->complete_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        if (!this->fd.is_open()) {
-            int const errnum = errno;
-            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_file_path, strerror(errnum));
-        }
-
-        this->write_event_to_logindex(text_date, this->connection_time, " connection "_av);
-    }
-
-    void rotate(std::chrono::seconds now)
-    {
-        auto next_file_date = now - now % this->file_interval;
+        const timeval next_file_date = timeslice(now, this->file_interval);
         if (this->current_file_date != next_file_date) {
             this->current_file_date = next_file_date;
             this->new_file(next_file_date);
@@ -206,9 +189,33 @@ public:
     }
 
 private:
+    void new_file(const timeval timeslice)
+    {
+        using namespace std::literals::chrono_literals;
+        
+        auto text_date = is_midnight(timeslice) ? text_gmdate(timeslice) : filename_gmdatetime(timeslice);
+
+        ::snprintf(this->complete_metrics_file_path, sizeof(this->complete_metrics_file_path),
+            "%s/%s_metrics-%s-%s.logmetrics",
+            this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
+
+        ::snprintf(this->complete_index_file_path, sizeof(this->complete_index_file_path),
+            "%s/%s_metrics-%s-%s.logindex",
+            this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
+            
+        this->fd = unique_fd(this->complete_metrics_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (!this->fd.is_open()) {
+            int const errnum = errno;
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_metrics_file_path, strerror(errnum));
+        }
+
+        this->write_event_to_logindex(this->connection_time, " connection "_av);
+    }
+
+
     void write_event_to_logmetrics(timeval const& now)
     {
-        auto text_datetime = text_gmdatetime(std::chrono::seconds(now.tv_sec));
+        auto text_datetime = text_gmdatetime(now);
 
         char sentence[4096];
         char * ptr = sentence;
@@ -228,24 +235,20 @@ private:
         if (nwritten == -1) {
             int const errnum = errno;
             LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\": %s",
-                errnum, this->complete_file_path, strerror(errnum));
+                errnum, this->complete_metrics_file_path, strerror(errnum));
         }
     }
 
     void write_event_to_logindex(
-        array_view_const_char date_for_file,
-        std::chrono::seconds event_time,
+        const timeval event_time,
         array_view_const_char event_name)
     {
-        char index_file_path[4096];
-        ::snprintf(index_file_path, sizeof(index_file_path),
-            "%s/%s_metrics-%s-%s.logindex",
-            this->path.c_str(),
-            this->protocol_name.c_str(),
-            this->version.c_str(),
-            date_for_file.data());
 
-        unique_fd fd_header(index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        unique_fd fd_header(this->complete_index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (!fd_header.is_open()) {
+            int const errnum = errno;
+            LOG(LOG_ERR, "Log Metrics Index error(%d): can't open \"%s\": %s", errnum, this->complete_index_file_path, strerror(errnum));
+        }
 
         auto disconnect_time_str = text_gmdatetime(event_time);
 
@@ -259,7 +262,7 @@ private:
 
         if (nwritten == -1) {
             int const errnum = errno;
-            LOG(LOG_ERR, "Log Metrics error(%d): can't write \"%s\": %s", errnum, index_file_path, strerror(errnum));
+            LOG(LOG_ERR, "Log Metrics Index error(%d): can't write \"%s\": %s", errnum, this->complete_index_file_path, strerror(errnum));
         }
     }
 
