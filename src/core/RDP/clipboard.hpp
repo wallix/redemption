@@ -212,6 +212,7 @@ enum {
 
 inline static const char * get_msgFlag_name(uint16_t msgFlag) {
     switch (msgFlag) {
+        case CB_RESPONSE_NONE: return "CB_RESPONSE_NONE";
         case CB_RESPONSE_OK:   return "CB_RESPONSE_OK";
         case CB_RESPONSE_FAIL: return "CB_RESPONSE_FAIL";
         case CB_ASCII_NAMES:   return "CB_ASCII_NAMES";
@@ -370,10 +371,11 @@ public:
 // capabilitySets (variable): A variable-sized array of capability sets, each
 //  conforming in structure to the CLIPRDR_CAPS_SET.
 
-struct ClipboardCapabilitiesPDU
+class ClipboardCapabilitiesPDU
 {
     uint16_t cCapabilitiesSets_ = 0;
 
+public:
     ClipboardCapabilitiesPDU() = default;
 
     ClipboardCapabilitiesPDU(uint16_t cCapabilitiesSets)
@@ -717,28 +719,20 @@ public:
 //  Clipboard PDU Header MUST be set to CB_MONITOR_READY (0x0001), while the
 //  msgFlags field MUST be set to 0x0000.
 
-struct ServerMonitorReadyPDU
+class ServerMonitorReadyPDU
 {
-    CliprdrHeader header;
+public:
+    void emit(OutStream &/* stream*/) const {}
 
-    ServerMonitorReadyPDU() : header(CB_MONITOR_READY, 0, 0) {
-    }   // ServerMonitorReadyPDU(bool response_ok)
+    void recv(InStream &/* stream*/) {}
 
-    void emit(OutStream & stream) const
-    {
-        this->header.emit(stream);
-    }
-
-    void recv(InStream & stream)
-    {
-        this->header.recv(stream);
+    static constexpr size_t size() {
+        return 0;
     }
 
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Server Monitor Ready PDU");
     }
-
 };  // struct ServerMonitorReadyPDU
 
 // [MS-RDPECLIP] 2.2.2.3 Client Temporary Directory PDU (CLIPRDR_TEMP_DIRECTORY)
@@ -1152,7 +1146,6 @@ struct FormatListPDU_LongName {
 };
 
 struct FormatListPDU_ShortName {
-
     //  FORMAT_LIST_MAX_SIZE
 
     uint32_t    formatID = 0;
@@ -2632,6 +2625,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 ServerMonitorReadyPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
             }
                 break;
@@ -2711,6 +2705,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 ClipboardCapabilitiesPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
 
                 GeneralCapabilitySet pdu2;
@@ -2774,7 +2769,9 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             }
                 break;
 
-            default: LOG(LOG_WARNING, "CLIPRDR Unknown PDU with length = %u", header.dataLen());
+            default:
+                header.log();
+                LOG(LOG_WARNING, "CLIPRDR Unknown PDU!");
                 break;
         }
     }

@@ -877,9 +877,11 @@ public:
                                    );
 
         RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
+        RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
 
         out_s.rewind();
 
+        header.emit(out_s);
         server_monitor_ready_pdu.emit(out_s);
 
         length     = out_s.get_offset();
@@ -887,8 +889,8 @@ public:
 
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
-                RDPECLIP::get_msgType_name(server_monitor_ready_pdu.header.msgType()),
-                server_monitor_ready_pdu.header.msgType()
+                RDPECLIP::get_msgType_name(header.msgType()),
+                header.msgType()
                 );
         }
 
@@ -2535,7 +2537,9 @@ private:
         if (channel) {
             // Monitor ready PDU send to front
             RDPECLIP::ServerMonitorReadyPDU server_monitor_ready_pdu;
-            StaticOutStream<64>             out_s;
+            RDPECLIP::CliprdrHeader         header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, server_monitor_ready_pdu.size());
+
+            StaticOutStream<64> out_s;
 
 /*
             //- Beginning of clipboard PDU Header ----------------------------
@@ -2549,6 +2553,7 @@ private:
             out_s.mark_end();
 */
 
+            header.emit(out_s);
             server_monitor_ready_pdu.emit(out_s);
 
             size_t chunk_size = out_s.get_offset();

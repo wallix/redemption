@@ -96,6 +96,25 @@ namespace
             CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
         );
     }
+
+    template<class PDU, class... Args>
+    void send_to_front_channel_2(
+        FrontAPI & front, const CHANNELS::ChannelDef channel,
+        uint16_t msgType, uint16_t msgFlags, PDU && pdu, Args && ...args)
+    {
+        StaticOutStream<256> out_s;
+
+        RDPECLIP::CliprdrHeader header(msgType, msgFlags, pdu.size());
+        header.emit(out_s);
+
+        pdu.emit(out_s, args...);
+        const size_t length     = out_s.get_offset();
+        const size_t chunk_size = length;
+        front.send_to_channel(
+            channel, out_s.get_data(), length, chunk_size,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+        );
+    }
 } // namespace
 
 
@@ -125,7 +144,7 @@ bool CopyPaste::ready(FrontAPI & front)
         this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
                                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-        send_to_front_channel(*this->front_, *this->channel_, RDPECLIP::ServerMonitorReadyPDU());
+        send_to_front_channel_2(*this->front_, *this->channel_, RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE_NONE, RDPECLIP::ServerMonitorReadyPDU());
         return true;
     }
 
