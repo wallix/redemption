@@ -26,8 +26,6 @@
 
 
 
-
-
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"
