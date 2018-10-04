@@ -127,6 +127,8 @@ sys_lib_prefix = (
         linkflags=['<library>ffmpeg',
                    '$(FFMPEG_LINKFLAGS)'],
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
+    ('libavcodec/', Dep(
+        cxxflags=['$(FFMPEG_CXXFLAGS)'])),
     ('openssl/', Dep(
         linkflags=['<library>crypto'])),
 )
@@ -393,6 +395,7 @@ for name, f in all_files.items():
 
     f.direct_link_deps = direct_link_deps
     f.direct_cxx_deps = direct_cxx_deps
+
 
 empty_set = set()
 def compute_all_source_deps(f):

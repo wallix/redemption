@@ -575,6 +575,7 @@ test-run tests/capture/test_bogus_ppocr :
 test-run tests/capture/test_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_capture.cpp
 :
+  $(FFMPEG_CXXFLAGS)
   $(FFMPEG_LINKFLAGS)
   <covfile>src/capture/capture.cpp
   <covfile>src/capture/capture.hpp
@@ -661,6 +662,7 @@ test-run tests/capture/test_ppocr :
 test-run tests/capture/test_video_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
 :
+  $(FFMPEG_CXXFLAGS)
   $(FFMPEG_LINKFLAGS)
   <covfile>src/capture/video_capture.cpp
   <covfile>src/capture/video_capture.hpp
@@ -4991,7 +4993,7 @@ obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_C
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
-obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST ;
+obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST $(FFMPEG_CXXFLAGS) ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
 obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_text.cc ;
