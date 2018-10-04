@@ -6,7 +6,7 @@
 #
 
 exe headlessclient :
-  $(REDEMPTION_SRC_PATH)/main/headlessclient.cpp
+  src/main/headlessclient.o
 :
   $(EXE_DEPENDENCIES)
   <define>ZLIB_CONST
@@ -62,10 +62,9 @@ exe headlessclient :
   <variant>san:<library>dl
 ;
 exe rdpproxy :
-  $(REDEMPTION_SRC_PATH)/main/main.cpp
+  src/main/main.o
 :
   $(EXE_DEPENDENCIES)
-  $(FFMPEG_LINKFLAGS)
   <library>app_path_exe.o
   <library>boost_stacktrace
   <library>crypto
@@ -165,7 +164,7 @@ exe rdpproxy :
   <variant>san:<library>dl
 ;
 exe rdpheadless :
-  $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp
+  src/main/rdpheadless.o
 :
   $(EXE_DEPENDENCIES)
   <include>$(REDEMPTION_TEST_PATH)/includes
@@ -210,7 +209,7 @@ exe rdpheadless :
   <variant>san:<library>dl
 ;
 exe rdpinichecker :
-  $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp
+  src/main/ini_checker.o
 :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   <library>app_path_exe.o
@@ -221,7 +220,7 @@ exe rdpinichecker :
   <library>src/utils/hexdump.o
 ;
 exe proxy_recorder :
-  $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp
+  src/main/proxy_recorder.o
 :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   <library>app_path_exe.o
@@ -243,7 +242,7 @@ exe proxy_recorder :
   <variant>san:<library>dl
 ;
 exe rdpclient :
-  $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp
+  src/main/rdp_client.o
 :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   <include>$(REDEMPTION_TEST_PATH)/includes
@@ -294,7 +293,6 @@ exe rdpclient :
 lib libredrec :
   src/lib/do_recorder.cpp.lib.o
 :
-  $(FFMPEG_LINKFLAGS)
   $(LIB_DEPENDENCIES)
   <define>ZLIB_CONST
   <library>app_path_exe.o
@@ -435,7 +433,6 @@ test-run tests/acl/test_mm_api :
 test-run tests/acl/test_module_manager :
   $(REDEMPTION_TEST_PATH)/acl/test_module_manager.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/acl/module_manager.hpp
   <define>ZLIB_CONST
   <library>app_path_test.o
@@ -576,7 +573,6 @@ test-run tests/capture/test_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_capture.cpp
 :
   $(FFMPEG_CXXFLAGS)
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/capture/capture.cpp
   <covfile>src/capture/capture.hpp
   <define>ZLIB_CONST
@@ -663,7 +659,6 @@ test-run tests/capture/test_video_capture :
   $(REDEMPTION_TEST_PATH)/capture/test_video_capture.cpp
 :
   $(FFMPEG_CXXFLAGS)
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/capture/video_capture.cpp
   <covfile>src/capture/video_capture.hpp
   <library>boost_stacktrace
@@ -2155,7 +2150,6 @@ test-run tests/core/test_listen :
 test-run tests/core/test_mainloop :
   $(REDEMPTION_TEST_PATH)/core/test_mainloop.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/core/mainloop.cpp
   <covfile>src/core/mainloop.hpp
   <library>app_path_test.o
@@ -2267,7 +2261,6 @@ test-run tests/core/test_server_notifier_api :
 test-run tests/core/test_session :
   $(REDEMPTION_TEST_PATH)/core/test_session.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/core/session.hpp
   <define>ZLIB_CONST
   <library>app_path_test.o
@@ -2380,7 +2373,6 @@ test-run tests/core/test_session_reactor :
 test-run tests/core/test_session_server :
   $(REDEMPTION_TEST_PATH)/core/test_session_server.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/core/session_server.hpp
   <define>ZLIB_CONST
   <library>app_path_test.o
@@ -2481,7 +2473,6 @@ test-run tests/core/test_session_server :
 test-run tests/front/test_front :
   $(REDEMPTION_TEST_PATH)/front/test_front.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   <covfile>src/front/front.hpp
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -2587,7 +2578,6 @@ test-run tests/keyboard/test_keymapSym :
 test-run tests/lib/test_do_recorder :
   $(REDEMPTION_TEST_PATH)/lib/test_do_recorder.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -4080,7 +4070,6 @@ test-run tests/regex/test_regex_utils :
 test-run tests/server/test_mstsc_client :
   $(REDEMPTION_TEST_PATH)/server/test_mstsc_client.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -4133,7 +4122,6 @@ test-run tests/server/test_mstsc_client :
 test-run tests/server/test_mstsc_client_rdp50bulk :
   $(REDEMPTION_TEST_PATH)/server/test_mstsc_client_rdp50bulk.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -4186,7 +4174,6 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
 test-run tests/server/test_rdesktop_client :
   $(REDEMPTION_TEST_PATH)/server/test_rdesktop_client.cpp
 :
-  $(FFMPEG_LINKFLAGS)
   $(GCOV_NO_BUILD)
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -4993,7 +4980,7 @@ obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_C
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
-obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : <define>ZLIB_CONST $(FFMPEG_CXXFLAGS) ;
+obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
 obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
 obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_text.cc ;

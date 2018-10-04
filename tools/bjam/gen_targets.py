@@ -124,8 +124,7 @@ sys_lib_assoc = dict((
 ))
 sys_lib_prefix = (
     ('libavformat/', Dep(
-        linkflags=['<library>ffmpeg',
-                   '$(FFMPEG_LINKFLAGS)'],
+        linkflags=['<library>ffmpeg'],
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
     ('libavcodec/', Dep(
         cxxflags=['$(FFMPEG_CXXFLAGS)'])),
@@ -516,7 +515,7 @@ def generate(type, files, requirements, get_target_cb = get_target):
                 #deps.append(coverage_requirements[src])
             src = inject_variable_prefix(f.path)
         elif type == 'exe':
-            src = inject_variable_prefix(f.path)
+            src = cpp_to_obj(f)
         elif type == 'lib':
             src += '.lib.o'
 
@@ -548,7 +547,7 @@ def generate_obj(files):
         if f.type == 'C' and f != app_path_cpp:
             print('obj', mark_target(cpp_to_obj(f)), ':', inject_variable_prefix(f.path), end='')
             if f.all_cxx_deps:
-                print(' :', ' '.join(f.all_cxx_deps), end='')
+                print(' :', ' '.join(sorted(f.all_cxx_deps)), end='')
             print(' ;')
 
 # filter target
