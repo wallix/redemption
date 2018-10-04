@@ -37,9 +37,13 @@ src_deps = dict((
 ))
 
 class Dep:
-    def __init__(self, linkflags=[], cxxflags=[]):
-        self.linkflags = linkflags
-        self.cxxflags = cxxflags
+    def __init__(self, linkflags=None, cxxflags=None):
+        self.linkflags = linkflags or []
+        self.cxxflags = cxxflags or []
+    def union(self, other):
+        return Dep(
+            linkflags=self.linkflags + other.linkflags,
+            cxxflags=self.cxxflags + other.cxxflags)
 
 inc_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for lcg_random or fixed_random
 
@@ -61,8 +65,8 @@ target_requirements = dict((
 
 # because include a .cpp file...
 remove_requirements = dict((
-    ('tests/capture/test_capture.cpp', '<library>src/capture/capture.o'),
-    ('tests/utils/test_rle.cpp', '<library>src/utils/rle.o'),
+    ('tests/capture/test_capture.cpp', ['<library>src/capture/capture.o']),
+    ('tests/utils/test_rle.cpp', ['<library>src/utils/rle.o']),
 ))
 
 # This is usefull if several source files have the same name to disambiguate tests
@@ -96,12 +100,6 @@ dir_nocoverage = set([
     'tests/lib',
 ])
 file_nocoverage = set(glob.glob('tests/*.cpp'))
-
-# lib/*.cpp -> <library>lib*
-replace_deps = dict([
-    (f, Dep(linkflags=['<library>lib' + f[8:-4]])) for f in glob.glob('src/lib/*.cpp')
-        if f != 'src/lib/do_recorder.cpp' # depends of app_path...
-])
 
 sys_lib_assoc = dict((
     ('png.h', Dep(
@@ -378,12 +376,7 @@ for name, f in all_files.items():
         for ext in ('.cpp', '.cc'):
             cpp_name = pf.path[:-4]+ext
             if cpp_name in all_files:
-                if cpp_name in replace_deps and f.path != cpp_name:
-                    d = replace_deps[cpp_name]
-                    direct_link_deps.update(d.linkflags)
-                    direct_cxx_deps.update(d.cxxflags)
-                else:
-                    direct_source_deps.add(all_files[cpp_name])
+                direct_source_deps.add(all_files[cpp_name])
     f.direct_source_deps = direct_source_deps
 
     def append(direct_link_deps, direct_cxx_deps, d):

@@ -2628,8 +2628,8 @@ test-run tests/lib/test_iametrics :
 :
   $(GCOV_NO_BUILD)
   <library>boost_stacktrace
-  <library>libiametrics
   <library>src/core/error.o
+  <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
@@ -2642,9 +2642,9 @@ test-run tests/lib/test_scytale :
   $(GCOV_NO_BUILD)
   <library>boost_stacktrace
   <library>crypto
-  <library>libscytale
   <library>snappy
   <library>src/core/error.o
+  <library>src/lib/scytale.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
