@@ -303,7 +303,7 @@ public:
         return this->config.connected;
    }
 
-    int wait_and_draw_event(timeval timeout) override
+    int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
         if (ExecuteEventsResult::Error == execute_events(
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},

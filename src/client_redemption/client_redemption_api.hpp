@@ -38,6 +38,7 @@
 
 #endif
 
+#include <chrono>
 
 class ClientRedemptionAPI : public FrontAPI
 {
@@ -54,7 +55,7 @@ public:
     virtual bool is_connected() {return false;}
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *
                          /*data*/, std::size_t  /*length*/, std::size_t  /*chunk_size*/, int  /*flags*/) override {}
-    virtual int wait_and_draw_event(timeval timeout) = 0;
+    virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
 
     // CONTROLLER
     virtual bool connect() {return true;}

@@ -24,6 +24,7 @@
 
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
+using namespace std::chrono_literals;
 
 
 class ClientHeadlessSocket : public ClientInputSocketAPI {
@@ -40,7 +41,7 @@ public:
 
         while (!mod->is_up_and_running()) {
 //                 std::cout << " Early negociations...\n";
-            if (int err = this->client->wait_and_draw_event({3, 0})) {
+            if (int err = this->client->wait_and_draw_event(3s)) {
                 std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
             }
         }

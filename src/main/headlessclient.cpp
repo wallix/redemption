@@ -36,6 +36,10 @@
 
 #pragma GCC diagnostic pop
 
+#include <chrono>
+
+using namespace std::chrono_literals;
+
 int run_mod(ClientRedemption & front);
 
 
@@ -83,7 +87,7 @@ int main(int argc, char const** argv)
 
 int run_mod(ClientRedemption & front) {
     const timeval time_stop = addusectimeval(front.config.time_out_disconnection, tvtime());
-    const timeval time_mark = { 0, 50000 };
+    const std::chrono::milliseconds time_mark = 50ms;
 
     if (front.mod) {
         auto & mod = *(front.mod);

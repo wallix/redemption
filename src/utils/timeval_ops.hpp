@@ -27,6 +27,7 @@
 #include <cassert>
 #include <sys/time.h>
 
+using namespace std::chrono_literals;
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
     // return ustime(a) < ustime(b)
@@ -55,25 +56,15 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
     return !(a < b);
 }
 
-// TODO: should return some std::duration object, not a timeval!
-inline timeval operator-(timeval const & endtime, timeval const & starttime)
+// date differences is returning how long to wait to reach ultimatum
+// which means 0 if starttime if after ultimatum
+inline std::chrono::microseconds operator-(timeval const & ultimatum, timeval const & starttime)
 {
-    assert(endtime >= starttime);
-
-    timeval result;
-
-    result.tv_sec = endtime.tv_sec - starttime.tv_sec;
-
-    if (endtime.tv_usec >= starttime.tv_usec) {
-        result.tv_usec = endtime.tv_usec - starttime.tv_usec;
+    if (ultimatum <= starttime) {
+        return 0us;
     }
-    else {
-        result.tv_sec--;
-
-        result.tv_usec = 1000000LL - starttime.tv_usec + endtime.tv_usec;
-    }
-
-    return result;
+    return std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+         - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec);
 }
 
 // TODO: should not exist, adding two dates is meaningless
@@ -92,6 +83,16 @@ inline timeval operator+(timeval const & a, timeval const & b)
     return result;
 }
 
+inline timeval to_timeval(std::chrono::seconds const& seconds)
+{
+    return {seconds.count(), 0};
+}
+
+inline timeval to_timeval(std::chrono::microseconds const& usec)
+{
+    return {usec.count()/1000000, usec.count()%1000000};
+}
+
 // Returns the beginning of the timeslice of width seconds containing timeval
 // origin of intervals is midnight 1 jan 1970
 inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
@@ -101,7 +102,6 @@ inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
 
 inline bool is_midnight(timeval const & a)
 {
-    using namespace std::chrono_literals;
     return (a.tv_sec % std::chrono::seconds(24h).count()) == 0;
 }
 
@@ -112,13 +112,16 @@ inline timeval operator+(timeval const & a, std::chrono::seconds const& seconds)
     return result;
 }
 
+inline timeval operator+(timeval const & a, std::chrono::milliseconds const& ms)
+{
+    std::chrono::microseconds usec = std::chrono::seconds(a.tv_sec) + std::chrono::microseconds(a.tv_usec) + ms;
+    return to_timeval(usec);
+}
+
 inline timeval& operator+=(timeval& tv, std::chrono::seconds const& seconds)
 {
     tv.tv_sec += seconds.count();
     return tv;
 }
 
-inline timeval to_timeval(std::chrono::seconds const& seconds)
-{
-    return {seconds.count(), 0};
-}
+

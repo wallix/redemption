@@ -18,7 +18,7 @@
    Author(s): Clément Moroldo
 */
 
-#include "front/rdpheadless.hpp"
+#include "main/rdpheadless.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 #include "utils/cli.hpp"
@@ -496,7 +496,7 @@ int main(int argc, char** argv)
 
 int run_mod(not_null_ptr<mod_api> mod_ptr, RDPHeadlessFront & front, bool quick_connection_test, std::chrono::milliseconds time_out_response, bool time_set_connection_test) {
     const timeval time_stop = addusectimeval(time_out_response, tvtime());
-    const timeval time_mark = { 0, 50000 };
+    const std::chrono::milliseconds time_mark = 50ms;
 
     auto & mod = *mod_ptr;
 

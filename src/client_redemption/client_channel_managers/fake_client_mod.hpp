@@ -36,6 +36,7 @@
 #include "core/RDP/clipboard.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 
+#include <chrono>
 
 class FakeRDPChannelsMod : public mod_api
 {
@@ -340,7 +341,7 @@ public:
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
     ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
-    int wait_and_draw_event(timeval /*timeout*/) override { return 0; }
+    int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}
     virtual void draw(const RDP::RAIL::WindowIcon & /*cmd*/) override {}

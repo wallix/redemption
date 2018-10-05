@@ -85,6 +85,9 @@
 
 #include <openssl/ssl.h>
 
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 struct RDPHeadlessFrontParams
 {
@@ -736,7 +739,7 @@ public:
         try {
             while (!this->_callback->is_up_and_running()) {
                 std::cout << " Early negociations...\n";
-                if (int err = this->wait_and_draw_event({3, 0})) {
+                if (int err = this->wait_and_draw_event(3s)) {
                     return err;
                 }
             }
@@ -816,7 +819,7 @@ public:
         return sck;
     }
 
-    int wait_and_draw_event(timeval timeout) {
+    int wait_and_draw_event(std::chrono::milliseconds timeout) {
         if (ExecuteEventsResult::Error == execute_events(
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
             *this->_callback, *this

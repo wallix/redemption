@@ -35,7 +35,7 @@ enum class ExecuteEventsResult
 };
 
 inline ExecuteEventsResult execute_events(
-    timeval timeout, SessionReactor& session_reactor,
+    std::chrono::milliseconds timeout, SessionReactor& session_reactor,
     SessionReactor::EnableGraphics enable_graphics,
     Callback& callback, gdi::GraphicApi& front)
 {
@@ -52,18 +52,11 @@ inline ExecuteEventsResult execute_events(
     );
 
     session_reactor.set_current_time(tvtime());
-    auto const tv = session_reactor.get_next_timeout(enable_graphics);
-    auto const tv_now = session_reactor.get_current_time();
-    if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
-        if (tv < tv_now) {
-            timeout = {0, 0};
-        }
-        else {
-            timeout = tv - tv_now;
-        }
-    }
+    timeval timeoutastv = to_timeval(
+                            session_reactor.get_next_timeout(enable_graphics, timeout)
+                          - session_reactor.get_current_time());
 
-    int num = select(max + 1, &rfds, nullptr, nullptr, &timeout);
+    int num = select(max + 1, &rfds, nullptr, nullptr, &timeoutastv);
 
     if (num < 0) {
         if (errno == EINTR) {
@@ -72,16 +65,14 @@ inline ExecuteEventsResult execute_events(
         return ExecuteEventsResult::Error;
     }
 
-    session_reactor.execute_timers_at(
-        enable_graphics, tvtime(),
-        [&]() -> gdi::GraphicApi& { return front; });
+    session_reactor.execute_timers_at(enable_graphics, tvtime(), [&]() -> gdi::GraphicApi& { return front; });
+
     if (num) {
         session_reactor.execute_callbacks(callback);
         auto fd_isset = [&rfds](int fd, auto& /*e*/){ return io_fd_isset(fd, rfds); };
         session_reactor.execute_graphics(fd_isset, front);
+        return ExecuteEventsResult::Success;
     }
 
-    return (tv.tv_sec >= 0 && num == 0)
-        ? ExecuteEventsResult::Timeout
-        : ExecuteEventsResult::Success;
+    return ExecuteEventsResult::Timeout;
 }

@@ -141,8 +141,6 @@ public:
                 this->write_performance_log(start_time);
             }
 
-            const timeval time_mark = { this->select_timeout_tv_sec, 0 };
-
             bool run_session = true;
 
             constexpr std::array<unsigned, 4> timers{{ 30*60, 10*60, 5*60, 1*60, }};
@@ -167,38 +165,27 @@ public:
                 fd_set rfds;
 
                 io_fd_zero(rfds);
-                timeval timeout = time_mark;
 
                 if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
+                    // TODO: check that, looks like blocking code
                     wait_on_sck(front_trans, rfds, max);
                 }
 
                 if (acl) {
+                    // TODO: check that, looks like blocking code
+                    // shouldn't we wait on both sockets ?
                     wait_on_sck(acl->auth_trans, rfds, max);
                 }
 
-                if (front_trans.has_pending_data()
-                 || mm.has_pending_data()
-                 || (acl && acl->auth_trans.has_pending_data())) {
-                    timeout = {0, 0};
-                }
+                using namespace std::chrono_literals;
+                std::chrono::milliseconds timeout = std::chrono::seconds(
+                        (  front_trans.has_pending_data()
+                        || mm.has_pending_data()
+                        || (acl && acl->auth_trans.has_pending_data())) 
+                        ? 0 : this->select_timeout_tv_sec);
 
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
-
-                auto const tv = session_reactor.get_next_timeout(enable_graphics);
-                auto tv_now = tvtime();
-                // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
-                if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
-                    if (tv < tv_now) {
-                        timeout = {0, 0};
-                    }
-                    else {
-                        timeout = tv - tv_now;
-                    }
-                }
-                // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
-                // session_reactor.timer_events_.info(tv_now);
 
                 session_reactor.for_each_fd(
                     enable_graphics,
@@ -209,7 +196,14 @@ public:
                 );
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
-                int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
+                session_reactor.set_current_time(tvtime());
+                // 0 if tv < tv_now : returns immediately
+                timeval timeoutastv = to_timeval(
+                                        session_reactor.get_next_timeout(enable_graphics, timeout)
+                                      - session_reactor.get_current_time());
+                // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
+                // session_reactor.timer_events_.info(tv_now);
+                int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeoutastv);
 
                 // for (unsigned i = 0; i <= max; ++i) {
                 //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
@@ -598,12 +592,12 @@ private:
             : [&](){
                 // TODO: add some explicit error checking
                 char* end;
-                char const* ip = authtarget.substr(0, pos).c_str();
+                std::string ip = authtarget.substr(0, pos);
                 long port = std::strtol(authtarget.c_str() + pos + 1, &end, 10);
                 if (port > std::numeric_limits<int>::max()) {
                     return unique_fd{-1};
                 }
-                return ip_connect(ip, int(port), 30, 1000);
+                return ip_connect(ip.c_str(), int(port), 30, 1000);
             }();
 
         if (!client_sck.is_open()) {

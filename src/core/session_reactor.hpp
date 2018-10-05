@@ -2950,20 +2950,18 @@ struct SessionReactor
         const bool enable;
     };
 
-    /// \return {-1, -1} if not timeout
-    timeval get_next_timeout(EnableGraphics enable_gd)
+
+    // return a valid timeout, current_time + maxdelay if must wait more than maxdelay
+    timeval get_next_timeout(EnableGraphics enable_gd, std::chrono::milliseconds maxdelay) /* const : can't because of _for_each */
     {
+        timeval tv = this->get_current_time() + maxdelay;
         if ((enable_gd && !this->graphic_events_.is_empty())
          || !this->front_events_.is_empty()) {
-            return {0, 0};
+            return tv;
         }
 
-        timeval tv{-1, -1};
         auto update_tv = [&](timeval const& tv2){
-            if (tv.tv_sec < 0) {
-                tv = tv2;
-            }
-            else if (tv2.tv_sec >= 0) {
+            if (tv2.tv_sec >= 0) {
                 tv = std::min(tv, tv2);
             }
         };

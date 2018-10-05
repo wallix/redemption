@@ -37,6 +37,9 @@
 #include "front/execute_events.hpp"
 #include "gdi/graphic_cmd_color.hpp"
 
+
+using namespace std::chrono_literals;
+
 class ClientFront : public FrontAPI
 {
     bool verbose;
@@ -138,7 +141,7 @@ inline int run_connection_test(
 {
     int       timeout_counter = 0;
     int const timeout_counter_max = 3;
-    timeval const timeout = {5, 0};
+    std::chrono::milliseconds const timeout = 5s;
 
     for (;;) {
         LOG(LOG_INFO, "run_connection_test");
@@ -169,7 +172,7 @@ inline int run_connection_test(
     }
 }
 
-
+// return 0 : do screenshot, don't do screenshot an error occurred
 inline int wait_for_screenshot(
     char const* type, SessionReactor& session_reactor, Callback& callback, gdi::GraphicApi & gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time)
@@ -184,12 +187,7 @@ inline int wait_for_screenshot(
             return 0;
         }
 
-        auto const ms = std::min(max_time - elapsed, inactivity_time);
-        auto const seconds = std::chrono::duration_cast<std::chrono::seconds>(ms);
-        timeval timeout = {
-            seconds.count(),
-            std::chrono::duration_cast<std::chrono::microseconds>(ms - seconds).count()
-        };
+        std::chrono::milliseconds timeout = std::min(max_time - elapsed, inactivity_time);
 
         switch (execute_events(
             timeout, session_reactor,
@@ -203,7 +201,7 @@ inline int wait_for_screenshot(
                 REDEMPTION_CXX_FALLTHROUGH;
             case ExecuteEventsResult::Continue:
             case ExecuteEventsResult::Timeout:
-                if (!timeout.tv_sec && !timeout.tv_usec) {
+                if (timeout == 0ms) {
                     return 0;
                 }
         }

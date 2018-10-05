@@ -156,11 +156,17 @@ public:
             return ;
         }
 
+        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld", 
+            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
+
         if (this->next_log_time > now) {
             return ;
         }
 
         this->next_log_time += this->log_delay;
+
+        LOG(LOG_INFO, " new next_log_time=%ld:%ld", 
+            this->next_log_time.tv_sec, this->next_log_time.tv_usec);
 
         this->rotate(now);
         this->write_event_to_logmetrics(now);
@@ -172,7 +178,7 @@ public:
             return ;
         }
 
-        using namespace std::literals::chrono_literals;
+        using namespace std::chrono_literals;
 
         this->rotate(this->next_log_time);
         this->write_event_to_logmetrics(this->next_log_time);
