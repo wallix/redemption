@@ -1067,9 +1067,9 @@ public:
                         buffers.push('!');
                         buffers.push(val);
                         buffers.push('\n');
-                        const char * display_val = val;
-                        if ((strncasecmp("password", key, 8) == 0)
-                         || (strncasecmp("target_password", key, 15) == 0)) {
+                        char const * display_val = val;
+                        if (field.authid() == cfg::context::password::index
+                         || field.authid() == cfg::context::target_password::index) {
                             display_val = get_printable_password(val, password_printing_mode);
                         }
                         if (bool(this->verbose & Verbose::variable)) {
