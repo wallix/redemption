@@ -115,7 +115,7 @@ public:
             if (0 != access(this->path.c_str(), F_OK)) {
                 LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
                 int status = recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
-                LOG(LOG_INFO, "create status = %d", status);
+//                LOG(LOG_INFO, "create status = %d", status);
             }
 
             if (0 != access(this->path.c_str(), F_OK)) {
@@ -152,21 +152,17 @@ public:
 
     void log(timeval const& now)
     {
-        if (!this->active_) {
-            return ;
-        }
+//        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld", 
+//            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
 
-        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld", 
-            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
-
-        if (this->next_log_time > now) {
+        if (!this->active_ || this->next_log_time > now) {
             return ;
         }
 
         this->next_log_time += this->log_delay;
 
-        LOG(LOG_INFO, " new next_log_time=%ld:%ld", 
-            this->next_log_time.tv_sec, this->next_log_time.tv_usec);
+//        LOG(LOG_INFO, " new next_log_time=%ld:%ld", 
+//            this->next_log_time.tv_sec, this->next_log_time.tv_usec);
 
         this->rotate(now);
         this->write_event_to_logmetrics(now);
