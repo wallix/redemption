@@ -28,11 +28,12 @@ Author(s): Jonathan Poelen
 void set_server_redirection_target(Inifile& ini, ReportMessageApi& reporter)
 {
     // SET new target in ini
-    const char * host = char_ptr_cast(ini.get<cfg::mod_rdp::redir_info>().host);
-    const char * password = char_ptr_cast(ini.get<cfg::mod_rdp::redir_info>().password);
-    const char * username = char_ptr_cast(ini.get<cfg::mod_rdp::redir_info>().username);
+    RedirectionInfo const& redir_info = ini.get<cfg::mod_rdp::redir_info>();
+    const char * host = char_ptr_cast(redir_info.host);
+    const char * password = char_ptr_cast(redir_info.password);
+    const char * username = char_ptr_cast(redir_info.username);
     const char * change_user = "";
-    if (ini.get<cfg::mod_rdp::redir_info>().dont_store_username && username[0] != 0) {
+    if (redir_info.dont_store_username && username[0] != 0) {
         LOG(LOG_INFO, "SrvRedir: Change target username to '%s'", username);
         ini.set_acl<cfg::globals::target_user>(username);
         change_user = username;

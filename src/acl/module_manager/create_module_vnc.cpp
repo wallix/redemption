@@ -57,7 +57,7 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::context::target_password>().c_str(),
             front,
             client_info,
-            this->timeobj,            
+            this->timeobj,
             client_info.width,
             client_info.height,
             client_info.keylayout,
@@ -103,6 +103,8 @@ void ModuleManager::create_mod_vnc(
                 adjusted_client_execute_rect,
                 std::move(managed_mod),
                 client_execute,
+                this->load_font(),
+                this->load_theme(),
                 client_info.cs_monitor,
                 false
             );

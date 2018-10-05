@@ -21,6 +21,7 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 
 #include <string>
 
@@ -123,25 +124,63 @@ namespace spec
     template<class T>
     using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
 
-    enum class attr {
-        no_ini_no_gui   = 1 << 0,
-        ini_and_gui     = 1 << 1,
-        hidden_in_gui   = 1 << 2,
-        hex_in_gui      = 1 << 3,
-        advanced_in_gui = 1 << 4,
-        iptables_in_gui = 1 << 5,
-        password_in_gui = 1 << 6,
+    namespace internal
+    {
+        enum class attr {
+            no_ini_no_gui   = 1 << 0,
+            ini_and_gui     = 1 << 1,
+            hidden_in_gui   = 1 << 2,
+            hex_in_gui      = 1 << 3,
+            advanced_in_gui = 1 << 4,
+            iptables_in_gui = 1 << 5,
+            password_in_gui = 1 << 6,
 
-        connection_policy_with_ini    = hidden_in_gui,
-        connection_policy_without_ini = no_ini_no_gui
-    };
+            connection_policy_with_ini    = hidden_in_gui,
+            connection_policy_without_ini = no_ini_no_gui
+        };
 
-    constexpr attr operator | (attr x, attr y) {
-        return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        constexpr attr operator | (attr x, attr y) {
+            return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        }
+
+        constexpr attr operator & (attr x, attr y) {
+            return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+        }
+
+        template<attr value>
+        using spec_attr_t = std::integral_constant<attr, value>;
+
+        template<internal::attr v1, internal::attr v2>
+        spec_attr_t<v1 | v2>
+        operator | (spec_attr_t<v1>, spec_attr_t<v2>)
+        {
+            static_assert(!bool(v1 & attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
+            static_assert(!bool(v2 & attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
+            constexpr auto in_gui
+                = attr::hidden_in_gui
+                | attr::hex_in_gui
+                | attr::advanced_in_gui
+                | attr::iptables_in_gui
+                | attr::password_in_gui
+            ;
+            static_assert(!(bool(v1 & attr::hidden_in_gui) && bool(v2 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
+            static_assert(!(bool(v2 & attr::hidden_in_gui) && bool(v1 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
+            return {};
+        }
     }
 
-    constexpr attr operator & (attr x, attr y) {
-        return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+    inline namespace constants
+    {
+        inline internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
+        inline internal::spec_attr_t<internal::attr::ini_and_gui>     ini_and_gui{};
+        inline internal::spec_attr_t<internal::attr::hidden_in_gui>   hidden_in_gui{};
+        inline internal::spec_attr_t<internal::attr::hex_in_gui>      hex_in_gui{};
+        inline internal::spec_attr_t<internal::attr::advanced_in_gui> advanced_in_gui{};
+        inline internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
+        inline internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
+
+        inline internal::spec_attr_t<internal::attr::connection_policy_with_ini> connection_policy_with_ini{};
+        inline internal::spec_attr_t<internal::attr::connection_policy_without_ini> connection_policy_without_ini{};
     }
 }
 
@@ -153,19 +192,33 @@ namespace sesman
     template<class T>
     using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
 
-    enum class io {
-        none,
-        sesman_to_proxy = 1 << 0,
-        proxy_to_sesman = 1 << 1,
-        rw = sesman_to_proxy | proxy_to_sesman,
-    };
+    namespace internal
+    {
+        enum class io {
+            none,
+            sesman_to_proxy = 1 << 0,
+            proxy_to_sesman = 1 << 1,
+            rw = sesman_to_proxy | proxy_to_sesman,
+        };
 
-    constexpr io operator | (io x, io y) {
-        return static_cast<io>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        constexpr io operator | (io x, io y) {
+            return static_cast<io>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        }
+
+        constexpr io operator & (io x, io y) {
+            return static_cast<io>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+        }
+
+        template<io value>
+        using sesman_io_t = std::integral_constant<io, value>;
     }
 
-    constexpr io operator & (io x, io y) {
-        return static_cast<io>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+    inline namespace constants
+    {
+        inline internal::sesman_io_t<internal::io::none>            no_sesman{};
+        inline internal::sesman_io_t<internal::io::proxy_to_sesman> proxy_to_sesman{};
+        inline internal::sesman_io_t<internal::io::sesman_to_proxy> sesman_to_proxy{};
+        inline internal::sesman_io_t<internal::io::rw>              sesman_rw{};
     }
 }
 

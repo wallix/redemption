@@ -79,8 +79,6 @@ namespace configs
 
 // config members
 //@{
-#include "core/font.hpp"
-#include "utils/theme.hpp"
 #include "utils/redirection_info.hpp"
 #include <string>
 #include <chrono>
@@ -109,12 +107,6 @@ namespace configs
         }
         return err;
     }
-
-    template<class CfgType>
-    void post_set_value(VariablesConfiguration & /*vars*/, CfgType const & /*x*/)
-    {}
-
-    void post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value);
 } // namespace configs
 
 
@@ -174,7 +166,6 @@ private:
             configs::spec_type<typename T::mapped_type>{},
             std::forward<Args>(args)...
         );
-        configs::post_set_value(this->variables, static_cast<T&>(this->variables));
         this->insert_index<T>(std::integral_constant<bool, T::is_proxy_to_sesman>());
         this->unask<T>(std::integral_constant<bool, T::is_sesman_to_proxy>());
     }
@@ -297,7 +288,7 @@ public:
     private:
         FieldBase * field = nullptr;
         Inifile * ini = nullptr;
-        authid_t id = authid_t::AUTHID_UNKNOWN;
+        authid_t id = MAX_AUTHID;
 
         FieldReference(Inifile & ini, authid_t id)
         : field(&ini.fields[id])
@@ -309,7 +300,7 @@ public:
     };
 
     FieldReference get_acl_field(authid_t authid) {
-        if (authid >= authid_t::MAX_AUTHID) {
+        if (authid >= MAX_AUTHID) {
             return {};
         }
         return {*this, authid};
@@ -359,7 +350,7 @@ public:
     private:
         FieldBase const * field = nullptr;
         Inifile const * ini = nullptr;
-        authid_t id = authid_t::AUTHID_UNKNOWN;
+        authid_t id = MAX_AUTHID;
 
         FieldConstReference(Inifile const & ini, authid_t id)
         : field(&ini.fields[id])
@@ -441,9 +432,7 @@ private:
 
         void clear() noexcept
         {
-            for (auto & w : this->words) {
-                w = 0;
-            }
+            this->words.fill(0);
             this->list_size = 0;
         }
 

@@ -14,10 +14,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::bitmap_cache&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "glyph_cache")) {
             ::configs::parse_and_log(
@@ -25,10 +21,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::glyph_cache&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::glyph_cache&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "port")) {
@@ -38,10 +30,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::port&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "nomouse")) {
             ::configs::parse_and_log(
@@ -49,10 +37,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::nomouse&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::nomouse&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "notimestamp")) {
@@ -62,10 +46,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::notimestamp&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "encryptionLevel")) {
             ::configs::parse_and_log(
@@ -73,10 +53,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::encryptionLevel&>(this->variables).value,
                 ::configs::spec_type<Level>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::encryptionLevel&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "authfile")) {
@@ -86,10 +62,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::authfile&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "handshake_timeout")) {
             ::configs::parse_and_log(
@@ -97,10 +69,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::handshake_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::handshake_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_timeout")) {
@@ -110,10 +78,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::session_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "inactivity_timeout")) {
             ::configs::parse_and_log(
@@ -121,10 +85,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::inactivity_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::inactivity_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "keepalive_grace_delay")) {
@@ -134,10 +94,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::keepalive_grace_delay&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "authentication_timeout")) {
             ::configs::parse_and_log(
@@ -145,10 +101,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::authentication_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::authentication_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "close_timeout")) {
@@ -158,10 +110,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::close_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "trace_type")) {
             ::configs::parse_and_log(
@@ -169,10 +117,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::trace_type&>(this->variables).value,
                 ::configs::spec_type<TraceType>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::trace_type&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "listen_address")) {
@@ -182,10 +126,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::ip>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::listen_address&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_transparent_mode")) {
             ::configs::parse_and_log(
@@ -193,10 +133,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::enable_transparent_mode&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_transparent_mode&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "certificate_password")) {
@@ -206,10 +142,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::certificate_password&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "png_path")) {
             ::configs::parse_and_log(
@@ -217,10 +149,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::png_path&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::png_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "wrm_path")) {
@@ -230,10 +158,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::wrm_path&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "movie_path")) {
             ::configs::parse_and_log(
@@ -241,10 +165,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::movie_path&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::movie_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_bitmap_update")) {
@@ -254,10 +174,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_bitmap_update&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_close_box")) {
             ::configs::parse_and_log(
@@ -265,10 +181,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::enable_close_box&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_close_box&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_osd")) {
@@ -278,10 +190,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_osd&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_osd_display_remote_target")) {
             ::configs::parse_and_log(
@@ -289,10 +197,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::enable_osd_display_remote_target&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_osd_display_remote_target&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "persistent_path")) {
@@ -302,10 +206,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::persistent_path&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_wab_integration")) {
             ::configs::parse_and_log(
@@ -313,10 +213,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::enable_wab_integration&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::enable_wab_integration&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "allow_using_multiple_monitors")) {
@@ -326,10 +222,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::allow_using_multiple_monitors&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "bogus_refresh_rect")) {
             ::configs::parse_and_log(
@@ -337,10 +229,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::bogus_refresh_rect&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::bogus_refresh_rect&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "codec_id")) {
@@ -350,10 +238,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::codec_id&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "video_quality")) {
             ::configs::parse_and_log(
@@ -361,10 +245,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::video_quality&>(this->variables).value,
                 ::configs::spec_type<Level>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::video_quality&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "large_pointer_support")) {
@@ -374,10 +254,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::large_pointer_support&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "unicode_keyboard_event_support")) {
             ::configs::parse_and_log(
@@ -385,10 +261,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::unicode_keyboard_event_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::unicode_keyboard_event_support&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "mod_recv_timeout")) {
@@ -398,10 +270,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::mod_recv_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "spark_view_specific_glyph_width")) {
             ::configs::parse_and_log(
@@ -409,10 +277,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::spark_view_specific_glyph_width&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::spark_view_specific_glyph_width&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "experimental_enable_serializer_data_block_size_limit")) {
@@ -422,10 +286,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::experimental_enable_serializer_data_block_size_limit&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "experimental_support_resize_session_during_recording")) {
             ::configs::parse_and_log(
@@ -433,10 +293,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::globals::experimental_support_resize_session_during_recording&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::globals::experimental_support_resize_session_during_recording&>(this->variables)
             );
         }
 
@@ -453,10 +309,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::session_log::enable_session_log&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "log_path")) {
             ::configs::parse_and_log(
@@ -464,10 +316,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::session_log::log_path&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::session_log::log_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "keyboard_input_masking_level")) {
@@ -477,10 +325,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<KeyboardInputMaskingLevel>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::session_log::keyboard_input_masking_level&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "hide_non_printable_kbd_input")) {
             ::configs::parse_and_log(
@@ -488,10 +332,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::session_log::hide_non_printable_kbd_input&>(this->variables)
             );
         }
 
@@ -508,10 +348,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::keyboard_layout_proposals&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "ignore_logon_password")) {
             ::configs::parse_and_log(
@@ -519,10 +355,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::ignore_logon_password&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::ignore_logon_password&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "performance_flags_default")) {
@@ -532,10 +364,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::performance_flags_default&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "performance_flags_force_present")) {
             ::configs::parse_and_log(
@@ -543,10 +371,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::performance_flags_force_present&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::performance_flags_force_present&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "performance_flags_force_not_present")) {
@@ -556,10 +380,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::performance_flags_force_not_present&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "auto_adjust_performance_flags")) {
             ::configs::parse_and_log(
@@ -567,10 +387,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::auto_adjust_performance_flags&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "tls_fallback_legacy")) {
@@ -580,10 +396,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::tls_fallback_legacy&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "tls_support")) {
             ::configs::parse_and_log(
@@ -591,10 +403,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::tls_support&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::tls_support&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_neg_request")) {
@@ -604,10 +412,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::bogus_neg_request&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "bogus_user_id")) {
             ::configs::parse_and_log(
@@ -615,10 +419,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::bogus_user_id&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::bogus_user_id&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "disable_tsk_switch_shortcuts")) {
@@ -628,10 +428,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::disable_tsk_switch_shortcuts&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "rdp_compression")) {
             ::configs::parse_and_log(
@@ -639,10 +435,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::rdp_compression&>(this->variables).value,
                 ::configs::spec_type<RdpCompression>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::rdp_compression&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "max_color_depth")) {
@@ -652,10 +444,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<ColorDepth>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::max_color_depth&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
             ::configs::parse_and_log(
@@ -663,10 +451,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::persistent_disk_bitmap_cache&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::persistent_disk_bitmap_cache&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "cache_waiting_list")) {
@@ -676,10 +460,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::cache_waiting_list&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
             ::configs::parse_and_log(
@@ -687,10 +467,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::persist_bitmap_cache_on_disk&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::persist_bitmap_cache_on_disk&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bitmap_compression")) {
@@ -700,10 +476,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::bitmap_compression&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "fast_path")) {
             ::configs::parse_and_log(
@@ -711,10 +483,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::fast_path&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::fast_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_suppress_output")) {
@@ -724,10 +492,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::enable_suppress_output&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "ssl_cipher_list")) {
             ::configs::parse_and_log(
@@ -735,10 +499,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::ssl_cipher_list&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "show_target_user_in_f12_message")) {
@@ -748,10 +508,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::show_target_user_in_f12_message&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_new_pointer_update")) {
             ::configs::parse_and_log(
@@ -759,10 +515,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::enable_new_pointer_update&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::enable_new_pointer_update&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_ios_glyph_support_level")) {
@@ -772,10 +524,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::bogus_ios_glyph_support_level&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "transform_glyph_to_bitmap")) {
             ::configs::parse_and_log(
@@ -783,10 +531,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::transform_glyph_to_bitmap&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::transform_glyph_to_bitmap&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_number_of_fastpath_input_event")) {
@@ -796,10 +540,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<BogusNumberOfFastpathInputEvent>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::bogus_number_of_fastpath_input_event&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "recv_timeout")) {
             ::configs::parse_and_log(
@@ -807,10 +547,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::recv_timeout&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 100, 10000>>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::client::recv_timeout&>(this->variables)
             );
         }
 
@@ -827,10 +563,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<RdpCompression>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::rdp_compression&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "disconnect_on_logon_user_change")) {
             ::configs::parse_and_log(
@@ -838,10 +570,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::disconnect_on_logon_user_change&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::disconnect_on_logon_user_change&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "open_session_timeout")) {
@@ -851,10 +579,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::open_session_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "extra_orders")) {
             ::configs::parse_and_log(
@@ -862,10 +586,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::extra_orders&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<unsigned int>>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::extra_orders&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_nla")) {
@@ -875,10 +595,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::enable_nla&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_kerberos")) {
             ::configs::parse_and_log(
@@ -886,10 +602,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::enable_kerberos&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::enable_kerberos&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "persistent_disk_bitmap_cache")) {
@@ -899,10 +611,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::persistent_disk_bitmap_cache&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "cache_waiting_list")) {
             ::configs::parse_and_log(
@@ -910,10 +618,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::cache_waiting_list&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::cache_waiting_list&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "persist_bitmap_cache_on_disk")) {
@@ -923,10 +627,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::persist_bitmap_cache_on_disk&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "allow_channels")) {
             ::configs::parse_and_log(
@@ -934,10 +634,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::allow_channels&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::allow_channels&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "deny_channels")) {
@@ -947,10 +643,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::deny_channels&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "fast_path")) {
             ::configs::parse_and_log(
@@ -958,10 +650,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::fast_path&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::fast_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "server_redirection_support")) {
@@ -971,10 +659,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_redirection_support&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "bogus_sc_net_size")) {
             ::configs::parse_and_log(
@@ -982,10 +666,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::bogus_sc_net_size&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "proxy_managed_drives")) {
@@ -995,10 +675,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::list<std::string>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::proxy_managed_drives&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "ignore_auth_channel")) {
             ::configs::parse_and_log(
@@ -1006,10 +682,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::ignore_auth_channel&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::ignore_auth_channel&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "auth_channel")) {
@@ -1019,10 +691,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::auth_channel&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "checkout_channel")) {
             ::configs::parse_and_log(
@@ -1030,10 +698,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::checkout_channel&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::checkout_channel&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "alternate_shell")) {
@@ -1043,10 +707,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::alternate_shell&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "shell_arguments")) {
             ::configs::parse_and_log(
@@ -1054,10 +714,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::shell_arguments&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::shell_arguments&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "shell_working_directory")) {
@@ -1067,10 +723,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::shell_working_directory&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "use_client_provided_alternate_shell")) {
             ::configs::parse_and_log(
@@ -1078,10 +730,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::use_client_provided_alternate_shell&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "use_client_provided_remoteapp")) {
@@ -1091,10 +739,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::use_client_provided_remoteapp&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "use_native_remoteapp_capability")) {
             ::configs::parse_and_log(
@@ -1102,10 +746,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::use_native_remoteapp_capability&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::use_native_remoteapp_capability&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "enable_session_probe")) {
@@ -1115,10 +755,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::enable_session_probe&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_use_smart_launcher")) {
             ::configs::parse_and_log(
@@ -1126,10 +762,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_use_clipboard_based_launcher&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_use_clipboard_based_launcher&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_enable_launch_mask")) {
@@ -1139,10 +771,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_enable_launch_mask&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_on_launch_failure")) {
             ::configs::parse_and_log(
@@ -1150,10 +778,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables).value,
                 ::configs::spec_type<SessionProbeOnLaunchFailure>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_on_launch_failure&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_launch_timeout")) {
@@ -1163,10 +787,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_launch_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_launch_fallback_timeout")) {
             ::configs::parse_and_log(
@@ -1174,10 +794,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_start_launch_timeout_timer_only_after_logon")) {
@@ -1187,10 +803,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_keepalive_timeout")) {
             ::configs::parse_and_log(
@@ -1198,10 +810,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_on_keepalive_timeout")) {
@@ -1211,10 +819,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<SessionProbeOnKeepaliveTimeout>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_on_keepalive_timeout&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_end_disconnected_session")) {
             ::configs::parse_and_log(
@@ -1222,10 +826,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_end_disconnected_session&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_end_disconnected_session&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_customize_executable_name")) {
@@ -1235,10 +835,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_customize_executable_name&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_enable_log")) {
             ::configs::parse_and_log(
@@ -1246,10 +842,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_enable_log&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_enable_log&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_enable_log_rotation")) {
@@ -1259,10 +851,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_enable_log_rotation&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_disconnected_application_limit")) {
             ::configs::parse_and_log(
@@ -1270,10 +858,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_disconnected_session_limit")) {
@@ -1283,10 +867,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_disconnected_session_limit&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_idle_session_limit")) {
             ::configs::parse_and_log(
@@ -1294,10 +874,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_exe_or_file")) {
@@ -1307,10 +883,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_exe_or_file&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_arguments")) {
             ::configs::parse_and_log(
@@ -1318,10 +890,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_arguments&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_arguments&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_clipboard_initialization_delay")) {
@@ -1331,10 +899,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_start_delay")) {
             ::configs::parse_and_log(
@@ -1342,10 +906,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_long_delay")) {
@@ -1355,10 +915,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_clipboard_based_launcher_short_delay")) {
             ::configs::parse_and_log(
@@ -1366,10 +922,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_allow_multiple_handshake")) {
@@ -1379,10 +931,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_allow_multiple_handshake&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_enable_crash_dump")) {
             ::configs::parse_and_log(
@@ -1390,10 +938,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_enable_crash_dump&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_enable_crash_dump&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_handle_usage_limit")) {
@@ -1403,10 +947,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_handle_usage_limit&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session_probe_memory_usage_limit")) {
             ::configs::parse_and_log(
@@ -1414,10 +954,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "session_probe_public_session")) {
@@ -1427,10 +963,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::session_probe_public_session&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_cert_store")) {
             ::configs::parse_and_log(
@@ -1438,10 +970,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::server_cert_store&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_store&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "server_cert_check")) {
@@ -1451,10 +979,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<ServerCertCheck>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_check&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_access_allowed_message")) {
             ::configs::parse_and_log(
@@ -1462,10 +986,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::server_access_allowed_message&>(this->variables).value,
                 ::configs::spec_type<ServerNotification>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_access_allowed_message&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "server_cert_create_message")) {
@@ -1475,10 +995,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<ServerNotification>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_create_message&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_cert_success_message")) {
             ::configs::parse_and_log(
@@ -1486,10 +1002,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::server_cert_success_message&>(this->variables).value,
                 ::configs::spec_type<ServerNotification>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_success_message&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "server_cert_failure_message")) {
@@ -1499,10 +1011,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<ServerNotification>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_failure_message&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_cert_error_message")) {
             ::configs::parse_and_log(
@@ -1510,10 +1018,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::server_cert_error_message&>(this->variables).value,
                 ::configs::spec_type<ServerNotification>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::server_cert_error_message&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "hide_client_name")) {
@@ -1523,10 +1027,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::hide_client_name&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "clean_up_32_bpp_cursor")) {
             ::configs::parse_and_log(
@@ -1534,10 +1034,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::clean_up_32_bpp_cursor&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::clean_up_32_bpp_cursor&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_ios_rdpdr_virtual_channel")) {
@@ -1547,10 +1043,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "enable_rdpdr_data_analysis")) {
             ::configs::parse_and_log(
@@ -1558,10 +1050,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::enable_rdpdr_data_analysis&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::enable_rdpdr_data_analysis&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "remoteapp_bypass_legal_notice_delay")) {
@@ -1571,10 +1059,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_delay&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "remoteapp_bypass_legal_notice_timeout")) {
             ::configs::parse_and_log(
@@ -1582,10 +1066,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout&>(this->variables).value,
                 ::configs::spec_type<std::chrono::milliseconds>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "experimental_fix_input_event_sync")) {
@@ -1595,10 +1075,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::experimental_fix_input_event_sync&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "experimental_fix_too_long_cookie")) {
             ::configs::parse_and_log(
@@ -1606,10 +1082,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_rdp::experimental_fix_too_long_cookie&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_rdp::experimental_fix_too_long_cookie&>(this->variables)
             );
         }
 
@@ -1626,10 +1098,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::metrics::activate_log_metrics&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "log_dir_path")) {
             ::configs::parse_and_log(
@@ -1637,10 +1105,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::metrics::log_dir_path&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::metrics::log_dir_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "log_interval")) {
@@ -1650,10 +1114,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::metrics::log_interval&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "log_file_turnover_interval")) {
             ::configs::parse_and_log(
@@ -1662,10 +1122,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::hours>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::metrics::log_file_turnover_interval&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "sign_key")) {
             ::configs::parse_and_log(
@@ -1673,10 +1129,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::metrics::sign_key&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_binary>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::metrics::sign_key&>(this->variables)
             );
         }
 
@@ -1693,10 +1145,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::clipboard_up&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "clipboard_down")) {
             ::configs::parse_and_log(
@@ -1704,10 +1152,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_vnc::clipboard_down&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::clipboard_down&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "encodings")) {
@@ -1717,10 +1161,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::list<int>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::encodings&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_clipboard_encoding_type")) {
             ::configs::parse_and_log(
@@ -1728,10 +1168,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables).value,
                 ::configs::spec_type<ClipboardEncodingType>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::server_clipboard_encoding_type&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_clipboard_infinite_loop")) {
@@ -1741,10 +1177,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<VncBogusClipboardInfiniteLoop>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::bogus_clipboard_infinite_loop&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "server_is_apple")) {
             ::configs::parse_and_log(
@@ -1752,10 +1184,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_vnc::server_is_apple&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_vnc::server_is_apple&>(this->variables)
             );
         }
 
@@ -1772,10 +1200,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_replay::on_end_of_data&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "replay_on_loop")) {
             ::configs::parse_and_log(
@@ -1783,10 +1207,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::mod_replay::replay_on_loop&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::mod_replay::replay_on_loop&>(this->variables)
             );
         }
 
@@ -1803,10 +1223,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<OcrVersion>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::ocr::version&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "locale")) {
             ::configs::parse_and_log(
@@ -1814,10 +1230,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::ocr::locale&>(this->variables).value,
                 ::configs::spec_type<OcrLocale>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::ocr::locale&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "interval")) {
@@ -1827,10 +1239,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 100>>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::ocr::interval&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "on_title_bar_only")) {
             ::configs::parse_and_log(
@@ -1839,10 +1247,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::ocr::on_title_bar_only&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "max_unrecog_char_rate")) {
             ::configs::parse_and_log(
@@ -1850,10 +1254,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::ocr::max_unrecog_char_rate&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::range<unsigned int, 0, 100>>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::ocr::max_unrecog_char_rate&>(this->variables)
             );
         }
 
@@ -1870,10 +1270,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::capture_groupid&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "capture_flags")) {
             ::configs::parse_and_log(
@@ -1881,10 +1277,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::capture_flags&>(this->variables).value,
                 ::configs::spec_type<CaptureFlags>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::capture_flags&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "png_interval")) {
@@ -1894,10 +1286,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 10>>>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::png_interval&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "frame_interval")) {
             ::configs::parse_and_log(
@@ -1905,10 +1293,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::frame_interval&>(this->variables).value,
                 ::configs::spec_type<std::chrono::duration<unsigned, std::ratio<1, 100>>>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::frame_interval&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "break_interval")) {
@@ -1918,10 +1302,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::chrono::seconds>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::break_interval&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "png_limit")) {
             ::configs::parse_and_log(
@@ -1929,10 +1309,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::png_limit&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::png_limit&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "replay_path")) {
@@ -1942,10 +1318,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::replay_path&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "hash_path")) {
             ::configs::parse_and_log(
@@ -1953,10 +1325,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::hash_path&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::hash_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "record_tmp_path")) {
@@ -1966,10 +1334,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::record_tmp_path&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "record_path")) {
             ::configs::parse_and_log(
@@ -1977,10 +1341,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::record_path&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::record_path&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "disable_keyboard_log")) {
@@ -1990,10 +1350,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<KeyboardLogFlags>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::disable_keyboard_log&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "disable_clipboard_log")) {
             ::configs::parse_and_log(
@@ -2001,10 +1357,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::disable_clipboard_log&>(this->variables).value,
                 ::configs::spec_type<ClipboardLogFlags>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::disable_clipboard_log&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "disable_file_system_log")) {
@@ -2014,10 +1366,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<FileSystemLogFlags>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::disable_file_system_log&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "rt_display")) {
             ::configs::parse_and_log(
@@ -2025,10 +1373,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::rt_display&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::rt_display&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "wrm_color_depth_selection_strategy")) {
@@ -2038,10 +1382,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<ColorDepthSelectionStrategy>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::wrm_color_depth_selection_strategy&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "wrm_compression_algorithm")) {
             ::configs::parse_and_log(
@@ -2049,10 +1389,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::wrm_compression_algorithm&>(this->variables).value,
                 ::configs::spec_type<WrmCompressionAlgorithm>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::wrm_compression_algorithm&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bogus_vlc_frame_rate")) {
@@ -2062,10 +1398,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::bogus_vlc_frame_rate&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "l_bitrate")) {
             ::configs::parse_and_log(
@@ -2073,10 +1405,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::l_bitrate&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::l_bitrate&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "l_framerate")) {
@@ -2086,10 +1414,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::l_framerate&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "l_height")) {
             ::configs::parse_and_log(
@@ -2097,10 +1421,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::l_height&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::l_height&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "l_width")) {
@@ -2110,10 +1430,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::l_width&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "l_qscale")) {
             ::configs::parse_and_log(
@@ -2121,10 +1437,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::l_qscale&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::l_qscale&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "m_bitrate")) {
@@ -2134,10 +1446,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::m_bitrate&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "m_framerate")) {
             ::configs::parse_and_log(
@@ -2145,10 +1453,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::m_framerate&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::m_framerate&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "m_height")) {
@@ -2158,10 +1462,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::m_height&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "m_width")) {
             ::configs::parse_and_log(
@@ -2169,10 +1469,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::m_width&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::m_width&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "m_qscale")) {
@@ -2182,10 +1478,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::m_qscale&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "h_bitrate")) {
             ::configs::parse_and_log(
@@ -2193,10 +1485,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::h_bitrate&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::h_bitrate&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "h_framerate")) {
@@ -2206,10 +1494,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::h_framerate&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "h_height")) {
             ::configs::parse_and_log(
@@ -2217,10 +1501,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::h_height&>(this->variables).value,
                 ::configs::spec_type<unsigned int>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::h_height&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "h_width")) {
@@ -2230,10 +1510,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::h_width&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "h_qscale")) {
             ::configs::parse_and_log(
@@ -2242,10 +1518,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<unsigned int>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::h_qscale&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "smart_video_cropping")) {
             ::configs::parse_and_log(
@@ -2253,10 +1525,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::smart_video_cropping&>(this->variables).value,
                 ::configs::spec_type<SmartVideoCropping>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::video::smart_video_cropping&>(this->variables)
             );
         }
 
@@ -2273,10 +1541,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<::configs::spec_types::fixed_binary>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::crypto::key0&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "sign_key")) {
             ::configs::parse_and_log(
@@ -2284,10 +1548,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::crypto::key1&>(this->variables).value,
                 ::configs::spec_type<::configs::spec_types::fixed_binary>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::crypto::key1&>(this->variables)
             );
         }
 
@@ -2304,10 +1564,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::fake_target_ip&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "x224")) {
             ::configs::parse_and_log(
@@ -2315,10 +1571,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::x224&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::x224&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "mcs")) {
@@ -2328,10 +1580,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mcs&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "sec")) {
             ::configs::parse_and_log(
@@ -2339,10 +1587,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::sec&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::sec&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "rdp")) {
@@ -2352,10 +1596,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::rdp&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "primary_orders")) {
             ::configs::parse_and_log(
@@ -2363,10 +1603,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::primary_orders&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::primary_orders&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "secondary_orders")) {
@@ -2376,10 +1612,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::secondary_orders&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "bitmap_update")) {
             ::configs::parse_and_log(
@@ -2387,10 +1619,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::bitmap_update&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::bitmap_update&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "bitmap")) {
@@ -2400,10 +1628,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::bitmap&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "capture")) {
             ::configs::parse_and_log(
@@ -2411,10 +1635,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::capture&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::capture&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "auth")) {
@@ -2424,10 +1644,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::auth&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "session")) {
             ::configs::parse_and_log(
@@ -2435,10 +1651,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::session&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::session&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "front")) {
@@ -2448,10 +1660,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::front&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "mod_rdp")) {
             ::configs::parse_and_log(
@@ -2459,10 +1667,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::mod_rdp&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mod_rdp&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "mod_vnc")) {
@@ -2472,10 +1676,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mod_vnc&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "mod_internal")) {
             ::configs::parse_and_log(
@@ -2483,10 +1683,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::mod_internal&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mod_internal&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "mod_xup")) {
@@ -2496,10 +1692,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::mod_xup&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "widget")) {
             ::configs::parse_and_log(
@@ -2507,10 +1699,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::widget&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::widget&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "input")) {
@@ -2520,10 +1708,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::input&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "password")) {
             ::configs::parse_and_log(
@@ -2531,10 +1715,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::password&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::password&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "compression")) {
@@ -2544,10 +1724,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::compression&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "cache")) {
             ::configs::parse_and_log(
@@ -2555,10 +1731,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::cache&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::cache&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "performance")) {
@@ -2568,10 +1740,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::performance&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "pass_dialog_box")) {
             ::configs::parse_and_log(
@@ -2579,10 +1747,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::pass_dialog_box&>(this->variables).value,
                 ::configs::spec_type<uint32_t>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::pass_dialog_box&>(this->variables)
             );
         }
         else if (0 == strcmp(key, "ocr")) {
@@ -2592,10 +1756,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::ocr&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "ffmpeg")) {
             ::configs::parse_and_log(
@@ -2604,10 +1764,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<uint32_t>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::ffmpeg&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "config")) {
             ::configs::parse_and_log(
@@ -2615,10 +1771,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::debug::config&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::debug::config&>(this->variables)
             );
         }
 
@@ -2635,10 +1787,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<bool>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::remote_program::allow_resize_hosted_desktop&>(this->variables)
-            );
         }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
@@ -2654,10 +1802,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<Language>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::translation::language&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "password_en")) {
             ::configs::parse_and_log(
@@ -2666,10 +1810,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 ::configs::spec_type<std::string>{},
                 av
             );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::translation::password_en&>(this->variables)
-            );
         }
         else if (0 == strcmp(key, "password_fr")) {
             ::configs::parse_and_log(
@@ -2677,10 +1817,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::translation::password_fr&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::translation::password_fr&>(this->variables)
             );
         }
 
@@ -2696,10 +1832,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::internal_mod::theme&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
                 av
-            );
-            ::configs::post_set_value(
-                this->variables,
-                static_cast<cfg::internal_mod::theme&>(this->variables)
             );
         }
 

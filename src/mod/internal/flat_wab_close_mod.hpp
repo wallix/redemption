@@ -38,9 +38,6 @@ using FlatWabCloseModVariables = vcfg::variables<
     vcfg::var<cfg::context::auth_error_message, vcfg::accessmode::get>,
     vcfg::var<cfg::context::module,             vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,       vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                        vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                       vcfg::accessmode::get>,
-
     vcfg::var<cfg::context::close_box_extra_message,
                                                 vcfg::accessmode::get | vcfg::accessmode::set>
 >;
@@ -57,8 +54,8 @@ public:
     FlatWabCloseMod(
         FlatWabCloseModVariables vars, SessionReactor& session_reactor,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect,
-        time_t now, ClientExecute & client_execute, bool showtimer = false,
-        bool back_selector = false);
+        time_t now, ClientExecute & client_execute, Font const& font, Theme const& theme,
+        bool showtimer = false, bool back_selector = false);
 
     ~FlatWabCloseMod() override;
 

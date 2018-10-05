@@ -39,8 +39,6 @@ using FlatWaitModVariables = vcfg::variables<
     vcfg::var<cfg::context::waitinforeturn,             vcfg::accessmode::set>,
     vcfg::var<cfg::context::duration_max,               vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
@@ -62,7 +60,8 @@ public:
         FlatWaitModVariables vars,
         SessionReactor& session_reactor, FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message, time_t now,
-        ClientExecute & client_execute, bool showform = false, uint32_t flag = 0);
+        ClientExecute & client_execute, Font const& font, Theme const& theme,
+        bool showform = false, uint32_t flag = 0);
 
     ~FlatWaitMod() override;
 

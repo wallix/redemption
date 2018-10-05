@@ -87,10 +87,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_string(string_from_authid(AUTHID_GLOBALS_AUTH_USER)); stream.out_string("\nASK\n");
-    stream.out_string(string_from_authid(AUTHID_CONTEXT_PASSWORD)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(cfg::globals::auth_user::index)); stream.out_string("\nASK\n");
+    stream.out_string(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
 
-    stream.out_string(string_from_authid(AUTHID_CONTEXT_SESSION_ID)); stream.out_string("\n!6455\n");
+    stream.out_string(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     LCGRandom rnd(0);

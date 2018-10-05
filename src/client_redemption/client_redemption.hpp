@@ -96,6 +96,8 @@ public:
     std::unique_ptr<Random> gen;
     std::array<uint8_t, 28> server_auto_reconnect_packet_ref;
     Inifile ini;
+    Theme theme;
+    Font font;
     std::string close_box_extra_message_ref;
 
     //  Remote App
@@ -477,8 +479,8 @@ public:
                   , this->config.target_IP.c_str()
                   , this->local_IP.c_str()
                   , 2
-                  , ini.get<cfg::font>()
-                  , ini.get<cfg::theme>()
+                  , this->font
+                  , this->theme
                   , this->server_auto_reconnect_packet_ref
                   , this->close_box_extra_message_ref
                   , this->config.verbose

@@ -4567,29 +4567,6 @@ namespace cfg {
         type value{};
     };
 
-    /// type: Theme <br/>
-    /// value{} <br/>
-    struct theme {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "";
-        static constexpr char const * name = "theme";
-        using type = Theme;
-        using mapped_type = type;
-        type value{};
-    };
-    /// type: Font <br/>
-    /// value{} <br/>
-    struct font {
-        static constexpr bool is_sesman_to_proxy = false;
-        static constexpr bool is_proxy_to_sesman = false;
-        static constexpr char const * section = "";
-        static constexpr char const * name = "font";
-        using type = Font;
-        using mapped_type = type;
-        type value{};
-    };
-
 } // namespace cfg
 
 namespace cfg_section {
@@ -4965,8 +4942,6 @@ struct VariablesConfiguration
 , cfg_section::translation
 , cfg_section::internal_mod
 , cfg_section::context
-, cfg::theme
-, cfg::font
 {};
 
 using VariablesAclPack = Pack<

@@ -26,10 +26,10 @@
 #include <cstring>
 
 static inline authid_t authid_from_string(const char * strauthid) {
-    authid_t res = AUTHID_UNKNOWN;
+    auto res = MAX_AUTHID;
     for (unsigned i = 0; i < MAX_AUTHID; i++) {
         if (0 == strcmp(authstr[i], strauthid)) {
-            res = static_cast<authid_t>(i);
+            res = authid_t(i);
             break;
         }
     }
@@ -37,7 +37,7 @@ static inline authid_t authid_from_string(const char * strauthid) {
 }
 
 static inline const char * string_from_authid(authid_t authid) {
-    return (authid >= authid_t::MAX_AUTHID)
+    return (authid >= MAX_AUTHID)
         ? ""
         : authstr[static_cast<unsigned>(authid)];
 }

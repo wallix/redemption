@@ -94,7 +94,6 @@ public:
                 Inifile ini;
 
                 configuration_load(ini.configuration_holder(), this->config_filename);
-                ini.set<cfg::font>(Font(app_path(AppPath::DefaultFontFile), ini.get<cfg::globals::spark_view_specific_glyph_width>()));
                 ini.set<cfg::debug::config>(this->debug_config);
 
                 if (ini.get<cfg::debug::session>()){
@@ -187,7 +186,6 @@ public:
                             sck, child_pid, source_ip, (real_target_ip[0] ? real_target_ip : target_ip));
                     }
                     ini.set_acl<cfg::globals::host>(source_ip);
-//                    ini.context_set_value(AUTHID_TARGET, real_target_ip);
                     ini.set_acl<cfg::globals::target>(target_ip);
                     if (ini.get<cfg::globals::enable_transparent_mode>()
                         && 0 != strncmp(target_ip, real_target_ip, strlen(real_target_ip))) {

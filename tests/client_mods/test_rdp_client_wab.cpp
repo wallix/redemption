@@ -29,6 +29,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "utils/theme.hpp"
 #include "test_only/check_sig.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
@@ -83,13 +84,15 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     Inifile ini;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
+    Font font;
+    Theme theme;
     ModRDPParams mod_rdp_params( "x"
                                , "x"
                                , "10.10.47.154"
                                , "192.168.1.100"
                                , 7
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)

@@ -360,6 +360,4 @@ namespace cfg {
         struct close_box_extra_message;
     };
 
-    struct theme;
-    struct font;
 } // namespace cfg

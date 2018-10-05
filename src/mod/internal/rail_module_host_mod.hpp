@@ -31,8 +31,6 @@ class SessionReactor;
 
 using RailModuleHostModVariables = vcfg::variables<
     vcfg::var<cfg::translation::language,                        vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                         vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                                        vcfg::accessmode::get>,
     vcfg::var<cfg::remote_program::allow_resize_hosted_desktop,  vcfg::accessmode::get>
 >;
 
@@ -44,8 +42,8 @@ public:
         RailModuleHostModVariables vars, SessionReactor& session_reactor,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute, const GCC::UserData::CSMonitor& cs_monitor,
-        bool can_resize_hosted_desktop);
+        ClientExecute& client_execute, Font const& font, Theme const& theme,
+        const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
 
     ~RailModuleHostMod() override
     {

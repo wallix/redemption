@@ -52,16 +52,14 @@ namespace
 SelectorMod::SelectorMod(
     SelectorModVariables vars, SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
-    Rect const widget_rect, ClientExecute & client_execute
+    Rect const widget_rect, ClientExecute & client_execute,
+    Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(
-        session_reactor,
-        front, width, height, vars.get<cfg::font>(),
-        client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
 
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
-        this->selector, front, front, this->font(), this->theme())
+        this->selector, front, front, font, theme)
 
     , selector_params([&]() {
         WidgetSelectorParams params;
@@ -92,11 +90,7 @@ SelectorMod::SelectorMod(
         vars.is_asked<cfg::context::selector_number_of_pages>()
             ? ""
             : configs::make_zstr_buffer(vars.get<cfg::context::selector_number_of_pages>()).get(),
-        &this->language_button,
-        this->selector_params,
-        vars.get<cfg::font>(),
-        vars.get<cfg::theme>(),
-        language(vars))
+        &this->language_button, this->selector_params, font, theme, language(vars))
 
     , current_page(atoi(this->selector.current_page.get_text())) /*NOLINT*/
     , number_page(atoi(this->selector.number_page.get_text()+1)) /*NOLINT*/
@@ -108,7 +102,7 @@ SelectorMod::SelectorMod(
     this->screen.set_widget_focus(&this->selector, Widget::focus_reason_tabkey);
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
-    gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
+    gdi::TextMetrics tm(font, "Édp");
     uint16_t line_height = tm.height + 2 * (
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
@@ -371,7 +365,7 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
     this->selector.move_size_widget(left, top, width, height);
 
     uint16_t available_height = (this->selector.first_page.y() - 10) - this->selector.selector_lines.y();
-    gdi::TextMetrics tm(this->vars.get<cfg::font>(), "Édp");
+    gdi::TextMetrics tm(this->font(), "Édp");
     uint16_t line_height = tm.height + 2 * (
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);

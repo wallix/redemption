@@ -30,6 +30,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/session_reactor_executor.hpp"
@@ -87,6 +88,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "RED\\RDUser"
@@ -94,8 +97,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
                                , "10.10.44.27"
                                , "192.168.1.100"
                                , 7
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)
@@ -193,6 +196,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "RED\\RDUser"
@@ -200,8 +205,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
                                , "10.10.44.27"
                                , "192.168.1.100"
                                , 7
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , to_verbose_flags(511)

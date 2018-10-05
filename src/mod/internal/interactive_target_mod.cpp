@@ -30,24 +30,23 @@ InteractiveTargetMod::InteractiveTargetMod(
     InteractiveTargetModVariables vars,
     SessionReactor& session_reactor, FrontAPI & front,
     uint16_t width, uint16_t height, Rect const widget_rect,
-    ClientExecute & client_execute
+    ClientExecute & client_execute, Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
     , ask_device(vars.is_asked<cfg::context::target_host>())
     , ask_login(vars.is_asked<cfg::globals::target_user>())
     , ask_password((this->ask_login || vars.is_asked<cfg::context::target_password>()))
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge, front, front, this->font(), this->theme())
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->challenge, front, front, font, theme)
     , challenge(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this,
         this->ask_device, this->ask_login, this->ask_password,
-        vars.get<cfg::theme>(),
+        theme,
         TR(trkeys::target_info_required, language(vars)),
         TR(trkeys::device, language(vars)), vars.get<cfg::globals::target_device>().c_str(),
         TR(trkeys::login, language(vars)), vars.get<cfg::globals::target_user>().c_str(),
         TR(trkeys::password, language(vars)),
-        vars.get<cfg::font>(),
-        &this->language_button)
+        font, &this->language_button)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {

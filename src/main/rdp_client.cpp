@@ -37,6 +37,7 @@
 #include "utils/netutils.hpp"
 #include "utils/redemption_info_version.hpp"
 #include "utils/redirection_info.hpp"
+#include "utils/theme.hpp"
 
 #include <iostream>
 #include <string>

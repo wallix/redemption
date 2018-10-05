@@ -103,7 +103,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         std::string const & varname_with_section = section_name.empty() ? varname : section_name + "::" + varname;
 
-        auto const properties = value_or(infos, sesman::io::none);
+        auto const properties = value_or(infos, sesman::internal::io::none);
         if (bool(/*PropertyFieldFlags::read & */properties)) {
             this->variables_acl.emplace_back(varname_with_section);
         }
@@ -127,19 +127,19 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->authids.emplace_back(str, pack_get<sesman::name>(infos));
         }
         this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
-        if ((properties & sesman::io::rw) == sesman::io::sesman_to_proxy) {
+        if ((properties & sesman::internal::io::rw) == sesman::internal::io::sesman_to_proxy) {
             this->tab(); this->out() << "/// sesman -> proxy <br/>\n";
         }
-        else if ((properties & sesman::io::rw) == sesman::io::proxy_to_sesman) {
+        else if ((properties & sesman::internal::io::rw) == sesman::internal::io::proxy_to_sesman) {
             this->tab(); this->out() << "/// sesman <- proxy <br/>\n";
         }
-        else if ((properties & sesman::io::rw) == sesman::io::rw) {
+        else if ((properties & sesman::internal::io::rw) == sesman::internal::io::rw) {
             this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
         this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
-        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::io::sesman_to_proxy) ? "true" : "false") << ";\n";
-        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::io::proxy_to_sesman) ? "true" : "false") << ";\n";
+        this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::internal::io::sesman_to_proxy) ? "true" : "false") << ";\n";
+        this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::internal::io::proxy_to_sesman) ? "true" : "false") << ";\n";
 
         this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
         this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
@@ -155,14 +155,14 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->out() << ";\n";
 
         // write type
-        if (bool(properties) || pack_contains<spec::attr>(infos)) {
+        if (bool(properties) || pack_contains<spec::internal::attr>(infos)) {
             auto type_sesman = pack_get<sesman::type_>(infos);
             auto type_spec = pack_get<spec::type_>(infos);
             static_assert(
                 std::is_same<decltype(type_spec), decltype(type_sesman)>{}
              || !std::is_same<
-                    decltype(pack_contains<sesman::io>(infos)),
-                    decltype(pack_contains<spec::attr>(infos))
+                    decltype(pack_contains<sesman::internal::io>(infos)),
+                    decltype(pack_contains<spec::internal::attr>(infos))
                 >{},
                 "different type for sesman and spec isn't supported (go code :D)"
             );
@@ -184,7 +184,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         this->out_ = &this->out_body_parser_;
 
-        apply_if_contains<spec::attr>(infos, [this, &infos, &varname_with_section](auto&&){
+        apply_if_contains<spec::internal::attr>(infos, [this, &infos, &varname_with_section](auto&&){
             auto type_spec = pack_get<spec::type_>(infos);
             this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos) << "\")) {\n"
             "            ::configs::parse_and_log(\n"
@@ -194,10 +194,6 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->inherit().write_type_spec(type_spec);
             this->out() << ">{},\n"
             "                av\n"
-            "            );\n"
-            "            ::configs::post_set_value(\n"
-            "                this->variables,\n"
-            "                static_cast<cfg::" << varname_with_section << "&>(this->variables)\n"
             "            );\n"
             "        }\n";
         });
@@ -300,15 +296,8 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
       "//\n\n"
       "#pragma once\n"
       "\n"
-      "enum authid_t : unsigned {\n"
-    ;
-    for (auto & body : writer.authids) {
-        out_authid << "    AUTHID_" << body.first << ",\n";
-    }
-    out_authid <<
-      "    MAX_AUTHID,\n"
-      "    AUTHID_UNKNOWN\n"
-      "};\n"
+      "enum authid_t : unsigned;\n\n"
+      "inline authid_t MAX_AUTHID = authid_t(" << writer.authids.size() << ");\n\n"
       "constexpr char const * const authstr[] = {\n"
     ;
     for (auto & body : writer.authids) {

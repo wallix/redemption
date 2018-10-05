@@ -53,6 +53,7 @@
 
 #include "transport/socket_transport.hpp"
 
+#include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/update_lock.hpp"
@@ -156,7 +157,7 @@ private:
                 this->osd_message += TR(trkeys::disable_osd, language(this->mm.ini));
             }
 
-            gdi::TextMetrics tm(this->mm.ini.get<cfg::font>(), this->osd_message.c_str());
+            gdi::TextMetrics tm(this->mm.load_font(), this->osd_message.c_str());
             int w = tm.width + padw * 2;
             int h = tm.height + padh * 2;
             this->color = color_encode(BGRColor(BLACK), this->mm.front.client_info.bpp);
@@ -287,7 +288,7 @@ private:
             drawable.draw(line_top, this->clip, color_ctx);
 
             gdi::server_draw_text(
-                drawable, this->mm.ini.get<cfg::font>(),
+                drawable, this->mm.load_font(),
                 this->get_protected_rect().x + padw, padh,
                 this->osd_message.c_str(),
                 this->color, this->background_color, color_ctx, this->clip
@@ -646,7 +647,7 @@ public:
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                this->ini.get<cfg::font>()
+                this->load_font()
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'bouncer2_mod' ready");
@@ -684,7 +685,7 @@ public:
                     this->front,
                     this->front.client_info.width,
                     this->front.client_info.height,
-                    this->ini.get<cfg::font>()
+                    this->load_font()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             }
@@ -696,7 +697,7 @@ public:
                 this->front,
                 this->front.client_info.width,
                 this->front.client_info.height,
-                this->ini.get<cfg::font>(),
+                this->load_font(),
                 false
             ));
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
@@ -720,7 +721,9 @@ public:
                     this->front.client_info.height,
                     this->front.client_info.cs_monitor
                 )),
-                this->client_execute
+                this->client_execute,
+                this->load_font(),
+                this->load_theme()
             ));
             //if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
@@ -746,7 +749,8 @@ public:
                     )),
                     now,
                     this->client_execute,
-//                     true,
+                    this->load_font(),
+                    this->load_theme(),
                     true
                 ));
             }
@@ -771,6 +775,8 @@ public:
                     )),
                     now,
                     this->client_execute,
+                    this->load_font(),
+                    this->load_theme(),
                     true,
                     true
                 ));
@@ -791,7 +797,9 @@ public:
                         this->front.client_info.height,
                         this->front.client_info.cs_monitor
                     )),
-                    this->client_execute
+                    this->client_execute,
+                    this->load_font(),
+                    this->load_theme()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Interactive Target' ready");
             }
@@ -818,7 +826,9 @@ public:
                     message,
                     button,
                     now,
-                    this->client_execute
+                    this->client_execute,
+                    this->load_font(),
+                    this->load_theme()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Accept Message' ready");
             }
@@ -845,7 +855,9 @@ public:
                     message,
                     button,
                     now,
-                    this->client_execute
+                    this->client_execute,
+                    this->load_font(),
+                    this->load_theme()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Display Message' ready");
             }
@@ -878,6 +890,8 @@ public:
                     button,
                     now,
                     this->client_execute,
+                    this->load_font(),
+                    this->load_theme(),
                     challenge
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'Dialog Challenge' ready");
@@ -906,6 +920,8 @@ public:
                     message,
                     now,
                     this->client_execute,
+                    this->load_font(),
+                    this->load_theme(),
                     showform,
                     flag
                 ));
@@ -955,7 +971,9 @@ public:
                     this->front.client_info.cs_monitor
                 )),
                 now,
-                this->client_execute
+                this->client_execute,
+                this->load_font(),
+                this->load_theme()
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
@@ -1065,4 +1083,40 @@ private:
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
         ClientExecute& client_execute, Keymap2::KeyFlags key_flags);
+
+    Font& load_font()
+    {
+        if (this->_font_is_loaded) {
+            return this->_font;
+        }
+
+        this->_font = Font(
+            app_path(AppPath::DefaultFontFile),
+            ini.get<cfg::globals::spark_view_specific_glyph_width>());
+
+        this->_font_is_loaded = true;
+        return this->_font;
+    }
+
+    Theme& load_theme()
+    {
+        if (this->_theme_is_loaded) {
+            return this->_theme;
+        }
+
+        auto & theme_name = this->ini.get<cfg::internal_mod::theme>();
+        if (this->ini.get<cfg::debug::config>()) {
+            LOG(LOG_INFO, "LOAD_THEME: %s", theme_name);
+        }
+
+        ::load_theme(this->_theme, theme_name);
+
+        this->_theme_is_loaded = true;
+        return this->_theme;
+    }
+
+    Theme _theme;
+    Font _font;
+    bool _theme_is_loaded = false;
+    bool _font_is_loaded = false;
 };

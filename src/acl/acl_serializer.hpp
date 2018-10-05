@@ -42,6 +42,7 @@
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/verbose_flags.hpp"
+#include "utils/hexdump.hpp"
 
 #include <string>
 #include <utility>

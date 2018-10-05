@@ -154,6 +154,7 @@ exe rdpproxy :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -214,9 +215,7 @@ exe rdpinichecker :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
   <library>app_path_exe.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/font.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
 ;
 exe proxy_recorder :
@@ -520,6 +519,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -774,7 +774,6 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2239,6 +2238,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2349,6 +2349,7 @@ test-run tests/core/test_session :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2461,6 +2462,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/d3des.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
@@ -2664,7 +2666,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2694,7 +2695,6 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2738,7 +2738,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2783,7 +2782,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2823,7 +2821,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2873,7 +2870,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -2899,7 +2895,6 @@ test-run tests/mod/internal/test_internal_mod :
   <library>src/mod/internal/widget/multiline.o
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2963,7 +2958,6 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <variant>coverage:<library>dl
@@ -2997,7 +2991,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3049,7 +3042,6 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3080,7 +3072,6 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3108,7 +3099,6 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3143,7 +3133,6 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3173,7 +3162,6 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3206,7 +3194,6 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3242,7 +3229,6 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3275,7 +3261,6 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3308,7 +3293,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3335,7 +3319,6 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3365,7 +3348,6 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3393,7 +3375,6 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3420,7 +3401,6 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3448,7 +3428,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3480,7 +3459,6 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3514,7 +3492,6 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3543,7 +3520,6 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3571,7 +3547,6 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3600,7 +3575,6 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/mod/internal/widget/scroll.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3632,7 +3606,6 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/mod/internal/widget/selector.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3663,7 +3636,6 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3695,7 +3667,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/mod/internal/widget/tooltip.o
   <library>src/mod/internal/widget/widget_rect.o
   <library>src/utils/bitmap.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -4803,6 +4774,17 @@ test-run tests/utils/test_key_qvalue_pairs :
 :
   <covfile>src/utils/key_qvalue_pairs.hpp
 ;
+test-run tests/utils/test_load_theme :
+  $(REDEMPTION_TEST_PATH)/utils/test_load_theme.cpp
+:
+  <covfile>src/utils/load_theme.cpp
+  <covfile>src/utils/load_theme.hpp
+  <library>app_path_test.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
+;
 test-run tests/utils/test_log :
   $(REDEMPTION_TEST_PATH)/utils/test_log.cpp
 :
@@ -4909,17 +4891,6 @@ test-run tests/utils/test_texttime :
 :
   <covfile>src/utils/texttime.hpp
 ;
-test-run tests/utils/test_theme :
-  $(REDEMPTION_TEST_PATH)/utils/test_theme.cpp
-:
-  <covfile>src/utils/theme.hpp
-  <library>app_path_test.o
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/font.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-;
 test-run tests/utils/test_timeval_ops :
   $(REDEMPTION_TEST_PATH)/utils/test_timeval_ops.cpp
 :
@@ -4931,9 +4902,7 @@ test-run tests/utils/test_translation :
   <covfile>src/utils/translation.hpp
   <library>app_path_test.o
   <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/font.o
   <library>src/utils/cfgloader.o
-  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_utf :
@@ -5074,6 +5043,7 @@ obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
+obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
@@ -5691,6 +5661,8 @@ alias test_id_manager : tests/utils/test_id_manager ;
 alias test_id_manager.coverage : tests/utils/test_id_manager.coverage ;
 alias test_key_qvalue_pairs : tests/utils/test_key_qvalue_pairs ;
 alias test_key_qvalue_pairs.coverage : tests/utils/test_key_qvalue_pairs.coverage ;
+alias test_load_theme : tests/utils/test_load_theme ;
+alias test_load_theme.coverage : tests/utils/test_load_theme.coverage ;
 alias test_log : tests/utils/test_log ;
 alias test_log.coverage : tests/utils/test_log.coverage ;
 alias test_netutils : tests/utils/test_netutils ;
@@ -5720,8 +5692,6 @@ alias test_stream : tests/utils/test_stream ;
 alias test_stream.coverage : tests/utils/test_stream.coverage ;
 alias test_texttime : tests/utils/test_texttime ;
 alias test_texttime.coverage : tests/utils/test_texttime.coverage ;
-alias test_theme : tests/utils/test_theme ;
-alias test_theme.coverage : tests/utils/test_theme.coverage ;
 alias test_timeval_ops : tests/utils/test_timeval_ops ;
 alias test_timeval_ops.coverage : tests/utils/test_timeval_ops.coverage ;
 alias test_translation : tests/utils/test_translation ;
@@ -6136,6 +6106,7 @@ alias tests/utils.norec :
   tests/utils/test_get_printable_password
   tests/utils/test_id_manager
   tests/utils/test_key_qvalue_pairs
+  tests/utils/test_load_theme
   tests/utils/test_log
   tests/utils/test_netutils
   tests/utils/test_outbound_connection_monitor_rules
@@ -6151,7 +6122,6 @@ alias tests/utils.norec :
   tests/utils/test_rle
   tests/utils/test_stream
   tests/utils/test_texttime
-  tests/utils/test_theme
   tests/utils/test_timeval_ops
   tests/utils/test_translation
   tests/utils/test_utf

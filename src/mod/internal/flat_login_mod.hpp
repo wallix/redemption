@@ -37,8 +37,6 @@ using FlatLoginModVariables = vcfg::variables<
     vcfg::var<cfg::globals::target_device,              vcfg::accessmode::ask>,
     vcfg::var<cfg::globals::target_user,                vcfg::accessmode::ask>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::context::opt_message,                vcfg::accessmode::get>,
     vcfg::var<cfg::context::login_message,              vcfg::accessmode::get>,
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
@@ -64,7 +62,7 @@ public:
         FlatLoginModVariables vars, SessionReactor& session_reactor,
         char const * username, char const * password,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
-        ClientExecute & client_execute
+        ClientExecute & client_execute, Font const& font, Theme const& theme
     );
 
     ~FlatLoginMod() override;

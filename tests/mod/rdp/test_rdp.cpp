@@ -29,6 +29,7 @@
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
+#include "utils/theme.hpp"
 #include "test_only/front/fake_front.hpp"
 #include "test_only/lcg_random.hpp"
 #include "test_only/session_reactor_executor.hpp"
@@ -76,8 +77,8 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
                                 , "10.10.47.175"
                                 , "10.10.9.161"
                                 , 7
-                                , ini.get<cfg::font>()
-                                , ini.get<cfg::theme>()
+                                , font
+                                , theme
                                 , server_auto_reconnect_packet
                                 , ini.get_ref<cfg::context::close_box_extra_message>()
                                 , RDPVerbose{}
@@ -161,6 +162,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     }
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
@@ -168,8 +171,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , "10.10.47.36"
                                , "10.10.43.33"
                                , 2
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
@@ -258,8 +261,8 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , "10.10.47.205"
                                , "0.0.0.0"
                                , 2
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}
@@ -345,8 +348,8 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
                                , "10.10.47.39"
                                , "0.0.0.0"
                                , 2
-                               , ini.get<cfg::font>()
-                               , ini.get<cfg::theme>()
+                               , font
+                               , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
                                , RDPVerbose{}

@@ -44,8 +44,6 @@ using SelectorModVariables = vcfg::variables<
     vcfg::var<cfg::client::keyboard_layout_proposals,   vcfg::accessmode::get>,
     vcfg::var<cfg::globals::host,                       vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
@@ -74,7 +72,8 @@ public:
     SelectorMod(
         SelectorModVariables vars, SessionReactor& session_reactor,
         FrontAPI & front, uint16_t width, uint16_t height,
-        Rect const widget_rect, ClientExecute & client_execute);
+        Rect const widget_rect, ClientExecute & client_execute,
+        Font const& font, Theme const& theme);
 
     ~SelectorMod() override
     {

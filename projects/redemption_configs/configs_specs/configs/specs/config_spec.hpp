@@ -20,7 +20,6 @@
 
 #pragma once
 
-
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
 
@@ -38,51 +37,28 @@
 /// ~"forward declaration" for redemption type
 //@{
 CONFIG_DEFINE_TYPE(RedirectionInfo)
-CONFIG_DEFINE_TYPE(Theme)
-CONFIG_DEFINE_TYPE(Font)
 //@}
 
 namespace cfg_specs {
 
-template<cfg_attributes::spec::attr value>
-using spec_attr_t = std::integral_constant<cfg_attributes::spec::attr, value>;
-
-template<cfg_attributes::spec::attr v1, cfg_attributes::spec::attr v2>
-spec_attr_t<v1 | v2>
-operator | (spec_attr_t<v1>, spec_attr_t<v2>)
-{
-    using namespace cfg_attributes;
-    static_assert(!bool(v1 & spec::attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
-    static_assert(!bool(v2 & spec::attr::no_ini_no_gui), "no_ini_no_gui is incompatible with other values");
-    constexpr auto in_gui
-      = spec::attr::hidden_in_gui
-      | spec::attr::hex_in_gui
-      | spec::attr::advanced_in_gui
-      | spec::attr::iptables_in_gui
-      | spec::attr::password_in_gui
-    ;
-    static_assert(!(bool(v1 & spec::attr::hidden_in_gui) && bool(v2 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
-    static_assert(!(bool(v2 & spec::attr::hidden_in_gui) && bool(v1 & in_gui)), "hidden_in_gui is incompatible with *_in_gui values");
-    return {};
-}
-
-template<cfg_attributes::sesman::io value>
-using sesman_io_t = std::integral_constant<cfg_attributes::sesman::io, value>;
-
-
+#ifdef IN_IDE_PARSER
+    // for coloration...
+    struct Writer {
+        template<class... Args>
+        void member(Args...);
+        template<class F>
+        void section(char const * name, F closure_section);
+        void sep();
+    };
+#else
 template<class Writer>
+#endif
 void config_spec_definition(Writer && W)
 {
     using namespace cfg_attributes;
 
-#ifdef IN_IDE_PARSER
-    // for coloration...
-    struct {
-        void member(...);
-        void section(char const * name, closure_section);
-        void sep();
-    } W;
-#endif
+    using namespace cfg_attributes::spec::constants;
+    using namespace cfg_attributes::sesman::constants;
 
     // force ordering section
     {
@@ -103,23 +79,6 @@ void config_spec_definition(Writer && W)
             W.section(section, [&]{});
         }
     }
-
-
-    spec_attr_t<spec::attr::no_ini_no_gui>    const no_ini_no_gui{};
-    spec_attr_t<spec::attr::ini_and_gui>      const ini_and_gui{};
-    spec_attr_t<spec::attr::hidden_in_gui>    const hidden_in_gui{};
-    spec_attr_t<spec::attr::hex_in_gui>       const hex_in_gui{};
-    spec_attr_t<spec::attr::advanced_in_gui>  const advanced_in_gui{};
-    spec_attr_t<spec::attr::iptables_in_gui>  const iptables_in_gui{};
-    spec_attr_t<spec::attr::password_in_gui>  const password_in_gui{};
-
-    spec_attr_t<spec::attr::connection_policy_with_ini>    const connection_policy_with_ini{};
-    spec_attr_t<spec::attr::connection_policy_without_ini> const connection_policy_without_ini{};
-
-    sesman_io_t<sesman::io::none>            const no_sesman{};
-    sesman_io_t<sesman::io::proxy_to_sesman> const proxy_to_sesman{};
-    sesman_io_t<sesman::io::sesman_to_proxy> const sesman_to_proxy{};
-    sesman_io_t<sesman::io::rw>              const sesman_rw{};
 
     prefix_value disable_prefix_val{"disable"};
 
@@ -607,7 +566,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<std::string>(), "password_fr");
     });
 
-    W.section("internal_mod", [&]{
+    W.section("internal_mod", [&]
+    {
         W.member(advanced_in_gui, no_sesman, type_<std::string>(), "theme", spec::name{"load_theme"});
     });
 
@@ -728,12 +688,6 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "close_box_extra_message");
-    });
-
-    W.section("", [&]
-    {
-        W.member(no_ini_no_gui, no_sesman, type_<Theme>(), "theme");
-        W.member(no_ini_no_gui, no_sesman, type_<Font>(), "font");
     });
 }
 

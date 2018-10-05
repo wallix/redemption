@@ -35,8 +35,6 @@ using FlatDialogModVariables = vcfg::variables<
     vcfg::var<cfg::context::password,                   vcfg::accessmode::set>,
     vcfg::var<cfg::debug::pass_dialog_box,              vcfg::accessmode::get>,
     vcfg::var<cfg::translation::language,               vcfg::accessmode::get>,
-    vcfg::var<cfg::font,                                vcfg::accessmode::get>,
-    vcfg::var<cfg::theme,                               vcfg::accessmode::get>,
     vcfg::var<cfg::debug::mod_internal,                 vcfg::accessmode::get>
 >;
 
@@ -58,7 +56,7 @@ public:
         FrontAPI & front, uint16_t width, uint16_t height,
         Rect const widget_rect, const char * caption, const char * message,
         const char * cancel_text, time_t now, ClientExecute & client_execute,
-        ChallengeOpt has_challenge = NO_CHALLENGE);
+        Font const& font, Theme const& theme, ChallengeOpt has_challenge = NO_CHALLENGE);
 
     ~FlatDialogMod() override;
 

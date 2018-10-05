@@ -34,6 +34,7 @@
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/session_reactor_executor.hpp"
 #include "core/client_info.hpp"
+#include "utils/theme.hpp"
 
 #include "front/front.hpp"
 #include "mod/null/null.hpp"
@@ -188,14 +189,17 @@ RED_AUTO_TEST_CASE(TestFront)
 
     RED_CHECK(true);
 
+    Theme theme;
+    Font font;
+
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
                                 , "S3cur3!1nux"
                                 , "10.10.47.36"
                                 , "10.10.43.33"
                                 , 2
-                                , ini.get<cfg::font>()
-                                , ini.get<cfg::theme>()
+                                , font
+                                , theme
                                 , server_auto_reconnect_packet
                                 , ini.get_ref<cfg::context::close_box_extra_message>()
                                 , to_verbose_flags(0)

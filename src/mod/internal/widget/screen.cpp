@@ -28,10 +28,10 @@
 
 WidgetScreen::WidgetScreen(
     gdi::GraphicApi & drawable, Font const & font,
-    NotifyApi * notifier, Theme theme
+    NotifyApi * notifier, Theme const & theme
 )
     : WidgetParent(drawable, *this, notifier)
-    , theme(std::move(theme))
+    , theme(theme)
     , tooltip(nullptr)
     , current_over(nullptr)
     , normal_pointer(::normal_pointer())

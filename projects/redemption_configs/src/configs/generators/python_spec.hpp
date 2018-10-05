@@ -81,18 +81,18 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         std::string const & member_name,
         Pack const & infos
     ) {
-        apply_if_contains<spec::attr>(infos, [&, this](auto && attr, auto && infos) {
+        apply_if_contains<spec::internal::attr>(infos, [&, this](auto && attr, auto && infos) {
             auto type = pack_get<spec::type_>(infos);
 
             this->write_description(pack_contains<desc>(infos), type, infos);
             this->inherit().write_type_info(type);
             this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
 
-            if (bool(attr & spec::attr::iptables_in_gui)) this->out() << "\"#_iptables\\n\"\n";
-            if (bool(attr & spec::attr::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
-            if (bool(attr & spec::attr::hidden_in_gui))   this->out() << "\"#_hidden\\n\"\n";
-            if (bool(attr & spec::attr::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
-            if (bool(attr & spec::attr::password_in_gui)) this->out() << "\"#_password\\n\"\n";
+            if (bool(attr & spec::internal::attr::iptables_in_gui)) this->out() << "\"#_iptables\\n\"\n";
+            if (bool(attr & spec::internal::attr::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
+            if (bool(attr & spec::internal::attr::hidden_in_gui))   this->out() << "\"#_hidden\\n\"\n";
+            if (bool(attr & spec::internal::attr::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
+            if (bool(attr & spec::internal::attr::password_in_gui)) this->out() << "\"#_password\\n\"\n";
 
             this->out() << "\"" << member_name << " = ";
             this->inherit().write_type(type, get_default(type, infos));

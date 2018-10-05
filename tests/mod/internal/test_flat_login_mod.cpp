@@ -47,12 +47,14 @@ RED_AUTO_TEST_CASE(TestDialogMod)
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, font, theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -79,12 +81,14 @@ RED_AUTO_TEST_CASE(TestDialogMod1)
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, font, theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -110,12 +114,14 @@ RED_AUTO_TEST_CASE(TestDialogMod2)
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
+    Theme theme;
+    Font font;
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, font, theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);

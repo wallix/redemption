@@ -23,44 +23,8 @@
 
 #include "configs/config.hpp"
 
-#include "core/app_path.hpp"
-#include "utils/fileutils.hpp" // file_exist
 #include "utils/translation.hpp"
 
-void configs::post_set_value(VariablesConfiguration & vars, ::cfg::internal_mod::theme const & cfg_value)
-{
-    Theme & theme = static_cast<cfg::theme&>(vars).value;
-
-    auto & str = cfg_value.value;
-    if (static_cast<cfg::debug::config>(vars).value) {
-        LOG(LOG_INFO, "LOAD_THEME: %s", str.c_str());
-    }
-
-    // load theme
-
-    {
-        char theme_path[1024] = {};
-        snprintf(theme_path, 1024, "%s/themes/%s/" THEME_INI, app_path(AppPath::Cfg), str.c_str());
-        theme_path[sizeof(theme_path) - 1] = 0;
-
-        configuration_load(ThemeHolder(theme), theme_path);
-    }
-
-    if (theme.global.logo) {
-        char logo_path[1024] = {};
-        snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_PNG, app_path(AppPath::Cfg), str.c_str());
-        logo_path[sizeof(logo_path) - 1] = 0;
-        if (!file_exist(logo_path)) {
-            snprintf(logo_path, 1024, "%s/themes/%s/" LOGO_BMP, app_path(AppPath::Cfg), str.c_str());
-            logo_path[sizeof(logo_path) - 1] = 0;
-            if (!file_exist(logo_path)) {
-                theme.global.logo = false;
-                return;
-            }
-        }
-        theme.global.logo_path = logo_path;
-    }
-}
 
 #include "configs/autogen/set_value.tcc"
 

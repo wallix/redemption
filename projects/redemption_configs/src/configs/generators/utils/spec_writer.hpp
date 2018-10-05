@@ -241,11 +241,11 @@ namespace detail_
 {
     template<class T>
     std::conditional_t<
-        std::is_convertible<T, cfg_attributes::spec::attr>::value,
-        cfg_attributes::spec::attr,
+        std::is_convertible<T, cfg_attributes::spec::internal::attr>::value,
+        cfg_attributes::spec::internal::attr,
         std::conditional_t<
-            std::is_convertible<T, cfg_attributes::sesman::io>::value,
-            cfg_attributes::sesman::io,
+            std::is_convertible<T, cfg_attributes::sesman::internal::io>::value,
+            cfg_attributes::sesman::internal::io,
             T const &
         >
     >
@@ -254,15 +254,15 @@ namespace detail_
 
     struct no_spec_attr_t {};
     inline no_spec_attr_t to_attr_if_convertible(std::integral_constant<
-        cfg_attributes::spec::attr,
-        cfg_attributes::spec::attr::no_ini_no_gui
+        cfg_attributes::spec::internal::attr,
+        cfg_attributes::spec::internal::attr::no_ini_no_gui
     >)
     { return {}; }
 
     struct no_sesman_io_t {};
     inline no_sesman_io_t to_attr_if_convertible(std::integral_constant<
-        cfg_attributes::sesman::io,
-        cfg_attributes::sesman::io::none
+        cfg_attributes::sesman::internal::io,
+        cfg_attributes::sesman::internal::io::none
     >)
     { return {}; }
 }
@@ -345,8 +345,8 @@ public:
     template<class... Ts>
     void member(Ts const & ... args)
     {
-        static_assert(! decltype(pack_contains<cfg_attributes::spec::attr>(std::declval<pack_type<Ts...>>())) {}, "Has a direct spec::attr value");
-        static_assert(! decltype(pack_contains<cfg_attributes::sesman::io>(std::declval<pack_type<Ts...>>())) {}, "Has a direct sesman::io value");
+        static_assert(! decltype(pack_contains<cfg_attributes::spec::internal::attr>(std::declval<pack_type<Ts...>>())) {}, "Has a direct spec::attr value");
+        static_assert(! decltype(pack_contains<cfg_attributes::sesman::internal::io>(std::declval<pack_type<Ts...>>())) {}, "Has a direct sesman::io value");
 
         using infos_type = Infos<
             std::remove_const_t<
@@ -359,14 +359,14 @@ public:
 
         // check spec::attr
         {
-            auto has_attr = pack_contains<cfg_attributes::spec::attr>(u->infos);
+            auto has_attr = pack_contains<cfg_attributes::spec::internal::attr>(u->infos);
             auto has_no_attr_t = pack_contains<detail_::no_spec_attr_t>(u->infos);
             static_assert(decltype(has_attr) {} || decltype(has_no_attr_t) {}, "spec:attr is missing");
             static_assert(! (decltype(has_attr) {} && decltype(has_no_attr_t) {}), "There is two spec:attr value");
         }
         // check sesman::io
         {
-            auto has_attr = pack_contains<cfg_attributes::sesman::io>(u->infos);
+            auto has_attr = pack_contains<cfg_attributes::sesman::internal::io>(u->infos);
             auto has_no_attr_t = pack_contains<detail_::no_sesman_io_t>(u->infos);
             static_assert(decltype(has_attr) {} || decltype(has_no_attr_t) {}, "sesman::io is missing");
             static_assert(! (decltype(has_attr) {} && decltype(has_no_attr_t) {}), "There is two sesman::io value");

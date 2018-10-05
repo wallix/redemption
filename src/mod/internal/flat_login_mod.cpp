@@ -32,12 +32,12 @@ FlatLoginMod::FlatLoginMod(
     FlatLoginModVariables vars, SessionReactor& session_reactor,
     char const * username, char const * password,
     FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t /*now*/,
-    ClientExecute & client_execute
+    ClientExecute & client_execute, Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
-        this->login, front, front, this->font(), this->theme())
+        this->login, front, front, font, theme)
     , login(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
         this->screen, this, "Redemption " VERSION,
@@ -46,8 +46,7 @@ FlatLoginMod::FlatLoginMod(
         TR(trkeys::password, language(vars)),
         vars.get<cfg::context::opt_message>().c_str(),
         vars.get<cfg::context::login_message>().c_str(),
-        &this->language_button,
-        this->font(), Translator(language(vars)), this->theme())
+        &this->language_button, font, Translator(language(vars)), theme)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
     , vars(vars)
 {

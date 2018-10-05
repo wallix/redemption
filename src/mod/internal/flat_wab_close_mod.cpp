@@ -56,10 +56,9 @@ FlatWabCloseMod::FlatWabCloseMod(
     FlatWabCloseModVariables vars, SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, time_t /*now*/, ClientExecute & client_execute,
-    bool showtimer, bool back_selector
+    Font const& font, Theme const& theme, bool showtimer, bool back_selector
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height,
-        vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
     , close_widget(
         front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this,
         vars.get<cfg::context::auth_error_message>().c_str(),
@@ -71,10 +70,7 @@ FlatWabCloseMod::FlatWabCloseMod(
             : temporary_text(vars).text,
         showtimer,
         vars.get<cfg::context::close_box_extra_message>().c_str(),
-        vars.get<cfg::font>(),
-        vars.get<cfg::theme>(),
-        language(vars),
-        back_selector)
+        font, theme, language(vars), back_selector)
     , vars(vars)
 {
     if (vars.get<cfg::globals::close_timeout>().count()) {

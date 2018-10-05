@@ -29,17 +29,14 @@ FlatWaitMod::FlatWaitMod(
     FlatWaitModVariables vars, SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message, time_t /*now*/,
-    ClientExecute & client_execute, bool showform, uint32_t flag
+    ClientExecute & client_execute, Font const& font, Theme const& theme,
+    bool showform, uint32_t flag
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, vars.get<cfg::font>(), client_execute, vars.get<cfg::theme>())
-    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget, front, front, this->font(), this->theme())
-    , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy, this->screen, this, caption, message, 0,
-                    &this->language_button,
-                    vars.get<cfg::font>(),
-                    vars.get<cfg::theme>(),
-                    language(vars),
-                    showform, flag, vars.get<cfg::context::duration_max>()
-                    )
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
+    , language_button(vars.get<cfg::client::keyboard_layout_proposals>(), this->wait_widget, front, front, font, theme)
+    , wait_widget(front, widget_rect.x, widget_rect.y, widget_rect.cx, widget_rect.cy,
+        this->screen, this, caption, message, 0, &this->language_button,
+        font, theme, language(vars), showform, flag, vars.get<cfg::context::duration_max>())
     , vars(vars)
     , copy_paste(vars.get<cfg::debug::mod_internal>() != 0)
 {
