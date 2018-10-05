@@ -121,6 +121,7 @@ exe generate_video
     src/utils/set_exception_handler_pretty_message.o
 :
     $(EXE_DEPENDENCIES_NO_SYSLOG)
+    $(FFMPEG_CXXFLAGS)
     <library>libredrec
     <library>ffmpeg
     <library>png
