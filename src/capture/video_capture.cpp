@@ -35,6 +35,10 @@
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
 
+#ifndef REDEMPTION_NO_FFMPEG
+#include <libavformat/avio.h> // AVSEEK_SIZE
+#endif
+
 #include <cerrno>
 #include <cstring>
 #include <cstddef>
@@ -313,11 +317,10 @@ FullVideoCaptureImpl::TmpFileTransport::TmpFileTransport(
 // IOVideoRecorderWithTransport
 //@{
 
-#include <libavformat/avio.h>
-
 template<class Transport>
 struct IOVideoRecorderWithTransport
 {
+#ifndef REDEMPTION_NO_FFMPEG
     static int write(void * opaque, uint8_t * buf, int buf_size)
     {
         Transport * trans       = static_cast<Transport*>(opaque);
@@ -364,6 +367,10 @@ struct IOVideoRecorderWithTransport
             return -1;
         };
     }
+#else
+    static int write(void * /*opaque*/, uint8_t * /*buf*/, int buf_size) { return buf_size; }
+    static int64_t seek(void * /*opaque*/, int64_t offset, int /*whence*/) { return offset; }
+#endif
 };
 
 //@}
