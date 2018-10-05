@@ -20,14 +20,11 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 
-using namespace std::chrono_literals;
 
-
-class ClientHeadlessSocket : public ClientInputSocketAPI {
+class ClientHeadlessSocket : public ClientInputSocketAPI
+{
 
 public:
 
@@ -37,7 +34,9 @@ public:
       : session_reactor(session_reactor)
     {}
 
-    virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override {
+    virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override
+    {
+        using namespace std::chrono_literals;
 
         while (!mod->is_up_and_running()) {
 //                 std::cout << " Early negociations...\n";

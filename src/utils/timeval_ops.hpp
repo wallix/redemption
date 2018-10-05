@@ -21,13 +21,18 @@
 
 #pragma once
 
+#include "cxx/diagnostic.hpp"
+
 #include <chrono>
 
 #include <cstdint>
 #include <cassert>
 #include <sys/time.h>
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
 using namespace std::chrono_literals;
+REDEMPTION_DIAGNOSTIC_POP
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
     // return ustime(a) < ustime(b)

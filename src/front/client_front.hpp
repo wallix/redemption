@@ -38,8 +38,6 @@
 #include "gdi/graphic_cmd_color.hpp"
 
 
-using namespace std::chrono_literals;
-
 class ClientFront : public FrontAPI
 {
     bool verbose;

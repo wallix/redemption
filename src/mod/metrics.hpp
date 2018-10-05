@@ -72,7 +72,7 @@ public:
     // TODO: if directory creation fails metrics will be disabled
     // it means either move the directory check and creation to lambda
     // or changing active to non const (I did that)
-    bool active_ = false; 
+    bool active_ = false;
 
     const timeval connection_time;
 
@@ -109,9 +109,9 @@ public:
     , next_log_time{now+this->log_delay}
     {
         if (activate) {
-            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
+            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours",
                 this->path.c_str(), this->log_delay.count(), this->file_interval.count());
-                
+
             if (0 != access(this->path.c_str(), F_OK)) {
                 LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
                 int status = recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
@@ -152,7 +152,7 @@ public:
 
     void log(timeval const& now)
     {
-//        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld", 
+//        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld",
 //            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
 
         if (!this->active_ || this->next_log_time > now) {
@@ -161,7 +161,7 @@ public:
 
         this->next_log_time += this->log_delay;
 
-//        LOG(LOG_INFO, " new next_log_time=%ld:%ld", 
+//        LOG(LOG_INFO, " new next_log_time=%ld:%ld",
 //            this->next_log_time.tv_sec, this->next_log_time.tv_usec);
 
         this->rotate(now);
@@ -173,8 +173,6 @@ public:
         if (!this->active_) {
             return ;
         }
-
-        using namespace std::chrono_literals;
 
         this->rotate(this->next_log_time);
         this->write_event_to_logmetrics(this->next_log_time);
@@ -193,8 +191,6 @@ public:
 private:
     void new_file(const timeval timeslice)
     {
-        using namespace std::literals::chrono_literals;
-        
         auto text_date = is_midnight(timeslice) ? text_gmdate(timeslice) : filename_gmdatetime(timeslice);
 
         ::snprintf(this->complete_metrics_file_path, sizeof(this->complete_metrics_file_path),
@@ -204,7 +200,7 @@ private:
         ::snprintf(this->complete_index_file_path, sizeof(this->complete_index_file_path),
             "%s/%s_metrics-%s-%s.logindex",
             this->path.c_str(), this->protocol_name.c_str(), this->version.c_str(), text_date.c_str());
-            
+
         this->fd = unique_fd(this->complete_metrics_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
             int const errnum = errno;

@@ -87,7 +87,6 @@
 
 #include <chrono>
 
-using namespace std::chrono_literals;
 
 struct RDPHeadlessFrontParams
 {
