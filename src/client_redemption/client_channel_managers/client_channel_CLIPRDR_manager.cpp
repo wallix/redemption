@@ -411,9 +411,10 @@
                                 }
                             }
 
-                            RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
+//                             RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
                             StaticOutStream<256> out_stream;
-                            formatListResponsePDU.emit(out_stream);
+                            RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
+                            formatListResponsePDUHeader.emit(out_stream);
                             InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
                             this->callback->send_to_mod_channel( channel_names::cliprdr
@@ -439,8 +440,10 @@
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
                             }
 
+                            RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_OK, 4);
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
                             StaticOutStream<256> out_streamRequest;
+                            formatListRequestPDUHeader.emit(out_streamRequest);
                             formatDataRequestPDU.emit(out_streamRequest);
                             InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
@@ -1100,7 +1103,7 @@
         std::string format_name = this->formats_map[this->clientIOClipboardAPI->get_buffer_type_id()];
         RDPECLIP::FormatListPDU_LongName format_list(this->clientIOClipboardAPI->get_buffer_type_id(), format_name.c_str(), format_name.size());
 
-        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, format_list.formatDataNameUTF16Len+4);
+        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, RDPECLIP::CB_RESPONSE__NONE_, format_list.formatDataNameUTF16Len+4);
         format_list_header.emit(out_stream);
 
         format_list.emit(out_stream);

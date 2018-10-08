@@ -1467,26 +1467,26 @@ struct FormatListPDU_ShortName {
 
 struct FormatListResponsePDU
 {
-    CliprdrHeader header;
+//     CliprdrHeader header;
     explicit FormatListResponsePDU(bool response_ok)
-        : header( CB_FORMAT_LIST_RESPONSE
+     /*   : header( CB_FORMAT_LIST_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                       , 0) {
+                       , 0)*/ {
     }   // FormatListResponsePDU(bool response_ok)
 
     FormatListResponsePDU() = default;
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
+//         this->header.emit(stream);
     }
 
     void recv(InStream & stream)
     {
-        this->header.recv(stream);
+//         this->header.recv(stream);
     }
 
     void log() const {
-        this->header.log();
+//         this->header.log();
         LOG(LOG_INFO, "     Format List Response PDU");
     }
 
@@ -2873,9 +2873,9 @@ struct CliprdrLogState
 
 static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        InStream chunk =  stream.clone();
+       // InStream chunk =  stream.clone();
         CliprdrHeader header;
-        header.recv(chunk);
+        header.recv(stream);
 
         switch (header.msgType()) {
 
@@ -2892,13 +2892,13 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 header.log();
                 if (state.use_long_format_names) {
-                    while (chunk.in_remain() >= 6) {
+                    while (stream.in_remain() >= 6) {
                         FormatListPDU_LongName pdu;
-                        pdu.recv(chunk);
+                        pdu.recv(stream);
                         pdu.log();
                     }
                 } else {
-                    while (chunk.in_remain() >= 36) {
+                    while (stream.in_remain() >= 36) {
                         FormatListPDU_ShortName pdu;
                         pdu.recv(stream);
                         pdu.log();
