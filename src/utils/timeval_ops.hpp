@@ -31,7 +31,7 @@
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wheader-hygiene")
-using namespace std::chrono_literals;
+using namespace std::chrono_literals; // NOLINT
 REDEMPTION_DIAGNOSTIC_POP
 
 inline bool operator<(const timeval & a, const timeval & b) noexcept {

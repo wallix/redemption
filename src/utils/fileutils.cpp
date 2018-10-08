@@ -23,6 +23,8 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/file.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/strutils.hpp"
 
 #include <cstdio>
 #include <cstddef>
@@ -186,8 +188,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
         }
         const char * start_of_extension = strrchr(end_of_path + 1, '.');
         if (start_of_extension){
-            snprintf(extension, extension_len, "%s", start_of_extension);
-            //strcpy(extension, start_of_extension);
+            strlcpy(extension, start_of_extension, extension_len);
             if (start_of_extension > end_of_path + 1){
                 if (static_cast<size_t>(start_of_extension - end_of_path - 1) <= basename_len) {
                     memcpy(basename, end_of_path + 1, start_of_extension - end_of_path - 1);
@@ -202,8 +203,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
         }
         else {
             if (end_of_path[1]){
-                snprintf(basename, basename_len, "%s", end_of_path + 1);
-                //strcpy(basename, end_of_path + 1);
+                strlcpy(basename, end_of_path + 1, basename_len);
                 // default extension : leave whatever is in extension output buffer
             }
             else {
@@ -216,8 +216,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
         // default path : leave whatever is in path output buffer
         const char * start_of_extension = strrchr(fullpath, '.');
         if (start_of_extension){
-            snprintf(extension, extension_len, "%s", start_of_extension);
-            // strcpy(extension, start_of_extension);
+            strlcpy(extension, start_of_extension, extension_len);
             if (start_of_extension > fullpath){
                 if (static_cast<size_t>(start_of_extension - fullpath) <= basename_len) {
                     memcpy(basename, fullpath, start_of_extension - fullpath);
@@ -232,8 +231,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
         }
         else {
             if (fullpath[0]){
-                snprintf(basename, basename_len, "%s", fullpath);
-                // strcpy(basename, fullpath);
+                strlcpy(basename, fullpath, basename_len);
                 // default extension : leave whatever is in extension output buffer
             }
             else {

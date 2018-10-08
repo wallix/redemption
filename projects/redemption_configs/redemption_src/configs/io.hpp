@@ -314,7 +314,7 @@ private:
     char const * s_err;
 };
 
-namespace
+namespace detail
 {
     template<char... c>
     struct string_literal
@@ -335,7 +335,7 @@ namespace
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wgnu-string-literal-operator-template")
     template<class T, T... c>
-    string_literal<c...> operator "" _mp_str ()
+    string_literal<c...> operator "" _mp_str()
     { return {}; }
     REDEMPTION_DIAGNOSTIC_POP
 
@@ -365,7 +365,8 @@ namespace
 
     template<class T, T val>
     using mp_to_string = typename int_to_meta_string<T, val>::type;
-} // namespace
+} // namespace detail
+
 
 constexpr parse_error no_parse_error {nullptr};
 
@@ -378,6 +379,7 @@ inline parse_error parse(std::string & x, spec_type<std::string> /*type*/, array
 template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<char[N]> /*type*/, array_view_const_char value)
 {
+    using namespace detail;
     if (value.size() >= N-1) {
         return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N-1>()};
     }
@@ -389,6 +391,7 @@ parse_error parse(char (&x)[N], spec_type<char[N]> /*type*/, array_view_const_ch
 template<std::size_t N>
 parse_error parse(char (&x)[N], spec_type<spec_types::fixed_string> /*type*/, array_view_const_char value)
 {
+    using namespace detail;
     if (value.size() >= N) {
         return parse_error{"out of bounds, limits is "_mp_str + mp_to_string<long, N>()};
     }
@@ -403,6 +406,7 @@ parse_error parse(
     spec_type<spec_types::fixed_binary> /*type*/,
     array_view_const_char value
 ) {
+    using namespace detail;
     if (value.size() != N*2) {
         return parse_error{"bad length, should be "_mp_str + mp_to_string<long, N*2>()};
     }
@@ -444,6 +448,7 @@ parse_error parse(
     spec_type<spec_types::range<T, min, max>> /*type*/,
     array_view_const_char value
 ) {
+    using namespace detail;
     using Int = spec_types::underlying_type_for_range_t<T>;
     Int y;
     if (auto err = parse(y, spec_type<Int>{}, value)) {
@@ -522,7 +527,7 @@ namespace detail
     }
 } // namespace detail
 
-namespace
+namespace detail
 {
     template<class T>
     using max_integral = std::integral_constant<T, std::numeric_limits<T>::max()>;
@@ -530,12 +535,12 @@ namespace
     using min_integral = std::integral_constant<T, std::numeric_limits<T>::min()>;
     template<class T>
     using zero_integral = std::integral_constant<T, 0>;
-} // namespace
+} // namespace detail
 
 template<class TInt>
 typename std::enable_if<std::is_integral<TInt>::value && !std::is_same<TInt, bool>::value, parse_error>::type
 parse(TInt & x, spec_type<TInt> /*type*/, array_view_const_char value)
-{ return detail::parse_integral(x, value, min_integral<TInt>(), max_integral<TInt>()); }
+{ return detail::parse_integral(x, value, detail::min_integral<TInt>(), detail::max_integral<TInt>()); }
 
 template<class T, class Ratio>
 parse_error parse(
@@ -544,7 +549,7 @@ parse_error parse(
     array_view_const_char value
 ) {
     T y{}; // create with default value
-    if (parse_error err = detail::parse_integral(y, value, zero_integral<T>(), max_integral<T>())) {
+    if (parse_error err = detail::parse_integral(y, value, detail::zero_integral<T>(), detail::max_integral<T>())) {
         return err;
     }
     x = std::chrono::duration<T, Ratio>{y};
@@ -557,7 +562,7 @@ namespace detail
     parse_error parse_integral_list(std::string & x, array_view_const_char value) {
         for (auto r : get_split(value, ',')) {
             IntOrigin i;
-            if (auto err = parse_integral<true>(i, {r.begin(), r.size()}, min_integral<IntOrigin>(), max_integral<IntOrigin>())) {
+            if (auto err = parse_integral<true>(i, {r.begin(), r.size()}, detail::min_integral<IntOrigin>(), detail::max_integral<IntOrigin>())) {
                 return err;
             }
         }
@@ -638,7 +643,7 @@ parse_error parse_enum_u(E & x, array_view_const_char value, Max max)
 {
     using ul = unsigned long;
     ul xi = 0;
-    if (parse_error err = detail::parse_integral(xi, value, zero_integral<ul>(), max)) {
+    if (parse_error err = detail::parse_integral(xi, value, detail::zero_integral<ul>(), max)) {
         return err;
     }
     //if (~~static_cast<E>(xi) != static_cast<E>(xi)) {
@@ -668,7 +673,7 @@ parse_error parse_enum_list(E & x, array_view_const_char value, std::initializer
 {
     using ul = unsigned long;
     ul xi = 0;
-    if (parse_error err = detail::parse_integral(xi, value, min_integral<ul>(), max_integral<ul>())) {
+    if (parse_error err = detail::parse_integral(xi, value, detail::min_integral<ul>(), detail::max_integral<ul>())) {
         return err;
     }
     for (auto val : l) {

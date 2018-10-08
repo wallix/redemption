@@ -327,8 +327,7 @@ public:
             this->impl_keylayout->update_keylayout(this->config.info.keylayout);
 
             this->impl_keylayout->clearCustomKeyCode();
-            for (size_t i = 0; i < this->config.keyCustomDefinitions.size(); i++) {
-                KeyCustomDefinition & key = this->config.keyCustomDefinitions[i];
+            for (KeyCustomDefinition& key : this->config.keyCustomDefinitions) {
                 this->impl_keylayout->setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
             }
         }

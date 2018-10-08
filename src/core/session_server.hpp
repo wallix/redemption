@@ -26,6 +26,7 @@
 #include "core/session.hpp"
 #include "main/version.hpp"
 #include "utils/netutils.hpp"
+#include "utils/sugar/strutils.hpp"
 
 class SessionServer : public Server
 {
@@ -74,7 +75,7 @@ public:
         }
 
         char source_ip[256];
-        strcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+        strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
         const int source_port = ntohs(u.s4.sin_port);
@@ -115,16 +116,15 @@ public:
                     _exit(1);
                 }
 
-                char target_ip[256];
                 REDEMPTION_DIAGNOSTIC_PUSH
                 REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
                 const int target_port = ntohs(localAddress.s4.sin_port);
                 REDEMPTION_DIAGNOSTIC_POP
-//                strcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
-                strcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
-                if (ini.get<cfg::debug::fake_target_ip>() != ""){
-                    LOG(LOG_INFO, "fake_target_ip='%s'", ini.get<cfg::debug::fake_target_ip>().c_str());
-                    strcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
+                char target_ip[256];
+                strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+                if (!ini.get<cfg::debug::fake_target_ip>().empty()){
+                    strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
+                    LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
                 }
 
                 if (0 != strcmp(source_ip, "127.0.0.1")){

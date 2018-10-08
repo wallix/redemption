@@ -28,6 +28,7 @@
 #include "utils/genfstat.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/strutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 #include <memory>
@@ -749,7 +750,10 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
 
-    strcpy(this->finalname, finalname);
+    if (!strbcpy(this->finalname, finalname)) {
+        LOG(LOG_ERR, "OutCryptoTransport::open finalname too long");
+        throw Error(ERR_TRANSPORT_OPEN_FAILED);
+    }
     this->hash_filename = hash_filename;
     this->derivator.assign(derivator.begin(), derivator.end());
     this->groupid = groupid;

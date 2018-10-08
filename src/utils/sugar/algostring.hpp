@@ -131,7 +131,7 @@ inline void append_escaped_delimiters(std::string & escaped_subject, char const 
         algostring::is_ascii_double_quote_escapable_fn{}, '\\');
 }
 
-inline  std::pair<char *, char const *>
+inline std::pair<char *, char const *>
 append_escaped_delimiters(char * escaped_subject, std::size_t size_max, char const * subject)
 {
     return algostring::append_escaped(

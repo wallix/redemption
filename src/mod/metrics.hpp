@@ -30,8 +30,9 @@
 #include <vector>
 
 #include <cerrno>
-#include <cstring>
 #include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <ctime>
 
 #include <fcntl.h>
@@ -40,7 +41,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <stdlib.h>
 
 class Metrics
 {

@@ -148,3 +148,84 @@ inline static void MultiSZCopy(char * dest, size_t dest_size, const char * src) 
 }
 
 
+
+
+#include "utils/sugar/array_view.hpp"
+
+
+/**
+ * \resume copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
+ * \return total length of the string they tried to create.
+ * @{
+ */
+std::size_t strlcpy(char* dest, array_view_const_char src, std::size_t n) noexcept;
+std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept;
+
+template<std::size_t N>
+std::size_t strlcpy(char (&dest)[N], array_view_const_char src) noexcept
+{
+    return strlcpy(dest, src, N);
+}
+
+template<std::size_t N>
+std::size_t strlcpy(char (&dest)[N], char const* src) noexcept
+{
+    return strlcpy(dest, src, N);
+}
+/**
+ * @}
+ */
+
+
+/**
+ * \resume copies up to \c n - 1 characters from the NUL-terminated string \c src to \c dst, NUL-terminating the result.
+ * \return false if \c src is too long
+ * @{
+ */
+[[nodiscard]] bool strbcpy(char* dest, array_view_const_char src, std::size_t n) noexcept;
+[[nodiscard]] bool strbcpy(char* dest, char const* src, std::size_t n) noexcept;
+
+template<std::size_t N>
+[[nodiscard]] bool strbcpy(char (&dest)[N], array_view_const_char src) noexcept
+{
+    return strlcpy(dest, src, N) < N;
+}
+
+template<std::size_t N>
+[[nodiscard]] bool strbcpy(char (&dest)[N], char const* src) noexcept
+{
+    return strlcpy(dest, src, N) < N;
+}
+/**
+ * @}
+ */
+
+#include <cstring>
+
+
+inline std::size_t strlcpy(char* dest, array_view_const_char src, std::size_t n) noexcept
+{
+    auto const nsrc = src.size();
+    if (n) {
+        auto const ncp = std::min(n-1u, nsrc);
+        std::memcpy(dest, src.data(), ncp);
+        dest[ncp] = 0;
+    }
+    return nsrc;
+}
+
+inline std::size_t strlcpy(char* dest, char const* src, std::size_t n) noexcept
+{
+    return strlcpy(dest, array_view_const_char{src, strlen(src)}, n);
+}
+
+
+inline bool strbcpy(char* dest, array_view_const_char src, std::size_t n) noexcept
+{
+    return strlcpy(dest, src, n) < n;
+}
+
+inline bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
+{
+    return strlcpy(dest, src, n) < n;
+}

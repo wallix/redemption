@@ -793,7 +793,8 @@ public:
                     return 0;
                 }
 
-                strcpy(buf, pass);
+                memcpy(buf, pass, pass_len);
+                buf[pass_len] = 0;
                 return int(pass_len);
             }
         );

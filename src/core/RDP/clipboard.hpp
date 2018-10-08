@@ -970,7 +970,7 @@ struct FormatListPDU
         , _unicodetext(unicodetext)
         {}
 
-    FormatListPDU(){}
+    FormatListPDU() = default;
 
     // TODO: that log is not logging anything useful
     void log() const {

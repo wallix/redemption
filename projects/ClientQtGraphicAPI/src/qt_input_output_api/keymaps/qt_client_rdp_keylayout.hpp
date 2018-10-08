@@ -67,8 +67,8 @@ public:
         this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
     }
 
-    KeyCustomDefinition get_key_info(int key, std::string const& text) override {
-        this->qtRDPKeymap.keyEvent(0, key, text);
+    KeyCustomDefinition get_key_info(int keycode, std::string const& text) override {
+        this->qtRDPKeymap.keyEvent(0, keycode, text);
         KeyCustomDefinition key_info(
             this->qtRDPKeymap.qKeyCode,
             this->qtRDPKeymap.scanCode,

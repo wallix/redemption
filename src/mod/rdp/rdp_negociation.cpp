@@ -426,8 +426,8 @@ RdpNegociation::RdpNegociation(
 
 void RdpNegociation::set_program(char const* program, char const* directory) noexcept
 {
-    strcpy(this->program, program);
-    strcpy(this->directory, directory);
+    strlcpy(this->program, program);
+    strlcpy(this->directory, directory);
 }
 
 void RdpNegociation::start_negociation()

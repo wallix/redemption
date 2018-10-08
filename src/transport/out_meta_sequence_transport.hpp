@@ -23,6 +23,7 @@
 #include "utils/log.hpp"
 
 #include "utils/genfstat.hpp"
+#include "utils/sugar/strutils.hpp"
 #include "core/error.hpp"
 
 #include "transport/crypto_transport.hpp"
@@ -47,17 +48,13 @@ public:
         const char * const filename,
         const char * const extension)
     {
-        if (strlen(prefix) > sizeof(this->path) - 1
-         || strlen(hash_prefix) > sizeof(this->hash_path) - 1
-         || strlen(filename) > sizeof(this->filename) - 1
-         || strlen(extension) > sizeof(this->extension) - 1) {
+        if (!strbcpy(this->path, prefix)
+         || !strbcpy(this->hash_path, hash_prefix)
+         || !strbcpy(this->filename, filename)
+         || !strbcpy(this->extension, extension)) {
+            LOG(LOG_ERR, "Filename too long");
             throw Error(ERR_TRANSPORT);
         }
-
-        strcpy(this->path, prefix);
-        strcpy(this->hash_path, hash_prefix);
-        strcpy(this->filename, filename);
-        strcpy(this->extension, extension);
 
         this->filename_gen[0] = 0;
     }

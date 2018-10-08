@@ -280,9 +280,8 @@ public:
 
     void clearCustomKeyCode() override {}
 
-    KeyCustomDefinition get_key_info(int , std::string const& ) override {
-        KeyCustomDefinition key_info;
-        return key_info;
+    KeyCustomDefinition get_key_info(int /*keycode*/, std::string const& /*text*/) override {
+        return KeyCustomDefinition{};
     }
 };
 
@@ -299,7 +298,6 @@ public:
     FakeRDPChannelsMod fake_mod;
 
     FakeClient(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
-      : ClientRedemptionAPI()
     {
 //         this->mod = &(this->fake_mod);
     }

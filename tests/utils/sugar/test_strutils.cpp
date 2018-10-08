@@ -447,3 +447,27 @@ RED_AUTO_TEST_CASE(TestMultiSZCopy)
     MultiSZCopy(dest, sizeof(dest), "12345678\x00\x00OPQRSTUV\x00");
     RED_CHECK(!memcmp(dest, "12345678\x00\x00\x00\x00\x00\x00\x00\x00", sizeof(dest)));
 }
+
+
+RED_AUTO_TEST_CASE(Teststrlcpy)
+{
+    char dest[10]{};
+    RED_CHECK_EQ(0, strlcpy(dest, "", 0));
+    RED_CHECK_EQ(0, strlcpy(dest, "", 1));
+    RED_CHECK_EQ(1, strlcpy(dest, "a"_av, 0));
+    RED_CHECK_EQ(dest[0], '\0');
+    RED_CHECK_EQ(1, strlcpy(dest, "a"_av, 2));
+    RED_CHECK_EQ(dest, "a");
+    RED_CHECK_EQ(7, strlcpy(dest, "abcdefg"_av, 5));
+    RED_CHECK_EQ(dest[4], 0);
+}
+
+RED_AUTO_TEST_CASE(Teststrbcpy)
+{
+    char dest[10]{};
+    RED_CHECK(!strbcpy(dest, "", 0));
+    RED_CHECK(strbcpy(dest, "", 1));
+    RED_CHECK(!strbcpy(dest, "a"_av, 0));
+    RED_CHECK(strbcpy(dest, "a"_av, 2));
+    RED_CHECK(!strbcpy(dest, "abcdefg"_av, 5));
+}

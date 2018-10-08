@@ -34,6 +34,7 @@
 #include "utils/bitmap_shrink.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/strutils.hpp"
 
 #ifndef REDEMPTION_NO_FFMPEG
 #include <libavformat/avio.h> // AVSEEK_SIZE
@@ -461,15 +462,12 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     ReportMessageApi * report_message)
 : VideoTransportBase(groupid, report_message)
 {
-    if (strlen(prefix) > sizeof(this->filegen.path) - 1
-     || strlen(filename) > sizeof(this->filegen.base) - 1
-     || strlen(extension) > sizeof(this->filegen.ext) - 1) {
+    if (!strbcpy(this->filegen.path, prefix)
+     || !strbcpy(this->filegen.base, filename)
+     || !strbcpy(this->filegen.ext, extension)) {
+        LOG(LOG_ERR, "Filename too long");
         throw Error(ERR_TRANSPORT);
     }
-
-    strcpy(this->filegen.path, prefix);
-    strcpy(this->filegen.base, filename);
-    strcpy(this->filegen.ext, extension);
 }
 
 bool SequencedVideoCaptureImpl::SequenceTransport::next()

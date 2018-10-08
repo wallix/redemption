@@ -26,6 +26,7 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/strutils.hpp"
 
 
 class InMetaSequenceTransport : public Transport
@@ -159,7 +160,7 @@ private:
             std::snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
 
             if (file_exist(filename)) {
-                strcpy(this->meta_line.filename, filename);
+                strlcpy(this->meta_line.filename, filename);
             }
         }
 

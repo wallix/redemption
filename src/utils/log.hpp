@@ -278,4 +278,4 @@ namespace detail
             REDEMPTION_LOG_VALUE(args)...
         );
     }
-} // namespace
+} // namespace detail

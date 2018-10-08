@@ -48,9 +48,9 @@ struct ReplayMod::Reader
 
             char path[1024];
             char basename[1024];
-            strcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
-            strcpy(basename, "replay"); // default value actual one should come from movie_path
-            strcpy(this->extension, ".mwrm"); // extension is currently ignored
+            strlcpy(path, app_path(AppPath::Record)); // default value, actual one should come from movie_path
+            strlcpy(basename, "replay"); // default value actual one should come from movie_path
+            strlcpy(this->extension, ".mwrm"); // extension is currently ignored
 
             const bool res = canonical_path(
                 replay_path,
