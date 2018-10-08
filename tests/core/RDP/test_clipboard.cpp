@@ -563,3 +563,481 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     }
 }
 
+
+RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
+{
+    const bool use_long_format_names = true;
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(RDPECLIP::CF_TEXT, "");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view("\x01\x00\x00\x00\x00\x00");
+
+        RED_CHECK_EQUAL(6, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(RDPECLIP::CF_TEXT, "");
+        format_list_pdu_ex.add_format_name(RDPECLIP::CF_UNICODETEXT, "");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x01\x00\x00\x00\x00\x00"
+                "\x0d\x00\x00\x00\x00\x00"
+            );
+
+        RED_CHECK_EQUAL(12, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "Test");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view("\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00");
+
+        RED_CHECK_EQUAL(14, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+}
+
+RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
+{
+    const bool use_long_format_names = true;
+
+    {
+        auto data = cstr_array_view("\x01\x00\x00\x00\x00\x00");
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        const bool in_ASCII_8 = false;
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00\x00\x00"
+                "\x0d\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        const bool in_ASCII_8 = false;
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(RDPECLIP::CF_TEXT, format_name_1.formatId());
+        RED_CHECK_EQUAL("", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(RDPECLIP::CF_UNICODETEXT, format_name_2.formatId());
+        RED_CHECK_EQUAL("", format_name_2.format_name());
+    }
+
+    {
+        auto data = cstr_array_view("\x01\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "\x00\x00");
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        const bool in_ASCII_8 = false;
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("Test", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "1\x00" "\x00\x00"
+                "\x02\x00\x00\x00" "T\x00" "e\x00" "s\x00" "t\x00" "2\x00" "\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        const bool in_ASCII_8 = false;
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name_1.formatId());
+        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(2, format_name_2.formatId());
+        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+    }
+}
+
+RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
+{
+    const bool use_long_format_names = false;
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "Test");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x00\x7D\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00"
+                                                "\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        RED_CHECK_EQUAL(36, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "Test1");
+        format_list_pdu_ex.add_format_name(32001, "Test2");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x00\x7D\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00" "1\x00"
+                                                        "\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
+                "\x01\x7D\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00" "2\x00"
+                                                        "\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        RED_CHECK_EQUAL(72, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "RedemptionClipboard");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x00\x7D\x00\x00"
+                "RedemptionClipboard"
+                            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        RED_CHECK_EQUAL(36, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "RédemptionClipboard");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x00\x7D\x00\x00"
+                "R\x00"
+                        "\xe9\x00"  // 'é'
+                                "d\x00" "e\x00" "m\x00" "p\x00" "t\x00" "i\x00"
+                "o\x00" "n\x00" "C\x00" "l\x00" "i\x00" "p\x00" "b\x00"
+                                                                        "\x00\x00"
+            );
+
+        RED_CHECK_EQUAL(36, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+
+    {
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.add_format_name(32000, "0123456789012345678901234567890123456789");
+
+        StaticOutStream<512> out_stream;
+
+        format_list_pdu_ex.emit(out_stream, use_long_format_names);
+
+        auto exp_data = cstr_array_view(
+                "\x00\x7D\x00\x00"
+                "0123456789012345678901234567890"
+                                                                            "\x00"
+            );
+
+        RED_CHECK_EQUAL(36, out_stream.get_offset());
+        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    }
+}
+
+RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
+{
+    const bool use_long_format_names = false;
+    const bool in_ASCII_8            = true;
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x02\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name_1.formatId());
+        RED_CHECK_EQUAL("", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(2, format_name_2.formatId());
+        RED_CHECK_EQUAL("", format_name_2.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "Test"
+                                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("Test", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "Test1"
+                                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
+                "\x02\x00\x00\x00"
+                "Test2"
+                                    "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name_1.formatId());
+        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(2, format_name_2.formatId());
+        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+    }
+}
+
+RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
+{
+    const bool use_long_format_names = false;
+    const bool in_ASCII_8            = false;
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x02\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name_1.formatId());
+        RED_CHECK_EQUAL("", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(2, format_name_2.formatId());
+        RED_CHECK_EQUAL("", format_name_2.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00"
+                                                "\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(1, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name.formatId());
+        RED_CHECK_EQUAL("Test", format_name.format_name());
+    }
+
+    {
+        auto data = cstr_array_view(
+                "\x01\x00\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00" "1\x00"
+                                                        "\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+
+                "\x02\x00\x00\x00"
+                "T\x00" "e\x00" "s\x00" "t\x00" "2\x00"
+                                                        "\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            );
+
+        InStream in_stream(data);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_ex;
+
+        format_list_pdu_ex.recv(in_stream, use_long_format_names, in_ASCII_8);
+
+        RED_CHECK_EQUAL(2, format_list_pdu_ex.num_format_names());
+
+        RDPECLIP::FormatName const & format_name_1 = format_list_pdu_ex.format_name(0);
+
+        RED_CHECK_EQUAL(1, format_name_1.formatId());
+        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+
+        RDPECLIP::FormatName const & format_name_2 = format_list_pdu_ex.format_name(1);
+
+        RED_CHECK_EQUAL(2, format_name_2.formatId());
+        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+    }
+}

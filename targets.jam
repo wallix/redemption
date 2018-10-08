@@ -4909,6 +4909,7 @@ test-run tests/utils/test_utf :
   $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
 :
   <covfile>src/utils/utf.hpp
+  <library>src/utils/hexdump.o
 ;
 test-run tests/utils/test_video_cropper :
   $(REDEMPTION_TEST_PATH)/utils/test_video_cropper.cpp

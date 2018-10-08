@@ -26,11 +26,14 @@
 
 #pragma once
 
+#include "utils/log.hpp"
+#include "utils/sugar/cast.hpp"
+#include "utils/unicode_case_conversion.hpp"
+
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include "utils/unicode_case_conversion.hpp"
-#include "utils/sugar/cast.hpp"
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -738,15 +741,15 @@ static inline size_t get_utf8_char_size(uint8_t const * c) {
     return 1;
 }
 
-static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
-    enum class Stat : uint8_t {
-        ASCII,
-        FIRST_UTF8_CHAR,
-        SECOND_UTF8_CHAR,
-        THIRD_UTF8_CHAR,
-        FOURTH_UTF8_CHAR
-    };
+enum class Stat : uint8_t {
+    ASCII,
+    FIRST_UTF8_CHAR,
+    SECOND_UTF8_CHAR,
+    THIRD_UTF8_CHAR,
+    FOURTH_UTF8_CHAR
+};
 
+static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
     Stat stat = Stat::ASCII;
 
     for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
@@ -780,6 +783,51 @@ static inline bool is_utf8_string(uint8_t const * s, int length = -1) {
 
     return (stat == Stat::ASCII);
 }
+
+static inline bool is_ASCII_string(uint8_t const * s, int length = -1) {
+    for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
+         *s && (!s_end || (s < s_end)); s++) {
+        if (*s > 0x7F) { return false; }
+    }
+
+    return true;
+}
+
+static inline size_t UTF8StrLenInChar(const uint8_t * s) {
+    size_t length = 0;
+
+    Stat stat = Stat::ASCII;
+
+    for (; *s; s++) {
+        switch (stat) {
+            case Stat::ASCII:
+                if (*s <= 0x7F) { length++; continue; }
+                if ((*s >> 6) == 0x3) { stat = Stat::FIRST_UTF8_CHAR; continue; }
+                assert(false);
+            break;
+            case Stat::FIRST_UTF8_CHAR:
+                if ((*s >> 6) == 0x2) { stat = Stat::SECOND_UTF8_CHAR; continue; }
+                assert(false);
+            break;
+            case Stat::SECOND_UTF8_CHAR:
+                if (*s <= 0x7F) { length += 2; stat = Stat::ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = Stat::THIRD_UTF8_CHAR; continue; }
+                assert(false);
+            break;
+            case Stat::THIRD_UTF8_CHAR:
+                if (*s <= 0x7F) { length += 2; stat = Stat::ASCII; continue; }
+                if ((*s >> 6) == 0x2) { stat = Stat::FOURTH_UTF8_CHAR; continue; }
+                assert(false);
+            break;
+            case Stat::FOURTH_UTF8_CHAR:
+                if (*s <= 0x7F) { length += 2; stat = Stat::ASCII; continue; }
+                assert(false);
+            break;
+        }
+    }
+
+    return length;
+}   // UTF8StrLenInChar
 
 static inline size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len) {
 

@@ -26,8 +26,9 @@
 #define RED_TEST_MODULE TestLul
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/sugar/cast.hpp"
+#include "utils/hexdump.hpp"
 #include "utils/utf.hpp"
+#include "utils/sugar/cast.hpp"
 
 // RED_AUTO_TEST_CASE(TestUTF32isValid)
 // {
@@ -897,7 +898,7 @@ RED_AUTO_TEST_CASE(TestUtf16UpperCase)
 }
 
 
-RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
+RED_AUTO_TEST_CASE(TestUTF16ToUTF8)
 {
     {
         uint8_t u16_1[]{'a', 0, 'b', 0, 'c', 0, 0, 0};
@@ -913,4 +914,64 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
         RED_CHECK_EQ(UTF16toUTF8(u16_2, 4, dest, sizeof(dest)), 4);
         RED_CHECK_EQ(char_ptr_cast(dest), "abc");
     }
+}
+
+RED_AUTO_TEST_CASE(TestUTF8ToUTF16Limit)
+{
+    uint8_t expected_target[]{ 'a', 0, 'b', 0, 'c', 0, 'd', 0 };
+
+    const size_t target_length = 8;
+    uint8_t target[target_length];
+
+    memset(target, 0xfe, sizeof(target));
+
+    size_t nbbytes_utf16 = UTF8toUTF16(byte_ptr_cast("abcdef"), target, target_length);
+
+    // Check result
+    RED_CHECK_EQUAL(target_length, nbbytes_utf16);      // 8
+    RED_CHECK_EQUAL_RANGES(target, expected_target);    // "\x61\x00\x62\x00\x63\x00\x64\x00"
+}
+
+RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
+{
+    uint8_t expected_target[]{ 'a', 0, 'b', 0, 'c', 0, 0xfe, 0xfe };
+
+    const size_t target_length = 8;
+    uint8_t target[target_length];
+
+    memset(target, 0xfe, sizeof(target));
+
+    size_t nbbytes_utf16 = UTF8toUTF16(byte_ptr_cast("abc"), target, target_length);
+
+    // Check result
+    RED_CHECK_EQUAL(6, nbbytes_utf16);      // 6
+    RED_CHECK_EQUAL_RANGES(target, expected_target);    // "\x61\x00\x62\x00\x63\x00\x64\x00"
+}
+
+RED_AUTO_TEST_CASE(TestUTF8StrLenInChar)
+{
+    RED_CHECK_EQUAL(4, UTF8StrLenInChar(byte_ptr_cast("abcd")));
+
+    RED_CHECK_EQUAL(0, UTF8StrLenInChar(byte_ptr_cast("")));
+
+    {
+        const char * str = "éric";
+        RED_CHECK_EQUAL(5, strlen(str));
+        RED_CHECK_EQUAL(4, UTF8StrLenInChar(byte_ptr_cast(str)));
+    }
+
+    {
+        const char * str = "€uro";
+        RED_CHECK_EQUAL(6, strlen(str));
+        RED_CHECK_EQUAL(4, UTF8StrLenInChar(byte_ptr_cast(str)));
+    }
+}
+
+RED_AUTO_TEST_CASE(Testis_ASCII_string)
+{
+    RED_CHECK(is_ASCII_string(byte_ptr_cast("abcd")));
+
+    RED_CHECK(!is_ASCII_string(byte_ptr_cast("éric")));
+
+    RED_CHECK(is_ASCII_string(byte_ptr_cast("")));
 }
