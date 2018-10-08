@@ -38,7 +38,6 @@
 #include "utils/sugar/iter.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/unique_fd.hpp"
-#include "utils/word_identification.hpp"
 
 
 #include <string>
@@ -2147,10 +2146,14 @@ extern "C" {
         int command = 0;
 
         if (argc > arg_used + 1){
-            command = in(argv[arg_used+1], {"redrec", "redver", "reddec"});
-            if (command){
-                command = command - 1;
-                arg_used++;
+            char const* scmd = argv[arg_used+1];
+            command = !strcmp("redrec", scmd) ? 1
+                    : !strcmp("redver", scmd) ? 2
+                    : !strcmp("reddec", scmd) ? 3
+                    : 0;
+            if (command) {
+                --command;
+                ++arg_used;
             }
             // default command is previous one;
         }
