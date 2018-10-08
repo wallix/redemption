@@ -375,6 +375,7 @@ public:
 
     void log5(const std::string & info) override
     {
+        // TODO system time
         this->log_file.write_line(std::time(nullptr), info);
 
         /* Log to SIEM (redirected syslog) */
@@ -404,7 +405,9 @@ public:
 
     void log6(const std::string & info, const ArcsightLogInfo & asl_info) override
     {
-        this->log_file.write_line(std::time(nullptr), info);
+        // TODO system time
+        time_t const time_now = std::time(nullptr);
+        this->log_file.write_line(time_now, info);
 
         /* Log to SIEM (redirected syslog) */
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
@@ -431,8 +434,32 @@ public:
               , info.c_str());
 
             if (bool(this->verbose & Verbose::log_arcsight)) {
-                timeval now = tvtime();
-                time_t time_now = now.tv_sec;
+                std::string extension;
+                if (!asl_info.ApplicationProtocol.empty()) {
+                    extension += " app=";
+                    arcsight_text_formating(extension, asl_info.ApplicationProtocol);
+                }
+                if (!asl_info.WallixBastionStatus.empty()) {
+                    extension += " WallixBastionStatus=";
+                    arcsight_text_formating(extension, asl_info.WallixBastionStatus);
+                }
+                if (!asl_info.message.empty()) {
+                    extension += " msg=\"";
+                    arcsight_text_formating(extension, asl_info.message);
+                    extension += "\"";
+                }
+                if (!asl_info.oldFilePath.empty()) {
+                    extension += " oldFilePath=";
+                    arcsight_text_formating(extension, asl_info.oldFilePath);
+                }
+                if (!asl_info.filePath.empty()) {
+                    extension += " filePath=";
+                    arcsight_text_formating(extension, asl_info.filePath);
+                }
+                if (!asl_info.fileSize.empty()) {
+                    extension += " fsize=";
+                    arcsight_text_formating(extension, asl_info.fileSize);
+                }
 
                 auto const& suser = this->ini.get<cfg::globals::auth_user>();
                 auto const& duser = this->ini.get<cfg::globals::target_user>();
@@ -440,62 +467,59 @@ public:
                 auto const& host = this->ini.get<cfg::globals::host>();
                 // auto const& device = this->ini.get<cfg::globals::target_device>();
 
-                std::string extension;
-                if (!asl_info.ApplicationProtocol.empty()) {
-                    extension += " app=";
-                    extension += this->arcsight_text_formating(asl_info.ApplicationProtocol);
-                }
-                if (!asl_info.WallixBastionStatus.empty()) {
-                    extension += " WallixBastionStatus=";
-                    extension += this->arcsight_text_formating(asl_info.WallixBastionStatus);
-                }
-                if (!asl_info.message.empty()) {
-                    extension += " msg=\"";
-                    extension += this->arcsight_text_formating(asl_info.message)+"\"";
-                }
-                if (!asl_info.oldFilePath.empty()) {
-                    extension += " oldFilePath=";
-                    extension += this->arcsight_text_formating(asl_info.oldFilePath);
-                }
-                if (!asl_info.filePath.empty()) {
-                    extension += " filePath=";
-                    extension += this->arcsight_text_formating(asl_info.filePath);
-                }
-                if (!asl_info.fileSize.empty()) {
-                    extension += " fsize=";
-                    extension += this->arcsight_text_formating(asl_info.fileSize);
-                }
+                // TODO depends to local
+                // TODO ctime_r ?
+                std::string current_date = ctime(&time_now);
 
-                // TODO string_view + %.*s format
-                std::string current_date(ctime(&time_now));
-                std::string mmm_dd(current_date.substr(4, 6));
-                std::string hhmmss(current_date.substr(11, 8));
-                std::string yyyy(current_date.substr(20, 4));
-                std::string formted_date(mmm_dd+" "+yyyy+" "+hhmmss);
-
-                LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|suser=%s duser=%s WallixBastionSession_id=%s WallixBastionSessionType=%s src=%s dst=%s %s", formted_date.c_str(), "1", "Wallix", "Bastion", VERSION, asl_info.signatureID, asl_info.name.c_str(), asl_info.severity, suser.c_str(), duser.c_str(), session_id.c_str(), (this->session_type.empty() ? "Neutral" : this->session_type.c_str()), host.c_str(), target_ip.c_str(), /*device.c_str(),*/ extension.c_str());
+                LOG_SIEM(LOG_INFO,
+                    "%.*s %.*s %.*s "
+                    "host message CEF:1|Wallix|Bastion|%s|%d|%s|%d|suser=%s "
+                    "duser=%s WallixBastionSession_id=%s WallixBastionSessionType=%s "
+                    "src=%s dst=%s %s",
+                    6, current_date.c_str() + 4,
+                    8, current_date.c_str() + 11,
+                    4, current_date.c_str() + 20,
+                    VERSION, asl_info.signatureID, asl_info.name.c_str(), asl_info.severity,
+                    suser.c_str(), duser.c_str(), session_id.c_str(),
+                    (this->session_type.empty() ? "Neutral" : this->session_type.c_str()),
+                    host.c_str(), target_ip.c_str(), /*device.c_str(),*/ extension.c_str());
             }
         }
     }
 
-    std::string arcsight_text_formating(const std::string & text) {
-        std::string temp(text);
-        size_t i = 0;
-        while (i < temp.length()) {
-            if (temp[i] == '\\' || temp[i] == '=' || temp[i] == '|') {
-                temp = temp.substr(0, i) + "\\" + temp.substr(i, temp.length());
-                i++;
+private:
+    static void arcsight_text_formating(std::string& buff, std::string const& text)
+    {
+        auto* p = text.data();
+        auto* curr = p;
+        while (*p) {
+            while (!(*curr == '\0'
+                  || *curr == '\\'
+                  || *curr == '='
+                  || *curr == '|'
+                  || *curr == ' ')
+            ) {
+                ++curr;
             }
-            if (temp[i] == ' ') {
-                temp = temp.substr(0, i) + "<space>" + temp.substr(i+1, temp.length());
-                i += 7;
-            }
-            i++;
-        }
 
-        return temp;
+            buff.append(p, curr);
+
+            if (*curr == '\\' || *curr == '=' || *curr == '|') {
+                buff += '\\';
+                buff += *curr;
+                ++curr;
+            }
+            else if (*curr == ' ') {
+                buff += "<space>";
+                ++curr;
+            }
+            // else '\0'
+
+            p = curr;
+        }
     }
 
+public:
     void start_session_log()
     {
         auto& log_path = this->ini.get<cfg::session_log::log_path>();
