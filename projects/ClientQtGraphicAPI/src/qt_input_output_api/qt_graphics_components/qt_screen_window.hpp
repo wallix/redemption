@@ -705,8 +705,7 @@ public Q_SLOTS:
     }
 
     void closeReplay() {
-       // this->callback->delete_replay_mod();
-        this->callback->disconnexionReleased();
+        this->callback->delete_replay_mod();
     }
 
     void stopRelease() override {

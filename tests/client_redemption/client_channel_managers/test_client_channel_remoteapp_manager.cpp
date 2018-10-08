@@ -33,12 +33,14 @@
 RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 {
     FakeRDPChannelsMod mod;
-    ClientChannelMod callback;
+    ClientChannelMod mod_channel;
+    mod_channel.set_mod(&mod);
+    ClientCallback callback(nullptr, nullptr);
     callback.set_mod(&mod);
     FakeClientOutputGraphic graph_io;
 //     FakeClientInputMouseKeyboard input_io;
 
-    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &callback, &graph_io);
+    ClientChannelRemoteAppManager manager(RDPVerbose::rail, &callback, &mod_channel, &graph_io);
 
     RDPRemoteAppConfig config;
 

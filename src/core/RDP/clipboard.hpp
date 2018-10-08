@@ -1467,26 +1467,26 @@ struct FormatListPDU_ShortName {
 
 struct FormatListResponsePDU
 {
-//     CliprdrHeader header;
+    CliprdrHeader header;
     explicit FormatListResponsePDU(bool response_ok)
-     /*   : header( CB_FORMAT_LIST_RESPONSE
+        : header( CB_FORMAT_LIST_RESPONSE
                        , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                       , 0)*/ {
+                       , 0) {
     }   // FormatListResponsePDU(bool response_ok)
 
     FormatListResponsePDU() = default;
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
     }
 
     void recv(InStream & stream)
     {
-//         this->header.recv(stream);
+        this->header.recv(stream);
     }
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     Format List Response PDU");
     }
 

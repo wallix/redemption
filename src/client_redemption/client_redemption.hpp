@@ -74,10 +74,11 @@ private:
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
 
-    ClientCallback _callback;
-    ClientChannelMod channel_mod;
+
 
 public:
+    ClientCallback _callback;
+    ClientChannelMod channel_mod;
     SessionReactor& session_reactor;
 
     std::unique_ptr<Transport> _socket_in_recorder;
