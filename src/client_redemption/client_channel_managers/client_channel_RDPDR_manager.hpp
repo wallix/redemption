@@ -32,7 +32,7 @@
 #include "core/FSCC/FileInformation.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 
-#include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 
@@ -113,7 +113,7 @@ class ClientChannelRDPDRManager {
 
     ClientIODiskAPI * impl_io_disk;
 
-    ClientCallback * callback;
+    ClientChannelMod * callback;
 
 public:
 
@@ -171,7 +171,7 @@ public:
 
 
 
-    ClientChannelRDPDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config);
+    ClientChannelRDPDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config);
 
     ~ClientChannelRDPDRManager();
 

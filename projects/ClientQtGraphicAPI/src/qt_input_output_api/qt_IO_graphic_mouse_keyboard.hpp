@@ -32,7 +32,6 @@
 #include "qt_graphics_components/qt_form_window.hpp"
 
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -69,9 +68,7 @@ public:
     QPainter             painter;
     QImage cursor_image;
     std::map<uint32_t, RemoteAppQtScreen *> remote_app_screen_map;
-    //     QPixmap            * trans_cache;
-//     Qt_ScanCode_KeyMap   qtRDPKeymap;
-
+    //     QPixmap            * trans_cache;;
     std::vector<QPixmap> balises;
 
 
@@ -109,10 +106,8 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //----------------------------------
 
-    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override
-    {
+    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override {
         ClientOutputGraphicAPI::set_drawn_client(controller, config);
-
         this->form = new QtForm(this->config, this->controller, this);
     }
 
@@ -161,10 +156,10 @@ public:
         this->screen = new RDPQtScreen(this->config, this->controller, map);
     }
 
-    void create_screen(std::string const & movie_dir, std::string const & movie_path) override {
+    void create_replay_screen() override {
         QPixmap * map = &(this->cache);
-        std::string filename = movie_dir+movie_path;/*this->controller->get_mwrm_filename();*/
-        this->screen = new ReplayQtScreen(this->controller, movie_dir, movie_path, map, this->controller->get_movie_time_length(filename.c_str()), 0, this->config);
+
+        this->screen = new ReplayQtScreen(this->controller, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, this->config);
     }
 
     QWidget * get_static_qwidget() {
@@ -449,11 +444,12 @@ private:
                         }
                         this->dropScreen();
                     }
+
                     this->reset_cache(width, height);
 
                     if (!this->is_pre_loading) {
-                        std::string filename = this->config->_movie_dir + this->config->_movie_name;
-                        this->screen = new ReplayQtScreen(this->controller, this->config->_movie_dir, this->config->_movie_name, &(this->cache), this->controller->get_movie_time_length(filename.c_str()), current_time_movie, this->config);
+
+                        this->screen = new ReplayQtScreen(this->controller, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, this->config);
 
                         this->screen->show();
                     }
@@ -492,12 +488,11 @@ private:
     }
 
 
-    void pre_load_movie(std::string & movie_dir, std::string & movie_name) override {
+    void pre_load_movie(const std::string & movie_path) override {
 
         this->balises.clear();
 
-        std::string filename = movie_dir + movie_name;
-        long int movie_length = this->controller->get_movie_time_length(filename.c_str());
+        long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
         this->form->hide();
         this->bar = new ProgressBarWindow(movie_length);
         long int endin_frame = 0;
@@ -1462,28 +1457,6 @@ private:
     //      CONTROLLERS
     //------------------------
 
-//     void keyPressEvent(const int key, std::string const& text) override {
-// //         if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-// //             this->client_replay->send_rdp_unicode(text, 0);
-// //         } else {
-//         this->qtRDPKeymap.keyEvent(0, key, text);
-//         if (this->qtRDPKeymap.scanCode != 0) {
-//             this->controller->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
-//         }
-// //         }
-//     }
-//
-//     void keyReleaseEvent(const int key, std::string const& text) override {
-// //          if (this->client_replay->mod_state ==  ClientRedemptionConfig::MOD_VNC) {
-// //             this->client_replay->send_rdp_unicode(text, KBD_FLAG_UP);
-// //         } else {
-//             this->qtRDPKeymap.keyEvent(KBD_FLAG_UP, key, text);
-//             if (this->qtRDPKeymap.scanCode != 0) {
-//                 this->controller->send_rdp_scanCode(this->qtRDPKeymap.scanCode, this->qtRDPKeymap.flag);
-//             }
-// //         }
-//     }
-
     bool connexionReleased() {
         bool conn_res = false;
         if (this->form) {
@@ -1504,7 +1477,12 @@ private:
         return conn_res;
     }
 
-    void closeFromScreen() override {
+    void closeFromGUI() override {
+
+//         this->config->is_replaying = false;
+//         this->config->connected = false;
+
+
 
         this->controller->disconnexionReleased();
 

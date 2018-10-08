@@ -30,7 +30,7 @@
 #include "utils/fileutils.hpp"
 #include "core/RDP/clipboard.hpp"
 
-#include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 
@@ -123,7 +123,7 @@ class ClientChannelCLIPRDRManager
 public:
     RDPVerbose verbose;
     ClientIOClipboardAPI * clientIOClipboardAPI;
-    ClientCallback * callback;
+    ClientChannelMod * callback;
 
     enum : int {
         PASTE_TEXT_CONTENT_SIZE = CHANNELS::CHANNEL_CHUNK_LENGTH - 8
@@ -179,7 +179,7 @@ public:
 
 
 
-    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
+    ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
 
     ~ClientChannelCLIPRDRManager();
 

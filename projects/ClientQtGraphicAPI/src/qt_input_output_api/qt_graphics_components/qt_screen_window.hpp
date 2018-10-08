@@ -103,7 +103,7 @@ public:
         this->config->writeWindowsData();
 
         if (!this->_connexionLasted) {
-            this->callback->closeFromScreen();
+            this->callback->closeFromGUI();
         }
     }
 
@@ -360,7 +360,7 @@ public Q_SLOTS:
     }
 
     void RefreshPressed() {
-        this->callback->refreshPressed();
+        this->callback->refreshPressed(this->_width, this->_height);
     }
 
     void CtrlAltDelPressed() {
@@ -392,7 +392,7 @@ public:
 
     bool           _running;
     std::string    _movie_name;
-    std::string    _movie_dir;
+//     std::string    _movie_dir;
 
     timeval movie_time_start;
     timeval movie_time_pause;
@@ -412,15 +412,15 @@ public:
 
 
 public:
-    ReplayQtScreen (ClientCallback * callback, std::string const & movie_dir, std::string const & movie_name, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
+    ReplayQtScreen (ClientCallback * callback, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
         : QtScreen(config, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
         , _timer_replay(this)
         , _running(false)
-        , _movie_name(movie_name)
-        , _movie_dir(movie_dir)
+        , _movie_name(this->config->_movie_name)
+//         , _movie_dir(movie_dir)
         , is_paused(false)
         , movie_time(movie_time)
         , movie_status( QString("  Stop"), this)
@@ -665,14 +665,14 @@ public Q_SLOTS:
                 timeval pause_duration = tvtime();
                 pause_duration = {pause_duration.tv_sec - this->movie_time_pause.tv_sec, pause_duration.tv_usec - this->movie_time_pause.tv_usec};
                 this->movie_time_start.tv_sec += pause_duration.tv_sec;
-                this->callback->replay_set_pause(pause_duration);
+                this->callback->set_pause(pause_duration);
 
                 this->is_paused = false;
             } else {
                 this->begin = 0;
                 this->barRepaint(this->reading_bar_len, QColor(Qt::black));
                 this->movie_time_start = tvtime();
-                this->callback->replay_set_sync();
+                this->callback->set_sync();
             }
             this->_buttonCtrlAltDel.setText("Pause");
             this->movie_status.setText("  Play ");
@@ -700,12 +700,12 @@ public Q_SLOTS:
             this->movie_status.setText("  Stop ");
             this->_running = false;
             this->is_paused = false;
-            this->callback->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0});
+            this->callback->load_replay_mod(this->config->_movie_full_path, {0, 0}, {0, 0});
         }
     }
 
     void closeReplay() {
-        this->callback->delete_replay_mod();
+       // this->callback->delete_replay_mod();
         this->callback->disconnexionReleased();
     }
 
@@ -723,7 +723,7 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        if (this->callback->load_replay_mod(this->_movie_dir, this->_movie_name, {0, 0}, {0, 0})) {
+        if (this->callback->load_replay_mod(this->config->_movie_full_path, {0, 0}, {0, 0})) {
             //this->slotRepainMatch();
         }
     }

@@ -45,7 +45,7 @@ namespace rdpdr
 RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -199,7 +199,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
 RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
 RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -298,7 +298,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -353,7 +353,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -408,7 +408,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -460,7 +460,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
 RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -502,7 +502,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
 RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
@@ -551,7 +551,7 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
 RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
 {
     FakeRDPChannelsMod mod;
-    ClientCallback callback(nullptr, nullptr);
+    ClientChannelMod callback;
     callback.set_mod(&mod);
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;

@@ -65,7 +65,7 @@ public:
 
     virtual void create_screen() = 0;
 
-    virtual void closeFromScreen() = 0;
+    virtual void closeFromGUI() = 0;
 
     virtual void set_screen_size(int x, int y) = 0;
 
@@ -74,7 +74,7 @@ public:
 
     // replay mod
 
-    virtual void create_screen(std::string const &  /*unused*/, std::string const &  /*unused*/) = 0;
+    virtual void create_replay_screen() = 0;
 
     virtual void draw_frame(int  /*unused*/) {}
 
@@ -111,5 +111,5 @@ public:
 
     virtual void open_options() {}
 
-    virtual void pre_load_movie(std::string & /*movie_dir*/, std::string & /*movie_name*/) {}
+    virtual void pre_load_movie(const std::string & /*movie_path*/) {}
 };

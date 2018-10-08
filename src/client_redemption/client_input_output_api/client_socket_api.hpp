@@ -27,10 +27,15 @@
 
 
 
-class ClientInputSocketAPI : public ClientIO {
+class ClientInputSocketAPI {
 
 public:
     mod_api * _callback = nullptr;
+    ClientRedemptionAPI * client;
+
+    void set_client(ClientRedemptionAPI * client) {
+        this->client = client;
+    }
 
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
     virtual void disconnect() = 0;

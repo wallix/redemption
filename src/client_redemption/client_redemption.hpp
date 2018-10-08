@@ -53,12 +53,13 @@
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 
 #include "front/execute_events.hpp"
 
 
 
-class ClientRedemption : public ClientRedemptionAPI/*ClientRedemptionController*/
+class ClientRedemption : public ClientRedemptionAPI
 {
 
 public:
@@ -74,6 +75,7 @@ private:
     NullReportMessage reportMessage;
 
     ClientCallback _callback;
+    ClientChannelMod channel_mod;
 
 public:
     SessionReactor& session_reactor;
@@ -117,10 +119,6 @@ public:
     ClientChannelCLIPRDRManager   clientChannelCLIPRDRManager;
     ClientChannelRDPDRManager     clientChannelRDPDRManager;
     ClientChannelRemoteAppManager clientChannelRemoteAppManager;
-
-
-//     // Replay Mod
-//     ClientRedemptionReplay replay;
 
     // Recorder
     Fstat fstat;
@@ -229,10 +227,10 @@ public:
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
-        , clientChannelRDPSNDManager(this->config.verbose, &(this->_callback), this->impl_sound, this->config.rDPSoundConfig)
-        , clientChannelCLIPRDRManager(this->config.verbose, &(this->_callback), this->impl_clipboard, this->config.rDPClipboardConfig)
-        , clientChannelRDPDRManager(this->config.verbose, &(this->_callback), this->impl_io_disk, this->config.rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), this->impl_graphic)
+        , clientChannelRDPSNDManager(this->config.verbose, &(this->channel_mod), this->impl_sound, this->config.rDPSoundConfig)
+        , clientChannelCLIPRDRManager(this->config.verbose, &(this->channel_mod), this->impl_clipboard, this->config.rDPClipboardConfig)
+        , clientChannelRDPDRManager(this->config.verbose, &(this->channel_mod), this->impl_io_disk, this->config.rDPDiskConfig)
+        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), &(this->channel_mod), this->impl_graphic)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -241,16 +239,16 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
-        this->set_icon_movie_data();
+        this->config.set_icon_movie_data();
 
         if (this->impl_clipboard) {
             this->impl_clipboard->set_client(this);
             this->impl_clipboard->set_path(this->config.CB_TEMP_DIR);
+            this->impl_clipboard->set_manager(&(this->clientChannelCLIPRDRManager));
         } else {
             LOG(LOG_WARNING, "No clipoard IO implementation.");
         }
         if (this->impl_sound) {
-            this->impl_sound->set_client(this);
             this->impl_sound->set_path(this->config.SOUND_TEMP_DIR);
         } else {
             LOG(LOG_WARNING, "No sound output implementation.");
@@ -260,11 +258,6 @@ public:
         } else {
             LOG(LOG_WARNING, "No socket lister implementation.");
         }
-//         if (this->impl_keylayout) {
-//             this->impl_keylayout->set_callback(&(this->_callback));
-//         } else {
-//             LOG(LOG_WARNING, "No keyboard and mouse input implementation.");
-//         }
         if (this->impl_graphic) {
             this->impl_graphic->set_drawn_client(&(this->_callback), &(this->config));
         } else {
@@ -309,7 +302,7 @@ public:
     {
         if (ExecuteEventsResult::Error == execute_events(
             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
-            *this->mod, *this
+            *this->_callback.get_mod(), *this
         )) {
             LOG(LOG_ERR, "RDP CLIENT :: errno = %s\n", strerror(errno));
             return 9;
@@ -361,73 +354,15 @@ public:
 //         this->windowsData.write();
 //     }
 
-    void closeFromScreen() override {
+    void closeFromGUI() override {
         if (this->impl_graphic) {
-            this->impl_graphic->closeFromScreen();
+            this->impl_graphic->closeFromGUI();
         }
     }
-
-    std::vector<IconMovieData> get_icon_movie_data() {
-
-        this->config.icons_movie_data.clear();
-
-        DIR *dir;
-        struct dirent *ent;
-        std::string extension(".mwrm");
-
-        if ((dir = opendir (this->config.REPLAY_DIR.c_str())) != nullptr) {
-
-            try {
-                while ((ent = readdir (dir)) != nullptr) {
-
-                    std::string current_name = std::string (ent->d_name);
-
-                    if (current_name.length() > 5) {
-
-                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
-                        if (end_string == extension) {
-
-                            std::string file_path = this->config.REPLAY_DIR + "/" + current_name;
-
-                            std::fstream ofile(file_path.c_str(), std::ios::in);
-                            if(ofile) {
-                                std::string file_name(current_name.substr(0, current_name.length()-5));
-                                std::string file_version;
-                                std::string file_resolution;
-                                std::string file_checksum;
-                                long int movie_len = this->get_movie_time_length(file_path.c_str());
-
-                                std::getline(ofile, file_version);
-                                std::getline(ofile, file_resolution);
-                                std::getline(ofile, file_checksum);
-
-                                this->config.icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
-
-                            } else {
-                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
-                            }
-                        }
-                    }
-                }
-            } catch (Error & e) {
-                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-            }
-            closedir (dir);
-        }
-
-        return this->config.icons_movie_data;
-    }
-
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
 
-
-        if (this->mod != nullptr) {
-            if (!pipe_broken) {
-                this->mod->disconnect(this->timeSystem.get_time().tv_sec);
-            }
-            this->mod = nullptr;
-        }
+        this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
 
         if (this->impl_socket_listener) {
             this->impl_socket_listener->disconnect();
@@ -458,7 +393,7 @@ public:
                 this->impl_graphic->set_ErrorMsg(error);
             }
         }
-        this->set_icon_movie_data();
+        this->config.set_icon_movie_data();
         if (this->impl_graphic) {
             this->impl_graphic->init_form();
         }
@@ -467,7 +402,7 @@ public:
     bool init_mod()  {
 
         try {
-            this->mod = nullptr;
+            this->_callback.init();
 
             switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_RDP:
@@ -573,14 +508,13 @@ public:
                 break;
             }
 
-            this->mod = this->unique_mod.get();
-
         } catch (const Error &) {
-            this->mod = nullptr;
+            this->_callback.init();
             return false;
         }
 
-        this->_callback.set_mod(this->mod);
+        this->_callback.set_mod(this->unique_mod.get());
+        this->channel_mod.set_mod(this->unique_mod.get());
 
         return true;
     }
@@ -788,7 +722,7 @@ public:
 
                 if (this->impl_socket_listener) {
 
-                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->mod)) {
+                    if (this->impl_socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                         this->start_wab_session_time = tvtime();
 
@@ -879,17 +813,15 @@ public:
         this->capture = std::make_unique<Capture>(
             this->config.info.width, this->config.info.height,
             captureParams, wrmParams);
-
-        //this->capture->gd_drawable->width();
     }
 
 
-    bool load_replay_mod(std::string const & movie_dir, std::string const & movie_name, timeval begin_read, timeval end_read) override {
+    bool load_replay_mod( std::string const & movie_path, timeval begin_read, timeval end_read) override {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , *this
-              , (movie_dir + movie_name).c_str() //(this->config.REPLAY_DIR + "/").c_str()
+              , movie_path.c_str()
               , 0             //this->config.info.width
               , 0             //this->config.info.height
               , this->_error
@@ -902,6 +834,8 @@ public:
               , to_verbose_flags(0)
             );
 
+            this->_callback.set_replay(this->replay_mod.get());
+
             return true;
 
         } catch (const Error & err) {
@@ -912,7 +846,7 @@ public:
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
-            const std::string errorMsg("Cannot read movie \""+movie_name+ "\".");
+            const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
             LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             this->disconnect(labelErrorMsg, false);
@@ -920,10 +854,11 @@ public:
         return false;
     }
 
-    void replay(const std::string & movie_name, const std::string & movie_dir) override {
+    void replay( const std::string & movie_path) override {
 
-        this->config._movie_name = movie_name;
-        this->config._movie_dir = movie_dir;
+//         this->config._movie_name = movie_name;
+//         this->config._movie_dir = movie_dir;
+        this->config._movie_full_path = movie_path;
 
         if (this->config._movie_name.empty()) {
              //this->impl_graphic->readError(movie_path_);
@@ -932,29 +867,29 @@ public:
 
         this->config.is_replaying = true;
         this->config.is_loading_replay_mod = true;
+
         //this->setScreenDimension();
-        if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {0, 0}, {0, 0})) {
+        if (this->load_replay_mod(movie_path, {0, 0}, {0, 0})) {
 
             this->config.is_loading_replay_mod = false;
 
             if (impl_graphic) {
-                this->impl_graphic->create_screen(this->config._movie_dir, this->config._movie_name);
+                this->impl_graphic->create_replay_screen();
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                    if (this->impl_graphic) {
-                        this->impl_graphic->pre_load_movie(this->config._movie_dir, this->config._movie_name);
-                        LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
-                          /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
-                         LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/
-                         LOG(LOG_INFO, "amount_RDPMemBlt = %d pixels_RDPMemBlt = %ld", this->wrmGraphicStat.amount_RDPMemBlt, this->wrmGraphicStat.pixels_RDPMemBlt);
-                         LOG(LOG_INFO, "amount_RDPBitmapData = %d pixels_RDPBitmapData = %ld ", this->wrmGraphicStat.amount_RDPBitmapData, this->wrmGraphicStat.pixels_RDPBitmapData);
-                         LOG(LOG_INFO, "amount_RDPPatBlt= %d pixels_RDPPatBlt= %ld", this->wrmGraphicStat.amount_RDPPatBlt, this->wrmGraphicStat.pixels_RDPPatBlt);
-                         //LOG(LOG_INFO, "amount_RDPMultiPatBlt = %d pixels_RDPMultiPatBlt = %ld");
-                         LOG(LOG_INFO, "amount_RDPOpaqueRect = %d pixels_RDPOpaqueRect = %ld", this->wrmGraphicStat.amount_RDPOpaqueRect, this->wrmGraphicStat.pixels_RDPOpaqueRect);
-                          /*\n amount_RDPMultiOpaqueRect = %d pixels_RDPMultiOpaqueRect = %ld*/
-                         LOG(LOG_INFO, "amount_RDPLineTo = %d pixels_RDPLineTo = %ld ", this->wrmGraphicStat.amount_RDPLineTo, this->wrmGraphicStat.pixels_RDPLineTo);
-                          /*amount_RDPPolygonSC = %d pixels_RDPPolygonSC = %ld\n amount_RDPPolygonCB = %d pixels_RDPPolygonCB = %ld\n amount_RDPPolyline = %d pixels_RDPPolyline = %ld\n amount_RDPEllipseSC = %d pixels_RDPEllipseSC = %ld\n amount_RDPEllipseCB = %d pixels_RDPEllipseCB = %ld\n*/
-                         LOG(LOG_INFO, "amount_RDPMem3Blt= %d pixels_RDPMem3Blt= %ld", this->wrmGraphicStat.amount_RDPMem3Blt, this->wrmGraphicStat.pixels_RDPMem3Blt);
-                         LOG(LOG_INFO, "amount_RDPGlyphIndex = %d pixels_RDPGlyphIndex = %ld", this->wrmGraphicStat.amount_RDPGlyphIndex, this->wrmGraphicStat.pixels_RDPGlyphIndex);
+                    this->impl_graphic->pre_load_movie(movie_path);
+                    LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
+                        /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
+                    LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/
+                    LOG(LOG_INFO, "amount_RDPMemBlt = %d pixels_RDPMemBlt = %ld", this->wrmGraphicStat.amount_RDPMemBlt, this->wrmGraphicStat.pixels_RDPMemBlt);
+                    LOG(LOG_INFO, "amount_RDPBitmapData = %d pixels_RDPBitmapData = %ld ", this->wrmGraphicStat.amount_RDPBitmapData, this->wrmGraphicStat.pixels_RDPBitmapData);
+                    LOG(LOG_INFO, "amount_RDPPatBlt= %d pixels_RDPPatBlt= %ld", this->wrmGraphicStat.amount_RDPPatBlt, this->wrmGraphicStat.pixels_RDPPatBlt);
+                    //LOG(LOG_INFO, "amount_RDPMultiPatBlt = %d pixels_RDPMultiPatBlt = %ld");
+                    LOG(LOG_INFO, "amount_RDPOpaqueRect = %d pixels_RDPOpaqueRect = %ld", this->wrmGraphicStat.amount_RDPOpaqueRect, this->wrmGraphicStat.pixels_RDPOpaqueRect);
+                    /*\n amount_RDPMultiOpaqueRect = %d pixels_RDPMultiOpaqueRect = %ld*/
+                    LOG(LOG_INFO, "amount_RDPLineTo = %d pixels_RDPLineTo = %ld ", this->wrmGraphicStat.amount_RDPLineTo, this->wrmGraphicStat.pixels_RDPLineTo);
+                    /*amount_RDPPolygonSC = %d pixels_RDPPolygonSC = %ld\n amount_RDPPolygonCB = %d pixels_RDPPolygonCB = %ld\n amount_RDPPolyline = %d pixels_RDPPolyline = %ld\n amount_RDPEllipseSC = %d pixels_RDPEllipseSC = %ld\n amount_RDPEllipseCB = %d pixels_RDPEllipseCB = %ld\n*/
+                    LOG(LOG_INFO, "amount_RDPMem3Blt= %d pixels_RDPMem3Blt= %ld", this->wrmGraphicStat.amount_RDPMem3Blt, this->wrmGraphicStat.pixels_RDPMem3Blt);
+                    LOG(LOG_INFO, "amount_RDPGlyphIndex = %d pixels_RDPGlyphIndex = %ld", this->wrmGraphicStat.amount_RDPGlyphIndex, this->wrmGraphicStat.pixels_RDPGlyphIndex);
 
 //              this->wrmGraphicStat.amount_RDPMultiDstBlt,
 //              this->wrmGraphicStat.pixels_RDPMultiDstBlt,
@@ -982,11 +917,7 @@ public:
 //
 //              this->wrmGraphicStat.amount_RDPEllipseCB,
 //              this->wrmGraphicStat.pixels_RDPEllipseCB,
-                    }
                 }
-            }
-
-            if (impl_graphic) {
                 this->impl_graphic->show_screen();
             }
         }
@@ -1003,7 +934,7 @@ public:
         switch (this->replay_mod->get_wrm_version()) {
 
                 case WrmVersion::v1:
-                    if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {0, 0}, {0, 0})) {
+                    if (this->load_replay_mod(this->config._movie_full_path, {0, 0}, {0, 0})) {
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
                         movie_time_start = tvtime();
                         return movie_time_start;
@@ -1014,11 +945,13 @@ public:
                 {
                     int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
                     this->config.is_loading_replay_mod = true;
-                    if (this->load_replay_mod(this->config._movie_dir, this->config._movie_name, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+                    if (this->load_replay_mod(this->config._movie_full_path, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
 
                         this->config.is_loading_replay_mod = false;
 
-                        this->draw_frame(last_balised);
+                        if (this->impl_graphic) {
+                            this->impl_graphic->draw_frame(last_balised);
+                        }
 
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
 
@@ -1041,108 +974,6 @@ public:
         return movie_time_start;
     }
 
-    void replay_set_pause(timeval pause_duration) override {
-        this->replay_mod->set_pause(pause_duration);
-    }
-
-    void replay_set_sync() override {
-        this->replay_mod->set_sync();
-    }
-
-    bool is_replay_on() override {
-        if (!this->replay_mod->get_break_privplay_client()) {
-            if (!this->replay_mod->play_client()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    time_t get_real_time_movie_begin() override {
-        return this->replay_mod->get_real_time_movie_begin();
-    }
-
-    std::string get_mwrm_filename() override {
-        this->config._movie_full_path = this->config._movie_dir + this->config._movie_name;
-        return this->config._movie_full_path;
-    }
-
-    void set_icon_movie_data() {
-
-        this->config.icons_movie_data.clear();
-
-        DIR *dir;
-        struct dirent *ent;
-        std::string extension(".mwrm");
-
-        if ((dir = opendir (this->config.REPLAY_DIR.c_str())) != nullptr) {
-//
-            try {
-                while ((ent = readdir (dir)) != nullptr) {
-
-                    std::string current_name = std::string (ent->d_name);
-
-                    if (current_name.length() > 5) {
-
-                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
-                        if (end_string == extension) {
-
-                            std::string file_path = this->config.REPLAY_DIR + "/" + current_name;
-
-                            std::fstream ofile(file_path.c_str(), std::ios::in);
-                            if(ofile) {
-                                std::string file_name(current_name.substr(0, current_name.length()-5));
-                                std::string file_version;
-                                std::string file_resolution;
-                                std::string file_checksum;
-                                long int movie_len = this->get_movie_time_length(file_path.c_str());
-
-                                std::getline(ofile, file_version);
-                                std::getline(ofile, file_resolution);
-                                std::getline(ofile, file_checksum);
-
-                                this->config.icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
-
-                            } else {
-                                LOG(LOG_INFO, "Can't open file \"%s\"", file_path);
-                            }
-                        }
-                    }
-                }
-            } catch (Error & e) {
-                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-            }
-            closedir (dir);
-        }
-    }
-
-    time_t get_movie_time_length(const char * mwrm_filename) override  {
-        // TODO RZ: Support encrypted recorded file.
-
-        CryptoContext cctx;
-        Fstat fsats;
-        InCryptoTransport trans(cctx, InCryptoTransport::EncryptionMode::NotEncrypted, fsats);
-        MwrmReader mwrm_reader(trans);
-        MetaLine meta_line;
-
-        time_t start_time = 0;
-        time_t stop_time = 0;
-
-        trans.open(mwrm_filename);
-        mwrm_reader.read_meta_headers();
-
-        Transport::Read read_stat = mwrm_reader.read_meta_line(meta_line);
-        if (read_stat == Transport::Read::Ok) {
-            start_time = meta_line.start_time;
-            stop_time = meta_line.stop_time;
-            while (read_stat == Transport::Read::Ok) {
-                stop_time = meta_line.stop_time;
-                read_stat = mwrm_reader.read_meta_line(meta_line);
-            }
-        }
-
-        return stop_time - start_time;
-    }
 
     void instant_play_client(std::chrono::microseconds time) override {
         this->replay_mod->instant_play_client(time);
@@ -1153,10 +984,6 @@ public:
     //--------------------------------
     //      CHANNELS FUNCTIONS
     //--------------------------------
-
-    void send_clipboard_format() override {
-        this->clientChannelCLIPRDRManager.send_FormatListPDU();
-    }
 
     void send_to_channel( const CHANNELS::ChannelDef & channel, uint8_t const * data, size_t  /*unused*/, size_t chunk_size, int flags) override {
 
@@ -1275,7 +1102,7 @@ public:
 
     void callback(bool is_timeout) override {
 
-        if (this->mod != nullptr) {
+//         if (this->mod != nullptr) {
             try {
                 auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
                 if (is_timeout) {
@@ -1297,7 +1124,7 @@ public:
 
                 this->disconnect(labelErrorMsg, true);
             }
-        }
+//         }
     }
 
 
@@ -1521,11 +1348,11 @@ public:
         }
     }
 
-    void draw_frame(int frame_index) override {
-        if (this->impl_graphic) {
-            this->impl_graphic->draw_frame(frame_index);
-        }
-    }
+//     void draw_frame(int frame_index) override {
+//         if (this->impl_graphic) {
+//             this->impl_graphic->draw_frame(frame_index);
+//         }
+//     }
 
 //     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
 //

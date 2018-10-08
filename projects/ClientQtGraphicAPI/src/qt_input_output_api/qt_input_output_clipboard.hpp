@@ -32,6 +32,7 @@
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
@@ -66,7 +67,6 @@ public:
         , CF_QT_CLIENT_FILECONTENTS         = 48026
     };
 
-//     ClientRedemptionAPI    * _front;
     QClipboard                * _clipboard;
     std::unique_ptr<uint8_t[]>  _chunk;
     QImage                      _bufferImage;
@@ -237,7 +237,7 @@ public:
 public Q_SLOTS:
 
     void mem_clipboard() {
-        if (this->client->mod != nullptr && this->_local_clipboard_stream) {
+        if (this->_local_clipboard_stream) {
             const QMimeData * mimeData = this->_clipboard->mimeData();
             mimeData->hasImage();
 
@@ -266,7 +266,7 @@ public Q_SLOTS:
                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
-                this->client->send_clipboard_format();
+                this->manager->send_FormatListPDU();
             //==========================================================================
 
 
@@ -351,7 +351,7 @@ public Q_SLOTS:
                             }
                         }
 
-                        this->client->send_clipboard_format();
+                        this->manager->send_FormatListPDU();
                 //==========================================================================
 
 
@@ -375,7 +375,7 @@ public Q_SLOTS:
 
                         this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
 
-                        this->client->send_clipboard_format();
+                        this->manager->send_FormatListPDU();
                 //==========================================================================
                     }
                 }

@@ -89,8 +89,8 @@ int run_mod(ClientRedemption & front) {
     const timeval time_stop = addusectimeval(front.config.time_out_disconnection, tvtime());
     const std::chrono::milliseconds time_mark = 50ms;
 
-    if (front.mod) {
-        auto & mod = *(front.mod);
+    if (front._callback.get_mod()) {
+        auto & mod = *(front._callback.get_mod());
 
         bool logged = false;
 

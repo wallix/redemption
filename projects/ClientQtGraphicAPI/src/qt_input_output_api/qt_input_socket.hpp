@@ -47,9 +47,9 @@ REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Winconsistent-missing-override")
 Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
+public:
     SessionReactor& session_reactor;
 
-public:
     QSocketNotifier           * _sckListener;
 
     QTimer timer;
@@ -66,6 +66,9 @@ public:
         this->disconnect();
     }
 
+    void set_client(ClientRedemptionAPI * client) {
+        this->client = client;
+    }
 
     void disconnect() override {
         if (this->_sckListener != nullptr) {
@@ -98,7 +101,7 @@ public:
 public Q_SLOTS:
     void call_draw_event_data() {
         // LOG(LOG_DEBUG, "draw_event_data");
-        if (this->_callback) {
+        if (this->_callback && this->client) {
             this->client->callback(false);
             this->prepare_timer_event();
         }
@@ -106,7 +109,7 @@ public Q_SLOTS:
 
     void call_draw_event_timer() {
         // LOG(LOG_DEBUG, "draw_event_timer");
-        if (this->_callback) {
+        if (this->_callback && this->client) {
             this->client->callback(true);
             this->prepare_timer_event();
         }
@@ -117,7 +120,7 @@ private:
 
         timeval now = tvtime();
         this->session_reactor.set_current_time(now);
-        timeval const tv = this->session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true});
+        timeval const tv = this->session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, std::chrono::milliseconds(1000));
         // LOG(LOG_DEBUG, "start timer: %ld %ld", tv.tv_sec, tv.tv_usec);
 
         if (tv.tv_sec > -1) {

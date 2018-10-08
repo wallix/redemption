@@ -30,10 +30,9 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/channel_list.hpp"
 
-#include "client_redemption/mod_wrapper/client_callback.hpp"
+#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
 
 
 // [MS-RDPERP]: Remote Desktop Protocol: Remote Programs Virtual Channel Extension
@@ -158,6 +157,7 @@ class ClientChannelRemoteAppManager {
     RDPVerbose verbose;
 
     ClientCallback * callback;
+    ClientChannelMod * channel_mod;
     ClientOutputGraphicAPI * impl_graphic;
 
     std::string source_of_ExeOrFile;
@@ -177,9 +177,11 @@ public:
 
     ClientChannelRemoteAppManager(RDPVerbose verbose,
                                   ClientCallback * callback,
+                                  ClientChannelMod * channel_mod,
                                   ClientOutputGraphicAPI * impl_graphic)
       : verbose(verbose)
       , callback(callback)
+      , channel_mod(channel_mod)
       , impl_graphic(impl_graphic)
       {}
 
@@ -227,7 +229,7 @@ public:
                         if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
                                 this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
-                                this->callback->refreshPressed();
+                                this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
                         }
                     }
 
@@ -296,7 +298,7 @@ public:
                         this->impl_graphic->set_screen_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
                         this->impl_graphic->set_mem_size(win_id, cmd.WindowWidth(), cmd.WindowHeight());
 
-                        this->callback->refreshPressed();
+                        this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
                     }
                 }
                 break;
@@ -334,7 +336,7 @@ public:
             this->impl_graphic->clear_remote_app_screen();
             this->callback->disconnexionReleased();
         } else {
-            this->callback->refreshPressed();
+            this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
         }
     }
 
@@ -386,7 +388,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -409,7 +411,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -430,7 +432,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -451,7 +453,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -475,7 +477,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -496,7 +498,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -520,7 +522,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -541,7 +543,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -562,7 +564,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -583,7 +585,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -608,7 +610,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -631,7 +633,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |
@@ -651,7 +653,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                   , chunk_to_send
                                                   , out_stream.get_offset()
                                                   , CHANNELS::CHANNEL_FLAG_LAST |
@@ -713,7 +715,7 @@ public:
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 
-                    this->callback->send_to_mod_channel( channel_names::rail
+                    this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
                                                 , out_stream.get_offset()
                                                 , CHANNELS::CHANNEL_FLAG_LAST |

@@ -114,7 +114,7 @@
 
 
 
-    ClientChannelCLIPRDRManager::ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
+    ClientChannelCLIPRDRManager::ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
       :  verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , callback(callback)

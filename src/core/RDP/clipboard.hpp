@@ -704,10 +704,10 @@ public:
         }
 
         this->capabilitySetType = stream.in_uint16_le();
-        assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
+//         assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
 
         this->lengthCapability  = stream.in_uint16_le();
-        assert(this->size() == this->lengthCapability);
+//         assert(this->size() == this->lengthCapability);
 
         this->version_      = stream.in_uint32_le();
         this->generalFlags_ = stream.in_uint32_le();

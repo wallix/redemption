@@ -24,13 +24,16 @@
 
 
 #include "client_redemption/client_redemption_api.hpp"
+//#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 
+class ClientChannelCLIPRDRManager;
 
-
-
-class ClientIOClipboardAPI : public ClientIO {
+class ClientIOClipboardAPI {
 
 public:
+    ClientRedemptionAPI * client = nullptr;
+    ClientChannelCLIPRDRManager * manager;
+
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
         IMAGE_BUFFER_TYPE                = 1,
@@ -49,6 +52,14 @@ public:
     ClientIOClipboardAPI() = default;
 
     virtual ~ClientIOClipboardAPI() = default;
+
+    void set_manager(ClientChannelCLIPRDRManager * manager) {
+        this->manager = manager;
+    }
+
+    void set_client(ClientRedemptionAPI * client) {
+        this->client = client;
+    }
 
     void set_path(const std::string & path) {
         this->tmp_path = path;

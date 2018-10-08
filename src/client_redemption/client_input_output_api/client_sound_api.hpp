@@ -27,7 +27,7 @@
 
 
 
-class ClientOutputSoundAPI : public ClientIO {
+class ClientOutputSoundAPI {
 
 public:
     uint32_t n_sample_per_sec = 0;

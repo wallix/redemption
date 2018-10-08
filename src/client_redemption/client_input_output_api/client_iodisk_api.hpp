@@ -32,7 +32,7 @@
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
 
-class ClientIODiskAPI : public ClientIO {
+class ClientIODiskAPI {
 
 
 public:

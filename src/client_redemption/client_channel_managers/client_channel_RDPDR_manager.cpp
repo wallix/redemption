@@ -98,7 +98,7 @@
 
 
 
-ClientChannelRDPDRManager::ClientChannelRDPDRManager(RDPVerbose verbose, ClientCallback * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
+ClientChannelRDPDRManager::ClientChannelRDPDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
     : verbose(verbose)
     , impl_io_disk(impl_io_disk)
     , callback(callback)

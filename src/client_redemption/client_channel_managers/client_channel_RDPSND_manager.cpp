@@ -199,7 +199,7 @@
 
 
 
-ClientChannelRDPSNDManager::ClientChannelRDPSNDManager(RDPVerbose verbose, ClientCallback * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
+ClientChannelRDPSNDManager::ClientChannelRDPSNDManager(RDPVerbose verbose, ClientChannelMod * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
     : verbose(verbose)
     , impl_sound(impl_sound)
     , callback(callback)

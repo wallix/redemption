@@ -226,7 +226,9 @@ public:
             std::string const movie_dir = path.substr(0, pos);
 
             this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
-            this->controllers->replay(movie_name, movie_dir);
+            this->config->_movie_name = movie_name;
+
+            this->controllers->replay(path);
         }
     }
 
@@ -317,14 +319,14 @@ public:
     QtMoviesPanel movie_panel;
 
 
-    QtFormReplay(ClientRedemptionConfig * config, ClientCallback * controllers, const std::vector<IconMovieData> & iconData, QWidget * parent)
+    QtFormReplay(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
     : QWidget(parent)
     , config(config)
     , controllers(controllers)
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
     , scroller(this)
-    , movie_panel(iconData, config, controllers, this)
+    , movie_panel(config->get_icon_movie_data(), config, controllers, this)
     {
         this->scroller.setFixedSize(410,  250);
         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
@@ -360,7 +362,7 @@ private Q_SLOTS:
         std::string const movie_dir = str_movie_path.substr(0, pos);
 
         this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
-        this->controllers->replay(movie_name, movie_dir);
+        this->controllers->replay(str_movie_path);
     }
 
 };
@@ -1036,7 +1038,7 @@ public:
         , tabs(this)
         , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
         , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
-        , replay_tab(config, controllers, config->icons_movie_data, this)
+        , replay_tab(config, controllers, this)
         , is_option_open(false)
         , is_closing(false)
     {

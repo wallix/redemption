@@ -183,9 +183,9 @@ public:
     void reset_cache(int w,  int h) override { (void)w; (void)h; }
 
     void create_screen() override {}
-    void create_screen(std::string const & /*unused*/, std::string const & /*unused*/) override {}
+    void create_replay_screen() override {}
 
-    void closeFromScreen() override {}
+    void closeFromGUI() override {}
 
     void set_screen_size(int x, int y) override { (void)x; (void)y; }
     void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
@@ -301,7 +301,7 @@ public:
     FakeClient(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
       : ClientRedemptionAPI()
     {
-        this->mod = &(this->fake_mod);
+//         this->mod = &(this->fake_mod);
     }
 
     size_t get_total_stream_produced() {

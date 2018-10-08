@@ -40,55 +40,36 @@
 
 #include <chrono>
 
+
 class ClientRedemptionAPI : public FrontAPI
 {
-public:
-    mod_api            * mod = nullptr;
-
 
 public:
-
     ClientRedemptionAPI() {}
     virtual ~ClientRedemptionAPI() = default;
 
-    virtual void send_clipboard_format() {}
+    bool can_be_start_capture() override { return true; }
+
     virtual bool is_connected() {return false;}
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *
                          /*data*/, std::size_t  /*length*/, std::size_t  /*chunk_size*/, int  /*flags*/) override {}
     virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
+    virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
     virtual bool connect() {return true;}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
-    virtual void callback(bool /*is_timeout*/) {}
-    virtual void draw_frame(int  /*unused*/) {}
-    virtual void closeFromScreen() {}
+    virtual void closeFromGUI() {}
     virtual void disconnexionReleased() {}
     virtual void update_keylayout() {}
-    bool can_be_start_capture() override { return true; }
 
     // Replay functions
-    virtual time_t get_movie_time_length(const char * /*unused*/) { return time_t{}; }
-    virtual void instant_play_client(std::chrono::microseconds /*unused*/) {}
-    virtual void replay(const std::string & /*unused*/, const std::string & /*unused*/) {}
-    virtual bool load_replay_mod(std::string const & /*unused*/, std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
+    virtual void replay( const std::string & /*unused*/) {}
+    virtual bool load_replay_mod(std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
-    virtual bool is_replay_on() { return false; }
-    virtual std::string get_mwrm_filename() { return ""; }
-    virtual time_t get_real_time_movie_begin() { return time_t{}; }
     virtual void delete_replay_mod() {}
-    virtual void replay_set_pause(timeval /*unused*/) {}
-    virtual void replay_set_sync() {}
+    virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
 };
 
 
-class ClientIO
-{
-public:
-    ClientRedemptionAPI * client;
-
-    void set_client(ClientRedemptionAPI * client) {
-        this->client = client;
-    }
-};
 
