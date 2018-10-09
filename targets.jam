@@ -56,6 +56,8 @@ exe headlessclient :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -159,6 +161,8 @@ exe rdpproxy :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -204,6 +208,8 @@ exe rdpheadless :
   <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -236,6 +242,8 @@ exe proxy_recorder :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -283,6 +291,8 @@ exe rdpclient :
   <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -325,6 +335,7 @@ lib libredrec :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -336,6 +347,7 @@ lib libiametrics :
   $(LIB_DEPENDENCIES)
   <library>log.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
 ;
 lib libscytale :
   src/lib/scytale.cpp.lib.o
@@ -350,6 +362,7 @@ lib libscytale :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -391,6 +404,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -420,6 +434,7 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -524,6 +539,8 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -606,6 +623,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -676,6 +694,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -702,6 +721,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -748,6 +768,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -815,6 +837,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -853,6 +877,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -891,6 +917,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -929,6 +956,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -967,6 +995,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -1003,6 +1032,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -1045,6 +1075,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1739,6 +1770,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1911,6 +1943,7 @@ test-run tests/core/RDP/test_nego :
   <library>src/core/RDP/nego.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/multisz.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2243,6 +2276,8 @@ test-run tests/core/test_mainloop :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2354,6 +2389,8 @@ test-run tests/core/test_session :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2467,6 +2504,8 @@ test-run tests/core/test_session_server :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2521,6 +2560,8 @@ test-run tests/front/test_front :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2559,6 +2600,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2612,6 +2654,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2625,6 +2668,7 @@ test-run tests/lib/test_iametrics :
   <library>src/core/error.o
   <library>src/lib/iametrics.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2642,6 +2686,7 @@ test-run tests/lib/test_scytale :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2925,6 +2970,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3728,6 +3774,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/gdi/graphic_api.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3749,6 +3796,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3777,6 +3825,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/gdi/graphic_api.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3794,6 +3843,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/gdi/graphic_api.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3843,6 +3893,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3864,6 +3916,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/core/font.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3883,6 +3936,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3939,6 +3993,16 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
+test-run tests/mod/vnc/test_newline_convert :
+  $(REDEMPTION_TEST_PATH)/mod/vnc/test_newline_convert.cpp
+:
+  <covfile>src/mod/vnc/newline_convert.hpp
+  <library>boost_stacktrace
+  <library>src/core/error.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 test-run tests/mod/vnc/test_vnc :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
 :
@@ -3963,6 +4027,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3977,6 +4042,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4085,6 +4151,8 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4137,6 +4205,8 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4189,6 +4259,8 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/sugar/strutils.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4277,6 +4349,7 @@ test-run tests/system/linux/system/test_tls_context :
   <library>openssl
   <library>src/core/error.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4308,6 +4381,7 @@ test-run tests/transport/test_crypto_transport :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4346,6 +4420,7 @@ test-run tests/transport/test_in_meta_sequence_transport :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4363,6 +4438,7 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/transport/mwrm_reader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4374,6 +4450,7 @@ test-run tests/transport/test_out_file_transport :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4389,6 +4466,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/transport/replay_transport.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4419,6 +4497,7 @@ test-run tests/transport/test_socket_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4550,6 +4629,13 @@ test-run tests/utils/sugar/test_movable_noncopyable :
 :
   <covfile>src/utils/sugar/movable_noncopyable.hpp
 ;
+test-run tests/utils/sugar/test_multisz :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_multisz.cpp
+:
+  <covfile>src/utils/sugar/multisz.cpp
+  <covfile>src/utils/sugar/multisz.hpp
+  <library>src/utils/sugar/multisz.o
+;
 test-run tests/utils/sugar/test_noncopyable :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_noncopyable.cpp
 :
@@ -4568,12 +4654,9 @@ test-run tests/utils/sugar/test_splitter :
 test-run tests/utils/sugar/test_strutils :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_strutils.cpp
 :
+  <covfile>src/utils/sugar/strutils.cpp
   <covfile>src/utils/sugar/strutils.hpp
-  <library>boost_stacktrace
-  <library>src/core/error.o
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
+  <library>src/utils/sugar/strutils.o
 ;
 test-run tests/utils/sugar/test_underlying_cast :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_underlying_cast.cpp
@@ -4743,6 +4826,7 @@ test-run tests/utils/test_fileutils :
   <covfile>src/utils/fileutils.cpp
   <covfile>src/utils/fileutils.hpp
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
 ;
 test-run tests/utils/test_genfstat :
   $(REDEMPTION_TEST_PATH)/utils/test_genfstat.cpp
@@ -4784,6 +4868,7 @@ test-run tests/utils/test_load_theme :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/load_theme.o
+  <library>src/utils/sugar/strutils.o
 ;
 test-run tests/utils/test_log :
   $(REDEMPTION_TEST_PATH)/utils/test_log.cpp
@@ -4832,6 +4917,7 @@ test-run tests/utils/test_png :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4848,6 +4934,7 @@ test-run tests/utils/test_recording_progress :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/fileutils.o
+  <library>src/utils/sugar/strutils.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4930,7 +5017,6 @@ test-run tests/utils/test_video_cropper :
 test-run tests/utils/test_word_identification :
   $(REDEMPTION_TEST_PATH)/utils/test_word_identification.cpp
 :
-  <covfile>src/utils/word_identification.hpp
 ;
 test-run tests/utils/test_zlib :
   $(REDEMPTION_TEST_PATH)/utils/test_zlib.cpp
@@ -5050,6 +5136,8 @@ obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
+obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
+obj src/utils/sugar/strutils.o : $(REDEMPTION_SRC_PATH)/utils/sugar/strutils.cpp ;
 obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp ;
@@ -5499,6 +5587,8 @@ alias test_hextile : tests/mod/vnc/encoder/test_hextile ;
 alias test_hextile.coverage : tests/mod/vnc/encoder/test_hextile.coverage ;
 alias test_zrle : tests/mod/vnc/encoder/test_zrle ;
 alias test_zrle.coverage : tests/mod/vnc/encoder/test_zrle.coverage ;
+alias test_newline_convert : tests/mod/vnc/test_newline_convert ;
+alias test_newline_convert.coverage : tests/mod/vnc/test_newline_convert.coverage ;
 alias test_vnc : tests/mod/vnc/test_vnc ;
 alias test_vnc.coverage : tests/mod/vnc/test_vnc.coverage ;
 alias test_vnc_metrics : tests/mod/vnc/test_vnc_metrics ;
@@ -5602,6 +5692,8 @@ alias test_iter : tests/utils/sugar/test_iter ;
 alias test_iter.coverage : tests/utils/sugar/test_iter.coverage ;
 alias test_movable_noncopyable : tests/utils/sugar/test_movable_noncopyable ;
 alias test_movable_noncopyable.coverage : tests/utils/sugar/test_movable_noncopyable.coverage ;
+alias test_multisz : tests/utils/sugar/test_multisz ;
+alias test_multisz.coverage : tests/utils/sugar/test_multisz.coverage ;
 alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
 alias test_range : tests/utils/sugar/test_range ;
@@ -5702,7 +5794,6 @@ alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_video_cropper : tests/utils/test_video_cropper ;
 alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
 alias test_word_identification : tests/utils/test_word_identification ;
-alias test_word_identification.coverage : tests/utils/test_word_identification.coverage ;
 alias test_zlib : tests/utils/test_zlib ;
 alias test_zlib.coverage : tests/utils/test_zlib.coverage ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
@@ -6003,6 +6094,7 @@ alias tests/mod/vnc/encoder.norec :
   tests/mod/vnc/encoder/test_zrle
 ;
 alias tests/mod/vnc.norec :
+  tests/mod/vnc/test_newline_convert
   tests/mod/vnc/test_vnc
   tests/mod/vnc/test_vnc_metrics
 ;
@@ -6075,6 +6167,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_finally
   tests/utils/sugar/test_iter
   tests/utils/sugar/test_movable_noncopyable
+  tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range
   tests/utils/sugar/test_splitter

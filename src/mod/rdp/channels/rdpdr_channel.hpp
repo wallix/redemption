@@ -1749,13 +1749,13 @@ public:
                             this->server_device_io_request.DeviceId());
                     if ((rdpdr::RDPDR_DTYP_FILESYSTEM == device_type) &&
                         (target_iter->for_reading != target_iter->for_writing)) {
-                        static const char DESKTOP_INI_FILENAME[] = "/desktop.ini";
+                        auto const DESKTOP_INI_FILENAME = "/desktop.ini"_av;
                         if (target_iter->sequential_access_offset &&
                             !::ends_case_with(
                                     file_path.data(),
                                     file_path.size(),
-                                    DESKTOP_INI_FILENAME,
-                                    sizeof(DESKTOP_INI_FILENAME) - 1
+                                    DESKTOP_INI_FILENAME.data(),
+                                    DESKTOP_INI_FILENAME.size()
                                 )) {
                             if (target_iter->for_reading) {
                                 if (target_iter->sequential_access_offset == target_iter->end_of_file) {

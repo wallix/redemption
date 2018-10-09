@@ -26,7 +26,7 @@
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
 
-#include "utils/sugar/strutils.hpp"
+#include "utils/sugar/multisz.hpp"
 
 
 // Protocol Security Negotiation Protocols

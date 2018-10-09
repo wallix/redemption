@@ -36,6 +36,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/sugar/multisz.hpp"
 #include "utils/sugar/strutils.hpp"
 
 #include <cstring>
