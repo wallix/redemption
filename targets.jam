@@ -39,6 +39,12 @@ exe headlessclient :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
@@ -146,6 +152,12 @@ exe rdpproxy :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -198,6 +210,12 @@ exe rdpheadless :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/socket_transport.o
   <library>src/utils/authorization_channels.o
@@ -282,6 +300,12 @@ exe rdpclient :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
@@ -558,6 +582,12 @@ test-run tests/acl/test_module_manager :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2424,6 +2454,12 @@ test-run tests/core/test_mainloop :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2538,6 +2574,12 @@ test-run tests/core/test_session :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -2655,6 +2697,12 @@ test-run tests/core/test_session_server :
   <library>src/mod/internal/widget_test_mod.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
@@ -4169,6 +4217,7 @@ test-run tests/mod/test_mod_api :
 test-run tests/mod/vnc/encoder/test_hextile :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_hextile.cpp
 :
+  <covfile>src/mod/vnc/encoder/hextile.cpp
   <covfile>src/mod/vnc/encoder/hextile.hpp
   <library>boost_stacktrace
   <library>crypto
@@ -4190,6 +4239,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
 :
+  <covfile>src/mod/vnc/encoder/zrle.cpp
   <covfile>src/mod/vnc/encoder/zrle.hpp
   <define>ZLIB_CONST
   <library>boost_stacktrace
@@ -4237,6 +4287,12 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -5352,6 +5408,12 @@ obj src/mod/internal/widget_test_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/wid
 obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
+obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
+obj src/mod/vnc/encoder/cursor.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/cursor.cpp ;
+obj src/mod/vnc/encoder/hextile.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/hextile.cpp ;
+obj src/mod/vnc/encoder/raw.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/raw.cpp ;
+obj src/mod/vnc/encoder/rre.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/rre.cpp ;
+obj src/mod/vnc/encoder/zrle.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/zrle.cpp : <define>ZLIB_CONST ;
 obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
 obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
 obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.cpp ;

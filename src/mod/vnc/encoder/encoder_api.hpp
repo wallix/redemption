@@ -22,24 +22,62 @@ h
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "utils/verbose_flags.hpp"
-#include "mod/vnc/vnc_verbose.hpp"
-#include "core/buf64k.hpp"
-#include "gdi/graphic_api.hpp"
+#include <functional>
+
+#include <cassert>
 
 
-namespace VNC {
-    namespace Encoder {
-        enum class EncoderState {
+class Buf64k;
+namespace gdi
+{
+    class GraphicApi;
+}
+
+
+namespace VNC
+{
+    namespace Encoder
+    {
+        enum class EncoderState
+        {
             Ready,
             NeedMoreData,
             Exit
         };
-        class EncoderApi {
-        public:
-            virtual EncoderState consume(Buf64k & buf, gdi::GraphicApi & drawable) = 0;
-            virtual ~EncoderApi() = default;
+
+        struct Encoder
+        {
+            template<class Consumer>
+            explicit Encoder(Consumer&& consumer)
+            : consumer(std::forward<Consumer>(consumer))
+            {}
+
+            Encoder() = default;
+
+            Encoder(Encoder&&) = default;
+            Encoder(Encoder const&) = delete;
+            Encoder& operator=(Encoder&&) = default;
+            Encoder& operator=(Encoder const&) = delete;
+
+            Encoder& operator=(decltype(nullptr)) noexcept
+            {
+                this->consumer = nullptr;
+                return *this;
+            }
+
+            EncoderState operator()(Buf64k& buf, gdi::GraphicApi& gd)
+            {
+                assert(bool(this->consumer));
+                return this->consumer(buf, gd);
+            }
+
+            explicit operator bool() const noexcept
+            {
+                return bool(this->consumer);
+            }
+
+        private:
+            std::function<EncoderState(Buf64k&, gdi::GraphicApi&)> consumer;
         };
     }  // namespace Encoder
 } // namespace VNC

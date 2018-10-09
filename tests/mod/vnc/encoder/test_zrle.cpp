@@ -23,7 +23,7 @@
 #include "test_only/fake_graphic.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "mod/vnc/encoder/zrle.hpp"
+#include "mod/vnc/encoder/zrle.cpp"
 
 
 //connection to 10.10.47.0:5900 (10.10.47.0) succeeded : socket 34
@@ -6626,13 +6626,13 @@ RED_AUTO_TEST_CASE(TestZrle)
         BlockRead z0b0(z0_block0, sizeof(z0_block0));
         buf.read_with(z0b0);
         RED_CHECK(z0b0.empty());
-        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
-        RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder.consume(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder(buf, drawable));
 
         BlockRead z0b1(z0_block1, sizeof(z0_block1));
         buf.read_with(z0b1);
         RED_CHECK(z0b1.empty());
-        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder(buf, drawable));
     }
 
     // Second rect
@@ -6641,8 +6641,8 @@ RED_AUTO_TEST_CASE(TestZrle)
 
         BlockRead z1b0(z1_block0, sizeof(z1_block0));
         buf.read_with(z1b0);
-        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
-        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder(buf, drawable));
     }
 
     // Third rect
@@ -6651,12 +6651,12 @@ RED_AUTO_TEST_CASE(TestZrle)
 
         BlockRead z2b0(z2_block0, sizeof(z2_block0));
         buf.read_with(z2b0);
-        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder.consume(buf, drawable));
-        RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder.consume(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Ready == encoder(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::NeedMoreData == encoder(buf, drawable));
 
         BlockRead z2b1(z2_block1, sizeof(z2_block1));
         buf.read_with(z2b1);
-        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder.consume(buf, drawable));
+        RED_CHECK(VNC::Encoder::EncoderState::Exit == encoder(buf, drawable));
     }
 
 //    drawable.save_to_png("vnc_first_len.png");

@@ -2258,29 +2258,37 @@ private:
 
                         switch (this->encoding){
                         case COPYRECT_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::CopyRect(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.width, vnc.height, vnc.verbose);
-                        break;
+                            this->encoder = VNC::Encoder::copy_rect_encoder(
+                                Rect(this->x, this->y, this->cx, this->cy),
+                                vnc.width, vnc.height);
+                            break;
                         case HEXTILE_ENCODING:  /* hextile */
-                            this->encoder = new VNC::Encoder::Hextile(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
-                        break;
+                            this->encoder = VNC::Encoder::hextile_encoder(
+                                this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy),
+                                vnc.verbose);
+                            break;
                         case CURSOR_PSEUDO_ENCODING:  /* cursor */
-                            this->encoder = new VNC::Encoder::Cursor(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy,
-                                                                     vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max, vnc.blue_shift, vnc.blue_max,
-                                                                     vnc.verbose);
-                        break;
+                            this->encoder = VNC::Encoder::cursor_encoder(
+                                this->Bpp, Rect(this->x, this->y, this->cx, this->cy),
+                                vnc.red_shift, vnc.red_max, vnc.green_shift, vnc.green_max,
+                                vnc.blue_shift, vnc.blue_max, vnc.verbose);
+                            break;
                         case RAW_ENCODING:  /* raw */
-                            this->encoder = new VNC::Encoder::Raw(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
-                        break;
+                            this->encoder = VNC::Encoder::raw_encoder(
+                                this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy));
+                            break;
                         case ZRLE_ENCODING: /* ZRLE */
-                            this->encoder = new VNC::Encoder::Zrle(this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy), this->zd, vnc.verbose);
-                        break;
+                            this->encoder = VNC::Encoder::zrle_encoder(
+                                this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy),
+                                this->zd, vnc.verbose);
+                            break;
                         case RRE_ENCODING: /* RRE */
-                            this->encoder = new VNC::Encoder::RRE(this->bpp, this->Bpp, this->x, this->y, this->cx, this->cy, vnc.verbose);
+                            this->encoder = VNC::Encoder::rre_encoder(
+                                this->bpp, this->Bpp, Rect(this->x, this->y, this->cx, this->cy));
                             break;
                         default:
                             LOG(LOG_ERR, "unexpected VNC encoding %d", encoding);
                             throw Error(ERR_VNC_UNEXPECTED_ENCODING_IN_LIB_FRAME_BUFFER);
-                        break;
                         }
                         buf.advance(sz);
                         // Note: it is important to immediately call State::Data as in some cases there won't be
@@ -2299,13 +2307,13 @@ private:
                                 throw Error(ERR_VNC);
                             }
                         }
-                        if (encoder == nullptr){
+                        if (!bool(this->encoder)){
                             LOG(LOG_ERR, "Call to vnc::mod with null encoder");
                             throw Error(ERR_VNC);
                         }
 
                         // Pre Assertion: we have an encoder
-                        switch (encoder->consume(buf, drawable)){
+                        switch (encoder(buf, drawable)){
                             case VNC::Encoder::EncoderState::Ready:
                                 r = Result::ok(State::Data);
                                 this->last = VNC::Encoder::EncoderState::Ready;
@@ -2316,12 +2324,11 @@ private:
                                 this->last = VNC::Encoder::EncoderState::NeedMoreData;
                             break;
                             case VNC::Encoder::EncoderState::Exit:
-                            // consume returns true if encoder is finished (ready to be resetted)
-                            r = Result::ok(State::Encoding);
-                            delete encoder;
-                            encoder = nullptr;
-                            this->last = VNC::Encoder::EncoderState::NeedMoreData;
-                            break;
+                                // consume returns true if encoder is finished (ready to be resetted)
+                                r = Result::ok(State::Encoding);
+                                encoder = nullptr;
+                                this->last = VNC::Encoder::EncoderState::NeedMoreData;
+                                break;
                         }
                     }
                 }
@@ -2346,7 +2353,7 @@ private:
         uint16_t cy;
         int32_t encoding;
 
-        VNC::Encoder::EncoderApi * encoder = nullptr;
+        VNC::Encoder::Encoder encoder;
 
         Zdecompressor<> & zd;
 
