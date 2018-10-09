@@ -2769,11 +2769,11 @@ public:
         }
 
         this->buf.load_data(this->trans);
-        draw_event_impl(now, gd);
+        draw_event_impl(now, drawable_);
     }
 
 
-    void draw_event_impl(time_t now, gdi::GraphicApi & gd)
+    void draw_event_impl(time_t now, gdi::GraphicApi & drawable_)
     {
         while (this->buf.next_pdu()) {
             InStream x224_data(this->buf.current_pdu_buffer());
