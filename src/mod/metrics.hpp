@@ -93,7 +93,7 @@ public:
         this->protocol_name = protocol_name;
         this->current_data.resize(nb_metric_item, 0);
 
-        if (this->is_active()) {
+        if (this->active_) {
             LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
                 this->path.c_str(), this->log_delay.count(), this->file_interval.count());
                 
