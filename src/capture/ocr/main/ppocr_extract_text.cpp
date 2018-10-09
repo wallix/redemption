@@ -6,9 +6,9 @@
 #include <cstring>
 #include <cerrno>
 
-#include "rgb8.hpp"
-#include "extract_bars.hh"
-#include "image2dview.hpp"
+#include "capture/ocr/rgb8.hpp"
+#include "capture/ocr/extract_bars.hh"
+#include "capture/ocr/image2dview.hpp"
 #include "capture/rdp_ppocr/extract_text.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 #include "capture/ocr/locale/latin_to_cyrillic.hpp"

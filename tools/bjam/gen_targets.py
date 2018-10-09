@@ -52,6 +52,7 @@ src_requirements = dict((
     ('src/main/rdpheadless.cpp', inc_dep),
     ('src/main/rdp_client.cpp', inc_dep),
     ('src/main/main_client_redemption.cpp', inc_dep),
+    ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
     ('tests/includes/test_only/front/fake_front.cpp', inc_dep),
     ('tests/includes/test_only/fake_graphic.cpp', inc_dep),
 ))
@@ -191,6 +192,7 @@ def CFile(d, f):
 ###
 
 sources = []
+exes = []
 mains = []
 libs = []
 tests = []
@@ -251,6 +253,8 @@ for t in ((mains, 'src/main'), (libs, 'src/lib')):
         f = append_file(sources, t[1], path, 'C')
         t[0].append(f)
 
+ocr_mains = [f for f in sources if start_with(f.path, 'src/capture/ocr/main/')]
+
 files_on_tests = []
 
 is_filtered_target = bool(len(sys.argv) > 1)
@@ -294,6 +298,7 @@ for t in extra_srcs:
 
 kpath = lambda f: f.path
 sources = sorted(sources, key=kpath)
+ocr_mains = sorted(ocr_mains, key=kpath)
 mains = sorted(mains, key=kpath)
 libs = sorted(libs, key=kpath)
 tests = sorted(tests, key=kpath)
@@ -303,6 +308,7 @@ def tuple_files(l):
 
 all_files = OrderedDict(tuple_files(tests))
 all_files.update(tuple_files(sources))
+all_files.update(tuple_files(ocr_mains))
 all_files.update(tuple_files(mains))
 all_files.update(tuple_files(libs))
 all_files.update(extra_srcs)
@@ -557,13 +563,17 @@ if is_filtered_target:
     mains = [pf for pf in mains if pf.path in keep_paths]
     libs = [pf for pf in libs if pf.path in keep_paths]
     sources = set()
+    ocr_mains = []
     for f in libs:
         sources.update(f.all_source_deps)
     for f in mains:
         sources.update(f.all_source_deps)
 
-generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)], ['$(EXE_DEPENDENCIES)'])
-generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)], ['$(EXE_DEPENDENCIES_NO_SYSLOG)'])
+generate('exe', [f for f in mains if (get_target(f) not in target_nosyslog)],
+         ['$(EXE_DEPENDENCIES)'])
+generate('exe', [f for f in mains if (get_target(f) in target_nosyslog)],
+         ['$(EXE_DEPENDENCIES_NO_SYSLOG)'])
+generate('exe', ocr_mains, ['$(GCOV_NO_BUILD)'])
 print()
 
 generate('lib', libs, ['$(LIB_DEPENDENCIES)', '<library>log.o'], lambda f: 'lib'+get_target(f))

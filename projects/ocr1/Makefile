@@ -27,5 +27,5 @@ $(D)/classifiers/%.hxx: learning learn.ok/%/*.pbm learn.ok/%/*.txt
 	./learning.sh $(D)/fonts/"$*".txt learn.ok/"$*"
 	python ./gen_classifier.py $(D)/fonts/"$*".txt "$@"
 
-learning: ../../src/capture/ocr/learning.cc
+learning: learning.cc
 	$(CXX) $^ -I../../src/capture/ocr/ -I../../modules/ppocr/includes/mln -O2 -std=c++11 -o $@

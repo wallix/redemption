@@ -1,8 +1,8 @@
 #include <mln/image/image2d.hh>
 #include <mln/io/pbm/load.hh>
 
-#include "labelize.hh"
-#include "io_char_box.hpp"
+#include "capture/ocr/labelize.hh"
+#include "capture/ocr/io_char_box.hpp"
 
 #include <iostream>
 #include <cstring>

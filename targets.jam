@@ -303,6 +303,33 @@ exe rdpclient :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
+exe display_learning :
+  src/capture/ocr/main/display_learning.o
+:
+  $(GCOV_NO_BUILD)
+;
+exe extract_text :
+  src/capture/ocr/main/extract_text.o
+:
+  $(GCOV_NO_BUILD)
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/utils/utf.o
+;
+exe ppocr_extract_text :
+  src/capture/ocr/main/ppocr_extract_text.o
+:
+  $(GCOV_NO_BUILD)
+  <library>boost_stacktrace
+  <library>log_print.o
+  <library>ppocr
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/core/error.o
+  <library>src/utils/utf.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 
 lib libredrec :
   src/lib/do_recorder.cpp.lib.o
@@ -5248,11 +5275,10 @@ obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/modu
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
 obj src/capture/capture.o : $(REDEMPTION_SRC_PATH)/capture/capture.cpp : $(FFMPEG_CXXFLAGS) <define>ZLIB_CONST ;
 obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
-obj src/capture/ocr/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/display_learning.cc ;
-obj src/capture/ocr/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/extract_text.cc ;
-obj src/capture/ocr/learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/learning.cc ;
 obj src/capture/ocr/locale/latin_to_cyrillic.o : $(REDEMPTION_SRC_PATH)/capture/ocr/locale/latin_to_cyrillic.cpp ;
-obj src/capture/ocr/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/ppocr_extract_text.cpp ;
+obj src/capture/ocr/main/display_learning.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/display_learning.cc ;
+obj src/capture/ocr/main/extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/extract_text.cc ;
+obj src/capture/ocr/main/ppocr_extract_text.o : $(REDEMPTION_SRC_PATH)/capture/ocr/main/ppocr_extract_text.cpp ;
 obj src/capture/params_from_ini.o : $(REDEMPTION_SRC_PATH)/capture/params_from_ini.cpp ;
 obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/rdp_ppocr/get_ocr_constants.cpp ;
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;

@@ -6,11 +6,11 @@
 #include <cstring>
 #include <cerrno>
 
-#include "rgb8.hpp"
-#include "extract_bars.hh"
-#include "image2dview.hpp"
-#include "io_char_box.hpp"
-#include "extract_text_classification.hh"
+#include "capture/ocr/rgb8.hpp"
+#include "capture/ocr/extract_bars.hh"
+#include "capture/ocr/image2dview.hpp"
+#include "capture/ocr/io_char_box.hpp"
+#include "capture/ocr/extract_text_classification.hh"
 
 typedef ocr::Image2dView<ocr::rgb8> ImageView;
 
