@@ -58,6 +58,7 @@ exe headlessclient :
   <library>src/utils/set_exception_handler_pretty_message.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -163,6 +164,7 @@ exe rdpproxy :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -210,6 +212,7 @@ exe rdpheadless :
   <library>src/utils/set_exception_handler_pretty_message.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -244,6 +247,7 @@ exe proxy_recorder :
   <library>src/utils/netutils.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -293,6 +297,7 @@ exe rdpclient :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -336,6 +341,7 @@ lib libredrec :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -405,6 +411,7 @@ test-run tests/acl/test_acl_serializer :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -435,6 +442,7 @@ test-run tests/acl/test_authentifier :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -541,6 +549,7 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -552,6 +561,7 @@ test-run tests/capture/ocr/locale/test_latin_to_cyrillic :
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.cpp
   <covfile>src/capture/ocr/locale/latin_to_cyrillic.hpp
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/utils/utf.o
 ;
 test-run tests/capture/test_bogus_ocr :
   $(REDEMPTION_TEST_PATH)/capture/test_bogus_ocr.cpp
@@ -564,6 +574,7 @@ test-run tests/capture/test_bogus_ocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -582,6 +593,7 @@ test-run tests/capture/test_bogus_ppocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -624,6 +636,7 @@ test-run tests/capture/test_capture :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -651,6 +664,7 @@ test-run tests/capture/test_ocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -669,6 +683,7 @@ test-run tests/capture/test_ppocr :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -695,6 +710,7 @@ test-run tests/capture/test_video_capture :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -722,6 +738,7 @@ test-run tests/capture/test_wrm_capture :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -770,6 +787,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -799,6 +817,7 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -839,6 +858,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -879,6 +899,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -918,6 +939,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -957,6 +979,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -996,6 +1019,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -1033,6 +1057,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -1045,6 +1070,7 @@ test-run tests/core/FSCC/test_FileInformation :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1060,6 +1086,7 @@ test-run tests/core/RDP/caches/test_bmpcache :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1076,6 +1103,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1090,6 +1118,7 @@ test-run tests/core/RDP/caches/test_glyphcache :
 :
   <covfile>src/core/RDP/caches/glyphcache.hpp
   <library>src/core/font.o
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
@@ -1098,6 +1127,7 @@ test-run tests/core/RDP/caches/test_pointercache :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1106,16 +1136,19 @@ test-run tests/core/RDP/capabilities/test_activate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_activate.cpp
 :
   <covfile>src/core/RDP/capabilities/activate.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_bitmapcachehostsupport :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcachehostsupport.cpp
 :
   <covfile>src/core/RDP/capabilities/bitmapcachehostsupport.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_bitmapcodecs :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcodecs.cpp
 :
   <covfile>src/core/RDP/capabilities/bitmapcodecs.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_bmpcache2 :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bmpcache2.cpp
@@ -1123,6 +1156,7 @@ test-run tests/core/RDP/capabilities/test_bmpcache2 :
   <covfile>src/core/RDP/capabilities/bmpcache2.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1133,6 +1167,7 @@ test-run tests/core/RDP/capabilities/test_cap_bitmap :
   <covfile>src/core/RDP/capabilities/cap_bitmap.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1143,6 +1178,7 @@ test-run tests/core/RDP/capabilities/test_cap_bmpcache :
   <covfile>src/core/RDP/capabilities/cap_bmpcache.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1153,6 +1189,7 @@ test-run tests/core/RDP/capabilities/test_cap_brushcache :
   <covfile>src/core/RDP/capabilities/cap_brushcache.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1161,26 +1198,31 @@ test-run tests/core/RDP/capabilities/test_cap_font :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_font.cpp
 :
   <covfile>src/core/RDP/capabilities/cap_font.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_cap_glyphcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_glyphcache.cpp
 :
   <covfile>src/core/RDP/capabilities/cap_glyphcache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_cap_share :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_share.cpp
 :
   <covfile>src/core/RDP/capabilities/cap_share.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_cap_sound :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_sound.cpp
 :
   <covfile>src/core/RDP/capabilities/cap_sound.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_colcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_colcache.cpp
 :
   <covfile>src/core/RDP/capabilities/colcache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_common :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_common.cpp
@@ -1193,6 +1235,7 @@ test-run tests/core/RDP/capabilities/test_compdesk :
   <covfile>src/core/RDP/capabilities/compdesk.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1201,21 +1244,25 @@ test-run tests/core/RDP/capabilities/test_control :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_control.cpp
 :
   <covfile>src/core/RDP/capabilities/control.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_drawgdiplus :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawgdiplus.cpp
 :
   <covfile>src/core/RDP/capabilities/drawgdiplus.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_drawninegridcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawninegridcache.cpp
 :
   <covfile>src/core/RDP/capabilities/drawninegridcache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_frameacknowledge :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_frameacknowledge.cpp
 :
   <covfile>src/core/RDP/capabilities/frameacknowledge.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_general :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_general.cpp
@@ -1223,6 +1270,7 @@ test-run tests/core/RDP/capabilities/test_general :
   <covfile>src/core/RDP/capabilities/general.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1231,21 +1279,25 @@ test-run tests/core/RDP/capabilities/test_input :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_input.cpp
 :
   <covfile>src/core/RDP/capabilities/input.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_largepointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_largepointer.cpp
 :
   <covfile>src/core/RDP/capabilities/largepointer.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_multifragmentupdate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_multifragmentupdate.cpp
 :
   <covfile>src/core/RDP/capabilities/multifragmentupdate.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_offscreencache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_offscreencache.cpp
 :
   <covfile>src/core/RDP/capabilities/offscreencache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_order :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_order.cpp
@@ -1253,6 +1305,7 @@ test-run tests/core/RDP/capabilities/test_order :
   <covfile>src/core/RDP/capabilities/order.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1263,6 +1316,7 @@ test-run tests/core/RDP/capabilities/test_pointer :
   <covfile>src/core/RDP/capabilities/pointer.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1271,21 +1325,25 @@ test-run tests/core/RDP/capabilities/test_rail :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_rail.cpp
 :
   <covfile>src/core/RDP/capabilities/rail.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_surfacecommands :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_surfacecommands.cpp
 :
   <covfile>src/core/RDP/capabilities/surfacecommands.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_virchan :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_virchan.cpp
 :
   <covfile>src/core/RDP/capabilities/virchan.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/capabilities/test_window :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_window.cpp
 :
   <covfile>src/core/RDP/capabilities/window.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/channels/test_rdpdr :
   $(REDEMPTION_TEST_PATH)/core/RDP/channels/test_rdpdr.cpp
@@ -1294,6 +1352,7 @@ test-run tests/core/RDP/channels/test_rdpdr :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1305,6 +1364,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1316,6 +1376,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_core :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1327,6 +1388,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1338,6 +1400,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1349,6 +1412,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1360,6 +1424,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1371,6 +1436,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_net :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1382,6 +1448,7 @@ test-run tests/core/RDP/gcc/userdata/test_cs_security :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1392,6 +1459,7 @@ test-run tests/core/RDP/gcc/userdata/test_sc_core :
   <covfile>src/core/RDP/gcc/userdata/sc_core.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1402,6 +1470,7 @@ test-run tests/core/RDP/gcc/userdata/test_sc_net :
   <covfile>src/core/RDP/gcc/userdata/sc_net.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1414,6 +1483,7 @@ test-run tests/core/RDP/gcc/userdata/test_sc_sec1 :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1426,6 +1496,7 @@ test-run tests/core/RDP/mppc/test_mppc_40 :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1438,6 +1509,7 @@ test-run tests/core/RDP/mppc/test_mppc_50 :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1450,6 +1522,7 @@ test-run tests/core/RDP/mppc/test_mppc_60 :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1462,6 +1535,7 @@ test-run tests/core/RDP/mppc/test_mppc_61 :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1470,6 +1544,7 @@ test-run tests/core/RDP/nla/asn1/test_ber :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/asn1/test_ber.cpp
 :
   <covfile>src/core/RDP/nla/asn1/ber.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/nla/kerberos/test_credentials :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_credentials.cpp
@@ -1485,6 +1560,7 @@ test-run tests/core/RDP/nla/kerberos/test_kerberos :
   <library>gssapi_krb5
   <library>krb5
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1497,6 +1573,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1506,6 +1583,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
 :
   <covfile>src/core/RDP/nla/ntlm/ntlm_avpair.hpp
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_context.cpp
@@ -1515,6 +1593,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1532,6 +1611,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1544,6 +1624,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1556,6 +1637,7 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1568,6 +1650,7 @@ test-run tests/core/RDP/nla/test_credssp :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1583,6 +1666,7 @@ test-run tests/core/RDP/nla/test_nla :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1593,6 +1677,7 @@ test-run tests/core/RDP/nla/test_sspi :
   <covfile>src/core/RDP/nla/sspi.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1604,6 +1689,7 @@ test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1612,91 +1698,109 @@ test-run tests/core/RDP/orders/test_RDPOrdersCommon :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersCommon.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersCommon.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryLineTo.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryPolyline.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryBmpCache.cpp
@@ -1708,6 +1812,7 @@ test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache :
   <library>src/core/font.o
   <library>src/utils/bitmap.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1716,21 +1821,25 @@ test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersSecondaryBrushCache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersSecondaryColorCache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp
 :
   <covfile>src/core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/RDP/test_GraphicUpdatePDU :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_GraphicUpdatePDU.cpp
@@ -1745,6 +1854,7 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1771,6 +1881,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1787,6 +1898,7 @@ test-run tests/core/RDP/test_RDPSerializer :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1800,6 +1912,7 @@ test-run tests/core/RDP/test_RefreshRectPDU :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1816,6 +1929,7 @@ test-run tests/core/RDP/test_ServerRedirection :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1837,6 +1951,7 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1855,6 +1970,7 @@ test-run tests/core/RDP/test_clipboard :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1868,6 +1984,7 @@ test-run tests/core/RDP/test_fastpath :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1880,6 +1997,7 @@ test-run tests/core/RDP/test_gcc :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1892,6 +2010,7 @@ test-run tests/core/RDP/test_lic :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1902,6 +2021,7 @@ test-run tests/core/RDP/test_logon :
   <covfile>src/core/RDP/logon.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1913,6 +2033,7 @@ test-run tests/core/RDP/test_mcs :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1926,6 +2047,7 @@ test-run tests/core/RDP/test_mppc :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1944,6 +2066,7 @@ test-run tests/core/RDP/test_nego :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/multisz.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1961,6 +2084,7 @@ test-run tests/core/RDP/test_out_per_bstream :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1985,6 +2109,7 @@ test-run tests/core/RDP/test_rdp_pointer :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/fake_graphic.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -1997,6 +2122,7 @@ test-run tests/core/RDP/test_remote_programs :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2010,6 +2136,7 @@ test-run tests/core/RDP/test_sec :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2022,6 +2149,7 @@ test-run tests/core/RDP/test_share :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2033,6 +2161,7 @@ test-run tests/core/RDP/test_slowpath :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2046,6 +2175,7 @@ test-run tests/core/RDP/test_tpdu_buffer :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2059,6 +2189,7 @@ test-run tests/core/RDP/test_x224 :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2072,6 +2203,7 @@ test-run tests/core/RDPEA/test_audio_output :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2080,11 +2212,13 @@ test-run tests/core/SMB2/test_MessageSyntax :
   $(REDEMPTION_TEST_PATH)/core/SMB2/test_MessageSyntax.cpp
 :
   <covfile>src/core/SMB2/MessageSyntax.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/WMF/test_MetaFileFormat :
   $(REDEMPTION_TEST_PATH)/core/WMF/test_MetaFileFormat.cpp
 :
   <covfile>src/core/WMF/MetaFileFormat.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/core/test_authid :
   $(REDEMPTION_TEST_PATH)/core/test_authid.cpp
@@ -2115,6 +2249,7 @@ test-run tests/core/test_channel_list :
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2140,6 +2275,7 @@ test-run tests/core/test_client_info :
   <library>crypto
   <library>src/core/error.o
   <library>src/core/font.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2168,6 +2304,7 @@ test-run tests/core/test_font :
   <covfile>src/core/font.cpp
   <covfile>src/core/font.hpp
   <library>src/core/font.o
+  <library>src/utils/utf.o
 ;
 test-run tests/core/test_front_api :
   $(REDEMPTION_TEST_PATH)/core/test_front_api.cpp
@@ -2278,6 +2415,7 @@ test-run tests/core/test_mainloop :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2391,6 +2529,7 @@ test-run tests/core/test_session :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2404,6 +2543,7 @@ test-run tests/core/test_session_reactor :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2506,6 +2646,7 @@ test-run tests/core/test_session_server :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2562,6 +2703,7 @@ test-run tests/front/test_front :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2574,11 +2716,13 @@ test-run tests/gdi/test_graphic_api :
   <covfile>src/gdi/graphic_api.hpp
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/utf.o
 ;
 test-run tests/gdi/test_graphic_cmd_color :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_cmd_color.cpp
 :
   <covfile>src/gdi/graphic_cmd_color.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/gdi/test_protected_graphics :
   $(REDEMPTION_TEST_PATH)/gdi/test_protected_graphics.cpp
@@ -2601,6 +2745,7 @@ test-run tests/gdi/test_protected_graphics :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2655,6 +2800,7 @@ test-run tests/lib/test_do_recorder :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2714,6 +2860,7 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2743,6 +2890,7 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2786,6 +2934,7 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2830,6 +2979,7 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2869,6 +3019,7 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2918,6 +3069,7 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -2941,6 +3093,7 @@ test-run tests/mod/internal/test_internal_mod :
   <library>src/mod/internal/widget/screen.o
   <library>src/mod/internal/widget/tooltip.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -2971,6 +3124,7 @@ test-run tests/mod/internal/test_replay_mod :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3006,6 +3160,7 @@ test-run tests/mod/internal/test_test_card_mod :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3040,6 +3195,7 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3064,6 +3220,7 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3091,6 +3248,7 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3121,6 +3279,7 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3148,6 +3307,7 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3182,6 +3342,7 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3211,6 +3372,7 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3243,6 +3405,7 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3278,6 +3441,7 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3310,6 +3474,7 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3342,6 +3507,7 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3368,6 +3534,7 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3397,6 +3564,7 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3424,6 +3592,7 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3450,6 +3619,7 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3477,6 +3647,7 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3508,6 +3679,7 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3541,6 +3713,7 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3569,6 +3742,7 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3596,6 +3770,7 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3624,6 +3799,7 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3655,6 +3831,7 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3685,6 +3862,7 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3716,6 +3894,7 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3726,6 +3905,7 @@ test-run tests/mod/null/test_null :
   <covfile>src/mod/null/null.hpp
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/utils/utf.o
 ;
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
@@ -3747,6 +3927,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3775,6 +3956,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3797,6 +3979,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3826,6 +4009,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3844,6 +4028,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3895,6 +4080,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3917,6 +4103,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3937,6 +4124,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -3966,6 +4154,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/fake_graphic.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -3987,6 +4176,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/fake_graphic.o
   <library>z
   <variant>coverage:<library>dl
@@ -4028,6 +4218,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4043,6 +4234,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
   <library>src/core/font.o
   <library>src/utils/fileutils.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4060,6 +4252,7 @@ test-run tests/mod/xup/test_xup :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4153,6 +4346,7 @@ test-run tests/server/test_mstsc_client :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4207,6 +4401,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4261,6 +4456,7 @@ test-run tests/server/test_rdesktop_client :
   <library>src/utils/rle.o
   <library>src/utils/sugar/multisz.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4365,6 +4561,7 @@ test-run tests/test_bitmap_perf :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4394,6 +4591,7 @@ test-run tests/transport/test_gzip_compression_transport :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4439,6 +4637,7 @@ test-run tests/transport/test_mwrm_reader :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4467,6 +4666,7 @@ test-run tests/transport/test_recorder_transport :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4479,6 +4679,7 @@ test-run tests/transport/test_snappy_compression_transport :
   <library>snappy
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4508,6 +4709,7 @@ test-run tests/transport/test_test_transport :
   <library>boost_stacktrace
   <library>src/core/error.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4534,6 +4736,7 @@ test-run tests/utils/crypto/test_ssl_lib :
   <library>boost_stacktrace
   <library>crypto
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4687,6 +4890,7 @@ test-run tests/utils/test_authorization_channels :
   <library>src/core/error.o
   <library>src/utils/authorization_channels.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4709,6 +4913,7 @@ test-run tests/utils/test_bitmap :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4730,6 +4935,7 @@ test-run tests/utils/test_bitmap_from_file :
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4760,6 +4966,7 @@ test-run tests/utils/test_compression_transport_builder :
   <library>boost_stacktrace
   <library>snappy
   <library>src/core/error.o
+  <library>src/utils/utf.o
   <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -4775,6 +4982,7 @@ test-run tests/utils/test_confdescriptor :
   <library>src/utils/cfgloader.o
   <library>src/utils/confdescriptor.o
   <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4811,6 +5019,7 @@ test-run tests/utils/test_drawable :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4918,6 +5127,7 @@ test-run tests/utils/test_png :
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/sugar/strutils.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4964,6 +5174,7 @@ test-run tests/utils/test_rle :
   <library>crypto
   <library>src/core/error.o
   <library>src/utils/bitmap.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -4972,6 +5183,7 @@ test-run tests/utils/test_stream :
   $(REDEMPTION_TEST_PATH)/utils/test_stream.cpp
 :
   <covfile>src/utils/stream.hpp
+  <library>src/utils/utf.o
 ;
 test-run tests/utils/test_texttime :
   $(REDEMPTION_TEST_PATH)/utils/test_texttime.cpp
@@ -4995,8 +5207,9 @@ test-run tests/utils/test_translation :
 test-run tests/utils/test_utf :
   $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
 :
+  <covfile>src/utils/utf.cpp
   <covfile>src/utils/utf.hpp
-  <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
 ;
 test-run tests/utils/test_video_cropper :
   $(REDEMPTION_TEST_PATH)/utils/test_video_cropper.cpp
@@ -5010,13 +5223,10 @@ test-run tests/utils/test_video_cropper :
   <library>src/utils/bitmap.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
-;
-test-run tests/utils/test_word_identification :
-  $(REDEMPTION_TEST_PATH)/utils/test_word_identification.cpp
-:
 ;
 test-run tests/utils/test_zlib :
   $(REDEMPTION_TEST_PATH)/utils/test_zlib.cpp
@@ -5138,6 +5348,7 @@ obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj src/utils/sugar/multisz.o : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 obj src/utils/sugar/strutils.o : $(REDEMPTION_SRC_PATH)/utils/sugar/strutils.cpp ;
+obj src/utils/utf.o : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 obj tests/includes/test_only/fake_graphic.o : $(REDEMPTION_TEST_PATH)/includes/test_only/fake_graphic.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/front/fake_front.o : $(REDEMPTION_TEST_PATH)/includes/test_only/front/fake_front.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj tests/includes/test_only/working_directory.o : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp ;
@@ -5793,7 +6004,6 @@ alias test_utf : tests/utils/test_utf ;
 alias test_utf.coverage : tests/utils/test_utf.coverage ;
 alias test_video_cropper : tests/utils/test_video_cropper ;
 alias test_video_cropper.coverage : tests/utils/test_video_cropper.coverage ;
-alias test_word_identification : tests/utils/test_word_identification ;
 alias test_zlib : tests/utils/test_zlib ;
 alias test_zlib.coverage : tests/utils/test_zlib.coverage ;
 alias test_pattern : tests/utils/winpr/test_pattern ;
@@ -6220,7 +6430,6 @@ alias tests/utils.norec :
   tests/utils/test_translation
   tests/utils/test_utf
   tests/utils/test_video_cropper
-  tests/utils/test_word_identification
   tests/utils/test_zlib
 ;
 alias tests/utils/winpr.norec :

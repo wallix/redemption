@@ -246,6 +246,7 @@ exe extract_text
     $(REDEMPTION_SRC_PATH)/capture/ocr/extract_text.cc
     ocr.o
 :
+    <library>src/utils/utf.o
     $(GCOV_NO_BUILD)
 ;
 
@@ -257,5 +258,6 @@ exe ppocr_extract_text
 :
     $(GCOV_NO_BUILD)
     <library>log_print.o
+    <library>src/utils/utf.o
 #   <library>crypto
 ;

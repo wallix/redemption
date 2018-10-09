@@ -24,6 +24,9 @@
 #include "core/error.hpp"
 #include "utils/utf.hpp"
 #include "utils/sugar/buf_maker.hpp"
+#include "utils/sugar/cast.hpp"
+
+#include <cstring>
 
 
 // TODO: CGR. This array here should be replaced by a plain std::vector<uint8_t>
