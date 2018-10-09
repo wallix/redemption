@@ -278,13 +278,15 @@ void ModuleManager::create_mod_rdp(
             client_execute.reset(false);
         }
 
+        const char * target_user = ini.get<cfg::globals::target_user>().c_str();
+
         auto metrics = std::make_unique<Metrics>(
             ini.get<cfg::metrics::activate_log_metrics>()
           , ini.get<cfg::metrics::log_dir_path>().to_string()
           , ini.get<cfg::context::session_id>()
           , hmac_user(ini.get<cfg::globals::auth_user>(),
                       ini.get<cfg::metrics::sign_key>())
-          , hmac_account({mod_rdp_params.target_user, strlen(mod_rdp_params.target_user)},
+          , hmac_account({target_user, strlen(target_user)},
                          ini.get<cfg::metrics::sign_key>())
           , hmac_device_service(ini.get<cfg::globals::target_device>(),
                                 ini.get<cfg::context::target_service>(),
@@ -325,7 +327,7 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            rdp_metrics.get()
+            ini.get<cfg::metrics::activate_log_metrics>()?rdp_metrics.get():nullptr
         );
 
         new_mod->metrics = std::move(metrics);

@@ -68,7 +68,7 @@ private:
 
     const char * vnc_protocol_name = "vnc";
 
-    Metrics metrics;
+    Metrics * metrics;
 
 
     // VNC context Info
@@ -79,86 +79,53 @@ private:
 
 public:
 
-    VNCMetrics( const bool activate                         // do nothing if false
-              , std::string path
-              , std::string session_id
-              , array_view_const_char primary_user_sig      // clear primary user account
-              , array_view_const_char account_sig           // secondary account
-              , array_view_const_char target_service_sig    // clear target service name + clear device name
-              , array_view_const_char session_info_sig      // source_host + client info
-              , const timeval now                           // time at beginning of metrics
-              , const std::chrono::hours file_interval      // daily rotation of filename (hours)
-              , const std::chrono::seconds log_delay        // delay between 2 logs
-              )
-        : metrics(activate, std::move(path), std::move(session_id),
-            primary_user_sig, account_sig, target_service_sig, session_info_sig,
-            now, file_interval, log_delay)
+    VNCMetrics(Metrics * metrics) : metrics(metrics)
     {
-        this->metrics.set_protocol(/*this->rdp_field_version*/"v1.0", this->vnc_protocol_name, COUNT_FIELD);
-    }
-
-    void log(timeval const& now) {
-        this->metrics.log(now);
+        this->metrics->set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);
+        LOG(LOG_INFO, "starting VNC Metrics");        
     }
 
     void data_from_client(long int len) {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
-        }
+        this->metrics->add_to_current_data(DATA_FROM_CLIENT, len);
     }
 
     void data_from_server(long int len) {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
-        }
+        this->metrics->add_to_current_data(DATA_FROM_SERVER, len);
     }
 
     void clipboard_data_from_client(long int len) {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
-        }
+        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
     }
 
     void clipboard_data_from_server(long int len) {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
-        }
+        this->metrics->add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
     }
 
     void mouse_move(const int x, const int y) {
-        if (this->metrics.is_active()){
-            if (this->last_x >= 0 && this->last_y >= 0) {
-                int x_shift = x - this->last_x;
-                if (x_shift < 0) {
-                    x_shift *=  -1;
-                }
-                int y_shift = y - this->last_y;
-                if (y_shift < 0) {
-                    y_shift *=  -1;
-                }
-                this->metrics.add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
+        if (this->last_x >= 0 && this->last_y >= 0) {
+            int x_shift = x - this->last_x;
+            if (x_shift < 0) {
+                x_shift *=  -1;
             }
-            this->last_x = x;
-            this->last_y = y;
+            int y_shift = y - this->last_y;
+            if (y_shift < 0) {
+                y_shift *=  -1;
+            }
+            this->metrics->add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
         }
+        this->last_x = x;
+        this->last_y = y;
     }
 
     void key_pressed() {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(KEY_PRESSED, 1);
-        }
+        this->metrics->add_to_current_data(KEY_PRESSED, 1);
     }
 
     void right_click() {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(RIGHT_CLICK, 1);
-        }
+        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
     }
 
     void left_click() {
-        if (this->metrics.is_active()){
-            this->metrics.add_to_current_data(LEFT_CLICK, 1);
-        }
+        this->metrics->add_to_current_data(LEFT_CLICK, 1);
     }
-
 };

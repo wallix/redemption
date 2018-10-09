@@ -44,7 +44,38 @@ void ModuleManager::create_mod_vnc(
     try {
         const char * const name = "VNC Target";
 
-        std::unique_ptr<mod_api> managed_mod(new ModWithSocket<mod_vnc>(
+        const char * target_user = ini.get<cfg::globals::target_user>().c_str();
+
+        auto metrics = std::make_unique<Metrics>(
+            ini.get<cfg::metrics::activate_log_metrics>()
+          , ini.get<cfg::metrics::log_dir_path>().to_string()
+          , ini.get<cfg::context::session_id>()
+          , hmac_user(ini.get<cfg::globals::auth_user>(),
+                      ini.get<cfg::metrics::sign_key>())
+          , hmac_account({target_user, strlen(target_user)},
+                         ini.get<cfg::metrics::sign_key>())
+          , hmac_device_service(ini.get<cfg::globals::target_device>(),
+                                ini.get<cfg::context::target_service>(),
+                                ini.get<cfg::metrics::sign_key>())
+          , hmac_client_info(ini.get<cfg::globals::host>(),
+                             client_info, ini.get<cfg::metrics::sign_key>())
+          , this->timeobj.get_time()
+          , ini.get<cfg::metrics::log_file_turnover_interval>()
+          , ini.get<cfg::metrics::log_interval>());
+
+        auto vnc_metrics = std::make_unique<VNCMetrics>(metrics.get());
+
+        struct ModVNCWithMetrics : public mod_vnc
+        {
+            std::unique_ptr<Metrics> metrics = nullptr;
+            std::unique_ptr<VNCMetrics> vnc_metrics = nullptr;
+            SessionReactor::TimerPtr metrics_timer;
+            
+            using mod_vnc::mod_vnc;
+            
+        };
+
+        auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,
             authentifier,
             name,
@@ -74,8 +105,21 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::mod_vnc::server_is_apple>(),
             (client_info.remote_program ? &client_execute : nullptr),
             ini,
-            to_verbose_flags(ini.get<cfg::debug::mod_vnc>())
-        ));
+            to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
+            ini.get<cfg::metrics::activate_log_metrics>()?vnc_metrics.get():nullptr
+        );
+
+        new_mod->metrics     = std::move(metrics);
+        new_mod->vnc_metrics = std::move(vnc_metrics);
+
+        new_mod->metrics_timer = session_reactor.create_timer()
+            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+            .on_action(jln::always_ready([mod = new_mod.get()]{
+                    if (mod->metrics) {
+                        mod->metrics->log(tvtime());
+                    }
+                }))
+            ;
 
         if (client_info.remote_program) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
@@ -101,7 +145,7 @@ void ModuleManager::create_mod_vnc(
                 client_info.width,
                 client_info.height,
                 adjusted_client_execute_rect,
-                std::move(managed_mod),
+                std::move(new_mod),
                 client_execute,
                 this->load_font(),
                 this->load_theme(),
@@ -113,7 +157,7 @@ void ModuleManager::create_mod_vnc(
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
-            this->set_mod(managed_mod.release());
+            this->set_mod(new_mod.release());
         }
     }
     catch (...) {

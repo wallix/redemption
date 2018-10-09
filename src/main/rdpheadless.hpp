@@ -714,6 +714,7 @@ public:
               , nullptr
               , ini
               , to_verbose_flags(this->_verbose)
+              , nullptr
               );
         } else {
             this->_callback = new_mod_rdp(

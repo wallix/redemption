@@ -205,7 +205,8 @@ int main(int argc, char** argv)
               , false
               , nullptr
               , ini
-              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace);
+              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
+              , nullptr);
         }) ? 1 : 0;
     }
 

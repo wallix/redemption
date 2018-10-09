@@ -20,6 +20,8 @@ Author(s): Jonathan Poelen
 
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "mod/vnc/vnc.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
+
 
 
 std::unique_ptr<mod_api> new_mod_vnc(
@@ -41,7 +43,8 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool server_is_apple,
     ClientExecute* client_execute,
     ModVncVariables vars,
-    VNCVerbose verbose
+    VNCVerbose verbose,
+    VNCMetrics * metrics
 )
 {
     return std::make_unique<mod_vnc>(
@@ -49,5 +52,5 @@ std::unique_ptr<mod_api> new_mod_vnc(
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple,
-        client_execute, vars, verbose);
+        client_execute, vars, verbose, metrics);
 }

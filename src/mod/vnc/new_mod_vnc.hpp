@@ -33,6 +33,7 @@ class ReportMessageApi;
 class SessionReactor;
 class TimeObj;
 class Transport;
+class VNCMetrics;
 
 std::unique_ptr<mod_api> new_mod_vnc(
     Transport& t,
@@ -53,5 +54,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     bool server_is_apple,
     ClientExecute* client_execute,
     ModVncVariables vars,
-    VNCVerbose verbose
+    VNCVerbose verbose,
+    VNCMetrics * metrics
 );

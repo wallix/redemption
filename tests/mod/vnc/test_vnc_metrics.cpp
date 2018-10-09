@@ -58,18 +58,19 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
 
     auto epoch = to_timeval(1533211681s);
 
-    VNCMetrics metrics( true
-                      , wd.dirname().c_str()
-                      , "164d89c1a56957b752540093e178"
-                      , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                      , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                      , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                      , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                      , epoch
-                      , 24h
-                      , 5s
-                      );
-
+    Metrics m( true
+              , wd.dirname().c_str()
+              , "164d89c1a56957b752540093e178"
+              , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+              , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+              , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+              , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+              , epoch
+              , 24h
+              , 5s
+              );
+    VNCMetrics metrics(&m);
+    
     RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
     RED_CHECK_FILE_EXISTS(wd[logindex1]);
 
@@ -80,33 +81,33 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
 
     {
         metrics.right_click();
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
-        metrics.log(epoch+1s);
+        m.log(epoch+1s);
         metrics.right_click();
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
-        metrics.log(epoch+3s);
+        m.log(epoch+3s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(epoch+5s);
+        m.log(epoch+5s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);;
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(epoch+7s);
+        m.log(epoch+7s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         std::string expected_log_metrics(
             "2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n"
             "2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
-        metrics.log(epoch+10s);
+        m.log(epoch+10s);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
 
@@ -122,37 +123,38 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
     {
         auto epoch = to_timeval(1533211681s);
 
-        VNCMetrics metrics( true
-                        , wd.dirname().c_str()
-                        , "164d89c1a56957b752540093e178"
-                        , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                        , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                        , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                        , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                        , epoch
-                        , 24h
-                        , 3s
-                        );
-
+        Metrics m( true
+                , wd.dirname().c_str()
+                , "164d89c1a56957b752540093e178"
+                , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+                , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+                , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+                , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+                , epoch
+                , 24h
+                , 3s
+                );
+        VNCMetrics metrics(&m);
+        
         RED_CHECK_FILE_EXISTS(wd[logindex1]);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
 
         {
             metrics.right_click();
-            metrics.log(epoch+0s);
+            m.log(epoch+0s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
-            metrics.log(epoch+1s);
+            m.log(epoch+1s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
-            metrics.log(epoch+2s);
+            m.log(epoch+2s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
         }
         {
             std::string expected_log_metrics("2018-08-02 12:08:04 164d89c1a56957b752540093e178 0 0 0 0 0 0 1 0\n");
-            metrics.log(epoch+3s);
+            m.log(epoch+3s);
             RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
         }
     }
@@ -168,17 +170,18 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
 
     auto epoch = to_timeval(1533211681s);
 
-    VNCMetrics metrics( true
-                      , wd.dirname().c_str()
-                      , "164d89c1a56957b752540093e178"
-                      , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                      , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                      , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                      , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                      , epoch
-                      , 24h
-                      , 5s
-                      );
+    Metrics m( true
+          , wd.dirname().c_str()
+          , "164d89c1a56957b752540093e178"
+          , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+          , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+          , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+          , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+          , epoch
+          , 24h
+          , 5s
+          );
+    VNCMetrics metrics(&m);
 
     RED_CHECK_FILE_EXISTS(wd[logindex1]);
 
@@ -187,7 +190,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
     {
         epoch += 5s;
         metrics.right_click();
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -195,7 +198,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 0\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.right_click();
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -203,7 +206,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:16 164d89c1a56957b752540093e178 0 0 0 0 0 0 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.left_click();
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -211,7 +214,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         std::string expected_log_metrics_next("2018-08-02 12:08:21 164d89c1a56957b752540093e178 0 0 0 0 0 1 2 1\n");
         expected_log_metrics += expected_log_metrics_next;
         metrics.key_pressed();
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
@@ -220,7 +223,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
         expected_log_metrics += expected_log_metrics_next;
         metrics.mouse_move(0, 0);
         metrics.mouse_move(2, 2);
-        metrics.log(epoch);
+        m.log(epoch);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
 
