@@ -450,7 +450,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
         arc_info.message = "a\\b=c|d";
         acl.log6("type=\"TEST\"", arc_info);
         auto undated_buf = make_array_view(logbuf.buf()).array_from_offset(date_length + 131);
-        auto expected6 = cstr_array_view("host message CEF:1|Wallix|Bastion|1.3.17|0||5|suser=admin duser=user1 WallixBastionSession_id= WallixBastionSessionType=Neutral src=10.10.13.12 dst=  msg=\"a\\\\b\\=c\\|d\"\n");
+        auto expected6 = cstr_array_view("host message CEF:1|Wallix|Bastion|" VERSION "|0||5|suser=admin duser=user1 WallixBastionSession_id= WallixBastionSessionType=Neutral src=10.10.13.12 dst=  msg=\"a\\\\b\\=c\\|d\"\n");
         RED_CHECK_SMEM(undated_buf, expected6);
     }
 
