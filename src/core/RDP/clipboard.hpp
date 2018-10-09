@@ -2882,7 +2882,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_MONITOR_READY:
             {
                 ServerMonitorReadyPDU pdu;
-                pdu.recv(chunk);
+                pdu.recv(stream);
                 header.log();
                 pdu.log();
             }
@@ -2911,6 +2911,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 FormatListResponsePDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
             }
                 break;
@@ -2919,6 +2920,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 FormatDataRequestPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
 
                 state.requestedFormatId = pdu.requestedFormatId;
@@ -2933,6 +2935,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FormatDataResponsePDU_MetaFilePic pdu;
                         pdu.recv(stream);
+                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2942,6 +2945,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FormatDataResponsePDU_Text pdu;
                         pdu.recv(stream);
+                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2954,7 +2958,8 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_TEMP_DIRECTORY:
             {
                 ClientTemporaryDirectoryPDU pdu;
-                pdu.recv(chunk);
+                pdu.recv(stream);
+                header.log();
                 pdu.log();
             }
                 break;
@@ -2962,12 +2967,12 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_CLIP_CAPS:
             {
                 ClipboardCapabilitiesPDU pdu;
-                pdu.recv(chunk);
+                pdu.recv(stream);
                 header.log();
                 pdu.log();
 
                 GeneralCapabilitySet pdu2;
-                pdu2.recv(chunk);
+                pdu2.recv(stream);
                 pdu2.log();
 
                 if (state.use_long_format_names) {
@@ -2980,6 +2985,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 FileContentsRequestPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
 
                 state.file_content_request_flag = pdu.flag;
@@ -2994,6 +3000,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FileContentsResponse_Size pdu;
                         pdu.recv(stream);
+                        header.log();
                         pdu.log();
                     }
                         break;
@@ -3002,6 +3009,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FileContentsResponse_Range pdu;
                         pdu.recv(stream);
+                        header.log();
                         pdu.log();
                     }
                         break;
@@ -3015,6 +3023,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 LockClipboardDataPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
             }
                 break;
@@ -3023,6 +3032,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 UnlockClipboardDataPDU pdu;
                 pdu.recv(stream);
+                header.log();
                 pdu.log();
             }
                 break;

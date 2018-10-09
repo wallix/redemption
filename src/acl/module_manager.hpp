@@ -1047,7 +1047,13 @@ private:
         in_addr s4_sin_addr;
         int status = resolve_ipv4_address(ip, s4_sin_addr);
         if (status){
-            report_message.log5("type=\"CONNECTION_FAILED\"");
+//             report_message.log5("type=\"CONNECTION_FAILED\"");
+
+            ArcsightLogInfo arc_info;
+            arc_info.name = "CONNECTION";
+            arc_info.ApplicationProtocol = "xup";
+            arc_info.WallixBastionStatus = "FAIL";
+            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info);
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
             // TODO: actually this is DNS Failure or invalid address
@@ -1060,7 +1066,12 @@ private:
         unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
         if (!client_sck.is_open()){
-            report_message.log5("type=\"CONNECTION_FAILED\"");
+//             report_message.log5("type=\"CONNECTION_FAILED\"");
+            ArcsightLogInfo arc_info;
+            arc_info.name = "CONNECTION";
+            arc_info.ApplicationProtocol = "xup";
+            arc_info.WallixBastionStatus = "FAIL";
+            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info);
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
             LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");

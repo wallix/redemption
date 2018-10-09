@@ -1274,7 +1274,12 @@ public:
                 {"type", "SESSION_ENDING_IN_PROGRESS"},
             });
 
-            this->report_message.log5(info);
+//             this->report_message.log5(info);
+
+             ArcsightLogInfo arc_info;
+            arc_info.name = "SESSION_ENDING_IN_PROGRESS";
+            arc_info.ApplicationProtocol = "rdp";
+            this->report_message.log6(info, arc_info);
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "%s", info);
@@ -1294,7 +1299,13 @@ public:
                         {"status", parameters_[0]},
                     });
 
-                    this->report_message.log5(info);
+                    ArcsightLogInfo arc_info;
+                    arc_info.name = "PASSWORD_TEXT_BOX_GET_FOCUS";
+                    arc_info.WallixBastionStatus = "OnFocus";
+                    arc_info.ApplicationProtocol = "rdp";
+                    this->report_message.log6(info, arc_info);
+
+//                     this->report_message.log5(info);
 
                     if (bool(this->verbose & RDPVerbose::sesprobe)) {
                         LOG(LOG_INFO, "%s", info);

@@ -145,50 +145,85 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 void RdpNegociation::RDPServerNotifier::server_access_allowed()
 {
     if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-        this->log5_server_cert(
-            "CERTIFICATE_CHECK_SUCCESS",
-            "Connexion to server allowed"
-        );
+//         this->log5_server_cert(
+//             "CERTIFICATE_CHECK_SUCCESS",
+//             "Connexion to server allowed"
+//         );
+
+        ArcsightLogInfo arc_info;
+        arc_info.name = "CERTIFICATE_CHECK";
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.WallixBastionStatus = "SUCCESS";
+        arc_info.message = "Connexion to server allowed";
+        this->report_message.log6("type=\"CERTIFICATE_CHECK_SUCCESS\"", arc_info);
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_create()
 {
     if (is_syslog_notification_enabled(this->server_cert_create_message)) {
-        this->log5_server_cert(
-            "SERVER_CERTIFICATE_NEW",
-            "New X.509 certificate created"
-        );
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_NEW",
+//             "New X.509 certificate created"
+//         );
+
+        ArcsightLogInfo arc_info;
+        arc_info.name = "SERVER_CERTIFICATE";
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.WallixBastionStatus = "NEW";
+        arc_info.message = "New X.509 certificate created";
+        this->report_message.log6("type=\"SERVER_CERTIFICATE_NEW\"", arc_info);
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_success()
 {
     if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-        this->log5_server_cert(
-            "SERVER_CERTIFICATE_MATCH_SUCCESS",
-            "X.509 server certificate match"
-        );
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_MATCH_SUCCESS",
+//             "X.509 server certificate match"
+//         );
+
+        ArcsightLogInfo arc_info;
+        arc_info.name = "SERVER_CERTIFICATE_MATCH";
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.WallixBastionStatus = "SUCCESS";
+        arc_info.message = "X.509 server certificate match";
+        this->report_message.log6("type=\"SERVER_CERTIFICATE_MATCH_SUCCESS\"", arc_info);
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_failure()
 {
     if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-        this->log5_server_cert(
-            "SERVER_CERTIFICATE_MATCH_FAILURE",
-            "X.509 server certificate match failure"
-        );
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_MATCH_FAILURE",
+//             "X.509 server certificate match failure"
+//         );
+
+        ArcsightLogInfo arc_info;
+        arc_info.name = "SERVER_CERTIFICATE_MATCH";
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.WallixBastionStatus = "FAILURE";
+        arc_info.message = "X.509 server certificate match failure";
+        this->report_message.log6("type=\"SERVER_CERTIFICATE_MATCH_FAILURE\"", arc_info);
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error)
 {
     if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-        this->log5_server_cert(
-            "SERVER_CERTIFICATE_ERROR",
-            "X.509 server certificate internal error: " + std::string(str_error)
-        );
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_ERROR",
+//             "X.509 server certificate internal error: " + std::string(str_error)
+//         );
+//
+        ArcsightLogInfo arc_info;
+        arc_info.name = "SERVER_CERTIFICATE";
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.WallixBastionStatus = "ERROR";
+        arc_info.message = "X.509 server certificate internal error";
+        this->report_message.log6("type=\"SERVER_CERTIFICATE_ERROR\"", arc_info);
     }
 }
 
