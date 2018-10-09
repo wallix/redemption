@@ -66,8 +66,7 @@ target_requirements = dict((
 
 # because include a .cpp file...
 remove_requirements = dict((
-    ('tests/capture/test_capture.cpp', ['<library>src/capture/capture.o']),
-    ('tests/utils/test_rle.cpp', ['<library>src/utils/rle.o']),
+    # ('tests/capture/test_capture.cpp', ['<library>src/capture/capture.o']),
 ))
 
 # This is usefull if several source files have the same name to disambiguate tests
@@ -149,7 +148,7 @@ def get_lib(inc, lib_assoc, lib_prefix):
         return lib_assoc[inc]
 
     for t in lib_prefix:
-        if start_with(inc, t[0]):
+        if startswith(inc, t[0]):
             if not (len(t) > 2 and inc in t[2]):
                 return t[1]
 
@@ -229,7 +228,7 @@ def get_files(a, dirpath):
             if type:
                 append_file(a, root, root+'/'+name, type)
 
-def start_with(str, prefix):
+def startswith(str, prefix):
     return str[:len(prefix)] == prefix
 
 get_files(sources, "src/acl")
@@ -253,7 +252,7 @@ for t in ((mains, 'src/main'), (libs, 'src/lib')):
         f = append_file(sources, t[1], path, 'C')
         t[0].append(f)
 
-ocr_mains = [f for f in sources if start_with(f.path, 'src/capture/ocr/main/')]
+ocr_mains = [f for f in sources if startswith(f.path, 'src/capture/ocr/main/')]
 
 files_on_tests = []
 
@@ -263,9 +262,9 @@ if not is_filtered_target:
     get_files(files_on_tests, 'tests')
     tests = [f for f in files_on_tests \
         if f.type != 'H' \
-        and not start_with(f.path, 'tests/includes/') \
-        and not start_with(f.path, 'tests/system/emscripten/system/') \
-        and not start_with(f.path, 'tests/web_video/') \
+        and not startswith(f.path, 'tests/includes/') \
+        and not startswith(f.path, 'tests/system/emscripten/system/') \
+        and not startswith(f.path, 'tests/web_video/') \
         and f.path not in disable_tests
     ]
 
@@ -274,9 +273,9 @@ mains = [f for f in mains if f.path not in disable_srcs]
 sources = [f for f in sources if f.path not in disable_srcs]
 sources += [f for f in files_on_tests \
     if f.type == 'H' \
-    and not start_with(f.path, 'tests/includes/') \
-    and not start_with(f.path, 'tests/system/emscripten/system/') \
-    and not start_with(f.path, 'tests/web_video/')
+    and not startswith(f.path, 'tests/includes/') \
+    and not startswith(f.path, 'tests/system/emscripten/system/') \
+    and not startswith(f.path, 'tests/web_video/')
 ]
 
 extra_srcs = (
@@ -353,6 +352,12 @@ def get_includes(path):
 
 for name, f in all_files.items():
     f.user_includes, f.system_includes, f.unknown_user_includes = get_includes(f.path)
+
+# remove .cpp include from user_includes
+for f in tests:
+    l = [f'<library>{finc.path[:-3]}o' for finc in f.user_includes if finc.path.endswith('.cpp')]
+    if l:
+        remove_requirements.setdefault(f.path, []).extend(l)
 
 #for f in sources:
     #print("--", f.path, [a.path for a in f.user_includes], f.system_includes, f.unknown_user_includes)
@@ -540,11 +545,11 @@ def generate(type, files, requirements, get_target_cb = get_target):
         print(';')
 
 def inject_variable_prefix(path):
-    if start_with(path, 'src/'):
+    if startswith(path, 'src/'):
         path = '$(REDEMPTION_SRC_PATH)' + path[3:]
-    elif start_with(path, 'tests/'):
+    elif startswith(path, 'tests/'):
         path = '$(REDEMPTION_TEST_PATH)' + path[5:]
-    elif start_with(path, 'projects/redemption_configs/'):
+    elif startswith(path, 'projects/redemption_configs/'):
         path = '$(REDEMPTION_CONFIG_PATH)' + path[27:]
     return path
 
