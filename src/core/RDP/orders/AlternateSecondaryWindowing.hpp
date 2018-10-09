@@ -3684,23 +3684,23 @@ class NonMonitoredDesktop {
 
 public:
     void emit(OutStream & stream) const {
-const auto save_stream_p = stream.get_current() + 1;
+        //const auto save_stream_p = stream.get_current() + 1;
 
         this->header.emit_begin(stream);
 
         this->header.emit_end();
 
-LOG(LOG_INFO, "Send NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Send NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // emit
 
     void receive(InStream & stream) {
-const auto save_stream_p = stream.get_current();
+        //const auto save_stream_p = stream.get_current();
 
         this->header.receive(stream);
 
-LOG(LOG_INFO, "Recv NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
-hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
+        //LOG(LOG_INFO, "Recv NonMonitoredDesktop: size=%u", unsigned(stream.get_current() - save_stream_p));
+        //hexdump(save_stream_p, unsigned(stream.get_current() - save_stream_p));
     }   // receive
 
     static size_t size() {

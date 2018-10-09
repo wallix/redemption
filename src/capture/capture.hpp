@@ -443,6 +443,8 @@ protected:
 
     void draw_impl(const RDP::RAIL::DeletedWindow & cmd);
 
+    void draw_impl(const RDP::RAIL::NonMonitoredDesktop & cmd);
+
     struct WindowRecord {
         uint32_t window_id;
         uint32_t fields_present_flags;

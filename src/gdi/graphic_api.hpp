@@ -270,14 +270,14 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
 
     // NOTE maybe in an other interface
-    virtual void draw(const RDP::RAIL::NewOrExistingWindow            &) {}
-    virtual void draw(const RDP::RAIL::WindowIcon                     &) {}
-    virtual void draw(const RDP::RAIL::CachedIcon                     &) {}
-    virtual void draw(const RDP::RAIL::DeletedWindow                  &) {}
-    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons &) {}
-    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       &) {}
-    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       &) {}
-    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            &) {}
+    virtual void draw(const RDP::RAIL::NewOrExistingWindow            & order) = 0;
+    virtual void draw(const RDP::RAIL::WindowIcon                     & order) = 0;
+    virtual void draw(const RDP::RAIL::CachedIcon                     & order) = 0;
+    virtual void draw(const RDP::RAIL::DeletedWindow                  & order) = 0;
+    virtual void draw(const RDP::RAIL::NewOrExistingNotificationIcons & order) = 0;
+    virtual void draw(const RDP::RAIL::DeletedNotificationIcons       & order) = 0;
+    virtual void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & order) = 0;
+    virtual void draw(const RDP::RAIL::NonMonitoredDesktop            & order) = 0;
 
     // TODO The 2 methods below should not exist and cache access be done before calling drawing orders
     virtual void draw(RDPColCache   const &) {}

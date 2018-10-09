@@ -346,6 +346,14 @@ private:
                     gd.draw(order);
                 }
                 break;
+
+            default:
+                LOG(LOG_INFO,
+                    "rdp_orders::process_window_information: "
+                        "unsupported Windowing Alternate Secondary Drawing Orders! "
+                        "FieldsPresentFlags=0x%08X",
+                    FieldsPresentFlags);
+                break;
         }
     }
 
