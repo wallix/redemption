@@ -1146,6 +1146,24 @@ public:
     void format_name(const char * format_name) { this->format_name_ = format_name; }
 
     size_t format_name_length() const { return this->format_name_.length(); }
+
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length,
+            "{formatId=%s(%u) formatName=\"%s\"}",
+            get_Format_name(this->formatId_), this->formatId_, this->format_name_.c_str());
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        return length;
+    }
+
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };  // class FormatName
 
 class FormatListPDUEx {
@@ -1309,10 +1327,48 @@ public:
         this->format_names.emplace_back(formatId, format_name);
     }
 
-    size_t num_format_names() { return this->format_names.size(); }
+    size_t num_format_names() const { return this->format_names.size(); }
 
-    FormatName const & format_name(size_t idx_format_name) { return this->format_names[idx_format_name]; }
+    FormatName const & format_name(size_t idx_format_name) const { return this->format_names[idx_format_name]; }
+
+private:
+    size_t str(char * buffer, size_t size) const {
+        size_t length = 0;
+
+        size_t result = ::snprintf(buffer + length, size - length,
+            "FormatListPDU:");
+        length += ((result < size - length) ? result : (size - length - 1));
+
+        for (auto & format_name : this->format_names) {
+            size_t result = ::snprintf(buffer + length, size - length, " ");
+            length += ((result < size - length) ? result : (size - length - 1));
+
+            result = format_name.str(buffer + length, size - length);
+            length += ((result < size - length) ? result : (size - length - 1));
+        }
+
+        return length;
+    }
+
+public:
+    void log(int level) const {
+        char buffer[2048];
+        this->str(buffer, sizeof(buffer));
+        buffer[sizeof(buffer) - 1] = 0;
+        LOG(level, "%s", buffer);
+    }
 };  // FormatListPDUEx
+
+inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
+    for (size_t i = 0, c = format_list_pdu.num_format_names(); i < c; ++i) {
+        FormatName const & format_name = format_list_pdu.format_name(i);
+        if (format_name.formatId() == formatId) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 
 

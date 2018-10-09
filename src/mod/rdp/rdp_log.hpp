@@ -44,8 +44,6 @@ REDEMPTION_VERBOSE_FLAGS_DEF(RDPVerbose)
     credssp             = 0x00000400,
     cache_persister     = 0x00000800,
 
-    
-
     fsdrvmgr            = 0x00002000,
     sesprobe_launcher   = 0x00004000,
     sesprobe_repetitive = 0x00008000,

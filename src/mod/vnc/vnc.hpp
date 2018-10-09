@@ -246,7 +246,7 @@ public:
     , bpp(0)
     , depth(0)
     , verbose(verbose)
-    , keymapSym(static_cast<uint32_t>(verbose))
+    , keymapSym(static_cast<uint32_t>(verbose & VNCVerbose::keymap))
     , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
@@ -838,7 +838,7 @@ public:
             RDPECLIP::CB_CAPS_VERSION_1,
             (this->server_use_long_format_names ? RDPECLIP::CB_USE_LONG_FORMAT_NAMES : 0));
 
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::clipboard)) {
             if (this->server_use_long_format_names){
                 LOG(LOG_INFO, "Server use long format name");
             }
@@ -861,7 +861,7 @@ public:
         size_t length     = out_s.get_offset();
         size_t chunk_size = length;
 
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::clipboard)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(clip_header.msgType()),
                 clip_header.msgType()
@@ -887,7 +887,7 @@ public:
         length     = out_s.get_offset();
         chunk_size = length;
 
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::clipboard)) {
             LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(header.msgType()),
                 header.msgType()
@@ -2132,7 +2132,7 @@ private:
             //LOG(LOG_INFO,
             //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
             //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::clipboard)) {
                 LOG(LOG_INFO,
                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (time)",
                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -2760,7 +2760,7 @@ private:
         }
 
         if (this->clipboard_data_ctx.clipboard_is_enabled()) {
-            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+            if (bool(this->verbose & VNCVerbose::clipboard)) {
                 LOG(LOG_INFO,
                     "mod_vnc::lib_clip_data: Sending Format List PDU (%u) to client.",
                     RDPECLIP::CB_FORMAT_LIST);
@@ -2893,25 +2893,34 @@ private:
             // msgType read is not a msgType, it's a part of data.
         }
 
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::clipboard)) {
             LOG(LOG_INFO, "mod_vnc client clipboard PDU: msgType=%s(%d)",
                 RDPECLIP::get_msgType_name(msgType), msgType);
         }
 
         switch (msgType) {
             case RDPECLIP::CB_FORMAT_LIST: {
+                RDPECLIP::CliprdrHeader header;
+                header.recv(chunk);
+                if (bool(this->verbose & VNCVerbose::clipboard)) {
+                    header.log(LOG_INFO);
+                }
+
                 // Client notify that a copy operation have occured.
                 // Two operations should be done :
                 //  - Always: send a RDP acknowledge (CB_FORMAT_LIST_RESPONSE)
                 //  - Only if clipboard content formats list include "UNICODETEXT:
                 // send a request for it in that format
-                bool unicodetext = false;
-                RDPECLIP::FormatListPDU format_list_pdu(this->client_use_long_format_names, unicodetext);
-                format_list_pdu.recv(chunk);
+                RDPECLIP::FormatListPDUEx format_list_pdu;
+                format_list_pdu.recv(chunk, this->client_use_long_format_names,
+                    (header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
+                if (bool(this->verbose & VNCVerbose::clipboard)) {
+                    format_list_pdu.log(LOG_INFO);
+                }
 
                 //---- Beginning of clipboard PDU Header ----------------------------
 
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::clipboard)) {
                     LOG(LOG_INFO, "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST_RESPONSE(%u)",
                         RDPECLIP::CB_FORMAT_LIST_RESPONSE);
                 }
@@ -2938,27 +2947,27 @@ private:
                 using std::chrono::microseconds;
                 constexpr microseconds MINIMUM_TIMEVAL(250000LL);
 
-                if (this->enable_clipboard_up
-                && (format_list_pdu.contains_data_in_text_format
-                 || format_list_pdu.contains_data_in_unicodetext_format)) {
+                const bool contains_data_in_text_format        = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_TEXT);
+                const bool contains_data_in_unicodetext_format = FormatListPDUEx_contains_data_in_format(format_list_pdu, RDPECLIP::CF_UNICODETEXT);
+
+                if (this->enable_clipboard_up &&
+                        (contains_data_in_text_format || contains_data_in_unicodetext_format)) {
                     if (this->clipboard_server_encoding_type == ClipboardEncodingType::UTF8) {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contains_data_in_unicodetext_format ?
-                             RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
+                            (contains_data_in_unicodetext_format ? RDPECLIP::CF_UNICODETEXT : RDPECLIP::CF_TEXT);
                     }
                     else {
                         this->clipboard_requested_format_id =
-                            (format_list_pdu.contains_data_in_text_format ?
-                             RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
+                            (contains_data_in_text_format ? RDPECLIP::CF_TEXT : RDPECLIP::CF_UNICODETEXT);
                     }
 
-                    const microseconds usnow = ustime();
+                    const microseconds usnow        = ustime();
                     const microseconds timeval_diff = usnow - this->clipboard_last_client_data_timestamp;
                     //LOG(LOG_INFO,
                     //    "usnow=%llu clipboard_last_client_data_timestamp=%llu timeval_diff=%llu",
                     //    usnow, this->clipboard_last_client_data_timestamp, timeval_diff);
                     if ((timeval_diff > MINIMUM_TIMEVAL) || !this->clipboard_owned_by_client) {
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::clipboard)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u)",
                                 RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -2987,7 +2996,7 @@ private:
                     }
                     else {
                         if (this->bogus_clipboard_infinite_loop == VncBogusClipboardInfiniteLoop::delayed) {
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::clipboard)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_REQUEST(%u) (delayed)",
                                     RDPECLIP::CB_FORMAT_DATA_REQUEST);
@@ -3002,7 +3011,7 @@ private:
                         else if ((this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::duplicated) &&
                                  ((this->clipboard_general_capability_flags & RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_) ==
                                   RDPECLIP::CB__MINIMUM_WINDOWS_CLIENT_GENERAL_CAPABILITY_FLAGS_)) {
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::clipboard)) {
                                 LOG( LOG_INFO
                                    , "mod_vnc::clipboard_send_to_vnc: "
                                      "duplicated clipboard update event "
@@ -3011,7 +3020,7 @@ private:
                             }
                         }
                         else {
-                            if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                            if (bool(this->verbose & VNCVerbose::clipboard)) {
                                 LOG(LOG_INFO,
                                     "mod_vnc server clipboard PDU: msgType=CB_FORMAT_LIST(%u) (preventive)",
                                     RDPECLIP::CB_FORMAT_LIST);
@@ -3057,7 +3066,7 @@ private:
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
                 format_data_request_pdu.recv(chunk);
 
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::clipboard)) {
                     LOG( LOG_INFO
                        , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%u) msgFlags=0x%02x datalen=%u requestedFormatId=%s(%u)"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
@@ -3095,7 +3104,7 @@ private:
                                                     chunk_size,
                                                     send_flags
                                                    );
-                        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                        if (bool(this->verbose & VNCVerbose::clipboard)) {
                             LOG(LOG_INFO,
                                 "mod_vnc server clipboard PDU: msgType=CB_FORMAT_DATA_RESPONSE(%u) - chunk_size=%zu",
                                 RDPECLIP::CB_FORMAT_DATA_RESPONSE, chunk_size);
@@ -3157,7 +3166,7 @@ private:
 
                     send_format_data_response(out_stream);
 
-                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO,
                             "mod_vnc::clipboard_send_to_vnc: "
                                 "Sending Format Data Response PDU (CF_TEXT) done");
@@ -3297,7 +3306,7 @@ private:
                 assert(this->to_vnc_clipboard_data_size);
 
                 // Virtual channel data span in multiple Virtual Channel PDUs.
-                if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                if (bool(this->verbose & VNCVerbose::clipboard)) {
                     LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: an other trunk");
                 }
 
@@ -3350,7 +3359,7 @@ private:
                     if (general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES) {
                         this->client_use_long_format_names = true;
                     }
-                    if (bool(this->verbose & VNCVerbose::basic_trace)) {
+                    if (bool(this->verbose & VNCVerbose::clipboard)) {
                         LOG(LOG_INFO, "Client use %s format name",
                             (this->client_use_long_format_names ? "long" : "short"));
                     }
@@ -3362,7 +3371,7 @@ private:
             }
             break;
         }
-        if (bool(this->verbose & VNCVerbose::basic_trace)) {
+        if (bool(this->verbose & VNCVerbose::clipboard)) {
             LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: done");
         }
     } // clipboard_send_to_vnc

@@ -76,6 +76,22 @@ enum {
      , OSMAJORTYPE_CHROME_OS
 };
 
+static inline
+const char * get_osMajorType_name(uint16_t osMajorType) {
+    switch (osMajorType) {
+        case OSMAJORTYPE_UNSPECIFIED: return "UNSPECIFIED";
+        case OSMAJORTYPE_WINDOWS:     return "WINDOWS";
+        case OSMAJORTYPE_OS2:         return "OS2";
+        case OSMAJORTYPE_MACINTOSH:   return "MACINTOSH";
+        case OSMAJORTYPE_UNIX:        return "UNIX";
+        case OSMAJORTYPE_IOS:         return "IOS";
+        case OSMAJORTYPE_OSX:         return "OSX";
+        case OSMAJORTYPE_ANDROID:     return "ANDROID";
+        case OSMAJORTYPE_CHROME_OS:   return "CHROME_OS";
+    }
+
+    return "<unknown>";
+}
 
 // osMinorType (2 bytes): A 16-bit, unsigned integer. The version of the
 //    platform specified in the osMajorType field.
@@ -214,7 +230,7 @@ struct GeneralCaps : public Capability {
     uint8_t suppressOutputSupport{0};
     GeneralCaps()
     : Capability(CAPSTYPE_GENERAL, CAPLEN_GENERAL)
-     
+
     {
     }
 
