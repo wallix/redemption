@@ -532,6 +532,7 @@ public:
                   , this->authentifier
                   , this->reportMessage
                   , this->ini
+                  , nullptr
                 );
 
                 if (is_remote_app) {

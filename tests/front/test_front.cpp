@@ -224,9 +224,10 @@ RED_AUTO_TEST_CASE(TestFront)
 
     front.clear_channels();
     NullAuthentifier authentifier;
+    class RDPMetrics * metrics = nullptr;
     auto mod = new_mod_rdp(
         t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+        gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, metrics);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -465,7 +466,7 @@ RED_AUTO_TEST_CASE(TestFront2)
     // front.clear_channels();
     //
     // NullAuthentifier authentifier;
-    // auto mod = new_mod_rdp(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+    // auto mod = new_mod_rdp(t, front, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(), gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
     // RED_CHECK(true);
     //
     // if (verbose > 2){

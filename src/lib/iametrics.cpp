@@ -55,11 +55,13 @@ extern "C"
         using std::chrono::seconds;
         using std::chrono::hours;
         timeval now{static_cast<time_t>(now_seconds), 0};
-        return new(std::nothrow) Metrics(
-            version, protocol_name, true, nbitems, path, session_id,
+        Metrics * metrics = new(std::nothrow) Metrics(
+            true, path, session_id,
             av(primary_user_sig), av(account_sig), av(target_service_sig),
             av(session_info_sig), now, hours(file_interval_hours),
             seconds(log_delay_seconds));
+        metrics->set_protocol(version, protocol_name, nbitems);
+        return metrics;
     }
 
     void metrics_delete(Metrics * metrics) noexcept

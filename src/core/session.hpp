@@ -128,14 +128,6 @@ public:
         try {
             TimeSystem timeobj;
             ModuleManager mm(session_reactor, front, this->ini, rnd, timeobj);
-            auto metrics_timer = session_reactor.create_timer()
-            .set_delay(std::chrono::seconds(this->ini.get<cfg::metrics::log_interval>()))
-            .on_action(jln::always_ready([&mm]{
-                    if (mm.get_mod()) {
-                        mm.get_mod()->log_metrics();
-                    }
-                }))
-            ;
 
             BackEvent_t signal       = BACK_EVENT_NONE;
             BackEvent_t front_signal = BACK_EVENT_NONE;

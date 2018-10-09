@@ -27,8 +27,6 @@
 #include <cassert>
 #include <sys/time.h>
 
-using namespace std::chrono_literals;
-
 inline bool operator<(const timeval & a, const timeval & b) noexcept {
     // return ustime(a) < ustime(b)
     return a.tv_sec < b.tv_sec
@@ -60,6 +58,7 @@ inline bool operator>=(const timeval & a, const timeval & b) noexcept {
 // which means 0 if starttime if after ultimatum
 inline std::chrono::microseconds operator-(timeval const & ultimatum, timeval const & starttime)
 {
+    using namespace std::chrono_literals;    
     if (ultimatum <= starttime) {
         return 0us;
     }
@@ -102,6 +101,7 @@ inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
 
 inline bool is_midnight(timeval const & a)
 {
+    using namespace std::chrono_literals;
     return (a.tv_sec % std::chrono::seconds(24h).count()) == 0;
 }
 

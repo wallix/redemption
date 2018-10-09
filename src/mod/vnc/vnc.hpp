@@ -601,9 +601,7 @@ public:
         out_stream.out_copy_bytes(cp_password, 64);
 
         this->t.send(out_stream.get_data(), out_stream.get_offset());
-        if (this->metrics.active()){
-            this->metrics.data_from_client(out_stream.get_offset());
-        }
+        this->metrics.data_from_client(out_stream.get_offset());
         // sec result
 
         return true;
@@ -911,21 +909,15 @@ public:
 
         if (device_flags & MOUSE_FLAG_MOVE) {
             this->mouse.move(this->t, x, y);
-            if (this->metrics.active()) {
-                this->metrics.mouse_move(x, y);
-            }
+            this->metrics.mouse_move(x, y);
         }
         else if (device_flags & MOUSE_FLAG_BUTTON1) {
             this->mouse.click(this->t, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
-            if (this->metrics.active()) {
-                this->metrics.right_click();
-            }
+            this->metrics.right_click();
         }
         else if (device_flags & MOUSE_FLAG_BUTTON2) {
             this->mouse.click(this->t, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
-            if (this->metrics.active()) {
-                this->metrics.left_click();
-            }
+            this->metrics.left_click();
         }
         else if (device_flags & MOUSE_FLAG_BUTTON3) {
             this->mouse.click(this->t, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
@@ -954,9 +946,7 @@ public:
             LOG(LOG_INFO, "mod_vnc::rdp_input_scancode(device_flags=%ld, param1=%ld)", device_flags, param1);
         }
 
-        if (this->metrics.active()) {
-            this->metrics.key_pressed();
-        }
+        this->metrics.key_pressed();
 
         if (0x45 == param1) {
             this->keymapSym.toggle_num_lock(keymap->is_num_locked());
@@ -1011,9 +1001,7 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
-        if (this->metrics.active()){
-            this->metrics.data_from_client(stream.get_offset());
-        }
+        this->metrics.data_from_client(stream.get_offset());
 
     }
 
@@ -1239,9 +1227,7 @@ protected:
         stream.out_copy_bytes(data, length);      // text
 
         this->t.send(stream.get_data(), (length + 8));
-        if (this->metrics.active()){
-            this->metrics.data_from_client(stream.get_offset());
-        }
+        this->metrics.data_from_client(stream.get_offset());
 
         this->event.set(1000);
     } // rdp_input_clip_data
@@ -1262,10 +1248,8 @@ protected:
             stream.out_copy_bytes(str, str_len);    // text
 
             this->t.send(stream.get_data(), stream.get_offset());
-            if (this->metrics.active()){
-                this->metrics.data_from_client(stream.get_offset());
-                this->metrics.clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset());
-            }
+            this->metrics.data_from_client(stream.get_offset());
+            this->metrics.clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset());
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -1351,9 +1335,7 @@ private:
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
         this->t.send(stream.get_data(), stream.get_offset());
-        if (this->metrics.active()){
-            this->metrics.data_from_client(stream.get_offset());
-        }
+        this->metrics.data_from_client(stream.get_offset());
     } // update_screen
 
 public:
@@ -1612,9 +1594,7 @@ public:
         }
 
         uint64_t data_server_after = this->server_data_buf.remaining();
-        if (this->metrics.active()){
-            this->metrics.data_from_server(data_server_before-data_server_after);
-        }
+        this->metrics.data_from_server(data_server_before-data_server_after);
 
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
@@ -1677,9 +1657,7 @@ private:
                 this->server_data_buf.advance(protocol_version_len);
 
                 this->t.send("RFB 003.003\n", 12);
-                if (this->metrics.active()){
-                    this->metrics.data_from_client(12);
-                }
+                this->metrics.data_from_client(12);
                 // sec type
 
                 this->state = WAIT_SECURITY_TYPES_LEVEL;
@@ -1744,9 +1722,7 @@ private:
                     LOG(LOG_INFO, "Sending Password");
                 }
                 this->t.send(random_buf, 16);
-                if (this->metrics.active()){
-                    this->metrics.data_from_client(16);
-                }
+                this->metrics.data_from_client(16);
             }
             this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
             REDEMPTION_CXX_FALLTHROUGH;
@@ -1831,9 +1807,7 @@ private:
 
         case SERVER_INIT:
             this->t.send("\x01", 1); // share flag
-            if (this->metrics.active()){
-                this->metrics.data_from_client(1);
-            }
+            this->metrics.data_from_client(1);
             this->state = SERVER_INIT_RESPONSE;
             REDEMPTION_CXX_FALLTHROUGH;
 
@@ -1936,9 +1910,7 @@ private:
 
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
-                if (this->metrics.active()){
-                    this->metrics.data_from_client(stream.get_offset());
-                }
+                this->metrics.data_from_client(stream.get_offset());
 
                 this->bpp = 16;
                 this->depth  = 16;
@@ -2066,9 +2038,7 @@ private:
                 assert(4u + number_of_encodings * 4u == stream.get_offset());
 
                 this->t.send(stream.get_data(), 4u + number_of_encodings * 4u);
-                if (this->metrics.active()){
-                    this->metrics.data_from_client(stream.get_offset());
-                }
+                this->metrics.data_from_client(stream.get_offset());
             }
 
 
@@ -2808,9 +2778,7 @@ private:
             this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
-            if (this->metrics.active()){
-                this->metrics.clipboard_data_from_client(chunk_size);
-            }
+            this->metrics.clipboard_data_from_client(chunk_size);
         }
     }
 
@@ -3366,15 +3334,6 @@ private:
             LOG(LOG_INFO, "mod_vnc::clipboard_send_to_vnc: done");
         }
     } // clipboard_send_to_vnc
-
-
-    void log_metrics() override {
-        if (this->metrics.active()) {
-            timeval now = tvtime();
-            this->metrics.log(now);
-        }
-    }
-
 
     // Front calls this member function when it became up and running.
 public:
