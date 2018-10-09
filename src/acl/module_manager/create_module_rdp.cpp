@@ -340,8 +340,6 @@ void ModuleManager::create_mod_rdp(
                 }))
             ;
 
-        std::unique_ptr<mod_api> managed_mod(std::move(new_mod));
-
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
@@ -359,7 +357,7 @@ void ModuleManager::create_mod_rdp(
                 client_info.width,
                 client_info.height,
                 adjusted_client_execute_rect,
-                std::move(managed_mod),
+                std::move(new_mod),
                 client_execute,
                 this->load_font(),
                 this->load_theme(),
@@ -374,7 +372,7 @@ void ModuleManager::create_mod_rdp(
         else {
             rdp_api*       rdpapi = new_mod.get();
             windowing_api* winapi = new_mod->get_windowing_api();
-            this->set_mod(managed_mod.release(), rdpapi, winapi);
+            this->set_mod(new_mod.release(), rdpapi, winapi);
         }
 
         /* If provided by connection policy, session timeout update */
