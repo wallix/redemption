@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -231,7 +231,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

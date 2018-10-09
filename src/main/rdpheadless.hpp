@@ -86,7 +86,6 @@
 
 #include <chrono>
 
-
 struct RDPHeadlessFrontParams
 {
     std::string out_path;
@@ -728,13 +727,15 @@ public:
               , mod_rdp_params
               , this->authentifier
               , this->report_message
-              , ini);
+              , ini
+              , nullptr);
         }
 
         this->_to_server_sender._callback = this->_callback.get();
 
         LOG(LOG_INFO, "impl_socket_listener->start_to_listen");
         try {
+            using namespace std::chrono_literals;
             while (!this->_callback->is_up_and_running()) {
                 std::cout << " Early negociations...\n";
                 if (int err = this->wait_and_draw_event(3s)) {

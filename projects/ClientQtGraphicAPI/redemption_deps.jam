@@ -51,9 +51,13 @@ requirement_list += <library>src/utils/utf.o ;
 requirement_list += <library>z ;
 requirement_list += <variant>debug:<library>dl ;
 requirement_list += <variant>san:<library>dl ;
+<<<<<<< HEAD
 add_obj src/utils/sugar/strutils.o : $(REDEMPTION_SRC_PATH)/utils/sugar/strutils.cpp ;
 add_obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 add_obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
+=======
+add_obj src/transport/crypto_transport.o : $(REDEMPTION_SRC_PATH)/transport/crypto_transport.cpp ;
+>>>>>>> 7379b59df7846342d62535fb17919e7729b8543a
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 add_obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 add_obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
@@ -86,9 +90,31 @@ add_obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/
 add_obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 add_obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 add_obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
+<<<<<<< HEAD
 add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/replay_mod.cpp : <define>ZLIB_CONST ;
 add_obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 add_obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 add_obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
 add_obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+=======
+add_obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
+add_obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
+add_obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+add_obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
+add_obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
+add_obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
+add_obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
+add_obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
+add_obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
+add_obj src/mod/vnc/new_mod_vnc.o : $(REDEMPTION_SRC_PATH)/mod/vnc/new_mod_vnc.cpp : <define>ZLIB_CONST ;
+add_obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
+add_obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
+add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
+add_obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
+add_obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
+add_obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
+add_obj src/utils/hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
+add_obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
+add_obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+>>>>>>> 7379b59df7846342d62535fb17919e7729b8543a

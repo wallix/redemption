@@ -90,14 +90,11 @@ public:
               , const std::chrono::hours file_interval      // daily rotation of filename (hours)
               , const std::chrono::seconds log_delay        // delay between 2 logs
               )
-        : metrics(/*this->rdp_field_version*/"v1.0", this->vnc_protocol_name,
-            activate, COUNT_FIELD, std::move(path), std::move(session_id),
+        : metrics(activate, std::move(path), std::move(session_id),
             primary_user_sig, account_sig, target_service_sig, session_info_sig,
             now, file_interval, log_delay)
-    {}
-
-    bool active() const {
-        return this->metrics.active_;
+    {
+        this->metrics.set_protocol(/*this->rdp_field_version*/"v1.0", this->vnc_protocol_name, COUNT_FIELD);
     }
 
     void log(timeval const& now) {
@@ -105,48 +102,63 @@ public:
     }
 
     void data_from_client(long int len) {
-        this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(DATA_FROM_CLIENT, len);
+        }
     }
 
     void data_from_server(long int len) {
-        this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(DATA_FROM_SERVER, len);
+        }
     }
 
     void clipboard_data_from_client(long int len) {
-        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_CLIENT, len);
+        }
     }
 
     void clipboard_data_from_server(long int len) {
-        this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(CLIPBOARD_DATA_FROM_SERVER, len);
+        }
     }
 
     void mouse_move(const int x, const int y) {
-        if (this->last_x >= 0 && this->last_y >= 0) {
-            int x_shift = x - this->last_x;
-            if (x_shift < 0) {
-                x_shift *=  -1;
+        if (this->metrics.is_active()){
+            if (this->last_x >= 0 && this->last_y >= 0) {
+                int x_shift = x - this->last_x;
+                if (x_shift < 0) {
+                    x_shift *=  -1;
+                }
+                int y_shift = y - this->last_y;
+                if (y_shift < 0) {
+                    y_shift *=  -1;
+                }
+                this->metrics.add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
             }
-            int y_shift = y - this->last_y;
-            if (y_shift < 0) {
-                y_shift *=  -1;
-            }
-            this->metrics.add_to_current_data(MOUSE_MOVE, x_shift + y_shift);
+            this->last_x = x;
+            this->last_y = y;
         }
-        this->last_x = x;
-        this->last_y = y;
     }
 
     void key_pressed() {
-        this->metrics.add_to_current_data(KEY_PRESSED, 1);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(KEY_PRESSED, 1);
+        }
     }
 
     void right_click() {
-        this->metrics.add_to_current_data(RIGHT_CLICK, 1);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(RIGHT_CLICK, 1);
+        }
     }
 
     void left_click() {
-        this->metrics.add_to_current_data(LEFT_CLICK, 1);
+        if (this->metrics.is_active()){
+            this->metrics.add_to_current_data(LEFT_CLICK, 1);
+        }
     }
-
 
 };

@@ -34,6 +34,7 @@ class TimeObj;
 class Transport;
 class RedirectionInfo;
 class Random;
+class RDPMetrics;
 
 std::unique_ptr<mod_api> new_mod_rdp(
     Transport& trans,
@@ -46,5 +47,6 @@ std::unique_ptr<mod_api> new_mod_rdp(
     const ModRDPParams& mod_rdp_params,
     AuthApi& authentifier,
     ReportMessageApi& report_message,
-    ModRdpVariables vars
+    ModRdpVariables vars,
+    RDPMetrics * metrics
 );

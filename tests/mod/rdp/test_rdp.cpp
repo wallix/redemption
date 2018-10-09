@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -202,7 +202,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -289,7 +289,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
@@ -376,7 +376,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
     SessionReactor session_reactor;
     auto mod = new_mod_rdp(t, session_reactor, front, info,
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
-        mod_rdp_params, authentifier, report_message, ini);
+        mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

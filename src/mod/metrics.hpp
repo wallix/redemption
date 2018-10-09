@@ -47,8 +47,13 @@ class Metrics
 public:
     std::vector<uint64_t> current_data;
 
-    const std::string version;
-    const std::string protocol_name;
+    std::string version;
+    std::string protocol_name;
+
+    // TODO: if directory creation fails metrics will be disabled
+    // it means either move the directory check and creation to lambda
+    // or changing active to non const (I did that)
+    bool active; 
 
     // output file info
     const std::chrono::hours file_interval;
@@ -73,7 +78,6 @@ public:
     // it means either move the directory check and creation to lambda
     // or changing active to non const (I did that)
     bool active_ = false;
-
     const timeval connection_time;
 
     const std::chrono::seconds log_delay;
@@ -82,10 +86,34 @@ public:
     char complete_index_file_path[4096] = {'\0'};
 
 public:
-    Metrics( std::string fields_version
-           , std::string protocol_name
-           , const bool activate                            // do nothing if false
-           , size_t     nb_metric_item
+
+    void set_protocol(std::string fields_version, std::string protocol_name, size_t nb_metric_item)
+    {
+        this->version = fields_version;
+        this->protocol_name = protocol_name;
+        this->current_data.resize(nb_metric_item, 0);
+
+        if (this->is_active()) {
+            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
+                this->path.c_str(), this->log_delay.count(), this->file_interval.count());
+                
+            if (0 != access(this->path.c_str(), F_OK)) {
+                LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
+                /* int status = */ recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
+//                LOG(LOG_INFO, "create status = %d", status);
+            }
+
+            if (0 != access(this->path.c_str(), F_OK)) {
+                LOG(LOG_INFO, "Creation of %s directory to store metrics failed, disabling metrics", this->path.c_str());
+                this->active = false;
+            }
+
+            this->new_file(this->current_file_date);
+        }
+
+    }
+
+    Metrics( const bool activate
            , std::string path
            , std::string session_id
            , array_view_const_char primary_user_sig         // hashed primary user account
@@ -96,33 +124,19 @@ public:
            , const std::chrono::hours file_interval         // daily rotation of filename
            , const std::chrono::seconds log_delay           // delay between 2 logs flush
            )
-    : current_data(nb_metric_item, 0)
-    , version(std::move(fields_version))
-    , protocol_name(std::move(protocol_name))
+    : current_data(0)
+    , version("0.0")
+    , protocol_name("none")
+    , active(activate)
     , file_interval{file_interval}
     , current_file_date(timeslice(now, this->file_interval))
     , path((path.back() == '/')?path.substr(0,path.size()-1):path)
     , session_id(std::move(session_id.insert(0, 1, ' ')))
-    , active_(activate)
     , connection_time(now)
     , log_delay(log_delay)
     , next_log_time{now+this->log_delay}
     {
         if (activate) {
-            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours",
-                this->path.c_str(), this->log_delay.count(), this->file_interval.count());
-
-            if (0 != access(this->path.c_str(), F_OK)) {
-                LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
-                int status = recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
-//                LOG(LOG_INFO, "create status = %d", status);
-            }
-
-            if (0 != access(this->path.c_str(), F_OK)) {
-                LOG(LOG_INFO, "Creation of %s directory to store metrics failed, disabling metrics", this->path.c_str());
-                this->active_ = false;
-            }
-
             this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
                 "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
                 int(this->session_id.size()-1u), this->session_id.data()+1,
@@ -130,8 +144,6 @@ public:
                 int(account_sig.size()), account_sig.data(),
                 int(target_service_sig.size()), target_service_sig.data(),
                 int(session_info_sig.size()), session_info_sig.data()));
-
-            this->new_file(this->current_file_date);
         }
     }
 
@@ -155,7 +167,7 @@ public:
 //        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld",
 //            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
 
-        if (!this->active_ || this->next_log_time > now) {
+        if (!this->active || this->next_log_time > now) {
             return ;
         }
 
@@ -170,7 +182,7 @@ public:
 
     void disconnect()
     {
-        if (!this->active_) {
+        if (!this->active) {
             return ;
         }
 
@@ -204,7 +216,8 @@ private:
         this->fd = unique_fd(this->complete_metrics_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!this->fd.is_open()) {
             int const errnum = errno;
-            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum, this->complete_metrics_file_path, strerror(errnum));
+            LOG(LOG_ERR, "Log Metrics error(%d): can't open \"%s\": %s", errnum,
+                this->complete_metrics_file_path, strerror(errnum));
         }
 
         this->write_event_to_logindex(this->connection_time, " connection "_av);
