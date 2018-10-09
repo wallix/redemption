@@ -1,3 +1,10 @@
+redemption (1.2.71%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support Windows Screenlocker in RemoteApp mode.
+  * Fix waiting for already received network data.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 09 Oct 2018 17:11:16 +0200
+
 redemption (1.2.69%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix delay (timeout) to bypassing Windows's Legal Notice screen in RemoteApp mode.
