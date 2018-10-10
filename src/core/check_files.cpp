@@ -23,6 +23,8 @@ Author(s): Christophe Grosjean, Jonathan Poelen
 #include "utils/log.hpp"
 #include "utils/sugar/array_view.hpp"
 
+#include <algorithm>
+
 
 struct CheckFileData
 {
@@ -75,8 +77,25 @@ namespace
     {
         bool result = true;
 
+        CheckFileData const* uses_files[std::size(user_check_file_list)];
+        CheckFileData const** uses_files_last = uses_files;
+
         for (CheckFileData const& check_file : check_file_list)
         {
+            // ignore duplicated files
+            if (std::any_of(uses_files, uses_files_last, [&](auto* pcheck_file){
+                using P = void const*;
+                return P(pcheck_file->filename) == P(check_file.filename)
+                    && pcheck_file->accessibility == check_file.accessibility
+                    && pcheck_file->type == check_file.type
+                ;
+            })) {
+                continue;
+            }
+
+            *uses_files_last = &check_file;
+            ++uses_files_last;
+
             const char * accessibility = nullptr;
             int access_type = 0;
 
