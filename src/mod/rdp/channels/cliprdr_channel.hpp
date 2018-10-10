@@ -2041,35 +2041,25 @@ public:
     }
 
     void empty_client_clipboard() {
-        if (proxy_managed) {
-            return;
-        }
-
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::empty_client_clipboard");
         }
 
-        // Format List PDU.
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::empty_client_clipboard: "
-                    "client_format_list_pdu_length=%zu client_format_list_pdu_flags=0x%X",
-                this->first_client_format_list_pdu_length,
-                this->first_client_format_list_pdu_flags);
-        }
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_, 0);
 
-        if (this->first_client_format_list_pdu_length) {
-            this->send_message_to_server(
-                    this->first_client_format_list_pdu_length,
-                    this->first_client_format_list_pdu_flags,
-                    this->first_client_format_list_pdu.get(),
-                    this->first_client_format_list_pdu_length
-                );
-            first_client_format_list_pdu.reset(nullptr);
-            this->first_client_format_list_pdu_length = 0;
-            this->first_client_format_list_pdu_flags  = 0;
-        }
+        StaticOutStream<256> out_s;
+
+        clipboard_header.emit(out_s);
+
+        const size_t totalLength = out_s.get_offset();
+
+        this->send_message_to_server(
+            totalLength,
+            this->first_client_format_list_pdu_flags,
+            out_s.get_data(),
+            totalLength);
     }
 };  // class ClipboardVirtualChannel
 
