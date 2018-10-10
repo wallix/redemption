@@ -26,7 +26,6 @@
 #include "regex/regex.hpp"
 #include "utils/log.hpp"
 #include "utils/select.hpp"
-#include "utils/sugar/array_view.hpp"
 
 #include <cerrno>
 #include <cstddef>
@@ -38,8 +37,6 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
-#include <signal.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <netdb.h>
 #include <sys/un.h>
@@ -101,7 +98,6 @@ namespace
 
         int trial = 0;
         for (; trial < nbretry ; trial++){
-//            LOG(LOG_INFO, "trial=%d", trial);
             int const res = ::connect(sck, &addr, addr_len);
             if (-1 != res){
                 // connection suceeded
@@ -125,72 +121,24 @@ namespace
                 // exit select on timeout or connect or error
                 // connect will catch the actual error if any,
                 // no need to care of select result
-                int res = select(sck+1, nullptr, &fds, nullptr, &timeout);
-                if (res == -1){
-                    LOG(LOG_INFO, "connecting: trying again (in progress) error=%d %s", errno, strerror(errno));
-                }
-                else {
-                    LOG(LOG_INFO, "connecting: trying again (in progress) [%d]", res);
-                }
-                trial--;
-                continue;
+                select(sck+1, nullptr, &fds, nullptr, &timeout);
             }
             else {
-                // try again after waiting (some errors like connection refused are transitory)
-                struct timeval timeout = {
-                    retry_delai_ms / 1000,
-                    1000 * (retry_delai_ms % 1000)
-                };
-                // exit select on timeout or connect or error
-                // connect will catch the actual error if any,
-                // no need to care of select result
-                int res = select(0, nullptr, nullptr, nullptr, &timeout);
-                if (res == -1){
-                    LOG(LOG_INFO, "connecting: trying again after error, new error=%d %s", errno, strerror(errno));
-                }
-                else {
-                    LOG(LOG_INFO, "connecting: trying again after error [%d]", res);
-                }
+                // real failure
+                trial = nbretry;
+                break;
             }
         }
 
         if (trial >= nbretry){
-            LOG(LOG_INFO, "All trials done connecting to %s", target);
+            LOG(LOG_ERR, "All trials done connecting to %s", target);
             return unique_fd{-1};
-        }
-
-        {
-            fd_set rfds;
-            io_fd_zero(rfds);
-            io_fd_set(sck, rfds);
-            struct timeval timeout = {
-                retry_delai_ms / 1000,
-                1000 * (retry_delai_ms % 1000)
-            };
-            // wait for socket to be ready for writing
-            int res = select(sck+1, nullptr, &rfds, nullptr, &timeout);
-            if (res == -1){
-                LOG(LOG_INFO, "Error checking if socket is ready for reading error=%d %s", errno, strerror(errno));
-            }
-            else {
-                LOG(LOG_INFO, "Socket ready for reading [%d]", res);
-            }
-            fd_set wfds;
-            io_fd_zero(wfds);
-            io_fd_set(sck, wfds);
-            res = select(sck+1, &wfds, nullptr, nullptr, &timeout);
-            if (res == -1){
-                LOG(LOG_INFO, "Error checking if socket is ready for writing error=%d %s", errno, strerror(errno));
-            }
-            else {
-                LOG(LOG_INFO, "Socket ready for writing [%d]", res);
-            }
         }
 
         LOG(LOG_INFO, "connection to %s succeeded : socket %d", target, sck);
         return unique_fd{sck};
     }
-}
+} // namespace
 
 int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 {
@@ -198,12 +146,12 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
         struct addrinfo * addr_info = nullptr;
         int               result    = getaddrinfo(ip, nullptr, nullptr, &addr_info);
         if (result) {
-            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)\n",
+            LOG(LOG_ERR, "DNS resolution failed for %s with errno = %d (%s)",
                 ip, (result == EAI_SYSTEM) ? errno : result
                   , (result == EAI_SYSTEM) ? strerror(errno) : gai_strerror(result));
             return -1;
         }
-        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr;
+        s4_sin_addr.s_addr = (reinterpret_cast<sockaddr_in *>(addr_info->ai_addr))->sin_addr.s_addr; /*NOLINT*/
         freeaddrinfo(addr_info);
     }
     return 0;
@@ -211,8 +159,7 @@ int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr)
 
 unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/)
 {
-    LOG(LOG_INFO, "connecting to %s:%d\n", ip, port);
-
+    LOG(LOG_INFO, "connecting to %s:%d", ip, port);
 
     // we will try connection several time
     // the trial process include "socket opening, hostname resolution, etc
@@ -236,14 +183,14 @@ unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_de
     REDEMPTION_DIAGNOSTIC_POP
     int status = resolve_ipv4_address(ip, u.s4.sin_addr);
     if (status){
-        LOG(LOG_INFO, "Connecting to %s:%d failed\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed", ip, port);
         close(sck);
         return unique_fd{-1};
     }
 
     /* set snd buffer to at least 32 Kbytes */
     if (!set_snd_buffer(sck, 32768)) {
-        LOG(LOG_INFO, "Connecting to %s:%d failed : cannot set socket buffer size\n", ip, port);
+        LOG(LOG_ERR, "Connecting to %s:%d failed : cannot set socket buffer size", ip, port);
         close(sck);
         return unique_fd{-1};
     }
@@ -299,7 +246,7 @@ struct LineBuffer
     int begin_line;
     int eol;
 
-    LineBuffer(int fd)
+    explicit LineBuffer(int fd)
     : end_buffer(0)
     , fd(fd)
     , begin_line(0)
