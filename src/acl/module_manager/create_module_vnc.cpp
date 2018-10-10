@@ -47,8 +47,7 @@ void ModuleManager::create_mod_vnc(
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
         auto metrics = std::make_unique<Metrics>(
-            ini.get<cfg::metrics::activate_log_metrics>()
-          , ini.get<cfg::metrics::log_dir_path>().to_string()
+            ini.get<cfg::metrics::log_dir_path>().to_string()
           , ini.get<cfg::context::session_id>()
           , hmac_user(ini.get<cfg::globals::auth_user>(),
                       ini.get<cfg::metrics::sign_key>())
@@ -63,12 +62,12 @@ void ModuleManager::create_mod_vnc(
           , ini.get<cfg::metrics::log_file_turnover_interval>()
           , ini.get<cfg::metrics::log_interval>());
 
-        auto vnc_metrics = std::make_unique<VNCMetrics>(metrics.get());
+        auto protocol_metrics = std::make_unique<VNCMetrics>(metrics.get());
 
         struct ModVNCWithMetrics : public mod_vnc
         {
             std::unique_ptr<Metrics> metrics = nullptr;
-            std::unique_ptr<VNCMetrics> vnc_metrics = nullptr;
+            std::unique_ptr<VNCMetrics> protocol_metrics = nullptr;
             SessionReactor::TimerPtr metrics_timer;
             
             using mod_vnc::mod_vnc;
@@ -106,11 +105,12 @@ void ModuleManager::create_mod_vnc(
             (client_info.remote_program ? &client_execute : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-            ini.get<cfg::metrics::activate_log_metrics>()?vnc_metrics.get():nullptr
+            (ini.get<cfg::metrics::activate_log_metrics>()
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
         );
 
         new_mod->metrics     = std::move(metrics);
-        new_mod->vnc_metrics = std::move(vnc_metrics);
+        new_mod->protocol_metrics = std::move(protocol_metrics);
 
         new_mod->metrics_timer = session_reactor.create_timer()
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))

@@ -58,8 +58,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
 
     auto epoch = to_timeval(1533211681s);
 
-    Metrics m( true
-              , wd.dirname().c_str()
+    Metrics m( wd.dirname().c_str()
               , "164d89c1a56957b752540093e178"
               , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
               , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
@@ -123,8 +122,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
     {
         auto epoch = to_timeval(1533211681s);
 
-        Metrics m( true
-                , wd.dirname().c_str()
+        Metrics m( wd.dirname().c_str()
                 , "164d89c1a56957b752540093e178"
                 , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
                 , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
@@ -170,8 +168,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogBasicIncrement)
 
     auto epoch = to_timeval(1533211681s);
 
-    Metrics m( true
-          , wd.dirname().c_str()
+    Metrics m( wd.dirname().c_str()
           , "164d89c1a56957b752540093e178"
           , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
           , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av

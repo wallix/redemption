@@ -58,17 +58,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 
     auto epoch = to_timeval(1533211681s);
 
-    Metrics m( true
-                      , wd.dirname().c_str()
-                      , "164d89c1a56957b752540093e178"
-                      , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                      , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                      , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                      , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                      , epoch
-                      , 24h
-                      , 5s
-                      );
+    Metrics m(wd.dirname().c_str()
+          , "164d89c1a56957b752540093e178"
+          , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+          , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+          , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+          , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+          , epoch
+          , 24h
+          , 5s
+          );
     RDPMetrics metrics(&m);
 
     RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
@@ -121,17 +120,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle2)
    {
        const auto epoch = to_timeval(1533211681s);
 
-       Metrics m( true
-                       , wd.dirname().c_str()
-                       , "164d89c1a56957b752540093e178"
-                       , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                       , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                       , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                       , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                       , epoch
-                       , 24h
-                       , 3s
-                       );
+       Metrics m(wd.dirname().c_str()
+               , "164d89c1a56957b752540093e178"
+               , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+               , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+               , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+               , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+               , epoch
+               , 24h
+               , 3s
+               );
        RDPMetrics metrics(&m);
 
        RED_CHECK_FILE_EXISTS(wd[logindex1]);
@@ -168,17 +166,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
 
    auto epoch = to_timeval(1533211681s);
 
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
     RDPMetrics metrics(&m);
 
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
@@ -283,17 +280,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
     RDPMetrics metrics(&m);
 
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
@@ -361,17 +357,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
 
     RDPMetrics metrics(&m);
 
@@ -453,17 +448,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
 
    RDPMetrics metrics(&m);
    
@@ -533,17 +527,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
 
    RDPMetrics metrics(&m);
    
@@ -665,17 +658,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
 
    RDPMetrics metrics(&m);
    
@@ -760,17 +752,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+         , "164d89c1a56957b752540093e178"
+         , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+         , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+         , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+         , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+         , epoch
+         , 24h
+         , 5s
+         );
 
    RDPMetrics metrics(&m);
 
@@ -870,17 +861,16 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
    auto epoch = to_timeval(1533211681s);
-   Metrics m( true
-                     , wd.dirname().c_str()
-                     , "164d89c1a56957b752540093e178"
-                     , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
-                     , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
-                     , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
-                     , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
-                     , epoch
-                     , 24h
-                     , 5s
-                     );
+   Metrics m(wd.dirname().c_str()
+             , "164d89c1a56957b752540093e178"
+             , "51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58"_av
+             , "1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31"_av
+             , "EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av
+             , "B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av
+             , epoch
+             , 24h
+             , 5s
+             );
                      
    RDPMetrics metrics(&m);                     
 

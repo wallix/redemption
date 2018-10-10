@@ -56,7 +56,7 @@ extern "C"
         using std::chrono::hours;
         timeval now{static_cast<time_t>(now_seconds), 0};
         Metrics * metrics = new(std::nothrow) Metrics(
-            true, path, session_id,
+            path, session_id,
             av(primary_user_sig), av(account_sig), av(target_service_sig),
             av(session_info_sig), now, hours(file_interval_hours),
             seconds(log_delay_seconds));

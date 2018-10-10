@@ -42,6 +42,19 @@
 #include <sys/stat.h>
 
 
+static inline bool create_metrics_directory(const std::string & path){
+    if (0 != access(path.c_str(), F_OK)) {
+        LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
+        recursive_create_directory(path.c_str(), ACCESSPERMS, -1);
+    }
+
+    if (0 != access(path.c_str(), F_OK)) {
+        LOG(LOG_WARNING, "Creation of %s directory to store metrics failed, metrics will be disabled", path.c_str());
+        return false;
+    }
+    return true;
+}
+
 class Metrics
 {
 public:
@@ -49,11 +62,6 @@ public:
 
     std::string version;
     std::string protocol_name;
-
-    // TODO: if directory creation fails metrics will be disabled
-    // it means either move the directory check and creation to lambda
-    // or changing active to non const (I did that)
-    bool active; 
 
     // output file info
     const std::chrono::hours file_interval;
@@ -74,10 +82,6 @@ public:
     };
     Header header;
     const std::string session_id;
-    // TODO: if directory creation fails metrics will be disabled
-    // it means either move the directory check and creation to lambda
-    // or changing active to non const (I did that)
-    bool active_ = false;
     const timeval connection_time;
 
     const std::chrono::seconds log_delay;
@@ -93,28 +97,13 @@ public:
         this->protocol_name = protocol_name;
         this->current_data.resize(nb_metric_item, 0);
 
-        if (this->active_) {
-            LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
-                this->path.c_str(), this->log_delay.count(), this->file_interval.count());
+        LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
+            this->path.c_str(), this->log_delay.count(), this->file_interval.count());
                 
-            if (0 != access(this->path.c_str(), F_OK)) {
-                LOG(LOG_INFO, "Creation of %s directory to store metrics", path.c_str());
-                /* int status = */ recursive_create_directory(this->path.c_str(), ACCESSPERMS, -1);
-//                LOG(LOG_INFO, "create status = %d", status);
-            }
-
-            if (0 != access(this->path.c_str(), F_OK)) {
-                LOG(LOG_INFO, "Creation of %s directory to store metrics failed, disabling metrics", this->path.c_str());
-                this->active = false;
-            }
-
-            this->new_file(this->current_file_date);
-        }
-
+        this->new_file(this->current_file_date);
     }
 
-    Metrics( const bool activate
-           , std::string path
+    Metrics( std::string path
            , std::string session_id
            , array_view_const_char primary_user_sig         // hashed primary user account
            , array_view_const_char account_sig              // hashed secondary account
@@ -127,7 +116,6 @@ public:
     : current_data(0)
     , version("0.0")
     , protocol_name("none")
-    , active(activate)
     , file_interval{file_interval}
     , current_file_date(timeslice(now, this->file_interval))
     , path((path.back() == '/')?path.substr(0,path.size()-1):path)
@@ -136,15 +124,13 @@ public:
     , log_delay(log_delay)
     , next_log_time{now+this->log_delay}
     {
-        if (activate) {
-            this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
-                "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
-                int(this->session_id.size()-1u), this->session_id.data()+1,
-                int(primary_user_sig.size()), primary_user_sig.data(),
-                int(account_sig.size()), account_sig.data(),
-                int(target_service_sig.size()), target_service_sig.data(),
-                int(session_info_sig.size()), session_info_sig.data()));
-        }
+        this->header.len = size_t(snprintf(this->header.buffer, sizeof(this->header.buffer),
+            "%.*s user=%.*s account=%.*s target_service_device=%.*s client_info=%.*s\n",
+            int(this->session_id.size()-1u), this->session_id.data()+1,
+            int(primary_user_sig.size()), primary_user_sig.data(),
+            int(account_sig.size()), account_sig.data(),
+            int(target_service_sig.size()), target_service_sig.data(),
+            int(session_info_sig.size()), session_info_sig.data()));
     }
 
     std::size_t count_data() noexcept
@@ -167,7 +153,7 @@ public:
 //        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld",
 //            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
 
-        if (!this->active || this->next_log_time > now) {
+        if (this->next_log_time > now) {
             return ;
         }
 
@@ -182,10 +168,6 @@ public:
 
     void disconnect()
     {
-        if (!this->active) {
-            return ;
-        }
-
         this->rotate(this->next_log_time);
         this->write_event_to_logmetrics(this->next_log_time);
         this->write_event_to_logindex(this->next_log_time, " disconnection "_av);
