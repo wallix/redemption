@@ -838,10 +838,11 @@ public:
 //  The supplied path MUST be absolute and relative to the local client system, for example,
 //  "c:\temp\clipdata". Any space not used in this field SHOULD be filled with null characters.
 
-struct ClientTemporaryDirectoryPDU
+class ClientTemporaryDirectoryPDU
 {
     std::string temp_dir;
 
+public:
     explicit ClientTemporaryDirectoryPDU() = default;
 
     explicit ClientTemporaryDirectoryPDU(const char* temp_dir)
@@ -880,6 +881,8 @@ struct ClientTemporaryDirectoryPDU
 
         stream.in_skip_bytes(520);  // wszTempDir(520)
     }
+
+    const char * wszTempDir() const { return this->temp_dir.c_str(); }
 
     static constexpr size_t size() {
         return 520;  // wszTempDir(520)
