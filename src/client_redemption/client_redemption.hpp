@@ -495,8 +495,6 @@ public:
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
-                  , this->config.info
-                  , this->timeSystem
                   , this->config.vnc_conf.width
                   , this->config.vnc_conf.height
                   , this->config.vnc_conf.keylayout

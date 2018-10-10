@@ -30,8 +30,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     const char* username,
     const char* password,
     FrontAPI& front,
-    const ClientInfo& info,
-    TimeObj& timeobj,
     uint16_t front_width,
     uint16_t front_height,
     int keylayout,
@@ -48,7 +46,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
 )
 {
     return std::make_unique<mod_vnc>(
-        t, session_reactor, username, password, front, info, timeobj,
+        t, session_reactor, username, password, front,
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
         VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple,

@@ -192,8 +192,6 @@ int main(int argc, char** argv)
               , username.c_str()
               , password.c_str()
               , front
-              , client_info
-              , lcg_timeobj
               , 800
               , 600
               , 0x04C         /* keylayout */

@@ -41,8 +41,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
     const char* username,
     const char* password,
     FrontAPI& front,
-    const ClientInfo& info,
-    TimeObj& timeobj,
     uint16_t front_width,
     uint16_t front_height,
     int keylayout,

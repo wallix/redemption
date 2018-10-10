@@ -69,9 +69,9 @@ void ModuleManager::create_mod_vnc(
             std::unique_ptr<Metrics> metrics = nullptr;
             std::unique_ptr<VNCMetrics> protocol_metrics = nullptr;
             SessionReactor::TimerPtr metrics_timer;
-            
+
             using mod_vnc::mod_vnc;
-            
+
         };
 
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
@@ -86,8 +86,6 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::globals::target_user>().c_str(),
             ini.get<cfg::context::target_password>().c_str(),
             front,
-            client_info,
-            this->timeobj,
             client_info.width,
             client_info.height,
             client_info.keylayout,

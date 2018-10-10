@@ -224,8 +224,6 @@ public:
            , const char * password
            , FrontAPI & front
            // TODO: front width and front height should be provided through info
-           , const ClientInfo & info
-           , TimeObj & timeobj
            , uint16_t front_width
            , uint16_t front_height
            , int keylayout

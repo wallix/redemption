@@ -700,8 +700,6 @@ public:
               , userName
               , userPwd
               , *(this)
-              , this->_info
-              , this->timeSystem
               , this->_info.width
               , this->_info.height
               , this->_info.keylayout
