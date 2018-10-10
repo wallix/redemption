@@ -24,7 +24,7 @@
 #include "configs/config_access.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/channel_names.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 

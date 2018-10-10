@@ -63,7 +63,7 @@
 #include "core/RDP/caches/bmpcachepersister.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 
 #include "gdi/graphic_api.hpp"
 

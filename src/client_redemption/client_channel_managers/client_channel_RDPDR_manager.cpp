@@ -23,7 +23,9 @@
 
 #include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
 
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 
 // [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
@@ -718,7 +720,6 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                                         endPath = path.substr(path.length() -1, path.length());
                                     }
 
-                                    struct stat buff_child;
                                     std::string str_file_name;
 
                                     if (sdqdr.InitialQuery() && endPath != asterix) {
@@ -769,6 +770,7 @@ void ClientChannelRDPDRManager::receive(InStream & chunk) /*NOLINT*/
                                             this->elem_in_path.erase(this->elem_in_path.begin());
 
                                             std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
+                                            struct stat buff_child;
                                             if (stat(str_file_path_slash.c_str(), &buff_child)) {
                                                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                                                 //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\' (buff_child).", str_file_path_slash.c_str());

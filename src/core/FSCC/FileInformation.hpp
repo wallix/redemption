@@ -18,11 +18,9 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Clément Moroldo
 */
 
-
 #pragma once
 
 #include <string>
-#include <cinttypes>
 #include <cinttypes>
 
 #include "core/error.hpp"

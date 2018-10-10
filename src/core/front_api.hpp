@@ -25,16 +25,11 @@
 #pragma once
 
 #include "gdi/graphic_api.hpp"
-
 #include "utils/sugar/array_view.hpp"
-
-struct Capability;
-class InStream;
-struct OrderCaps;
 
 namespace CHANNELS {
     class ChannelDefArray;
-    struct ChannelDef;
+    class ChannelDef;
 }
 
 class FrontAPI : public gdi::GraphicApi

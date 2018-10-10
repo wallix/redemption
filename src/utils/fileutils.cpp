@@ -37,7 +37,6 @@
 #include <dirent.h>
 #include <alloca.h>
 
-#include <string>
 
 // two flavors of basename_len to make it const agnostic
 const char * basename_len(const char * path, size_t & len)

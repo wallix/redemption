@@ -30,6 +30,7 @@ exe headlessclient :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
@@ -108,6 +109,7 @@ exe rdpproxy :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -202,6 +204,7 @@ exe rdpheadless :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
@@ -292,6 +295,7 @@ exe rdpclient :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
@@ -453,9 +457,7 @@ test-run tests/acl/test_acl_serializer :
   <library>snappy
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
-  <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/cfgloader.o
@@ -484,9 +486,7 @@ test-run tests/acl/test_authentifier :
   <library>src/acl/module_manager/mm_ini.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
-  <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
-  <library>src/gdi/graphic_api.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/cfgloader.o
@@ -538,6 +538,7 @@ test-run tests/acl/test_module_manager :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -827,6 +828,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
@@ -898,6 +900,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
@@ -939,6 +942,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
@@ -967,37 +971,27 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
 :
   <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp
   <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp
-  <define>ZLIB_CONST
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/replay_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
   <library>src/utils/utf.o
-  <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1007,37 +1001,27 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
 :
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp
-  <define>ZLIB_CONST
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/replay_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
   <library>src/utils/utf.o
-  <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1047,37 +1031,27 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
 :
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp
   <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp
-  <define>ZLIB_CONST
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
-  <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/replay_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/sugar/strutils.o
   <library>src/utils/utf.o
-  <library>z
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1092,7 +1066,6 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>crypto
   <library>openssl
   <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
   <library>src/core/RDP/mppc.o
@@ -1104,11 +1077,8 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/transport/recorder_transport.o
-  <library>src/transport/replay_transport.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
@@ -2410,6 +2380,7 @@ test-run tests/core/test_mainloop :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -2530,6 +2501,7 @@ test-run tests/core/test_session :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -2653,6 +2625,7 @@ test-run tests/core/test_session_server :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
@@ -2757,6 +2730,7 @@ test-run tests/front/test_front :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
@@ -3978,9 +3952,6 @@ test-run tests/mod/null/test_null :
   $(REDEMPTION_TEST_PATH)/mod/null/test_null.cpp
 :
   <covfile>src/mod/null/null.hpp
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/utf.o
 ;
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
@@ -4081,6 +4052,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
@@ -4100,6 +4072,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/sugar/strutils.o
@@ -4138,6 +4111,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/clip_from_cmd.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
@@ -4164,7 +4138,6 @@ test-run tests/mod/rdp/test_rdp :
 test-run tests/mod/rdp/test_rdp_log :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_log.cpp
 :
-  <covfile>src/mod/rdp/rdp_log.hpp
 ;
 test-run tests/mod/rdp/test_rdp_metrics :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
@@ -4284,6 +4257,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/client_execute.o
@@ -5340,9 +5314,9 @@ obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/r
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
-obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp : <define>ZLIB_CONST ;
-obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp : <define>ZLIB_CONST ;
-obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp : <define>ZLIB_CONST ;
+obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
+obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
+obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
@@ -5354,6 +5328,7 @@ obj src/core/set_server_redirection_target.o : $(REDEMPTION_SRC_PATH)/core/set_s
 obj src/gdi/clip_from_cmd.o : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 obj src/gdi/graphic_api.o : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 obj src/gdi/protected_graphics.o : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
+obj src/gdi/screen_functions.o : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 obj src/keyboard/keymap2.o : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
 obj src/keyboard/keymapSym.o : $(REDEMPTION_SRC_PATH)/keyboard/keymapSym.cpp ;
 obj src/lib/do_recorder.o : $(REDEMPTION_SRC_PATH)/lib/do_recorder.cpp : <define>ZLIB_CONST ;
@@ -5873,7 +5848,6 @@ alias test_virtual_channel_data_sender.coverage : tests/mod/rdp/channels/test_vi
 alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp.coverage : tests/mod/rdp/test_rdp.coverage ;
 alias test_rdp_log : tests/mod/rdp/test_rdp_log ;
-alias test_rdp_log.coverage : tests/mod/rdp/test_rdp_log.coverage ;
 alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;

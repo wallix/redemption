@@ -20,11 +20,16 @@
 
 #pragma once
 
-#include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "core/RDP/RDPDrawable.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/log.hpp"
+#include "core/front_api.hpp" // TODO FrontAPI::ResizeResult
+
+#include <string>
+
+
+class ClientCallback;
+class ClientRedemptionConfig;
+class ClientRedemptionAPI;
 
 
 class ClientOutputGraphicAPI : public gdi::GraphicApi

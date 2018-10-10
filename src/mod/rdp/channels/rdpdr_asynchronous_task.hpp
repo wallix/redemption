@@ -26,7 +26,7 @@
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
 #include "core/session_reactor.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

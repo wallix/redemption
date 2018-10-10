@@ -22,9 +22,8 @@
 
 #include "core/back_event_t.hpp"
 #include "mod/mod_api.hpp"
-#include "mod/rdp/rdp_api.hpp"
 
-
+class rdp_api;
 class AuthApi;
 class ReportMessageApi;
 

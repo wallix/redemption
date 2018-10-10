@@ -18,40 +18,18 @@
    Author(s): Christophe Grosjean, Javier Caverni, Meng Tan, Raphael Zhou
 */
 
-
 #pragma once
 
-#include <ctime>
-#include <vector>
-#include <typeinfo>
-
 #include "core/callback.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "gdi/graphic_api.hpp"
-#include "utils/sugar/not_null_ptr.hpp"
 
-// TODO to another file
-inline void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim)
+#include <string>
+#include <ctime>
+
+namespace gdi
 {
-    Rect const r(0, 0, dim.w, dim.h);
-    RDPOpaqueRect cmd(r, color_encode(BLACK, 24));
-    drawable.begin_update();
-    drawable.draw(cmd, r, gdi::ColorCtx::depth24());
-    drawable.end_update();
+    class GraphicApi;
 }
-// TODO to another file
-inline void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim)
-{
-    Rect const r(0, 0, dim.w, dim.h);
-    RDPPatBlt cmd(
-        r, 0xA0, color_encode(BLACK, 24), color_encode(WHITE, 24),
-        RDPBrush(0, 0, 3, 0xaa, cbyte_ptr("\x55\xaa\x55\xaa\x55\xaa\x55"))
-    );
-    drawable.begin_update();
-    drawable.draw(cmd, r, gdi::ColorCtx::depth24());
-    drawable.end_update();
-}
+
 
 class mod_api : public Callback
 {

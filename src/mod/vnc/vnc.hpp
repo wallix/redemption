@@ -37,6 +37,9 @@ h
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/report_message_api.hpp"
 #include "core/session_reactor.hpp"
+
+#include "gdi/screen_functions.hpp"
+
 #include "keyboard/keymap2.hpp"
 #include "keyboard/keymapSym.hpp"
 #include "main/version.hpp"

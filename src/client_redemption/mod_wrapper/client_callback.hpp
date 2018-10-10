@@ -20,18 +20,11 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-#ifndef Q_MOC_RUN
-
 #include "core/callback.hpp"
 #include "keyboard/keymap2.hpp"
-//#include "core/channel_names.hpp"
-//#include "core/channel_list.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-
-#endif
+#include "mod/internal/replay_mod.hpp"
 
 
 class ClientCallback

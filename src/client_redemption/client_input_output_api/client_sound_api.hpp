@@ -20,12 +20,7 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-
-#include "client_redemption/client_redemption_api.hpp"
-
-
+#include <string>
 
 class ClientOutputSoundAPI {
 

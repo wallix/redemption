@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "utils/log.hpp"
 
 #include "core/RDPEA/audio_output.hpp"

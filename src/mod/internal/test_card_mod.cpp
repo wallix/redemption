@@ -20,6 +20,7 @@
    Use (implemented) basic RDP orders to draw some known test pattern
 */
 
+#include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/test_card_mod.hpp"
 #include "core/app_path.hpp"

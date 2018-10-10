@@ -31,9 +31,12 @@
 
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-
+#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
+#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
+#include "mod/mod_api.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 
 #include <chrono>

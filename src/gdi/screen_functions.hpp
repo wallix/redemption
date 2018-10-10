@@ -6,7 +6,7 @@
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
@@ -15,28 +15,17 @@
 
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
-   Author(s): Clément Moroldo, David Fort
+   Author(s): Christophe Grosjean, Javier Caverni, Meng Tan, Raphael Zhou
 */
 
 #pragma once
 
-class ClientRedemptionAPI;
-class mod_api;
-
-class ClientInputSocketAPI
+class Dimension;
+namespace gdi
 {
-    // TODO private
-public:
-    mod_api * _callback = nullptr;
-    ClientRedemptionAPI * client;
+    class GraphicApi;
+}
 
-    // TODO API ?????
-    void set_client(ClientRedemptionAPI * client) {
-        this->client = client;
-    }
+void gdi_clear_screen(gdi::GraphicApi& drawable, Dimension const& dim);
 
-    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
-    virtual void disconnect() = 0;
-
-    virtual ~ClientInputSocketAPI() = default;
-};
+void gdi_freeze_screen(gdi::GraphicApi& drawable, Dimension const& dim);

@@ -25,7 +25,7 @@
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
 #include "core/session_reactor.hpp"
 

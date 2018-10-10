@@ -2,8 +2,8 @@
 BEGINFILE {
     f=substr(FILENAME,5) # skip src/
 }
-/^\s*#include "/ {
-    gsub(/^\s*\#include "|".*$/, "")
+/^\s*#\s*include "/ {
+    gsub(/^\s*\#\s*include "|".*$/, "")
     m[f][$0]
 }
 function ptree(s, f,    ns)

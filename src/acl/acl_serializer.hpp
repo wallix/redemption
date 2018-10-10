@@ -29,6 +29,7 @@
 #include "acl/module_manager/enums.hpp"
 #include "configs/config.hpp"
 #include "main/version.hpp"
+#include "mod/rdp/rdp_api.hpp"
 #include "core/authid.hpp"
 #include "core/date_dir_from_filename.hpp"
 #include "core/set_server_redirection_target.hpp"

@@ -20,16 +20,17 @@
 
 #pragma once
 
-#include "utils/log.hpp"
+#include "utils/image_data_view.hpp"
 
-
-#include "client_redemption/client_redemption_api.hpp"
-//#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
+#include <string>
 
 class ClientChannelCLIPRDRManager;
+class ClientRedemptionAPI;
 
-class ClientIOClipboardAPI {
 
+class ClientIOClipboardAPI
+{
+    // TODO private !!!!!!!!!!!!!!!!
 public:
     ClientRedemptionAPI * client = nullptr;
     ClientChannelCLIPRDRManager * manager;

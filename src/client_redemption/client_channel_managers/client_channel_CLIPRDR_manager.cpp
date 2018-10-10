@@ -23,6 +23,10 @@
 
 
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
+#include "utils/difftimeval.hpp"
+
+#include <sys/stat.h>
+#include <sys/types.h>
 
 
 // [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension

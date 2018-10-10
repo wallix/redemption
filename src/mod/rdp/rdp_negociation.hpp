@@ -30,7 +30,7 @@
 #include "core/RDP/lic.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 

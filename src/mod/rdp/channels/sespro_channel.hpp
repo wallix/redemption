@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "gdi/screen_functions.hpp"
 #include "core/error.hpp"
 #include "core/front_api.hpp"
 #include "core/session_reactor.hpp"

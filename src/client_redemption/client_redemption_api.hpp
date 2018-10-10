@@ -20,25 +20,11 @@
 
 #pragma once
 
-#ifndef Q_MOC_RUN
-
-#include "utils/log.hpp"
-#include "mod/rdp/rdp_log.hpp"
-
-#include "configs/config.hpp"
-
 #include "core/front_api.hpp"
-#include "core/report_message_api.hpp"
-
-#include "mod/internal/client_execute.hpp"
-#include "mod/mod_api.hpp"
-
-#include "mod/internal/replay_mod.hpp"
-#include "transport/replay_transport.hpp"
-
-#endif
 
 #include <chrono>
+#include <string>
+#include <ctime>
 
 
 class ClientRedemptionAPI : public FrontAPI

@@ -49,12 +49,17 @@
 #include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
 #include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
 
+#include "client_redemption/client_config/client_redemption_config.hpp"
+
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_input_output_api/client_socket_api.hpp"
+
 #include "client_redemption/client_redemption_api.hpp"
+
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 
+#include "configs/config.hpp"
 #include "front/execute_events.hpp"
 
 

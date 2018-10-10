@@ -22,6 +22,7 @@
 
 #include "acl/auth_api.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 #include "core/front_api.hpp"
@@ -33,12 +34,13 @@
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/windowing_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/rect.hpp"
 #include "utils/theme.hpp"
 #include "utils/translation.hpp"
+#include "utils/sugar/not_null_ptr.hpp"
 
 #include <string>
 

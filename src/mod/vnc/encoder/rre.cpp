@@ -30,6 +30,8 @@ h
 #include "utils/stream.hpp"
 #include "utils/sugar/update_lock.hpp"
 
+#include <vector>
+
 
 //  7.6.3   RRE Encoding
 //  ====================

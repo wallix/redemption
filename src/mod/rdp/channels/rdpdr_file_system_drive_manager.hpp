@@ -29,7 +29,7 @@
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
-#include "mod/rdp/rdp_log.hpp"
+#include "mod/rdp/rdp_verbose.hpp"
 #include "transport/in_file_transport.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/sugar/array_view.hpp"

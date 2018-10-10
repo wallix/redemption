@@ -20,14 +20,11 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-
-
-#include "client_redemption/client_redemption_api.hpp"
-
-
-
+#include "utils/sugar/bytes_view.hpp"
 #include "core/FSCC/FileInformation.hpp"
+
+#include <vector>
+#include <string>
 
 constexpr long long WINDOWS_TICK = 10000000;
 constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
@@ -38,8 +35,8 @@ class ClientIODiskAPI {
 public:
     virtual ~ClientIODiskAPI() = default;
 
-    struct FileStat {
-
+    struct FileStat
+    {
         uint64_t LastAccessTime = 0;
         uint64_t LastWriteTime  = 0;
         uint64_t CreationTime   = 0;
@@ -53,8 +50,8 @@ public:
         uint8_t  Directory      = 0;
     };
 
-    struct FileStatvfs {
-
+    struct FileStatvfs
+    {
         uint64_t VolumeCreationTime             = 0;
         const char * VolumeLabel                = "";
         const char * FileSystemName             = "ext4";
@@ -70,31 +67,12 @@ public:
         uint64_t ActualAvailableAllocationUnits = 0;
     };
 
-
-
-
     unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
         return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
     }
 
     long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
         return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
-    }
-
-    uint32_t string_to_hex32(uint8_t const * str) {
-        size_t size = sizeof(str);
-        uint32_t hex32(0);
-        for (size_t i = 0; i < size; i++) {
-            int s = str[i];
-            if('0' <= s && s <= '9') {
-                hex32 += (s - '0') << (size - i - 1);
-            } else if ('A' <= s && s <= 'F') {
-                hex32 += (s - 'A') << (size - i - 1);
-            } else if ('a' <= s && s <= 'f') {
-                hex32 += (s - 'a') << (size - i - 1);
-            }
-        }
-        return hex32;
     }
 
     virtual bool ifile_good(const char * new_path) = 0;

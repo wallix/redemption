@@ -22,10 +22,10 @@
 */
 
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "gdi/graphic_api.hpp"
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "utils/sugar/update_lock.hpp"
-
 
 Bouncer2Mod::Bouncer2Mod(
     SessionReactor& session_reactor,

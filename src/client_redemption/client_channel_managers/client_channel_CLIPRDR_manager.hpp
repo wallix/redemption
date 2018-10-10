@@ -34,6 +34,7 @@
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 
+#include "mod/rdp/rdp_verbose.hpp"
 
 
 
