@@ -93,13 +93,13 @@ public:
 
     void set_protocol(std::string fields_version, std::string protocol_name, size_t nb_metric_item)
     {
-        this->version = fields_version;
-        this->protocol_name = protocol_name;
+        this->version = std::move(fields_version);
+        this->protocol_name = std::move(protocol_name);
         this->current_data.resize(nb_metric_item, 0);
 
-        LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours", 
+        LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours",
             this->path.c_str(), this->log_delay.count(), this->file_interval.count());
-                
+
         this->new_file(this->current_file_date);
     }
 

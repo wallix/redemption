@@ -597,7 +597,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->trans.next();
     }
 
-    this->recorder.reset(new video_recorder(
+    this->recorder = std::make_unique<video_recorder>(
         IOVideoRecorderWithTransport<SequenceTransport>::write,
         IOVideoRecorderWithTransport<SequenceTransport>::seek,
         &this->trans,
@@ -607,7 +607,7 @@ void SequencedVideoCaptureImpl::VideoCapture::next_video()
         this->video_params.qscale,
         this->video_params.codec.c_str(),
         this->video_params.verbosity
-    ));
+    );
     this->recorder->preparing_video_frame();
     this->video_cap_ctx.next_video();
 }
@@ -654,7 +654,7 @@ void SequencedVideoCaptureImpl::zoom(unsigned percent)
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
     if (this->ic_zoom_factor != 100) {
-        this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        this->ic_scaled_buffer = std::make_unique<uint8_t[]>(this->ic_scaled_width * this->ic_scaled_height * 3);
     }
 }
 
@@ -748,7 +748,7 @@ SequencedVideoCaptureImpl::SequencedVideoCaptureImpl(
     this->ic_scaled_width = (zoom_width + 3) & 0xFFC;
     this->ic_scaled_height = zoom_height;
     if (this->ic_zoom_factor != 100) {
-        this->ic_scaled_buffer.reset(new uint8_t[this->ic_scaled_width * this->ic_scaled_height * 3]);
+        this->ic_scaled_buffer = std::make_unique<uint8_t[]>(this->ic_scaled_width * this->ic_scaled_height * 3);
     }
 }
 

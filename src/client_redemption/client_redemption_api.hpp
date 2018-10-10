@@ -31,7 +31,6 @@ class ClientRedemptionAPI : public FrontAPI
 {
 
 public:
-    ClientRedemptionAPI() {}
     virtual ~ClientRedemptionAPI() = default;
 
     bool can_be_start_capture() override { return true; }

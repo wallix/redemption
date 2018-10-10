@@ -67,7 +67,7 @@ namespace
         }
     };
 
-    std::string const filter_error = []{
+    std::string const filter_error = []{ /*NOLINT*/
         auto s = std::getenv("REDEMPTION_FILTER_ERROR");
         return s ? std::string{s} : std::string{};
     }();
@@ -131,7 +131,7 @@ namespace
 
     struct SEGV_Handler
     {
-        SEGV_Handler()
+        SEGV_Handler() noexcept
         {
             auto handler = [](int signum) {
                 ::signal(signum, SIG_DFL);
@@ -146,7 +146,7 @@ namespace
             ::signal(SIGABRT, handler);
         }
     } SEGV_Handler;
-}
+} // namespace
 # endif
 #endif
 

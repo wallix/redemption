@@ -43,7 +43,10 @@ h
 //         No. of bytes                    Type               Description
 // width * height * bytesPerPixel      PIXEL array              pixels
 
-namespace VNC::Encoder
+
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -111,4 +114,5 @@ Encoder raw_encoder(uint8_t bpp, uint8_t Bpp, Rect rect)
     return Encoder(Raw{bpp, Bpp, rect});
 }
 
-} // namespace Encoder::VNC
+} // namespace Encoder
+} // namespace VNC

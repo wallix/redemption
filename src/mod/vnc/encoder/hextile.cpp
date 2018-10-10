@@ -134,7 +134,9 @@ h
 // the Y position. The most-significant four bits of width-and-height specify
 // the width minus one, the least-significant specify the height minus one.
 
-namespace VNC::Encoder
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -382,4 +384,5 @@ Encoder hextile_encoder(uint8_t bpp, uint8_t Bpp, Rect rect, VNCVerbose verbose)
   return Encoder(Hextile{bpp, Bpp, rect, verbose});
 }
 
-} // namespace VNC::Encoder
+} // namespace Encoder
+} // namespace VNC

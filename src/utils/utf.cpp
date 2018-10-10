@@ -114,7 +114,7 @@ namespace
         uint8_t c = *source;
         return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
     }
-}
+} // namespace
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
@@ -803,8 +803,9 @@ size_t Latin1toUTF8(
 
 size_t UTF16StrLen(const uint8_t * utf16_s) {
     size_t length = 0;
-    for (; *utf16_s || *(utf16_s + 1); utf16_s += 2, length++)
-        ;
-
+    while (utf16_s[0] | utf16_s[1]) {
+        utf16_s += 2;
+        length++;
+    }
     return length;
 }

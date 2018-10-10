@@ -46,7 +46,9 @@ h
 //      2           U16     src-y-position
 
 
-namespace VNC::Encoder
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -84,4 +86,5 @@ Encoder copy_rect_encoder(Rect rect, uint16_t width, uint16_t height)
     return Encoder(CopyRect{rect, width, height});
 }
 
-} // namespace VNC::Encoder
+} // namespace Encoder
+} // namespace VNC

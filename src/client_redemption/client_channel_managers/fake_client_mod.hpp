@@ -300,10 +300,11 @@ public:
 
     FakeRDPChannelsMod fake_mod;
 
-    FakeClient(/*SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose*/)
-    {
-//         this->mod = &(this->fake_mod);
-    }
+    FakeClient() = default;
+    // FakeClient(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
+    // {
+    //     this->mod = &(this->fake_mod);
+    // }
 
     size_t get_total_stream_produced() {
         return this->fake_mod.index_in;

@@ -58,7 +58,9 @@ Vnc encoder module for Cursor Pseudo Encoding
 // the leftmost pixel, with a 1-bit meaning the corresponding
 // pixel in the cursor is valid.
 
-namespace VNC::Encoder
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -139,4 +141,5 @@ Encoder cursor_encoder(
     return Encoder(Cursor{Bpp, rect, red_shift, red_max, green_shift, green_max, blue_shift, blue_max, verbose});
 }
 
-} // namespace Encoder::VNC
+} // namespace Encoder
+} // namespace VNC

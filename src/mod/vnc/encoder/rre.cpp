@@ -66,7 +66,9 @@ h
 //          2           U16         width
 //          2           U16         height
 
-namespace VNC::Encoder
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -198,4 +200,5 @@ Encoder rre_encoder(uint8_t bpp, uint8_t Bpp, Rect rect)
     return Encoder{RRE(bpp, Bpp, rect)};
 }
 
-}  // namespace Encoder::VNC
+} // namespace Encoder
+} // namespace VNC

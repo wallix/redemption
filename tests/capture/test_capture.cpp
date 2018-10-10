@@ -2508,11 +2508,12 @@ RED_AUTO_TEST_CASE(TestReadPNGFromChunkedTransport)
 RED_AUTO_TEST_CASE(TestPatternSearcher)
 {
     PatternSearcher searcher(utils::MatchFinder::KBD_INPUT, "$kbd:e");
-    auto u8p = [](char const * s) { return byte_ptr_cast(s); };
-    searcher.test_uchar(u8p("e"), 1, [](char const *, char const *){});
-    searcher.test_uchar(u8p("a"), 1, [](char const *, char const *){});
+    bool check = false;
+    auto report = [&](auto&, auto&){ check = true; };
+    searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check); check = false;
+    searcher.test_uchar(byte_ptr_cast("a"), 1, report); RED_CHECK(!check);
     // #15241: Pattern detection crash
-    searcher.test_uchar(u8p("e"), 1, [](char const *, char const *){});
+    searcher.test_uchar(byte_ptr_cast("e"), 1, report); RED_CHECK(check);
 }
 
 

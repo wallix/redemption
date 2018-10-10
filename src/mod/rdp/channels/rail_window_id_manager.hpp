@@ -25,7 +25,9 @@
 
 #include <map>
 
-class RemoteProgramsWindowIdManager {
+class RemoteProgramsWindowIdManager
+{
+    // TODO very inneficient,  use std::vector/flat_map
     mutable std::map<uint32_t, uint32_t> client_to_server;
     mutable std::map<uint32_t, uint32_t> server_to_client;
 

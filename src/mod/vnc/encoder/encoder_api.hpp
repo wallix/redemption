@@ -23,6 +23,7 @@ h
 #pragma once
 
 #include <functional>
+#include <type_traits>
 
 #include <cassert>
 
@@ -47,15 +48,16 @@ namespace VNC
 
         struct Encoder
         {
-            template<class Consumer>
-            explicit Encoder(Consumer&& consumer)
-            : consumer(std::forward<Consumer>(consumer))
-            {}
-
             Encoder() = default;
 
             Encoder(Encoder&&) = default;
             Encoder(Encoder const&) = delete;
+
+            template<class Consumer, class = std::enable_if_t<!std::is_same_v<Consumer, Encoder>>>
+            explicit Encoder(Consumer&& consumer)
+            : consumer(std::forward<Consumer>(consumer))
+            {}
+
             Encoder& operator=(Encoder&&) = default;
             Encoder& operator=(Encoder const&) = delete;
 

@@ -38,7 +38,9 @@
 #include "utils/zlib.hpp"
 
 
-namespace VNC::Encoder
+namespace VNC
+{
+namespace Encoder
 {
 namespace
 {
@@ -783,5 +785,6 @@ Encoder zrle_encoder(uint8_t bpp, uint8_t Bpp, Rect rect, Zdecompressor<>& zd, V
     return Encoder(Zrle{bpp, Bpp, rect, zd, verbose});
 }
 
-} // namespace Encoder::VNC
+} // namespace Encoder
+} // namespace VNC
 

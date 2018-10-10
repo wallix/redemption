@@ -216,7 +216,7 @@ public:
                     auto str = (!match_result.empty() && match_result[0].first)
                         ? match_result[0].first
                         : char_kbd_data;
-                    report(named_regex.name.c_str(), str);
+                    report(named_regex.name, str);
                     has_notify = true;
                 }
                 test_searcher_it->reset(named_regex.regex);
@@ -726,10 +726,8 @@ public:
 
                 return interval.count() ? interval - duration % interval : interval;
             }
-            else {
-                // Wait 0.3 x frame_interval.
-                return this->frame_interval / 3;
-            }
+            // Wait 0.3 x frame_interval.
+            return this->frame_interval / 3;
         }
         return interval - duration;
     }
@@ -1025,8 +1023,8 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 }
 
 namespace {
-    constexpr array_view_const_char session_meta_kbd_prefix() { return cstr_array_view("[Kbd]"); }
-    constexpr array_view_const_char session_meta_kbd_suffix() { return cstr_array_view("\n"); }
+    constexpr array_view_const_char session_meta_kbd_prefix() noexcept { return cstr_array_view("[Kbd]"); }
+    constexpr array_view_const_char session_meta_kbd_suffix() noexcept { return cstr_array_view("\n"); }
 }
 
 /*
@@ -1838,18 +1836,18 @@ Rect Capture::get_joint_visibility_rect() const
                         this->window_visibility_rects.cbegin(),
                         this->window_visibility_rects.cend(),
                         [&joint_visibility_rect, window, this](
-                                const WindowVisibilityRectRecord& window_visibility_rect) {
-                            if (window.window_id !=
-                                window_visibility_rect.window_id) {
+                            const WindowVisibilityRectRecord& window_visibility_rect
+                        ) {
+                            if (window.window_id != window_visibility_rect.window_id) {
                                 return;
                             }
 
                             assert(window.fields_present_flags &
-                                RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
+                                   RDP::RAIL::WINDOW_ORDER_FIELD_VISOFFSET);
 
                             if (
                                 // Window is not IME icon.
-                                strcasecmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
+                                0 != strcasecmp(window.title_info.c_str(), "CiceroUIWndFrame-TF_FloatingLangBar_WndTitle") &&
                                 ((((window.style & WS_DISABLED) || (window.style & WS_SYSMENU) || (window.style & WS_VISIBLE)) &&
                                   !(window.style & WS_ICONIC) &&
                                   (window.show_state != SW_FORCEMINIMIZE) &&
@@ -1860,7 +1858,7 @@ Rect Capture::get_joint_visibility_rect() const
                                     if (this->verbose) {
                                         LOG(LOG_INFO,
                                             "Capture::get_joint_visibility_rect(): + Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                                            window.title_info.c_str(),
+                                            window.title_info,
                                             window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
                                             window.show_state, window.style);
                                     }
@@ -1872,16 +1870,13 @@ Rect Capture::get_joint_visibility_rect() const
                                                     window.visible_offset_y
                                                 ));
                             }
-                            else {
-                                if (this->verbose) {
-                                    LOG(LOG_INFO,
-                                        "Capture::get_joint_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
-                                        window.title_info.c_str(),
-                                        window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
-                                        window.show_state, window.style);
-                                }
+                            else if (this->verbose) {
+                                LOG(LOG_INFO,
+                                    "Capture::get_joint_visibility_rect():   Title=\"%s\" Rect=%s ShowState=0x%X Style=0x%X",
+                                    window.title_info,
+                                    window_visibility_rect.rect.offset(window.visible_offset_x, window.visible_offset_y),
+                                    window.show_state, window.style);
                             }
-
                         }
                     );
             }
