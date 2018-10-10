@@ -354,7 +354,7 @@ private:
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
                     "requestedFormatId=%s(%u)",
-                RDPECLIP::get_Format_name(this->requestedFormatId),
+                RDPECLIP::get_FormatId_name(this->requestedFormatId),
                 this->requestedFormatId);
         }
 
@@ -442,7 +442,7 @@ private:
 
                 std::string format_name = this->format_name_inventory[requestedFormatId];
                 if (format_name.empty()) {
-                    format_name = RDPECLIP::get_Format_name(this->requestedFormatId);
+                    format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
                 }
 
                 auto const size_str = std::to_string(dataLen);
@@ -772,7 +772,7 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
                             "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_Format_name(formatId), formatId,
+                        RDPECLIP::get_FormatId_name(formatId), formatId,
                         utf8_string);
                 }
 
@@ -840,7 +840,7 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_format_list_pdu: "
                             "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_Format_name(formatId), formatId,
+                        RDPECLIP::get_FormatId_name(formatId), formatId,
                         utf8_string);
                 }
 
@@ -1290,7 +1290,7 @@ public:
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                     "requestedFormatId=%s(%u)",
-                RDPECLIP::get_Format_name(this->requestedFormatId),
+                RDPECLIP::get_FormatId_name(this->requestedFormatId),
                 this->requestedFormatId);
         }
 
@@ -1364,7 +1364,7 @@ public:
 
                 std::string format_name = this->format_name_inventory[requestedFormatId];
                 if (format_name.empty()) {
-                    format_name = RDPECLIP::get_Format_name(this->requestedFormatId);
+                    format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
                 }
 
                 auto const size_str = std::to_string(dataLen);
@@ -1549,7 +1549,7 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
                             "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_Format_name(formatId), formatId,
+                        RDPECLIP::get_FormatId_name(formatId), formatId,
                         utf8_string);
                 }
 
@@ -1603,7 +1603,7 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_format_list_pdu: "
                             "formatId=%s(%u) wszFormatName=\"%s\"",
-                        RDPECLIP::get_Format_name(formatId), formatId, utf8_string);
+                        RDPECLIP::get_FormatId_name(formatId), formatId, utf8_string);
                 }
 
                 this->format_name_inventory[formatId] = ::char_ptr_cast(utf8_string);

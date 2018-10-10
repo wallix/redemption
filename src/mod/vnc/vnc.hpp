@@ -3042,7 +3042,7 @@ private:
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
                        , format_data_request_pdu.header.msgFlags()
                        , format_data_request_pdu.header.dataLen()
-                       , RDPECLIP::get_Format_name(format_data_request_pdu.requestedFormatId)
+                       , RDPECLIP::get_FormatId_name(format_data_request_pdu.requestedFormatId)
                        , format_data_request_pdu.requestedFormatId
                        );
                 }

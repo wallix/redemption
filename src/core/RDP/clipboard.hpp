@@ -66,7 +66,7 @@ enum {
     , CF_GDIOBJLAST      = 1023
 };
 
-inline static const char * get_Format_name(uint32_t FormatId) {
+inline static const char * get_FormatId_name(uint32_t FormatId) {
     switch (FormatId) {
         case CF_TEXT:            return "CF_TEXT";
         case CF_BITMAP:          return "CF_BITMAP";
@@ -1152,7 +1152,7 @@ public:
 
         size_t result = ::snprintf(buffer + length, size - length,
             "{formatId=%s(%u) formatName=\"%s\"}",
-            get_Format_name(this->formatId_), this->formatId_, this->format_name_.c_str());
+            get_FormatId_name(this->formatId_), this->formatId_, this->format_name_.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -1452,7 +1452,7 @@ struct FormatListPDU_LongName {
     void log() const {
         LOG(LOG_INFO, "     Format List PDU Long Name:");
         LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s",
-                            this->formatID, get_Format_name(this->formatID));
+                            this->formatID, get_FormatId_name(this->formatID));
         LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)",
                             this->formatUTF8Name, this->formatDataNameUTF16Len);
     }
@@ -1494,7 +1494,7 @@ struct FormatListPDU_ShortName {
 
     void log() const {
         LOG(LOG_INFO, "     Format List PDU Short Name:");
-        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_Format_name(this->formatID));
+        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_FormatId_name(this->formatID));
         LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
     }
 
@@ -1611,7 +1611,7 @@ struct FormatDataRequestPDU
     void log() const {
         this->header.log();
         LOG(LOG_INFO, "     Format Data Request PDU:");
-        LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes): %s", this->requestedFormatId, get_Format_name(this->requestedFormatId));
+        LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes): %s", this->requestedFormatId, get_FormatId_name(this->requestedFormatId));
     }
 
 };  // struct FormatDataRequestPDU
@@ -3006,7 +3006,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     }
                         break;
 
-                    default: LOG(LOG_INFO, "CLIPRDR CB_FORMAT_DATA_RESPONSE format data id = %d %s", state.requestedFormatId, get_Format_name(state.requestedFormatId));
+                    default: LOG(LOG_INFO, "CLIPRDR CB_FORMAT_DATA_RESPONSE format data id = %d %s", state.requestedFormatId, get_FormatId_name(state.requestedFormatId));
                         break;
                 }
                 break;
