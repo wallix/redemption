@@ -2151,7 +2151,7 @@ public:
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.endTime = long(seconds);
 
-                this->report_message.log6(info, arc_info, tvtime());
+                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                 if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO, "%s", info);
@@ -2362,7 +2362,7 @@ public:
                                 arc_info.WallixBastionStatus = "SUCCESS";
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                                this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, tvtime());
+                                this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -5341,7 +5341,7 @@ public:
             arc_info.endTime = long(seconds);
 
 
-            this->report_message.log6(info, arc_info, tvtime());
+            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
             this->session_disconnection_logged = true;
         }

@@ -1280,7 +1280,7 @@ public:
             arc_info.ApplicationProtocol = "rdp";
             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-            this->report_message.log6(info, arc_info, tvtime());
+            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "%s", info);
@@ -1306,7 +1306,7 @@ public:
                     arc_info.ApplicationProtocol = "rdp";
                     arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                    this->report_message.log6(info, arc_info, tvtime());
+                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                     if (bool(this->verbose & RDPVerbose::sesprobe)) {
                         LOG(LOG_INFO, "%s", info);
@@ -1333,7 +1333,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1359,7 +1359,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1386,7 +1386,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1411,7 +1411,7 @@ public:
                         arc_info.WallixBastionStatus = "FAIL_TO_RUN";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1443,7 +1443,7 @@ public:
                         arc_info.WallixBastionStatus = "FAIL_TO_RUN";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1473,7 +1473,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1497,7 +1497,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1553,7 +1553,7 @@ public:
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                            this->report_message.log6(info, arc_info, tvtime());
+                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                             {
                                 char message[4096];
@@ -1628,7 +1628,7 @@ public:
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                            this->report_message.log6(info, arc_info, tvtime());
+                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                             {
                                 char message[4096];
@@ -1687,7 +1687,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1711,7 +1711,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1735,7 +1735,7 @@ public:
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info, arc_info, tvtime());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);

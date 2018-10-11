@@ -1686,7 +1686,7 @@ public:
                             arc_info.message = info;
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                            this->report_message.log6(info, arc_info, tvtime());
+                            this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
@@ -1801,7 +1801,7 @@ public:
                                     arc_info.WallixBastionSHA256Digest = std::string(digest_s);
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, tvtime());
+                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1830,7 +1830,7 @@ public:
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, tvtime());
+                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1904,7 +1904,7 @@ public:
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                    this->report_message.log6(info, arc_info, tvtime());
+                                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -2052,7 +2052,7 @@ public:
                                 arc_info.filePath = file_path;
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                this->report_message.log6(info, arc_info, tvtime());
+                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
@@ -2092,7 +2092,7 @@ public:
                                 arc_info.oldFilePath = target_iter->file_path;
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                                this->report_message.log6(info, arc_info, tvtime());
+                                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);

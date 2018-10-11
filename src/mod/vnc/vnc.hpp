@@ -811,7 +811,7 @@ public:
         arc_info.ApplicationProtocol = "vnc";
         arc_info.WallixBastionStatus = "SUCCESS";
 
-        this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, tvtime());
+        this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, this->session_reactor.get_current_time());
 
         Rect const screen_rect(0, 0, this->width, this->height);
 
@@ -3433,7 +3433,7 @@ public:
         arc_info.ApplicationProtocol = "vnc";
         arc_info.endTime = long(seconds);
 
-        this->report_message.log6("type=\"SESSION_DISCONNECTION\"", arc_info, tvtime());
+        this->report_message.log6("type=\"SESSION_DISCONNECTION\"", arc_info, this->session_reactor.get_current_time());
     }
 
     Dimension get_dim() const override
