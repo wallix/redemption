@@ -144,14 +144,13 @@ namespace std
 
 namespace detail
 {
-    template<class T, class = std::integral_constant<bool,
-        (std::is_enum<T>::value || !std::is_integral<T>::value)>>
+    template<class T, class = void>
     struct underlying_type_or_integral
-    { using type = typename std::underlying_type<T>::type; };
+    { using type = T; };
 
     template<class T>
-    struct underlying_type_or_integral<T, std::false_type>
-    { using type = T; };
+    struct underlying_type_or_integral<T, std::enable_if_t<std::is_enum_v<T>>>
+    { using type = std::underlying_type_t<T>; };
 
     template<class T>
     using underlying_type_or_integral_t = typename underlying_type_or_integral<T>::type;
@@ -193,16 +192,16 @@ namespace detail
     template <class Dst, class Src>
     constexpr Dst saturated_cast(type_<Dst> /*unused*/, Src value)
     {
-        if (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
+        if constexpr (std::is_signed<Dst>::value == std::is_signed<Src>::value && sizeof(Dst) >= sizeof(Src)) {
             return static_cast<Dst>(value);
         }
 
         using dst_limits = std::numeric_limits<Dst>;
         Dst const new_max_value = dst_limits::max() < value ? dst_limits::max() : static_cast<Dst>(value);
-        if (!std::is_signed<Dst>::value && std::is_signed<Src>::value) {
+        if constexpr (!std::is_signed<Dst>::value && std::is_signed<Src>::value) {
             return value < 0 ? Dst{0} : new_max_value;
         }
-        if (!std::is_signed<Src>::value) {
+        if constexpr (!std::is_signed<Src>::value) {
             return new_max_value;
         }
         return dst_limits::min() > value ? dst_limits::min() : new_max_value;

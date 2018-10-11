@@ -179,7 +179,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
 
         CaptureParams capture_params{
             now,
@@ -399,7 +399,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-    WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
 
     CaptureParams capture_params{
         now,
@@ -1087,14 +1087,14 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrm)
     StaticOutStream<65536> stream;
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
 
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1263,14 +1263,14 @@ RED_AUTO_TEST_CASE(Test6SecondsStrippedScreenToWrmReplay2)
     Rect screen_rect(0, 0, 800, 600);
     StaticOutStream<65536> stream;
     CheckTransport trans(expected_stripped_wrm2, sizeof(expected_stripped_wrm2)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
 
     consumer.draw(RDPOpaqueRect(screen_rect, encode_color24()(GREEN)), screen_rect, color_ctx);
@@ -1309,14 +1309,14 @@ RED_AUTO_TEST_CASE(TestCaptureToWrmReplayToPng)
 
     OutFileTransport trans(unique_fd{fd});
     RED_CHECK_EQUAL(0, 0);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     RED_CHECK_EQUAL(0, 0);
     RDPOpaqueRect cmd0(screen_rect, encode_color24()(GREEN));
@@ -1458,14 +1458,14 @@ RED_AUTO_TEST_CASE(TestSaveCache)
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_Red_on_Blue_wrm, sizeof(expected_Red_on_Blue_wrm)-1);
     trans.disable_remaining_error();
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_ctx = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1476,7 +1476,7 @@ RED_AUTO_TEST_CASE(TestSaveCache)
         0x00, 0x94                    // FILL 9 * 20
     };
 
-    Bitmap bloc20x10(24, 24, nullptr, 20, 10, comp20x10RED, sizeof(comp20x10RED), true );
+    Bitmap bloc20x10(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 20, 10, comp20x10RED, sizeof(comp20x10RED), true );
     consumer.draw(
         RDPMemBlt(0, Rect(0, scr.cy - 10, bloc20x10.cx(), bloc20x10.cy()), 0xCC, 0, 0, 0),
         scr,
@@ -1599,14 +1599,14 @@ RED_AUTO_TEST_CASE(TestSaveOrderStates)
 
     Rect scr(0, 0, 100, 100);
     CheckTransport trans(expected_reset_rect_wrm, sizeof(expected_reset_rect_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(2, 256, false),
                        BmpCache::CacheOption(2, 1024, false),
                        BmpCache::CacheOption(2, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     consumer.timestamp(now);
 
@@ -1784,14 +1784,14 @@ RED_AUTO_TEST_CASE(TestImageChunk)
 
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected_stripped_wrm, sizeof(expected_stripped_wrm)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                         BmpCache::CacheOption(600, 256, false),
                         BmpCache::CacheOption(300, 1024, false),
                         BmpCache::CacheOption(262, 4096, false));
     PointerCache ptr_cache;
     GlyphCache gly_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1858,14 +1858,14 @@ RED_AUTO_TEST_CASE(TestImagePNGMediumChunks)
 
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -1942,14 +1942,14 @@ RED_AUTO_TEST_CASE(TestImagePNGSmallChunks)
 
     Rect scr(0, 0, 20, 10);
     CheckTransport trans(expected, sizeof(expected)-1);
-    BmpCache bmp_cache(BmpCache::Recorder, 24, 3, false,
+    BmpCache bmp_cache(BmpCache::Recorder, BitsPerPixel{24}, 3, false,
                        BmpCache::CacheOption(600, 256, false),
                        BmpCache::CacheOption(300, 1024, false),
                        BmpCache::CacheOption(262, 4096, false));
     GlyphCache gly_cache;
     PointerCache ptr_cache;
     RDPDrawable drawable(scr.cx, scr.cy);
-    GraphicToFile consumer(now, trans, 24, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
+    GraphicToFile consumer(now, trans, BitsPerPixel{24}, false, bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression);
     auto const color_cxt = gdi::ColorCtx::depth24();
     drawable.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
     consumer.draw(RDPOpaqueRect(scr, encode_color24()(RED)), scr, color_cxt);
@@ -2410,7 +2410,7 @@ RED_AUTO_TEST_CASE(TestSample0WRM)
 
     RDPDrawable drawable(player.screen_rect.cx, player.screen_rect.cy);
     GraphicToFile graphic_to_file(
-        player.record_now, out_wrm_trans, 24, false,
+        player.record_now, out_wrm_trans, BitsPerPixel{24}, false,
         bmp_cache, gly_cache, ptr_cache, drawable, WrmCompressionAlgorithm::no_compression
     );
     WrmCaptureImpl::NativeCaptureLocal wrm_recorder(graphic_to_file, player.record_now, std::chrono::seconds{1}, std::chrono::seconds{20});
@@ -2733,7 +2733,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-    WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+    WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
 
     CaptureParams capture_params{
         now,
@@ -3014,7 +3014,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
 
         CaptureParams capture_params{
             now,
@@ -3276,7 +3276,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
-        WrmParams const wrm_params = wrm_params_from_ini(24, false, cctx, rnd, fstat, hash_path, ini);
+        WrmParams const wrm_params = wrm_params_from_ini(BitsPerPixel{24}, false, cctx, rnd, fstat, hash_path, ini);
 
         CaptureParams capture_params{
             now,

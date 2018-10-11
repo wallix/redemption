@@ -33,6 +33,7 @@
 #include "utils/bitmap_private_data.hpp" // aux_::bitmap_data_allocator
 #include "utils/stream.hpp"
 #include "utils/image_data_view.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 
 using std::size_t; /*NOLINT*/
@@ -1278,7 +1279,8 @@ void compress_color_plane(uint16_t cx, uint16_t cy, OutStream & outbuffer, uint8
 void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
 {
     //LOG(LOG_INFO, "bmp compress60");
-    assert((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+    assert(image.bits_per_pixel() == BitsPerPixel{24}
+        || image.bits_per_pixel() == BitsPerPixel{32});
     const uint16_t cx = image.width();
     const uint16_t cy = image.height();
     const uint32_t color_plane_size = sizeof(uint8_t) * cx * cy;
@@ -1290,7 +1292,7 @@ void rle_compress60(ConstImageDataView const & image, OutStream & outbuffer)
     uint8_t * red_plane   = mem_color + color_plane_size * 0;
     uint8_t * green_plane = mem_color + color_plane_size * 1;
     uint8_t * blue_plane  = mem_color + color_plane_size * 2;
-    const uint8_t   byte_per_color = image.bytes_per_pixel();
+    const uint8_t   byte_per_color = safe_int(image.bytes_per_pixel());
     const uint8_t * data = image.data();
     uint8_t * pixel_over_red_plane   = red_plane;
     uint8_t * pixel_over_green_plane = green_plane;
@@ -1335,7 +1337,8 @@ void rle_decompress60(
   uint16_t src_cx, uint16_t src_cy, const uint8_t *data, size_t data_size)
 {
     //LOG(LOG_INFO, "bmp decompress60: cx=%u cy=%u data_size=%u", src_cx, src_cy, data_size);
-  assert((image.bits_per_pixel() == 24) || (image.bits_per_pixel() == 32));
+  assert((image.bits_per_pixel() == BitsPerPixel{24})
+      || (image.bits_per_pixel() == BitsPerPixel{32}));
     //LOG(LOG_INFO, "data_size=%u src_cx=%u src_cy=%u", data_size, src_cx, src_cy);
     //hexdump_d(data, data_size);
     uint8_t FormatHeader = *data++;
@@ -1386,7 +1389,7 @@ void rle_decompress60(
     uint8_t * g     = green_plane;
     uint8_t * b     = blue_plane;
     uint8_t * pixel = image.mutable_data();
-    uint8_t   bpp   = image.bytes_per_pixel();
+    uint8_t   bpp   = safe_int(image.bytes_per_pixel());
     for (uint16_t y = 0; y < cy; y++) {
         for (uint16_t x = 0; x < cx; x++) {
             uint32_t color = (0xFFu << 24) | ((*r++) << 16) | ((*g++) << 8) | (*b++);
@@ -1403,10 +1406,10 @@ void rle_decompress(
 {
     (void)src_cy;
     switch (image.bits_per_pixel()) {
-        case 8 : return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size);
-        case 15: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size);
-        case 16: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size);
-        default: return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size);
+        case BitsPerPixel{8 }: return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size);
+        case BitsPerPixel{15}: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size);
+        case BitsPerPixel{16}: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size);
+        default:               return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size);
     }
 }
 
@@ -1414,9 +1417,9 @@ void rle_decompress(
 void rle_compress(ConstImageDataView const & image, OutStream & outbuffer)
 {
     switch (image.bits_per_pixel()) {
-        case 8 : return RLEDecompressorImpl< 8>{}.compress_(image, outbuffer);
-        case 15: return RLEDecompressorImpl<15>{}.compress_(image, outbuffer);
-        case 16: return RLEDecompressorImpl<16>{}.compress_(image, outbuffer);
-        default: return RLEDecompressorImpl<24>{}.compress_(image, outbuffer);
+        case BitsPerPixel{8 }: return RLEDecompressorImpl< 8>{}.compress_(image, outbuffer);
+        case BitsPerPixel{15}: return RLEDecompressorImpl<15>{}.compress_(image, outbuffer);
+        case BitsPerPixel{16}: return RLEDecompressorImpl<16>{}.compress_(image, outbuffer);
+        default:               return RLEDecompressorImpl<24>{}.compress_(image, outbuffer);
     }
 }

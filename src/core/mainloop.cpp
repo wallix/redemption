@@ -25,7 +25,7 @@
 #include "core/listen.hpp"
 #include "core/session_server.hpp"
 #include "utils/netutils.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include "configs/config.hpp"
 

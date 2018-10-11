@@ -22,12 +22,13 @@ h
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/rect.hpp"
 
 namespace VNC {
     namespace Encoder {
-        Encoder hextile_encoder(uint8_t bpp, uint8_t Bpp, Rect rect, VNCVerbose verbose);
+        Encoder hextile_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, VNCVerbose verbose);
     }
 } // namespace VNC

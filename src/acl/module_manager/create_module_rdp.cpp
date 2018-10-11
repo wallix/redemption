@@ -260,8 +260,8 @@ void ModuleManager::create_mod_rdp(
 
         Rect const adjusted_client_execute_rect =
             client_execute.adjust_rect(get_widget_rect(
-                    client_info.width,
-                    client_info.height,
+                    client_info.screen_info.width,
+                    client_info.screen_info.height,
                     client_info.cs_monitor
                 ));
 
@@ -270,8 +270,8 @@ void ModuleManager::create_mod_rdp(
                 !mod_rdp_params.remote_program);
 
         if (host_mod_in_widget) {
-            client_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
-            client_info.height = adjusted_client_execute_rect.cy;
+            client_info.screen_info.width  = adjusted_client_execute_rect.cx / 4 * 4;
+            client_info.screen_info.height = adjusted_client_execute_rect.cy;
             client_info.cs_monitor = GCC::UserData::CSMonitor{};
         }
         else {
@@ -291,7 +291,7 @@ void ModuleManager::create_mod_rdp(
                                 ini.get<cfg::context::target_service>(),
                                 ini.get<cfg::metrics::sign_key>())
           , hmac_client_info(ini.get<cfg::globals::host>(),
-                             client_info, ini.get<cfg::metrics::sign_key>())
+                             client_info.screen_info, ini.get<cfg::metrics::sign_key>())
           , this->timeobj.get_time()
           , ini.get<cfg::metrics::log_file_turnover_interval>()
           , ini.get<cfg::metrics::log_interval>());
@@ -356,8 +356,8 @@ void ModuleManager::create_mod_rdp(
                 ini,
                 this->session_reactor,
                 front,
-                client_info.width,
-                client_info.height,
+                client_info.screen_info.width,
+                client_info.screen_info.height,
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 client_execute,
@@ -395,9 +395,9 @@ void ModuleManager::create_mod_rdp(
         (client_info.cs_monitor.monitorCount > 1)) {
         this->mod->rdp_suppress_display_updates();
         this->mod->rdp_allow_display_updates(0, 0,
-            client_info.width, client_info.height);
+            client_info.screen_info.width, client_info.screen_info.height);
     }
-    this->mod->rdp_input_invalidate(Rect(0, 0, client_info.width, client_info.height));
+    this->mod->rdp_input_invalidate(Rect(0, 0, client_info.screen_info.width, client_info.screen_info.height));
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP' suceeded\n");
     ini.get_ref<cfg::context::auth_error_message>().clear();
     this->connected = true;

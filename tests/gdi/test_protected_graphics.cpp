@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
         bmp_data.dest_bottom = bmp_data.dest_top + bmp_rect.cy - 1;
         bmp_data.width = bmp.cx();
         bmp_data.height = bmp.cy();
-        bmp_data.bits_per_pixel = bmp.bpp();
+        bmp_data.bits_per_pixel = safe_int(bmp.bpp());
         bmp_data.flags = 0;
 
         bmp_data.bitmap_length = bmp.bmp_size();

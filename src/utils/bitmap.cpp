@@ -39,6 +39,7 @@
 #include "utils/rle.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/array_view.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "system/ssl_sha1.hpp"
 
@@ -110,7 +111,7 @@ void Bitmap::swap(Bitmap & other) noexcept
 }
 
 Bitmap::Bitmap(
-    uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
+    BitsPerPixel session_color_depth, BitsPerPixel bpp, const BGRPalette * palette,
     uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
     bool compressed)
 : data_bitmap(DataBitmap::construct(bpp, cx, cy))
@@ -118,7 +119,7 @@ Bitmap::Bitmap(
     if (cx <= 0 || cy <= 0){
         LOG(LOG_ERR, "Bogus empty bitmap!!! cx=%u cy=%u size=%zu bpp=%u", cx, cy, size, bpp);
     }
-    if (bpp == 8){
+    if (bpp == BitsPerPixel{8}){
         if (palette){
             this->data_bitmap->palette() = *palette;
         }
@@ -135,11 +136,11 @@ Bitmap::Bitmap(
             this->cx(),
             this->cy(),
             this->line_size(),
-            ConstImageDataView::BitsPerPixel(this->bpp()),
+            this->bpp(),
             ConstImageDataView::Storage::BottomToTop
         };
 
-        if ((session_color_depth == 32) && ((bpp == 24) || (bpp == 32))) {
+        if (session_color_depth == BitsPerPixel{32} && (bpp == BitsPerPixel{24} || bpp == BitsPerPixel{32})) {
             rle_decompress60(image_view, cx, cy, data, size);
         }
         else {
@@ -148,7 +149,7 @@ Bitmap::Bitmap(
     } else {
         uint8_t * dest = this->data_bitmap->get();
         const uint8_t * src = data;
-        const size_t data_width = cx * nbbytes(bpp);
+        const size_t data_width = cx * nb_bytes_per_pixel(bpp);
         const size_t line_size = this->line_size();
         const uint16_t cy = this->cy();
         for (uint16_t i = 0; i < cy ; i++){
@@ -169,7 +170,7 @@ Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
         return ;
     }
     this->data_bitmap = DataBitmap::construct(src_bmp.bpp(), r.cx, r.cy);
-    if (this->bpp() == 8) {
+    if (this->bpp() == BitsPerPixel{8}) {
         this->data_bitmap->palette() = src_bmp.data_bitmap->palette();
     }
     // bitmapDataStream (variable): A variable-sized array of bytes.
@@ -179,7 +180,7 @@ Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
     // (including up to three bytes of padding, as necessary).
     // In redemption we ensure a more constraint restriction to avoid padding
     // bitmap width must always be a multiple of 4
-    const uint8_t Bpp = nbbytes(this->bpp());
+    const uint8_t Bpp = nb_bytes_per_pixel(this->bpp());
     uint8_t *dest = this->data_bitmap->get();
     const size_t dest_line_size = this->line_size();
     const size_t src_line_size = src_bmp.line_size();
@@ -197,7 +198,7 @@ Bitmap::Bitmap(const Bitmap & src_bmp, const Rect r)
     }
 }
 
-Bitmap::Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, uint8_t vnc_bpp, const Rect tile)
+Bitmap::Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, BitsPerPixel vnc_bpp, const Rect tile)
 : data_bitmap(DataBitmap::construct(vnc_bpp, tile.cx, tile.cy))
 {
     //LOG(LOG_INFO, "Creating bitmap (%p) extracting part cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
@@ -208,7 +209,7 @@ Bitmap::Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t /*vnc_cy*/, ui
     //  left-to-right series of pixels. Each pixel is a whole
     //  number of bytes. Each row contains a multiple of four bytes
     // (including up to three bytes of padding, as necessary).
-    const uint8_t Bpp = nbbytes(this->bpp());
+    const uint8_t Bpp = nb_bytes_per_pixel(this->bpp());
     const unsigned src_row_size = vnc_cx * Bpp;
     uint8_t *dest = this->data_bitmap->get();
     const uint8_t *src = vnc_raw + src_row_size * (tile.y + tile.cy - 1) + tile.x * Bpp;
@@ -250,7 +251,7 @@ size_t Bitmap::line_size() const noexcept
     return this->data_bitmap->line_size();
 }
 
-uint8_t Bitmap::bpp() const noexcept
+BitsPerPixel Bitmap::bpp() const noexcept
 {
     return this->data_bitmap->bpp();
 }
@@ -271,7 +272,7 @@ bool Bitmap::has_data_compressed() const noexcept
 }
 
 // TODO simplify and enhance compression using 1 pixel orders BLACK or WHITE.
-void Bitmap::compress(uint8_t session_color_depth, OutStream & outbuffer) const
+void Bitmap::compress(BitsPerPixel session_color_depth, OutStream & outbuffer) const
 {
     if (this->data_bitmap->compressed_size()) {
         outbuffer.out_copy_bytes(this->data_bitmap->compressed_data(), this->data_bitmap->compressed_size());
@@ -289,7 +290,7 @@ void Bitmap::compress(uint8_t session_color_depth, OutStream & outbuffer) const
         ConstImageDataView::Storage::BottomToTop
     };
 
-    if ((session_color_depth == 32) && ((this->bpp() == 24) || (this->bpp() == 32))) {
+    if ((session_color_depth == BitsPerPixel{32}) && ((this->bpp() == BitsPerPixel{24}) || (this->bpp() == BitsPerPixel{32}))) {
         rle_compress60(image_view, outbuffer);
     }
     else {
@@ -306,7 +307,7 @@ void Bitmap::compute_sha1(uint8_t (&sig)[SslSha1::DIGEST_LENGTH]) const
     this->data_bitmap->copy_sha1(sig);
 }
 
-Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
+Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
 {
     //LOG(LOG_INFO, "Creating bitmap (%p) (copy constructor) cx=%u cy=%u size=%u bpp=%u", this, cx, cy, bmp_size, bpp);
     if (out_bpp != bmp.bpp()) {
@@ -314,13 +315,17 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
         {
             uint8_t * dest = this->data_bitmap->get();
             const uint8_t * src = bmp.data_bitmap->get();
-            const uint8_t src_nbbytes = nbbytes(dec.bpp);
-            const uint8_t Bpp = nbbytes(enc.bpp);
+            const uint8_t src_nbbytes = nb_bytes_per_pixel(dec.bpp);
+            const uint8_t Bpp = nb_bytes_per_pixel(enc.bpp);
             for (size_t y = 0; y < bmp.cy() ; y++) {
                 for (size_t x = 0; x < bmp.cx() ; x++) {
                     BGRColor pixel = dec(buf_to_color(src));
-                    constexpr bool enc_8_15_16 = enc.bpp == 8 || enc.bpp == 15 || enc.bpp == 16;
-                    constexpr bool dec_8_15_16 = dec.bpp == 8 || dec.bpp == 15 || dec.bpp == 16;
+                    constexpr bool enc_8_15_16 = enc.bpp == BitsPerPixel{8}
+                                              || enc.bpp == BitsPerPixel{15}
+                                              || enc.bpp == BitsPerPixel{16};
+                    constexpr bool dec_8_15_16 = dec.bpp == BitsPerPixel{8}
+                                              || dec.bpp == BitsPerPixel{15}
+                                              || dec.bpp == BitsPerPixel{16};
                     if (enc_8_15_16 != dec_8_15_16) {
                         pixel = BGRasRGBColor(pixel);
                     }
@@ -342,7 +347,7 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
         auto col2buf_3B = [=](RDPColor c, uint8_t * p) { col2buf_2B(c, p); p[2] = c.as_bgr().blue(); };
         using namespace shortcut_encode;
         using namespace shortcut_decode_with_palette;
-        switch ((bmp.bpp() << 8) + out_bpp) {
+        switch ((underlying_cast(bmp.bpp()) << 8) + underlying_cast(out_bpp)) {
             case  (8<<8)+15: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc15()); break;
             case  (8<<8)+16: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_2B, enc16()); break;
             case  (8<<8)+24: bpp2bpp(buf2col_1B, dec8{bmp.palette()}, col2buf_3B, enc24()); break;
@@ -357,7 +362,7 @@ Bitmap::Bitmap(uint8_t out_bpp, const Bitmap & bmp)
             case (24<<8)+16: bpp2bpp(buf2col_3B, dec24(), col2buf_2B, enc16()); break;
             default: assert(!"unknown bpp");
         }
-        if (out_bpp == 8) {
+        if (out_bpp == BitsPerPixel{8}) {
             this->data_bitmap->palette() = BGRPalette::classic_332();
         }
     }

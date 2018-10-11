@@ -26,6 +26,7 @@
 #include "capture/ocr_params.hpp"
 #include "capture/pattern_params.hpp"
 #include "capture/wrm_params.hpp"
+#include "gdi/screen_info.hpp"
 
 
 class CryptoContext;
@@ -47,5 +48,5 @@ KbdLogParams kbd_log_params_from_ini(Inifile & ini);
 PatternParams pattern_params_from_ini(Inifile & ini);
 
 WrmParams wrm_params_from_ini(
-    uint8_t capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
+    BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
     const char * hash_path, Inifile & ini);

@@ -26,7 +26,7 @@
 #include "transport/crypto_transport.hpp"
 #include "transport/mwrm_reader.hpp"
 #include "utils/fileutils.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 
 class InMetaSequenceTransport : public Transport

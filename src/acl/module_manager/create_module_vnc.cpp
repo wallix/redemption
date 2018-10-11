@@ -57,7 +57,7 @@ void ModuleManager::create_mod_vnc(
                                 ini.get<cfg::context::target_service>(),
                                 ini.get<cfg::metrics::sign_key>())
           , hmac_client_info(ini.get<cfg::globals::host>(),
-                             client_info, ini.get<cfg::metrics::sign_key>())
+                             client_info.screen_info, ini.get<cfg::metrics::sign_key>())
           , this->timeobj.get_time()
           , ini.get<cfg::metrics::log_file_turnover_interval>()
           , ini.get<cfg::metrics::log_interval>());
@@ -86,8 +86,8 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::globals::target_user>().c_str(),
             ini.get<cfg::context::target_password>().c_str(),
             front,
-            client_info.width,
-            client_info.height,
+            client_info.screen_info.width,
+            client_info.screen_info.height,
             client_info.keylayout,
             key_flags,
             ini.get<cfg::mod_vnc::clipboard_up>(),
@@ -124,8 +124,8 @@ void ModuleManager::create_mod_vnc(
 
             Rect adjusted_client_execute_rect =
                 client_execute.adjust_rect(get_widget_rect(
-                    client_info.width,
-                    client_info.height,
+                    client_info.screen_info.width,
+                    client_info.screen_info.height,
                     client_info.cs_monitor
                 ));
 
@@ -140,8 +140,8 @@ void ModuleManager::create_mod_vnc(
                 ini,
                 this->session_reactor,
                 front,
-                client_info.width,
-                client_info.height,
+                client_info.screen_info.width,
+                client_info.screen_info.height,
                 adjusted_client_execute_rect,
                 std::move(new_mod),
                 client_execute,

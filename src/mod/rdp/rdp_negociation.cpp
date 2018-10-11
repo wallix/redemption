@@ -37,7 +37,7 @@
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/multisz.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include "utils/difftimeval.hpp"
 
@@ -287,7 +287,7 @@ RdpNegociation::RdpNegociation(
     , cbAutoReconnectCookie(info.cbAutoReconnectCookie)
     , keylayout(info.keylayout)
     , console_session(info.console_session)
-    , front_bpp(info.bpp)
+    , front_bpp(info.screen_info.bpp)
     , performanceFlags(
         info.rdp5_performanceflags
         & (~(mod_rdp_params.adjust_performance_flags_for_recording
@@ -352,8 +352,9 @@ RdpNegociation::RdpNegociation(
     , has_managed_drive(has_managed_drive)
 	, send_channel_index(0)
 {
-    this->negociation_result.front_width = info.width - (info.width % 4);
-    this->negociation_result.front_height = info.height;
+    this->negociation_result.front_width = safe_int(info.screen_info.width);
+    this->negociation_result.front_width -= this->negociation_result.front_width % 4;
+    this->negociation_result.front_height = safe_int(info.screen_info.height);
 
     if (this->cbAutoReconnectCookie) {
         ::memcpy(this->autoReconnectCookie, info.autoReconnectCookie, sizeof(this->autoReconnectCookie));
@@ -859,10 +860,11 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             cs_core.desktopWidth  = (single_monitor ? this->negociation_result.front_width : primary_monitor_rect.cx + 1);
             cs_core.desktopHeight = (single_monitor ? this->negociation_result.front_height : primary_monitor_rect.cy + 1);
             //cs_core.highColorDepth = this->front_bpp;
-            cs_core.highColorDepth = ((this->front_bpp == 32)
-                ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP) : this->front_bpp);
+            cs_core.highColorDepth = ((this->front_bpp == BitsPerPixel{32})
+                ? uint16_t(GCC::UserData::HIGH_COLOR_24BPP)
+                : safe_cast<uint16_t>(this->front_bpp));
             cs_core.keyboardLayout = this->keylayout;
-            if (this->front_bpp == 32) {
+            if (this->front_bpp == BitsPerPixel{32}) {
                 cs_core.supportedColorDepths = 15;
                 cs_core.earlyCapabilityFlags |= GCC::UserData::RNS_UD_CS_WANT_32BPP_SESSION;
             }

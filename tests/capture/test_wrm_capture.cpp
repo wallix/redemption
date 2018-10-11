@@ -112,7 +112,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         cctx.set_trace_type(TraceType::localfile);
 
         WrmParams wrm_params(
-            24,
+            BitsPerPixel{24},
             false,
             cctx,
             rnd,
@@ -229,7 +229,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         cctx.set_trace_type(TraceType::localfile_hashed);
 
         WrmParams wrm_params(
-            24,
+            BitsPerPixel{24},
             false,
             cctx,
             rnd,
@@ -588,7 +588,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
         cctx.set_trace_type(TraceType::localfile);
 
         WrmParams wrm_params(
-            24,
+            BitsPerPixel{24},
             false,
             cctx,
             rnd,
@@ -738,7 +738,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
         cctx.set_trace_type(TraceType::localfile);
 
         WrmParams wrm_params(
-            24,
+            BitsPerPixel{24},
             true,   // RemoteApp
             cctx,
             rnd,

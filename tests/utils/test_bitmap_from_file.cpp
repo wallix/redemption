@@ -49,8 +49,7 @@ RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
         RED_REQUIRE(bmp.is_valid());
         RED_CHECK_EQUAL(bmp.cx(), 256);
         RED_CHECK_EQUAL(bmp.cy(), 150);
-        RED_CHECK_EQUAL(bmp.bpp(), 24);
-
+        RED_CHECK_EQUAL(bmp.bpp(), BitsPerPixel{24});
     }
     {
         const char * filename = FIXTURES_PATH "/xrdp24b.png";
@@ -58,6 +57,6 @@ RED_AUTO_TEST_CASE(TestBitmapOpenFiles)
         RED_REQUIRE(bmp.is_valid());
         RED_CHECK_EQUAL(bmp.cx(), 256);
         RED_CHECK_EQUAL(bmp.cy(), 150);
-        RED_CHECK_EQUAL(bmp.bpp(), 24);
+        RED_CHECK_EQUAL(bmp.bpp(), BitsPerPixel{24});
     }
 }

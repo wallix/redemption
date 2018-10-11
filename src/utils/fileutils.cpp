@@ -24,7 +24,7 @@
 #include "utils/log.hpp"
 #include "utils/file.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include <cstdio>
 #include <cstddef>

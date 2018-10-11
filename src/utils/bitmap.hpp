@@ -59,23 +59,23 @@ public:
     Bitmap(Bitmap && bmp) noexcept;
     Bitmap(const Bitmap & other) noexcept;
 
-    Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
+    Bitmap(BitsPerPixel session_color_depth, BitsPerPixel bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
            bool compressed = false);
 
     Bitmap(const Bitmap & src_bmp, Rect r);
 
     // TODO add palette support
-    Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, uint8_t vnc_bpp, Rect tile);
+    Bitmap(const uint8_t * vnc_raw, uint16_t vnc_cx, uint16_t vnc_cy, BitsPerPixel vnc_bpp, Rect tile);
 
-    Bitmap(uint8_t out_bpp, const Bitmap &bmp);
+    Bitmap(BitsPerPixel out_bpp, const Bitmap &bmp);
 
     ~Bitmap();
 
     Bitmap & operator=(const Bitmap & other) noexcept;
     Bitmap & operator=(Bitmap && other) noexcept;
 
-    void compress(uint8_t session_color_depth, OutStream & outbuffer) const;
+    void compress(BitsPerPixel session_color_depth, OutStream & outbuffer) const;
 
     void swap(Bitmap & other) noexcept;
 
@@ -94,7 +94,7 @@ public:
 
     size_t bmp_size() const noexcept;
 
-    uint8_t bpp() const noexcept;
+    BitsPerPixel bpp() const noexcept;
 
     bool has_data_compressed() const noexcept;
 

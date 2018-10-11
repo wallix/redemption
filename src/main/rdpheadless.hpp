@@ -415,7 +415,7 @@ private:
 
 
     // Graphic members
-    uint8_t               mod_bpp;
+    BitsPerPixel          mod_bpp;
     BGRPalette            mod_palette;
 
 
@@ -564,7 +564,7 @@ public:
 
         return params;
     }())
-    , mod_bpp(info.bpp)
+    , mod_bpp(info.screen_info.bpp)
     , mod_palette(BGRPalette::classic_332())
     , _info(info)
     , _callback(nullptr)
@@ -618,7 +618,7 @@ public:
                                       };
 //         this->_cl.push_back(channel_rdpdr);
 
-        if (this->mod_bpp == this->_info.bpp) {
+        if (this->mod_bpp == this->_info.screen_info.bpp) {
             this->mod_palette = BGRPalette::classic_332();
         }
     }
@@ -700,8 +700,8 @@ public:
               , userName
               , userPwd
               , *(this)
-              , this->_info.width
-              , this->_info.height
+              , this->_info.screen_info.width
+              , this->_info.screen_info.height
               , this->_info.keylayout
               , 0
               , true
@@ -907,14 +907,14 @@ public:
         }
     }
 
-    ResizeResult server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
         if (this->_verbose & SHOW_DRAW_ORDERS_INFO) {
             std::cout << "server_resize width=" << width << " height=" << height << " bpp=" << bpp << std::endl;
         }
         this->mod_bpp = bpp;
-        this->_info.bpp = bpp;
-        this->_info.width = width;
-        this->_info.height = height;
+        this->_info.screen_info.bpp = bpp;
+        this->_info.screen_info.width = width;
+        this->_info.screen_info.height = height;
 
 //         if (!this->primary_connection_finished) {
 //             this->primary_connection_finished = true;

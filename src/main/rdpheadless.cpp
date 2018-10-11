@@ -47,9 +47,9 @@ int main(int argc, char** argv)
     info.keylayout = 0x040C;
     info.console_session = false;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER
                                | PERF_DISABLE_FULLWINDOWDRAG
                                | PERF_DISABLE_MENUANIMATIONS;
@@ -252,15 +252,15 @@ int main(int argc, char** argv)
 
         cli::option("bpp")
         .help("Set bit per pixel value")
-        .action(cli::arg([&](int bpp){ info.bpp = bpp; })),
+        .action(cli::arg([&](int bpp){ info.screen_info.bpp = checked_int(bpp); })),
 
         cli::option("width")
         .help("Set screen width")
-        .action(cli::arg([&](int w){ info.width = w; })),
+        .action(cli::arg([&](int w){ info.screen_info.width = w; })),
 
         cli::option("height")
         .help("Set screen height")
-        .action(cli::arg([&](int h){ info.height = h; })),
+        .action(cli::arg([&](int h){ info.screen_info.height = h; })),
 
         cli::helper("========= CONFIG ========="),
 

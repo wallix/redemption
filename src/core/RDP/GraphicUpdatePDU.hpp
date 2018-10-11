@@ -24,7 +24,6 @@
 #include <cinttypes>
 
 #include "utils/log.hpp"
-#include "utils/sugar/underlying_cast.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/gcc.hpp"
 #include "core/RDP/sec.hpp"
@@ -444,7 +443,7 @@ public:
                      , int & shareid
                      , int & encryptionLevel
                      , CryptContext & encrypt
-                     , const uint8_t bpp
+                     , const BitsPerPixel bpp
                      , BmpCache & bmp_cache
                      , GlyphCache & gly_cache
                      , PointerCache & pointer_cache

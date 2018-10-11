@@ -22,7 +22,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 
 inline bool ends_with(char const * s1, char const * s2) {

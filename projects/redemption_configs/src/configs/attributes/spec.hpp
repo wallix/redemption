@@ -88,6 +88,7 @@ namespace types
     struct signed_base : integer_base {};
     struct unsigned_base : integer_base {};
 
+    struct u16 : unsigned_base { u16(long long = 0) {} };
     struct u32 : unsigned_base { u32(long long = 0) {} };
     struct u64 : unsigned_base { u64(long long = 0) {} };
 

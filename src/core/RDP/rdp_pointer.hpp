@@ -82,13 +82,13 @@ struct Pointer {
 
     friend class NewPointerUpdate;
     friend class ColorPointerUpdate;
-    friend Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
+    friend Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
                            uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
                            uint16_t dlen, const uint8_t * data,
                            uint16_t mlen, const uint8_t * mask,
                            bool clean_up_32_bpp_cursor);
-    friend Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
-    friend Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
+    friend Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max);
+    friend Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor);
     friend Pointer predefined_pointer(const unsigned width, const unsigned height,
                                       const char * def,
                                       const unsigned hsx, const unsigned hsy,
@@ -619,7 +619,7 @@ struct ARGB32Pointer {
 };
 
 
-inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
+inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
                            uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy,
                            uint16_t dlen, const uint8_t * data,
                            uint16_t mlen, const uint8_t * mask,
@@ -628,7 +628,7 @@ inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
     Pointer cursor(CursorSize(width, height), Hotspot(hsx, hsy));
 
     switch (data_bpp) {
-    case 1:
+    case BitsPerPixel{1}:
     {
         const unsigned int src_line_bytes = ::even_pad_length(::nbbytes(width));
         const unsigned int src_mask_line_bytes = ::even_pad_length(::nbbytes(width));
@@ -664,7 +664,7 @@ inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
         }
     }
     break;
-    case 4:
+    case BitsPerPixel{4}:
     {
         for (unsigned i = 0; i < dlen ; i++) {
             const uint8_t px = data[i];
@@ -675,13 +675,13 @@ inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
         memcpy(cursor.mask, mask, mlen);
     }
     break;
-    case 8:
-    case 15:
-    case 16:
-    case 24:
-    case 32:
+    case BitsPerPixel{8}:
+    case BitsPerPixel{15}:
+    case BitsPerPixel{16}:
+    case BitsPerPixel{24}:
+    case BitsPerPixel{32}:
     {
-        uint8_t BPP = ::nbbytes(data_bpp);
+        uint8_t BPP = nb_bytes_per_pixel(data_bpp);
         const unsigned int src_xor_line_length_in_byte = width * BPP;
         const unsigned int src_xor_padded_line_length_in_byte = ::even_pad_length(src_xor_line_length_in_byte);
         const unsigned int dest_xor_line_length_in_byte = width * 3;
@@ -699,7 +699,7 @@ inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
             }
         }
         memcpy(cursor.mask, mask, mlen);
-        if ((data_bpp == 32) && (clean_up_32_bpp_cursor)) {
+        if ((data_bpp == BitsPerPixel{32}) && (clean_up_32_bpp_cursor)) {
             fix_32_bpp(cursor.dimensions, cursor.data, cursor.mask);
         }
     }
@@ -712,7 +712,7 @@ inline Pointer decode_pointer(uint8_t data_bpp, const BGRPalette & palette,
     return cursor;
 }
 
-inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor)
+inline Pointer pointer_loader_new(BitsPerPixel data_bpp, InStream & stream, const BGRPalette & palette, bool clean_up_32_bpp_cursor)
 {
     auto hsx      = stream.in_uint16_le();
     auto hsy      = stream.in_uint16_le();
@@ -723,7 +723,7 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
     uint16_t dlen = stream.in_uint16_le(); /* data length */
 
     assert(::even_pad_length(::nbbytes(width)) == mlen / height);
-    assert(::even_pad_length(::nbbytes(width * data_bpp)) == dlen / height);
+    assert(::even_pad_length(::nbbytes(width * underlying_cast(data_bpp))) == dlen / height);
 
     if (!stream.in_check_rem(mlen + dlen)){
         LOG(LOG_ERR, "Not enough data for cursor (dlen=%u mlen=%u need=%u remain=%zu)",
@@ -738,7 +738,7 @@ inline Pointer pointer_loader_new(uint8_t data_bpp, InStream & stream, const BGR
 }
 
 
-inline Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
+inline Pointer pointer_loader_vnc(BytesPerPixel Bpp, uint16_t width, uint16_t height, uint16_t hsx, uint16_t hsy, const std::vector<uint8_t> & vncdata, const std::vector<uint8_t> & vncmask, int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max)
 {
 // VNC Pointer format
 // ==================
@@ -762,7 +762,7 @@ inline Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, 
 
     size_t target_offset_line = 0;
     size_t target_mask_offset_line = 0;
-    size_t source_offset_line = (minheight-1) * width * Bpp;
+    size_t source_offset_line = (minheight-1) * width * underlying_cast(Bpp);
     size_t source_mask_offset_line = (minheight-1) * ::nbbytes(width);
     memset(cursor.data, 0xAA, sizeof(cursor.data));
 
@@ -770,11 +770,10 @@ inline Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, 
     for (size_t y = 0 ; y < minheight ; y++){
         for (size_t x = 0 ; x < 32 ; x++){
             const size_t target_offset = target_offset_line +x*3;
-            const size_t source_offset = source_offset_line + x*Bpp;
+            const size_t source_offset = source_offset_line + x*underlying_cast(Bpp);
             unsigned pixel = 0;
             if (x < width) {
-                for(size_t i = 0 ; i < Bpp ; i++){
-//                    pixel = (pixel<<8) + vncdata[source_offset+Bpp-i-1];
+                for(size_t i = 0 ; i < underlying_cast(Bpp); i++){
                     pixel = (pixel<<8) + vncdata[source_offset+i];
                 }
             }
@@ -803,7 +802,7 @@ inline Pointer pointer_loader_vnc(uint8_t Bpp, uint16_t width, uint16_t height, 
         }
         target_offset_line += 32*3;
         target_mask_offset_line += 4;
-        source_offset_line -= width*Bpp;
+        source_offset_line -= width*underlying_cast(Bpp);
         source_mask_offset_line -= ::nbbytes(width);
     }
     return cursor;
@@ -815,7 +814,7 @@ inline Pointer pointer_loader_2(InStream & stream)
 {
     uint8_t width     = stream.in_uint8();
     uint8_t height    = stream.in_uint8();
-    uint8_t data_bpp  = stream.in_uint8();
+    BitsPerPixel data_bpp{stream.in_uint8()};
     uint8_t hsx       = stream.in_uint8();
     uint8_t hsy       = stream.in_uint8();
     uint16_t dlen     = stream.in_uint16_le();
@@ -838,10 +837,10 @@ inline Pointer pointer_loader_32x32(InStream & stream)
 {
     const uint8_t width     = 32;
     const uint8_t height    = 32;
-    const uint8_t data_bpp  = 24;
+    const BitsPerPixel data_bpp{24};
     const uint8_t hsx       = stream.in_uint8();
     const uint8_t hsy       = stream.in_uint8();
-    const uint16_t dlen     = 32 * 32 *::nbbytes(data_bpp);
+    const uint16_t dlen     = 32 * 32 * nb_bytes_per_pixel(data_bpp);
     uint16_t mlen           = 32 * ::nbbytes(32);
 
     if (dlen > Pointer::DATA_SIZE){

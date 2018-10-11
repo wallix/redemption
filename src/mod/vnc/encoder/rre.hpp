@@ -22,6 +22,7 @@ h
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "utils/rect.hpp"
 
@@ -29,6 +30,6 @@ namespace VNC
 {
     namespace Encoder
     {
-        Encoder rre_encoder(uint8_t bpp, uint8_t Bpp, Rect rect);
+        Encoder rre_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect);
     }  // namespace Encoder
 } // namespace VNC

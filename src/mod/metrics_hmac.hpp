@@ -21,7 +21,8 @@
 #pragma once
 
 #include "system/linux/system/ssl_sha256.hpp"
-#include "core/client_info.hpp"
+#include "gdi/screen_info.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <array>
 #include <string>
@@ -87,12 +88,12 @@ inline MetricsHmacSha256Encrypt hmac_device_service(
 }
 
 inline MetricsHmacSha256Encrypt hmac_client_info(
-    std::string client_host, ClientInfo const& info,
+    std::string client_host, ScreenInfo const& info,
     std::array<uint8_t, 32> const& key)
 {
     char session_info[128];
     int session_info_size = ::snprintf(session_info, sizeof(session_info), "%d%u%u",
-        info.bpp, info.width, info.height);
+        underlying_cast(info.bpp), info.width, info.height);
     client_host.append(session_info, session_info_size);
     return MetricsHmacSha256Encrypt(client_host, key);
 }

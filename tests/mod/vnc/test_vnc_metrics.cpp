@@ -42,7 +42,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsH)
     RED_CHECK_MEM("EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48"_av,
         hmac_device_service("device1"_av, "service1", key));
 
-    ClientInfo info;
+    ScreenInfo info;
     RED_CHECK_MEM("B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7"_av,
         hmac_client_info("10.10.13.12", info, key));
 }
@@ -69,7 +69,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle1)
               , 5s
               );
     VNCMetrics metrics(&m);
-    
+
     RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
     RED_CHECK_FILE_EXISTS(wd[logindex1]);
 
@@ -133,7 +133,7 @@ RED_AUTO_TEST_CASE(TestVNCMetricsLogCycle2)
                 , 3s
                 );
         VNCMetrics metrics(&m);
-        
+
         RED_CHECK_FILE_EXISTS(wd[logindex1]);
         RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
 

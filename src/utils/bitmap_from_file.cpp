@@ -331,7 +331,8 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 
     auto initializer_data = [&header, &bitmap](auto init_pixel_at) {
         Bitmap::PrivateData::Data & data
-          = Bitmap::PrivateData::initialize(bitmap, 24, header.image_width, header.image_height);
+          = Bitmap::PrivateData::initialize(
+              bitmap, BitsPerPixel{24}, header.image_width, header.image_height);
         const uint8_t Bpp = 3;
         uint8_t * dest = data.get();
         const size_t line_size = data.line_size();
@@ -447,7 +448,7 @@ Bitmap load_error_bitmap()
     };
 
     Bitmap bitmap;
-    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, 24, 16, 16);
+    Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(bitmap, BitsPerPixel{24}, 16, 16);
     memcpy(data.get(), errorbmp, sizeof(errorbmp));
     return bitmap;
 }

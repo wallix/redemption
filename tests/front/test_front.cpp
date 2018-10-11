@@ -92,9 +92,9 @@ RED_AUTO_TEST_CASE(TestFront)
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
     uint32_t verbose = 3;
@@ -237,8 +237,8 @@ RED_AUTO_TEST_CASE(TestFront)
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
     // incoming connexion data
-    RED_CHECK_EQUAL(front.client_info.width, 1024);
-    RED_CHECK_EQUAL(front.client_info.height, 768);
+    RED_CHECK_EQUAL(front.client_info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(front.client_info.screen_info.height, 768);
 
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
@@ -336,9 +336,9 @@ RED_AUTO_TEST_CASE(TestFront2)
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname,sizeof(info.hostname),"test");
     uint32_t verbose = 3;

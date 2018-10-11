@@ -453,12 +453,13 @@ public:
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
 
                     if (this->impl_graphic) {
-                        this->config.info.width = this->impl_graphic->screen_max_width;
-                        this->config.info.height = this->impl_graphic->screen_max_height;
+                        this->config.info.screen_info.width = this->impl_graphic->screen_max_width;
+                        this->config.info.screen_info.height = this->impl_graphic->screen_max_height;
                     }
 
                     this->clientChannelRemoteAppManager.set_configuration(
-                        this->config.info.width, this->config.info.height,
+                        this->config.info.screen_info.width,
+                        this->config.info.screen_info.height,
                         this->config.rDPRemoteAppConfig);
                 }
 
@@ -694,13 +695,13 @@ public:
 
             switch (this->config.mod_state) {
                 case ClientRedemptionConfig::MOD_RDP:
-                    this->config.info.width = this->config.rdp_width;
-                    this->config.info.height = this->config.rdp_height;
+                    this->config.info.screen_info.width = this->config.rdp_width;
+                    this->config.info.screen_info.height = this->config.rdp_height;
                     break;
 
                 case ClientRedemptionConfig::MOD_VNC:
-                    this->config.info.width = this->config.vnc_conf.width;
-                    this->config.info.height = this->config.vnc_conf.height;
+                    this->config.info.screen_info.width = this->config.vnc_conf.width;
+                    this->config.info.screen_info.height = this->config.vnc_conf.height;
                     break;
 
                 default: break;
@@ -708,7 +709,7 @@ public:
 
             if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
 
-                this->impl_graphic->reset_cache(this->config.info.width, this->config.info.height);
+                this->impl_graphic->reset_cache(this->config.info.screen_info.width, this->config.info.screen_info.height);
                 this->impl_graphic->create_screen();
             } else {
                 this->impl_graphic->reset_cache(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
@@ -795,7 +796,7 @@ public:
 
         bool const is_remoteapp = false;
         WrmParams wrmParams(
-              this->config.info.bpp
+              this->config.info.screen_info.bpp
             , is_remoteapp
             , this->cctx
             , *this->gen
@@ -816,7 +817,7 @@ public:
         captureParams.report_message = nullptr;
 
         this->capture = std::make_unique<Capture>(
-            this->config.info.width, this->config.info.height,
+            this->config.info.screen_info.width, this->config.info.screen_info.height,
             captureParams, wrmParams);
     }
 
@@ -1369,7 +1370,7 @@ public:
 //         }
 //     }
 
-    ResizeResult server_resize(int width, int height, int bpp) override {
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
         LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
         if (this->impl_graphic) {
             return this->impl_graphic->server_resize(width, height, bpp);
@@ -1469,8 +1470,8 @@ private:
         }
 
         if (this->config.is_recording && !this->config.is_replaying) {
-            this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
-            this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.bpp), &this->config.mod_palette), others...);
+            this->capture->drawable.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
+            this->capture->wrm_capture.draw(order, clip, gdi::ColorCtx(gdi::Depth::from_bpp(this->config.info.screen_info.bpp), &this->config.mod_palette), others...);
             this->capture->wrm_capture.periodic_snapshot(tvtime(), this->_callback.mouse_data.x, this->_callback.mouse_data.y, false);
         }
     }

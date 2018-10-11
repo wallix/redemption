@@ -43,14 +43,15 @@
 #include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "gdi/screen_info.hpp"
 #include "utils/get_printable_password.hpp"
 #include "utils/sugar/cast.hpp"
 
-struct ClientInfo {
-    int bpp = 0;
-    uint16_t width = 0;
-    uint16_t height = 0;
+struct ClientInfo
+{
+    ScreenInfo screen_info;
 
+    // TODO CacheInfo { entrie, is_persistent, size }; or Cache5Info { entries[5], ... };
     /* bitmap cache info */
     uint8_t number_of_cache = 0;
     uint32_t cache1_entries = 600;

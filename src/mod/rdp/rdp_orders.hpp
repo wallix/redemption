@@ -89,7 +89,7 @@ class rdp_orders
     RDPNineGrid        ninegrid;
 
 public:
-    uint8_t bpp = 0;
+    BitsPerPixel bpp {};
     BGRPalette global_palette;
 
     std::unique_ptr<BmpCache> bmp_cache;
@@ -215,7 +215,8 @@ public:
             // Generates the name of file.
             char filename[2048];
             ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d",
-                app_path(AppPath::PersistentRdp), this->target_host.c_str(), this->bmp_cache->bpp);
+                app_path(AppPath::PersistentRdp), this->target_host.c_str(),
+                underlying_cast(this->bmp_cache->bpp));
             filename[sizeof(filename) - 1] = '\0';
 
             int fd = ::open(filename, O_RDONLY);

@@ -2891,7 +2891,7 @@ namespace cfg {
     };
 
     /// type: std::string <br/>
-    /// value = "" <br/>
+    /// value{} <br/>
     struct debug::fake_target_ip {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2900,7 +2900,7 @@ namespace cfg {
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
-        type value = "";
+        type value{};
     };
     /// type: uint32_t <br/>
     /// value{} <br/>
@@ -3350,9 +3350,9 @@ namespace cfg {
         type value{15};
     };
     /// AUTHID_CONTEXT_OPT_BPP <br/>
-    /// type: unsigned int <br/>
+    /// type: ColorDepth <br/>
     /// sesman <-> proxy <br/>
-    /// value{24} <br/>
+    /// value = static_cast<type>(24) <br/>
     struct context::opt_bpp {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = true;
@@ -3361,13 +3361,13 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(80);
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = ColorDepth;
+        using sesman_and_spec_type = ColorDepth;
         using mapped_type = sesman_and_spec_type;
-        type value{24};
+        type value = static_cast<type>(24);
     };
     /// AUTHID_CONTEXT_OPT_HEIGHT <br/>
-    /// type: unsigned int <br/>
+    /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{600} <br/>
     struct context::opt_height {
@@ -3378,13 +3378,13 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(81);
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint16_t;
+        using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
     /// AUTHID_CONTEXT_OPT_WIDTH <br/>
-    /// type: unsigned int <br/>
+    /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{800} <br/>
     struct context::opt_width {
@@ -3395,8 +3395,8 @@ namespace cfg {
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(82);
-        using type = unsigned int;
-        using sesman_and_spec_type = unsigned int;
+        using type = uint16_t;
+        using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{800};
     };

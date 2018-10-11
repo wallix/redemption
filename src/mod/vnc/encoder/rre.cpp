@@ -28,6 +28,7 @@ h
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
 
 #include <vector>
@@ -75,7 +76,7 @@ namespace
     // TODO: Check that encoder, it looks bad, working ?
     class RRE
     {
-        const uint8_t bpp;
+        const BitsPerPixel bpp;
         const uint8_t Bpp;
         Rect rect;
 
@@ -93,11 +94,11 @@ namespace
         std::vector<uint8_t> rre_raw;
 
     public:
-        RRE(uint8_t bpp, uint8_t Bpp, Rect rect)
-            : bpp(bpp), Bpp(Bpp), rect(rect)
+        RRE(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect)
+            : bpp(bpp), Bpp(safe_int(Bpp)), rect(rect)
             , state(RREState::Header)
         {
-            this->rre_raw.reserve(rect.cx * rect.cy * Bpp);
+            this->rre_raw.reserve(rect.cx * rect.cy * this->Bpp);
         }
 
         EncoderState operator()(Buf64k & buf, gdi::GraphicApi & drawable)
@@ -195,7 +196,7 @@ namespace
     };
 }
 
-Encoder rre_encoder(uint8_t bpp, uint8_t Bpp, Rect rect)
+Encoder rre_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect)
 {
     return Encoder{RRE(bpp, Bpp, rect)};
 }

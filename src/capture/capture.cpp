@@ -74,7 +74,6 @@ class SequencedVideoCaptureImpl {};
 #endif
 
 #include "utils/recording_progress.hpp"
-#include "utils/sugar/underlying_cast.hpp"
 
 //#include "configs/config_access.hpp"
 

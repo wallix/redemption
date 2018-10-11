@@ -29,12 +29,14 @@
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "utils/cpack.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/colors.hpp"
-#include "utils/log.hpp"
+#include "utils/stream.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <cstring>
 #include <cassert>
@@ -46,7 +48,7 @@ struct DataBitmapBase
 {
     const uint16_t cx_;
     const uint16_t cy_;
-    const uint8_t bpp_;
+    const BitsPerPixel bpp_;
     uint_fast8_t counter_;
     const size_t line_size_;
     const size_t bmp_size_;
@@ -56,12 +58,12 @@ struct DataBitmapBase
     size_t size_compressed_;
     mutable uint8_t sha1_[SslSha1::DIGEST_LENGTH];
     mutable bool sha1_is_init_;
-    DataBitmapBase(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
+    DataBitmapBase(BitsPerPixel bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
     : cx_(cx)
     , cy_(cy)
     , bpp_(bpp)
     , counter_(1)
-    , line_size_(this->cx_ * nbbytes(this->bpp_))
+    , line_size_(this->cx_ * nb_bytes_per_pixel(this->bpp_))
     , bmp_size_(this->line_size_ * cy)
     , ptr_(ptr)
     , data_compressed_(nullptr)
@@ -73,10 +75,10 @@ struct DataBitmapBase
 class Bitmap::DataBitmap : DataBitmapBase
 {
     DataBitmap(uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
-    : DataBitmapBase(24, cx, cy, ptr)
+    : DataBitmapBase(BitsPerPixel{24}, cx, cy, ptr)
     {}
 
-    DataBitmap(uint8_t bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
+    DataBitmap(BitsPerPixel bpp, uint16_t cx, uint16_t cy, uint8_t * ptr) noexcept
     : DataBitmapBase(bpp, align4(cx), cy, ptr)
     {}
 
@@ -91,10 +93,10 @@ public:
     DataBitmap(DataBitmap const &) = delete;
     DataBitmap & operator=(DataBitmap const &) = delete;
 
-    static DataBitmap * construct(uint8_t bpp, uint16_t cx, uint16_t cy)
+    static DataBitmap * construct(BitsPerPixel bpp, uint16_t cx, uint16_t cy)
     {
-        const size_t sz = align4(cx) * nbbytes(bpp) * cy;
-        const size_t sz_struct = bpp == 8 ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
+        const size_t sz = align4(cx) * nb_bytes_per_pixel(bpp) * cy;
+        const size_t sz_struct = bpp == BitsPerPixel{8} ? palette_index + sizeof(BGRPalette) : sizeof(DataBitmap);
         uint8_t * p = static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(sz_struct + sz));
         return new (p) DataBitmap(bpp, cx, cy, p + sz_struct); /*NOLINT*/
     }
@@ -118,12 +120,14 @@ public:
         if (!this->sha1_is_init_) {
             this->sha1_is_init_ = true;
             SslSha1 sha1;
-            if (this->bpp_ == 8) {
+            if (this->bpp_ == BitsPerPixel{8}) {
                 sha1.update({this->data_palette(), sizeof(BGRPalette)});
             }
-            sha1.update({&this->bpp_, sizeof(this->bpp_)});
-            sha1.update(cpack::Uint16_le(this->cx_));
-            sha1.update(cpack::Uint16_le(this->cy_));
+            StaticOutStream<5> out_stream;
+            out_stream.out_uint8(safe_int(this->bpp_));
+            out_stream.out_uint16_le(this->cx_);
+            out_stream.out_uint16_le(this->cy_);
+            sha1.update(stream_to_avu8(out_stream));
             const uint8_t * first = this->get();
             const uint8_t * last = first + this->cy_ * this->line_size_;
             for (; first != last; first += this->line_size_) {
@@ -174,7 +178,7 @@ public:
         return this->line_size_;
     }
 
-    uint8_t bpp() const noexcept
+    BitsPerPixel bpp() const noexcept
     {
         return this->bpp_;
     }
@@ -221,7 +225,7 @@ public:
 struct Bitmap::PrivateData
 {
     using Data = Bitmap::DataBitmap;
-    static Data & initialize(Bitmap & bmp, uint8_t bpp, uint16_t cx, uint16_t cy)
+    static Data & initialize(Bitmap & bmp, BitsPerPixel bpp, uint16_t cx, uint16_t cy)
     { return *(bmp.data_bitmap = DataBitmap::construct(bpp, cx, cy)); }
     static Data & initialize_png(Bitmap & bmp, uint16_t cx, uint16_t cy)
     { return *(bmp.data_bitmap = DataBitmap::construct_png(cx, cy)); }

@@ -31,7 +31,9 @@
 #include <cstddef>
 #include <cstring> // strcasecmp
 
+#include "gdi/screen_info.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
+
 
 // Those are in BGR
 enum NamedBGRColor {
@@ -362,7 +364,7 @@ inline BGRColor color_from_cstr(const char * str)
 
 struct decode_color8
 {
-    static constexpr const uint8_t bpp = 8;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{8};
 
     constexpr decode_color8() noexcept = default;
 
@@ -375,7 +377,7 @@ struct decode_color8
 
 struct decode_color15
 {
-    static constexpr const uint8_t bpp = 15;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{15};
 
     constexpr decode_color15() noexcept = default;
 
@@ -392,7 +394,7 @@ struct decode_color15
 
 struct decode_color16
 {
-    static constexpr const uint8_t bpp = 16;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{16};
 
     constexpr decode_color16() noexcept = default;
 
@@ -409,7 +411,7 @@ struct decode_color16
 
 struct decode_color24
 {
-    static constexpr const uint8_t bpp = 24;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{24};
 
     constexpr decode_color24() noexcept = default;
 
@@ -439,14 +441,14 @@ struct decode_color24
 // |    24 bpp   |    3 bytes |     RGB color triplet (1 byte per component).  |
 // +-------------+------------+------------------------------------------------+
 
-inline BGRColor color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPalette & palette) noexcept
+inline BGRColor color_decode(const RDPColor c, const BitsPerPixel in_bpp, const BGRPalette & palette) noexcept
 {
     switch (in_bpp){
-        case 8:  return decode_color8()(c, palette);
-        case 15: return decode_color15()(c);
-        case 16: return decode_color16()(c);
-        case 24:
-        case 32: return decode_color24()(c);
+        case BitsPerPixel{8}:  return decode_color8()(c, palette);
+        case BitsPerPixel{15}: return decode_color15()(c);
+        case BitsPerPixel{16}: return decode_color16()(c);
+        case BitsPerPixel{24}:
+        case BitsPerPixel{32}: return decode_color24()(c);
         default: assert(!"unknown bpp");
     }
     return BGRColor{0};
@@ -455,7 +457,7 @@ inline BGRColor color_decode(const RDPColor c, const uint8_t in_bpp, const BGRPa
 template<class Converter>
 struct with_color8_palette
 {
-    static constexpr const uint8_t bpp = Converter::bpp;
+    static constexpr const BitsPerPixel bpp = Converter::bpp;
 
     BGRColor operator()(RDPColor c) const noexcept
     {
@@ -469,7 +471,7 @@ using decode_color8_with_palette = with_color8_palette<decode_color8>;
 
 struct encode_color8
 {
-    static constexpr const uint8_t bpp = 8;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{8};
 
     constexpr encode_color8() noexcept = default;
 
@@ -485,7 +487,7 @@ struct encode_color8
 
 struct encode_color15
 {
-    static constexpr const uint8_t bpp = 15;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{15};
 
     constexpr encode_color15() noexcept = default;
 
@@ -506,7 +508,7 @@ struct encode_color15
 
 struct encode_color16
 {
-    static constexpr const uint8_t bpp = 16;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{16};
 
     constexpr encode_color16() noexcept = default;
 
@@ -527,7 +529,7 @@ struct encode_color16
 
 struct encode_color24
 {
-    static constexpr const uint8_t bpp = 24;
+    static constexpr const BitsPerPixel bpp = BitsPerPixel{24};
 
     constexpr encode_color24() noexcept = default;
 
@@ -537,14 +539,14 @@ struct encode_color24
     }
 };
 
-inline RDPColor color_encode(const BGRColor c, const uint8_t out_bpp) noexcept
+inline RDPColor color_encode(const BGRColor c, const BitsPerPixel out_bpp) noexcept
 {
     switch (out_bpp){
-        case 8:  return encode_color8()(c);
-        case 15: return encode_color15()(c);
-        case 16: return encode_color16()(c);
-        case 32:
-        case 24: return encode_color24()(c);
+        case BitsPerPixel{8}:  return encode_color8()(c);
+        case BitsPerPixel{15}: return encode_color15()(c);
+        case BitsPerPixel{16}: return encode_color16()(c);
+        case BitsPerPixel{32}:
+        case BitsPerPixel{24}: return encode_color24()(c);
         default:
             assert(!"unknown bpp");
         break;

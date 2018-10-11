@@ -22,24 +22,30 @@
 */
 
 #pragma once
-#include <cstdint>
 
-static inline uint8_t * byte_ptr_cast(char * data) noexcept
+#include <cstdint>
+#include <type_traits>
+
+inline uint8_t * byte_ptr_cast(char * data) noexcept
 {
     return reinterpret_cast<uint8_t *>(data); /*NOLINT*/
 }
 
-static inline const uint8_t * byte_ptr_cast(const char * data) noexcept
+inline const uint8_t * byte_ptr_cast(const char * data) noexcept
 {
     return reinterpret_cast<const uint8_t *>(data); /*NOLINT*/
 }
 
-static inline char * char_ptr_cast(uint8_t * data) noexcept
+inline char * char_ptr_cast(uint8_t * data) noexcept
 {
     return reinterpret_cast<char *>(data); /*NOLINT*/
 }
 
-static inline const char * char_ptr_cast(const uint8_t * data) noexcept
+inline const char * char_ptr_cast(const uint8_t * data) noexcept
 {
     return reinterpret_cast<const char *>(data); /*NOLINT*/
 }
+
+template<class E>
+constexpr std::underlying_type_t<E> underlying_cast(E e) noexcept
+{ return static_cast<std::underlying_type_t<E>>(e); }

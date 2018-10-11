@@ -24,6 +24,7 @@
 
 #include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -552,7 +553,7 @@
                                           this->clientIOClipboardAPI->get_cliboard_data_length()
                                         , image.width()
                                         , image.height()
-                                        , image.bits_per_pixel()
+                                        , safe_int(image.bits_per_pixel())
                                         , this->arbitrary_scale
                                     );
                                     fdr.emit(out_stream_first_part);
@@ -1103,7 +1104,7 @@
         this->clientIOClipboardAPI->setClipboard_image(this->_cb_buffers.data.get(),
                                                        this->_cb_buffers.pic_width,
                                                        this->_cb_buffers.pic_height,
-                                                       this->_cb_buffers.pic_bpp);
+                                                       checked_int(this->_cb_buffers.pic_bpp));
         this->clientIOClipboardAPI->set_local_clipboard_stream(true);
 
         this->empty_buffer();

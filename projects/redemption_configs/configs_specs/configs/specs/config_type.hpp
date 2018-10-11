@@ -26,6 +26,8 @@ namespace cfg_specs {
 
 inline void config_type_definition(type_enumerations & e)
 {
+    // TODO add enumeration underlying type
+
     e.enumeration_flags("CaptureFlags", "Specifies the type of data to be captured:")
       .value("none")
       .value("png")

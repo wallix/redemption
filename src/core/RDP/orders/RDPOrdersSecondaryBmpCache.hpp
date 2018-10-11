@@ -27,6 +27,7 @@
 #include "utils/log.hpp"
 #include "utils/colors.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 
 /* RDP bitmap cache (version 2) constants */
@@ -474,7 +475,7 @@ class RDPBmpCache {
         :  verbose(verbose) {
     }
 
-    void emit(uint8_t session_color_depth, OutStream & stream, const int bitmap_cache_version,
+    void emit(BitsPerPixel session_color_depth, OutStream & stream, const int bitmap_cache_version,
         bool use_bitmap_comp, bool use_compact_packets) const
     {
         using namespace RDP;
@@ -510,7 +511,7 @@ class RDPBmpCache {
         }
     }
 
-    void emit_v1_compressed(uint8_t session_color_depth, OutStream & stream, bool use_compact_packets) const {
+    void emit_v1_compressed(BitsPerPixel session_color_depth, OutStream & stream, bool use_compact_packets) const {
         using namespace RDP;
 
         int order_flags = STANDARD | SECONDARY;
@@ -529,7 +530,7 @@ class RDPBmpCache {
 
         stream.out_uint8(this->bmp.cx());
         stream.out_uint8(this->bmp.cy());
-        stream.out_uint8(this->bmp.bpp());
+        stream.out_uint8(safe_int(this->bmp.bpp()));
 
         uint32_t offset = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for bufsize
@@ -595,7 +596,7 @@ class RDPBmpCache {
         //  0x10 16-bit color depth.
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
-        stream.out_uint8(this->bmp.bpp());
+        stream.out_uint8(safe_int(this->bmp.bpp()));
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
@@ -767,11 +768,11 @@ class RDPBmpCache {
           BITMAPCACHE_WAITING_LIST_INDEX = 32767
     };
 
-    void emit_v2_compressed(uint8_t session_color_depth, OutStream & stream) const
+    void emit_v2_compressed(BitsPerPixel session_color_depth, OutStream & stream) const
     {
         using namespace RDP;
 
-        int Bpp = nbbytes(this->bmp.bpp());
+        const int Bpp = nb_bytes_per_pixel(this->bmp.bpp());
 
         stream.out_uint8(STANDARD | SECONDARY);
 
@@ -825,7 +826,7 @@ class RDPBmpCache {
         uint32_t offset_header = stream.get_offset();
         stream.out_uint16_le(0); // placeholder for length after type minus 7
 
-        int bitsPerPixelId = nbbytes(this->bmp.bpp())+2;
+        int bitsPerPixelId = nb_bytes_per_pixel(this->bmp.bpp())+2;
 
         // TODO some optimisations are possible here if we manage flags  but what will we do with persistant bitmaps ? We definitely do not want to save them on disk from here. There must be some kind of persistant structure where to save them and check if they exist.
         uint16_t flags = ((this->persistent   ? CBR2_PERSISTENT_KEY_PRESENT : 0) |
@@ -921,7 +922,7 @@ class RDPBmpCache {
         stream.set_out_uint16_le(stream.get_offset() - (offset_header + 12), offset_header);
     }
 
-    void receive(InStream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, uint8_t session_color_depth)
+    void receive(InStream & stream, const RDPSecondaryOrderHeader & header, const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
         switch (header.type){
         case RDP::TS_CACHE_BITMAP_UNCOMPRESSED:
@@ -943,32 +944,14 @@ class RDPBmpCache {
     }
 
     void receive_raw_v2( InStream & stream, const RDPSecondaryOrderHeader & header
-                       , const BGRPalette & palette, uint8_t session_color_depth)
+                       , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
         using namespace RDP;
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
         uint8_t cbr2_bpp    = ((extraFlags & 0x0078) >> 3);
-        uint8_t bpp;
-        switch (cbr2_bpp) {
-            case CBR2_8BPP:
-                bpp = 8;
-            break;
-            case CBR2_16BPP:
-                // Support of 16-bit bitmaps in 15-bit RDP session.
-                bpp = ((session_color_depth == 15) ? 15 : 16);
-            break;
-            case CBR2_24BPP:
-                bpp = 24;
-            break;
-            case CBR2_32BPP:
-                bpp = 32;
-            break;
-            default:
-                LOG(LOG_ERR, "RDPBmpCache::receive_raw_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
-                throw Error(ERR_RDP_PROTOCOL);
-        }
+        BitsPerPixel bpp    = cbr2_bpp_to_bpp(session_color_depth, cbr2_bpp);
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
         //LOG(LOG_INFO, "RDPBmpCache::receive_raw_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
@@ -1018,7 +1001,7 @@ class RDPBmpCache {
     }
 
     void receive_raw_v1(InStream & stream, const RDPSecondaryOrderHeader &/* header*/
-                       , const BGRPalette & palette, uint8_t session_color_depth)
+                       , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
 //        LOG(LOG_INFO, "receive raw v1");
         using namespace RDP;
@@ -1053,7 +1036,7 @@ class RDPBmpCache {
         //  0x18 24-bit color depth.
         //  0x20 32-bit color depth.
 
-        uint8_t bpp = stream.in_uint8();
+        BitsPerPixel bpp{stream.in_uint8()};
 
         // bitmapLength (2 bytes): A 16-bit, unsigned integer. The size in
         //  bytes of the data in the bitmapComprHdr and bitmapDataStream
@@ -1098,32 +1081,14 @@ class RDPBmpCache {
     }
 
     void receive_compressed_v2( InStream & stream, const RDPSecondaryOrderHeader & header
-                              , const BGRPalette & palette, uint8_t session_color_depth)
+                              , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
         using namespace RDP;
 
         uint16_t extraFlags = header.flags;
         this->id            =   extraFlags & 0x0007;
         uint8_t cbr2_bpp    = ((extraFlags & 0x0078) >> 3);
-        uint8_t bpp;
-        switch (cbr2_bpp) {
-            case CBR2_8BPP:
-                bpp = 8;
-            break;
-            case CBR2_16BPP:
-                // Support of 16-bit bitmaps in 15-bit RDP session.
-                bpp = ((session_color_depth == 15) ? 15 : 16);
-            break;
-            case CBR2_24BPP:
-                bpp = 24;
-            break;
-            case CBR2_32BPP:
-                bpp = 32;
-            break;
-            default:
-                LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
-                throw Error(ERR_RDP_PROTOCOL);
-        }
+        BitsPerPixel bpp    = cbr2_bpp_to_bpp(session_color_depth, cbr2_bpp);
         uint8_t cbr2_flags  = ((extraFlags & 0xFF80) >> 7);
         //LOG(LOG_INFO, "RDPBmpCache::receive_compressed_v2: cbr2_bpp=%u cbr2_flags=0x%X", cbr2_bpp, cbr2_flags);
 
@@ -1200,14 +1165,14 @@ class RDPBmpCache {
     }
 
     void receive_compressed_v1( InStream & stream, const RDPSecondaryOrderHeader & header
-                              , const BGRPalette & palette, uint8_t session_color_depth)
+                              , const BGRPalette & palette, BitsPerPixel session_color_depth)
     {
         int flags = header.flags;
         this->id = stream.in_uint8();
         stream.in_uint8(); // skip pad1
         uint8_t width = stream.in_uint8();
         uint8_t height = stream.in_uint8();
-        uint8_t bpp = stream.in_uint8();
+        BitsPerPixel bpp{stream.in_uint8()};
         uint16_t bufsize = stream.in_uint16_le();
         this->idx = stream.in_uint16_le();
 
@@ -1267,5 +1232,28 @@ class RDPBmpCache {
         char buffer[1024];
         this->str(buffer, 1024);
         LOG(level, "%s", buffer);
+    }
+
+private:
+    static BitsPerPixel cbr2_bpp_to_bpp(BitsPerPixel session_color_depth, uint8_t cbr2_bpp)
+    {
+        switch (cbr2_bpp) {
+            case CBR2_8BPP:
+                return BitsPerPixel{8};
+            case CBR2_16BPP:
+                // Support of 16-bit bitmaps in 15-bit RDP session.
+                return (session_color_depth == BitsPerPixel{15})
+                    ? BitsPerPixel{15} : BitsPerPixel{16};
+            break;
+            case CBR2_24BPP:
+                return BitsPerPixel{24};
+            break;
+            case CBR2_32BPP:
+                return BitsPerPixel{32};
+            break;
+            default:
+                LOG(LOG_ERR, "RDPBmpCache::receive_compressed_v2: Unsupported bitsPerPixelId(0x%X)", cbr2_bpp);
+                throw Error(ERR_RDP_PROTOCOL);
+        }
     }
 };

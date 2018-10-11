@@ -66,7 +66,7 @@ namespace
 {
     struct Cursor
     {
-        const uint8_t Bpp;
+        const BytesPerPixel Bpp;
         const Rect rect;
         int red_shift;
         int red_max;
@@ -83,7 +83,7 @@ namespace
                 return EncoderState::Exit;
             }
 
-            const size_t sz_pixel_array = this->rect.cx * this->rect.cy * this->Bpp;
+            const size_t sz_pixel_array = this->rect.cx * this->rect.cy * underlying_cast(this->Bpp);
             const size_t sz_bitmask = ::nbbytes(this->rect.cx) * this->rect.cy;
 
             if (sz_pixel_array + sz_bitmask > 65536)
@@ -134,7 +134,7 @@ namespace
 } // namespace
 
 Encoder cursor_encoder(
-    uint8_t Bpp, Rect rect,
+    BytesPerPixel Bpp, Rect rect,
     int red_shift, int red_max, int green_shift, int green_max, int blue_shift, int blue_max,
     VNCVerbose verbose)
 {

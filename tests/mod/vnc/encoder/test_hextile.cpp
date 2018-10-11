@@ -49,7 +49,7 @@ public:
 
 RED_AUTO_TEST_CASE(TestHextile1)
 {
-    VNC::Encoder::Hextile encoder(16, 2, {0, 0, 44, 19}, VNCVerbose::basic_trace);
+    VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 44, 19}, VNCVerbose::basic_trace);
     RED_CHECK_EQUAL(Rect( 0,  0, 16, 16), encoder.current_tile());
     RED_CHECK_EQUAL(true, encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16,  0, 16, 16), encoder.current_tile());
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestHextile1)
 
 RED_AUTO_TEST_CASE(TestHextile2)
 {
-    VNC::Encoder::Hextile encoder(16, 2, {0, 0, 48, 19}, VNCVerbose::basic_trace);
+    VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 48, 19}, VNCVerbose::basic_trace);
     RED_CHECK_EQUAL(Rect( 0,  0, 16, 16), encoder.current_tile());
     RED_CHECK_EQUAL(true, encoder.next_tile());
     RED_CHECK_EQUAL(Rect(16,  0, 16, 16), encoder.current_tile());
@@ -717,7 +717,7 @@ RED_AUTO_TEST_CASE(TestHextile)
     Buf64k buf;
     buf.read_with(bw);
 
-    VNC::Encoder::Hextile encoder(16, 2, {0, 0, 44, 19}, VNCVerbose::basic_trace);
+    VNC::Encoder::Hextile encoder(BitsPerPixel{16}, BytesPerPixel{2}, {0, 0, 44, 19}, VNCVerbose::basic_trace);
 
 //    encoder->consume(buf, drawable);
 

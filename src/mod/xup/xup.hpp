@@ -71,7 +71,7 @@ enum {
     FrontAPI & front;
     int width;
     int height;
-    int bpp;
+    BitsPerPixel bpp;
     Transport & t;
     int rop;
     BGRColor fgcolor;
@@ -86,7 +86,7 @@ enum {
            , uint16_t /*front_height*/
            , int context_width
            , int context_height
-           , int context_bpp
+           , BitsPerPixel context_bpp
            )
     : front(front)
     , width(context_width)
@@ -267,7 +267,7 @@ enum {
                         int height = stream.in_uint16_le();
                         int srcx = stream.in_sint16_le();
                         int srcy = stream.in_sint16_le();
-                        Bitmap bmp(this->bpp, bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
+                        Bitmap bmp(this->bpp, this->bpp, &this->palette332, width, height, bmpdata, sizeof(bmpdata));
                         gd.draw(RDPMemBlt(0, r, 0xCC, srcx, srcy, 0), r, bmp);
                     }
                     break;

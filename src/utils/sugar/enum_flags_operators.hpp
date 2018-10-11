@@ -21,7 +21,6 @@
 #pragma once
 
 #include "cxx/cxx.hpp"
-#include "utils/sugar/underlying_cast.hpp"
 
 namespace detail_
 {

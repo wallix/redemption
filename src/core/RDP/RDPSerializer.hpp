@@ -129,7 +129,7 @@ protected:
     OutStream & stream_orders;
     OutStream & stream_bitmaps;
 
-    const uint8_t capture_bpp;
+    const BitsPerPixel capture_bpp;
 
 private:
     const int bitmap_cache_version;
@@ -174,7 +174,7 @@ public:
 
     RDPSerializer( OutStream & stream_orders
                  , OutStream & stream_bitmaps
-                 , const uint8_t bpp
+                 , const BitsPerPixel bpp
                  , BmpCache & bmp_cache
                  , GlyphCache & glyph_cache
                  , PointerCache & pointer_cache
@@ -255,7 +255,7 @@ public:
 private:
     struct color_convertor
     {
-        uint8_t depth_encoding;
+        BitsPerPixel depth_encoding;
         gdi::ColorCtx color_ctx;
 
         RDPColor operator()(RDPColor c) const noexcept

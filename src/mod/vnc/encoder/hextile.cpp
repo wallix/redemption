@@ -31,6 +31,7 @@ h
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/verbose_flags.hpp"
 
@@ -142,7 +143,7 @@ namespace
 {
     class Hextile
     {
-        const uint8_t bpp;
+        const BitsPerPixel bpp;
         const uint8_t Bpp;
         // rectangle we are refreshing
         const Rect r;
@@ -166,8 +167,8 @@ namespace
         VNCVerbose verbose;
 
     public:
-        Hextile(uint8_t bpp, uint8_t Bpp, Rect rect, VNCVerbose verbose)
-        : bpp(bpp), Bpp(Bpp), r(rect)
+        Hextile(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, VNCVerbose verbose)
+        : bpp(bpp), Bpp(safe_int(Bpp)), r(rect)
         , tile(Rect(this->r.x, this->r.y,
             std::min<size_t>(this->r.cx, 16),
             std::min<size_t>(this->r.cy, 16)))
@@ -379,7 +380,7 @@ namespace
     };
 } // namespace
 
-Encoder hextile_encoder(uint8_t bpp, uint8_t Bpp, Rect rect, VNCVerbose verbose)
+Encoder hextile_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, VNCVerbose verbose)
 {
   return Encoder(Hextile{bpp, Bpp, rect, verbose});
 }

@@ -22,6 +22,7 @@ h
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/rect.hpp"
@@ -32,7 +33,7 @@ namespace VNC
     namespace Encoder
     {
         Encoder cursor_encoder(
-            uint8_t Bpp, Rect rect,
+            BytesPerPixel Bpp, Rect rect,
             int red_shift, int red_max,
             int green_shift, int green_max,
             int blue_shift, int blue_max,

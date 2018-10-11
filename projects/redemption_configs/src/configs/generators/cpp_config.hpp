@@ -242,6 +242,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     { this->out() << "{}"; }
 
 
+    void write_type(type_<types::u16>) { this->out() << "uint16_t"; }
     void write_type(type_<types::u32>) { this->out() << "uint32_t"; }
     void write_type(type_<types::u64>) { this->out() << "uint64_t"; }
 

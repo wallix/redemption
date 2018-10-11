@@ -50,6 +50,7 @@ h
 #include "utils/d3des.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/utf.hpp"
 #include "utils/verbose_flags.hpp"
@@ -80,9 +81,9 @@ class mod_vnc : public mod_api
        static const uint32_t MAX_CLIPBOARD_DATA_SIZE = 1024 * 64;
 
     /* mod data */
-    char mod_name[256];
-    char username[256];
-    char password[256];
+    char mod_name[256] {0};
+    char username[256] {0};
+    char password[256] {0};
 
     FrontAPI& front;
 
@@ -137,8 +138,9 @@ private:
 
     uint16_t width;
     uint16_t height;
-    uint8_t  bpp;
-    uint8_t  depth;
+    BitsPerPixel bpp {};
+    // TODO BytesPerPixel ?
+    uint8_t  depth = 0;
 
     uint8_t endianess;
     uint8_t true_color_flag;
@@ -158,7 +160,7 @@ private:
     KeymapSym  keymapSym;
 
     StaticOutStream<MAX_CLIPBOARD_DATA_SIZE> to_vnc_clipboard_data;
-    uint32_t to_vnc_clipboard_data_size;
+    uint32_t to_vnc_clipboard_data_size = 0;
     uint32_t to_vnc_clipboard_data_remaining;
 
     const bool enable_clipboard_up;   // true clipboard available, false clipboard unavailable
@@ -191,7 +193,7 @@ public:
 private:
     std::string encodings;
 
-    VncState state;
+    VncState state = WAIT_SECURITY_TYPES;
 
     bool left_ctrl_pressed = false;
 
@@ -240,22 +242,15 @@ public:
            , VNCVerbose verbose
            , VNCMetrics * metrics
            )
-    : mod_name{0}
-    , username{0}
-    , password{0}
-    , front(front)
+    : front(front)
     , t(t)
     , width(front_width)
     , height(front_height)
-    , bpp(0)
-    , depth(0)
     , verbose(verbose)
     , keymapSym(static_cast<uint32_t>(verbose & VNCVerbose::keymap))
-    , to_vnc_clipboard_data_size(0)
     , enable_clipboard_up(clipboard_up)
     , enable_clipboard_down(clipboard_down)
     , encodings(encodings)
-    , state(WAIT_SECURITY_TYPES)
     , clipboard_server_encoding_type(clipboard_server_encoding_type)
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
@@ -756,7 +751,7 @@ public:
             InStream stream(buf.av(sz));
             vnc.width = stream.in_uint16_be();
             vnc.height = stream.in_uint16_be();
-            vnc.bpp    = stream.in_uint8();
+            vnc.bpp    = safe_int(stream.in_uint8());
             vnc.depth  = stream.in_uint8();
             vnc.endianess = stream.in_uint8();
             vnc.true_color_flag = stream.in_uint8();
@@ -1538,7 +1533,7 @@ protected:
                 switch (this->message_type)
                 {
                     case VNC_SC_MSG_FRAMEBUFFER_UPDATE: /* framebuffer update */
-                        vnc.frame_buffer_update_ctx.start(vnc.bpp, nbbytes(vnc.bpp));
+                        vnc.frame_buffer_update_ctx.start(vnc.bpp, to_bytes_per_pixel(vnc.bpp));
                         this->state = State::FrameBufferupdate;
                         return vnc.lib_frame_buffer_update(drawable, buf);
                     case VNC_SC_MSG_SET_COLOUR_MAP_ENTRIES: /* palette */
@@ -1910,7 +1905,7 @@ private:
                 this->t.send(stream.get_data(), stream.get_offset());
                 IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
 
-                this->bpp = 16;
+                this->bpp = BitsPerPixel{16};
                 this->depth  = 16;
                 this->endianess = 0;
                 this->true_color_flag = 1;
@@ -2163,7 +2158,7 @@ private:
 //            inflateEnd(&this->zstrm);
 //        }
 
-        void start(uint8_t bpp, uint8_t Bpp)
+        void start(BitsPerPixel bpp, BytesPerPixel Bpp)
         {
             this->bpp = bpp;
             this->Bpp = Bpp;
@@ -2346,8 +2341,8 @@ private:
         }
 
     private:
-        uint8_t bpp;
-        uint8_t Bpp;
+        BitsPerPixel bpp;
+        BytesPerPixel Bpp;
 
         State state;
 

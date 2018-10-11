@@ -205,8 +205,7 @@ struct RDPBitmapData {
     uint16_t cb_scan_width{0};
     uint16_t cb_uncompressed_size{0};
 
-    RDPBitmapData()
-     = default;
+    RDPBitmapData() = default;
 
     void emit(OutStream & stream) const {
         unsigned expected;

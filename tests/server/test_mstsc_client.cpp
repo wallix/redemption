@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestIncomingConnection)
 
     RED_CHECK_EQUAL(1, front.up_and_running);
     Font font;
-    TestCardMod mod(session_reactor, front, front.client_info.width, front.client_info.height, font);
+    TestCardMod mod(session_reactor, front, front.client_info.screen_info.width, front.client_info.screen_info.height, font);
     mod.draw_event(time(nullptr), front);
 
     // Uncomment the code block below to generate testing data.

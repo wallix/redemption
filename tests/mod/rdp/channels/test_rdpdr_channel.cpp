@@ -88,9 +88,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -197,9 +197,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -306,9 +306,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -415,9 +415,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -524,9 +524,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -633,9 +633,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,
@@ -744,9 +744,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     info.keylayout             = 0x04C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 24;
-    info.width                 = 800;
-    info.height                = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
     snprintf(info.hostname, sizeof(info.hostname), "test");
     FakeFront front(info,

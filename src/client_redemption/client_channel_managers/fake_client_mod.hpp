@@ -135,7 +135,7 @@ public:
         return this->_chunk.get();
     }
 
-    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) override {
+    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {
         (void) data;
         (void) image_width;
         (void) image_height;
@@ -199,7 +199,7 @@ public:
 
 
     // TODO bpp -> gdi::Depth
-    FrontAPI::ResizeResult server_resize(int width, int height, int bpp) override
+    FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
     {
         (void)width;
         (void)height;
@@ -342,7 +342,7 @@ public:
     using ClientRedemptionAPI::draw;
     bool must_be_stop_capture() override { return true;}
     const CHANNELS::ChannelDefArray & get_channel_list() const override { return this->channels;}
-    ResizeResult server_resize(int  /*width*/, int  /*height*/, int  /*bpp*/) override { return ResizeResult::instant_done;}
+    ResizeResult server_resize(int  /*width*/, int  /*height*/, BitsPerPixel /*bpp*/) override { return ResizeResult::instant_done;}
     int wait_and_draw_event(std::chrono::milliseconds /*timeout*/) override { return 0; }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & /*cmd*/) override {}

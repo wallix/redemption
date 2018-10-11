@@ -21,7 +21,7 @@
 #pragma once
 
 #include "transport/out_file_transport.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include <cstring>
 

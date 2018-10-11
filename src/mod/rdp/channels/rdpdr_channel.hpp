@@ -30,7 +30,7 @@
 #include "system/linux/system/ssl_sha256.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include <deque>
 

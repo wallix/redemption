@@ -152,13 +152,13 @@ RED_AUTO_TEST_CASE(TestDrawBitmapUpdate)
 
     BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
-    Bitmap bmp(16, 24, &palette, 8, 600, raw_bitmap, sizeof(raw_bitmap), true);
+    Bitmap bmp(BitsPerPixel{16}, BitsPerPixel{24}, &palette, 8, 600, raw_bitmap, sizeof(raw_bitmap), true);
 
 
-    Bitmap capture_bmp(16, bmp);
+    Bitmap capture_bmp(BitsPerPixel{16}, bmp);
 
     StaticOutStream<65535> bmp_stream;
-    capture_bmp.compress(16, bmp_stream);
+    capture_bmp.compress(BitsPerPixel{16}, bmp_stream);
 
     RDPBitmapData bitmap_data;
 

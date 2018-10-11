@@ -111,8 +111,7 @@ public:
     virtual void clear_remote_app_screen() {}
 
     // TODO bpp -> gdi::Depth TODO inner GraphicApi ?
-    virtual FrontAPI::ResizeResult server_resize(int width, int height, int bpp) = 0;
-
+    virtual FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) = 0;
 
     virtual void open_options() {}
 

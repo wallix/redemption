@@ -23,6 +23,7 @@
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "utils/bitmap.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "gdi/graphic_api.hpp"
 
 
@@ -50,7 +51,7 @@ void ProtectedGraphics::draw_impl(const RDPBitmapData & bitmap_data, const Bitma
 
                 sub_bmp_data.width = sub_bmp.cx();
                 sub_bmp_data.height = sub_bmp.cy();
-                sub_bmp_data.bits_per_pixel = sub_bmp.bpp();
+                sub_bmp_data.bits_per_pixel = safe_int(sub_bmp.bpp());
                 sub_bmp_data.flags = 0;
 
                 sub_bmp_data.bitmap_length = sub_bmp.bmp_size();

@@ -34,7 +34,7 @@
 #include "utils/bitmap_shrink.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/log.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #ifndef REDEMPTION_NO_FFMPEG
 #include <libavformat/avio.h> // AVSEEK_SIZE

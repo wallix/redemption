@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     // test COPY
     {
         RED_CHECK_EQUAL(1, 1);
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
             0x06, 0x07, 0x08, 0x09,
@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test COPY 16 bits
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         uint8_t data[4*4*2] = {
             0x01, 0, 0x02, 0, 0x03, 0, 0x04, 0,
             0x05, 0, 0x06, 0, 0x07, 0, 0x08, 0,
@@ -91,14 +91,14 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         RED_CHECK(0 == memcmp(out.get_data(), expected, sizeof(expected)));
 
         // empty set to 0,0,0,0,0,0,...
-        Bitmap bmp2(16, 16, nullptr, 4, 4, out.get_data(), out.get_offset(), true);
+        Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, nullptr, 4, 4, out.get_data(), out.get_offset(), true);
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(data));
         RED_CHECK(0 == memcmp(bmp2.data(), data, sizeof(data)));
     }
 
     // test COLOR
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
             0x01, 0x01, 0x01, 0x01,
@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test COLOR then COPY
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x01, 0x01, 0x01,
             0x01, 0x01, 0x01, 0x01,
@@ -152,7 +152,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     // test interleaved COLOR and COPY
     {
         RED_CHECK_EQUAL(1, 1);
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x01, 0x02, 0x03, 0x04,
             0x01, 0x01, 0x01, 0x01,
@@ -181,7 +181,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test BICOLOR
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[24] = {
             0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02,
             0x01, 0x02, 0x01, 0x02, 0x01, 0x02, 0x01, 0x02,
@@ -205,7 +205,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test FILL
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x02, 0x03, 0x04, 0x05,
             0x02, 0x03, 0x04, 0x05,
@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test MIX
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x02, 0x03, 0x04, 0x05,
             0xFD, 0xFC, 0xFB, 0xFA,
@@ -256,7 +256,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test FOM
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x02, 0x03, 0x04, 0x05,
             0xFD, 0x03, 0xFB, 0x05,
@@ -282,7 +282,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // test FOM 2
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t data[4*4] = {
             0x02, 0x03, 0x04, 0x05,
             0xFD, 0x03, 0xFB, 0x05,
@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     }
 
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t compressed[] = {
             0x40, 0x08, 0x33,                               // 9 FOM 9
             0x0f, 0x66, 0xbb,                               // 15 FILL
@@ -320,7 +320,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
 
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         uint8_t raw[] = {
             0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a,
             0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a, 0x10, 0xe5, 0xef, 0x1a,
@@ -521,7 +521,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
         };
 
         RED_CHECK(1);
-        Bitmap bmp2(16, 16, &palette332, 548, 1, compressed, sizeof(compressed), true);
+        Bitmap bmp2(BitsPerPixel{16}, BitsPerPixel{16}, &palette332, 548, 1, compressed, sizeof(compressed), true);
 
         RED_CHECK_EQUAL(bmp2.bmp_size(), sizeof(raw));
         RED_CHECK(0 == memcmp(bmp2.data(), raw, sizeof(raw)));
@@ -531,7 +531,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // functional test , 24 bits, various orders with SET variants
     {
-        int bpp = 24;
+        BitsPerPixel bpp{24};
         uint8_t raw[2*16*3] = {
         0x0c, 0x0c, 0xea,  0x0c, 0x0c, 0xea,  0x0c, 0x0c, 0xea,  0x0c, 0x0c, 0xea,
         0x07, 0x07, 0x8e,  0x00, 0x00, 0x00,  0x00, 0x00, 0x00,  0x00, 0x00, 0x00,
@@ -574,7 +574,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
 
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         uint8_t compressed[] = {
             // FOM SET 16px Mix 0x0842 MASK 0x00, 00
             0xd0, 0x0F, 0x08, 0x42, 0x0F, 0x0F,
@@ -597,7 +597,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
 
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         uint8_t compressed[] = {
             // 1_COPY 31_FILL 1_MIX 31_FILL
             // the mix is magically inserted because we have 2 back to back FILL
@@ -635,7 +635,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // Test for magic mix pixel on first line
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t compressed[] = {
             0x02, 0x02
         };
@@ -652,7 +652,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
     // No magic pixel between first line and followings
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t compressed[] = {
             0x04, 0x04
         };
@@ -671,7 +671,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     // No magic pixel between first line and followings
     // Magic pixel after first line
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t compressed[] = {
             0x04, 0x04, 0x04
         };
@@ -691,7 +691,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     // No magic pixel between first line and followings
     // Magic pixel after first line, not necessarilly at beginning of a line
     {
-        int bpp = 8;
+        BitsPerPixel bpp{8};
         uint8_t compressed[] = {
             0x04, 0x06, 0x02
         };
@@ -709,7 +709,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 
 
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         uint8_t compressed[] = {
             // FOM (24 * 8) pix
             0x58, 0x01, 0x01, 0x01, 0x0d, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
@@ -766,7 +766,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
 //    }
 
     {
-        int bpp = 16;
+        BitsPerPixel bpp{16};
         RED_CHECK(1);
 
         uint8_t uncompressed[] = {
@@ -1358,7 +1358,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     }
 
     {
-        int bpp = 24;
+        BitsPerPixel bpp{24};
         uint8_t data[64*64*3] = {
             /* line 63 */
             0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,  0xFF, 0x00, 0x00,
@@ -2533,7 +2533,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     }
 
     {
-        uint8_t bpp = 8;
+        BitsPerPixel bpp{8};
 
         uint8_t compressed[] ={
 // DUMP OUPUT: cx=192 cy=18 line_width=192 bmp_size=3456
@@ -3034,7 +3034,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
    }
 
     {
-        int bpp = 24;
+        BitsPerPixel bpp{24};
         RED_CHECK(1);
 
         uint8_t uncompressed[3072] = {
@@ -3334,9 +3334,9 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
     Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(32, compressed_bitmap_data);
+    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -3350,9 +3350,9 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
     Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(32, compressed_bitmap_data);
+    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -3366,9 +3366,9 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
     Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(32, compressed_bitmap_data);
+    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -3382,9 +3382,9 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
     Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(32, compressed_bitmap_data);
+    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -3398,9 +3398,9 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
     Bitmap bmp = bitmap_from_file(filename);
 
     StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(32, compressed_bitmap_data);
+    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
-    Bitmap bmp2(32, 24, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
+    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
 
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
@@ -3449,7 +3449,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression) {
     uint32_t bitmap_data_size = 601;
     uint16_t cx               = 1152;
     uint16_t cy               = 6;
-    uint8_t  bpp              = 32;
+    BitsPerPixel bpp {32};
 
     RED_CHECK_EQUAL(sizeof(bitmap_data), bitmap_data_size);
 
@@ -3494,7 +3494,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression1) {
     uint32_t bitmap_data_size = 505;
     uint16_t cx               = 1280;
     uint16_t cy               = 6;
-    uint8_t  bpp              = 32;
+    BitsPerPixel bpp{32};
 
     RED_CHECK_EQUAL(sizeof(bitmap_data), bitmap_data_size);
 
@@ -3508,7 +3508,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression1) {
 
 
 RED_AUTO_TEST_CASE(TestBogusRLEDecompression1) {
-    uint8_t bpp = 16;
+    BitsPerPixel bpp{16};
     const BGRPalette & palette332 = BGRPalette::classic_332();
 
     // x=591; y=138; w=368; h=10; dw=367; dh=10; bpp=16; cf=1; sz=756
@@ -3592,7 +3592,7 @@ RED_AUTO_TEST_CASE(TestConvertBitmap)
 {
     BGRPalette palette332(BGRPalette::classic_332());
 
-    const uint8_t source_bpp = 16;
+    const BitsPerPixel source_bpp{16};
     const uint16_t cx = 2;
     const uint16_t cy = 3;
     const uint8_t data[] = {
@@ -3601,22 +3601,22 @@ RED_AUTO_TEST_CASE(TestConvertBitmap)
         0xFF, 0xFF,   0xFF, 0xFF,
     };
 
-    Bitmap bmp16(16, source_bpp, &palette332, cx, cy, data, cx * nbbytes(source_bpp) * cy, false);
+    Bitmap bmp16(BitsPerPixel{16}, source_bpp, &palette332, cx, cy, data, cx * nb_bytes_per_pixel(source_bpp) * cy, false);
     RED_CHECK_EQUAL(24, bmp16.bmp_size());
 
     // TODO Check that: cx is now forced to be a multiple of 4 when creating bitmap, previous behaviour was only forcing line size to be aligned as a multiple of 4 (RDP constraint). See it has not effect on provided data and not other unwanted effect
     RED_CHECK_EQUAL(8, bmp16.line_size());
     RED_CHECK_EQUAL(4, bmp16.cx());
     RED_CHECK_EQUAL(cy, bmp16.cy());
-    RED_CHECK_EQUAL(16, bmp16.bpp());
+    RED_CHECK_EQUAL(BitsPerPixel{16}, bmp16.bpp());
 
-    uint16_t target_bpp = 24;
+    BitsPerPixel target_bpp{24};
     Bitmap bmp24(target_bpp, bmp16);
     RED_CHECK_EQUAL(36, bmp24.bmp_size());
     RED_CHECK_EQUAL(12, bmp24.line_size());
     RED_CHECK_EQUAL(4, bmp24.cx());
     RED_CHECK_EQUAL(cy, bmp24.cy());
-    RED_CHECK_EQUAL(24, bmp24.bpp());
+    RED_CHECK_EQUAL(BitsPerPixel{24}, bmp24.bpp());
 
     const uint8_t * outbuf = bmp24.data();
 
@@ -3693,31 +3693,31 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
         0xc4, 0xad, 0xf8,   0x61, 0x6f, 0x32,   0xd6, 0x13, 0x61,   0xee, 0xb2, 0x7b,   0x81, 0x0f, 0x66
     };
 
-    Bitmap bmp24(24, 24, &palette332, 4, 5, raw24, sizeof(raw24));
+    Bitmap bmp24(BitsPerPixel{24}, BitsPerPixel{24}, &palette332, 4, 5, raw24, sizeof(raw24));
 
 
 
-    RED_CHECK_EQUAL(bmp24.bpp(), 24);
+    RED_CHECK_EQUAL(bmp24.bpp(), BitsPerPixel{24});
 
-    Bitmap bmp_24_to_24(24, bmp24);
-    Bitmap bmp_24_to_16(16, bmp24);
-    Bitmap bmp_24_to_15(15, bmp24);
-    Bitmap bmp_24_to_8(8, bmp24);
+    Bitmap bmp_24_to_24(BitsPerPixel{24}, bmp24);
+    Bitmap bmp_24_to_16(BitsPerPixel{16}, bmp24);
+    Bitmap bmp_24_to_15(BitsPerPixel{15}, bmp24);
+    Bitmap bmp_24_to_8(BitsPerPixel{8}, bmp24);
 
-    Bitmap bmp_16_to_24(24, bmp_24_to_16);
-    Bitmap bmp_16_to_16(16, bmp_24_to_16);
-    Bitmap bmp_16_to_15(15, bmp_24_to_16);
-    Bitmap bmp_16_to_8(8, bmp_24_to_16);
+    Bitmap bmp_16_to_24(BitsPerPixel{24}, bmp_24_to_16);
+    Bitmap bmp_16_to_16(BitsPerPixel{16}, bmp_24_to_16);
+    Bitmap bmp_16_to_15(BitsPerPixel{15}, bmp_24_to_16);
+    Bitmap bmp_16_to_8(BitsPerPixel{8}, bmp_24_to_16);
 
-    Bitmap bmp_15_to_24(24, bmp_24_to_15);
-    Bitmap bmp_15_to_16(16, bmp_24_to_15);
-    Bitmap bmp_15_to_15(15, bmp_24_to_15);
-    Bitmap bmp_15_to_8(8, bmp_24_to_15);
+    Bitmap bmp_15_to_24(BitsPerPixel{24}, bmp_24_to_15);
+    Bitmap bmp_15_to_16(BitsPerPixel{16}, bmp_24_to_15);
+    Bitmap bmp_15_to_15(BitsPerPixel{15}, bmp_24_to_15);
+    Bitmap bmp_15_to_8(BitsPerPixel{8}, bmp_24_to_15);
 
-    Bitmap bmp_8_to_24(24, bmp_24_to_8);
-    Bitmap bmp_8_to_16(16, bmp_24_to_8);
-    Bitmap bmp_8_to_15(15, bmp_24_to_8);
-    Bitmap bmp_8_to_8(8, bmp_24_to_8);
+    Bitmap bmp_8_to_24(BitsPerPixel{24}, bmp_24_to_8);
+    Bitmap bmp_8_to_16(BitsPerPixel{16}, bmp_24_to_8);
+    Bitmap bmp_8_to_15(BitsPerPixel{15}, bmp_24_to_8);
+    Bitmap bmp_8_to_8(BitsPerPixel{8}, bmp_24_to_8);
 
     RED_CHECK_SIG(bmp_24_to_24, "\xaa\x33\x05\x87\x63\x66\xc0\x9d\x89\x78\x00\xe7\x9b\x8f\x09\x2e\xbf\x06\x64\x74");
     RED_CHECK_SIG(bmp_24_to_16, "\xfd\x08\xc9\x9c\x81\x9f\xea\x1c\xc0\x95\xba\x62\x89\xb5\xbc\x2b\x09\x46\x6d\xb6");
@@ -3760,10 +3760,9 @@ RED_AUTO_TEST_CASE(TestConvertBitmap2)
     //dump_png("/tmp/rawdisk/8_8.png", bmp_8_to_8);
 }
 
-static int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const uint8_t*image_data_p,
-        size_t image_data_size) {
-    LOG(LOG_INFO, "ImageWidth=%u ImageBPP=%u", image_width, image_bpp);
-
+static int rle_bin_to_run_order(
+    BitsPerPixel image_bpp, const uint8_t* image_data_p, size_t image_data_size
+) {
     const uint8_t* image_data_current_p = image_data_p;
     const uint8_t* image_data_end_p = image_data_p + image_data_size;
 
@@ -3936,7 +3935,7 @@ static int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const u
             case CodeIdentifier::REGULAR_COLOR_IMAGE:
                 LOG(LOG_INFO, "REGULAR_COLOR_IMAGE RunLength=%u", run_order.length);
 
-                image_data_current_p += nbbytes(image_bpp) * run_order.length;
+                image_data_current_p += nb_bytes_per_pixel(image_bpp) * run_order.length;
             break;
 
             case CodeIdentifier::REGULAR_FG_RUN:
@@ -3946,7 +3945,7 @@ static int rle_bin_to_run_order(uint16_t image_width, uint8_t image_bpp, const u
             case CodeIdentifier::LITE_SET_FG_FG_RUN:
                 LOG(LOG_INFO, "LITE_SET_FG_FG_RUN RunLength=%u", run_order.length);
 
-                image_data_current_p += nbbytes(image_bpp);
+                image_data_current_p += nb_bytes_per_pixel(image_bpp);
             break;
 
             case CodeIdentifier::LITE_SET_FG_FGBG_IMAGE:
@@ -5403,7 +5402,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 /* 5970 */ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,                          // ............
     };
 
-    Bitmap ori_bmp(24, 24, nullptr, 332, 23, ori_bmp_data, 22908);
+    Bitmap ori_bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 332, 23, ori_bmp_data, 22908);
 
     // {
     //     Drawable gd(1024, 768);
@@ -5416,17 +5415,17 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
     // }
 
     StaticOutStream<65535> ori_bmp_comp_stream;
-    ori_bmp.compress(24, ori_bmp_comp_stream);
+    ori_bmp.compress(BitsPerPixel{24}, ori_bmp_comp_stream);
 
     {
         auto data_compressed = ori_bmp.data_compressed();
         hexdump_d(data_compressed.data(), data_compressed.size());
 
-        rle_bin_to_run_order(ori_bmp.cx(), ori_bmp.bpp(), data_compressed.data(), data_compressed.size());
+        rle_bin_to_run_order(ori_bmp.bpp(), data_compressed.data(), data_compressed.size());
     }
 
     auto ori_bmp_data_compressed = ori_bmp.data_compressed();
-    Bitmap test_bmp(24, 24, nullptr, 332, 23, ori_bmp_data_compressed.data(), ori_bmp_data_compressed.size(), true);
+    Bitmap test_bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 332, 23, ori_bmp_data_compressed.data(), ori_bmp_data_compressed.size(), true);
 
     // {
     //     Drawable gd(1024, 768);

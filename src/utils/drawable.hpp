@@ -33,6 +33,7 @@
 #include "utils/ellipse.hpp"
 #include "utils/bitfu.hpp"
 #include "utils/drawable_pointer.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "gdi/image_frame_api.hpp"
 
 using std::size_t; /*NOLINT*/
@@ -499,7 +500,7 @@ public:
         P dest = this->first_pixel(rect);
         cP src = bmp.data(srcx, bmp.height() - srcy - 1);
         const size_t n = rect.cx * Bpp;
-        const uint8_t bmp_bpp = bmp.bits_per_pixel();
+        const uint8_t bmp_bpp = safe_int(bmp.bits_per_pixel());
         const size_t bmp_line_size = bmp.line_size();
 
         if (bmp_bpp == this->bpp()) {
@@ -511,13 +512,13 @@ public:
         else {
             switch (bmp_bpp) {
                 case 8: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
+                    safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor8{bmp.palette()}, c...); break;
                 case 15: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor15{}, c...); break;
+                    safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor15{}, c...); break;
                 case 16: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor16{}, c...); break;
+                    safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor16{}, c...); break;
                 case 24: this->spe_mem_blt(dest, src, rect.cx, rect.cy,
-                    bmp.bytes_per_pixel(), bmp_line_size, op, typename traits::fromColor24{}, c...); break;
+                    safe_int(bmp.bytes_per_pixel()), bmp_line_size, op, typename traits::fromColor24{}, c...); break;
                 default: ;
             }
         }

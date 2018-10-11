@@ -527,7 +527,7 @@ RED_AUTO_TEST_CASE(TestMemblt)
 
     uint8_t comp64x64RED[] = { 0xc0, 0x30, 0x00, 0x00, 0xFF, 0xf0, 0xc0, 0x0f, };
     BGRPalette const & palette332 = BGRPalette::classic_332();
-    Bitmap bmp(24, 24, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
+    Bitmap bmp(BitsPerPixel{24}, BitsPerPixel{24}, &palette332, 64, 64, comp64x64RED, sizeof(comp64x64RED), true );
 
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
     gd.mem_blt_invert(Rect(25, 25, 20, 20), bmp, 0, 0);
@@ -658,7 +658,7 @@ RED_AUTO_TEST_CASE(TestMemblt2)
 
     const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
-    Bitmap bmp(8, 8, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
+    Bitmap bmp(BitsPerPixel{8}, BitsPerPixel{8}, &palette, 64, 22, raw_bitmap, sizeof(raw_bitmap), true);
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);
@@ -774,7 +774,7 @@ RED_AUTO_TEST_CASE(TestMemblt3)
 
     const BGRPalette palette = make_bgr_palette_from_bgrx_array(raw_palette);
 
-    Bitmap bmp(15, 15, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
+    Bitmap bmp(BitsPerPixel{15}, BitsPerPixel{15}, &palette, 32, 32, raw_bitmap, sizeof(raw_bitmap), true);
 
     // red square
     gd.mem_blt(Rect(5, 5, 20, 20), bmp, 0, 0);

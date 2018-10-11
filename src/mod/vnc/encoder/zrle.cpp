@@ -33,6 +33,7 @@
 #include "utils/hexdump.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/zlib.hpp"
@@ -46,7 +47,7 @@ namespace
 {
     class Zrle
     {
-        const uint8_t bpp;
+        const BitsPerPixel bpp;
         const uint8_t Bpp;
         // rectangle we are refreshing
         const Rect r;
@@ -70,8 +71,8 @@ namespace
         VNCVerbose verbose;
 
     public:
-        Zrle(uint8_t bpp, uint8_t Bpp, Rect rect, Zdecompressor<>& zd, VNCVerbose verbose)
-        : bpp(bpp), Bpp(Bpp), r(rect)
+        Zrle(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, Zdecompressor<>& zd, VNCVerbose verbose)
+        : bpp(bpp), Bpp(safe_int(Bpp)), r(rect)
         , tile(Rect(this->r.x, this->r.y,
             std::min<size_t>(this->r.cx, 64),
             std::min<size_t>(this->r.cy, 64)))
@@ -780,7 +781,7 @@ namespace
     }; // class Zrle
 }
 
-Encoder zrle_encoder(uint8_t bpp, uint8_t Bpp, Rect rect, Zdecompressor<>& zd, VNCVerbose verbose)
+Encoder zrle_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, Zdecompressor<>& zd, VNCVerbose verbose)
 {
     return Encoder(Zrle{bpp, Bpp, rect, zd, verbose});
 }

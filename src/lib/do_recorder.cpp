@@ -1446,7 +1446,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                     );
 
                     if (wrm_color_depth == static_cast<int>(USE_ORIGINAL_COLOR_DEPTH)) {
-                        wrm_color_depth = player.info.bpp;
+                        wrm_color_depth = safe_int(player.info.bpp);
                     }
 
                     {
@@ -1568,7 +1568,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         cctx.set_trace_type(ini.get<cfg::globals::trace_type>());
 
                         WrmParams const wrm_params = wrm_params_from_ini(
-                            wrm_color_depth,
+                            checked_int(wrm_color_depth),
                             player.info.remote_app,
                             cctx,
                             rnd,

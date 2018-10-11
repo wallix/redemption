@@ -21,6 +21,7 @@
 
 #include "mod/internal/widget/image.hpp"
 #include "utils/bitmap_from_file.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 #include "gdi/graphic_api.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 
@@ -58,7 +59,7 @@ void WidgetImage::rdp_input_invalidate(Rect clip)
         bitmap_data.dest_bottom     = rect.y + rect.cy - 1;
         bitmap_data.width           = bitmap.cx();
         bitmap_data.height          = bitmap.cy();
-        bitmap_data.bits_per_pixel  = bitmap.bpp();
+        bitmap_data.bits_per_pixel  = safe_int(bitmap.bpp());
         bitmap_data.flags           = 0;
         bitmap_data.bitmap_length   = bitmap.bmp_size();
 

@@ -130,7 +130,8 @@ private:
             if (this->bogus_refresh_rect_ex) {
                 this->mm.mod->rdp_suppress_display_updates();
                 this->mm.mod->rdp_allow_display_updates(0, 0,
-                    this->mm.front.client_info.width, this->mm.front.client_info.height);
+                    this->mm.front.client_info.screen_info.width,
+                    this->mm.front.client_info.screen_info.height);
             }
 
             if (this->mm.winapi) {
@@ -160,8 +161,8 @@ private:
             gdi::TextMetrics tm(this->mm.load_font(), this->osd_message.c_str());
             int w = tm.width + padw * 2;
             int h = tm.height + padh * 2;
-            this->color = color_encode(BGRColor(BLACK), this->mm.front.client_info.bpp);
-            this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->mm.front.client_info.bpp);
+            this->color = color_encode(BGRColor(BLACK), this->mm.front.client_info.screen_info.bpp);
+            this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->mm.front.client_info.screen_info.bpp);
 
             if (this->mm.front.client_info.remote_program &&
                 (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
@@ -174,7 +175,7 @@ private:
                     0, w, h);
             }
             else {
-                this->clip = Rect(this->mm.front.client_info.width < w ? 0 : (this->mm.front.client_info.width - w) / 2, 0, w, h);
+                this->clip = Rect(this->mm.front.client_info.screen_info.width < w ? 0 : (this->mm.front.client_info.screen_info.width - w) / 2, 0, w, h);
             }
 
             this->set_protected_rect(this->clip);
@@ -269,7 +270,7 @@ private:
                 return ;
             }
 
-            auto const color_ctx = gdi::ColorCtx::from_bpp(this->mm.front.client_info.bpp, this->mm.front.get_palette());
+            auto const color_ctx = gdi::ColorCtx::from_bpp(this->mm.front.client_info.screen_info.bpp, this->mm.front.get_palette());
 
             drawable.draw(RDPOpaqueRect(this->clip, this->background_color), this->clip, color_ctx);
 
@@ -645,8 +646,8 @@ public:
             this->set_mod(new Bouncer2Mod(
                 this->session_reactor,
                 this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
                 this->load_font()
             ));
             if (bool(this->verbose & Verbose::new_mod)) {
@@ -666,8 +667,8 @@ public:
                     }
                     return movie_path;
                 }().c_str(),
-                this->front.client_info.width,
-                this->front.client_info.height,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
                 this->ini.get_ref<cfg::context::auth_error_message>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
@@ -683,8 +684,8 @@ public:
                 this->set_mod(new WidgetTestMod(
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->load_font()
                 ));
                 LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
@@ -695,8 +696,8 @@ public:
             this->set_mod(new TestCardMod(
                 this->session_reactor,
                 this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
                 this->load_font(),
                 false
             ));
@@ -714,11 +715,11 @@ public:
                 this->ini,
                 this->session_reactor,
                 this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
                 this->client_execute.adjust_rect(get_widget_rect(
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
                 this->client_execute,
@@ -740,11 +741,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     now,
@@ -766,11 +767,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     now,
@@ -790,11 +791,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     this->client_execute,
@@ -815,11 +816,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     caption,
@@ -844,11 +845,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     caption,
@@ -878,11 +879,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     caption,
@@ -909,11 +910,11 @@ public:
                     this->ini,
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.width,
-                        this->front.client_info.height,
+                        this->front.client_info.screen_info.width,
+                        this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
                     caption,
@@ -963,11 +964,11 @@ public:
                 accounts.username,
                 accounts.password,
                 this->front,
-                this->front.client_info.width,
-                this->front.client_info.height,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
                 this->client_execute.adjust_rect(get_widget_rect(
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
                 now,
@@ -998,11 +999,12 @@ public:
                     sock_mod_barrier(),
                     this->session_reactor,
                     this->front,
-                    this->front.client_info.width,
-                    this->front.client_info.height,
+                    this->front.client_info.screen_info.width,
+                    this->front.client_info.screen_info.height,
                     this->ini.get<cfg::context::opt_width>(),
                     this->ini.get<cfg::context::opt_height>(),
-                    this->ini.get<cfg::context::opt_bpp>()
+                    // TODO use safe_int
+                    checked_int(this->ini.get<cfg::context::opt_bpp>())
                     // TODO: shouldn't alls mods have access to sesman authentifier ?
                 ));
 

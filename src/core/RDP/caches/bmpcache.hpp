@@ -27,9 +27,10 @@
 
 #include <cinttypes>
 
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
+#include "gdi/screen_info.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 #include "utils/verbose_flags.hpp"
 
 using std::size_t; /*NOLINT*/
@@ -359,7 +360,7 @@ public:
         , Recorder
     } owner;
 
-    const uint8_t bpp;
+    const BitsPerPixel bpp;
     const uint8_t number_of_cache;
     const bool    use_waiting_list;
 
@@ -391,7 +392,7 @@ public:
 
     explicit BmpCache(
         Owner owner,
-        const uint8_t bpp,
+        const BitsPerPixel bpp,
         uint8_t number_of_cache,
         bool use_waiting_list,
         CacheOption c0 = CacheOption(),
@@ -478,7 +479,7 @@ public:
         };
 
         const size_t coef = this->use_waiting_list ? 3 : 2; /*+ compressed*/
-        const size_t add_mem = (this->bpp == 8 ? sizeof(BGRPalette) : 0) + 32 /*arbitrary*/;
+        const size_t add_mem = (this->bpp == BitsPerPixel{8} ? sizeof(BGRPalette) : 0) + 32 /*arbitrary*/;
 
         for (auto& cache : this->caches) {
             if (cache.size()) {

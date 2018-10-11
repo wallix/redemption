@@ -158,13 +158,13 @@ RED_AUTO_TEST_CASE(TestPaste)
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 120;
-    info.height = 20;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 120;
+    info.screen_info.height = 20;
 
     CopyPaste copy_paste;
     CopyPasteFront front(info, copy_paste);
-    TestDraw mod(info.width, info.height);
+    TestDraw mod(info.screen_info.width, info.screen_info.height);
 
     Keymap2 keymap;
     keymap.init_layout(info.keylayout);
@@ -174,7 +174,7 @@ RED_AUTO_TEST_CASE(TestPaste)
     Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
 
     WidgetScreen parent(mod.gd, font, nullptr, Theme{});
-    parent.set_wh(info.width, info.height);
+    parent.set_wh(info.screen_info.width, info.screen_info.height);
 
     WidgetEdit edit(mod.gd, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
     Dimension dim = edit.get_optimal_dim();

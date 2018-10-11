@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen
 */
 
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 #include <cstring>
 

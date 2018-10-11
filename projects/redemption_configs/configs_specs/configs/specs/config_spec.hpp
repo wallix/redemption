@@ -577,9 +577,9 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_framerate", sesman::name{"framerate"}, set(5));
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_qscale", sesman::name{"qscale"}, set(15));
         W.sep();
-        W.member(no_ini_no_gui, sesman_rw, type_<unsigned>(), "opt_bpp", sesman::name{"bpp"}, set(24));
-        W.member(no_ini_no_gui, sesman_rw, type_<unsigned>(), "opt_height", sesman::name{"height"}, set(600));
-        W.member(no_ini_no_gui, sesman_rw, type_<unsigned>(), "opt_width", sesman::name{"width"}, set(800));
+        W.member(no_ini_no_gui, sesman_rw, type_<ColorDepth>(), "opt_bpp", sesman::name{"bpp"}, set(ColorDepth::depth24));
+        W.member(no_ini_no_gui, sesman_rw, type_<types::u16>(), "opt_height", sesman::name{"height"}, set(600));
+        W.member(no_ini_no_gui, sesman_rw, type_<types::u16>(), "opt_width", sesman::name{"width"}, set(800));
         W.sep();
         // auth_error_message is left as std::string type because SocketTransport and ReplayMod
         // take it as argument on constructor and modify it as a std::string

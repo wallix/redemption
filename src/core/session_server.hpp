@@ -26,7 +26,7 @@
 #include "core/session.hpp"
 #include "main/version.hpp"
 #include "utils/netutils.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 
 class SessionServer : public Server
 {

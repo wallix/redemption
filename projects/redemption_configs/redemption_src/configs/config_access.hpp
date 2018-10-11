@@ -22,7 +22,7 @@
 #define REDEMPTION_SRC_CORE_CONFIG_ACCESS_HPP
 
 #include "configs/autogen/variables_configuration_fwd.hpp"
-#include "utils/sugar/underlying_cast.hpp"
+#include "utils/sugar/cast.hpp"
 #include "utils/translation.hpp"
 
 class Inifile;

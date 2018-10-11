@@ -36,3 +36,18 @@ RED_AUTO_TEST_CASE(TestCast)
     RED_CHECK_EQ(Ptr(a), Ptr(b));
     RED_CHECK_EQ(Ptr(b), Ptr(c));
 }
+
+struct testUnderlyingCast
+{
+    testUnderlyingCast()
+    {
+        enum E1 : char {A};
+        enum E2 : long {B, C};
+        constexpr auto a = underlying_cast(A);
+        constexpr auto c = underlying_cast(C);
+        static_assert(std::is_same_v<const char, decltype(a)>);
+        static_assert(std::is_same_v<const long, decltype(c)>);
+        static_assert(c == 1);
+        static_assert(a == 0);
+    }
+};

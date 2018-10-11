@@ -103,8 +103,8 @@ public:
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override {}
 
 
-    ResizeResult server_resize(int width, int height, int bpp) override {
-        this->info.bpp = bpp;
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+        this->info.screen_info.bpp = bpp;
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);

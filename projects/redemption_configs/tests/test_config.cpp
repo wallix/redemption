@@ -224,7 +224,7 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::auth_error_message>());
 
@@ -534,7 +534,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestConfig1bis)
@@ -750,7 +750,7 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestConfig2)
@@ -939,7 +939,7 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestConfig3)
@@ -1135,7 +1135,7 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestMultiple)
@@ -1305,7 +1305,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 
 
     // see we can change configuration using parse without default setting of existing ini
@@ -1476,7 +1476,7 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestNewConf)
@@ -1633,7 +1633,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 
     std::stringstream ifs2(
                            "# Here we put global values\n"
@@ -1792,7 +1792,7 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(15,                               ini.get<cfg::context::opt_qscale>());
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
-    RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth24,              ini.get<cfg::context::opt_bpp>());
 }
 
 RED_AUTO_TEST_CASE(TestConfigTools)
@@ -1904,7 +1904,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_height>());
     RED_CHECK_EQUAL(false, ini.is_asked<cfg::context::opt_width>());
 
-    RED_CHECK_EQUAL(16,   ini.get<cfg::context::opt_bpp>());
+    RED_CHECK_EQUAL(ColorDepth::depth16, ini.get<cfg::context::opt_bpp>());
     RED_CHECK_EQUAL(1024, ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(1280, ini.get<cfg::context::opt_width>());
 

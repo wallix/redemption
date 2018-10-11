@@ -49,7 +49,7 @@ public:
         instant_done = 2,
         remoteapp = 3
     };
-    virtual ResizeResult server_resize(int width, int height, int bpp) = 0;
+    virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) = 0;
 
     virtual void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) {}
 

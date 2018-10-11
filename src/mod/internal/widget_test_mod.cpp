@@ -94,7 +94,7 @@ WidgetTestMod::WidgetTestMod(
 : InternalMod(front, width, height, font, Theme{})
 , d(std::make_unique<WidgetTestModPrivate>(session_reactor, *this))
 {
-    front.server_resize(width, height, 8);
+    front.server_resize(width, height, BitsPerPixel{8});
 }
 
 WidgetTestMod::~WidgetTestMod()
@@ -154,7 +154,7 @@ void WidgetTestMod::draw_event(time_t /*now*/, gdi::GraphicApi& gd)
 
     auto plain_img = [&](BGRColor const& color){
         Bitmap img;
-        Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(img, 8, cx, cy);
+        Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(img, BitsPerPixel{8}, cx, cy);
         memset(data.get(), encode_color(color).as_bgr().to_u32(), data.line_size() * cy);
         //data.palette() = BGRPalette::classic_332();
         data.palette() = mono_palette(color);

@@ -127,9 +127,9 @@ int main(int argc, char** argv)
     }
 
     ClientInfo client_info;
-    client_info.width = 800;
-    client_info.height = 600;
-    client_info.bpp = 24;
+    client_info.screen_info.width = 800;
+    client_info.screen_info.height = 600;
+    client_info.screen_info.bpp = BitsPerPixel{24};
     if (is_vnc) {
         client_info.keylayout = 0x04C;
         client_info.console_session = false;

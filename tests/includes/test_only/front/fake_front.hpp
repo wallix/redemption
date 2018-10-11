@@ -111,7 +111,7 @@ public:
 
     void end_update() override;
 
-    ResizeResult server_resize(int width, int height, int bpp) override;
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
 
     void dump_png(const char * prefix);
 
@@ -124,7 +124,7 @@ private:
 public:
     ClientInfo                & info;
     CHANNELS::ChannelDefArray   cl;
-    uint8_t                     mod_bpp;
+    BitsPerPixel                mod_bpp;
     BGRPalette                  mod_palette;
 
     int mouse_x;

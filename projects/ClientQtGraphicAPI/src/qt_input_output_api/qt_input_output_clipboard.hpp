@@ -192,7 +192,7 @@ public:
         this->_clipboard->setText(QString::fromUtf8(str.c_str()), QClipboard::Clipboard);
     }
 
-    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) override {               // Paste image to client
+    void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {               // Paste image to client
         QImage image(data,
                      image_width,
                      image_height,
@@ -407,25 +407,25 @@ public Q_SLOTS:
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 
-    QImage::Format bpp_to_QFormat(int bpp, bool alpha) {
+    QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha) {
         QImage::Format format(QImage::Format_RGB16);
 
         if (alpha) {
 
             switch (bpp) {
-                case 15: format = QImage::Format_ARGB4444_Premultiplied; break;
-                case 16: format = QImage::Format_ARGB4444_Premultiplied; break;
-                case 24: format = QImage::Format_ARGB8565_Premultiplied; break;
-                case 32: format = QImage::Format_ARGB32_Premultiplied;   break;
+                case BitsPerPixel{15}: format = QImage::Format_ARGB4444_Premultiplied; break;
+                case BitsPerPixel{16}: format = QImage::Format_ARGB4444_Premultiplied; break;
+                case BitsPerPixel{24}: format = QImage::Format_ARGB8565_Premultiplied; break;
+                case BitsPerPixel{32}: format = QImage::Format_ARGB32_Premultiplied;   break;
                 default : break;
             }
         } else {
 
             switch (bpp) {
-                case 15: format = QImage::Format_RGB555; break;
-                case 16: format = QImage::Format_RGB16;  break;
-                case 24: format = QImage::Format_RGB888; break;
-                case 32: format = QImage::Format_RGB32;  break;
+                case BitsPerPixel{15}: format = QImage::Format_RGB555; break;
+                case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
+                case BitsPerPixel{24}: format = QImage::Format_RGB888; break;
+                case BitsPerPixel{32}: format = QImage::Format_RGB32;  break;
                 default : break;
             }
         }

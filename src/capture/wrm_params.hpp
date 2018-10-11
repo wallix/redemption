@@ -21,6 +21,7 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
+#include "gdi/screen_info.hpp"
 
 #include <chrono>
 
@@ -34,7 +35,7 @@ class Fstat;
 
 struct WrmParams
 {
-    uint8_t capture_bpp;
+    BitsPerPixel capture_bpp;
     bool remote_app;
     CryptoContext & cctx;
     Random & rnd;
@@ -45,7 +46,7 @@ struct WrmParams
     WrmCompressionAlgorithm wrm_compression_algorithm;
     uint32_t wrm_verbose;
 
-    WrmParams(uint8_t capture_bpp,
+    WrmParams(BitsPerPixel capture_bpp,
               bool remote_app,
               CryptoContext & cctx,
               Random & rnd,

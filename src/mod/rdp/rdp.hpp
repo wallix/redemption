@@ -1118,8 +1118,8 @@ public:
                 );
         }
 
-        this->negociation_result.front_width = info.width;
-        this->negociation_result.front_height = info.height;
+        this->negociation_result.front_width = safe_int(info.screen_info.width);
+        this->negociation_result.front_height = safe_int(info.screen_info.height);
 
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
 
@@ -2071,7 +2071,7 @@ public:
                     LOG(LOG_INFO, "Process pointer color (Fast)");
                 }
 //                 this->process_color_pointer_pdu(stream, drawable);
-                this->process_new_pointer_pdu(24, stream, drawable);
+                this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
                 break;
 
             case FastPath::UpdateType::CACHED:
@@ -2087,7 +2087,7 @@ public:
                     LOG(LOG_INFO, "Process pointer new (Fast)");
 
                 }
-                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                BitsPerPixel data_bpp = checked_int(stream.in_uint16_le()); /* data bpp */
                 this->process_new_pointer_pdu(data_bpp, stream, drawable);
             }
             break;
@@ -2451,23 +2451,23 @@ public:
                                 case PDUTYPE2_CONTROL:
                                     if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_CONTROL");}
                                     // TODO CGR: Data should actually be consumed
-                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_SYNCHRONIZE:
                                     if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SYNCHRONIZE");}
                                     // TODO CGR: Data should actually be consumed
-                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_POINTER:
                                     if (bool(this->verbose & RDPVerbose::graphics_pointer)){ LOG(LOG_INFO, "PDUTYPE2_POINTER");}
                                     this->process_pointer_pdu(sdata.payload, drawable);
                                     // TODO CGR: Data should actually be consumed
-                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_PLAY_SOUND:
                                     if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_PLAY_SOUND");}
                                     // TODO CGR: Data should actually be consumed
-                                        sdata.payload.in_skip_bytes(sdata.payload.in_remain());
+                                    sdata.payload.in_skip_bytes(sdata.payload.in_remain());
                                     break;
                                 case PDUTYPE2_SAVE_SESSION_INFO:
                                     if (bool(this->verbose & RDPVerbose::connection)){ LOG(LOG_INFO, "PDUTYPE2_SAVE_SESSION_INFO");}
@@ -2832,7 +2832,7 @@ public:
 
                 BitmapCaps bitmap_caps;
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
-                bitmap_caps.preferredBitsPerPixel = this->orders.bpp;
+                bitmap_caps.preferredBitsPerPixel = safe_int(this->orders.bpp);
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
                 bitmap_caps.desktopWidth          = this->negociation_result.front_width;
                 bitmap_caps.desktopHeight         = this->negociation_result.front_height;
@@ -2932,11 +2932,11 @@ public:
 
                 BmpCacheCaps bmpcache_caps;
                 bmpcache_caps.cache0Entries         = 0x258;
-                bmpcache_caps.cache0MaximumCellSize = nbbytes(this->orders.bpp) * 0x100;
+                bmpcache_caps.cache0MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x100;
                 bmpcache_caps.cache1Entries         = 0x12c;
-                bmpcache_caps.cache1MaximumCellSize = nbbytes(this->orders.bpp) * 0x400;
+                bmpcache_caps.cache1MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x400;
                 bmpcache_caps.cache2Entries         = 0x106;
-                bmpcache_caps.cache2MaximumCellSize = nbbytes(this->orders.bpp) * 0x1000;
+                bmpcache_caps.cache2MaximumCellSize = nb_bytes_per_pixel(this->orders.bpp) * 0x1000;
 
                 BmpCache2Caps bmpcache2_caps;
                 bmpcache2_caps.cacheFlags           = PERSISTENT_KEYS_EXPECTED_FLAG | (this->enable_cache_waiting_list ? ALLOW_CACHE_WAITING_LIST_FLAG : 0);
@@ -2955,9 +2955,9 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            this->BmpCacheRev2_Cache_NumEntries()[0], nbbytes(this->orders.bpp) * 16 * 16, false,
-                            this->BmpCacheRev2_Cache_NumEntries()[1], nbbytes(this->orders.bpp) * 32 * 32, false,
-                            this->BmpCacheRev2_Cache_NumEntries()[2], nbbytes(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
+                            this->BmpCacheRev2_Cache_NumEntries()[0], nb_bytes_per_pixel(this->orders.bpp) * 16 * 16, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[1], nb_bytes_per_pixel(this->orders.bpp) * 32 * 32, false,
+                            this->BmpCacheRev2_Cache_NumEntries()[2], nb_bytes_per_pixel(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
                             this->enable_cache_waiting_list,
                             this->cache_verbose);
                     }
@@ -2970,9 +2970,9 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
-                            0x258, nbbytes(this->orders.bpp) * 0x100,   false,
-                            0x12c, nbbytes(this->orders.bpp) * 0x400,   false,
-                            0x106, nbbytes(this->orders.bpp) * 0x1000,  false,
+                            0x258, nb_bytes_per_pixel(this->orders.bpp) * 0x100,  false,
+                            0x12c, nb_bytes_per_pixel(this->orders.bpp) * 0x400,  false,
+                            0x106, nb_bytes_per_pixel(this->orders.bpp) * 0x1000, false,
                             false,
                             this->cache_verbose);
                     }
@@ -3159,7 +3159,7 @@ public:
                 LOG(LOG_INFO, "Process pointer color");
             }
 //             this->process_color_pointer_pdu(stream, drawable);
-            this->process_new_pointer_pdu(24, stream, drawable);
+            this->process_new_pointer_pdu(BitsPerPixel{24}, stream, drawable);
             if (bool(this->verbose & RDPVerbose::graphics_pointer)){
                 LOG(LOG_INFO, "Process pointer color done");
             }
@@ -3170,7 +3170,7 @@ public:
                 LOG(LOG_INFO, "Process pointer new");
             }
             if (enable_new_pointer) {
-                unsigned data_bpp = stream.in_uint16_le(); /* data bpp */
+                BitsPerPixel data_bpp = checked_int{stream.in_uint16_le()}; /* data bpp */
                 this->process_new_pointer_pdu(data_bpp, stream, drawable);
             }
             if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
@@ -4400,7 +4400,7 @@ public:
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         bitmap_caps.log("Received from server");
                     }
-                    this->orders.bpp = bitmap_caps.preferredBitsPerPixel;
+                    this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
                     this->negociation_result.front_width = bitmap_caps.desktopWidth;
                     this->negociation_result.front_height = bitmap_caps.desktopHeight;
                 }
@@ -5077,7 +5077,7 @@ public:
 
     //    pad (1 byte): An optional 8-bit, unsigned integer. Padding. Values in this field MUST be ignored.
 
-    void process_new_pointer_pdu(unsigned data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
+    void process_new_pointer_pdu(BitsPerPixel data_bpp, InStream & stream, gdi::GraphicApi & drawable) {
         if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
             LOG(LOG_INFO, "mod_rdp::process_new_pointer_pdu");
         }
@@ -5268,17 +5268,17 @@ private:
                 //            }
                 const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
             Bitmap bitmap( this->orders.bpp
-                           , bmpdata.bits_per_pixel
-                           , &this->orders.global_palette
-                           , bmpdata.width
-                           , bmpdata.height
-                           , data
-                           , bmpdata.bitmap_size()
-                           , (bmpdata.flags & BITMAP_COMPRESSION)
-                           );
+                         , checked_int(bmpdata.bits_per_pixel)
+                         , &this->orders.global_palette
+                         , bmpdata.width
+                         , bmpdata.height
+                         , data
+                         , bmpdata.bitmap_size()
+                         , (bmpdata.flags & BITMAP_COMPRESSION)
+                         );
 
             if (   bmpdata.cb_scan_width
-                   && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nbbytes(bitmap.bpp()))) {
+                   && ((bmpdata.cb_scan_width - bitmap.line_size()) >= nb_bytes_per_pixel(bitmap.bpp()))) {
                 LOG( LOG_WARNING
                      , "Bad line size: line_size=%" PRIu16 " width=%" PRIu16 " height=%" PRIu16 " bpp=%" PRIu16
                      , bmpdata.cb_scan_width

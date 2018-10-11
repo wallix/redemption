@@ -137,6 +137,21 @@ public:
     }
 
 private:
+    static ScreenInfo extract_screen_info(InStream& stream)
+    {
+        BitsPerPixel original_bpp {stream.in_uint8()};
+        assert(original_bpp == BitsPerPixel{8}
+            || original_bpp == BitsPerPixel{15}
+            || original_bpp == BitsPerPixel{16}
+            || original_bpp == BitsPerPixel{24}
+            || original_bpp == BitsPerPixel{32});
+
+        uint16_t cx = stream.in_uint16_le();
+        uint16_t cy = stream.in_uint16_le();
+
+        return ScreenInfo{original_bpp, cx, cy};
+    }
+
     void preload_from_disk(Transport & t, uint8_t cache_id) {
         uint8_t buf[65536];
         InStream stream(buf);
@@ -159,13 +174,9 @@ private:
 
             stream.in_copy_bytes(sig, 8); // sig(8);
 
-            uint8_t  original_bpp = stream.in_uint8();
-            assert((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
-                (original_bpp == 24) || (original_bpp == 32));
-            uint16_t cx           = stream.in_uint16_le();
-            uint16_t cy           = stream.in_uint16_le();
+            auto original_info = extract_screen_info(stream);
 
-            if (original_bpp == 8) {
+            if (original_info.bpp == BitsPerPixel{8}) {
                 // TODO implementation and endianness dependent
                 t.recv_boom(end, sizeof(original_palette));
                 end += sizeof(original_palette);
@@ -186,16 +197,18 @@ private:
                 map_key key(sig);
 
                 if (bool(this->verbose & Verbose::bmp_info)) {
-                    LOG( LOG_INFO
-                       , "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                       , key.str(), original_bpp, cx, cy, bmp_size);
+                    LOG( LOG_INFO,
+                        "BmpCachePersister::preload_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u",
+                        key.str(), original_info.bpp,
+                        original_info.width, original_info.height, bmp_size);
                 }
 
                 assert(this->bmp_map[cache_id][key].is_valid() == false);
 
-                Bitmap bmp( this->bmp_cache.bpp, original_bpp
-                          , &original_palette, cx, cy, stream.get_data()
-                          , bmp_size);
+                Bitmap bmp( this->bmp_cache.bpp, original_info.bpp
+                          , &original_palette
+                          , safe_int(original_info.width), safe_int(original_info.height)
+                          , stream.get_data(), bmp_size);
 
                 uint8_t sha1[SslSha1::DIGEST_LENGTH];
                 bmp.compute_sha1(sha1);
@@ -312,13 +325,9 @@ private:
 
             stream.in_copy_bytes(sig.sig_8, 8); // sig(8);
 
-            uint8_t  original_bpp = stream.in_uint8();
-            assert((original_bpp == 8) || (original_bpp == 15) || (original_bpp == 16) ||
-                (original_bpp == 24) || (original_bpp == 32));
-            uint16_t cx           = stream.in_uint16_le();
-            uint16_t cy           = stream.in_uint16_le();
+            auto original_info = extract_screen_info(stream);
 
-            if (original_bpp == 8) {
+            if (original_info.bpp == BitsPerPixel{8}) {
                 // TODO implementation and endianness dependent
                 t.recv_boom(end, sizeof(original_palette));
                 end += sizeof(original_palette);
@@ -341,10 +350,15 @@ private:
                     map_key key(sig.sig_8);
                     LOG( LOG_INFO
                         , "BmpCachePersister::load_from_disk: sig=\"%s\" original_bpp=%u cx=%u cy=%u bmp_size=%u"
-                        , key.str(), original_bpp, cx, cy, bmp_size);
+                        , key.str(), original_info.bpp
+                        , original_info.width, original_info.height, bmp_size);
                 }
 
-                Bitmap bmp(bmp_cache.bpp, original_bpp, &original_palette, cx, cy, stream.get_data(), stream.get_data() - end);
+
+                Bitmap bmp( bmp_cache.bpp, original_info.bpp
+                          , &original_palette
+                          , safe_int(original_info.width), safe_int(original_info.height)
+                          , stream.get_data(), stream.get_data() - end);
 
                 bmp_cache.put(cache_id, i, bmp, sig.sig_32[0], sig.sig_32[1]);
             }
@@ -432,10 +446,10 @@ private:
                 }
 
                 stream.out_copy_bytes(sig, 8);
-                stream.out_uint8(bmp.bpp());
+                stream.out_uint8(safe_int(bmp.bpp()));
                 stream.out_uint16_le(bmp.cx());
                 stream.out_uint16_le(bmp.cy());
-                if (bmp.bpp() == 8) {
+                if (bmp.bpp() == BitsPerPixel{8}) {
                     // TODO implementation and endianness dependent
                     stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
@@ -452,7 +466,7 @@ inline void save_persistent_disk_bitmap_cache(
     BmpCache const & bmp_cache,
     const char * persistent_path,
     const char * target_host,
-    uint8_t bpp,
+    BitsPerPixel bpp,
     ReportError report_error,
     BmpCachePersister::Verbose verbose
 )
@@ -467,7 +481,7 @@ inline void save_persistent_disk_bitmap_cache(
 
     char filename_temporary[2048];
     ::snprintf(filename_temporary, sizeof(filename_temporary) - 1, "%s/PDBC-%s-%d-XXXXXX.tmp",
-        persistent_path, target_host, bpp);
+        persistent_path, target_host, underlying_cast(bpp));
     filename_temporary[sizeof(filename_temporary) - 1] = '\0';
 
     int fd = ::mkostemps(filename_temporary, 4, O_CREAT | O_WRONLY);
@@ -488,7 +502,7 @@ inline void save_persistent_disk_bitmap_cache(
 
         // Generates the name of file.
         char filename[2048];
-        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d", persistent_path, target_host, bpp);
+        ::snprintf(filename, sizeof(filename) - 1, "%s/PDBC-%s-%d", persistent_path, target_host, underlying_cast(bpp));
         filename[sizeof(filename) - 1] = '\0';
 
         if (::rename(filename_temporary, filename) == -1) {

@@ -273,10 +273,10 @@ void FakeFront::end_update()
     //}
 }
 
-FakeFront::ResizeResult FakeFront::server_resize(int width, int height, int bpp)
+FakeFront::ResizeResult FakeFront::server_resize(int width, int height, BitsPerPixel bpp)
 {
     this->mod_bpp = bpp;
-    this->info.bpp = bpp;
+    this->info.screen_info.bpp = bpp;
     if (this->verbose > 10) {
         LOG(LOG_INFO, "--------- FRONT ------------------------");
         LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
@@ -302,16 +302,17 @@ void FakeFront::save_to_png(const char * filename)
     fclose(file);
 }
 
+// TODO use info.screen_info
 FakeFront::FakeFront(ClientInfo & info, uint32_t verbose)
 : verbose(verbose)
 , info(info)
-, mod_bpp(info.bpp)
+, mod_bpp(info.screen_info.bpp)
 , mod_palette(BGRPalette::classic_332())
 , mouse_x(0)
 , mouse_y(0)
 , notimestamp(true)
 , nomouse(true)
-, gd(info.width, info.height)
+, gd(safe_int(info.screen_info.width), safe_int(info.screen_info.height))
 {
     // -------- Start of system wide SSL_Ctx option ------------------------------
 

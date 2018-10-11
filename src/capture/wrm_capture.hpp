@@ -135,7 +135,8 @@ public:
 
     GraphicToFile(const timeval & now
                 , Transport & trans
-                , const uint8_t capture_bpp
+                , const BitsPerPixel capture_bpp
+                // TOSO strong type
                 , const bool remote_app
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
@@ -488,7 +489,7 @@ class WrmCaptureImpl :
     struct Serializer final : GraphicToFile {
         Serializer(const timeval & now
                 , Transport & trans
-                , const uint8_t capture_bpp
+                , const BitsPerPixel capture_bpp
                 , const bool remote_app
                 , BmpCache & bmp_cache
                 , GlyphCache & gly_cache
@@ -515,7 +516,7 @@ class WrmCaptureImpl :
 
                 RDPBitmapData target_bitmap_data = bitmap_data;
 
-                target_bitmap_data.bits_per_pixel = bmp.bpp();
+                target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
                 target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
                 target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 

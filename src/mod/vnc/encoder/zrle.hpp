@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/rect.hpp"
@@ -33,7 +34,7 @@ namespace VNC
     namespace Encoder
     {
         Encoder zrle_encoder(
-            uint8_t bpp, uint8_t Bpp, Rect rect,
+            BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect,
             Zdecompressor<> & zd, VNCVerbose verbose);
     } // namespace Encoder
 } // namespace VNC

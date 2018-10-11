@@ -90,6 +90,7 @@ include ../../jam/testing-coverage.jam ;
 
 obj font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 obj cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
+obj strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 obj fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
@@ -113,6 +114,7 @@ constant TEST_DEPENDENCIES :
     <library>cfgloader.o
     <library>config.o
     <library>error.o
+    <library>strutils.o
     <library>fileutils.o
     <library>font.o
     <library>hexdump.o

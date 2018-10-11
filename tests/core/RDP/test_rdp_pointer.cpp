@@ -461,7 +461,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_BW)
 
     // r31 rs<<11 g63 gs<<5 b31 bs<<0
 
-    Pointer vnccursor = pointer_loader_vnc(2, 12, 19, 0, 0, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 12, 19, 0, 0, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
     RED_CHECK_EQUAL(vnccursor.get_dimensions().height, 19);
@@ -824,7 +824,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
     std::vector<uint8_t> vncdata(data, sizeof(data) + data);
     std::vector<uint8_t> vncmask(mask, sizeof(mask) + mask);
 
-    Pointer vnccursor = pointer_loader_vnc(2, 23, 27, 0, 8, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
+    Pointer vnccursor = pointer_loader_vnc(BytesPerPixel{2}, 23, 27, 0, 8, vncdata, vncmask, 11, 31, 5, 63, 0, 31);
 
     // When cursor Size is odd, then the next even width is used and mask is fixed accordingly to avoid some annoying border cases
     RED_CHECK_EQUAL(vnccursor.get_dimensions().width, 32);
@@ -870,7 +870,7 @@ RED_AUTO_TEST_CASE(TestPointerIO)
         drawable.draw(RDPOpaqueRect(rect, pixel_color), rect, color_context);
 
         auto av_xor = cursor.get_24bits_xor_mask();
-        Bitmap bmp(24, 24, nullptr, width, height, av_xor.data(), av_xor.size(), false);
+        Bitmap bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, width, height, av_xor.data(), av_xor.size(), false);
 //        drawable.mem_blt(rect, bmp, 0, 0);
 //
 //        drawable.save_to_png("./cursor.png");
@@ -987,7 +987,7 @@ Mask For Cursor
     };
 
     InStream in_stream_cursor(buffer, sizeof(buffer));
-    Pointer cursor = pointer_loader_new(1, in_stream_cursor, BGRPalette::classic_332(), true);
+    Pointer cursor = pointer_loader_new(BitsPerPixel{1}, in_stream_cursor, BGRPalette::classic_332(), true);
 
     RED_CHECK_EQ(cursor.get_hotspot().x, 8);
     RED_CHECK_EQ(cursor.get_hotspot().y, 9);

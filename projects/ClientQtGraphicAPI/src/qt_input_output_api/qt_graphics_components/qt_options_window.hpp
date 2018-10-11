@@ -709,7 +709,7 @@ public:
         this->remoteapp_workin_dir.setText(this->config->rDPRemoteAppConfig.source_of_WorkingDir.c_str());
 
         // View tab
-        int indexBpp = this->_bppComboBox.findData(this->config->info.bpp);
+        int indexBpp = this->_bppComboBox.findData(safe_cast<int>(this->config->info.screen_info.bpp));
         if ( indexBpp != -1 ) {
             this->_bppComboBox.setCurrentIndex(indexBpp);
         }
@@ -790,7 +790,7 @@ public:
         }
 
         //  View tab
-        this->config->info.bpp = this->_bppComboBox.currentText().toInt();
+        this->config->info.screen_info.bpp = checked_int(this->_bppComboBox.currentText().toInt());
         std::string delimiter = " * ";
         std::string resolution( this->_resolutionComboBox.currentText().toStdString());
         int pos(resolution.find(delimiter));

@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "utils/image_data_view.hpp"
 
 #include <string>
@@ -79,7 +80,7 @@ public:
 
     //  set distant clipboard data
     virtual void setClipboard_text(std::string const& str) = 0;
-    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const int bpp) = 0;
+    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) = 0;
     virtual void setClipboard_files(std::string const& name) = 0;
     virtual void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) = 0;
 

@@ -30,7 +30,6 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/noncopyable.hpp"
-#include "utils/sugar/underlying_cast.hpp"
 #include "utils/utf.hpp"
 
 #include <algorithm>

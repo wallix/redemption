@@ -400,7 +400,7 @@ private:
         }
     }
 
-    FrontAPI::ResizeResult server_resize(const int width, const int height, const int bpp) override {
+    FrontAPI::ResizeResult server_resize(const int width, const int height, const BitsPerPixel bpp) override {
 
         if (width == 0 || height == 0) {
             return FrontAPI::ResizeResult::fail;
@@ -409,7 +409,7 @@ private:
         switch (this->config->mod_state) {
 
             case ClientRedemptionConfig::MOD_RDP:
-                if (this->config->info.width == width && this->config->info.height == height) {
+                if (this->config->info.screen_info.width == width && this->config->info.screen_info.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
                 this->dropScreen();
@@ -458,7 +458,7 @@ private:
                     break;
         }
 
-        this->config->info.bpp = bpp;
+        this->config->info.screen_info.bpp = bpp;
 
         return FrontAPI::ResizeResult::instant_done;
     }
@@ -644,12 +644,12 @@ private:
 
     QColor u32_to_qcolor(RDPColor color, gdi::ColorCtx color_ctx) {
 
-        if (uint8_t(this->config->info.bpp) != color_ctx.depth().to_bpp()) {
+        if (gdi::Depth::from_bpp(this->config->info.screen_info.bpp) != color_ctx.depth()) {
             BGRColor d = color_decode(color, color_ctx);
-            color      = color_encode(d, uint8_t(this->config->info.bpp));
+            color      = color_encode(d, this->config->info.screen_info.bpp);
         }
 
-        BGRColor bgr = color_decode(color, this->config->info.bpp, this->config->mod_palette);
+        BGRColor bgr = color_decode(color, this->config->info.screen_info.bpp, this->config->mod_palette);
 
         return {bgr.red(), bgr.green(), bgr.blue()};
     }
@@ -737,7 +737,7 @@ private:
             qbitmap.invertPixels();
         }
 
-        if (bitmap.bpp() == 24) {
+        if (bitmap.bpp() == BitsPerPixel{24}) {
             qbitmap = qbitmap.rgbSwapped();
         }
 
@@ -760,26 +760,26 @@ private:
         }
     }
 
-
-    QImage::Format bpp_to_QFormat(int bpp, bool alpha) {
+    // TODO duplicated
+    QImage::Format bpp_to_QFormat(BitsPerPixel bpp, bool alpha) {
         QImage::Format format(QImage::Format_RGB16);
 
         if (alpha) {
 
             switch (bpp) {
-                case 15: format = QImage::Format_ARGB4444_Premultiplied; break;
-                case 16: format = QImage::Format_ARGB4444_Premultiplied; break;
-                case 24: format = QImage::Format_ARGB8565_Premultiplied; break;
-                case 32: format = QImage::Format_ARGB32_Premultiplied;   break;
+                case BitsPerPixel{15}: format = QImage::Format_ARGB4444_Premultiplied; break;
+                case BitsPerPixel{16}: format = QImage::Format_ARGB4444_Premultiplied; break;
+                case BitsPerPixel{24}: format = QImage::Format_ARGB8565_Premultiplied; break;
+                case BitsPerPixel{32}: format = QImage::Format_ARGB32_Premultiplied;   break;
                 default : break;
             }
         } else {
 
             switch (bpp) {
-                case 15: format = QImage::Format_RGB555; break;
-                case 16: format = QImage::Format_RGB16;  break;
-                case 24: format = QImage::Format_RGB888; break;
-                case 32: format = QImage::Format_RGB32;  break;
+                case BitsPerPixel{15}: format = QImage::Format_RGB555; break;
+                case BitsPerPixel{16}: format = QImage::Format_RGB16;  break;
+                case BitsPerPixel{24}: format = QImage::Format_RGB888; break;
+                case BitsPerPixel{32}: format = QImage::Format_RGB32;  break;
                 default : break;
             }
         }
@@ -1015,12 +1015,12 @@ private:
         QImage::Format format(this->bpp_to_QFormat(bmp.bpp(), false)); //bpp
         QImage qbitmap(bmp.data(), mincx, mincy, bmp.line_size(), format);
 
-        if (bmp.bpp() == 24) {
+        if (bmp.bpp() == BitsPerPixel{24}) {
             qbitmap = qbitmap.rgbSwapped();
         }
 
-        if (bmp.bpp() != this->config->info.bpp) {
-            qbitmap = qbitmap.convertToFormat(this->bpp_to_QFormat(this->config->info.bpp, false));
+        if (bmp.bpp() != this->config->info.screen_info.bpp) {
+            qbitmap = qbitmap.convertToFormat(this->bpp_to_QFormat(this->config->info.screen_info.bpp, false));
             //LOG(LOG_INFO, "RDPBitmapData convertToFormat");
         }
 
@@ -1180,7 +1180,7 @@ private:
                     QImage srcBitmap(bitmap.data(), mincx, mincy, bitmap.line_size(), format);
                     srcBitmap = srcBitmap.convertToFormat(QImage::Format_RGB888);
                     srcBitmap = srcBitmap.mirrored(false, true);
-                    if (bitmap.bpp() == 24) {
+                    if (bitmap.bpp() == BitsPerPixel{24}) {
                         srcBitmap = srcBitmap.rgbSwapped();
                     }
                     const uchar * srcData = srcBitmap.bits();
@@ -1199,8 +1199,8 @@ private:
                     }
 
                     QImage image(data.get(), mincx, mincy, srcBitmap.format());
-                    if (image.depth() != this->config->info.bpp) {
-                        image = image.convertToFormat(this->bpp_to_QFormat(this->config->info.bpp, false));
+                    if (image.depth() != safe_cast<int>(this->config->info.screen_info.bpp)) {
+                        image = image.convertToFormat(this->bpp_to_QFormat(this->config->info.screen_info.bpp, false));
                     }
                     QRect trect(drect.x, drect.y, mincx, mincy-1);
 

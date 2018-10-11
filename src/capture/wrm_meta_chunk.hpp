@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "gdi/screen_info.hpp"
 #include "transport/transport.hpp"
 #include "capture/wrm_chunk_type.hpp"
 #include "utils/stream.hpp"
@@ -42,7 +43,7 @@ struct WrmMetaChunk
 
     uint16_t width = 0;
     uint16_t height = 0;
-    uint16_t bpp = 0;
+    BitsPerPixel bpp {0};
 
     uint16_t cache_0_entries = 0;
     uint16_t cache_0_size = 0;
@@ -84,7 +85,7 @@ struct WrmMetaChunk
         payload.out_uint16_le(this->version);
         payload.out_uint16_le(this->width);
         payload.out_uint16_le(this->height);
-        payload.out_uint16_le(this->bpp);
+        payload.out_uint16_le(safe_int(this->bpp));
 
         payload.out_uint16_le(this->cache_0_entries);
         payload.out_uint16_le(this->cache_0_size);
@@ -128,7 +129,7 @@ struct WrmMetaChunk
         this->version                  = stream.in_uint16_le();
         this->width                    = stream.in_uint16_le();
         this->height                   = stream.in_uint16_le();
-        this->bpp                      = stream.in_uint16_le();
+        this->bpp                      = checked_int(stream.in_uint16_le());
         this->cache_0_entries          = stream.in_uint16_le();
         this->cache_0_size             = stream.in_uint16_le();
         this->cache_1_entries          = stream.in_uint16_le();

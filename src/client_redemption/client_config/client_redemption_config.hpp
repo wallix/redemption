@@ -27,6 +27,7 @@
 #include <dirent.h>
 
 #include "utils/genfstat.hpp"
+#include "utils/sugar/numerics/safe_conversions.hpp"
 
 #include "main/version.hpp"
 #include "utils/cli.hpp"
@@ -298,12 +299,12 @@ public:
     {
         this->setDefaultConfig();
 
-        this->info.width  = 800;
-        this->info.height = 600;
+        this->info.screen_info.width  = 800;
+        this->info.screen_info.height = 600;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.console_session = false;
         this->info.brush_cache_code = 0;
-        this->info.bpp = 24;
+        this->info.screen_info.bpp = BitsPerPixel{24};
         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
 
@@ -547,7 +548,9 @@ public:
             .action(cli::arg_location(this->rdp_height)),
 
             cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24)")
-            .action(cli::arg_location("bit_per_pixel", this->info.bpp)),
+            .action(cli::arg("bit_per_pixel", [this](int x) {
+                this->info.screen_info.bpp = checked_int(x);
+            })),
 
             cli::option("keylaout").help("Set windows keylayout")
             .action(cli::arg_location(this->info.keylayout)),
@@ -859,7 +862,9 @@ public:
             .action(cli::arg_location(this->rdp_height)),
 
             cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24)")
-            .action(cli::arg_location("bit_per_pixel", this->info.bpp)),
+            .action(cli::arg("bit_per_pixel", [this](int x) {
+                this->info.screen_info.bpp = checked_int(x);
+            })),
 
             cli::option("keylaout").help("Set windows keylayout")
             .action(cli::arg_location(this->info.keylayout)),
@@ -1094,7 +1099,7 @@ public:
                         this->info.brush_cache_code = std::stoi(info);
                     } else
                     if (line.compare(0, pos, "bpp") == 0) {
-                        this->info.bpp = std::stoi(info);
+                        this->info.screen_info.bpp = checked_int(std::stoi(info));
                     } else
                     if (line.compare(0, pos, "width") == 0) {
                         this->rdp_width     = std::stoi(info);
@@ -1410,9 +1415,9 @@ public:
         //this->current_user_profil = 0;
         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
         this->info.brush_cache_code = 0;
-        this->info.bpp = 24;
-        this->info.width  = 800;
-        this->info.height = 600;
+        this->info.screen_info.bpp = BitsPerPixel{24};
+        this->info.screen_info.width  = 800;
+        this->info.screen_info.height = 600;
         this->info.console_session = false;
         this->info.rdp5_performanceflags = 0;               //PERF_DISABLE_WALLPAPER;
         this->info.cs_monitor.monitorCount = 1;
@@ -1460,7 +1465,7 @@ public:
                 new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                new_ofile << "bpp "                   << this->info.bpp                     << "\n";
+                new_ofile << "bpp "                   << this->info.screen_info.bpp         << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
                 new_ofile << "height "                << this->rdp_height                  << "\n";
                 new_ofile << "rdp5_performanceflags " << static_cast<int>(this->info.rdp5_performanceflags) << "\n";
@@ -1490,7 +1495,7 @@ public:
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                ofichier << "bpp "                   << this->info.bpp                       << "\n";
+                ofichier << "bpp "                   << this->info.screen_info.bpp        << "\n";
                 ofichier << "width "                 << this->rdp_width                   << "\n";
                 ofichier << "height "                << this->rdp_height                  << "\n";
                 ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";

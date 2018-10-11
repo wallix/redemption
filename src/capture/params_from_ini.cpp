@@ -124,7 +124,7 @@ PatternParams pattern_params_from_ini(Inifile & ini)
 }
 
 WrmParams wrm_params_from_ini(
-    uint8_t capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
+    BitsPerPixel capture_bpp, bool remote_app, CryptoContext & cctx, Random & rnd, Fstat & fstat,
     const char * hash_path, Inifile & ini)
 {
     return WrmParams{

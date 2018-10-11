@@ -118,6 +118,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 
     static char const * stringize_integral(bool x) = delete;
     static char const * stringize_integral(types::integer_base) { return "0"; }
+    static char const * stringize_integral(types::u16) { return "0"; }
     static char const * stringize_integral(types::u32) { return "0"; }
     static char const * stringize_integral(types::u64) { return "0"; }
     template<class T> static T const & stringize_integral(T const & x) { return x; }

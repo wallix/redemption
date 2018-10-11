@@ -28,7 +28,7 @@
 #include "utils/genfstat.hpp"
 #include "utils/parse.hpp"
 #include "utils/sugar/byte_ptr.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 #include "utils/sugar/unique_fd.hpp"
 
 #include <memory>

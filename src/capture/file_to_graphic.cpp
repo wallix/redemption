@@ -249,7 +249,7 @@ struct ReceiveOrder
 
     struct ColorCtxFromBppConverter
     {
-        uint16_t info_bpp;
+        BitsPerPixel info_bpp;
         BGRPalette const & palette;
 
         operator gdi::ColorCtx () const
@@ -640,7 +640,7 @@ void FileToGraphic::interpret_order()
         const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
         Bitmap bitmap( this->info.bpp
-                     , bitmap_data.bits_per_pixel
+                     , checked_int(bitmap_data.bits_per_pixel)
                      , /*0*/&palette
                      , bitmap_data.width
                      , bitmap_data.height

@@ -23,7 +23,7 @@
 #include "utils/log.hpp"
 
 #include "utils/genfstat.hpp"
-#include "utils/sugar/strutils.hpp"
+#include "utils/strutils.hpp"
 #include "core/error.hpp"
 
 #include "transport/crypto_transport.hpp"

@@ -42,11 +42,11 @@ RED_AUTO_TEST_CASE(TestBmpCacheV1NoCompressionLargeHeaders)
             0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,
             0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,  0x00, 0x00, 0xFF,
         };
-        Bitmap bmp(24, 24, nullptr, 8, 1, data, sizeof(data), false);
+        Bitmap bmp(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 8, 1, data, sizeof(data), false);
         RDPBmpCache newcmd(bmp, 1, 10, false, false);
         uint8_t buf[65536];
         OutStream out_stream(buf);
-        newcmd.emit(24, out_stream, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
+        newcmd.emit(BitsPerPixel{24}, out_stream, ci.bitmap_cache_version, use_bitmap_comp, ci.use_compact_packets);
 
         uint8_t datas[] = {
             STANDARD | SECONDARY,       // control = 0x03

@@ -6621,7 +6621,7 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     // First rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 1898, 19), zd, VNCVerbose::none);
+        VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 1898, 19), zd, VNCVerbose::none);
 
         BlockRead z0b0(z0_block0, sizeof(z0_block0));
         buf.read_with(z0b0);
@@ -6637,7 +6637,7 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     // Second rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(1910, 0, 10, 19), zd, VNCVerbose::none);
+        VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(1910, 0, 10, 19), zd, VNCVerbose::none);
 
         BlockRead z1b0(z1_block0, sizeof(z1_block0));
         buf.read_with(z1b0);
@@ -6647,7 +6647,7 @@ RED_AUTO_TEST_CASE(TestZrle)
 
     // Third rect
     {
-        VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 19, 1920, 34), zd, VNCVerbose::none);
+        VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 19, 1920, 34), zd, VNCVerbose::none);
 
         BlockRead z2b0(z2_block0, sizeof(z2_block0));
         buf.read_with(z2b0);
@@ -6698,7 +6698,7 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 
     FakeGraphic drawable(16, 16, 19, 0);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 10, 19), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 10, 19), zd, VNCVerbose::none);
     InStream buffer(raw0, sizeof(raw0));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
@@ -6725,7 +6725,7 @@ RED_AUTO_TEST_CASE(TestZrleSolid)
     const RDPOpaqueRect cmd(Rect(0,0,75,66), pixel_color);
     drawable.draw(cmd, Rect(0,0,75,66), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 74, 65), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 74, 65), zd, VNCVerbose::none);
     InStream buffer(solid0, sizeof(solid0));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc_first_len.png");
@@ -6759,7 +6759,7 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette2, sizeof(palette2));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc0.png");
@@ -6814,7 +6814,7 @@ RED_AUTO_TEST_CASE(TestZrlePalette13)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette13, sizeof(palette13));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc.png");
@@ -6844,7 +6844,7 @@ RED_AUTO_TEST_CASE(TestZrlePlainRLE)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(plainrle, sizeof(plainrle));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc2.png");
@@ -6888,7 +6888,7 @@ RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 67, 8), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(paletteRLE, sizeof(paletteRLE));
     encoder.rle_test_bypass(buffer, drawable);
 //    drawable.save_to_png("vnc3.png");
@@ -6921,7 +6921,7 @@ RED_AUTO_TEST_CASE(TestZrlePackedPalette5)
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
     drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
 
-    VNC::Encoder::Zrle encoder(16, nbbytes(16), Rect(0, 0, 64, 4), zd, VNCVerbose::none);
+    VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 64, 4), zd, VNCVerbose::none);
     InStream buffer(PackedPalette5, sizeof(PackedPalette5));
     encoder.rle_test_bypass(buffer, drawable);
     RED_CHECK_EQUAL(0, buffer.in_remain());

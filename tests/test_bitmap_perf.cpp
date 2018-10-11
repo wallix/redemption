@@ -42,7 +42,7 @@ inline Bitmap compress_perf(Bitmap & bigbmp)
     using std::chrono::microseconds;
     microseconds usec = ustime();
     microseconds cycles = rdtsc();
-    bigbmp.compress(24, out);
+    bigbmp.compress(BitsPerPixel{24}, out);
     microseconds elapusec = ustime() - usec;
     microseconds elapcyc = rdtsc() - cycles;
     printf("initial_size = %zu, compressed size: %zu\n"
@@ -50,7 +50,7 @@ inline Bitmap compress_perf(Bitmap & bigbmp)
         bigbmp.bmp_size(), out.get_offset(),
         elapusec.count(), elapcyc.count(), static_cast<double>(elapcyc.count()) / elapusec.count());
 
-    return Bitmap(24, 24, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
+    return Bitmap(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
 }
 
 RED_AUTO_TEST_CASE(TestBitmapCompressPerformanceBMP)

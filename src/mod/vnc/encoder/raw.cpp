@@ -52,8 +52,8 @@ namespace
 {
     struct Raw
     {
-        const uint8_t bpp;
-        const uint8_t Bpp;
+        const BitsPerPixel bpp;
+        const BytesPerPixel Bpp;
         Rect rect;
 
         EncoderState operator()(Buf64k& buf, gdi::GraphicApi& drawable)
@@ -62,7 +62,7 @@ namespace
                 return EncoderState::Exit;
             }
 
-            size_t const line_size = this->rect.cx * this->Bpp;
+            size_t const line_size = this->rect.cx * underlying_cast(this->Bpp);
 
             if (buf.remaining() < line_size) {
                 return EncoderState::NeedMoreData;
@@ -109,7 +109,7 @@ namespace
     };
 } // namespace
 
-Encoder raw_encoder(uint8_t bpp, uint8_t Bpp, Rect rect)
+Encoder raw_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect)
 {
     return Encoder(Raw{bpp, Bpp, rect});
 }

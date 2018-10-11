@@ -22,7 +22,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "core/RDPEA/audio_output.hpp"
-#include "utils/sugar/underlying_cast.hpp"
+#include "utils/sugar/cast.hpp"
 
 
 

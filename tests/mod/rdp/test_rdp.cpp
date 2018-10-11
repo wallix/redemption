@@ -129,9 +129,9 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     info.keylayout = 0x04C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
     info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
 
     snprintf(info.hostname,sizeof(info.hostname),"test");
@@ -207,8 +207,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    RED_CHECK_EQUAL(front.info.width, 800);
-    RED_CHECK_EQUAL(front.info.height, 600);
+    RED_CHECK_EQUAL(front.info.screen_info.width, 800);
+    RED_CHECK_EQUAL(front.info.screen_info.height, 600);
 
     execute_negociate_mod(session_reactor, *mod, front);
     for (int count = 0; count < 38; ++count) {

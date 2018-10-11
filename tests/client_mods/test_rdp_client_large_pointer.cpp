@@ -48,9 +48,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     info.keylayout             = 0x040C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 16;
-    info.width                 = 1024;
-    info.height                = 768;
+    info.screen_info.bpp       = BitsPerPixel{16};
+    info.screen_info.width     = 1024;
+    info.screen_info.height    = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG
                                  | PERF_DISABLE_MENUANIMATIONS;
@@ -133,8 +133,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerDisabled)
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    RED_CHECK_EQUAL(front.info.width, 1024);
-    RED_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(front.info.screen_info.height, 768);
 
     execute_mod(session_reactor, *mod, front, 72);
 
@@ -152,9 +152,9 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     info.keylayout             = 0x040C;
     info.console_session       = 0;
     info.brush_cache_code      = 0;
-    info.bpp                   = 16;
-    info.width                 = 1024;
-    info.height                = 768;
+    info.screen_info.bpp       = BitsPerPixel{16};
+    info.screen_info.width     = 1024;
+    info.screen_info.height    = 768;
     info.rdp5_performanceflags =   PERF_DISABLE_WALLPAPER
                                  | PERF_DISABLE_FULLWINDOWDRAG
                                  | PERF_DISABLE_MENUANIMATIONS;
@@ -241,8 +241,8 @@ RED_AUTO_TEST_CASE(TestRdpClientLargePointerEnabled)
     if (verbose > 2) {
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
     }
-    RED_CHECK_EQUAL(front.info.width, 1024);
-    RED_CHECK_EQUAL(front.info.height, 768);
+    RED_CHECK_EQUAL(front.info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(front.info.screen_info.height, 768);
 
     execute_mod(session_reactor, *mod, front, 72);
 

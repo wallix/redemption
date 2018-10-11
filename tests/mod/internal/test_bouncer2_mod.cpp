@@ -35,9 +35,9 @@ RED_AUTO_TEST_CASE(TestBouncer2Mod)
     info.keylayout = 0x040C;
     info.console_session = 0;
     info.brush_cache_code = 0;
-    info.bpp = 24;
-    info.width = 800;
-    info.height = 600;
+    info.screen_info.bpp = BitsPerPixel{24};
+    info.screen_info.width = 800;
+    info.screen_info.height = 600;
 
     FakeFront front(info, 0);
 

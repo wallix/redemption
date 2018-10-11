@@ -5,7 +5,6 @@
 #include <boost/test/auto_unit_test.hpp>
 
 #include "utils/sugar/bytes_view.hpp"
-#include "utils/sugar/underlying_cast.hpp"
 
 #include <iterator>
 #include <type_traits>

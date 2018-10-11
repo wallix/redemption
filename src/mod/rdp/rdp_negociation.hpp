@@ -30,6 +30,7 @@
 #include "core/RDP/lic.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
+#include "gdi/screen_info.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "utils/key_qvalue_pairs.hpp"
@@ -129,7 +130,7 @@ private:
     uint8_t client_crypt_random[512] {};
 
     const bool console_session;
-    const uint8_t front_bpp;
+    const BitsPerPixel front_bpp;
     const uint32_t performanceFlags;
     const ClientTimeZone client_time_zone;
     Random& gen;

@@ -827,15 +827,15 @@ RED_AUTO_TEST_CASE(TestBogusBitmap)
     }
     ;
 
-    Bitmap bloc64x64(16, 16, nullptr, 64, 64, source64x64, sizeof(source64x64), true );
+    Bitmap bloc64x64(BitsPerPixel{16}, BitsPerPixel{16}, nullptr, 64, 64, source64x64, sizeof(source64x64), true );
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc64x64.cx(), bloc64x64.cy()), 0xCC, 0, 0, 0), scr, bloc64x64);
 
-    Bitmap good16(24, bloc64x64);
+    Bitmap good16(BitsPerPixel{24}, bloc64x64);
     drawable.draw(RDPMemBlt(0, Rect(200, 200, good16.cx(), good16.cy()), 0xCC, 0, 0, 0), scr, good16);
 
     StaticOutStream<8192> stream;
-    good16.compress(24, stream);
-    Bitmap bogus(24, 24, nullptr, 64, 64, stream.get_data(), stream.get_offset(), true);
+    good16.compress(BitsPerPixel{24}, stream);
+    Bitmap bogus(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, 64, 64, stream.get_data(), stream.get_offset(), true);
     drawable.draw(RDPMemBlt(0, Rect(300, 100, bogus.cx(), bogus.cy()), 0xCC, 0, 0, 0), scr, bogus);
 
 //     dump_png24("/tmp/test_bmp.png", drawable, true);
@@ -887,7 +887,7 @@ RED_AUTO_TEST_CASE(TestBogusBitmap2)
            "\xc3\xef\x1a"
     ;
 
-    Bitmap bloc32x1(16, 16, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
+    Bitmap bloc32x1(BitsPerPixel{16}, BitsPerPixel{16}, nullptr, 32, 1, source32x1, sizeof(source32x1)-1, true);
     drawable.draw(RDPMemBlt(0, Rect(100, 100, bloc32x1.cx(), bloc32x1.cy()), 0xCC, 0, 0, 0), scr, bloc32x1);
 
     dump_png24(trans, drawable, true);
