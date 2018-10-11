@@ -1053,7 +1053,8 @@ private:
             arc_info.name = "CONNECTION";
             arc_info.ApplicationProtocol = "xup";
             arc_info.WallixBastionStatus = "FAIL";
-            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info);
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, tvtime());
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
             // TODO: actually this is DNS Failure or invalid address
@@ -1071,7 +1072,8 @@ private:
             arc_info.name = "CONNECTION";
             arc_info.ApplicationProtocol = "xup";
             arc_info.WallixBastionStatus = "FAIL";
-            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info);
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, tvtime());
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
             LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");

@@ -47,6 +47,7 @@ class RedirectionInfo;
 class ReportMessageApi;
 class TimeObj;
 class Transport;
+class ArcsightLogInfo;
 namespace CHANNELS
 {
     class ChannelDefArray;
@@ -98,6 +99,8 @@ private:
         ReportMessageApi& report_message;
 
         void log5_server_cert(charp_or_string type, charp_or_string description);
+
+        void log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info);
     };
 
 private:

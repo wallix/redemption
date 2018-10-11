@@ -2221,7 +2221,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture)
     struct : NullReportMessage {
         std::string s;
 
-        void log5(const std::string &info) override {
+        void log6(const std::string &info, const ArcsightLogInfo & arc_info, const timeval time) override {
             s += info;
         }
     } report_message;
@@ -2275,7 +2275,7 @@ RED_AUTO_TEST_CASE(TestKbdCapture2)
     struct : NullReportMessage {
         std::string s;
 
-        void log5(const std::string &info) override {
+        void log6(const std::string &info, const ArcsightLogInfo & arc_info, const timeval time) override {
             s += info;
         }
     } report_message;

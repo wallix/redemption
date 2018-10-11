@@ -39,6 +39,8 @@
 #include "utils/sugar/multisz.hpp"
 #include "utils/sugar/strutils.hpp"
 
+#include "utils/difftimeval.hpp"
+
 #include <cstring>
 
 
@@ -146,85 +148,115 @@ RdpNegociation::RDPServerNotifier::RDPServerNotifier(
 void RdpNegociation::RDPServerNotifier::server_access_allowed()
 {
     if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
-//         this->log5_server_cert(
-//             "CERTIFICATE_CHECK_SUCCESS",
-//             "Connexion to server allowed"
-//         );
-
         ArcsightLogInfo arc_info;
         arc_info.name = "CERTIFICATE_CHECK";
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "Connexion to server allowed";
-        this->report_message.log6("type=\"CERTIFICATE_CHECK_SUCCESS\"", arc_info);
+        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+        this->log6_server_cert(
+            "CERTIFICATE_CHECK_SUCCESS",
+            "Connexion to server allowed",
+            arc_info
+        );
+
+//         this->log5_server_cert(
+//             "CERTIFICATE_CHECK_SUCCESS",
+//             "Connexion to server allowed",
+//         );
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_create()
 {
     if (is_syslog_notification_enabled(this->server_cert_create_message)) {
+        ArcsightLogInfo arc_info;
+        arc_info.name = "SERVER_CERTIFICATE_NEW";
+        arc_info.ApplicationProtocol = "rdp";
+        //arc_info.WallixBastionStatus = "";
+        arc_info.message = "New X.509 certificate created";
+        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+        this->log6_server_cert(
+            "SERVER_CERTIFICATE_NEW",
+            "New X.509 certificate created",
+            arc_info
+        );
+
 //         this->log5_server_cert(
 //             "SERVER_CERTIFICATE_NEW",
 //             "New X.509 certificate created"
 //         );
-
-        ArcsightLogInfo arc_info;
-        arc_info.name = "SERVER_CERTIFICATE";
-        arc_info.ApplicationProtocol = "rdp";
-        arc_info.WallixBastionStatus = "NEW";
-        arc_info.message = "New X.509 certificate created";
-        this->report_message.log6("type=\"SERVER_CERTIFICATE_NEW\"", arc_info);
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_success()
 {
     if (is_syslog_notification_enabled(this->server_cert_success_message)) {
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_MATCH_SUCCESS",
-//             "X.509 server certificate match"
-//         );
-
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "X.509 server certificate match";
-        this->report_message.log6("type=\"SERVER_CERTIFICATE_MATCH_SUCCESS\"", arc_info);
+        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+        this->log6_server_cert(
+            "SERVER_CERTIFICATE_MATCH_SUCCESS",
+            "X.509 server certificate match",
+            arc_info
+        );
+
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_MATCH_SUCCESS",
+//             "X.509 server certificate match"
+//         );
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_failure()
 {
     if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_MATCH_FAILURE",
-//             "X.509 server certificate match failure"
-//         );
-
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "FAILURE";
         arc_info.message = "X.509 server certificate match failure";
-        this->report_message.log6("type=\"SERVER_CERTIFICATE_MATCH_FAILURE\"", arc_info);
+        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+        this->log6_server_cert(
+            "SERVER_CERTIFICATE_MATCH_FAILURE",
+            "X.509 server certificate match failure",
+            arc_info
+        );
+
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_MATCH_FAILURE",
+//             "X.509 server certificate match failure"
+//         );
     }
 }
 
 void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error)
 {
     if (is_syslog_notification_enabled(this->server_cert_error_message)) {
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_ERROR",
-//             "X.509 server certificate internal error: " + std::string(str_error)
-//         );
-//
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE";
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "ERROR";
-        arc_info.message = "X.509 server certificate internal error";
-        this->report_message.log6("type=\"SERVER_CERTIFICATE_ERROR\"", arc_info);
+        arc_info.message = "X.509 server certificate internal error: " + std::string(str_error);
+        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+        this->log6_server_cert(
+            "SERVER_CERTIFICATE_ERROR",
+            "X.509 server certificate internal error: " + std::string(str_error),
+            arc_info
+        );
+
+//         this->log5_server_cert(
+//             "SERVER_CERTIFICATE_ERROR",
+//             "X.509 server certificate internal error: " + std::string(str_error)
+//         );
     }
 }
 
@@ -233,6 +265,25 @@ void RdpNegociation::RDPServerNotifier::log5_server_cert(charp_or_string type, c
     this->message.assign(type.data, {{"description", description.data}});
 
     this->report_message.log5(this->message.str());
+
+    if (bool(this->verbose & RDPVerbose::basic_trace)) {
+        LOG(LOG_INFO, "%s", this->message.str());
+    }
+
+    {
+        std::string message(type.data.data(), type.data.size());
+        message += "=";
+        message.append(description.data.data(), description.data.size());
+
+        this->front.session_update(message);
+    }
+}
+
+void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info)
+{
+    this->message.assign(type.data, {{"description", description.data}});
+
+    this->report_message.log6(this->message.str(), arc_info, tvtime());
 
     if (bool(this->verbose & RDPVerbose::basic_trace)) {
         LOG(LOG_INFO, "%s", this->message.str());

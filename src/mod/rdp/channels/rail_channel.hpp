@@ -965,7 +965,15 @@ public:
                     {"exe_or_file", serpdu.ExeOrFile()},
                     });
 
-                this->report_message.log5(info);
+                ArcsightLogInfo arc_info;
+                arc_info.name = "CLIENT_EXECUTE_REMOTEAPP";
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.filePath = serpdu.ExeOrFile();
+                arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                this->report_message.log6(info, arc_info, tvtime());
+
+//                 this->report_message.log5(info);
             }
         }
 

@@ -26,6 +26,14 @@
 
 struct ArcsightLogInfo {
 
+    enum :  uint8_t {
+        SERVER_SRC,
+        SERVER_DST,
+        NONE
+    };
+
+    ArcsightLogInfo() = default;
+
     std::string name;
     int signatureID = 0;
     int severity = 5;
@@ -33,8 +41,13 @@ struct ArcsightLogInfo {
     std::string WallixBastionStatus;
     std::string message;
     std::string filePath;
+    std::string fileName;
+    long fileSize = 0;
     std::string oldFilePath;
-    std::string fileSize;
+    uint64_t endTime = 0;
+    std::string WallixBastionSHA256Digest;
+
+    uint8_t direction_flag = NONE;
 
 };
 
@@ -45,7 +58,7 @@ struct ReportMessageApi : noncopyable
 
     virtual void log5(const std::string & info) = 0;
 
-    virtual void log6(const std::string & info, const ArcsightLogInfo & asl_info) = 0;
+    virtual void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) = 0;
 
     virtual void update_inactivity_timeout() = 0;
 
@@ -67,11 +80,8 @@ struct NullReportMessage : ReportMessageApi
         (void)info;
     }
 
-    void log6(const std::string & info, const ArcsightLogInfo & asl_info) override
-    {
-        (void)info;
-        (void)asl_info;
-    }
+    void log6(const std::string & /*info*/, const ArcsightLogInfo & /*asl_info*/, const timeval /*time*/) override
+    {}
 
 
     void update_inactivity_timeout() override { }

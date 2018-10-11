@@ -25,7 +25,7 @@
 #include <ctime>
 
 inline std::string text_gmdate(const timeval tv)
-{
+{                                                           // yyyy-MM-dd
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
@@ -36,7 +36,7 @@ inline std::string text_gmdate(const timeval tv)
 
 
 inline std::string text_gmdatetime(const timeval tv)
-{
+{                                                           // yyyy-MM-dd hh:mm:ss
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
@@ -47,11 +47,42 @@ inline std::string text_gmdatetime(const timeval tv)
 
 
 inline std::string filename_gmdatetime(const timeval tv)
-{
+{                                                           // yyyy-MM-dd_hh-mm-ss
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
     char buf[20] = {};
     snprintf(buf, sizeof(buf), "%04d-%02d-%02d_%02d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
     return std::string(buf, 19);
+}
+
+
+inline const char * get_short_text_month(int month) {
+    switch (month) {
+        case 1:  return "Jan";
+        case 2:  return "Feb";
+        case 3:  return "Mar";
+        case 4:  return "Apr";
+        case 5:  return "May";
+        case 6:  return "Jun";
+        case 7:  return "Jul";
+        case 8:  return "Aug";
+        case 9:  return "Sep";
+        case 10: return "Oct";
+        case 11: return "Nov";
+        case 12: return "Dec";
+    }
+
+    return "date_error";
+}
+
+
+inline std::string siem_log_gmdatetime(const timeval tv)
+{                                                           // MMM(text) dd yyyy hh:mm:ss
+    struct tm t;
+    time_t time = tv.tv_sec;
+    gmtime_r(&time, &t);
+    char buf[21] = {};
+    snprintf(buf, sizeof(buf), "%s %02d %04d %02d:%02d:%02d", get_short_text_month(1+t.tm_mon), t.tm_mday,1900+t.tm_year, t.tm_hour, t.tm_min, t.tm_sec);
+    return std::string(buf, 21);
 }

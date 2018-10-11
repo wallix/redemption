@@ -30,6 +30,7 @@
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
+#include "utils/difftimeval.hpp"
 
 #include <map>
 #include <memory>
@@ -465,7 +466,15 @@ private:
                         );
                 }
 
-                this->report_message.log5(info);
+                ArcsightLogInfo arc_info;
+                arc_info.name = std::string(type);
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.message = info;
+                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                this->report_message.log6(info, arc_info, tvtime());
+
+//                 this->report_message.log5(info);
 
                 if (!this->param_dont_log_data_into_syslog) {
                     LOG(LOG_INFO, "%s", info);
@@ -644,7 +653,17 @@ private:
                 { "sha256", digest_s }
             });
 
-        this->report_message.log5(info);
+        ArcsightLogInfo arc_info;
+        arc_info.name = std::string(type);
+        arc_info.ApplicationProtocol = "rdp";
+        arc_info.fileName = file_info.file_name;
+        arc_info.fileSize = file_info.size;
+        arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+        arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+
+        this->report_message.log6(info, arc_info, tvtime());
+
+//         this->report_message.log5(info);
 
         if (!this->param_dont_log_data_into_syslog) {
             LOG(LOG_INFO, "%s", info);
@@ -1387,7 +1406,15 @@ public:
                         );
                 }
 
-                this->report_message.log5(info);
+                ArcsightLogInfo arc_info;
+                arc_info.name = std::string(type);
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.message = info;
+                arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                this->report_message.log6(info, arc_info, tvtime());
+
+//                 this->report_message.log5(info);
 
                 if (!this->param_dont_log_data_into_syslog) {
                     LOG(LOG_INFO, "%s", info);

@@ -2146,7 +2146,14 @@ public:
                     {"duration", duration},
                     });
 
-                this->report_message.log5(info);
+                ArcsightLogInfo arc_info;
+                arc_info.name = "SESSION_DISCONNECTION";
+                arc_info.ApplicationProtocol = "rdp";
+                arc_info.endTime = long(seconds);
+
+                this->report_message.log6(info, arc_info, tvtime());
+
+                //this->report_message.log5(info);
 
                 if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO, "%s", info);
@@ -2350,7 +2357,16 @@ public:
                             this->connection_finalization_state = UP_AND_RUNNING;
 
                             if (!this->deactivation_reactivation_in_progress) {
-                                this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
+
+                                ArcsightLogInfo arc_info;
+                                arc_info.name = "SESSION_ESTABLISHED";
+                                arc_info.ApplicationProtocol = "rdp";
+                                arc_info.WallixBastionStatus = "SUCCESS";
+                                arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                                this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, tvtime());
+
+                                //this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -5323,7 +5339,15 @@ public:
                 {"duration", extra},
                 });
 
-            this->report_message.log5(info);
+            ArcsightLogInfo arc_info;
+            arc_info.name = "SESSION_DISCONNECTION";
+            arc_info.ApplicationProtocol = "rdp";
+            arc_info.endTime = long(seconds);
+
+
+            this->report_message.log6(info, arc_info, tvtime());
+
+//             this->report_message.log5(info);
 
             this->session_disconnection_logged = true;
         }

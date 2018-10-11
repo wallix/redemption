@@ -1670,17 +1670,17 @@ public:
 
     uint64_t Offset() const { return this->Offset_; }
 
-    void log(int level) const {
-        LOG(level, "DeviceReadRequest: Length=%u Offset=%" PRIu64,
+    void log(int level = LOG_INFO) const {
+        LOG(level, "DeviceReadRequest: Length=%u(4 bytes) Offset=%" PRIu64 "(8 bytes) Padding(20 bytes) NOT USED",
             this->Length_, this->Offset_);
     }
 
-    void log() const {
-        LOG(LOG_INFO, "     Device Read Request:");
-        LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
-        LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
-        LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
-    }
+//     void log() const {
+//         LOG(LOG_INFO, "     Device Read Request:");
+//         LOG(LOG_INFO, "          * Length = %u (4 bytes)", this->Length_);
+//         LOG(LOG_INFO, "          * Offset = 0x%" PRIx64 " (8 bytes)", this->Offset_);
+//         LOG(LOG_INFO, "          * Padding - (20 bytes) NOT USED");
+//     }
 };
 
 

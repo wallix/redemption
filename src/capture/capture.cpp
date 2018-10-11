@@ -544,7 +544,15 @@ public:
                 {"data", stream_to_avchar(this->kbd_stream)}
             });
 
-            this->report_message.log5(this->formatted_message.str());
+            ArcsightLogInfo arc_info;
+            arc_info.name = "KBD_INPUT";
+            arc_info.message = this->formatted_message.str();
+
+            LOG(LOG_INFO, "capture::flush this->formatted_message.str()=%s", this->formatted_message.str());
+
+            this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
+
+            //this->report_message.log5(this->formatted_message.str());
 
             this->kbd_stream.rewind();
         }
@@ -1357,7 +1365,14 @@ public:
                  && this->report_message)
                 {
                     this->formatted_message.assign("TITLE_BAR", {{"data", title}});
-                    this->report_message->log5(this->formatted_message.str());
+
+                    ArcsightLogInfo arc_info;
+                    arc_info.name = "TITLE_BAR";
+                    arc_info.message = this->formatted_message.str();
+
+                    this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());
+
+//                     this->report_message->log5(this->formatted_message.str());
                 }
             }
 

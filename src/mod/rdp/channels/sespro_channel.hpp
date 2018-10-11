@@ -1277,10 +1277,12 @@ public:
 
 //             this->report_message.log5(info);
 
-             ArcsightLogInfo arc_info;
+            ArcsightLogInfo arc_info;
             arc_info.name = "SESSION_ENDING_IN_PROGRESS";
             arc_info.ApplicationProtocol = "rdp";
-            this->report_message.log6(info, arc_info);
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+            this->report_message.log6(info, arc_info, tvtime());
 
             if (bool(this->verbose & RDPVerbose::sesprobe)) {
                 LOG(LOG_INFO, "%s", info);
@@ -1302,9 +1304,11 @@ public:
 
                     ArcsightLogInfo arc_info;
                     arc_info.name = "PASSWORD_TEXT_BOX_GET_FOCUS";
-                    arc_info.WallixBastionStatus = "OnFocus";
+                    arc_info.WallixBastionStatus = parameters_[0];
                     arc_info.ApplicationProtocol = "rdp";
-                    this->report_message.log6(info, arc_info);
+                    arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                    this->report_message.log6(info, arc_info, tvtime());
 
 //                     this->report_message.log5(info);
 
@@ -1327,7 +1331,15 @@ public:
                             {"status", parameters_[0]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "UAC_PROMPT_BECOME_VISIBLE";
+                        arc_info.WallixBastionStatus = parameters_[0];
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1347,7 +1359,15 @@ public:
                             {"display_name", parameters_[1]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "INPUT_LANGUAGE";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1368,7 +1388,15 @@ public:
                             {"command_line", parameters_[0]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = order_;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1386,7 +1414,16 @@ public:
                             {"raw_result",       parameters_[1]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "STARTUP_APPLICATION";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.WallixBastionStatus = "FAIL_TO_RUN";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1410,6 +1447,15 @@ public:
                             {"raw_result",         parameters_[1]},
                             {"raw_result_message", parameters_[2]},
                         });
+
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "STARTUP_APPLICATION";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.WallixBastionStatus = "FAIL_TO_RUN";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
 
                         this->report_message.log5(info);
 
@@ -1435,7 +1481,15 @@ public:
                             {"application_name", parameters_[1]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "OUTBOUND_CONNECTION_BLOCKED";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1453,7 +1507,15 @@ public:
                             {"application_name", parameters_[1]}
                             });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "OUTBOUND_CONNECTION_DETECTED";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1503,7 +1565,15 @@ public:
                                 {"dst_port",     parameters_[4]},
                                 });
 
-                            this->report_message.log5(info);
+                            ArcsightLogInfo arc_info;
+                            arc_info.name = order_;
+                            arc_info.message = info;
+                            arc_info.ApplicationProtocol = "rdp";
+                            arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                            this->report_message.log6(info, arc_info, tvtime());
+
+//                             this->report_message.log5(info);
 
                             {
                                 char message[4096];
@@ -1572,7 +1642,15 @@ public:
                                 {"app_cmd_line", parameters_[2]},
                                 });
 
-                            this->report_message.log5(info);
+                            ArcsightLogInfo arc_info;
+                            arc_info.name = order_;
+                            arc_info.message = info;
+                            arc_info.ApplicationProtocol = "rdp";
+                            arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                            this->report_message.log6(info, arc_info, tvtime());
+
+//                             this->report_message.log5(info);
 
                             {
                                 char message[4096];
@@ -1625,7 +1703,15 @@ public:
                             {"window", parameters_[0]},
                             });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = order_;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1643,7 +1729,15 @@ public:
                             {"button", parameters_[1]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = order_;
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1661,7 +1755,15 @@ public:
                             {"edit",   parameters_[1]},
                         });
 
-                        this->report_message.log5(info);
+                        ArcsightLogInfo arc_info;
+                        arc_info.name = "EDIT_CHANGED";
+                        arc_info.message = info;
+                        arc_info.ApplicationProtocol = "rdp";
+                        arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                        this->report_message.log6(info, arc_info, tvtime());
+
+//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);

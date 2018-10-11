@@ -1680,7 +1680,15 @@ public:
                                     { "device_type", device_type_name }
                                 });
 
-                            this->report_message.log5(info);
+                            ArcsightLogInfo arc_info;
+                            arc_info.name = "DRIVE_REDIRECTION_USE";
+                            arc_info.ApplicationProtocol = "rdp";
+                            arc_info.message = info;
+                            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                            this->report_message.log6(info, arc_info, tvtime());
+
+//                             this->report_message.log5(info);
 
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
@@ -1787,7 +1795,17 @@ public:
                                             { "sha256", digest_s }
                                         });
 
-                                    this->report_message.log5(info);
+                                    ArcsightLogInfo arc_info;
+                                    arc_info.name = "DRIVE_REDIRECTION_READ_EX";
+                                    arc_info.ApplicationProtocol = "rdp";
+                                    arc_info.filePath = file_path;
+                                    arc_info.fileSize = target_iter->end_of_file;
+                                    arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                    this->report_message.log6(info, arc_info, tvtime());
+
+//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1810,7 +1828,15 @@ public:
                                             { "file_name", file_path }
                                         });
 
-                                    this->report_message.log5(info);
+                                    ArcsightLogInfo arc_info;
+                                    arc_info.name = "DRIVE_REDIRECTION_READ";
+                                    arc_info.ApplicationProtocol = "rdp";
+                                    arc_info.filePath = file_path;
+                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                    this->report_message.log6(info, arc_info, tvtime());
+
+//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1847,7 +1873,17 @@ public:
                                             { "sha256", digest_s }
                                         });
 
-                                    this->report_message.log5(info);
+                                    ArcsightLogInfo arc_info;
+                                    arc_info.name = "DRIVE_REDIRECTION_WRITE_EX";
+                                    arc_info.ApplicationProtocol = "rdp";
+                                    arc_info.filePath = file_path;
+                                    arc_info.fileSize = target_iter->end_of_file;
+                                    arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                    this->report_message.log6(info, arc_info, tvtime());
+
+//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1870,7 +1906,14 @@ public:
                                             { "file_name", file_path },
                                         });
 
-                                    this->report_message.log5(info);
+                                    ArcsightLogInfo arc_info;
+                                    arc_info.name = "DRIVE_REDIRECTION_WRITE";
+                                    arc_info.ApplicationProtocol = "rdp";
+                                    arc_info.filePath = file_path;
+                                    arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                    this->report_message.log6(info, arc_info, tvtime());
+//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -2012,7 +2055,14 @@ public:
                                         { "file_name", file_path },
                                     });
 
-                                this->report_message.log5(info);
+                                ArcsightLogInfo arc_info;
+                                arc_info.name = "DRIVE_REDIRECTION_DELETE";
+                                arc_info.ApplicationProtocol = "rdp";
+                                arc_info.filePath = file_path;
+                                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                this->report_message.log6(info, arc_info, tvtime());
+//                                 this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
@@ -2045,7 +2095,16 @@ public:
                                         { "new_file_name", file_path },
                                     });
 
-                                this->report_message.log5(info);
+                                ArcsightLogInfo arc_info;
+                                arc_info.name = "DRIVE_REDIRECTION_RENAME";
+                                arc_info.ApplicationProtocol = "rdp";
+                                arc_info.filePath = file_path;
+                                arc_info.oldFilePath = target_iter->file_path;
+                                arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+
+                                this->report_message.log6(info, arc_info, tvtime());
+
+//                                 this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
