@@ -71,6 +71,7 @@ public:
     {
         none,
         state = 0x10,
+        arcsight = 0x20
     };
 
     KeepAlive(std::chrono::seconds grace_delay_, Verbose verbose)
@@ -293,7 +294,7 @@ public:
         variable = 0x2,
         buffer   = 0x40,
         state    = 0x10,
-       // log_arcsight  = 0x20,
+        arcsight  = 0x20,
     };
 
 public:
@@ -414,85 +415,109 @@ public:
         /* Log to SIEM (redirected syslog) */
         if (this->ini.get<cfg::session_log::enable_session_log>()) {
 
-            auto const& target_ip    = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+            auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
                 ? this->ini.get<cfg::context::target_host>()
                 : this->ini.get<cfg::context::ip_target>());
-            auto const& formted_date = siem_log_gmdatetime(time);
-            auto const& user         = this->ini.get<cfg::globals::auth_user>();
-            auto const& account      = this->ini.get<cfg::globals::target_user>();
-            auto const& session_id   = this->ini.get<cfg::context::session_id>();
-            auto const& host         = this->ini.get<cfg::globals::host>();
-            // auto const& device = this->ini.get<cfg::globals::target_device>();
 
-            std::string extension;
+            auto session_info = key_qvalue_pairs({
+                {"session_id", this->ini.get<cfg::context::session_id>()},
+                {"client_ip",  this->ini.get<cfg::globals::host>()},
+                {"target_ip",  target_ip},
+                {"user",       this->ini.get<cfg::globals::auth_user>()},
+                {"device",     this->ini.get<cfg::globals::target_device>()},
+                {"service",    this->ini.get<cfg::context::target_service>()},
+                {"account",    this->ini.get<cfg::globals::target_user>()},
+            });
 
-            switch (asl_info.direction_flag) {
+            LOG_SIEM(
+                LOG_INFO
+              , "[%s Session] %s %s"
+              , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
+              , session_info.c_str()
+              , info.c_str());
 
-                case ArcsightLogInfo::NONE: break;
+            if (bool(this->verbose & Verbose::arcsight)) {
 
-                case ArcsightLogInfo::SERVER_DST:
-                    extension += " suser=" + user + " duser=" + account;
-                    extension += " src=" + host + " dst=" + target_ip;
-                    break;
+                auto const& target_ip    = (isdigit(this->ini.get<cfg::context::target_host>()[0])
+                    ? this->ini.get<cfg::context::target_host>()
+                    : this->ini.get<cfg::context::ip_target>());
+                auto const& formted_date = siem_log_gmdatetime(time);
+                auto const& user         = this->ini.get<cfg::globals::auth_user>();
+                auto const& account      = this->ini.get<cfg::globals::target_user>();
+                auto const& session_id   = this->ini.get<cfg::context::session_id>();
+                auto const& host         = this->ini.get<cfg::globals::host>();
+                // auto const& device = this->ini.get<cfg::globals::target_device>();
 
-                case ArcsightLogInfo::SERVER_SRC:
-                    extension += " suser=" + account + " duser=" + user;
-                    extension += " src=" + target_ip + " dst=" + host;
-                    break;
-            }
-            if (!asl_info.ApplicationProtocol.empty()) {
-                extension += " app=";
-                this->arcsight_text_formating(extension, asl_info.ApplicationProtocol);
-            }
-            if (!asl_info.WallixBastionStatus.empty()) {
-                extension += " WallixBastionStatus=";
-                this->arcsight_text_formating(extension, asl_info.WallixBastionStatus);
-            }
-            if (!asl_info.message.empty()) {
-                extension += " msg=\"";
-                this->arcsight_text_formating(extension, asl_info.message);
-                extension +="\"";
-            }
-            if (!asl_info.oldFilePath.empty()) {
-                extension += " oldFilePath=";
-                this->arcsight_text_formating(extension, asl_info.oldFilePath);
-            }
-            if (!asl_info.filePath.empty()) {
-                extension += " filePath=";
-                this->arcsight_text_formating(extension, asl_info.filePath);
-            }
-            if (asl_info.fileSize) {
-                extension += " fsize=";
-                this->arcsight_text_formating(extension, std::to_string(asl_info.fileSize));
-            }
-            if (asl_info.endTime) {
-                timeval time = {__time_t(asl_info.endTime),  0};
-                extension += " end=";
-                this->arcsight_text_formating(extension, siem_log_gmdatetime(time));
-            }
-            if (!asl_info.fileName.empty()) {
-                extension += " fname=";
-                this->arcsight_text_formating(extension, asl_info.fileName);
-            }
+                std::string extension;
 
-            LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
-                formted_date.c_str(),
-                "1",
-                "Wallix",
-                "Bastion",
-                VERSION,
-                asl_info.signatureID,
-                asl_info.name.c_str(),
-                asl_info.severity,
-                user.c_str(),
-                account.c_str(),
-                host.c_str(),
-                target_ip.c_str(),
-                session_id.c_str(),
-                (this->session_type.empty() ? "Neutral" : this->session_type.c_str()),
-                /*device.c_str(),*/
-                extension.c_str()
-            );
+                switch (asl_info.direction_flag) {
+
+                    case ArcsightLogInfo::NONE: break;
+
+                    case ArcsightLogInfo::SERVER_DST:
+                        extension += " suser=" + user + " duser=" + account;
+                        extension += " src=" + host + " dst=" + target_ip;
+                        break;
+
+                    case ArcsightLogInfo::SERVER_SRC:
+                        extension += " suser=" + account + " duser=" + user;
+                        extension += " src=" + target_ip + " dst=" + host;
+                        break;
+                }
+                if (!asl_info.ApplicationProtocol.empty()) {
+                    extension += " app=";
+                    this->arcsight_text_formating(extension, asl_info.ApplicationProtocol);
+                }
+                if (!asl_info.WallixBastionStatus.empty()) {
+                    extension += " WallixBastionStatus=";
+                    this->arcsight_text_formating(extension, asl_info.WallixBastionStatus);
+                }
+                if (!asl_info.message.empty()) {
+                    extension += " msg=\"";
+                    this->arcsight_text_formating(extension, asl_info.message);
+                    extension +="\"";
+                }
+                if (!asl_info.oldFilePath.empty()) {
+                    extension += " oldFilePath=";
+                    this->arcsight_text_formating(extension, asl_info.oldFilePath);
+                }
+                if (!asl_info.filePath.empty()) {
+                    extension += " filePath=";
+                    this->arcsight_text_formating(extension, asl_info.filePath);
+                }
+                if (asl_info.fileSize) {
+                    extension += " fsize=";
+                    this->arcsight_text_formating(extension, std::to_string(asl_info.fileSize));
+                }
+                if (asl_info.endTime) {
+                    timeval time = {__time_t(asl_info.endTime),  0};
+                    extension += " end=";
+                    this->arcsight_text_formating(extension, siem_log_gmdatetime(time));
+                }
+                if (!asl_info.fileName.empty()) {
+                    extension += " fname=";
+                    this->arcsight_text_formating(extension, asl_info.fileName);
+                }
+
+                LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
+                    formted_date.c_str(),
+                    "1",
+                    "Wallix",
+                    "Bastion",
+                    VERSION,
+                    asl_info.signatureID,
+                    asl_info.name.c_str(),
+                    asl_info.severity,
+                    user.c_str(),
+                    account.c_str(),
+                    host.c_str(),
+                    target_ip.c_str(),
+                    session_id.c_str(),
+                    (this->session_type.empty() ? "Neutral" : this->session_type.c_str()),
+                    /*device.c_str(),*/
+                    extension.c_str()
+                );
+            }
         }
     }
 
