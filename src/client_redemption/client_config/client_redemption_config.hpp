@@ -330,7 +330,6 @@ public:
 
         // Set RDP CLIPRDR config
         this->rDPClipboardConfig.arbitrary_scale = 40;
-        this->rDPClipboardConfig.total_format_list_pdu_size = 0;
         this->rDPClipboardConfig.server_use_long_format_names = true;
         this->rDPClipboardConfig.cCapabilitiesSets = 1;
         this->rDPClipboardConfig.generalFlags = RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS;

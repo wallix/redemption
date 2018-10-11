@@ -127,7 +127,7 @@
       , arbitrary_scale(config.arbitrary_scale)
       , file_content_flag(RDPECLIP::FILECONTENTS_SIZE)
       , path(config.path)
-      , total_format_list_pdu_size(config.total_format_list_pdu_size)
+      , total_format_list_pdu_size(0)
       , server_use_long_format_names(config.server_use_long_format_names)
       , cCapabilitiesSets(config.cCapabilitiesSets)
       , generalFlags(config.generalFlags)
