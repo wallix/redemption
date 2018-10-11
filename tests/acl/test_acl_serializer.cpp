@@ -324,8 +324,6 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     GeneratorTransport trans("", 0);
     AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0x20));
 
-    const size_t date_length(21);
-
     acl.start_session_log();
 
     // MOD SESSION_CREATION FAIL

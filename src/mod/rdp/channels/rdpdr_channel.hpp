@@ -1688,8 +1688,6 @@ public:
 
                             this->report_message.log6(info, arc_info, tvtime());
 
-//                             this->report_message.log5(info);
-
                             if (!this->param_dont_log_data_into_syslog) {
                                 LOG(LOG_INFO, "%s", info);
                             }
@@ -1805,8 +1803,6 @@ public:
 
                                     this->report_message.log6(info, arc_info, tvtime());
 
-//                                     this->report_message.log5(info);
-
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
                                     }
@@ -1835,8 +1831,6 @@ public:
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, tvtime());
-
-//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -1883,8 +1877,6 @@ public:
 
                                     this->report_message.log6(info, arc_info, tvtime());
 
-//                                     this->report_message.log5(info);
-
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
                                     }
@@ -1913,7 +1905,6 @@ public:
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, tvtime());
-//                                     this->report_message.log5(info);
 
                                     if (!this->param_dont_log_data_into_syslog) {
                                         LOG(LOG_INFO, "%s", info);
@@ -2062,7 +2053,6 @@ public:
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                 this->report_message.log6(info, arc_info, tvtime());
-//                                 this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);
@@ -2103,8 +2093,6 @@ public:
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                 this->report_message.log6(info, arc_info, tvtime());
-
-//                                 this->report_message.log5(info);
 
                                 if (!this->param_dont_log_data_into_syslog) {
                                     LOG(LOG_INFO, "%s", info);

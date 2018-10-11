@@ -813,8 +813,6 @@ public:
 
         this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, tvtime());
 
-//         this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
-
         Rect const screen_rect(0, 0, this->width, this->height);
 
         drawable.begin_update();
@@ -3436,8 +3434,6 @@ public:
         arc_info.endTime = long(seconds);
 
         this->report_message.log6("type=\"SESSION_DISCONNECTION\"", arc_info, tvtime());
-
-//         this->report_message.log5(info);
     }
 
     Dimension get_dim() const override

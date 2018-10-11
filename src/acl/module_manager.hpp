@@ -1047,7 +1047,6 @@ private:
         in_addr s4_sin_addr;
         int status = resolve_ipv4_address(ip, s4_sin_addr);
         if (status){
-//             report_message.log5("type=\"CONNECTION_FAILED\"");
 
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
@@ -1067,7 +1066,7 @@ private:
         unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
 
         if (!client_sck.is_open()){
-//             report_message.log5("type=\"CONNECTION_FAILED\"");
+            
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
             arc_info.ApplicationProtocol = "xup";

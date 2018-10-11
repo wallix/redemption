@@ -972,8 +972,6 @@ public:
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                 this->report_message.log6(info, arc_info, tvtime());
-
-//                 this->report_message.log5(info);
             }
         }
 

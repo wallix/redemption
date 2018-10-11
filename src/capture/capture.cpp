@@ -552,8 +552,6 @@ public:
 
             this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
 
-            //this->report_message.log5(this->formatted_message.str());
-
             this->kbd_stream.rewind();
         }
     }
@@ -1371,8 +1369,6 @@ public:
                     arc_info.message = this->formatted_message.str();
 
                     this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());
-
-//                     this->report_message->log5(this->formatted_message.str());
                 }
             }
 

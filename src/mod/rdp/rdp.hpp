@@ -2153,8 +2153,6 @@ public:
 
                 this->report_message.log6(info, arc_info, tvtime());
 
-                //this->report_message.log5(info);
-
                 if (bool(this->verbose & RDPVerbose::sesprobe)) {
                     LOG(LOG_INFO, "%s", info);
                 }
@@ -2365,8 +2363,6 @@ public:
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                                 this->report_message.log6("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"", arc_info, tvtime());
-
-                                //this->report_message.log5("type=\"SESSION_ESTABLISHED_SUCCESSFULLY\"");
                             }
 
                             // Synchronize sent to indicate server the state of sticky keys (x-locks)
@@ -5346,8 +5342,6 @@ public:
 
 
             this->report_message.log6(info, arc_info, tvtime());
-
-//             this->report_message.log5(info);
 
             this->session_disconnection_logged = true;
         }

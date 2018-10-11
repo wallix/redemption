@@ -295,7 +295,7 @@ void ModuleManager::create_mod_rdp(
           , this->timeobj.get_time()
           , ini.get<cfg::metrics::log_file_turnover_interval>()
           , ini.get<cfg::metrics::log_interval>());
- 
+
         auto protocol_metrics = std::make_unique<RDPMetrics>(metrics.get());
 
         struct ModRDPWithMetrics : public mod_rdp
@@ -303,11 +303,11 @@ void ModuleManager::create_mod_rdp(
             std::unique_ptr<Metrics> metrics = nullptr;
             std::unique_ptr<RDPMetrics> protocol_metrics = nullptr;
             SessionReactor::TimerPtr metrics_timer;
-            
+
             using mod_rdp::mod_rdp;
-            
+
         };
-        
+
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             authentifier,
@@ -332,7 +332,7 @@ void ModuleManager::create_mod_rdp(
 
         new_mod->metrics = std::move(metrics);
         new_mod->protocol_metrics = std::move(protocol_metrics);
-        
+
         new_mod->metrics_timer = session_reactor.create_timer()
             .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
             .on_action(jln::always_ready([mod = new_mod.get()]{
@@ -386,7 +386,6 @@ void ModuleManager::create_mod_rdp(
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "FAIL";
         report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, tvtime());
-        //report_message.log5("type=\"SESSION_CREATION_FAILED\"");
 
         throw;
     }

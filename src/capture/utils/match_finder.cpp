@@ -27,6 +27,7 @@
 #include "utils/sugar/splitter.hpp"
 #include "utils/pattutils.hpp"
 #include "utils/key_qvalue_pairs.hpp"
+#include "utils/difftimeval.hpp"
 
 
 namespace utils
@@ -212,7 +213,11 @@ void MatchFinder::report(
         {"pattern", message},
     });
 
-    report_message.log5(info);
+    ArcsightLogInfo arc_info;
+    arc_info.name = pattern_detection_type;
+    arc_info.message = info;
+
+    report_message.log6(info, arc_info, tvtime());
 
     report_message.report(
         (is_pattern_kill ? "FINDPATTERN_KILL" : "FINDPATTERN_NOTIFY"),

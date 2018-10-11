@@ -376,40 +376,10 @@ public:
         }
     }
 
-    void log5(const std::string & info) override
-    {
-        // TODO system time
-        this->log_file.write_line(std::time(nullptr), info);
-
-        /* Log to SIEM (redirected syslog) */
-        if (this->ini.get<cfg::session_log::enable_session_log>()) {
-            auto const& target_ip = (isdigit(this->ini.get<cfg::context::target_host>()[0])
-                ? this->ini.get<cfg::context::target_host>()
-                : this->ini.get<cfg::context::ip_target>());
-
-            auto session_info = key_qvalue_pairs({
-                {"session_id", this->ini.get<cfg::context::session_id>()},
-                {"client_ip",  this->ini.get<cfg::globals::host>()},
-                {"target_ip",  target_ip},
-                {"user",       this->ini.get<cfg::globals::auth_user>()},
-                {"device",     this->ini.get<cfg::globals::target_device>()},
-                {"service",    this->ini.get<cfg::context::target_service>()},
-                {"account",    this->ini.get<cfg::globals::target_user>()},
-            });
-
-            LOG_SIEM(
-                LOG_INFO
-              , "[%s Session] %s %s"
-              , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
-              , session_info.c_str()
-              , info.c_str());
-        }
-    }
-
     void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) override
     {
         // TODO system time
-        time_t const time_now = std::time(nullptr);
+        time_t const time_now = time.tv_sec;                      //std::time(nullptr);
         this->log_file.write_line(time_now, info);
 
         /* Log to SIEM (redirected syslog) */

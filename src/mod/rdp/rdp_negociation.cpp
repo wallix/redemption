@@ -160,11 +160,6 @@ void RdpNegociation::RDPServerNotifier::server_access_allowed()
             "Connexion to server allowed",
             arc_info
         );
-
-//         this->log5_server_cert(
-//             "CERTIFICATE_CHECK_SUCCESS",
-//             "Connexion to server allowed",
-//         );
     }
 }
 
@@ -183,11 +178,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_create()
             "New X.509 certificate created",
             arc_info
         );
-
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_NEW",
-//             "New X.509 certificate created"
-//         );
     }
 }
 
@@ -206,11 +196,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_success()
             "X.509 server certificate match",
             arc_info
         );
-
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_MATCH_SUCCESS",
-//             "X.509 server certificate match"
-//         );
     }
 }
 
@@ -229,11 +214,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_failure()
             "X.509 server certificate match failure",
             arc_info
         );
-
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_MATCH_FAILURE",
-//             "X.509 server certificate match failure"
-//         );
     }
 }
 
@@ -252,30 +232,6 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
             "X.509 server certificate internal error: " + std::string(str_error),
             arc_info
         );
-
-//         this->log5_server_cert(
-//             "SERVER_CERTIFICATE_ERROR",
-//             "X.509 server certificate internal error: " + std::string(str_error)
-//         );
-    }
-}
-
-void RdpNegociation::RDPServerNotifier::log5_server_cert(charp_or_string type, charp_or_string description)
-{
-    this->message.assign(type.data, {{"description", description.data}});
-
-    this->report_message.log5(this->message.str());
-
-    if (bool(this->verbose & RDPVerbose::basic_trace)) {
-        LOG(LOG_INFO, "%s", this->message.str());
-    }
-
-    {
-        std::string message(type.data.data(), type.data.size());
-        message += "=";
-        message.append(description.data.data(), description.data.size());
-
-        this->front.session_update(message);
     }
 }
 

@@ -164,7 +164,6 @@ void ModuleManager::create_mod_vnc(
         arc_info.ApplicationProtocol = "vnc";
         arc_info.WallixBastionStatus = "FAIL";
         report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, tvtime());
-        //report_message.log5("type=\"SESSION_CREATION_FAILED\"");
 
         throw;
     }

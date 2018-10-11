@@ -56,8 +56,6 @@ struct ReportMessageApi : noncopyable
 {
     virtual void report(const char * reason, const char * message) = 0;
 
-    virtual void log5(const std::string & info) = 0;
-
     virtual void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) = 0;
 
     virtual void update_inactivity_timeout() = 0;
@@ -73,11 +71,6 @@ struct NullReportMessage : ReportMessageApi
     {
         (void)reason;
         (void)message;
-    }
-
-    void log5(const std::string & info) override
-    {
-        (void)info;
     }
 
     void log6(const std::string & /*info*/, const ArcsightLogInfo & /*asl_info*/, const timeval /*time*/) override

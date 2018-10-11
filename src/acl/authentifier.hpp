@@ -108,17 +108,6 @@ public:
         }
     }
 
-    void log5(const std::string & info) override
-    {
-        // TODO: should we delay logs sent to SIEM ?
-        if (this->acl_serial && this->session_log_is_open) {
-            this->acl_serial->log5(info);
-        }
-        else {
-            this->buffered_log_params.push_back({info});
-        }
-    }
-
     void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) override
     {
         // TODO: should we delay logs sent to SIEM ?
@@ -154,7 +143,6 @@ public:
 
             for (LogParam const & log_param : this->buffered_log_params) {
 
-                //this->acl_serial->log5(log_param.info);
                 ArcsightLogInfo asl_info;
 
                 this->acl_serial->log6(log_param.info, asl_info, tvtime());

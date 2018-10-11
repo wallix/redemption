@@ -1275,8 +1275,6 @@ public:
                 {"type", "SESSION_ENDING_IN_PROGRESS"},
             });
 
-//             this->report_message.log5(info);
-
             ArcsightLogInfo arc_info;
             arc_info.name = "SESSION_ENDING_IN_PROGRESS";
             arc_info.ApplicationProtocol = "rdp";
@@ -1310,8 +1308,6 @@ public:
 
                     this->report_message.log6(info, arc_info, tvtime());
 
-//                     this->report_message.log5(info);
-
                     if (bool(this->verbose & RDPVerbose::sesprobe)) {
                         LOG(LOG_INFO, "%s", info);
                     }
@@ -1339,8 +1335,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-//                         this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1366,8 +1360,6 @@ public:
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                         this->report_message.log6(info, arc_info, tvtime());
-
-//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1396,8 +1388,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-//                         this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1422,8 +1412,6 @@ public:
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                         this->report_message.log6(info, arc_info, tvtime());
-
-//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1457,8 +1445,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-                        this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1489,8 +1475,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-//                         this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1514,8 +1498,6 @@ public:
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                         this->report_message.log6(info, arc_info, tvtime());
-
-//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
@@ -1572,8 +1554,6 @@ public:
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                             this->report_message.log6(info, arc_info, tvtime());
-
-//                             this->report_message.log5(info);
 
                             {
                                 char message[4096];
@@ -1650,8 +1630,6 @@ public:
 
                             this->report_message.log6(info, arc_info, tvtime());
 
-//                             this->report_message.log5(info);
-
                             {
                                 char message[4096];
 
@@ -1711,8 +1689,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-//                         this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1737,8 +1713,6 @@ public:
 
                         this->report_message.log6(info, arc_info, tvtime());
 
-//                         this->report_message.log5(info);
-
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
                         }
@@ -1762,8 +1736,6 @@ public:
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
                         this->report_message.log6(info, arc_info, tvtime());
-
-//                         this->report_message.log5(info);
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
                             LOG(LOG_INFO, "%s", info);
