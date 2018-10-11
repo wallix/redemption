@@ -4135,10 +4135,6 @@ test-run tests/mod/rdp/test_rdp :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/mod/rdp/test_rdp_log :
-  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_log.cpp
-:
-;
 test-run tests/mod/rdp/test_rdp_metrics :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_metrics.cpp
 :
@@ -5847,7 +5843,6 @@ alias test_virtual_channel_data_sender : tests/mod/rdp/channels/test_virtual_cha
 alias test_virtual_channel_data_sender.coverage : tests/mod/rdp/channels/test_virtual_channel_data_sender.coverage ;
 alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp.coverage : tests/mod/rdp/test_rdp.coverage ;
-alias test_rdp_log : tests/mod/rdp/test_rdp_log ;
 alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
@@ -6353,7 +6348,6 @@ alias tests/mod/rdp/channels.norec :
 ;
 alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
-  tests/mod/rdp/test_rdp_log
   tests/mod/rdp/test_rdp_metrics
   tests/mod/rdp/test_rdp_orders
   tests/mod/rdp/test_rdp_params
