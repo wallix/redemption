@@ -30,6 +30,46 @@
 
 class RDPMetrics
 {
+public:
+    struct FormatListPDU_ShortName {
+        //  FORMAT_LIST_MAX_SIZE
+
+        uint32_t    formatID = 0;
+        uint8_t     formatUTF16Name[32] = {0};
+        uint8_t     formatUTF8Name[16] = {0};
+
+        FormatListPDU_ShortName() = default;
+
+        void emit(OutStream & stream) const {
+            stream.out_uint32_le(this->formatID);
+            stream.out_copy_bytes(this->formatUTF16Name, 32);
+        }
+
+        void recv(InStream & stream) {
+            if (!stream.in_check_rem(36)) {
+                LOG( LOG_INFO
+                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
+                    , 36u, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+
+            this->formatID = stream.in_uint32_le();
+
+            stream.in_copy_bytes(this->formatUTF16Name, 32);
+
+            ::UTF16toUTF8(
+            this->formatUTF16Name+1,
+            32,
+            this->formatUTF8Name,
+            16);
+        }
+
+        void log() const {
+            LOG(LOG_INFO, "     Format List PDU Short Name:");
+            LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, RDPECLIP::get_FormatId_name(this->formatID));
+            LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
+        }
+    };
 
 private:
 
@@ -248,7 +288,7 @@ public:
                                 known_format_not_found = false;
                             }
                         } else {
-                            RDPECLIP::FormatListPDU_ShortName fl_sn;
+                            FormatListPDU_ShortName fl_sn;
                             fl_sn.recv(chunk);
                             formatID = fl_sn.formatID;
                             formatName = char_ptr_cast(fl_sn.formatUTF8Name);
@@ -393,7 +433,7 @@ public:
                                     known_format_not_found = false;
                                 }
                             } else {
-                                RDPECLIP::FormatListPDU_ShortName fl_sn;
+                                FormatListPDU_ShortName fl_sn;
                                 fl_sn.recv(chunk);
                                 formatID = fl_sn.formatID;
                                 formatName = char_ptr_cast(fl_sn.formatUTF8Name);

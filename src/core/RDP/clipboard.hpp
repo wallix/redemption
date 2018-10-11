@@ -1322,48 +1322,6 @@ struct FormatListPDU_LongName {
 
 };
 
-struct FormatListPDU_ShortName {
-    //  FORMAT_LIST_MAX_SIZE
-
-    uint32_t    formatID = 0;
-    uint8_t     formatUTF16Name[32] = {0};
-    uint8_t     formatUTF8Name[16] = {0};
-
-    FormatListPDU_ShortName() = default;
-
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->formatID);
-        stream.out_copy_bytes(this->formatUTF16Name, 32);
-    }
-
-    void recv(InStream & stream) {
-        if (!stream.in_check_rem(36)) {
-            LOG( LOG_INFO
-                , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
-                , 36u, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        this->formatID = stream.in_uint32_le();
-
-        stream.in_copy_bytes(this->formatUTF16Name, 32);
-
-        ::UTF16toUTF8(
-        this->formatUTF16Name+1,
-        32,
-        this->formatUTF8Name,
-        16);
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Format List PDU Short Name:");
-        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, get_FormatId_name(this->formatID));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
-    }
-
-};
-
-
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 // =====================================================================
 // The Format List Response PDU is sent as a reply to the Format List PDU. It
