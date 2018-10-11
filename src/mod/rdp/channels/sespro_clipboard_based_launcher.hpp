@@ -226,7 +226,7 @@ public:
 
                         RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(1);
 
-                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0,
+                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, RDPECLIP::CB_RESPONSE__NONE_,
                             clipboard_caps_pdu.size() + general_cap_set.size());
 
                         StaticOutStream<1024> out_s;
@@ -249,15 +249,23 @@ public:
 
                     // Format List PDU.
                     {
+                        RDPECLIP::FormatListPDUEx format_list_pdu;
+                        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
                         const bool use_long_format_names =
                             (this->cliprdr_channel ?
                              this->cliprdr_channel->use_long_format_names() :
                              false);
+                        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-                        const bool unicodetext = false;
-                        RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
-                        StaticOutStream<256>    out_s;
-                        format_list_pdu.emit(out_s);
+                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                            format_list_pdu.size(use_long_format_names));
+
+                        StaticOutStream<256> out_s;
+
+                        clipboard_header.emit(out_s);
+                        format_list_pdu.emit(out_s, use_long_format_names);
 
                         const size_t totalLength = out_s.get_offset();
                         InStream in_s(out_s.get_data(), totalLength);
@@ -418,16 +426,23 @@ public:
                 self.delay_wainting_clipboard_response = true;
 
                 {
+                    RDPECLIP::FormatListPDUEx format_list_pdu;
+                    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
                     const bool use_long_format_names =
                         (self.cliprdr_channel ?
                          self.cliprdr_channel->use_long_format_names() :
                          false);
+                    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-                    const bool unicodetext = false;
-                    RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+                    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                        format_list_pdu.size(use_long_format_names));
+
                     StaticOutStream<256>    out_s;
 
-                    format_list_pdu.emit(out_s);
+                    clipboard_header.emit(out_s);
+                    format_list_pdu.emit(out_s, use_long_format_names);
 
                     const size_t totalLength = out_s.get_offset();
 
@@ -578,16 +593,23 @@ public:
             const uint16_t msgType = chunk.in_uint16_le();
             chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
             if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                RDPECLIP::FormatListPDUEx format_list_pdu;
+                format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
                 const bool use_long_format_names =
                     (this->cliprdr_channel ?
                      this->cliprdr_channel->use_long_format_names() :
                      false);
-                const bool unicodetext = false;
-                RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
-                StaticOutStream<256>    out_s;
+                const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-                format_list_pdu.emit(out_s);
+                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                    RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                    format_list_pdu.size(use_long_format_names));
+
+                StaticOutStream<256> out_s;
+
+                clipboard_header.emit(out_s);
+                format_list_pdu.emit(out_s, use_long_format_names);
 
                 const size_t totalLength = out_s.get_offset();
 
@@ -692,15 +714,23 @@ private:
             return;
         }
 
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
         const bool use_long_format_names =
             (this->cliprdr_channel ?
              this->cliprdr_channel->use_long_format_names() :
              false);
-        const bool unicodetext = false;
-        RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-        StaticOutStream<256>    out_s;
-        format_list_pdu.emit(out_s);
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        StaticOutStream<256> out_s;
+
+        clipboard_header.emit(out_s);
+        format_list_pdu.emit(out_s, use_long_format_names);
 
         const size_t totalLength = out_s.get_offset();
         InStream in_s(out_s.get_data(), totalLength);

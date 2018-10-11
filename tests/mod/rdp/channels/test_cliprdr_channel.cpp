@@ -506,13 +506,21 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     InStream virtual_channel_stream(virtual_channel_data);
 
 
-    const bool unicodetext           = false;
+    RDPECLIP::FormatListPDUEx format_list_pdu;
+    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
     const bool use_long_format_names = true;    // Malformation
+    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-    RDPECLIP::FormatListPDU format_list_pdu(use_long_format_names, unicodetext);
+    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+        format_list_pdu.size(use_long_format_names));
 
-    StaticOutStream<256>    out_s;
-    format_list_pdu.emit(out_s);
+    StaticOutStream<256> out_s;
+
+    clipboard_header.emit(out_s);
+    format_list_pdu.emit(out_s, use_long_format_names);
+
 
     const size_t totalLength = out_s.get_offset();
 

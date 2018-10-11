@@ -1677,23 +1677,30 @@ public:
                             "Send Format List PDU.");
                 }
 
-                const bool unicodetext = false;
-                RDPECLIP::FormatListPDU format_list_pdu(this->use_long_format_names(), unicodetext);
-                StaticOutStream<1024> out_stream;
+                RDPECLIP::FormatListPDUEx format_list_pdu;
+                format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
-                format_list_pdu.emit(out_stream);
+                const bool use_long_format_names = this->use_long_format_names();
+                const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
-                const uint32_t total_length      = out_stream.get_offset();
-                const uint32_t flags             =
-                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-                const uint8_t* chunk_data        = out_stream.get_data();
-                const uint32_t chunk_data_length = total_length;
+                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                    RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                    format_list_pdu.size(use_long_format_names));
+
+                StaticOutStream<256> out_s;
+
+                clipboard_header.emit(out_s);
+                format_list_pdu.emit(out_s, use_long_format_names);
+
+                const size_t totalLength = out_s.get_offset();
+                InStream in_s(out_s.get_data(), totalLength);
 
                 this->send_message_to_server(
-                    total_length,
-                    flags,
-                    chunk_data,
-                    chunk_data_length);
+                        totalLength,
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                        out_s.get_data(),
+                        totalLength
+                    );
             }
 
             return false;

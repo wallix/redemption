@@ -63,7 +63,23 @@ struct CopyPasteFront : FakeFront
 
         switch (rp.msgType()) {
             case RDPECLIP::CB_MONITOR_READY:
-                this->send_to_server(RDPECLIP::FormatListPDU());
+            {
+                RDPECLIP::FormatListPDUEx format_list_pdu;
+                format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
+                const bool use_long_format_names = false;
+                const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+                    RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                    format_list_pdu.size(use_long_format_names));
+
+                StaticOutStream<256> out_s;
+                clipboard_header.emit(out_s);
+                format_list_pdu.emit(out_s, use_long_format_names);
+                InStream in_s(out_s.get_data(), out_s.get_offset());
+                this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+            }
             break;
             //case RDPECLIP::CB_FORMAT_LIST:
             //    break;
@@ -89,7 +105,22 @@ struct CopyPasteFront : FakeFront
 
     void copy(const char * s) {
         this->str = s;
-        this->send_to_server(RDPECLIP::FormatListPDU());
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
+        const bool use_long_format_names = false;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        StaticOutStream<256> out_s;
+        clipboard_header.emit(out_s);
+        format_list_pdu.emit(out_s, use_long_format_names);
+        InStream in_s(out_s.get_data(), out_s.get_offset());
+        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
 
 private:
