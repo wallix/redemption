@@ -2667,16 +2667,17 @@ struct CliprdrLogState
 
 static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-       // InStream chunk =  stream.clone();
+        InStream chunk =  stream.clone();
+
         CliprdrHeader header;
-        header.recv(stream);
+        header.recv(chunk);
 
         switch (header.msgType()) {
 
             case CB_MONITOR_READY:
             {
                 ServerMonitorReadyPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 header.log();
                 pdu.log();
             }
@@ -2687,7 +2688,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                 header.log();
 
                 FormatListPDUEx format_list_pdu;
-                format_list_pdu.recv(stream, state.use_long_format_names, (header.msgFlags() & CB_ASCII_NAMES));
+                format_list_pdu.recv(chunk, state.use_long_format_names, (header.msgFlags() & CB_ASCII_NAMES));
                 format_list_pdu.log(LOG_INFO);
             }
                 break;
@@ -2743,7 +2744,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_TEMP_DIRECTORY:
             {
                 ClientTemporaryDirectoryPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 header.log();
                 pdu.log();
             }
@@ -2752,12 +2753,12 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_CLIP_CAPS:
             {
                 ClipboardCapabilitiesPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 header.log();
                 pdu.log();
 
                 GeneralCapabilitySet pdu2;
-                pdu2.recv(stream);
+                pdu2.recv(chunk);
                 pdu2.log();
 
                 if (state.use_long_format_names) {
