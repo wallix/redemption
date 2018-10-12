@@ -462,7 +462,7 @@ public:
                 if (asl_info.endTime) {
                     timeval time = {__time_t(asl_info.endTime),  0};
                     extension += " end=";
-                    this->arcsight_text_formating(extension, siem_log_gmdatetime(time));
+                    this->arcsight_text_formating(extension, arcsight_gmdatetime(time));
                 }
                 if (!asl_info.fileName.empty()) {
                     extension += " fname=";

@@ -32,6 +32,11 @@ RED_AUTO_TEST_CASE(TestTextdate)
     RED_CHECK_SMEM("2018-08-02"_av, text_gmdate(to_timeval(1533211681s)));
 
     RED_CHECK_SMEM("1970-01-01 00:00:00"_av, text_gmdatetime(to_timeval(0s)));
+    RED_CHECK_SMEM("2018-08-02 12:08:01"_av, text_gmdatetime(to_timeval(1533211681s)));
 
     RED_CHECK_SMEM("1970-01-01_00-00-00"_av, filename_gmdatetime(to_timeval(0s)));
+    RED_CHECK_SMEM("2018-08-02_12-08-01"_av, filename_gmdatetime(to_timeval(1533211681s)));
+
+    RED_CHECK_SMEM("Jan 01 1970 00:00:00"_av, arcsight_gmdatetime(to_timeval(0s)));
+    RED_CHECK_SMEM("Aug 02 2018 12:08:01"_av, arcsight_gmdatetime(to_timeval(1533211681s)));
 }
