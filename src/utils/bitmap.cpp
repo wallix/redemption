@@ -286,7 +286,7 @@ void Bitmap::compress(BitsPerPixel session_color_depth, OutStream & outbuffer) c
         this->cx(),
         this->cy(),
         this->line_size(),
-        ConstImageDataView::BitsPerPixel(this->bpp()),
+        this->bpp(),
         ConstImageDataView::Storage::BottomToTop
     };
 
@@ -380,7 +380,7 @@ Bitmap::operator ConstImageDataView() const
         this->data(),
         this->cx(), this->cy(),
         this->line_size(),
-        ConstImageDataView::BitsPerPixel(this->bpp()),
+        this->bpp(),
         ConstImageDataView::Storage::BottomToTop,
         &this->data_bitmap->palette()
     };
