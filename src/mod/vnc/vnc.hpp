@@ -2909,14 +2909,12 @@ private:
                         RDPECLIP::CB_FORMAT_LIST_RESPONSE);
                 }
 
-                bool response_ok = true;
-
                 // Build and send the CB_FORMAT_LIST_RESPONSE (with status = OK)
                 // 03 00 01 00 00 00 00 00 00 00 00 00
-                RDPECLIP::FormatListResponsePDU format_list_response_pdu(response_ok);
-                StaticOutStream<256>            out_s;
+                RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
+                StaticOutStream<256>    out_s;
 
-                format_list_response_pdu.emit(out_s);
+                clipboard_header.emit(out_s);
 
                 size_t chunk_size = out_s.get_offset();
 

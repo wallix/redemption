@@ -1261,29 +1261,21 @@ constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 struct FormatListResponsePDU
 {
-    CliprdrHeader header;
-    explicit FormatListResponsePDU(bool response_ok)
-        : header( CB_FORMAT_LIST_RESPONSE
-                       , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                       , 0) {
-    }   // FormatListResponsePDU(bool response_ok)
+    void emit(OutStream &) const {}
 
-    FormatListResponsePDU() = default;
+    void recv(InStream &) {}
 
-    void emit(OutStream & stream) const {
-        this->header.emit(stream);
+    static constexpr size_t size() {
+        return 0;
     }
 
-    void recv(InStream & stream)
-    {
-        this->header.recv(stream);
+    void log(int level) const {
+        LOG(level, "FormatListResponsePDU");
     }
 
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Format List Response PDU");
     }
-
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
@@ -2676,9 +2668,10 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
             case CB_MONITOR_READY:
             {
+                header.log();
+
                 ServerMonitorReadyPDU pdu;
                 pdu.recv(chunk);
-                header.log();
                 pdu.log();
             }
                 break;
@@ -2695,9 +2688,10 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
             case CB_FORMAT_LIST_RESPONSE:
             {
-                FormatListResponsePDU pdu;
-                pdu.recv(stream);
                 header.log();
+
+                FormatListResponsePDU pdu;
+                pdu.recv(chunk);
                 pdu.log();
             }
                 break;
@@ -2706,7 +2700,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 FormatDataRequestPDU pdu;
                 pdu.recv(stream);
-                header.log();
                 pdu.log();
 
                 state.requestedFormatId = pdu.requestedFormatId;
@@ -2721,7 +2714,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FormatDataResponsePDU_MetaFilePic pdu;
                         pdu.recv(stream);
-                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2731,7 +2723,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FormatDataResponsePDU_Text pdu;
                         pdu.recv(stream);
-                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2743,26 +2734,28 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
             case CB_TEMP_DIRECTORY:
             {
+                header.log();
+
                 ClientTemporaryDirectoryPDU pdu;
                 pdu.recv(chunk);
-                header.log();
                 pdu.log();
             }
                 break;
 
             case CB_CLIP_CAPS:
             {
+                header.log();
+
                 ClipboardCapabilitiesPDU pdu;
                 pdu.recv(chunk);
-                header.log();
                 pdu.log();
 
-                GeneralCapabilitySet pdu2;
-                pdu2.recv(chunk);
-                pdu2.log();
+                GeneralCapabilitySet caps;
+                caps.recv(chunk);
+                caps.log();
 
                 if (state.use_long_format_names) {
-                    state.use_long_format_names = bool(pdu2.generalFlags() & CB_USE_LONG_FORMAT_NAMES);
+                    state.use_long_format_names = bool(caps.generalFlags() & CB_USE_LONG_FORMAT_NAMES);
                 }
             }
                 break;
@@ -2771,7 +2764,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 FileContentsRequestPDU pdu;
                 pdu.recv(stream);
-                header.log();
                 pdu.log();
 
                 state.file_content_request_flag = pdu.flag;
@@ -2786,7 +2778,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FileContentsResponse_Size pdu;
                         pdu.recv(stream);
-                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2795,7 +2786,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     {
                         FileContentsResponse_Range pdu;
                         pdu.recv(stream);
-                        header.log();
                         pdu.log();
                     }
                         break;
@@ -2809,7 +2799,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 LockClipboardDataPDU pdu;
                 pdu.recv(stream);
-                header.log();
                 pdu.log();
             }
                 break;
@@ -2818,7 +2807,6 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             {
                 UnlockClipboardDataPDU pdu;
                 pdu.recv(stream);
-                header.log();
                 pdu.log();
             }
                 break;

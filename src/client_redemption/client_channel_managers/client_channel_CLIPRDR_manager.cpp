@@ -438,7 +438,6 @@
                                 }
                             }
 
-//                             RDPECLIP::FormatListResponsePDU formatListResponsePDU(true);
                             StaticOutStream<256> out_stream;
                             RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
                             formatListResponsePDUHeader.emit(out_stream);
