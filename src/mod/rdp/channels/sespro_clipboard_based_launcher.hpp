@@ -716,7 +716,8 @@ public:
             }
         }
 
-        if (this->clipboard_initialized) {
+        if (this->clipboard_initialized &&
+            bool(this->current_client_format_list_pdu)) {
             // Sends client Format List PDU to server
             this->cliprdr_channel->process_client_message(
                     this->current_client_format_list_pdu_length,
