@@ -300,10 +300,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_METAFILEPICT, "\0", 1);
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -378,10 +388,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -460,7 +480,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
              );
 
    RDPMetrics metrics(&m);
-   
+
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
    std::string expected_log_metrics;
 
@@ -469,10 +489,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -539,9 +569,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
              );
 
    RDPMetrics metrics(&m);
-   
+
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
-   
+
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 12 0 0 0 0 0 0 0 0 0 0 0\n");
 
     { // CLIENT PDU
@@ -670,17 +700,27 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
              );
 
    RDPMetrics metrics(&m);
-   
+
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
 
    { // FORMAT LIST INITIALISATION
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -695,10 +735,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_METAFILEPICT, "\0", 1);
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -771,10 +821,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
    {  // FORMAT LIST INITIALISATION
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -789,10 +849,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -871,8 +941,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
              , 24h
              , 5s
              );
-                     
-   RDPMetrics metrics(&m);                     
+
+   RDPMetrics metrics(&m);
 
    RED_CHECK_FILE_EXISTS(wd[logindex1]);
    std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 54 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -880,10 +950,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
    {  // FORMAT LIST INITIALISATION
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 42+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -898,10 +978,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
        expected_log_metrics += expected_log_metrics_next;
        epoch += 5s;
        StaticOutStream<1600> out_stream;
-       RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, 2+4);
-       format_list_header.emit(out_stream);
-       RDPECLIP::FormatListPDU_LongName format(RDPECLIP::CF_TEXT, "\0", 1);
-       format.emit(out_stream);
+
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+
+        const bool use_long_format_names = true;
+        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+            format_list_pdu.size(use_long_format_names));
+
+        clipboard_header.emit(out_stream);
+        format_list_pdu.emit(out_stream, use_long_format_names);
+
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);

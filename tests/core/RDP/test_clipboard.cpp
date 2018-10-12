@@ -411,51 +411,25 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
 RED_AUTO_TEST_CASE(TestFormatListPDU) {
 
-    // inData
-    std::string name1("FileContents");
-    std::string name2("FileGroupDescriptorW");
-    std::string name3("\0\0", 2);
+    RDPECLIP::FormatListPDUEx format_list_pdu;
+    format_list_pdu.add_format_name(48026, "FileContents");
+    format_list_pdu.add_format_name(48025, "FileGroupDescriptorW");
+    format_list_pdu.add_format_name(RDPECLIP::CF_UNICODETEXT);
+    format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
+    format_list_pdu.add_format_name(RDPECLIP::CF_METAFILEPICT);
+
+    const bool use_long_format_names = true;
+    const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+    RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+        format_list_pdu.size(use_long_format_names));
 
     // Init stream format list PDU long name
     StaticOutStream<1024> out_stream;
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST, 0, 0);
 
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long0(48026,
-                                                           name1.c_str(),
-                                                           name1.size());
-    header.dataLen(header.dataLen() + format_list_pdu_long0.formatDataNameUTF16Len + 4);
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long1(48025,
-                                                           name2.c_str(),
-                                                           name2.size());
-    header.dataLen(header.dataLen() + format_list_pdu_long1.formatDataNameUTF16Len + 4);
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long2(RDPECLIP::CF_UNICODETEXT,
-                                                           name3.c_str(),
-                                                           name3.size());
-    header.dataLen(header.dataLen() + format_list_pdu_long2.formatDataNameUTF16Len + 4);
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long3(RDPECLIP::CF_TEXT,
-                                                           name3.c_str(),
-                                                           name3.size());
-    header.dataLen(header.dataLen() + format_list_pdu_long3.formatDataNameUTF16Len + 4);
-    RDPECLIP::FormatListPDU_LongName format_list_pdu_long4(RDPECLIP::CF_METAFILEPICT,
-                                                           name3.c_str(),
-                                                           name3.size());
-    header.dataLen(header.dataLen() + format_list_pdu_long4.formatDataNameUTF16Len + 4);
-
-    header.emit(out_stream);
-    format_list_pdu_long0.emit(out_stream);
-    format_list_pdu_long1.emit(out_stream);
-    format_list_pdu_long2.emit(out_stream);
-    format_list_pdu_long3.emit(out_stream);
-    format_list_pdu_long4.emit(out_stream);
-
-//     header.log();
-//     format_list_pdu_long0.log();
-//     format_list_pdu_long1.log();
-//     format_list_pdu_long2.log();
-//     format_list_pdu_long3.log();
-//     format_list_pdu_long4.log();
-//
-//     hexdump(out_stream.get_data(), out_stream.get_offset(), 16);
+    clipboard_header.emit(out_stream);
+    format_list_pdu.emit(out_stream, use_long_format_names);
 
     const char exp_data[] =
         "\x02\x00\x00\x00\x5e\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00" //....^.......F.i.

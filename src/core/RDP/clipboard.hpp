@@ -1234,93 +1234,10 @@ inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx
 }
 
 
-
 constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW\0");
 constexpr auto FILECONTENTS         = cstr_array_view("FileContents\0");
 constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
-
-
-struct FormatListPDU_LongName {
-
-    //  FORMAT_LIST_MAX_SIZE
-
-    uint32_t    formatID = 0;
-    uint8_t     formatUTF16Name[500] = {0};
-    uint8_t     formatUTF8Name[500] = {0};
-    std::size_t formatDataNameUTF8Len = 0;
-    std::size_t formatDataNameUTF16Len = 0;
-
-    explicit FormatListPDU_LongName( const uint32_t  formatID
-                                   , const char * formatUTF8Name
-                                   , const std::size_t formatNameUTF8Len)
-    : formatID(formatID)
-    , formatDataNameUTF8Len(formatNameUTF8Len > 500 ? 500:formatNameUTF8Len)
-    {
-         memcpy(this->formatUTF8Name, formatUTF8Name, this->formatDataNameUTF8Len);
-         this->formatDataNameUTF16Len = ::UTF8toUTF16(
-            byte_ptr_cast(formatUTF8Name),
-            this->formatUTF16Name, formatNameUTF8Len*2);
-
-        this->formatDataNameUTF16Len += 2;
-
-        if (this->formatDataNameUTF16Len > 500) {
-            this->formatUTF16Name[498] = 0x0;
-            this->formatUTF16Name[499] = 0x0;
-            this->formatDataNameUTF16Len = 500;
-        }
-    }
-
-    FormatListPDU_LongName() = default;
-
-    void emit(OutStream & stream) const {
-
-        stream.out_uint32_le(this->formatID);
-        stream.out_copy_bytes(this->formatUTF16Name, this->formatDataNameUTF16Len);
-    }
-
-    uint16_t len() const {
-        return sizeof(this->formatID)+this->formatDataNameUTF16Len;
-    }
-
-    void recv(InStream & stream) {
-
-        this->formatID = stream.in_uint32_le();
-
-        uint16_t c = -1;
-
-        size_t name_len = 0;
-        while ((c != 0x00) && (stream.in_remain() >= 2) && (name_len <= 498)) {
-            c = stream.in_uint16_le();
-            this->formatUTF16Name[name_len] = c >> 8;
-            name_len ++;
-            this->formatUTF16Name[name_len] = c;
-            name_len ++;
-        }
-        this->formatDataNameUTF16Len = name_len;
-
-        this->formatDataNameUTF8Len = ::UTF16toUTF8(
-        this->formatUTF16Name+1,
-        this->formatDataNameUTF16Len,
-        this->formatUTF8Name,
-        500);
-
-        if (this->formatDataNameUTF8Len  > 500) {
-            this->formatDataNameUTF8Len  = 500;
-        }
-
-        this->formatUTF8Name[this->formatDataNameUTF8Len -1] = 0;
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Format List PDU Long Name:");
-        LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s",
-                            this->formatID, get_FormatId_name(this->formatID));
-        LOG(LOG_INFO, "             * formatListDataName = \"%s\" (%zu bytes)",
-                            this->formatUTF8Name, this->formatDataNameUTF16Len);
-    }
-
-};
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
 // =====================================================================

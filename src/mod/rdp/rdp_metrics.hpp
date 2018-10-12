@@ -30,49 +30,6 @@
 
 class RDPMetrics
 {
-public:
-    struct FormatListPDU_ShortName {
-        //  FORMAT_LIST_MAX_SIZE
-
-        uint32_t    formatID = 0;
-        uint8_t     formatUTF16Name[32] = {0};
-        uint8_t     formatUTF8Name[16] = {0};
-
-        FormatListPDU_ShortName() = default;
-
-        void emit(OutStream & stream) const {
-            stream.out_uint32_le(this->formatID);
-            stream.out_copy_bytes(this->formatUTF16Name, 32);
-        }
-
-        void recv(InStream & stream) {
-            if (!stream.in_check_rem(36)) {
-                LOG( LOG_INFO
-                    , "RDPECLIP::FormatListPDU truncated CLIPRDR_SHORT_FORMAT_NAME structure, need=%u remains=%zu"
-                    , 36u, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            this->formatID = stream.in_uint32_le();
-
-            stream.in_copy_bytes(this->formatUTF16Name, 32);
-
-            ::UTF16toUTF8(
-            this->formatUTF16Name+1,
-            32,
-            this->formatUTF8Name,
-            16);
-        }
-
-        void log() const {
-            LOG(LOG_INFO, "     Format List PDU Short Name:");
-            LOG(LOG_INFO, "             * formatListDataIDs  = 0x%08x (4 bytes): %s", this->formatID, RDPECLIP::get_FormatId_name(this->formatID));
-            LOG(LOG_INFO, "             * formatListDataName = \"%s\" (32 bytes)", this->formatUTF8Name);
-        }
-    };
-
-private:
-
     enum : int {
 
         main_channel_data_from_client,              // number of byte sent from client to main channel.
@@ -273,29 +230,16 @@ public:
 
                 case RDPECLIP::CB_FORMAT_LIST:
                 {
-                    bool known_format_not_found = true;
-                    while (known_format_not_found) {
+                    RDPECLIP::FormatListPDUEx format_list_pdu;
+                    format_list_pdu.recv(chunk, this->use_long_format_names, (header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
 
-                        uint32_t formatID = 0;
-                        std::string formatName;
-                        if (this->use_long_format_names) {
-                            RDPECLIP::FormatListPDU_LongName fl_ln;
-                            fl_ln.recv(chunk);
-                            fl_ln.log();
-                            formatID = fl_ln.formatID;
-                            formatName = char_ptr_cast(fl_ln.formatUTF8Name);
-                            if (chunk.in_remain() <= 6) {
-                                known_format_not_found = false;
-                            }
-                        } else {
-                            FormatListPDU_ShortName fl_sn;
-                            fl_sn.recv(chunk);
-                            formatID = fl_sn.formatID;
-                            formatName = char_ptr_cast(fl_sn.formatUTF8Name);
-                            if (chunk.in_remain() <= 36) {
-                                known_format_not_found = false;
-                            }
-                        }
+                    bool known_format_not_found = true;
+                    for (size_t index = 0, count = format_list_pdu.num_format_names(); (index < count) && known_format_not_found; ++index) {
+                        RDPECLIP::FormatName const & format_name_local = format_list_pdu.format_name(index);
+                        format_name_local.log(LOG_INFO);
+
+                        uint32_t formatID = format_name_local.formatId();
+                        std::string formatName = format_name_local.format_name();
 
                         switch (formatID) {
 
@@ -416,31 +360,16 @@ public:
                 case RDPECLIP::CB_FORMAT_LIST:
                     if (this->cliprdr_init_format_list_done) {
 
+                        RDPECLIP::FormatListPDUEx format_list_pdu;
+                        format_list_pdu.recv(chunk, this->use_long_format_names, (header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
+
                         bool known_format_not_found = true;
-                        while (known_format_not_found) {
+                        for (size_t index = 0, count = format_list_pdu.num_format_names(); (index < count) && known_format_not_found; ++index) {
+                            RDPECLIP::FormatName const & format_name_local = format_list_pdu.format_name(index);
+                            format_name_local.log(LOG_INFO);
 
-                            uint32_t formatID = 0;
-                            std::string formatName;
-                            if (this->use_long_format_names) {
-
-                                RDPECLIP::FormatListPDU_LongName fl_ln;
-                                fl_ln.recv(chunk);
-                                fl_ln.log();
-
-                                formatID = fl_ln.formatID;
-                                formatName = char_ptr_cast(fl_ln.formatUTF8Name);
-                                if (chunk.in_remain() <= 6) {
-                                    known_format_not_found = false;
-                                }
-                            } else {
-                                FormatListPDU_ShortName fl_sn;
-                                fl_sn.recv(chunk);
-                                formatID = fl_sn.formatID;
-                                formatName = char_ptr_cast(fl_sn.formatUTF8Name);
-                                if (chunk.in_remain() <= 36) {
-                                    known_format_not_found = false;
-                                }
-                            }
+                            uint32_t formatID = format_name_local.formatId();
+                            std::string formatName = format_name_local.format_name();
 
                             switch (formatID) {
 

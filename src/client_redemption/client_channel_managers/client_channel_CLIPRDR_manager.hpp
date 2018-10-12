@@ -172,19 +172,21 @@ public:
     }  _cb_filesList;
 
     // Config negociation
-    std::vector<RDPECLIP::FormatListPDU_LongName> formats_list;
-    size_t total_format_list_pdu_size;
     bool server_use_long_format_names = true;
     const uint16_t cCapabilitiesSets = 1;
     uint32_t generalFlags;
 
+    RDPECLIP::FormatListPDUEx format_list_pdu;
 
 
     ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
 
     ~ClientChannelCLIPRDRManager();
 
+private:
     void add_format(uint32_t ID, const std::string & name);
+
+public:
 
     void receive(InStream & chunk, int flags);
 
