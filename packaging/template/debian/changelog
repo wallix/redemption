@@ -1,3 +1,8 @@
+redemption (1.3.31%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 12 Oct 2018 17:39:23 +0200
+
 redemption (1.3.30%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Restore clipboard of session after Session Probe startup.
