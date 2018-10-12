@@ -67,10 +67,6 @@ private:
 
     const bool proxy_managed;   // Has not client.
 
-    std::unique_ptr<uint8_t[]> first_client_format_list_pdu;
-    size_t                     first_client_format_list_pdu_length = 0;
-    uint32_t                   first_client_format_list_pdu_flags  = 0;
-
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -537,23 +533,6 @@ public:
 
         const uint16_t msgFlags = chunk.in_uint16_le();
         const uint32_t dataLen  = chunk.in_uint32_le();
-
-        if (!this->first_client_format_list_pdu) {
-            this->first_client_format_list_pdu_length =
-                    2 + // msgType(2)
-                    2 + // msgFlags(2)
-                    4 + // dataLen(4)
-                    dataLen
-                ;
-            this->first_client_format_list_pdu =
-                std::make_unique<uint8_t[]>(
-                    this->first_client_format_list_pdu_length);
-
-            ::memcpy(this->first_client_format_list_pdu.get(),
-                chunk.get_data(), this->first_client_format_list_pdu_length);
-
-            first_client_format_list_pdu_flags = flags;
-        }
 
         if (!this->client_use_long_format_names ||
             !this->server_use_long_format_names) {
@@ -1504,28 +1483,6 @@ public:
         this->format_list_notifier             = launcher;
         this->format_list_response_notifier    = launcher;
         this->format_data_request_notifier     = launcher;
-    }
-
-    void empty_client_clipboard() {
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::empty_client_clipboard");
-        }
-
-        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE_NONE, 0);
-
-        StaticOutStream<256> out_s;
-
-        clipboard_header.emit(out_s);
-
-        const size_t totalLength = out_s.get_offset();
-
-        this->send_message_to_server(
-            totalLength,
-            this->first_client_format_list_pdu_flags,
-            out_s.get_data(),
-            totalLength);
     }
 };  // class ClipboardVirtualChannel
 

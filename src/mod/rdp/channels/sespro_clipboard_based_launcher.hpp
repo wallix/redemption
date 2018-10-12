@@ -73,6 +73,10 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 
     const RDPVerbose verbose;
 
+    std::unique_ptr<uint8_t[]> current_client_format_list_pdu;
+    size_t                     current_client_format_list_pdu_length = 0;
+    uint32_t                   current_client_format_list_pdu_flags  = 0;
+
 public:
     SessionProbeClipboardBasedLauncher(
         SessionReactor& session_reactor,
@@ -574,9 +578,20 @@ public:
 
         if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) &&
             (chunk.in_remain() >= 8 /* msgType(2) + msgFlags(2) + dataLen(4) */)) {
+            const uint8_t* current_chunk_pos  = chunk.get_current();
+            const size_t   current_chunk_size = chunk.in_remain();
+
+            assert(current_chunk_size == length);
+
             const uint16_t msgType = chunk.in_uint16_le();
-            chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
             if (msgType == RDPECLIP::CB_FORMAT_LIST) {
+                this->current_client_format_list_pdu_length = current_chunk_size;
+                this->current_client_format_list_pdu        =
+                    std::make_unique<uint8_t[]>(current_chunk_size);
+                ::memcpy(this->current_client_format_list_pdu.get(),
+                    current_chunk_pos, current_chunk_size);
+                this->current_client_format_list_pdu_flags  = flags;
+
                 const bool use_long_format_names =
                     (this->cliprdr_channel ?
                      this->cliprdr_channel->use_long_format_names() :
@@ -679,8 +694,14 @@ public:
             }
         }
 
-        if (this->clipboard_initialized) {
-            this->cliprdr_channel->empty_client_clipboard();
+        if (this->clipboard_initialized &&
+            bool(this->current_client_format_list_pdu)) {
+            // Sends client Format List PDU to server
+            this->cliprdr_channel->process_client_message(
+                    this->current_client_format_list_pdu_length,
+                    this->current_client_format_list_pdu_flags,
+                    this->current_client_format_list_pdu.get(),
+                    this->current_client_format_list_pdu_length);
         }
     }
 
