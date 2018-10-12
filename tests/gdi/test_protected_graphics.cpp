@@ -23,7 +23,9 @@
 #define RED_TEST_MODULE GraphicsOSD
 #include "system/redemption_unit_tests.hpp"
 
-#include "core/RDP/RDPDrawable.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/bitmapupdate.hpp"
 #include "gdi/protected_graphics.hpp"
 #include "transport/out_filename_sequence_transport.hpp"
 #include "transport/transport.hpp"
@@ -32,6 +34,7 @@
 #include "utils/png.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "test_only/check_sig.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 
 #include <chrono>
 
@@ -39,17 +42,17 @@
 RED_AUTO_TEST_CASE(TestModOSD)
 {
     Rect screen_rect(0, 0, 800, 600);
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
     OutFilenameSequenceTransport trans(FilenameGenerator::PATH_FILE_PID_COUNT_EXTENSION, "/tmp/", "test", ".png", groupid, ReportError{});
 
-    auto do_snapshot = [](RDPDrawable& drawable, Transport& trans, timeval const& now){
+    auto do_snapshot = [](TestGraphic& drawable, Transport& trans, timeval const& now){
         drawable.trace_mouse();
         tm ptm;
         localtime_r(&now.tv_sec, &ptm);
-        TimestampTracer timestamp_tracer(gdi::get_mutable_image_view(drawable));
+        TimestampTracer timestamp_tracer(drawable.get_mutable_image_view());
         timestamp_tracer.trace(ptm);
         ::dump_png24(trans, drawable, true);
         trans.next();
@@ -59,7 +62,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
     timeval now;
     now.tv_sec = 1350998222;
@@ -72,7 +75,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
         int const bmp_y = 200;
         Rect const bmp_rect(bmp_x, bmp_y, bmp.cx(), bmp.cy());
         Rect const rect = bmp_rect.intersect(screen_rect.cx, screen_rect.cy);
-        drawable.draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
+        drawable->draw(RDPMemBlt(0, bmp_rect, 0xCC, 0, 0, 0), rect, bmp);
 
         now.tv_sec++;
         do_snapshot(drawable, trans, now);
@@ -104,7 +107,7 @@ RED_AUTO_TEST_CASE(TestModOSD)
 RED_AUTO_TEST_CASE(TestModOSD2)
 {
     Rect screen_rect(0, 0, 800, 600);
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
@@ -113,15 +116,15 @@ RED_AUTO_TEST_CASE(TestModOSD2)
     class ImageCaptureLocal
     {
         Transport & trans;
-        RDPDrawable & drawable;
+        TestGraphic & drawable;
         timeval start_capture;
         TimestampTracer timestamp_tracer;
 
     public:
-        ImageCaptureLocal(RDPDrawable & drawable, Transport & trans)
+        ImageCaptureLocal(TestGraphic & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(drawable))
+        , timestamp_tracer(drawable.get_mutable_image_view())
         {
         }
 
@@ -149,7 +152,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
     timeval now;
     now.tv_sec = 1350998222;
@@ -158,7 +161,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 
     {
         Rect const rect = Rect(100, 100, 200, 200);
-        drawable.draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
+        drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
         now.tv_sec++;
         consumer.do_snapshot(now);
@@ -195,7 +198,7 @@ RED_AUTO_TEST_CASE(TestModOSD2)
 RED_AUTO_TEST_CASE(TestModOSD3)
 {
     Rect screen_rect(0, 0, 800, 600);
-    RDPDrawable drawable(screen_rect.cx, screen_rect.cy);
+    TestGraphic drawable(screen_rect.cx, screen_rect.cy);
     auto const color_cxt = gdi::ColorCtx::depth24();
 
     const int groupid = 0;
@@ -204,15 +207,15 @@ RED_AUTO_TEST_CASE(TestModOSD3)
     class ImageCaptureLocal
     {
         Transport & trans;
-        RDPDrawable & drawable;
+        TestGraphic & drawable;
         timeval start_capture;
         TimestampTracer timestamp_tracer;
 
     public:
-        ImageCaptureLocal(RDPDrawable & drawable, Transport & trans)
+        ImageCaptureLocal(TestGraphic & drawable, Transport & trans)
         : trans(trans)
         , drawable(drawable)
-        , timestamp_tracer(gdi::get_mutable_image_view(drawable))
+        , timestamp_tracer(drawable.get_mutable_image_view())
         {
         }
 
@@ -240,7 +243,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
 
     drawable.show_mouse_cursor(false);
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, screen_rect.cx, screen_rect.cy), encode_color24()(RED)), screen_rect, color_cxt);
 
     timeval now;
     now.tv_sec = 1350998222;
@@ -249,7 +252,7 @@ RED_AUTO_TEST_CASE(TestModOSD3)
 
     {
         Rect const rect = Rect(100, 100, 200, 200);
-        drawable.draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
+        drawable->draw(RDPOpaqueRect(rect, encode_color24()(GREEN)), screen_rect, color_cxt);
 
         now.tv_sec++;
         consumer.do_snapshot(now);

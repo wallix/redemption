@@ -24,24 +24,22 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "gdi/graphic_api.hpp"
-#include "core/font.hpp"
-
-Font const font {FIXTURES_PATH "/Lato-Light_16.rbf"};
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TextMetrics)
 {
     {
-        gdi::TextMetrics text(font, "abc");
+        gdi::TextMetrics text(global_font_lato_light_16(), "abc");
         RED_CHECK_EQUAL(21, text.height);
         RED_CHECK_EQUAL(27, text.width);
     }
     {
-        gdi::TextMetrics text(font, "abcde");
+        gdi::TextMetrics text(global_font_lato_light_16(), "abcde");
         RED_CHECK_EQUAL(21, text.height);
         RED_CHECK_EQUAL(46, text.width);
     }
     {
-        gdi::TextMetrics text(font, "Ay");
+        gdi::TextMetrics text(global_font_lato_light_16(), "Ay");
         RED_CHECK_EQUAL(21, text.height);
         RED_CHECK_EQUAL(20, text.width);
     }
@@ -52,7 +50,7 @@ RED_AUTO_TEST_CASE(MultiLineTextMetrics)
     std::string out;
 
     {
-        gdi::MultiLineTextMetrics text(font,
+        gdi::MultiLineTextMetrics text(global_font_lato_light_16(),
             "abc efg fajshfkg kf gfjg hjgsj dj, fhsg h, sg, mshg szjh gkj,"
             " s hzgskhg shzktgs t lurzywiurtyzlis uhtzsli uyzi tyz liuhtzli"
             " tyzkr tyzdkl yzdk,  ylktyzdlk dlktuh lkzhluzo huwory gzl",
@@ -74,7 +72,7 @@ RED_AUTO_TEST_CASE(MultiLineTextMetricsEx)
     std::string out;
 
     {
-        gdi::MultiLineTextMetricsEx text(font,
+        gdi::MultiLineTextMetricsEx text(global_font_lato_light_16(),
             "Unauthorized access to this system is forbidden and will be prosecuted by law. By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
             0, 300, out);
         RED_CHECK_EQUAL(126, text.height);
@@ -95,7 +93,7 @@ RED_AUTO_TEST_CASE(MultiLineTextMetricsEx1)
     std::string out;
 
     {
-        gdi::MultiLineTextMetricsEx text(font,
+        gdi::MultiLineTextMetricsEx text(global_font_lato_light_16(),
             "Unauthorized access to this system is forbidden and will be prosecuted by law.<br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
             0, 300, out);
         RED_CHECK_EQUAL(126, text.height);
@@ -116,7 +114,7 @@ RED_AUTO_TEST_CASE(MultiLineTextMetricsEx2)
     std::string out;
 
     {
-        gdi::MultiLineTextMetricsEx text(font,
+        gdi::MultiLineTextMetricsEx text(global_font_lato_light_16(),
             "Unauthorized access to this system is forbidden and will be prosecuted by law.<br><br>By accessing this system, you agree that your actions may be monitored if unauthorized usage is suspected.",
             0, 300, out);
         RED_CHECK_EQUAL(147, text.height);

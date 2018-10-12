@@ -95,8 +95,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
             break;
 
             default:
-                LOG(LOG_INFO, "ERR FASTPATH");
-                throw Error(ERR_RDP_FASTPATH);
+                RED_CHECK(!"ERR FASTPATH");
         }
     }
 

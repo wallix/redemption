@@ -21,7 +21,7 @@
    Using lib boost functions for testing
 */
 
-#define RED_TEST_MODULE TestDrawable
+#define RED_TEST_MODULE TestGraphicable
 #include "system/redemption_unit_tests.hpp"
 
 #include "test_only/check_sig.hpp"
@@ -448,67 +448,67 @@ inline void test_scrblt2_impl(Drawable & gd, const uint8_t rop, const int cx, co
     RED_CHECK_SIG(gd, sig);                           \
 } while (0)
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltDown)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltDown)
 {
     test_scrblt2(0x00, 0, 20, "down00",
     "\xf8\xbd\xd7\x1d\x93\x78\x8c\xd9\x7a\x88\x6d\xfe\x52\x71\xe5\xaf\x7d\xba\x61\x46");
 }
 
-//RED_AUTO_TEST_CASE(TestDrawableScrBltDown)
+//RED_AUTO_TEST_CASE(TestGraphicableScrBltDown)
 //{
 //    test_scrblt(0x00, 0, 20, "down00",
 //    "\x3c\x39\xae\x2b\x84\x5b\xc6\xa8\x75\xc1\xaf\xbb\x5c\x26\xa9\x1f\x94\x24\xc4\x68");
 //}
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltRight)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltRight)
 {
     test_scrblt2(0x00, 20, 0, "right00",
     "\x76\xbb\x56\xf5\x70\xec\x7e\x19\xc7\x68\xe6\x32\xb3\x43\xf1\xc8\xf1\x78\x6e\xf1");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltLeft)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltLeft)
 {
     test_scrblt2(0x00, -20, 0, "left00",
     "\x05\xdf\xba\x3b\x9f\xa9\x5d\x1c\xa9\x12\xa0\x0b\x1d\x10\x26\x68\x41\xc7\x73\xd9");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltUp)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltUp)
 {
     test_scrblt2(0x00, 0, -20, "up00",
     "\x55\x73\x7e\xd8\x0a\x36\xde\x1c\x87\xb3\xbb\x78\x6c\xaf\xb2\xcf\x53\xab\xa2\xe6");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltLeftUp)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltLeftUp)
 {
     test_scrblt2(0x00, -20, -20, "left_up00",
     "\xb6\x9a\xe7\xd0\x97\xe1\x3b\xce\x8d\xef\x73\x43\xd2\x50\xba\xd0\x06\xe1\x6c\xca");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltDown11)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltDown11)
 {
     test_scrblt2(0x11, 0, 20, "down11",
     "\xd4\x3a\x6e\xea\x67\xe4\x0c\xe2\xc9\xde\xd0\x0f\x3f\xd7\x2d\x26\x93\xcf\x40\x53");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltRight11)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltRight11)
 {
     test_scrblt2(0x11, 20, 0, "right11",
     "\x44\x93\x9e\xf8\x40\x9d\x18\x24\x27\xcf\x53\x76\xde\xd6\x05\x0f\x33\x65\x79\xfc");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltLeft11)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltLeft11)
 {
     test_scrblt2(0x11, -20, 0, "left11",
     "\x8b\x54\x94\x20\x65\xf3\x91\x64\x9a\x25\xca\x18\x18\x46\x0c\x1f\x00\x22\x18\x7c");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltUp11)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltUp11)
 {
     test_scrblt2(0x11, 0, -20, "up11",
     "\x82\x1a\x1c\xa5\xe2\x53\x37\xbd\x39\x21\x74\xd6\xd8\x57\xd7\xaf\xaf\xe0\xc9\x18");
 }
 
-RED_AUTO_TEST_CASE(TestDrawableScrBltLeftUp11)
+RED_AUTO_TEST_CASE(TestGraphicableScrBltLeftUp11)
 {
     test_scrblt2(0x11, -20, -20, "left_up11",
     "\x02\xb8\x82\xa6\x44\x12\x7c\xcd\xb6\x38\xa3\xef\x1c\xe7\xaa\x54\xcd\xf2\x75\xdb");

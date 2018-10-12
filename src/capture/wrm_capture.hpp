@@ -26,7 +26,6 @@
 
 #include "capture/capture_params.hpp"
 
-#include "core/RDP/RDPDrawable.hpp"
 #include "core/RDP/RDPSerializer.hpp"
 #include "core/RDP/caches/bmpcache.hpp"
 #include "core/RDP/caches/glyphcache.hpp"

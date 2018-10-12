@@ -113,7 +113,7 @@ make targets.jam : : @gen_targets ;
 
 
 ## { test_web_video_mp4
-explicit test_web_video_mp4 tests/web_video/test.mp4 ;
+explicit test_web_video_mp4 tests/web_video/test.mp4 generate_video ;
 
 exe generate_video
 :

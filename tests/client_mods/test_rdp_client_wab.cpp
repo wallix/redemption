@@ -35,12 +35,11 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
-    int verbose = 256;
-
     ClientInfo info;
     info.keylayout             = 0x040C;
     info.console_session       = 0;
@@ -57,7 +56,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
 
-    FakeFront front(info, verbose);
+    FakeFront front(info.screen_info);
 
     // const char * name = "RDP Wab Target";
     // Uncomment the code block below to generate testing data.
@@ -75,23 +74,18 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     #include "fixtures/dump_wab.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     Inifile ini;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
-    Font font;
     Theme theme;
     ModRDPParams mod_rdp_params( "x"
                                , "x"
                                , "10.10.47.154"
                                , "192.168.1.100"
                                , 7
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -124,15 +118,11 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-
-    RED_CHECK_EQUAL(front.info.screen_info.width, 1024);
-    RED_CHECK_EQUAL(front.info.screen_info.height, 768);
+    RED_CHECK_EQUAL(info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     execute_mod(session_reactor, *mod, front, 8);
 
-    RED_CHECK_SIG(front.gd.impl(), "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
+    RED_CHECK_SIG(front, "\xbc\x5e\x77\xb0\x61\x27\x45\xb1\x3c\x87\xd2\x94\x59\xe7\x3e\x8d\x6c\xcc\xc3\x29");
     //front.dump_png("trace_wab_");
 }

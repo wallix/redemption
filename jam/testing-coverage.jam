@@ -91,15 +91,19 @@ lib libunit_test :
     # <cxxflags>-frtti
 ;
 
+constant CXXFLAGS_TEST :
+    <include>$(REDEMPTION_TEST_PATH)/includes
+    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+;
+
 constant TEST_DEPENDENCIES :
     <library>libunit_test
     <library>log_test.o
-    <include>$(REDEMPTION_TEST_PATH)/includes
     # <cxxflags>-frtti
     <define>BOOST_AUTO_TEST_MAIN
     <define>BOOST_TEST_DYN_LINK
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    $(CXXFLAGS_TEST)
 ;
 
 rule test-run ( target : source : requirements * : )

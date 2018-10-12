@@ -22,25 +22,23 @@
 #define RED_TEST_MODULE TestCopyPaste
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/clipboard.hpp"
-#include "core/font.hpp"
-#include "core/client_info.hpp"
 #include "mod/internal/copy_paste.hpp"
 #include "mod/internal/widget/edit.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 #include "test_only/check_sig.hpp"
+#include "test_only/core/font.hpp"
 
 #include <string>
 
 
 struct CopyPasteFront : FakeFront
 {
-    CopyPasteFront(ClientInfo & info, CopyPaste & copy_paste)
-    : FakeFront(info, 0)
+    CopyPasteFront(ScreenInfo & info, CopyPaste & copy_paste)
+    : FakeFront(info)
     , copy_paste(copy_paste)
     {
         CHANNELS::ChannelDef def;
@@ -154,29 +152,21 @@ public:
 
 RED_AUTO_TEST_CASE(TestPaste)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 120;
-    info.screen_info.height = 20;
+    ScreenInfo screen_info{BitsPerPixel{24}, 120, 20};
 
     CopyPaste copy_paste;
-    CopyPasteFront front(info, copy_paste);
-    TestDraw mod(info.screen_info.width, info.screen_info.height);
+    CopyPasteFront front(screen_info, copy_paste);
+    TestGraphic gd(screen_info.width, screen_info.height);
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
 
     CopyPasteProcess notifier(copy_paste);
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    WidgetScreen parent(gd, global_font_lato_light_16(), nullptr, Theme{});
+    parent.set_wh(screen_info.width, screen_info.height);
 
-    WidgetScreen parent(mod.gd, font, nullptr, Theme{});
-    parent.set_wh(info.screen_info.width, info.screen_info.height);
-
-    WidgetEdit edit(mod.gd, parent, &notifier, "", 0, PINK, ORANGE, RED, font);
+    WidgetEdit edit(gd, parent, &notifier, "", 0, PINK, ORANGE, RED, global_font_lato_light_16());
     Dimension dim = edit.get_optimal_dim();
     edit.set_wh(120, dim.h);
     edit.set_xy(0, 0);
@@ -194,7 +184,7 @@ RED_AUTO_TEST_CASE(TestPaste)
         /*sprintf(filename, "test_copy_paste_%d.png", __LINE__);*/ \
         /*mod.save_to_png(filename);*/                             \
                                                                    \
-        RED_CHECK_SIG(mod.gd.impl(), sig);                         \
+        RED_CHECK_SIG(gd, sig);                                    \
     }
     edit_paste("",
         "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");

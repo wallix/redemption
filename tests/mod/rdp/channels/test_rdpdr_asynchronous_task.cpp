@@ -24,7 +24,6 @@
 
 
 #include "gdi/graphic_api.hpp"
-#include "utils/log.hpp"
 #include "mod/rdp/channels/rdpdr_asynchronous_task.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "test_only/get_file_contents.hpp"
@@ -38,8 +37,6 @@ public:
 
     virtual void operator() (uint32_t total_length, uint32_t flags,
         const uint8_t * chunk_data, uint32_t chunk_data_length) override {
-        LOG(LOG_INFO, "total_length=%u flags=0x%X chunk_data=<%p> chunk_data_length=%u",
-            total_length, flags, static_cast<void const *>(chunk_data), chunk_data_length);
         StaticOutStream<8> stream;
         stream.out_uint32_le(total_length);
         stream.out_uint32_le(flags);
@@ -102,20 +99,15 @@ RED_AUTO_TEST_CASE(TestRdpdrSendDriveIOResponseTask)
     //TestToServerSender test_to_server_sender(log_transport);
 
     #include "fixtures/test_rdpdr_send_drive_io_response_task.hpp"
-    LOG(LOG_INFO, "CHECK_EXCEPTION_ERROR_ID");
     CheckTransport check_transport(outdata, sizeof(outdata)-1);
 
-    LOG(LOG_INFO, "check_transport");
     TestToServerSender test_to_server_sender(check_transport);
-
-    LOG(LOG_INFO, "TestToServerSender");
 
     RdpdrSendDriveIOResponseTask rdpdr_send_drive_io_response_task(
         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
         byte_ptr_cast(contents.data()),
         contents.size(), test_to_server_sender, to_verbose_flags(verbose));
 
-    LOG(LOG_INFO, "RdpdrSendDriveIOResponseTask");
     bool run_task = true;
     SessionReactor session_reactor;
     rdpdr_send_drive_io_response_task.configure_event(

@@ -23,8 +23,6 @@
 #define RED_TEST_MODULE TestCapture
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
 #include "capture/file_to_graphic.hpp"
@@ -127,19 +125,6 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             ini.get<cfg::debug::ocr>()
         };
 
-//        if (ini.get<cfg::debug::capture>()) {
-            LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-                capture_wrm ?"wrm ":"",
-                capture_png ?"png ":"",
-                capture_kbd ? 1 : 0,
-                capture_video ?"video ":"",
-                capture_video_full ?"video_full ":"",
-                capture_pattern_checker ?"pattern ":"",
-                capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-                capture_meta?"meta ":""
-            );
-//        }
-
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -152,11 +137,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
+        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
         PngParams png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -347,19 +328,6 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     OcrParams const ocr_params = ocr_params_from_ini(ini);
 
-    if (ini.get<cfg::debug::capture>()) {
-        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-            capture_wrm ?"wrm ":"",
-            capture_png ?"png ":"",
-            capture_kbd ? 1 : 0,
-            capture_video ?"video ":"",
-            capture_video_full ?"video_full ":"",
-            capture_pattern_checker ?"pattern ":"",
-            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-            capture_meta?"meta ":""
-        );
-    }
-
     const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
     const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
     const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -372,11 +340,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     strcpy(basename, movie_path);
     strcpy(extension, "");          // extension is currently ignored
 
-    if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-    ) {
-        LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-        throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-    }
+    RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
     PngParams png_params = {
         0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -2680,19 +2644,6 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     OcrParams const ocr_params = ocr_params_from_ini(ini);
 
-    if (ini.get<cfg::debug::capture>()) {
-        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-            capture_wrm ?"wrm ":"",
-            capture_png ?"png ":"",
-            capture_kbd ? 1 : 0,
-            capture_video ?"video ":"",
-            capture_video_full ?"video_full ":"",
-            capture_pattern_checker ?"pattern ":"",
-            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-            capture_meta?"meta ":""
-        );
-    }
-
     const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
     const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
     const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -2705,11 +2656,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     strcpy(basename, movie_path);
     strcpy(extension, "");          // extension is currently ignored
 
-    if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-    ) {
-        LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-        throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-    }
+    RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
     PngParams png_params = {
         0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -2802,9 +2749,6 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     //    );
     //    ::unlink(filename);
     }
-
-
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
 
     {
         char const * argv[] {
@@ -2964,17 +2908,6 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
             ini.get<cfg::debug::ocr>()
         };
 
-        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-            capture_wrm ?"wrm ":"",
-            capture_png ?"png ":"",
-            capture_kbd ? 1 : 0,
-            capture_video ?"video ":"",
-            capture_video_full ?"video_full ":"",
-            capture_pattern_checker ?"pattern ":"",
-            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-            capture_meta?"meta ":""
-        );
-
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -2987,11 +2920,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
+        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
         PngParams png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false,
@@ -3226,17 +3155,6 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
             ini.get<cfg::debug::ocr>()
         };
 
-        LOG(LOG_INFO, "Enable capture:  %s%s  kbd=%d %s%s%s  ocr=%d %s",
-            capture_wrm ?"wrm ":"",
-            capture_png ?"png ":"",
-            capture_kbd ? 1 : 0,
-            capture_video ?"video ":"",
-            capture_video_full ?"video_full ":"",
-            capture_pattern_checker ?"pattern ":"",
-            capture_ocr ? (ocr_params.ocr_version == OcrVersion::v2 ? 2 : 1) : 0,
-            capture_meta?"meta ":""
-        );
-
         const int groupid = ini.get<cfg::video::capture_groupid>(); // www-data
         const char * hash_path = ini.get<cfg::video::hash_path>().c_str();
         const char * movie_path = ini.get<cfg::globals::movie_path>().c_str();
@@ -3249,11 +3167,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         strcpy(basename, movie_path);
         strcpy(extension, "");          // extension is currently ignored
 
-        if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))
-        ) {
-            LOG(LOG_ERR, "Buffer Overflowed: Path too long");
-            throw Error(ERR_RECORDER_FAILED_TO_FOUND_PATH);
-        }
+        RED_CHECK(canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension)));
 
         PngParams png_params = {
             0, 0, std::chrono::milliseconds{60}, 100, 0, false,

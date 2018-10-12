@@ -21,67 +21,50 @@
 #define RED_TEST_MODULE TestFlatWabCloseMod
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "configs/config.hpp"
-#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_wab_close_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TestWabCloseMod)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, font, theme, true);
+    FlatWabCloseMod d(ini, session_reactor, front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, global_font(), theme, true);
     d.draw_event(100001, front);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }
 
 RED_AUTO_TEST_CASE(TestWabCloseMod2)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 2048;
-    info.screen_info.height = 1536;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 2048, 1536};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
 
-    FlatWabCloseMod d(ini, session_reactor, front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, font, theme, true);
+    FlatWabCloseMod d(ini, session_reactor, front, screen_info.width, screen_info.height, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, global_font(), theme, true);
     d.draw_event(100001, front);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

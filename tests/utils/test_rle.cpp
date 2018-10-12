@@ -286,52 +286,42 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t raw_bytes;
 
     get_run(byte_ptr_cast("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(3,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
     get_run(byte_ptr_cast("BBCCCCCD"), 8, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(3,  raw_bytes);
 
     get_run(byte_ptr_cast("D"), 1, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(12, raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
-    LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(16, raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(4,  run_length);
     RED_CHECK_EQUAL(15, raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
     get_run(byte_ptr_cast("AAABB"), 5, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(0,  run_length);
     RED_CHECK_EQUAL(5,  raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(8,  run_length);
     RED_CHECK_EQUAL(0,  raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
-    //LOG(LOG_INFO, "run_length=%u raw_bytes=%u", run_length, raw_bytes);
     RED_CHECK_EQUAL(7,  run_length);
     RED_CHECK_EQUAL(1,  raw_bytes);
 }

@@ -388,6 +388,10 @@ public:
     DrawableImpl& operator=(DrawableImpl const &) = delete;
 
     void resize(unsigned width, unsigned height) {
+        if (width == this->width_ && height == this->height_) {
+            return;
+        }
+
         uint16_t const saved_height_  = this->height_;
         size_t   const saved_rowsize_ = this->rowsize_;
 

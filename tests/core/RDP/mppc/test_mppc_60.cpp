@@ -21,8 +21,8 @@
 #define RED_TEST_MODULE TestMPPC60
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "core/RDP/mppc/mppc_60.hpp"
+
 
 RED_AUTO_TEST_CASE(TestRDP60BlukCompression)
 {
@@ -41,9 +41,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukCompression)
     int flags = PACKET_COMPRESSED;
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
-
-//     LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
-//     hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 
 /*
     int bits_left = 8;
@@ -87,9 +84,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukCompression2)
     int flags = PACKET_COMPRESSED;
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
-
-    //LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
-    //hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukCompression3)
@@ -173,9 +167,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukCompression3)
     int flags = PACKET_COMPRESSED;
 
     RED_CHECK_EQUAL(flags, (compressionFlags & PACKET_COMPRESSED));
-
-//     LOG(LOG_INFO, "bytes_in_opb=%d", mppc_enc.bytes_in_opb);
-//     hexdump_d(mppc_enc.outputBuffer, mppc_enc.bytes_in_opb);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression)
@@ -202,9 +193,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression)
     RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
     RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
         rdata, rlen));
-
-    //LOG(LOG_INFO, "rlen=%d", rlen);
-    //hexdump_d(rdata, rlen);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
@@ -231,9 +219,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression1)
     RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
     RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
         rdata, rlen));
-
-    //LOG(LOG_INFO, "rlen=%d", rlen);
-    //hexdump_d(rdata, rlen);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
@@ -260,9 +245,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression2)
     RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
     RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
         rdata, rlen));
-
-    //LOG(LOG_INFO, "rlen=%d", rlen);
-    //hexdump_d(rdata, rlen);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
@@ -384,9 +366,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression3)
     RED_CHECK_EQUAL(sizeof(uncompressed_data), rlen);
     RED_CHECK_EQUAL(0,                         memcmp(uncompressed_data,
         rdata, rlen));
-
-    //LOG(LOG_INFO, "rlen=%d", rlen);
-    //hexdump_d(rdata, rlen);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
@@ -409,9 +388,6 @@ RED_AUTO_TEST_CASE(TestRDP60BlukDecompression4)
 
     RED_CHECK_EQUAL(sizeof(__srcData), rlen);
     RED_CHECK_EQUAL(0,                 memcmp(__srcData, rdata, rlen));
-
-    LOG(LOG_INFO, "rlen=%u", rlen);
-    hexdump_d(rdata, rlen);
 }
 
 RED_AUTO_TEST_CASE(TestCacheAdd) {

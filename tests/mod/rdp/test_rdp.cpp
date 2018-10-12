@@ -34,6 +34,7 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 /*
 RED_AUTO_TEST_CASE(TestModRDPXPServer)
@@ -77,7 +78,7 @@ RED_AUTO_TEST_CASE(TestModRDPXPServer)
                                 , "10.10.47.175"
                                 , "10.10.9.161"
                                 , 7
-                                , font
+                                , global_font()
                                 , theme
                                 , server_auto_reconnect_packet
                                 , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -139,9 +140,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     memset(info.order_caps.orderSupport, 0xFF, sizeof(info.order_caps.orderSupport));
     info.order_caps.orderSupportExFlags = 0xFFFF;
 
-    int verbose = 511;
-
-    FakeFront front(info, verbose);
+    FakeFront front(info.screen_info);
 
     // const char * name = "RDP W2008 Target";
     // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
@@ -157,13 +156,8 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
     #include "fixtures/dump_w2008.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
     Inifile ini;
     Theme theme;
-    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
@@ -171,7 +165,7 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
                                , "10.10.47.36"
                                , "10.10.43.33"
                                , 2
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -204,15 +198,11 @@ RED_AUTO_TEST_CASE(TestModRDPWin2008Server)
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    RED_CHECK_EQUAL(front.info.screen_info.width, 800);
-    RED_CHECK_EQUAL(front.info.screen_info.height, 600);
+    RED_CHECK_EQUAL(info.screen_info.width, 800);
+    RED_CHECK_EQUAL(info.screen_info.height, 600);
 
     execute_negociate_mod(session_reactor, *mod, front);
     for (int count = 0; count < 38; ++count) {
-        LOG(LOG_INFO, "===================> count = %d", count);
         execute_graphics_event(session_reactor, front);
     }
 
@@ -261,7 +251,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2003Server)
                                , "10.10.47.205"
                                , "0.0.0.0"
                                , 2
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -348,7 +338,7 @@ RED_AUTO_TEST_CASE(TestModRDPW2000Server)
                                , "10.10.47.39"
                                , "0.0.0.0"
                                , 2
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()

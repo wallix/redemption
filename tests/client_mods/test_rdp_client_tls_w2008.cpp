@@ -34,12 +34,11 @@
 #include "test_only/lcg_random.hpp"
 #include "test_only/session_reactor_executor.hpp"
 #include "test_only/transport/test_transport.hpp"
+#include "test_only/core/font.hpp"
 
 
 RED_AUTO_TEST_CASE(TestDecodePacket)
 {
-    int verbose = 256;
-
     ClientInfo info;
     info.keylayout             = 0x040C;
     info.console_session       = 0;
@@ -57,7 +56,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     // Uncomment the code block below to generate testing data.
     //SSL_library_init();
 
-    FakeFront front(info, verbose);
+    FakeFront front(info.screen_info);
 
     //const char * name       = "RDP W2008 TLS Target";
     // Uncomment the code block below to generate testing data.
@@ -77,15 +76,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
     #include "fixtures/dump_TLSw2008.hpp"
     TestTransport t(indata, sizeof(indata) - 1, outdata, sizeof(outdata) - 1);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
@@ -93,7 +87,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
                                , "10.10.47.35"
                                , "192.168.1.100"
                                , 7
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -126,11 +120,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-    RED_CHECK_EQUAL(front.info.screen_info.width, 1024);
-    RED_CHECK_EQUAL(front.info.screen_info.height, 768);
+    RED_CHECK_EQUAL(info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     t.disable_remaining_error();
 
@@ -142,8 +133,6 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
 
 RED_AUTO_TEST_CASE(TestDecodePacket2)
 {
-    int verbose = 256;
-
     ClientInfo info;
     info.keylayout             = 0x040C;
     info.console_session       = 0;
@@ -159,7 +148,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
 
     //SSL_library_init();
 
-    FakeFront front(info, verbose);
+    FakeFront front(info.screen_info);
 
     //const char * name       = "RDP W2008 TLS Target";
     //int          client_sck = ip_connect("10.10.47.16", 3389, 3, 1000);
@@ -184,15 +173,10 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
     #include "fixtures/dump_TLSw2008_2.hpp"
     LimitedTestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
     snprintf(info.hostname, sizeof(info.hostname), "192-168-1-100");
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
@@ -200,7 +184,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
                                , "10.10.47.16"
                                , "10.10.43.33"
                                , 7
-                               , font
+                               , global_font()
                                , theme
                                , server_auto_reconnect_packet
                                , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -233,12 +217,8 @@ RED_AUTO_TEST_CASE(TestDecodePacket2)
         ini.get_ref<cfg::mod_rdp::redir_info>(), gen, timeobj,
         mod_rdp_params, authentifier, report_message, ini, nullptr);
 
-    if (verbose > 2) {
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
-
-    RED_CHECK_EQUAL(front.info.screen_info.width, 1024);
-    RED_CHECK_EQUAL(front.info.screen_info.height, 768);
+    RED_CHECK_EQUAL(info.screen_info.width, 1024);
+    RED_CHECK_EQUAL(info.screen_info.height, 768);
 
     t.disable_remaining_error();
 

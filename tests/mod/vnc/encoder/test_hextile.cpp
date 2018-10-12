@@ -20,7 +20,6 @@
 
 #define RED_TEST_MODULE TestVNCHextileEncoder
 #include "system/redemption_unit_tests.hpp"
-#include "test_only/fake_graphic.hpp"
 
 #include "mod/vnc/encoder/hextile.cpp"
 
@@ -641,7 +640,7 @@ RED_AUTO_TEST_CASE(TestHextile2)
 
 RED_AUTO_TEST_CASE(TestHextile)
 {
-    FakeGraphic drawable(16, 1308, 19, 20);
+    // FakeGraphic drawable(16, 1308, 19, 20);
 
     const uint8_t tile[] = {
 /* 000 */ "\x01\x04\x19\xc3\x10\xe4\x18\xc3\x10\x25\x21\xe4\x18\x46\x29\x86"

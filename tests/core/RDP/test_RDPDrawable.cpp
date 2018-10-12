@@ -71,7 +71,7 @@ inline void process_glyphcache(GlyphCache & gly_cache, InStream & stream) {
     }
 }
 
-RED_AUTO_TEST_CASE(TestDrawGlyphIndex)
+RED_AUTO_TEST_CASE(TestGraphicGlyphIndex)
 {
     uint16_t width = 1024;
     uint16_t height = 768;

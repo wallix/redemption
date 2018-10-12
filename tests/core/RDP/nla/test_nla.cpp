@@ -87,8 +87,6 @@ RED_AUTO_TEST_CASE(TestNlaclient)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
         ;
 
-    LOG(LOG_INFO, "TEST CLIENT SIDE");
-
     TestTransport logtrans(server, sizeof(server)-1, client, sizeof(client)-1);
     logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";
@@ -176,7 +174,6 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 /* 0020 */ "\x45\x3d\x1b\x05\x15\xce\x56\x0a\x54\xa1\xf1"                     //E=....V.T..
         ;
 
-    LOG(LOG_INFO, "TEST SERVER SIDE");
     TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
     logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
     uint8_t user[] = "Ulysse";

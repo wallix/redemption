@@ -22,27 +22,26 @@
 #define RED_TEST_MODULE TestWidgetSelector
 #include "system/redemption_unit_tests.hpp"
 
-#include "core/font.hpp"
 #include "mod/internal/widget/selector.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -53,7 +52,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     array_view_const_char const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -89,7 +88,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     // drawable.save_to_png("selector1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x50\x25\xe5\x03\x76\x81\x53\xfc\x6e\x22\xd4\xf8\xfb\xf1\x70\x57\x4d\xb5\x16\x45");
+    RED_CHECK_SIG(drawable, "\x50\x25\xe5\x03\x76\x81\x53\xfc\x6e\x22\xd4\xf8\xfb\xf1\x70\x57\x4d\xb5\x16\x45");
 
     selector.selector_lines.set_selection(1);
 
@@ -98,22 +97,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
 
     // drawable.save_to_png("selector2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa7\x47\xcc\x6f\x5c\x52\x40\x92\x70\x30\x6c\x75\xa0\xd7\xf8\x3b\x70\xe5\x45\x00");
+    RED_CHECK_SIG(drawable, "\xa7\x47\xcc\x6f\x5c\x52\x40\x92\x70\x30\x6c\x75\xa0\xd7\xf8\x3b\x70\xe5\x45\x00");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 {
-    TestDraw drawable(640, 480);
+    TestGraphic drawable(640, 480);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(640, 480);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -124,8 +122,8 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
-                                "1", "1",  extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier,
+                                "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     array_view_const_char const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -161,7 +159,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
     // drawable.save_to_png("selector-resize1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xbb\x51\x75\x39\x8a\x7f\xad\x40\xdf\xd0\xc5\xc7\xac\x20\x2b\xa0\x89\x66\xdc\x90");
+    RED_CHECK_SIG(drawable, "\xbb\x51\x75\x39\x8a\x7f\xad\x40\xdf\xd0\xc5\xc7\xac\x20\x2b\xa0\x89\x66\xdc\x90");
 
 
     selector.selector_lines.set_selection(1);
@@ -171,22 +169,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorResize)
 
     // drawable.save_to_png("selector-resize2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x6c\x77\x75\x9f\x0a\xf0\x98\x35\xa7\xfd\xf2\xf7\x37\xc5\xe7\x56\xb7\xf5\x23\x30");
+    RED_CHECK_SIG(drawable, "\x6c\x77\x75\x9f\x0a\xf0\x98\x35\xa7\xfd\xf2\xf7\x37\xc5\xe7\x56\xb7\xf5\x23\x30");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelector2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -197,29 +194,28 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font,  Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(),  Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     selector.rdp_input_invalidate(selector.get_rect());
 
     // drawable.save_to_png("selector3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x84\x8f\x42\x84\x07\x86\x34\x90\x65\x3a\xd4\x5f\x72\xb9\xe9\xeb\x3b\x4a\xb5\x25");
+    RED_CHECK_SIG(drawable, "\x84\x8f\x42\x84\x07\x86\x34\x90\x65\x3a\xd4\x5f\x72\xb9\xe9\xeb\x3b\x4a\xb5\x25");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -230,7 +226,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -240,23 +236,22 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip)
 
     // drawable.save_to_png("selector4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x68\x1e\x1c\x20\xb1\x2a\x68\x59\x45\xc1\x41\x0c\x03\x0d\x3e\xc9\xf3\xce\x22\x40");
+    RED_CHECK_SIG(drawable, "\x68\x1e\x1c\x20\xb1\x2a\x68\x59\x45\xc1\x41\x0c\x03\x0d\x3e\xc9\xf3\xce\x22\x40");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -267,7 +262,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1",  extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     selector.rdp_input_invalidate(Rect(20 + selector.x(),
@@ -277,22 +272,21 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorClip2)
 
     // drawable.save_to_png("selector5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9d\xbe\x64\x88\x34\x4b\x79\x83\x6a\xa1\x36\xad\xf4\x9e\xe6\x89\xb8\xf3\x86\x87");
+    RED_CHECK_SIG(drawable, "\x9d\xbe\x64\x88\x34\x4b\x79\x83\x6a\xa1\x36\xad\xf4\x9e\xe6\x89\xb8\xf3\x86\x87");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -303,7 +297,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     params.label[1] = "Target";
     params.label[2] = "Protocol";
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     array_view_const_char const add1[] = {
         "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
@@ -344,7 +338,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
     // drawable.save_to_png("selector6-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
+    RED_CHECK_SIG(drawable, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
 
 
     Keymap2 keymap;
@@ -358,7 +352,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-2.png");
 
 
-//     RED_CHECK_SIG(drawable.gd, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
+//     RED_CHECK_SIG(drawable, "\xac\x89\x98\x5b\xe1\x08\x1c\xab\xf6\x9f\x20\x26\xb5\xfa\x07\x57\x1b\x1a\x7c\xfe");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -369,7 +363,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-3.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x72\xf6\x86\x9a\xf8\x1c\x62\xae\xce\x8e\x40\x26\x9d\x4a\x65\xac\x7e\x13\x75\x52");
+    RED_CHECK_SIG(drawable, "\x72\xf6\x86\x9a\xf8\x1c\x62\xae\xce\x8e\x40\x26\x9d\x4a\x65\xac\x7e\x13\x75\x52");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -380,7 +374,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-4.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
+    RED_CHECK_SIG(drawable, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
 
 
     keymap.push_kevent(Keymap2::KEVENT_DOWN_ARROW);
@@ -391,7 +385,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-5.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
+    RED_CHECK_SIG(drawable, "\x72\x58\x16\x04\xe4\x09\xb6\x58\x40\x70\x62\xe1\xf8\xd7\xf6\xe4\x02\xd9\xd0\x96");
 
 
     keymap.push_kevent(Keymap2::KEVENT_HOME);
@@ -402,7 +396,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
     // drawable.save_to_png("selector6-6.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
+    RED_CHECK_SIG(drawable, "\x0a\x7a\xa1\x01\x97\xdb\x79\x24\x21\x49\x24\x61\xd6\x2b\x0f\xf7\xb4\x67\xdb\xd2");
 
     // int x = selector.selector_lines.rect.x + 5;
     // int y = selector.selector_lines.rect.y + 3;
@@ -417,17 +411,16 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorEventSelect)
 
 RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetSelector is a selector widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
-    int16_t w = drawable.gd.width();
-    int16_t h = drawable.gd.height();
+    int16_t w = drawable.width();
+    int16_t h = drawable.height();
     WidgetFlatButton * extra_button = nullptr;
     WidgetSelectorParams params;
     params.nb_columns = 3;
@@ -439,7 +432,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     params.label[2] = "Protocol";
 
 
-    WidgetSelector selector(drawable.gd, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, font, Theme(), Translation::EN);
+    WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     array_view_const_char const add1[] = {
         "reptile", "snake@10.10.14.111"_av,
@@ -486,7 +479,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xcb\xa1\x9f\x4e\xb9\x42\x64\xa9\xa5\x9d\xcd\x06\xc2\x33\x56\xae\xab\xfa\x75\x65");
+    RED_CHECK_SIG(drawable, "\xcb\xa1\x9f\x4e\xb9\x42\x64\xa9\xa5\x9d\xcd\x06\xc2\x33\x56\xae\xab\xfa\x75\x65");
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -500,7 +493,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
     // drawable.save_to_png("selector7-2.png");
 
 
-    RED_CHECK_SIG(drawable.gd, "\x7d\x15\x56\x7d\xe4\x03\x75\xb5\xb7\x47\x7f\xb4\x24\x38\xed\xe6\x29\xe3\xd8\x81");
+    RED_CHECK_SIG(drawable, "\x7d\x15\x56\x7d\xe4\x03\x75\xb5\xb7\x47\x7f\xb4\x24\x38\xed\xe6\x29\xe3\xd8\x81");
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -509,7 +502,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x77\x74\x1e\x4e\xfa\x9e\xc1\x65\x8b\x53\x40\x08\xce\x5c\x32\xe8\x44\x00\x3d\x6b");
+    RED_CHECK_SIG(drawable, "\x77\x74\x1e\x4e\xfa\x9e\xc1\x65\x8b\x53\x40\x08\xce\x5c\x32\xe8\x44\x00\x3d\x6b");
     keymap.push_kevent(Keymap2::KEVENT_TAB);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
 
@@ -520,7 +513,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xce\xfd\x05\x29\xf5\xbc\x75\xb2\x06\xba\x1b\xe1\xbe\x6a\x00\xd3\x14\x2a\x16\x65");
+    RED_CHECK_SIG(drawable, "\xce\xfd\x05\x29\xf5\xbc\x75\xb2\x06\xba\x1b\xe1\xbe\x6a\x00\xd3\x14\x2a\x16\x65");
 
 
     keymap.push_kevent(Keymap2::KEVENT_END);
@@ -530,7 +523,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x7b\x90\xfa\xfc\x76\xd6\x9c\x2a\xba\xd7\x98\xc2\xbf\x59\xa2\xf0\x8b\x47\xdd\xb2");
+    RED_CHECK_SIG(drawable, "\x7b\x90\xfa\xfc\x76\xd6\x9c\x2a\xba\xd7\x98\xc2\xbf\x59\xa2\xf0\x8b\x47\xdd\xb2");
 
 
     keymap.push_kevent(Keymap2::KEVENT_UP_ARROW);
@@ -540,7 +533,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x03\xb4\xed\xd3\xd3\x6d\x38\x33\x96\x04\x39\x7d\xdf\xd4\xa0\xcd\xee\xd5\xd2\x46");
+    RED_CHECK_SIG(drawable, "\x03\xb4\xed\xd3\xd3\x6d\x38\x33\x96\x04\x39\x7d\xdf\xd4\xa0\xcd\xee\xd5\xd2\x46");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -550,7 +543,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xfe\x3b\x6e\x81\xba\x50\x46\xda\xe9\x67\x97\x6d\x59\x4d\x71\x54\x48\x01\xd5\xc5");
+    RED_CHECK_SIG(drawable, "\xfe\x3b\x6e\x81\xba\x50\x46\xda\xe9\x67\x97\x6d\x59\x4d\x71\x54\x48\x01\xd5\xc5");
 
 
     keymap.push_kevent(Keymap2::KEVENT_TAB);
@@ -562,7 +555,7 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xfc\xaf\x04\x5d\x54\x8a\xe4\x93\x99\x1c\xef\xc0\xe8\x98\x69\x4b\xb8\xf6\xa6\x4f");
+    RED_CHECK_SIG(drawable, "\xfc\xaf\x04\x5d\x54\x8a\xe4\x93\x99\x1c\xef\xc0\xe8\x98\x69\x4b\xb8\xf6\xa6\x4f");
 
     keymap.push_kevent(Keymap2::KEVENT_RIGHT_ARROW);
     selector.rdp_input_scancode(0,0,0,0, &keymap);
@@ -584,5 +577,5 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     // drawable.save_to_png("selector7-9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x66\x8e\x41\x3b\xcd\xd7\xde\x26\x6e\x22\x93\xe2\x82\x42\x97\xf3\x22\xc4\xa9\x27");
+    RED_CHECK_SIG(drawable, "\x66\x8e\x41\x3b\xcd\xd7\xde\x26\x6e\x22\x93\xe2\x82\x42\x97\xf3\x22\xc4\xa9\x27");
 }

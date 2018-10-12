@@ -22,39 +22,32 @@
 #define RED_TEST_MODULE TestFlatLoginMod
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "configs/config.hpp"
-#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/flat_login_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/core/font.hpp"
+
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, font, theme);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, screen_info.width, screen_info.height,
+        Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, global_font(), theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -67,28 +60,21 @@ RED_AUTO_TEST_CASE(TestDialogMod)
 
 RED_AUTO_TEST_CASE(TestDialogMod1)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 800, 600, Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, font, theme);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, screen_info.width, screen_info.height,
+        Rect(0, 0, 799, 599), static_cast<time_t>(100000), client_execute, global_font(), theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);
@@ -100,28 +86,21 @@ RED_AUTO_TEST_CASE(TestDialogMod1)
 
 RED_AUTO_TEST_CASE(TestDialogMod2)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 2048;
-    info.screen_info.height = 1536;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 2048, 1536};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
-    FlatLoginMod d(ini, session_reactor, "user", "pass", front, 2048, 1536, Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, font, theme);
+    FlatLoginMod d(ini, session_reactor, "user", "pass", front, screen_info.width, screen_info.height,
+        Rect(1024, 768, 1023, 767), static_cast<time_t>(100000), client_execute, global_font(), theme);
     d.draw_event(100001, front);
 
 // TODO    RED_CHECK_EQUAL(BACK_EVENT_NONE, d.get_event().signal);

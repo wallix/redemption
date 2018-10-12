@@ -22,8 +22,6 @@
 #define RED_TEST_MODULE TestDoRecorder
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
-
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"
 #include "transport/crypto_transport.hpp"
@@ -103,7 +101,6 @@ using EncryptionMode = InCryptoTransport::EncryptionMode;
 
 RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 {
-   LOG(LOG_INFO, "=================== TestDecrypterEncryptedData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -129,7 +126,6 @@ RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
 
 RED_AUTO_TEST_CASE(TestDecrypterClearData)
 {
-   LOG(LOG_INFO, "=================== TestDecrypterClearData =============");
     char const * argv[] {
         "decrypter.py",
         "reddec",
@@ -160,7 +156,6 @@ bool is_except( Exception const & ) { return true; }
 
 RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
 {
-   LOG(LOG_INFO, "=================== TestVerifierFileNotFound =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -181,7 +176,6 @@ RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 {
-   LOG(LOG_INFO, "=================== TestVerifierEncryptedDataFailure =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -207,7 +201,6 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
 
 RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
 {
-   LOG(LOG_INFO, "=================== TestVerifierEncryptedData =============");
     char const * argv[] = {
         "verifier.py",
         "redver",
@@ -233,7 +226,6 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
 
 RED_AUTO_TEST_CASE(TestVerifierClearData)
 {
-   LOG(LOG_INFO, "=================== TestVerifierClearData =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -263,15 +255,6 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
 
 RED_AUTO_TEST_CASE(TestVerifierUpdateData)
 {
-    LOG(LOG_INFO, "=================== TestVerifierUpdateData =============");
-//    Inifile ini;
-//    ini.set<cfg::debug::config>(false);
-//    CryptoContext cctx;
-//    LOG(LOG_INFO, "set_get_hmac_key");
-//    cctx.set_get_hmac_key_cb(hmac_fn);
-//    cctx.set_get_trace_key_cb(trace_fn);
-//    LOG(LOG_INFO, "set_get_hmac_key done");
-
 #define MWRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
     ",20160218-181658,wab-5-0-0.yourdomain,7681.mwrm"
 #define WRM_FILENAME "toto@10.10.43.13,Administrateur@QA@cible" \
@@ -361,7 +344,6 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
 
 RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
 {
-    LOG(LOG_INFO, "=================== TestVerifierClearDataStatFailed =============");
     char const * argv[] {
         "verifier.py",
         "redver",
@@ -402,8 +384,6 @@ inline int hmac_2016_fn(uint8_t * buffer)
 
 inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, unsigned oldscheme)
 {
-//    LOG(LOG_INFO, "\n\ntrace_20161025_fn(%*s,%d,oldscheme=%d)->\n", len, base, len, oldscheme);
-
     struct {
         std::string base;
         unsigned scheme;
@@ -466,12 +446,6 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
         && (k.base.length() == static_cast<size_t>(len))
         && (strncmp(k.base.c_str(), char_ptr_cast(base), static_cast<size_t>(len)) == 0))
         {
-            if (oldscheme){
-                LOG(LOG_INFO, "old key (derived from main master)");
-            }
-            else {
-                LOG(LOG_INFO, "new key (derived master to use as master)");
-            }
             memcpy(buffer, k.derived_key, 32);
             //hexdump_d(buffer, 32);
             return 0;
@@ -485,7 +459,6 @@ inline int trace_20161025_fn(uint8_t const * base, int len, uint8_t * buffer, un
 
 RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
 {
-    LOG(LOG_INFO, "=================== TestDecrypterEncrypted =============");
     char const * argv[] {
         "decrypter.py", "reddec",
         "-i", FIXTURES_PATH "/verifier/recorded/"
@@ -509,8 +482,6 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
 
 RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
 {
-    LOG(LOG_INFO, "=================== TestDecrypterEncrypted1 =============");
-
     char const * argv[] {
         "decrypter.py", "reddec",
         "-i", FIXTURES_PATH "/verifier/recorded/"
@@ -532,7 +503,6 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
 
 RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 {
-    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
 
@@ -559,7 +529,6 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
 
 RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
 {
-    LOG(LOG_INFO, "=================== TestDecrypterMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
 
@@ -587,7 +556,6 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
 
 RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 {
-    LOG(LOG_INFO, "=================== TestVerifierMigratedEncrypted =============");
     // verifier.py redver -i cgrosjean@10.10.43.13,proxyuser@win2008,20161025-192304,wab-4-2-4.yourdomain,5560.mwrm --hash-path ./tests/fixtures/verifier/hash --mwrm-path ./tests/fixtures/verifier/recorded/ --verbose 10
 
     char const * argv[] {
@@ -615,8 +583,6 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
 
 RED_AUTO_TEST_CASE(TestVerifier4714)
 {
-    LOG(LOG_INFO, "=================== TestVerifier4714 =============");
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-134039,wab-4-2-4.yourdomain,4714.mwrm",
@@ -644,8 +610,6 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
 
 RED_AUTO_TEST_CASE(TestVerifier7192)
 {
-    LOG(LOG_INFO, "=================== TestVerifier7192 =============");
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@win2008,20161025-164758,wab-4-2-4.yourdomain,7192.mwrm",
@@ -673,8 +637,6 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
 
 RED_AUTO_TEST_CASE(TestVerifier2510)
 {
-    LOG(LOG_INFO, "=================== TestVerifier2510 =============");
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyuser@win2008,20161025-165619,wab-4-2-4.yourdomain,2510.mwrm",
@@ -939,8 +901,6 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
 
 RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
 {
-    LOG(LOG_INFO, "=================== TestVerifier1914MigratedNocryptHasChecksum =============");
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-131957,wab-4-2-4.yourdomain,1914.mwrm",
@@ -975,8 +935,6 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
 
 RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
 {
-    LOG(LOG_INFO, "=================== TestVerifier9904NocryptNochecksumStatinfo =============");
-
     char const * argv[] {
         "verifier.py", "redver",
         "-i", "cgrosjean@10.10.43.13,proxyadmin@local@win2008,20161026-132156,wab-4-2-4.yourdomain,9904.mwrm",
@@ -999,7 +957,6 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorder)
 {
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1033,7 +990,6 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 {
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1067,7 +1023,6 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
 #ifndef REDEMPTION_NO_FFMPEG
 RED_AUTO_TEST_CASE(TestAppRecorderChunk)
 {
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1270,8 +1225,6 @@ RED_AUTO_TEST_CASE(TestClearTargetFiles)
 
 RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
 {
-    LOG(LOG_INFO, "=================== TestAppRecorderChunkMeta =============");
-
     const struct CheckFiles {
         const char * filename;
         ssize_t size;
@@ -1340,7 +1293,6 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize)
         ::unlink(f.filename);
     }
 
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
         "redrec",
@@ -1386,7 +1338,6 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize1)
         ::unlink(f.filename);
     }
 
-    LOG(LOG_INFO, "=================== TestAppRecorder =============");
     char const * argv[] {
         "recorder.py",
         "redrec",

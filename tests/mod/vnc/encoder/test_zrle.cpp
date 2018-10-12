@@ -20,7 +20,8 @@
 
 #define RED_TEST_MODULE TestVNCZrleEncoder
 #include "system/redemption_unit_tests.hpp"
-#include "test_only/fake_graphic.hpp"
+
+#include "test_only/gdi/test_graphic.hpp"
 #include "test_only/check_sig.hpp"
 
 #include "mod/vnc/encoder/zrle.cpp"
@@ -6617,7 +6618,7 @@ RED_AUTO_TEST_CASE(TestZrle)
     Zdecompressor<> zd;
     Buf64k buf;
 
-    FakeGraphic drawable(16, 1920, 55, 0);
+    TestGraphic drawable(1920, 55);
 
     // First rect
     {
@@ -6696,7 +6697,7 @@ RED_AUTO_TEST_CASE(TestZrleRaw)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 16, 19, 0);
+    TestGraphic drawable(16, 19);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 10, 19), zd, VNCVerbose::none);
     InStream buffer(raw0, sizeof(raw0));
@@ -6719,11 +6720,11 @@ RED_AUTO_TEST_CASE(TestZrleSolid)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 128, 0);
+    TestGraphic drawable(128, 128);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,75,66), pixel_color);
-    drawable.draw(cmd, Rect(0,0,75,66), color_context);
+    drawable->draw(cmd, Rect(0,0,75,66), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 74, 65), zd, VNCVerbose::none);
     InStream buffer(solid0, sizeof(solid0));
@@ -6753,11 +6754,11 @@ RED_AUTO_TEST_CASE(TestZrlePalette2)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 9, 0);
+    TestGraphic drawable(128, 9);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
-    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+    drawable->draw(cmd, Rect(0, 0, 68, 9), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette2, sizeof(palette2));
@@ -6808,11 +6809,11 @@ RED_AUTO_TEST_CASE(TestZrlePalette13)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 9, 0);
+    TestGraphic drawable(128, 9);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
-    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+    drawable->draw(cmd, Rect(0, 0, 68, 9), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(palette13, sizeof(palette13));
@@ -6838,11 +6839,11 @@ RED_AUTO_TEST_CASE(TestZrlePlainRLE)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 9, 0);
+    TestGraphic drawable(128, 9);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
-    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+    drawable->draw(cmd, Rect(0, 0, 68, 9), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(plainrle, sizeof(plainrle));
@@ -6882,11 +6883,11 @@ RED_AUTO_TEST_CASE(TestZrlePaletteRLE)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 9, 0);
+    TestGraphic drawable(128, 9);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
-    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+    drawable->draw(cmd, Rect(0, 0, 68, 9), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 67, 8), zd, VNCVerbose::none);
     InStream buffer(paletteRLE, sizeof(paletteRLE));
@@ -6915,11 +6916,11 @@ RED_AUTO_TEST_CASE(TestZrlePackedPalette5)
 {
     Zdecompressor<> zd;
 
-    FakeGraphic drawable(16, 128, 9, 0);
+    TestGraphic drawable(128, 9);
     auto const color_context= gdi::ColorCtx::depth24();
     auto pixel_color = RDPColor::from(PINK);
     const RDPOpaqueRect cmd(Rect(0,0,68,9), pixel_color);
-    drawable.draw(cmd, Rect(0, 0, 68, 9), color_context);
+    drawable->draw(cmd, Rect(0, 0, 68, 9), color_context);
 
     VNC::Encoder::Zrle encoder(BitsPerPixel{16}, BytesPerPixel{2}, Rect(0, 0, 64, 4), zd, VNCVerbose::none);
     InStream buffer(PackedPalette5, sizeof(PackedPalette5));

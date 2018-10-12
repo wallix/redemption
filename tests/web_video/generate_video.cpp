@@ -21,7 +21,6 @@
 #include "capture/capture_params.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/video_capture.hpp"
-#include "core/RDP/RDPDrawable.hpp"
 #include "utils/fileutils.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 

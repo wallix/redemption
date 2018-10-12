@@ -22,17 +22,17 @@
 
 #pragma once
 
-#include "gdi/graphic_api.hpp"
 #include "core/front_api.hpp"
-#include "core/channel_list.hpp"
-#include "core/RDP/RDPDrawable.hpp"
+#include "utils/image_data_view.hpp"
 
-class ClientInfo;
+#include <memory>
+
 
 class FakeFront : public FrontAPI
 {
 public:
-    FakeFront(ClientInfo & info, uint32_t verbose);
+    FakeFront(ScreenInfo& screen_info);
+    ~FakeFront();
 
     void draw(RDP::FrameMarker    const & cmd) override;
 
@@ -102,7 +102,7 @@ public:
 
     void sync() override;
 
-    const CHANNELS::ChannelDefArray & get_channel_list(void) const override { return cl; }
+    const CHANNELS::ChannelDefArray & get_channel_list(void) const override;
 
     void send_to_channel( const CHANNELS::ChannelDef &, uint8_t const * /*data*/, size_t /*length*/
                         , size_t /*chunk_size*/, int /*flags*/) override;
@@ -113,25 +113,13 @@ public:
 
     ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
 
-    void dump_png(const char * prefix);
-
     void save_to_png(const char * filename);
 
     void update_pointer_position(uint16_t, uint16_t) override {}
 
+    operator ConstImageDataView () const;
+
 private:
-    uint32_t                    verbose;
-public:
-    ClientInfo                & info;
-    CHANNELS::ChannelDefArray   cl;
-    BitsPerPixel                mod_bpp;
-    BGRPalette                  mod_palette;
-
-    int mouse_x;
-    int mouse_y;
-
-    bool notimestamp;
-    bool nomouse;
-
-    RDPDrawable gd;
+    class D;
+    std::unique_ptr<D> d;
 };

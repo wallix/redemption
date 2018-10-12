@@ -21,28 +21,20 @@
 #define RED_TEST_MODULE TestWidgetTestMod
 #include "system/redemption_unit_tests.hpp"
 
-
-#include "core/client_info.hpp"
+#include "core/session_reactor.hpp"
 #include "mod/internal/widget_test_mod.hpp"
-#include "mod/internal/client_execute.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
 
-    FakeFront front(info, 0);
+    FakeFront front(screen_info);
 
-    Font font;
 
     SessionReactor session_reactor;
-    WidgetTestMod d(session_reactor, front, 800, 600, font);
+    WidgetTestMod d(session_reactor, front, screen_info.width, screen_info.height, global_font());
     d.draw_event(100001, front);
 /*
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enterto validate

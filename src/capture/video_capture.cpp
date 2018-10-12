@@ -229,6 +229,26 @@ void VideoCaptureCtx::next_video()
     }
 }
 
+uint16_t VideoCaptureCtx::width() const noexcept
+{
+    return this->drawable.width();
+}
+
+uint16_t VideoCaptureCtx::height() const noexcept
+{
+    return this->drawable.height();
+}
+
+size_t VideoCaptureCtx::pix_len() const noexcept
+{
+    return this->drawable.pix_len();
+}
+
+const uint8_t * VideoCaptureCtx::data() const noexcept
+{
+    return this->drawable.data();
+}
+
 Microseconds VideoCaptureCtx::snapshot(
     video_recorder & recorder, timeval const & now, bool /*ignore_frame_in_timeval*/
 )

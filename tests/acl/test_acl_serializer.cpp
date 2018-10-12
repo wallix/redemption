@@ -54,8 +54,16 @@ inline void init_keys(CryptoContext & cctx)
 
 RED_AUTO_TEST_CASE(TestAclSerializeAskNextModule)
 {
+    class NullTransport : public Transport
+    {
+        void do_send(const uint8_t * const /*buffer*/, size_t /*len*/) override
+        {
+            // TODO TEST test
+        }
+    };
+
     Inifile ini;
-    LogTransport trans;
+    NullTransport trans;
     LCGRandom rnd(0);
     Fstat fstat;
     CryptoContext cctx;

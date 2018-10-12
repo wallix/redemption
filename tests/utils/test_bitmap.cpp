@@ -5419,7 +5419,7 @@ RED_AUTO_TEST_CASE(TestBitmapCompress2)
 
     {
         auto data_compressed = ori_bmp.data_compressed();
-        hexdump_d(data_compressed.data(), data_compressed.size());
+        // hexdump_d(data_compressed.data(), data_compressed.size());
 
         rle_bin_to_run_order(ori_bmp.bpp(), data_compressed.data(), data_compressed.size());
     }

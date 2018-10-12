@@ -19,12 +19,16 @@
 
 */
 
-#define RED_TEST_MODULE TestXXX
-#include "system/redemption_unit_tests.hpp"
-
+// #define RED_TEST_MODULE TestXXX
+// #include "system/redemption_unit_tests.hpp"
+//
+//
+// #include "mod/internal/internal_mod.hpp"
+//
+// RED_AUTO_TEST_CASE(TestXXX)
+// {
+// }
 
 #include "mod/internal/internal_mod.hpp"
 
-RED_AUTO_TEST_CASE(TestXXX)
-{
-}
+int main(){}

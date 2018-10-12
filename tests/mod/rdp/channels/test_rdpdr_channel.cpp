@@ -22,81 +22,19 @@
 #define RED_TEST_MODULE TestRDPDRChannel
 #include "system/redemption_unit_tests.hpp"
 
-
-#include "core/channel_list.hpp"
-#include "core/client_info.hpp"
-#include "utils/stream.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 
+#include "./test_channel.hpp"
 #include "test_only/front/fake_front.hpp"
 
 
-class TestToClientSender : public VirtualChannelDataSender {
-    Transport& transport;
-
-public:
-    TestToClientSender(Transport& transport) : transport(transport) {}
-
-    virtual void operator() (uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-        LOG(LOG_INFO,
-            "TestToClientSender: "
-                "total_length=%u flags=0x%X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
-
-        const uint32_t dest = 0;    // Client
-        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
-        ::out_bytes_be(tmp, sizeof(dest), dest);
-        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
-        this->transport.send(tmp,sizeof(tmp));
-        this->transport.send(chunk_data, chunk_data_length);
-    }
-};
-
-class TestToServerSender : public VirtualChannelDataSender {
-    Transport& transport;
-
-public:
-    TestToServerSender(Transport& transport) : transport(transport) {}
-
-    virtual void operator() (uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length) override {
-        LOG(LOG_INFO,
-            "TestToServerSender: "
-                "total_length=%u flags=0x%X chunk_data_length=%u",
-            total_length, flags, chunk_data_length);
-
-        const uint32_t dest = 1;    // Server
-        uint8_t tmp[sizeof(dest)+sizeof(total_length)+sizeof(flags)+sizeof(chunk_data_length)];
-        ::out_bytes_be(tmp, sizeof(dest), dest);
-        ::out_bytes_be(tmp + sizeof(dest), sizeof(total_length), total_length);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length), sizeof(flags), flags);
-        ::out_bytes_be(tmp + sizeof(dest) + sizeof(total_length) + sizeof(flags), sizeof(chunk_data_length), chunk_data_length);
-        this->transport.send(tmp,sizeof(tmp));
-        this->transport.send(chunk_data, chunk_data_length);
-    }
-};
-
 RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -136,76 +74,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
         session_reactor, &to_client_sender, &to_server_sender,
         file_system_drive_manager, front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto * end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            uint8_t * chunk_data = virtual_channel_data;
-
-            end = virtual_channel_data;
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -245,76 +120,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            end = virtual_channel_data;
-            uint8_t * chunk_data = end;
-
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -354,76 +166,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            end = virtual_channel_data;
-            uint8_t * chunk_data = end;
-
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -463,76 +212,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            end = virtual_channel_data;
-            uint8_t * chunk_data = end;
-
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -572,76 +258,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            end = virtual_channel_data;
-            uint8_t * chunk_data = end;
-
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -681,78 +304,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            uint8_t * chunk_data = virtual_channel_data;
-
-            memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
-
-            end = virtual_channel_data;
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
 
 RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
 {
-    ClientInfo info;
-    info.keylayout             = 0x04C;
-    info.console_session       = 0;
-    info.brush_cache_code      = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-    info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-    snprintf(info.hostname, sizeof(info.hostname), "test");
-    FakeFront front(info,
-                    511 // verbose
-                   );
-
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
@@ -789,59 +347,5 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
         front, file_system_virtual_channel_params);
 
-    uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH + 8];
-    InStream virtual_channel_stream(virtual_channel_data);
-
-    auto test = [&]{
-        while (true) {
-            auto end = virtual_channel_data;
-            t.recv_boom(end,
-                   16    // dest(4) + total_length(4) + flags(4) +
-                         //     chunk_length(4)
-                );
-
-            const uint32_t dest              =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t total_length      =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t flags             =
-                virtual_channel_stream.in_uint32_le();
-            const uint32_t chunk_data_length =
-                virtual_channel_stream.in_uint32_le();
-
-            //std::cout << "dest=" << dest <<
-            //    ", total_length=" << total_length <<
-            //    ", flags=" <<  flags <<
-            //    ", chunk_data_length=" << chunk_data_length <<
-            //    std::endl;
-
-            uint8_t * chunk_data = virtual_channel_data;
-
-            memset(virtual_channel_data, 0, sizeof(virtual_channel_data));
-
-            end = virtual_channel_data;
-            t.recv_boom(end, chunk_data_length);
-
-            //hexdump_c(chunk_data, virtual_channel_stream.in_remain());
-
-            if (!dest)  // Client
-            {
-                file_system_virtual_channel.process_client_message(
-                    total_length, flags, chunk_data, chunk_data_length);
-            }
-            else
-            {
-                std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-                file_system_virtual_channel.process_server_message(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    out_asynchronous_task);
-
-                RED_CHECK(false == bool(out_asynchronous_task));
-            }
-
-            virtual_channel_stream.rewind();
-        }
-    };
-    RED_CHECK_EXCEPTION_ERROR_ID(test(), ERR_TRANSPORT_NO_MORE_DATA);
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }

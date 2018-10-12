@@ -25,7 +25,6 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include <zlib.h>
-#include "utils/hexdump.hpp"
 #include "utils/zlib.hpp"
 
 RED_AUTO_TEST_CASE(TestZLIB0)
@@ -97,7 +96,7 @@ RED_AUTO_TEST_CASE(TestZLIB0)
 
     RED_CHECK_EQUAL(total_compressed_size, 262);
 
-    hexdump(&all_out[0], total_size);
+    // hexdump(&all_out[0], total_size);
 
     RED_CHECK_EQUAL(total_size, 262);
 }
@@ -165,7 +164,7 @@ RED_AUTO_TEST_CASE(TestZLIB1)
 
     ret = deflateEnd(&strm);
 
-    hexdump(&all_out[0], total_size);
+    // hexdump(&all_out[0], total_size);
 
     RED_CHECK_EQUAL(total_size, 262);
     RED_CHECK_EQUAL(total_compressed_size, 262);
@@ -202,7 +201,7 @@ RED_AUTO_TEST_CASE(TestZLIB3)
         total_size += z.flush_ready(&all_out[total_size], sizeof(all_out)-total_size);
     }
 
-    hexdump(&all_out[0], total_size);
+    // hexdump(&all_out[0], total_size);
     RED_CHECK_EQUAL(total_size, 262);
 
     Zdecompressor<> unz;
@@ -222,6 +221,5 @@ RED_AUTO_TEST_CASE(TestZLIB3)
     }
     RED_CHECK_EQUAL(inflated_size, 70000);
 
-    hexdump(&decompressed[0], 200);
     RED_CHECK(0 == memcmp(decompressed, uncompressed, 70000));
 }

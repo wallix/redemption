@@ -41,6 +41,7 @@
 #include "mod/rdp/new_mod_rdp.hpp"
 
 #include "test_only/lcg_random.hpp"
+#include "test_only/core/font.hpp"
 
 
 namespace dump2008 {
@@ -77,9 +78,16 @@ public:
         size_t ,
         int ) override
     {
-        LOG(LOG_INFO, "--------- FRONT ------------------------");
-        LOG(LOG_INFO, "send_to_channel");
-        LOG(LOG_INFO, "========================================\n");
+    }
+};
+
+struct FrontTransport : GeneratorTransport
+{
+    using GeneratorTransport::GeneratorTransport;
+
+    void do_send(const uint8_t * const /*buffer*/, size_t /*len*/) override
+    {
+        // TODO TEST test
     }
 };
 
@@ -137,9 +145,7 @@ RED_AUTO_TEST_CASE(TestFront)
     #include "fixtures/trace_front_client.hpp"
 
     // Comment the code block below to generate testing data.
-    GeneratorTransport front_trans(indata, sizeof(indata)-1);
-
-    RED_CHECK(true);
+    FrontTransport front_trans(indata, sizeof(indata)-1);
 
     LCGRandom gen1(0);
     CryptoContext cctx;
@@ -169,7 +175,7 @@ RED_AUTO_TEST_CASE(TestFront)
     }
     RED_CHECK(session_reactor.front_events_.is_empty());
 
-    LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
+    // LOG(LOG_INFO, "hostname=%s", front.client_info.hostname);
 
     // int client_sck = ip_connect("10.10.47.36", 3389, 3, 1000);
     // std::string error_message;
@@ -181,16 +187,9 @@ RED_AUTO_TEST_CASE(TestFront)
     //                  , &error_message
     //                  );
 
-    GeneratorTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
-
-    if (verbose > 2){
-        LOG(LOG_INFO, "--------- CREATION OF MOD ------------------------");
-    }
-
-    RED_CHECK(true);
+    FrontTransport t(dump2008::indata, sizeof(dump2008::indata)-1);
 
     Theme theme;
-    Font font;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
     ModRDPParams mod_rdp_params( "administrateur"
@@ -198,7 +197,7 @@ RED_AUTO_TEST_CASE(TestFront)
                                 , "10.10.47.36"
                                 , "10.10.43.33"
                                 , 2
-                                , font
+                                , global_font()
                                 , theme
                                 , server_auto_reconnect_packet
                                 , ini.get_ref<cfg::context::close_box_extra_message>()
@@ -233,9 +232,6 @@ RED_AUTO_TEST_CASE(TestFront)
         t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
         gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, metrics);
 
-    if (verbose > 2){
-        LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");
-    }
     // incoming connexion data
     RED_CHECK_EQUAL(front.client_info.screen_info.width, 1024);
     RED_CHECK_EQUAL(front.client_info.screen_info.height, 768);
@@ -243,8 +239,6 @@ RED_AUTO_TEST_CASE(TestFront)
     // Force Front to be up and running after Deactivation-Reactivation
     //  Sequence initiated by mod_rdp.
     front.up_and_running = 1;
-
-    LOG(LOG_INFO, "Before Start Capture");
 
     front.can_be_start_capture();
 

@@ -32,6 +32,7 @@
 
 #include "core/error.hpp"
 #include "core/window_constants.hpp"
+#include "core/RDP/RDPDrawable.hpp"
 
 #include "utils/log.hpp"
 

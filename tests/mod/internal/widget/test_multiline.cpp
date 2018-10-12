@@ -23,21 +23,20 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "core/font.hpp"
 #include "mod/internal/widget/multiline.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -53,13 +52,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
      * I believe users of this widget may wish to control text position and behavior inside rectangle
      * ie: text may be centered, aligned left, aligned right, or even upside down, etc
      * these possibilities (and others) are supported in RDPGlyphIndex */
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font, xtext, ytext);
+                               id, fg_color, bg_color, global_font_deja_vu_14(), xtext, ytext);
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -73,17 +72,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine)
 
     // drawable.save_to_png("multiline.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x9b\x92\x55\x24\xaa\xb1\x63\xd8\x6b\xb9\xd4\x7d\xd2\x08\xe9\xff\xf0\x95\x73\x47");
+    RED_CHECK_SIG(drawable, "\x9b\x92\x55\x24\xaa\xb1\x63\xd8\x6b\xb9\xd4\x7d\xd2\x08\xe9\xff\xf0\x95\x73\x47");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -93,13 +91,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
     int16_t x = 10;
     int16_t y = 100;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -112,17 +110,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine2)
 
     // drawable.save_to_png("multiline2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x91\xc0\xda\xdb\x61\x7c\x9e\x5d\x76\x1b\x81\x88\x1d\xa8\x3e\xeb\x3a\x71\x5c\xf3");
+    RED_CHECK_SIG(drawable, "\x91\xc0\xda\xdb\x61\x7c\x9e\x5d\x76\x1b\x81\x88\x1d\xa8\x3e\xeb\x3a\x71\x5c\xf3");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -132,13 +129,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
     int16_t x = -10;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -151,17 +148,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine3)
 
     // drawable.save_to_png("multiline3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x20\x2b\xdf\xe4\x2d\xfe\x75\x7c\x52\x45\x8b\x41\x01\x41\x70\x20\x90\x0c\x5d\x53");
+    RED_CHECK_SIG(drawable, "\x20\x2b\xdf\xe4\x2d\xfe\x75\x7c\x52\x45\x8b\x41\x01\x41\x70\x20\x90\x0c\x5d\x53");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 770,500 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -171,13 +167,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
     int16_t x = 770;
     int16_t y = 500;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -190,17 +186,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine4)
 
     // drawable.save_to_png("multiline4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xc0\xb3\xff\x4b\x68\xb8\x8c\xf9\x58\x19\x44\x72\x6a\x7c\xd3\x18\x55\xf6\x40\x82");
+    RED_CHECK_SIG(drawable, "\xc0\xb3\xff\x4b\x68\xb8\x8c\xf9\x58\x19\x44\x72\x6a\x7c\xd3\x18\x55\xf6\x40\x82");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position -20,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -210,13 +205,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
     int16_t x = -20;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -229,17 +224,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine5)
 
     // drawable.save_to_png("multiline5.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x23\x1b\xda\x2a\x8d\x74\x75\x34\x4c\xa2\x4e\xf2\x4c\xa8\x2c\xc2\x27\x8d\x49\xe7");
+    RED_CHECK_SIG(drawable, "\x23\x1b\xda\x2a\x8d\x74\x75\x34\x4c\xa2\x4e\xf2\x4c\xa8\x2c\xc2\x27\x8d\x49\xe7");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -249,13 +243,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -268,17 +262,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLine6)
 
     // drawable.save_to_png("multiline6.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xaf\xef\x9e\xf5\x72\xe1\xb2\x81\x1f\xf7\xb9\x55\xf3\x93\x00\x79\xba\x71\x85\xdc");
+    RED_CHECK_SIG(drawable, "\xaf\xef\x9e\xf5\x72\xe1\xb2\x81\x1f\xf7\xb9\x55\xf3\x93\x00\x79\xba\x71\x85\xdc");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -288,13 +281,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
     int16_t x = 760;
     int16_t y = -7;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -307,17 +300,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip)
 
     // drawable.save_to_png("multiline7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x13\xc4\x5b\xc6\x2f\x90\x1c\x29\xa9\x1d\x22\x77\x95\x0a\xfe\xa6\x04\xce\x19\xfb");
+    RED_CHECK_SIG(drawable, "\x13\xc4\x5b\xc6\x2f\x90\x1c\x29\xa9\x1d\x22\x77\x95\x0a\xfe\xa6\x04\xce\x19\xfb");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -327,13 +319,13 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "line 1<br>"
                                "line 2<br>"
                                "<br>"
                                "line 3, blah blah<br>"
                                "line 4",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -346,17 +338,16 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineClip2)
 
     // drawable.save_to_png("multiline8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x44\x6c\xa2\x38\x99\xa8\xe0\x3d\xd7\xc8\xf7\x1b\xdf\xfe\x3b\xe5\x7e\x28\xc2\xea");
+    RED_CHECK_SIG(drawable, "\x44\x6c\xa2\x38\x99\xa8\xe0\x3d\xd7\xc8\xf7\x1b\xdf\xfe\x3b\xe5\x7e\x28\xc2\xea");
 }
 
 RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // WidgetMultiLine is a multiline widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -366,14 +357,14 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
     int16_t x = 0;
     int16_t y = 0;
 
-    WidgetMultiLine wmultiline(drawable.gd, parent, notifier,
+    WidgetMultiLine wmultiline(drawable, parent, notifier,
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br>"
                                "Curabitur sit amet eros rutrum mi ultricies tempor.<br>"
                                "Nam non magna sit amet dui vestibulum feugiat.<br>"
                                "Praesent vitae purus et lacus tincidunt lobortis.<br>"
                                "Nam lacinia purus luctus ante congue facilisis.<br>"
                                "Donec sodales mauris luctus ante ultrices blandit.",
-                               id, fg_color, bg_color, font);
+                               id, fg_color, bg_color, global_font_deja_vu_14());
     Dimension dim = wmultiline.get_optimal_dim();
     wmultiline.set_wh(dim);
     wmultiline.set_xy(x, y);
@@ -383,5 +374,5 @@ RED_AUTO_TEST_CASE(TraceWidgetMultiLineTooLong)
 
     // drawable.save_to_png("multiline9.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x3d\x88\xa2\x81\xdd\x9b\xbb\xcc\xee\xa7\xde\x22\x17\x29\x73\xa9\x47\x59\x90\x27");
+    RED_CHECK_SIG(drawable, "\x3d\x88\xa2\x81\xdd\x9b\xbb\xcc\xee\xa7\xde\x22\x17\x29\x73\xa9\x47\x59\x90\x27");
 }

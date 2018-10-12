@@ -37,9 +37,8 @@
 
 #include "system/redemption_unit_tests.hpp"
 #include "transport/transport.hpp"
-#include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "utils/hexdump.hpp"
+
 
 struct RemainingError : std::runtime_error
 {
@@ -192,13 +191,6 @@ private:
         memcpy(buffer, this->data.get() + this->current, len);
         this->current += len;
         return len;
-    }
-
-    void do_send(const uint8_t * const buffer, size_t len) override
-    {
-        LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
-        hexdump_c(buffer, len);
-        LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
     }
 
     const std::unique_ptr<uint8_t[]> data;
@@ -379,17 +371,6 @@ private:
     GeneratorTransport gen;
     std::unique_ptr<uint8_t[]> public_key;
     std::size_t public_key_length;
-};
-
-
-class LogTransport : public Transport
-{
-    void do_send(const uint8_t * const buffer, size_t len) override
-    {
-        LOG(LOG_INFO, "Sending on target (-1) %zu bytes", len);
-        hexdump_c(buffer, len);
-        LOG(LOG_INFO, "Sent dumped on target (-1) %zu bytes", len);
-    }
 };
 
 

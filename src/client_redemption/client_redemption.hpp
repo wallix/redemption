@@ -30,6 +30,7 @@
 
 #include "acl/auth_api.hpp"
 
+#include "core/RDP/RDPDrawable.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"
 

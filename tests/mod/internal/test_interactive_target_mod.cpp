@@ -22,73 +22,56 @@
 #define RED_TEST_MODULE TestInteractiveTargetMod
 #include "system/redemption_unit_tests.hpp"
 
-
 #include "configs/config.hpp"
-#include "core/client_info.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "mod/internal/client_execute.hpp"
 #include "mod/internal/interactive_target_mod.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/front/fake_front.hpp"
+#include "test_only/core/font.hpp"
 
 // TODO "Need more tests, with or without device/login/password asking, "
 
 RED_AUTO_TEST_CASE(TestDialogMod)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
     ini.set_acl<cfg::context::target_host>("somehost");
     ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute, font, theme);
+    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     keymap.push_kevent(Keymap2::KEVENT_ENTER); // enter to validate
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
-    RED_CHECK_EQUAL(true, ini.get<cfg::context::display_message>());
+    RED_CHECK(ini.get<cfg::context::display_message>());
 }
 
 
 RED_AUTO_TEST_CASE(TestDialogModReject)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute, font, theme);
+    InteractiveTargetMod d(ini, session_reactor, front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
     keymap.push_kevent(Keymap2::KEVENT_ESC);
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
@@ -97,30 +80,22 @@ RED_AUTO_TEST_CASE(TestDialogModReject)
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
     ini.set_acl<cfg::context::target_host>("somehost");
     ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, front, 800, 600, Rect(0, 0, 799, 599), client_execute, font, theme);
+    InteractiveTargetMod d(ini, session_reactor, front, screen_info.width, screen_info.height, Rect(0, 0, 799, 599), client_execute, global_font(), theme);
 
     bool    ctrl_alt_del;
 
@@ -144,35 +119,27 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge)
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
-    RED_CHECK_EQUAL(true, ini.get<cfg::context::display_message>());
+    RED_CHECK(ini.get<cfg::context::display_message>());
 }
 
 RED_AUTO_TEST_CASE(TestDialogModChallenge2)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 1600;
-    info.screen_info.height = 1200;
-
-    FakeFront front(info, 0);
+    ScreenInfo screen_info{BitsPerPixel{24}, 1600, 1200};
+    FakeFront front(screen_info);
     WindowListCaps window_list_caps;
     SessionReactor session_reactor;
     ClientExecute client_execute(session_reactor, front, window_list_caps, 0);
 
     Inifile ini;
     Theme theme;
-    Font font;
     ini.set_acl<cfg::context::target_host>("somehost");
     ini.set_acl<cfg::globals::target_user>("someuser");
     ini.ask<cfg::context::target_password>();
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
 
-    InteractiveTargetMod d(ini, session_reactor, front, 1600, 1200, Rect(800, 600, 799, 599), client_execute, font, theme);
+    InteractiveTargetMod d(ini, session_reactor, front, screen_info.width, screen_info.height, Rect(800, 600, 799, 599), client_execute, global_font(), theme);
 
     bool    ctrl_alt_del;
 
@@ -196,5 +163,5 @@ RED_AUTO_TEST_CASE(TestDialogModChallenge2)
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 
     RED_CHECK_EQUAL("zeaaaa", ini.get<cfg::context::target_password>());
-    RED_CHECK_EQUAL(true, ini.get<cfg::context::display_message>());
+    RED_CHECK(ini.get<cfg::context::display_message>());
 }

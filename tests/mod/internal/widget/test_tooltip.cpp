@@ -23,22 +23,20 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "core/font.hpp"
 #include "mod/internal/widget/tooltip.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "mod/internal/widget/label.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 {
-    TestDraw drawable(800, 600);
-
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    TestGraphic drawable(800, 600);
 
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -49,7 +47,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
     int16_t y = 10;
     const char * tooltiptext = "testémq";
 
-    WidgetTooltip wtooltip(drawable.gd, parent, notifier, tooltiptext, fg_color, bg_color, border_color, font);
+    WidgetTooltip wtooltip(drawable, parent, notifier, tooltiptext, fg_color, bg_color, border_color, global_font_lato_light_16());
     Dimension dim = wtooltip.get_optimal_dim();
     wtooltip.set_wh(dim);
     wtooltip.set_xy(x, y);
@@ -59,7 +57,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltip)
 
     // drawable.save_to_png("tooltip.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb8\x16\x68\x4c\x37\x49\x4b\xca\xea\x46\xc9\x95\x75\x82\x2b\xd4\xa9\x4a\x92\x7b");
+    RED_CHECK_SIG(drawable, "\xb8\x16\x68\x4c\x37\x49\x4b\xca\xea\x46\xc9\x95\x75\x82\x2b\xd4\xa9\x4a\x92\x7b");
 }
 
 inline
@@ -77,24 +75,22 @@ void rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap, WidgetScre
 
 RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
     int x = 50;
     int y = 20;
 
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
-
     // WidgetTooltip is a tooltip widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
-    WidgetLabel label(drawable.gd, parent, &parent, "TOOLTIPTEST",
-                      0, BLACK, WHITE, font);
+    WidgetLabel label(drawable, parent, &parent, "TOOLTIPTEST",
+                      0, BLACK, WHITE, global_font_lato_light_16());
     Dimension dim = label.get_optimal_dim();
     label.set_wh(dim);
     label.set_xy(x, y);
 
-    WidgetLabel label2(drawable.gd, parent, &parent, "TOOLTIPTESTMULTI",
-                      0, BLACK, WHITE, font);
+    WidgetLabel label2(drawable, parent, &parent, "TOOLTIPTESTMULTI",
+                      0, BLACK, WHITE, global_font_lato_light_16());
     dim = label2.get_optimal_dim();
     label2.set_wh(dim);
     label2.set_xy(x + 50, y + 90);
@@ -106,7 +102,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xb9\x45\xcd\x0a\xb0\xe2\x0a\x5f\x0b\xc4\xed\x1c\x99\x57\x5c\xbb\xbc\x4b\x2b\xaf");
+    RED_CHECK_SIG(drawable, "\xb9\x45\xcd\x0a\xb0\xe2\x0a\x5f\x0b\xc4\xed\x1c\x99\x57\x5c\xbb\xbc\x4b\x2b\xaf");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label.x() + label.cx() / 2, label.y() + label.cy() / 2,
@@ -115,7 +111,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x73\x16\xd3\xa6\xa9\x00\xaa\xac\x08\xce\xd1\x9f\xf7\xf1\x48\x91\xcc\x42\xcd\x66");
+    RED_CHECK_SIG(drawable, "\x73\x16\xd3\xa6\xa9\x00\xaa\xac\x08\xce\xd1\x9f\xf7\xf1\x48\x91\xcc\x42\xcd\x66");
 
     rdp_input_mouse(MOUSE_FLAG_MOVE,
                     label2.x() + label2.cx() / 2, label2.y() + label2.cy() / 2,
@@ -128,7 +124,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
+    RED_CHECK_SIG(drawable, "\x10\x22\xd9\xed\x87\x2a\x02\xbf\x64\x3d\xcf\x89\x3a\x65\xab\x53\xf9\x2c\x25\x43");
 
     parent.tooltip->set_text("Test tooltip<br>"
                              "Text modification<br>"
@@ -137,7 +133,7 @@ RED_AUTO_TEST_CASE(TraceWidgetTooltipScreen)
 
     // drawable.save_to_png("tooltipscreen4.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x40\x98\x69\xe9\xd8\xb9\x15\x60\x8f\xc1\xee\x0e\xd4\x2f\xb3\x63\xd9\xf8\xdf\x09");
+    RED_CHECK_SIG(drawable, "\x40\x98\x69\xe9\xd8\xb9\x15\x60\x8f\xc1\xee\x0e\xd4\x2f\xb3\x63\xd9\xf8\xdf\x09");
 
     parent.clear();
 }

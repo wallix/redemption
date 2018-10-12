@@ -23,7 +23,7 @@
 #include <cstdint>
 
 #include "gdi/screen_info.hpp"
-#include "utils/bitfu.hpp"
+
 
 class BGRPalette;
 

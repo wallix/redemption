@@ -23,21 +23,19 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "core/font.hpp"
 #include "mod/internal/widget/flat_form.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "test_only/check_sig.hpp"
 
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TestFlatForm)
 {
-    TestDraw drawable(800, 600);
-
-    Font font(FIXTURES_PATH "/Lato-Light_16.rbf");
+    TestGraphic drawable(800, 600);
 
     // FlatWait is a flat_dialog widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_lato_light_16(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
@@ -50,27 +48,27 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
     flag += FlatForm::DURATION_MANDATORY;
 
-    FlatForm form(drawable.gd, 0, 0, 600, 150, parent, notifier, 0, font, colors, Translation::EN, flag);
+    FlatForm form(drawable, 0, 0, 600, 150, parent, notifier, 0, global_font_lato_light_16(), colors, Translation::EN, flag);
     // ask to widget to redraw at it's current position
     form.move_xy(70, 70);
     form.rdp_input_invalidate(form.get_rect());
 
     // drawable.save_to_png("ticket_form.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x81\x01\x09\x20\x44\x48\x48\xeb\xb4\x83\x0f\xd5\x66\xb9\x34\x49\xcd\xf5\x25\x57");
+    RED_CHECK_SIG(drawable, "\x81\x01\x09\x20\x44\x48\x48\xeb\xb4\x83\x0f\xd5\x66\xb9\x34\x49\xcd\xf5\x25\x57");
 }
 
 // RED_AUTO_TEST_CASE(TraceFlatWait2)
 // {
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,100 in it's parent context
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 640, 480, parent, notifier, "test2",
+//     FlatWait flat_dialog(drawable, 640, 480, parent, notifier, "test2",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -88,7 +86,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xbe\xdc\x51\xe5\x3f\x17\x87\xa2\x5e\x57"
 //                    "\x57\x77\xc8\xab\x74\xd1\x44\x67\x73\x6a"
 //                    )){
@@ -99,15 +97,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWait3)
 // {
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -10,500 in it's parent context
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 1280, 1024, parent, notifier, "test3",
+//     FlatWait flat_dialog(drawable, 1280, 1024, parent, notifier, "test3",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -125,7 +123,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xab\xf6\x15\x4e\xf6\x00\xcf\xb1\xba\x72"
 //                    "\xc7\x45\x21\x71\xdc\x87\x99\x29\xcd\xdc"
 //                    )){
@@ -136,15 +134,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWait4)
 // {
-//     TestDraw drawable(1280, 1024);
+//     TestGraphic drawable(1280, 1024);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 770,500 in it's parent context
-//     WidgetScreen parent(drawable.gd, 1280, 1024);
+//     WidgetScreen parent(drawable, 1280, 1024);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 1280, 1024, parent, notifier, "test4",
+//     FlatWait flat_dialog(drawable, 1280, 1024, parent, notifier, "test4",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -162,7 +160,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xa4\x3f\xae\x5e\x0c\x62\x18\x35\x12\x4e"
 //                    "\x97\xb2\x9d\xf3\x0a\x21\x3b\xaa\x16\xa8"
 //                    )){
@@ -173,15 +171,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWait5)
 // {
-//     TestDraw drawable(640, 480);
+//     TestGraphic drawable(640, 480);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position -20,-7 in it's parent context
-//     WidgetScreen parent(drawable.gd, 640, 480);
+//     WidgetScreen parent(drawable, 640, 480);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 640, 480, parent, notifier, "test5",
+//     FlatWait flat_dialog(drawable, 640, 480, parent, notifier, "test5",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -199,7 +197,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\x23\x3e\xc8\xac\x9e\x89\x32\x4a\xc7\x13"
 //                    "\xb5\xe8\x55\xf9\x55\x0c\x61\xf8\x1f\x56"
 //                    )){
@@ -210,15 +208,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWait6)
 // {
-//     TestDraw drawable(350, 500);
+//     TestGraphic drawable(350, 500);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-//     WidgetScreen parent(drawable.gd, 300, 600);
+//     WidgetScreen parent(drawable, 300, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 350, 500, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable, 350, 500, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -236,7 +234,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\x60\x53\x42\x70\xfb\xc5\x95\xd8\xa7\xef"
 //                    "\x07\xe8\x5d\xab\xbc\xb1\xf7\x7a\xb6\x6e"
 //     )){
@@ -248,15 +246,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWaitClip)
 // {
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 760,-7 in it's parent context
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 300, 600, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable, 300, 600, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -274,7 +272,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\x6f\x5e\xaa\x7b\xaa\x85\x86\x9a\x32\x6c"
 //                    "\xd3\x2e\xa2\x2b\xde\x76\x35\xd6\x3b\x50"
 //     )){
@@ -285,15 +283,15 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 // RED_AUTO_TEST_CASE(TraceFlatWaitClip2)
 // {
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
 //     // FlatWait is a flat_dialog widget of size 100x20 at position 10,7 in it's parent context
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     NotifyApi * notifier = nullptr;
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, notifier, "test6",
+//     FlatWait flat_dialog(drawable, 800, 600, parent, notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -311,7 +309,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xb1\x4f\x44\xde\x94\x93\x7c\x72\x48\xc1"
 //                    "\x15\x50\x5f\x45\xa5\xb4\xcf\x9f\x21\x73"
 //     )){
@@ -330,9 +328,9 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 //     info.width = 800;
 //     info.height = 600;
 
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -351,7 +349,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, &notifier, "test6",
+//     FlatWait flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
 //                            "line 1<br>"
 //                            "line 2<br>"
 //                            "<br>"
@@ -376,7 +374,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\x09\x03\x4f\xf6\x6b\xbf\xe2\x9c\xf0\xee"
 //                    "\x89\x5c\x88\x5b\x63\xe8\x39\x4e\xe4\xef"
 //     )){
@@ -397,7 +395,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 //     // drawable.save_to_png(OUTPUT_FILE_PATH "flat_dialog-clic-2-button-ok.png");
 
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xed\xa6\x0c\x8e\xbc\xab\xdf\x81\x63\xd9"
 //                    "\xaf\x19\x24\x80\x7e\x65\x98\xe9\x94\xab"
 //     )){
@@ -419,7 +417,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xee\x26\x6b\x3c\x2b\x33\x01\x18\xf5\xca"
 //                    "\x87\x41\xd2\xce\x00\x17\xf9\x2f\xbd\xb2"
 //     )){
@@ -454,9 +452,9 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 //     info.width = 800;
 //     info.height = 600;
 
-//     TestDraw drawable(800, 600);
+//     TestGraphic drawable(800, 600);
 
-//     WidgetScreen parent(drawable.gd, 800, 600);
+//     WidgetScreen parent(drawable, 800, 600);
 //     struct Notify : NotifyApi {
 //         Widget2* sender;
 //         notify_event_t event;
@@ -475,7 +473,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 //     Theme colors;
 //     colors.global.bgcolor = DARK_BLUE_BIS;
 //     colors.global.fgcolor = WHITE;
-//     FlatWait flat_dialog(drawable.gd, 800, 600, parent, &notifier, "test6",
+//     FlatWait flat_dialog(drawable, 800, 600, parent, &notifier, "test6",
 //                            "Lorem ipsum dolor sit amet, consectetur<br>"
 //                            "adipiscing elit. Nam purus lacus, luctus sit<br>"
 //                            "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -508,7 +506,7 @@ RED_AUTO_TEST_CASE(TestFlatForm)
 
 //     char message[1024];
 
-//     if (!check_sig(drawable.gd.impl(), message,
+//     if (!check_sig(drawable.impl(), message,
 //                    "\xaa\x65\x78\x57\x46\xa8\x97\x24\xf1\xd6"
 //                    "\xc2\xff\x28\x92\xbe\xc8\x46\x0c\xbe\x01"
 //     )){

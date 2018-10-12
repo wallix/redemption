@@ -23,20 +23,22 @@
 #define RED_TEST_MODULE TestVideoCropper
 #include "system/redemption_unit_tests.hpp"
 
-#include "core/RDP/RDPDrawable.hpp"
-#include "test_only/check_sig.hpp"
+#include "gdi/graphic_api.hpp"
 #include "utils/video_cropper.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/check_sig.hpp"
 
 
 RED_AUTO_TEST_CASE(TestVideoCropperFull)
 {
-    RDPDrawable drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
     VideoCropper video_cropper(drawable, 0, 0, 800, 600);
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
-    drawable.draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(RED)), Rect(50, 50, 320, 200), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(RED)), Rect(50, 50, 320, 200), color_cxt);
 
     RED_CHECK_SIG(drawable,
         "\x85\x0e\x04\xea\xf7\x6c\x08\xbd\x4f\xb1\xd5\xbe\xf5\xe4\x43\x4e\x1d\x93\x8e\x5e");
@@ -56,8 +58,8 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
     }
 
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(RED)), Rect(125, 75, 320, 200), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(RED)), Rect(125, 75, 320, 200), color_cxt);
 
     video_cropper.prepare_image_frame();
 
@@ -71,8 +73,8 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
     }
 
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(RED)), Rect(100, 100, 370, 250), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(RED)), Rect(100, 100, 370, 250), color_cxt);
 
     video_cropper.prepare_image_frame();
 
@@ -88,13 +90,13 @@ RED_AUTO_TEST_CASE(TestVideoCropperFull)
 
 RED_AUTO_TEST_CASE(TestVideoCropperReset)
 {
-    RDPDrawable drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
     VideoCropper video_cropper(drawable, 0, 0, 800, 600);
 
     auto const color_cxt = gdi::ColorCtx::depth24();
 
-    drawable.draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(GREEN)), Rect(50, 50, 320, 200), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(50, 50, 320, 200), encode_color24()(GREEN)), Rect(50, 50, 320, 200), color_cxt);
 
     RED_CHECK_SIG(drawable,
         "\xb6\xce\xad\x9e\x0c\x71\x67\xc5\x81\x59\x35\x97\xb8\xf2\x68\x0a\xf9\x7b\x88\x00");
@@ -116,8 +118,8 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
     }
 
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(GREEN)), Rect(125, 75, 320, 200), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(125, 75, 320, 200), encode_color24()(GREEN)), Rect(125, 75, 320, 200), color_cxt);
 
     video_cropper.reset(125, 75, 320, 200);
 
@@ -133,8 +135,8 @@ RED_AUTO_TEST_CASE(TestVideoCropperReset)
     }
 
 
-    drawable.draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
-    drawable.draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(GREEN)), Rect(100, 100, 370, 250), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(0, 0, 800, 600), encode_color24()(BLACK)), Rect(0, 0, 800, 600), color_cxt);
+    drawable->draw(RDPOpaqueRect(Rect(100, 100, 370, 250), encode_color24()(GREEN)), Rect(100, 100, 370, 250), color_cxt);
 
     video_cropper.reset(100, 100, 370, 250);
 

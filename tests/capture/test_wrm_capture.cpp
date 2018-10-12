@@ -26,11 +26,13 @@
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"
 #include "core/app_path.hpp"
+#include "transport/in_file_transport.hpp"
+#include "transport/transport.hpp"
+
 #include "test_only/fake_stat.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "test_only/lcg_random.hpp"
-#include "transport/in_file_transport.hpp"
-#include "transport/transport.hpp"
+#include "test_only/gdi/test_graphic.hpp"
 
 #include <cstring>
 #include <string>
@@ -124,7 +126,7 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
             int(wrm_verbose)
         );
 
-        RDPDrawable gd_drawable(scr.cx, scr.cy);
+        TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
           CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable, 0},
@@ -133,41 +135,41 @@ RED_AUTO_TEST_CASE(TestWrmCapture)
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
-        gd_drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
@@ -243,7 +245,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         RED_CHECK(true);
 
-        RDPDrawable gd_drawable(scr.cx, scr.cy);
+        TestGraphic gd_drawable(scr.cx, scr.cy);
 
         WrmCaptureImpl wrm(
             CaptureParams{now, "capture", "", "./", 1000, nullptr, SmartVideoCropping::disable, 0},
@@ -254,21 +256,21 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
         auto const color_cxt = gdi::ColorCtx::depth24();
         bool ignore_frame_in_timeval = false;
 
-        gd_drawable.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(scr, encode_color24()(GREEN)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         RED_CHECK(true);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(1, 50, 700, 30), encode_color24()(BLUE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         RED_CHECK(true);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(2, 100, 700, 30), encode_color24()(WHITE)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
@@ -277,21 +279,21 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(3, 150, 700, 30), encode_color24()(RED)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         RED_CHECK(true);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(4, 200, 700, 30), encode_color24()(BLACK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
 
         RED_CHECK(true);
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(5, 250, 700, 30), encode_color24()(PINK)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
@@ -300,7 +302,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureLocalHashed)
 
         // ------------------------------ BREAKPOINT ------------------------------
 
-        gd_drawable.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
+        gd_drawable->draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         wrm.draw(RDPOpaqueRect(Rect(6, 300, 700, 30), encode_color24()(WABGREEN)), scr, color_cxt);
         now.tv_sec++;
         wrm.periodic_snapshot(now, 0, 0, ignore_frame_in_timeval);
@@ -600,7 +602,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
             int(wrm_verbose)
         );
 
-        RDPDrawable gd_drawable(4, 1);
+        TestGraphic gd_drawable(4, 1);
 
         WrmCaptureImpl wrm(
           CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::disable, 0},
@@ -752,7 +754,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureRemoteApp)
 
         auto const color_cxt = gdi::ColorCtx::depth24();
 
-        RDPDrawable gd_drawable(800, 600);
+        TestGraphic gd_drawable(800, 600);
 
         WrmCaptureImpl wrm(
           CaptureParams{now, basename, "", record_path, groupid, nullptr, SmartVideoCropping::v1, 0},

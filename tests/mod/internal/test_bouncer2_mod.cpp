@@ -22,32 +22,23 @@
 #define RED_TEST_MODULE TestBouncer2Mod
 #include "system/redemption_unit_tests.hpp"
 
-
-
-#include "core/client_info.hpp"
+#include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"
 #include "test_only/front/fake_front.hpp"
-#include "keyboard/keymap2.hpp"
+#include "test_only/core/font.hpp"
+
 
 RED_AUTO_TEST_CASE(TestBouncer2Mod)
 {
-    ClientInfo info;
-    info.keylayout = 0x040C;
-    info.console_session = 0;
-    info.brush_cache_code = 0;
-    info.screen_info.bpp = BitsPerPixel{24};
-    info.screen_info.width = 800;
-    info.screen_info.height = 600;
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
 
-    FakeFront front(info, 0);
-
-    Font font;
 
     Keymap2 keymap;
-    keymap.init_layout(info.keylayout);
+    keymap.init_layout(0x040C);
     keymap.push_kevent(Keymap2::KEVENT_ENTER);
 
     SessionReactor session_reactor;
-    Bouncer2Mod d(session_reactor, front, 800, 600, font);
+    Bouncer2Mod d(session_reactor, front, screen_info.width, screen_info.height, global_font());
     d.rdp_input_scancode(0, 0, 0, 0, &keymap);
 }

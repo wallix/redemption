@@ -53,8 +53,6 @@ src_requirements = dict((
     ('src/main/rdp_client.cpp', inc_dep),
     ('src/main/main_client_redemption.cpp', inc_dep),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
-    ('tests/includes/test_only/front/fake_front.cpp', inc_dep),
-    ('tests/includes/test_only/fake_graphic.cpp', inc_dep),
 ))
 
 dir_requirements = dict((
@@ -559,6 +557,10 @@ def generate_obj(files):
             print('obj', mark_target(cpp_to_obj(f)), ':', inject_variable_prefix(f.path), end='')
             if f.all_cxx_deps:
                 print(' :', ' '.join(sorted(f.all_cxx_deps)), end='')
+            if f.path.startswith('tests/includes/test_only/'):
+                if not f.all_cxx_deps:
+                    print(' :', end='')
+                print(' $(CXXFLAGS_TEST)', end='')
             print(' ;')
 
 # filter target

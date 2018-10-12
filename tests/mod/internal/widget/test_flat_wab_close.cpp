@@ -23,54 +23,52 @@
 #include "system/redemption_unit_tests.hpp"
 
 
-#include "core/font.hpp"
 #include "mod/internal/widget/flat_wab_close.hpp"
 #include "mod/internal/widget/screen.hpp"
 #include "keyboard/keymap2.hpp"
 #include "test_only/check_sig.hpp"
-#include "test_only/mod/fake_draw.hpp"
+#include "test_only/gdi/test_graphic.hpp"
+#include "test_only/core/font.hpp"
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget at position 0,0 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                 "abc<br>def", "rec", "rec",
-                                false, extra_message, font, Theme(), Translation::EN);
+                                false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png("flat_wab_close.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xdb\x65\x0f\x79\xfe\xd4\xee\x90\x78\xb7\x04\x01\xed\x5a\x83\x12\xe9\x03\x39\x1e");
+    RED_CHECK_SIG(drawable, "\xdb\x65\x0f\x79\xfe\xd4\xee\x90\x78\xb7\x04\x01\xed\x5a\x83\x12\xe9\x03\x39\x1e");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,100 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
         "Lorem ipsum dolor sit amet, consectetur<br>"
         "adipiscing elit. Nam purus lacus, luctus sit<br>"
         "amet suscipit vel, posuere quis turpis. Sed<br>"
@@ -85,7 +83,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
         "erat ut ligula. Fusce sit amet mauris neque.<br>"
         "Sed orci augue, luctus in ornare sed,<br>"
         "adipiscing et arcu.",
-        nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
+        nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
@@ -93,78 +91,75 @@ RED_AUTO_TEST_CASE(TraceFlatWabClose2)
 
 //    drawable.save_to_png(OUTPUT_FILE_PATH "flat_wab_close2.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x46\xca\x13\x7f\x61\x03\x7c\xd1\xe0\x84\x8f\x11\x89\x09\x3c\xf0\xe1\x3b\xa6\xa1");
+    RED_CHECK_SIG(drawable, "\x46\xca\x13\x7f\x61\x03\x7c\xd1\xe0\x84\x8f\x11\x89\x09\x3c\xf0\xe1\x3b\xa6\xa1");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabClose3)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at it's current position
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png("flat_wab_close3.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x37\xca\xf1\xf0\x97\x55\x83\xa8\x76\x95\xd3\xd9\x6d\xa8\x18\xd3\x02\x9d\xd9\xd3");
+    RED_CHECK_SIG(drawable, "\x37\xca\xf1\xf0\x97\x55\x83\xa8\x76\x95\xd3\xd9\x6d\xa8\x18\xd3\x02\x9d\xd9\xd3");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 760,-7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 780,-7 and of size 120x20. After clip the size is of 20x13
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect().offset(20,0));
 
     // drawable.save_to_png("flat_wab_close7.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x4b\x63\x5e\x1b\x74\x99\x92\xed\xfd\xa8\xbe\xc9\xf0\x8e\x73\x34\xdc\xf9\x8a\x08");
+    RED_CHECK_SIG(drawable, "\x4b\x63\x5e\x1b\x74\x99\x92\xed\xfd\xa8\xbe\xc9\xf0\x8e\x73\x34\xdc\xf9\x8a\x08");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 {
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position 10,7 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     NotifyApi * notifier = nullptr;
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, notifier,
                                     "abc<br>def",
-                                    nullptr, nullptr, false, extra_message, font, Theme(), Translation::EN);
+                                    nullptr, nullptr, false, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     // ask to widget to redraw at position 30,12 and of size 30x10.
     flat_wab_close.rdp_input_invalidate(Rect(20 + flat_wab_close.x(),
@@ -174,7 +169,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseClip2)
 
     // drawable.save_to_png("flat_wab_close8.png");
 
-    RED_CHECK_SIG(drawable.gd, "\x5e\xd7\x4c\xb7\x03\x2f\xe1\x79\xbf\x92\x0b\x30\xd6\x9b\xe3\xe2\x5d\xbf\x7b\x75");
+    RED_CHECK_SIG(drawable, "\x5e\xd7\x4c\xb7\x03\x2f\xe1\x79\xbf\x92\x0b\x30\xd6\x9b\xe3\xe2\x5d\xbf\x7b\x75");
 }
 
 RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
@@ -190,19 +185,18 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
         }
     } notifier;
 
-    TestDraw drawable(800, 600);
+    TestGraphic drawable(800, 600);
 
-    Font font(FIXTURES_PATH "/dejavu_14.rbf");
 
     // FlatWabClose is a flat_wab_close widget of size 100x20 at position -10,500 in it's parent context
-    WidgetScreen parent(drawable.gd, font, nullptr, Theme{});
+    WidgetScreen parent(drawable, global_font_deja_vu_14(), nullptr, Theme{});
     parent.set_wh(800, 600);
 
     const char* extra_message = nullptr;
 
-    FlatWabClose flat_wab_close(drawable.gd, 0, 0, 800, 600, parent, &notifier,
+    FlatWabClose flat_wab_close(drawable, 0, 0, 800, 600, parent, &notifier,
                                 "abc<br>def", "tartempion", "caufield",
-                                true, extra_message, font, Theme(), Translation::EN);
+                                true, extra_message, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     flat_wab_close.refresh_timeleft(183);
 
@@ -211,13 +205,13 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
 
     // drawable.save_to_png("flat_wab_close-exit1.png");
 
-    RED_CHECK_SIG(drawable.gd, "\xa8\x5c\xaf\x51\x0d\x59\xfa\x8c\x38\x4e\xe7\x67\x21\x64\xc2\xf0\x8b\xa7\xf7\x1f");
+    RED_CHECK_SIG(drawable, "\xa8\x5c\xaf\x51\x0d\x59\xfa\x8c\x38\x4e\xe7\x67\x21\x64\xc2\xf0\x8b\xa7\xf7\x1f");
 
     flat_wab_close.refresh_timeleft(49);
     flat_wab_close.rdp_input_invalidate(flat_wab_close.get_rect());
 
     // drawable.save_to_png("flat_wab_close-exit2.png");
-    RED_CHECK_SIG(drawable.gd, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
+    RED_CHECK_SIG(drawable, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
 
     flat_wab_close.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                                    flat_wab_close.cancel.x() + 2,
@@ -230,7 +224,7 @@ RED_AUTO_TEST_CASE(TraceFlatWabCloseExit)
     RED_CHECK(notifier.event == NOTIFY_CANCEL);
 
     // drawable.save_to_png("flat_wab_close-exit3.png");
-    RED_CHECK_SIG(drawable.gd, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
+    RED_CHECK_SIG(drawable, "\x3b\xcb\x95\xcf\x2f\x9b\xb8\x4e\x45\xe2\x47\x6c\x50\x92\xa8\x64\xc9\xe3\x17\xf8");
 
     notifier.sender = nullptr;
     notifier.event = 0;

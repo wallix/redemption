@@ -96,16 +96,12 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
                                                    make_array_view(userDomain));
 
     auto & LmChallengeResponse = context.AUTHENTICATE_MESSAGE.LmChallengeResponse.buffer;
-    // LOG(LOG_INFO, "==== LmChallengeResponse =====");
-    // hexdump_c(LmChallengeResponse.get_data(), LmChallengeResponse.size());
     RED_CHECK_MEM_C(
         make_array_view(LmChallengeResponse.get_data(), LmChallengeResponse.size()),
         /* 0000 */ "\x11\x1b\x69\x4b\xdb\x30\x53\x91\xef\x94\x8b\x20\x83\xbd\x07\x43" //..iK.0S.... ...C
         /* 0010 */ "\xb8\x6c\xda\xa6\xf0\xf6\x30\x8d"                                 //.l....0.
     );
     auto & NtChallengeResponse = context.AUTHENTICATE_MESSAGE.NtChallengeResponse.buffer;
-    // LOG(LOG_INFO, "==== NtChallengeResponse =====");
-    // hexdump_c(NtChallengeResponse.get_data(), NtChallengeResponse.size());
 
     RED_CHECK_MEM_C(
         make_array_view(NtChallengeResponse.get_data(), NtChallengeResponse.size()),
@@ -117,8 +113,6 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
         "\x03\x00\x08\x00\x77\x00\x69\x00\x6e\x00\x37\x00\x07\x00\x08\x00" //....w.i.n.7..... !
         "\xa9\x8d\x9b\x1a\x6c\xb0\xcb\x01\x00\x00\x00\x00\x00\x00\x00\x00" //....l........... !
     );
-    // LOG(LOG_INFO, "==== SessionBaseKey =====");
-    // hexdump_c(context.SessionBaseKey, 16);
     RED_CHECK_MEM_AC(
         context.SessionBaseKey,
         "\x1b\x76\xfd\xe3\x46\x77\x60\x04\x39\x7a\x47\x8a\x60\x92\x0c\x4c"
@@ -126,37 +120,27 @@ RED_AUTO_TEST_CASE(TestNtlmContext)
 
     context.ntlm_encrypt_random_session_key();
 
-    // LOG(LOG_INFO, "==== EncryptedRandomSessionKey =====");
-    // hexdump_c(context.EncryptedRandomSessionKey, 16);
     RED_CHECK_MEM_AC(
         context.EncryptedRandomSessionKey,
         "\x5a\xcb\x6c\xba\x58\x07\xb5\xd4\xf4\x61\x65\xfb\xb0\x9a\xe7\xc6"
     );
 
     context.ntlm_generate_client_signing_key();
-    // LOG(LOG_INFO, "==== ClientSigningKey =====");
-    // hexdump_c(context.ClientSigningKey, 16);
     RED_CHECK_MEM_AC(
         context.ClientSigningKey,
         /* 0000 */ "\xb6\x18\x61\x5b\xdb\x97\x6c\x62\xfd\xd5\x72\xab\x37\x24\xd1\x38" //..a[..lb..r.7$.8
     );
     context.ntlm_generate_client_sealing_key();
-    // LOG(LOG_INFO, "==== ClientSealingKey =====");
-    // hexdump_c(context.ClientSealingKey, 16);
     RED_CHECK_MEM_AC(
         context.ClientSealingKey,
         /* 0000 */ "\x02\x46\xea\x18\xc8\xba\x71\xf3\xc1\x06\xb9\xf0\x54\x37\x44\x01" //.F....q.....T7D.
     );
     context.ntlm_generate_server_signing_key();
-    // LOG(LOG_INFO, "==== ServerSigningKey =====");
-    // hexdump_c(context.ServerSigningKey, 16);
     RED_CHECK_MEM_AC(
         context.ServerSigningKey,
       /* 0000 */ "\x56\x66\xbd\xc3\x82\xda\xb7\x70\x08\x36\xb3\xed\xcd\x67\x8b\x5a" //Vf.....p.6...g.Z
     );
     context.ntlm_generate_server_sealing_key();
-    // LOG(LOG_INFO, "==== ServerSealingKey =====");
-    // hexdump_c(context.ServerSealingKey, 16);
     RED_CHECK_MEM_AC(
         context.ServerSealingKey,
         /* 0000 */ "\x19\x3a\x3f\x24\x89\x27\xd3\x8b\x4b\xf5\x63\x2d\xa4\xc2\xb2\x78" //.:?$.'..K.c-...x
@@ -209,69 +193,6 @@ RED_AUTO_TEST_CASE(TestSetters)
     context.ntlm_SetContextServicePrincipalName(spn);
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
     RED_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
-
-}
-
-
-RED_AUTO_TEST_CASE(TestOutputs)
-{
-    LOG(LOG_INFO, "SebBuffer size : %zu", sizeof(SecBuffer));
-    LOG(LOG_INFO, "Array size : %zu", sizeof(Array));
-    LOG(LOG_INFO, "size_t size : %zu", sizeof(size_t));
-    LOG(LOG_INFO, "unsigned long size : %zu", sizeof(unsigned long));
-    LOG(LOG_INFO, "unsigned int size : %zu", sizeof(unsigned int));
-    LOG(LOG_INFO, "int size : %zu", sizeof(int));
-    LOG(LOG_INFO, "uint8_t size : %zu", sizeof(uint8_t));
-    LOG(LOG_INFO, "uint8_t* size : %zu", sizeof(uint8_t*));
-    uint8_t autobuffer[AUTOSIZE];
-    LOG(LOG_INFO, "autobuffer size : %zu", sizeof(autobuffer));
-
-
-    uint8_t head[2];
-    head[0] = 1;
-    head[1] = 0xFF;
-    size_t length = (head[0] << 8) | head[1];
-    LOG(LOG_INFO, "size length : %zx", length);
-
-//     const char ccd_r[] = {
-// // Client Core Data
-// "\x01\xc0\xd8\x00\x04\x00\x08\x00" //..Duca..........
-// /* 0090 */ "\x00\x04\x00\x03\x01\xca\x03\xaa\x0c\x04\x00\x00\x28\x0a\x00\x00" //............(...
-// /* 00a0 */ "\x6d\x00\x74\x00\x61\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //m.t.a...........
-// /* 00b0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 00c0 */ "\x04\x00\x00\x00\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 00d0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 00e0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 00f0 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 0100 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00" //................
-// /* 0110 */ "\x00\x00\x00\x00\x10\x00\x07\x00\x01\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 0120 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 0130 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 0140 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //................
-// /* 0150 */ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x00\x00" //................
-//     };
-
-
-//     const char ccd_f[] = {
-// // Client Core Data
-// "\x01\xc0\xd8\x00\x04\x00\x08\x00\x80\x07\xdb\x03" // ca.(............
-// /*0090*/ "\x01\xca\x03\xaa\x09\x04\x00\x00\xb0\x1d\x00\x00\x57\x00\x49\x00" // ............W.I.
-// /*00a0*/ "\x4e\x00\x58\x00\x50\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // N.X.P...........
-// /*00b0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x04\x00\x00\x00" // ................
-// /*00c0*/ "\x00\x00\x00\x00\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*00d0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*00e0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*00f0*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*0100*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x01\xca\x01\x00\x00\x00\x00\x00" // ................
-// /*0110*/ "\x18\x00\x0f\x00\x2f\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ..../...........
-// /*0120*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*0130*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*0140*/ "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" // ................
-// /*0150*/ "\x00\x00\x00\x00\x00\x00\x02\x00\x02\x00\x00\x00"
-//     };
-
-    // hexdump_c(ccd_r, sizeof(ccd_r) - 1);
-    // hexdump_c(ccd_f, sizeof(ccd_f) - 1);
 
 }
 

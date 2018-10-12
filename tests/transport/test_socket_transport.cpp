@@ -71,7 +71,6 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     bool run = true;
 
     const char * ip = "127.0.0.1";
-    LOG(LOG_INFO, "connecting to %s:%d", ip, 4444);
     int client_sck = socket(PF_INET, SOCK_STREAM, 0);
     union
     {
@@ -113,7 +112,6 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
     SocketTransport * client_trans = nullptr;
 
     while (run){
-        LOG(LOG_INFO, "run loop\n");
         fd_set rfds;
         fd_set wfds;
         FD_ZERO(&rfds);
@@ -150,7 +148,6 @@ RED_AUTO_TEST_CASE(TestSocketTransport)
         switch (num) {
         case 0:
             if (timeout.tv_sec) {
-                LOG(LOG_INFO, "woke up on timeout\n");
                 RED_REQUIRE_MESSAGE(false, "woke up on timeout");
             }
             REDEMPTION_CXX_FALLTHROUGH;
