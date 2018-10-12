@@ -101,14 +101,7 @@ public:
 
     const long int movie_len;
 
-
-    IconMovie(ClientRedemptionConfig * config, ClientCallback * controllers
-      , const std::string & name
-      , const std::string & path
-      , const std::string & version,
-        const std::string & reso,
-        const std::string & checksum,
-        const long int movie_len,
+    IconMovie(ClientRedemptionConfig * config, ClientCallback * controllers, const IconMovieData & iconData,
         QWidget * parent)
       : QWidget(parent)
       , config(config)
@@ -117,14 +110,16 @@ public:
       , _height(60)
       , pixmap(this->_width, this->_height)
       , drop_rect(24, 95, 240, 160)
-      , name(name)
-      , path(path)
-      , version(version)
-      , reso(reso)
-      , checksum(checksum)
-      , movie_len(movie_len)
+      , name(iconData.file_name)
+      , path(iconData.file_path)
+      , version(iconData.file_version)
+      , reso(iconData.file_resolution)
+      , checksum(iconData.file_checksum)
+      , movie_len(iconData.movie_len)
     {
         this->setFixedSize(this->_width, this->_height);
+
+        this->draw_account();
     }
 
     void draw_account() {
@@ -214,20 +209,7 @@ public:
     }
 
     void mouseDoubleClickEvent( QMouseEvent * e ) override {
-        if ( e->button() == Qt::LeftButton )
-        {
-            auto const last_delimiter_it = std::find(path.rbegin(), path.rend(), '/');
-            int pos = path.size() - (last_delimiter_it - path.rbegin());
-
-            std::string const movie_name = (last_delimiter_it == path.rend())
-            ? path
-            : path.substr(path.size() - (last_delimiter_it - path.rbegin()));
-
-            std::string const movie_dir = path.substr(0, pos);
-
-            this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
-            this->config->_movie_name = movie_name;
-
+        if ( e->button() == Qt::LeftButton ) {
             this->controllers->replay(path);
         }
     }
@@ -260,11 +242,10 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     ClientRedemptionConfig * config;
     ClientCallback * controllers;
-    std::vector<IconMovie *> icons;
     QFormLayout lay;
 
 
-    QtMoviesPanel(const std::vector<IconMovieData> & iconData, ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
+    QtMoviesPanel(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
       : QWidget(parent)
       , config(config)
       , controllers(controllers)
@@ -273,12 +254,10 @@ public:
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        //std::vector<IconMovieData> iconData = this->controllers->get_icon_movie_data();
+        std::vector<IconMovieData> iconData = this->config->get_icon_movie_data();
 
         for (size_t i = 0; i < iconData.size(); i++) {
-            IconMovie* icon = new IconMovie(this->config, controllers, iconData[i].file_name, iconData[i].file_path, iconData[i].file_version, iconData[i].file_resolution, iconData[i].file_checksum, iconData[i].movie_len, this);
-            this->icons.push_back(icon);
-            icon->draw_account();
+            IconMovie* icon = new IconMovie(this->config, controllers, iconData[i], this);
             this->lay.addRow(icon);
         }
 
@@ -326,7 +305,7 @@ public:
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
     , scroller(this)
-    , movie_panel(config->get_icon_movie_data(), config, controllers, this)
+    , movie_panel(config, controllers, this)
     {
         this->scroller.setFixedSize(410,  250);
         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
@@ -481,13 +460,11 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
     FormTabAPI * main_tab;
-    const ClientRedemptionConfig::AccountData accountData;
+    const AccountData accountData;
     QPixmap pixmap;
     QRect drop_rect;
 
-
-
-    QtIconAccount(FormTabAPI * main_tab, const ClientRedemptionConfig::AccountData & accountData, QWidget * parent)
+    QtIconAccount(FormTabAPI * main_tab, const AccountData & accountData, QWidget * parent)
       : QWidget(parent)
       , main_tab(main_tab)
       , accountData(accountData)

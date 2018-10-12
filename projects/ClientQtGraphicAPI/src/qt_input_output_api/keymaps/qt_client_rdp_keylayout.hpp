@@ -21,7 +21,7 @@
 #pragma once
 
 //#include "utils/log.hpp"
-
+#include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 
 

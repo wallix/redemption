@@ -163,6 +163,27 @@ struct RDPRemoteAppConfig {
     std::string full_cmd_line;
 };
 
+struct WindowsData {
+    int form_x = 0;
+    int form_y = 0;
+    int screen_x = 0;
+    int screen_y = 0;
+
+    bool no_data = true;
+};
+
+
+struct AccountData {
+    std::string title;
+    std::string IP;
+    std::string name;
+    std::string pwd;
+    int port = 0;
+    int options_profil = 0;
+    int index = -1;
+    int protocol = 0;
+};
+
 
 class ClientRedemptionConfig
 {
@@ -221,33 +242,15 @@ public:
     std::chrono::milliseconds time_out_disconnection;
     int keep_alive_freq;
 
+    WindowsData windowsData;
+
     std::vector<KeyCustomDefinition> keyCustomDefinitions;
     std::vector<UserProfil> userProfils;
 
     ModRDPParamsData modRDPParamsData;
     ModVNCParamsData vnc_conf;
 
-    struct WindowsData {
-        int form_x = 0;
-        int form_y = 0;
-        int screen_x = 0;
-        int screen_y = 0;
-
-        bool no_data = true;
-
-    } windowsData;
-
-
-    struct AccountData {
-        std::string title;
-        std::string IP;
-        std::string name;
-        std::string pwd;
-        int port = 0;
-        int options_profil = 0;
-        int index = -1;
-        int protocol = NO_PROTOCOL;
-    };                                                      // _accountData[MAX_ACCOUNT_DATA];
+                                                     // _accountData[MAX_ACCOUNT_DATA];
     std::vector<AccountData> _accountData;
     int  _accountNB = 0;
     bool _save_password_account = false;

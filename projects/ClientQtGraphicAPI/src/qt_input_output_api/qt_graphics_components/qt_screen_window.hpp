@@ -508,7 +508,6 @@ public:
         //this->barRepaint(this->current_time_movie, QColor(Qt::green));
     }
 
-
     void show_video_real_time() {
 
         struct timeval now = tvtime();
@@ -706,6 +705,7 @@ public Q_SLOTS:
 
     void closeReplay() {
         this->callback->delete_replay_mod();
+        this->callback->closeFromGUI();
     }
 
     void stopRelease() override {

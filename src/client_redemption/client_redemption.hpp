@@ -299,7 +299,7 @@ public:
         }
     }
 
-    ~ClientRedemption() = default;
+   ~ClientRedemption() = default;
 
    virtual bool is_connected() override {
         return this->config.connected;
@@ -863,8 +863,15 @@ public:
 
     void replay( const std::string & movie_path) override {
 
-//         this->config._movie_name = movie_name;
-//         this->config._movie_dir = movie_dir;
+        auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
+        int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
+
+        std::string const movie_name = (last_delimiter_it == movie_path.rend())
+        ? movie_path
+        : movie_path.substr(movie_path.size() - (last_delimiter_it - movie_path.rbegin()));
+
+        this->config.mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
+        this->config._movie_name = movie_name;
         this->config._movie_full_path = movie_path;
 
         if (this->config._movie_name.empty()) {
