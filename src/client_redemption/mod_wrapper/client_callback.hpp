@@ -77,8 +77,8 @@ public:
         return this->client->reload_replay_mod(begin, now_stop);
     }
 
-    bool load_replay_mod(std::string const & movie_path, timeval time_1, timeval time_2) {
-        return this->client->load_replay_mod(movie_path, time_1, time_2);
+    bool load_replay_mod(timeval time_1, timeval time_2) {
+        return this->client->load_replay_mod(time_1, time_2);
     }
 
 

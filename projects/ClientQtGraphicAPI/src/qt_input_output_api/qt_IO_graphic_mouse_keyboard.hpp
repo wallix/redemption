@@ -153,13 +153,13 @@ public:
 
     void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(this->config, this->controller, map);
+        this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, map, this->config->is_spanning, this->config->target_IP);
     }
 
     void create_replay_screen() override {
         QPixmap * map = &(this->cache);
 
-        this->screen = new ReplayQtScreen(this->controller, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, this->config);
+        this->screen = new ReplayQtScreen(this->controller, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
     }
 
     QWidget * get_static_qwidget() {
@@ -221,7 +221,7 @@ public:
     void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(this->config, this->controller, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&(this->config->windowsData), this->controller, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
@@ -414,7 +414,7 @@ private:
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->controller, &(this->cache));
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -426,7 +426,7 @@ private:
                 this->config->vnc_conf.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(this->config, this->controller, &(this->cache));
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -449,7 +449,7 @@ private:
 
                     if (!this->is_pre_loading) {
 
-                        this->screen = new ReplayQtScreen(this->controller, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, this->config);
+                        this->screen = new ReplayQtScreen(this->controller, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
 
                         this->screen->show();
                     }

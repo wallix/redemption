@@ -50,7 +50,7 @@ public:
 
     // Replay functions
     virtual void replay( const std::string & /*unused*/) {}
-    virtual bool load_replay_mod(std::string const & /*unused*/, timeval /*unused*/, timeval /*unused*/) { return false; }
+    virtual bool load_replay_mod(timeval /*unused*/, timeval /*unused*/) { return false; }
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}

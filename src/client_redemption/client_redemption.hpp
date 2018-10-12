@@ -823,12 +823,12 @@ public:
     }
 
 
-    bool load_replay_mod( std::string const & movie_path, timeval begin_read, timeval end_read) override {
+    bool load_replay_mod(timeval begin_read, timeval end_read) override {
          try {
             this->replay_mod = std::make_unique<ReplayMod>(
                 this->session_reactor
               , *this
-              , movie_path.c_str()
+              , this->config._movie_full_path.c_str()
               , 0             //this->config.info.width
               , 0             //this->config.info.height
               , this->_error
@@ -853,7 +853,7 @@ public:
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
-            const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
+            const std::string errorMsg("Cannot read movie \""+this->config._movie_full_path+ "\".");
             LOG(LOG_INFO, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             this->disconnect(labelErrorMsg, false);
@@ -883,7 +883,7 @@ public:
         this->config.is_loading_replay_mod = true;
 
         //this->setScreenDimension();
-        if (this->load_replay_mod(movie_path, {0, 0}, {0, 0})) {
+        if (this->load_replay_mod({0, 0}, {0, 0})) {
 
             this->config.is_loading_replay_mod = false;
 
@@ -948,7 +948,7 @@ public:
         switch (this->replay_mod->get_wrm_version()) {
 
                 case WrmVersion::v1:
-                    if (this->load_replay_mod(this->config._movie_full_path, {0, 0}, {0, 0})) {
+                    if (this->load_replay_mod({0, 0}, {0, 0})) {
                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
                         movie_time_start = tvtime();
                         return movie_time_start;
@@ -959,7 +959,7 @@ public:
                 {
                     int last_balised = (begin/ ClientRedemptionConfig::BALISED_FRAME);
                     this->config.is_loading_replay_mod = true;
-                    if (this->load_replay_mod(this->config._movie_full_path, {last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
+                    if (this->load_replay_mod({last_balised * ClientRedemptionConfig::BALISED_FRAME, 0}, {0, 0})) {
 
                         this->config.is_loading_replay_mod = false;
 

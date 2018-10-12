@@ -62,7 +62,9 @@ public:
         READING_BAR_H = 12,
     };
 
-    ClientRedemptionConfig * config;
+//     ClientRedemptionConfig * config;
+    WindowsData * win_data;
+
     ClientCallback * callback;
 
     int            _width;
@@ -79,9 +81,9 @@ public:
      QRect clip;
 
 
-    QtScreen(ClientRedemptionConfig * config, ClientCallback * callback, QPixmap * cache, int w, int h)
+    QtScreen(WindowsData * win_data, ClientCallback * callback, QPixmap * cache, int w, int h)
     : QWidget()
-    , config(config)
+    , win_data(win_data)
     , callback(callback)
     , _width(w)
     , _height(h)
@@ -98,16 +100,16 @@ public:
 
     ~QtScreen() {
         QPoint points = this->mapToGlobal({0, 0});
-        this->config->windowsData.screen_x = points.x()-1;    //-1;
-        this->config->windowsData.screen_y = points.y()-39;   //-39;
-        this->config->writeWindowsData();
+        this->win_data->screen_x = points.x()-1;            //-1;
+        this->win_data->screen_y = points.y()-39;           //-39;
+        this->win_data->writeWindowsData();
 
         if (!this->_connexionLasted) {
             this->callback->closeFromGUI();
         }
     }
 
-    void mouseReleaseEvent(QMouseEvent *e) override {
+    virtual void mouseReleaseEvent(QMouseEvent *e) override {
         int flag(0);
         switch (e->button()) {
 
@@ -124,12 +126,6 @@ public:
 
         int x = e->x();
         int y = e->y();
-
-        if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-            QPoint mouseLoc = QCursor::pos();
-            x = mouseLoc.x();
-            y = mouseLoc.y();
-        }
 
         this->callback->mouseButtonEvent(x, y, flag);
     }
@@ -150,19 +146,13 @@ public:
         this->_penColor = color;
     }
 
-    bool eventFilter(QObject *obj, QEvent *e) override {
+    virtual bool eventFilter(QObject *obj, QEvent *e) override {
         Q_UNUSED(obj);
         if (e->type() == QEvent::MouseMove)
         {
             QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
             int x = std::max(0, mouseEvent->x());
             int y = std::max(0, mouseEvent->y());
-
-            if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-                QPoint mouseLoc = QCursor::pos();
-                x = std::max(0, mouseLoc.x());
-                y = std::max(0, mouseLoc.y());
-            }
 
             this->callback->mouseMouveEvent(x, y);
         }
@@ -186,7 +176,7 @@ public:
         this->close();
     }
 
-    void mousePressEvent(QMouseEvent *e) override {
+    virtual void mousePressEvent(QMouseEvent *e) override {
 
         int flag(0);
         switch (e->button()) {
@@ -204,11 +194,11 @@ public:
         int x = e->x();
         int y = e->y();
 
-        if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-            QPoint mouseLoc = QCursor::pos();
-            x = mouseLoc.x();
-            y = mouseLoc.y();
-        }
+//         if (this->config->mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+//             QPoint mouseLoc = QCursor::pos();
+//             x = mouseLoc.x();
+//             y = mouseLoc.y();
+//         }
 
         this->callback->mouseButtonEvent(x, y, flag | MOUSE_FLAG_DOWN);
     }
@@ -236,8 +226,8 @@ public:
 
 
 
-    RemoteAppQtScreen (ClientRedemptionConfig * config, ClientCallback * callback, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(config, callback, cache, width, height)
+    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(wind_data, callback, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -247,11 +237,11 @@ public:
 
         //this->setAttribute(Qt::WA_OutsideWSRange);
 
-        if (this->config->is_spanning) {
-            this->setWindowState(Qt::WindowFullScreen);
-        } else {
-            this->setFixedSize(this->_width, this->_height);
-        }
+//         if (this->config->is_spanning) {
+//             this->setWindowState(Qt::WindowFullScreen);
+//         } else {
+//             this->setFixedSize(this->_width, this->_height);
+//         }
 
         this->move(this->x_pixmap_shift, this->y_pixmap_shift);
     }
@@ -267,6 +257,74 @@ public:
         painter.setPen(pen);
         painter.drawPixmap(QPoint(0, 0), *(this->_cache), QRect(this->x_pixmap_shift, this->y_pixmap_shift, this->_width, this->_height));
         painter.end();
+    }
+
+    void mouseReleaseEvent(QMouseEvent *e) override {
+        int flag(0);
+        switch (e->button()) {
+
+            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::XButton1:
+            case Qt::XButton2:
+            case Qt::NoButton:
+            case Qt::MouseButtonMask:
+
+            default: break;
+        }
+
+        int x = e->x();
+        int y = e->y();
+
+        QPoint mouseLoc = QCursor::pos();
+        x = mouseLoc.x();
+        y = mouseLoc.y();
+
+        this->callback->mouseButtonEvent(x, y, flag);
+    }
+
+    bool eventFilter(QObject *obj, QEvent *e) override {
+        Q_UNUSED(obj);
+        if (e->type() == QEvent::MouseMove)
+        {
+            QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(e);
+            int x = std::max(0, mouseEvent->x());
+            int y = std::max(0, mouseEvent->y());
+
+            QPoint mouseLoc = QCursor::pos();
+            x = std::max(0, mouseLoc.x());
+            y = std::max(0, mouseLoc.y());
+
+            this->callback->mouseMouveEvent(x, y);
+        }
+
+        return false;
+    }
+
+    void mousePressEvent(QMouseEvent *e) override {
+
+        int flag(0);
+        switch (e->button()) {
+            case Qt::LeftButton:  flag = MOUSE_FLAG_BUTTON1; break;
+            case Qt::RightButton: flag = MOUSE_FLAG_BUTTON2; break;
+            case Qt::MidButton:   flag = MOUSE_FLAG_BUTTON4; break;
+            case Qt::XButton1:
+            case Qt::XButton2:
+            case Qt::NoButton:
+            case Qt::MouseButtonMask:
+
+            default: break;
+        }
+
+        int x = e->x();
+        int y = e->y();
+
+        QPoint mouseLoc = QCursor::pos();
+        x = mouseLoc.x();
+        y = mouseLoc.y();
+
+        this->callback->mouseButtonEvent(x, y, flag | MOUSE_FLAG_DOWN);
     }
 
 };
@@ -285,8 +343,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (ClientRedemptionConfig * config, ClientCallback * callback, QPixmap * cache)
-        : QtScreen(config, callback, cache, cache->width(), cache->height())
+    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, QPixmap * cache, bool is_spanning, std::string & target_IP)
+        : QtScreen(wind_data, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -295,10 +353,10 @@ public:
         this->installEventFilter(this);
 //         this->setAttribute(Qt::WA_NoSystemBackground);
 
-        std::string title = "ReDemPtion Client connected to [" + this->config->target_IP +  "].";
+        std::string title = "ReDemPtion Client connected to [" + target_IP +  "].";
         this->setWindowTitle(QString(title.c_str()));
 
-        if (this->config->is_spanning) {
+        if (is_spanning) {
             this->setWindowState(Qt::WindowFullScreen);
         } else {
             this->setFixedSize(this->_width, this->_height + BUTTON_HEIGHT);
@@ -326,16 +384,16 @@ public:
         this->QObject::connect(&(this->_buttonDisconnexion), SIGNAL (released()), this, SLOT (disconnexionRelease()));
         this->_buttonDisconnexion.setFocusPolicy(Qt::NoFocus);
 
-        if (this->config->is_spanning) {
+        if (is_spanning) {
             this->move(0, 0);
         } else {
-            if (this->config->is_no_win_data()) {
+            if (wind_data->no_data) {
                 QDesktopWidget* desktop = QApplication::desktop();
-                this->config->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
-                this->config->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+                wind_data->screen_x = (desktop->width()/2)  - (this->_width/2);
+                wind_data->screen_y = (desktop->height()/2) - (this->_height/2);
             }
 
-            this->move(this->config->windowsData.screen_x, this->config->windowsData.screen_y);
+            this->move(wind_data->screen_x, wind_data->screen_y);
         }
     }
 
@@ -391,8 +449,6 @@ public:
     QTimer         _timer_replay;
 
     bool           _running;
-    std::string    _movie_name;
-//     std::string    _movie_dir;
 
     timeval movie_time_start;
     timeval movie_time_pause;
@@ -412,14 +468,13 @@ public:
 
 
 public:
-    ReplayQtScreen (ClientCallback * callback, QPixmap * cache, time_t movie_time, time_t current_time_movie, ClientRedemptionConfig * config)
-        : QtScreen(config, callback, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
+        : QtScreen(win_data, callback, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
         , _timer_replay(this)
         , _running(false)
-        , _movie_name(this->config->_movie_name)
 //         , _movie_dir(movie_dir)
         , is_paused(false)
         , movie_time(movie_time)
@@ -432,7 +487,7 @@ public:
         , current_time_movie(current_time_movie)
         , real_time_record(callback->get_real_time_movie_begin())
     {
-        std::string title = "ReDemPtion Client " + this->_movie_name;
+        std::string title = "ReDemPtion Client " + movie_name;
         this->setWindowTitle(QString(title.c_str()));
 
 //         if (this->_front->is_spanning) {
@@ -496,12 +551,12 @@ public:
         this->repaint();
 
 
-        if (this->config->is_no_win_data()) {
+        if (win_data->no_data) {
             QDesktopWidget* desktop = QApplication::desktop();
-            this->config->windowsData.screen_x = (desktop->width()/2)  - (this->_width/2);
-            this->config->windowsData.screen_y = (desktop->height()/2) - (this->_height/2);
+            win_data->screen_x = (desktop->width()/2)  - (this->_width/2);
+            win_data->screen_y = (desktop->height()/2) - (this->_height/2);
         }
-        this->move(this->config->windowsData.screen_x, this->config->windowsData.screen_y);
+        this->move(win_data->screen_x, win_data->screen_y);
 
         this->QObject::connect(&(this->_timer_replay), SIGNAL (timeout()),  this, SLOT (playReplay()));
 
@@ -588,7 +643,7 @@ public:
     }
 
     bool event(QEvent *event) override {
-        if (this->config->is_replaying) {
+//         if (this->config->is_replaying) {
             QHelpEvent *helpEvent = static_cast<QHelpEvent*>( event );
             QRect bar_zone(44, this->_height+4, this->reading_bar_len, READING_BAR_H);
             int x = helpEvent->pos().x();
@@ -602,9 +657,10 @@ public:
             } else {
                 QToolTip::hideText();
             }
-        }
+//         }
         return QWidget::event( event );
     }
+
 
 
 private:
@@ -699,7 +755,7 @@ public Q_SLOTS:
             this->movie_status.setText("  Stop ");
             this->_running = false;
             this->is_paused = false;
-            this->callback->load_replay_mod(this->config->_movie_full_path, {0, 0}, {0, 0});
+            this->callback->load_replay_mod({0, 0}, {0, 0});
         }
     }
 
@@ -722,7 +778,7 @@ public Q_SLOTS:
         this->current_time_movie = 0;
         this->show_video_real_time_hms();
 
-        if (this->callback->load_replay_mod(this->config->_movie_full_path, {0, 0}, {0, 0})) {
+        if (this->callback->load_replay_mod({0, 0}, {0, 0})) {
             //this->slotRepainMatch();
         }
     }

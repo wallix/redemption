@@ -84,7 +84,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-    ClientRedemptionConfig * config;
+//     ClientRedemptionConfig * config;
     ClientCallback * controllers;
 
     int _width;
@@ -101,10 +101,10 @@ public:
 
     const long int movie_len;
 
-    IconMovie(ClientRedemptionConfig * config, ClientCallback * controllers, const IconMovieData & iconData,
+    IconMovie(ClientCallback * controllers, const IconMovieData & iconData,
         QWidget * parent)
       : QWidget(parent)
-      , config(config)
+//       , config(config)
       , controllers(controllers)
       , _width(385)
       , _height(60)
@@ -240,24 +240,20 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-    ClientRedemptionConfig * config;
     ClientCallback * controllers;
     QFormLayout lay;
 
 
-    QtMoviesPanel(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
+    QtMoviesPanel(std::vector<IconMovieData> iconData, ClientCallback * controllers, QWidget * parent)
       : QWidget(parent)
-      , config(config)
       , controllers(controllers)
       , lay(this)
     {
         this->setMinimumSize(395, 250);
         this->setMaximumWidth(395);
 
-        std::vector<IconMovieData> iconData = this->config->get_icon_movie_data();
-
         for (size_t i = 0; i < iconData.size(); i++) {
-            IconMovie* icon = new IconMovie(this->config, controllers, iconData[i], this);
+            IconMovie* icon = new IconMovie(controllers, iconData[i], this);
             this->lay.addRow(icon);
         }
 
@@ -288,7 +284,7 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-    ClientRedemptionConfig * config;
+//     ClientRedemptionConfig * config;
     ClientCallback * controllers;
 
     QFormLayout lay;
@@ -297,15 +293,18 @@ public:
     QScrollArea scroller;
     QtMoviesPanel movie_panel;
 
+    const std::string replay_default_dir;
 
-    QtFormReplay(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
+
+    QtFormReplay(std::vector<IconMovieData> iconData, ClientCallback * controllers, QWidget * parent, const std::string & replay_default_dir)
     : QWidget(parent)
-    , config(config)
+//     , config(config)
     , controllers(controllers)
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
     , scroller(this)
-    , movie_panel(config, controllers, this)
+    , movie_panel(iconData, controllers, this)
+    , replay_default_dir(replay_default_dir)
     {
         this->scroller.setFixedSize(410,  250);
         this->scroller.setStyleSheet("background-color: #C4C4C3; border: 1px solid #FFFFFF;"
@@ -327,20 +326,19 @@ private Q_SLOTS:
     void replayPressed() {
         QString filePath("");
         filePath = QFileDialog::getOpenFileName(this, tr("Open a Movie"),
-                                                this->config->REPLAY_DIR.c_str(),
+                                                this->replay_default_dir.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
 
-        auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
-        int pos = str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin());
+//         auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
+//         int pos = str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin());
+//
+//         std::string const movie_name = (last_delimiter_it == str_movie_path.rend())
+//         ? str_movie_path
+//         : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
+//
+//         std::string const movie_dir = str_movie_path.substr(0, pos);
 
-        std::string const movie_name = (last_delimiter_it == str_movie_path.rend())
-        ? str_movie_path
-        : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
-
-        std::string const movie_dir = str_movie_path.substr(0, pos);
-
-        this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
         this->controllers->replay(str_movie_path);
     }
 
@@ -1015,7 +1013,7 @@ public:
         , tabs(this)
         , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
         , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
-        , replay_tab(config, controllers, this)
+        , replay_tab(config->get_icon_movie_data(), controllers, this, config->REPLAY_DIR)
         , is_option_open(false)
         , is_closing(false)
     {

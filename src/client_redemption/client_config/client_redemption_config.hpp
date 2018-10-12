@@ -71,7 +71,6 @@
           , name(std::move(name)) {}
     };
 
-
     struct KeyCustomDefinition {
         int qtKeyID = 0;
         int scanCode = 0;
@@ -89,10 +88,6 @@
           , name(std::move(name))
         {}
     };
-
-
-   // bool                 _recv_disconnect_ultimatum;
-
 
     struct IconMovieData {
         const std::string file_name;
@@ -155,34 +150,52 @@
         bool enable_shared_remoteapp = false;
     };
 
-
-struct RDPRemoteAppConfig {
-    std::string source_of_ExeOrFile;
-    std::string source_of_WorkingDir;
-    std::string source_of_Arguments;
-    std::string full_cmd_line;
-};
+    struct RDPRemoteAppConfig {
+        std::string source_of_ExeOrFile;
+        std::string source_of_WorkingDir;
+        std::string source_of_Arguments;
+        std::string full_cmd_line;
+    };
 
 struct WindowsData {
+
+    const std::string config_file_path;
+
     int form_x = 0;
     int form_y = 0;
     int screen_x = 0;
     int screen_y = 0;
 
     bool no_data = true;
+
+    WindowsData(const std::string & config_file_path)
+      : config_file_path(config_file_path)
+    {}
+
+    void writeWindowsData()  {
+        std::ofstream ofile(this->config_file_path, std::ios::trunc);
+        if (ofile) {
+            ofile
+                << "form_x " << this->form_x << "\n"
+                << "form_y " << this->form_y << "\n"
+                << "screen_x " << this->screen_x << "\n"
+                << "screen_y " << this->screen_y << "\n"
+            ;
+            ofile.close();
+        }
+    }
 };
 
-
-struct AccountData {
-    std::string title;
-    std::string IP;
-    std::string name;
-    std::string pwd;
-    int port = 0;
-    int options_profil = 0;
-    int index = -1;
-    int protocol = 0;
-};
+    struct AccountData {
+        std::string title;
+        std::string IP;
+        std::string name;
+        std::string pwd;
+        int port = 0;
+        int options_profil = 0;
+        int index = -1;
+        int protocol = 0;
+    };
 
 
 class ClientRedemptionConfig
@@ -298,6 +311,7 @@ public:
     , persist(false)
     , time_out_disconnection(5000)
     , keep_alive_freq(100)
+    , windowsData(this->WINDOWS_CONF)
     , vnc_conf(session_reactor, front)
     {
         this->setDefaultConfig();
@@ -962,16 +976,17 @@ public:
     }
 
     void writeWindowsData()  {
-        std::ofstream ofile(this->WINDOWS_CONF, std::ios::trunc);
-        if (ofile) {
-            ofile
-                << "form_x " << this->windowsData.form_x << "\n"
-                << "form_y " << this->windowsData.form_y << "\n"
-                << "screen_x " << this->windowsData.screen_x << "\n"
-                << "screen_y " << this->windowsData.screen_y << "\n"
-            ;
-            ofile.close();
-        }
+        this->windowsData.writeWindowsData();
+//         std::ofstream ofile(this->WINDOWS_CONF, std::ios::trunc);
+//         if (ofile) {
+//             ofile
+//                 << "form_x " << this->windowsData.form_x << "\n"
+//                 << "form_y " << this->windowsData.form_y << "\n"
+//                 << "screen_x " << this->windowsData.screen_x << "\n"
+//                 << "screen_y " << this->windowsData.screen_y << "\n"
+//             ;
+//             ofile.close();
+//         }
     }
 
     void setUserProfil()  {
