@@ -3975,8 +3975,7 @@ private:
                 // TODO we should use accessors to set that, also not sure it's the right place to set it
                 this->ini.set_acl<cfg::context::opt_width>(this->client_info.screen_info.width);
                 this->ini.set_acl<cfg::context::opt_height>(this->client_info.screen_info.height);
-                // TODO use safe_int
-                this->ini.set_acl<cfg::context::opt_bpp>(checked_int(this->client_info.screen_info.bpp));
+                this->ini.set_acl<cfg::context::opt_bpp>(safe_int(this->client_info.screen_info.bpp));
 
                 if (!this->auth_info_sent) {
                     char         username_a_domain[516];

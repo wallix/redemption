@@ -78,7 +78,7 @@ RED_AUTO_TEST_CASE(TestSequencedVideoCapture)
         {
             void notify_next_video(const timeval& /*now*/, reason /*reason*/) override
             {
-                // TODO TEST test
+                // TEST test
             }
         } next_video_notifier;
 
@@ -114,7 +114,7 @@ RED_AUTO_TEST_CASE(TestSequencedVideoCaptureMP4)
         {
             void notify_next_video(const timeval& /*now*/, reason /*reason*/) override
             {
-                // TODO TEST test
+                // TEST test
             }
         } next_video_notifier;
 
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestVideoCaptureOneChunkFLV)
     {
         void notify_next_video(const timeval& /*now*/, reason /*reason*/) override
         {
-            // TODO TEST
+            // TEST
         }
     } next_video_notifier;
 
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureFLV)
     {
         void notify_next_video(const timeval& /*now*/, reason /*reason*/) override
         {
-            // TODO TEST test
+            // TEST check notification
         }
     } next_video_notifier;
 
@@ -267,7 +267,7 @@ RED_AUTO_TEST_CASE(SequencedVideoCaptureX264)
     {
         void notify_next_video(const timeval& /*now*/, reason /*reason*/) override
         {
-            // TODO TEST
+            // TEST check notification
         }
     } next_video_notifier;
 

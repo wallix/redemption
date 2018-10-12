@@ -857,7 +857,7 @@ RED_AUTO_TEST_CASE(TestPointerVNC_Color)
 
 }
 
-// TODO re-enable
+// TEST re-enable
 // RED_AUTO_TEST_CASE(TestPointerIO)
 // {
 //         StaticOutStream<32+108*96> stream;

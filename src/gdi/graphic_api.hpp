@@ -85,12 +85,6 @@ struct Depth
 
     static /*c++14: constexpr*/ Depth from_bpp(BitsPerPixel bpp) noexcept
     {
-        return from_bpp(uint8_t(bpp));
-    }
-
-    // TODO deprecated
-    static /*c++14: constexpr*/ Depth from_bpp(uint8_t bpp) noexcept
-    {
         struct depth_table {
             Depth table[33] = {
                 unspecified(),  unspecified(),  unspecified(),  unspecified(),
@@ -104,7 +98,7 @@ struct Depth
                 depth24(), // TODO useless ?
             };
         };
-        auto const depth = bpp < sizeof(depth_table{}.table)/sizeof(depth_table{}.table[0])
+        auto const depth = size_t(bpp) < sizeof(depth_table{}.table)/sizeof(depth_table{}.table[0])
             ? depth_table{}.table[int(bpp)]
             : unspecified();
         assert(depth != unspecified());
@@ -206,18 +200,10 @@ struct ColorCtx
     static ColorCtx from_bpp(BitsPerPixel bpp, BGRPalette const * palette)
     { return {Depth::from_bpp(bpp), palette}; }
 
-    // TODO deprecated
-    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const * palette)
-    { return {Depth::from_bpp(bpp), palette}; }
-
     static ColorCtx from_bpp(uint8_t bpp, BGRPalette const && palette) = delete;
     static ColorCtx from_bpp(BitsPerPixel bpp, BGRPalette const && palette) = delete;
 
     static ColorCtx from_bpp(BitsPerPixel bpp, BGRPalette const & palette)
-    { return {Depth::from_bpp(bpp), &palette}; }
-
-    // TODO deprecated
-    static ColorCtx from_bpp(uint8_t bpp, BGRPalette const & palette)
     { return {Depth::from_bpp(bpp), &palette}; }
 
 private:
