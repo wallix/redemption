@@ -27,7 +27,15 @@ Author(s): Jonathan Poelen
 #include <cassert>
 
 
-enum class BitsPerPixel : uint8_t;
+enum class BitsPerPixel : uint8_t {
+    BitsPP1 = 1,
+    BitsPP4 = 4,
+    BitsPP8 = 8,
+    BitsPP15 = 15,
+    BitsPP16 = 16,
+    BitsPP24 = 24,
+    BitsPP32 = 32,
+};
 enum class BytesPerPixel : uint8_t;
 // enum class Width : uint16_t;
 // enum class Height : uint16_t;
