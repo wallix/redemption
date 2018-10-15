@@ -167,7 +167,8 @@ namespace cfg {
     };
 
     struct metrics {
-        struct activate_log_metrics;
+        struct enable_rdp_metrics;
+        struct enable_vnc_metrics;
         struct log_dir_path;
         struct log_interval;
         struct log_file_turnover_interval;

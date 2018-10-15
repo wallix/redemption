@@ -2166,11 +2166,23 @@ namespace cfg {
 
     /// type: bool <br/>
     /// value{false} <br/>
-    struct metrics::activate_log_metrics {
+    struct metrics::enable_rdp_metrics {
         static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "metrics";
-        static constexpr char const * name = "activate_log_metrics";
+        static constexpr char const * name = "enable_rdp_metrics";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct metrics::enable_vnc_metrics {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "metrics";
+        static constexpr char const * name = "enable_vnc_metrics";
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4730,7 +4742,8 @@ struct mod_rdp
 { static constexpr bool is_section = true; };
 
 struct metrics
-: cfg::metrics::activate_log_metrics
+: cfg::metrics::enable_rdp_metrics
+, cfg::metrics::enable_vnc_metrics
 , cfg::metrics::log_dir_path
 , cfg::metrics::log_interval
 , cfg::metrics::log_file_turnover_interval

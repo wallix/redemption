@@ -326,7 +326,7 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            (ini.get<cfg::metrics::activate_log_metrics>()
+            (ini.get<cfg::metrics::enable_rdp_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
         );
 

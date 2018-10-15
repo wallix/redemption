@@ -103,7 +103,7 @@ void ModuleManager::create_mod_vnc(
             (client_info.remote_program ? &client_execute : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-            (ini.get<cfg::metrics::activate_log_metrics>()
+            (ini.get<cfg::metrics::enable_vnc_metrics>()
             && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
         );
 

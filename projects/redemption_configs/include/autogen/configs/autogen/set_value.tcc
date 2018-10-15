@@ -1091,10 +1091,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     }
     else if (0 == strcmp(context, "metrics")) {
         if (0) {}
-        else if (0 == strcmp(key, "activate_log_metrics")) {
+        else if (0 == strcmp(key, "enable_rdp_metrics")) {
             ::configs::parse_and_log(
                 context, key,
-                static_cast<cfg::metrics::activate_log_metrics&>(this->variables).value,
+                static_cast<cfg::metrics::enable_rdp_metrics&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "enable_vnc_metrics")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::metrics::enable_vnc_metrics&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

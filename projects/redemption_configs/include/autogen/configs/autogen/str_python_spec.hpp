@@ -556,9 +556,12 @@
 "[metrics]\n\n"
 
 "#_advanced\n"
-"activate_log_metrics = boolean(default=False)\n\n"
+"enable_rdp_metrics = boolean(default=False)\n\n"
 
 "#_advanced\n"
+"enable_vnc_metrics = boolean(default=False)\n\n"
+
+"#_hidden\n"
 "log_dir_path = string(max=4096, default='" << (app_path(AppPath::Metrics)) << "')\n\n"
 
 "# (is in second)\n"

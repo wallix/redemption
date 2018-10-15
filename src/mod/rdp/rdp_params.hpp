@@ -48,7 +48,7 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::metrics::log_dir_path,                  vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::sign_key,                      vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::activate_log_metrics,          vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::enable_rdp_metrics,            vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>
 >;
 
@@ -415,4 +415,3 @@ struct ModRDPParams {
 #undef RDP_PARAMS_LOG_GET
     }   // void log() const
 };  // struct ModRDPParams
-

@@ -35,7 +35,6 @@ using ModVncVariables = vcfg::variables<
     vcfg::var<cfg::metrics::log_dir_path,                  vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::log_file_turnover_interval,    vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::sign_key,                      vcfg::accessmode::get>,
-    vcfg::var<cfg::metrics::activate_log_metrics,          vcfg::accessmode::get>,
+    vcfg::var<cfg::metrics::enable_vnc_metrics  ,          vcfg::accessmode::get>,
     vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>
 >;
-
