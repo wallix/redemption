@@ -6,6 +6,7 @@ REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_ROOT_PATH)/include ;
 SYSTEM_TYPE ?= linux ;
 SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 
+include ../../jam/redemption-config.jam
 include ../../jam/cxxflags.jam ;
 include ../../jam/defines.jam ;
 
