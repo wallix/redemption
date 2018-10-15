@@ -48,12 +48,12 @@ int main(int argc, char** argv)
 
 
 
-    ClientOutputGraphicAPI      * graphic_qt = &graphic_control_qt_obj;
-    ClientIOClipboardAPI * clipboard_api = &clipboard_api_obj;
-    ClientOutputSoundAPI * sound_api     = &sound_api_obj;
-    ClientInputSocketAPI * socket_api    = &socket_api_obj;
-    ClientKeyLayoutAPI   * keylayout_api = &keylayout_obj;
-    ClientIODiskAPI      * ioDisk_api    = &ioDisk_api_obj;
+    ClientOutputGraphicAPI * graphic_qt    = &graphic_control_qt_obj;
+    ClientIOClipboardAPI   * clipboard_api = &clipboard_api_obj;
+    ClientOutputSoundAPI   * sound_api     = &sound_api_obj;
+    ClientInputSocketAPI   * socket_api    = &socket_api_obj;
+    ClientKeyLayoutAPI     * keylayout_api = &keylayout_obj;
+    ClientIODiskAPI        * ioDisk_api    = &ioDisk_api_obj;
 
     //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
     //;           //RDPVerbose::graphics;
