@@ -327,6 +327,7 @@ private Q_SLOTS:
         filePath = QFileDialog::getOpenFileName(this, tr("Open a Movie"),
                                                 this->replay_default_dir.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
+
         std::string str_movie_path(filePath.toStdString());
 
 //         auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');

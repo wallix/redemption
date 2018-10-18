@@ -316,7 +316,7 @@ private:
                     "ClipboardVirtualChannel::process_client_file_contents_request_pdu: "
                         "Requesting the contents of server file is denied.");
             }
-            this->send_pdu_to_client<RDPECLIP::FileContentsResponse>(false);
+            this->send_pdu_to_client_2<RDPECLIP::FileContentsResponse>(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK);
 
             return false;
         }
@@ -373,8 +373,7 @@ private:
                         "Serveur to client Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_client<RDPECLIP::FormatDataResponsePDU>(
-                false, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_client_2<RDPECLIP::FormatDataResponsePDU>(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, static_cast<uint8_t *>(nullptr), 0);
 
             return false;
         }
@@ -1240,7 +1239,7 @@ public:
                     "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
                         "Requesting the contents of client file is denied.");
             }
-            this->send_pdu_to_server<RDPECLIP::FileContentsResponse>(false);
+              this->send_pdu_to_client_2<RDPECLIP::FileContentsResponse>(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK);
 
             return false;
         }
@@ -1322,8 +1321,7 @@ public:
                         "Client to server Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_server<RDPECLIP::FormatDataResponsePDU>(
-                false, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_client_2<RDPECLIP::FormatDataResponsePDU>(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, static_cast<uint8_t *>(nullptr), 0);
 
             return false;
         }

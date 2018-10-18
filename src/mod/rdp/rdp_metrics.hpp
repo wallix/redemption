@@ -221,6 +221,7 @@ public:
 
     void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+            LOG(LOG_INFO, "set_server_cliprdr_metrics length=%zu", length);
             this->metrics->add_to_current_data(clipboard_channel_data_from_server, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
@@ -334,6 +335,7 @@ public:
 
     void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+            LOG(LOG_INFO, "set_client_cliprdr_metrics length=%zu", length);
             this->metrics->add_to_current_data(clipboard_channel_data_from_client, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
