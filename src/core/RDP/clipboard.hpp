@@ -2151,7 +2151,7 @@ struct FormatDataResponsePDU
 }; // struct FormatDataResponsePDU
 
 
-struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
+struct FormatDataResponsePDU_MetaFilePic {
 
     // 2.2.5.2.1 Packed Metafile Payload
 
@@ -2252,7 +2252,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     };
 
     void log() const {
-        this->header.log();
+//         this->header.log();
         LOG(LOG_INFO, "     Packed Metafile Payload:");
         LOG(LOG_INFO, "          * mappingMode = 0x%08x (4 bytes)", this->mappingMode);
         LOG(LOG_INFO, "          * xExt        = %d (4 bytes)", int(this->xExt));
@@ -2277,8 +2277,8 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
                                               , const uint16_t height
                                               , const uint16_t depth
                                               , const double ARBITRARY_SCALE)
-      : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
-      , mappingMode(MM_ANISOTROPIC)
+//       : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
+  :  mappingMode(MM_ANISOTROPIC)
       , xExt(int(double(width ) * ARBITRARY_SCALE))
       , yExt(int(double(height) * ARBITRARY_SCALE))
       , metaHeader(MFF::MEMORYMETAFILE, MFF::METAVERSION300, data_length)
@@ -2289,7 +2289,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     {}
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
+//         this->header.emit(stream);
 
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
@@ -2310,7 +2310,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
+//         this->header.recv(stream);
         this->mappingMode = stream.in_uint32_le();
         this->xExt = stream.in_uint32_le();
         this->yExt = stream.in_uint32_le();
@@ -2366,7 +2366,7 @@ struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
     }
 };
 
-struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
+struct FormatDataResponsePDU_Text {
 
     struct Ender {
         enum : uint32_t {
@@ -2379,22 +2379,22 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
         }
     };
 
-    explicit FormatDataResponsePDU_Text() = default;
+//     explicit FormatDataResponsePDU_Text() = default;
 
-    explicit FormatDataResponsePDU_Text(std::size_t length)
-      : FormatDataResponsePDU(length)
+    explicit FormatDataResponsePDU_Text()
+//       : FormatDataResponsePDU(length)
     {}
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
+//         this->header.emit(stream);
     }
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
+//         this->header.recv(stream);
     }
 
     void log() const {
-        this->header.log();
+//         this->header.log();
         LOG(LOG_INFO, "     Format Data Response Text PDU:");
     }
 
@@ -2421,12 +2421,12 @@ struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
 // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
-struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
+struct FormatDataResponsePDU_FileList {
 
     int cItems{0};
 
     void log() const {
-        this->header.log();
+//         this->header.log();
         LOG(LOG_INFO, "     Format Data Response File List PDU:");
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
@@ -2434,17 +2434,17 @@ struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
     explicit FormatDataResponsePDU_FileList() = default;
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
-      : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
-      , cItems(cItems)
+//       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
+    : cItems(cItems)
     {}
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
+//         this->header.emit(stream);
         stream.out_uint32_le(this->cItems);
     }
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
+//         this->header.recv(stream);
         this->cItems = stream.in_uint32_le();
     }
 };

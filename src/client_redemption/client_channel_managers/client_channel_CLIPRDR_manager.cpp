@@ -469,10 +469,10 @@
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
                             }
 
-                            RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_OK, 4);
+//                             RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_OK, 4);
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
                             StaticOutStream<256> out_streamRequest;
-                            formatListRequestPDUHeader.emit(out_streamRequest);
+//                             formatListRequestPDUHeader.emit(out_streamRequest);
                             formatDataRequestPDU.emit(out_streamRequest);
                             InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
@@ -551,6 +551,8 @@
                                     }
                                     total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
                                     auto image = this->clientIOClipboardAPI->get_image();
+
+                                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length()+RDPECLIP::METAFILE_HEADERS_SIZE);
                                     RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
                                           this->clientIOClipboardAPI->get_cliboard_data_length()
                                         , image.width()
@@ -558,6 +560,7 @@
                                         , safe_int(image.bits_per_pixel())
                                         , this->arbitrary_scale
                                     );
+                                    formatDataResponseHeader.emit(out_stream_first_part);
                                     fdr.emit(out_stream_first_part);
 
                                     this->callback->process_client_channel_out_data(
@@ -582,9 +585,12 @@
                                         first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
                                     }
 
-                                    RDPECLIP::FormatDataResponsePDU_Text fdr(this->clientIOClipboardAPI->get_cliboard_data_length());
+                                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length());
 
-                                    fdr.emit(out_stream_first_part);
+                                    formatDataResponseHeader.emit(out_stream_first_part);
+//                                     RDPECLIP::FormatDataResponsePDU_Text fdr(this->clientIOClipboardAPI->get_cliboard_data_length());
+//
+//                                     fdr.emit(out_stream_first_part);
 
                                     this->callback->process_client_channel_out_data(
                                         channel_names::cliprdr
@@ -605,7 +611,10 @@
                                     total_length = (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 8 + RDPECLIP::CliprdrHeader::size();
                                     int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                                     //ClipBoard_Qt::CB_out_File file = this->clientIOClipboardAPI->_items_list[0];
+
+                                    RDPECLIP::CliprdrHeader formatDataResponseHeader_FileList(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 4);
                                     RDPECLIP::FormatDataResponsePDU_FileList fdr(this->clientIOClipboardAPI->get_citems_number());
+                                    formatDataResponseHeader_FileList.emit(out_stream_first_part);
                                     fdr.emit(out_stream_first_part);
 
                                     RDPECLIP::FileDescriptor fdf(

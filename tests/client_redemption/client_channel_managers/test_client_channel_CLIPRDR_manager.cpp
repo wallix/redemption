@@ -109,113 +109,113 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 {
-//     uint8_t clip_data_part1[1592] = {0};
-//     uint8_t clip_data_part2[208]  = {0};
-//     uint8_t clip_data_total[1800] = {0};
-//
-//     char clip_txt_part1[1592 + 1] = {0};
-//     char clip_txt_total[1800] = {0};
-//
-//     memset (clip_data_part1, 97, 1592);
-//     memset (clip_data_part2, 97, 208 );
-//     memset (clip_data_total, 97, 1800);
-//     memset (clip_txt_part1, 'a', 1592);
-//     memset (clip_txt_total, 'a', 1800);
-//
-//     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST
-//                            | CHANNELS::CHANNEL_FLAG_FIRST
-//                            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-//
-//     FakeRDPChannelsMod mod;
-//     ClientChannelMod callback;
-//     callback.set_mod(&mod);
-//     FakeClientIOClipboard clip_io;
-//     RDPClipboardConfig conf;
-//     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-//     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-//     conf.add_format(RDPECLIP::CF_TEXT, {});
-//     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-//
-//     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr, &callback, &clip_io, conf);
-//
-//     // Format List PDU
-//     StaticOutStream<512> out_FormatListPDU;
-//     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
-//     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
-//     out_FormatListPDU.out_uint32_le(6);
-//     out_FormatListPDU.out_uint32_le(RDPECLIP::CF_TEXT);
-//     out_FormatListPDU.out_uint16_le(0);
-//     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
-//     manager.receive(chunk_FormatListPDU, flag_channel);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
-//
-//     // Format List Response PDU
-//     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 8);
-//     InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint32_le(), 0);
-//
-//     // Lock Clipboard Data PDU (Optional)
-//     pdu_data = mod.stream();
-//     InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_LOCK_CLIPDATA);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 0x00000000);
-//
-//     // Format Data Request PDU
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
-//
-//     // Format Data Response PDU part 1
-//     StaticOutStream<1600> out_FormatDataResponsep_part1;
-//     out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
-//     out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
-//     out_FormatDataResponsep_part1.out_uint32_le(sizeof(clip_data_total));
-//     out_FormatDataResponsep_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
-//     InStream chunk_FormatDataResponse_part1(out_FormatDataResponsep_part1.get_data(), out_FormatDataResponsep_part1.get_offset());
-//     manager.receive(chunk_FormatDataResponse_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-//
-//     // Manager state check
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
-//     RED_CHECK_EQUAL(sizeof(clip_data_part1), manager._cb_buffers.size);
-//     RED_CHECK_EQUAL(sizeof(clip_data_total), manager._cb_buffers.sizeTotal);
-//     std::string data_sent_to_local_clipboard_part1(char_ptr_cast(manager._cb_buffers.data.get()));
-//     std::string data_sent_expected_part1(clip_txt_part1);
-//     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
-//
-//     // Format Data Response PDU part 2
-//     StaticOutStream<1600> out_FormatDataResponsep_part2;
-//     out_FormatDataResponsep_part2.out_copy_bytes(clip_data_part2, sizeof(clip_data_part2));
-//     InStream chunk_FormatDataResponse_part2(out_FormatDataResponsep_part2.get_data(), out_FormatDataResponsep_part2.get_offset());
-//     manager.receive(chunk_FormatDataResponse_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
-//
-//     // Manager state check
-//     RED_CHECK_EQUAL(0, manager._cb_buffers.size);
-//     RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
-//
-//     // check clip io data
-//     std::string data_sent_to_local_clipboard(clip_io.data_text);
-//     std::string data_sent_expected(clip_txt_total, sizeof(clip_txt_total));
-//     RED_CHECK_EQUAL(clip_io.data_text, data_sent_expected);
-//
-//     // Unlock Clipboard Data PDU
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     InStream stream_unlock(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_UNLOCK_CLIPDATA);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 0x00000000);
+    uint8_t clip_data_part1[1592] = {0};
+    uint8_t clip_data_part2[208]  = {0};
+    uint8_t clip_data_total[1800] = {0};
+
+    char clip_txt_part1[1592 + 1] = {0};
+    char clip_txt_total[1800] = {0};
+
+    memset (clip_data_part1, 97, 1592);
+    memset (clip_data_part2, 97, 208 );
+    memset (clip_data_total, 97, 1800);
+    memset (clip_txt_part1, 'a', 1592);
+    memset (clip_txt_total, 'a', 1800);
+
+    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST
+                           | CHANNELS::CHANNEL_FLAG_FIRST
+                           | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+
+    FakeRDPChannelsMod mod;
+    ClientChannelMod callback;
+    callback.set_mod(&mod);
+    FakeClientIOClipboard clip_io;
+    RDPClipboardConfig conf;
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+    conf.add_format(RDPECLIP::CF_TEXT, {});
+    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+
+    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr, &callback, &clip_io, conf);
+
+    // Format List PDU
+    StaticOutStream<512> out_FormatListPDU;
+    out_FormatListPDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
+    out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
+    out_FormatListPDU.out_uint32_le(6);
+    out_FormatListPDU.out_uint32_le(RDPECLIP::CF_TEXT);
+    out_FormatListPDU.out_uint16_le(0);
+    InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
+    manager.receive(chunk_FormatListPDU, flag_channel);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
+
+    // Format List Response PDU
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 8);
+    InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint32_le(), 0);
+
+    // Lock Clipboard Data PDU (Optional)
+    pdu_data = mod.stream();
+    InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_LOCK_CLIPDATA);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 0x00000000);
+
+    // Format Data Request PDU
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
+
+    // Format Data Response PDU part 1
+    StaticOutStream<1600> out_FormatDataResponsep_part1;
+    out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+    out_FormatDataResponsep_part1.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+    out_FormatDataResponsep_part1.out_uint32_le(sizeof(clip_data_total));
+    out_FormatDataResponsep_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
+    InStream chunk_FormatDataResponse_part1(out_FormatDataResponsep_part1.get_data(), out_FormatDataResponsep_part1.get_offset());
+    manager.receive(chunk_FormatDataResponse_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+    // Manager state check
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
+    RED_CHECK_EQUAL(sizeof(clip_data_part1), manager._cb_buffers.size);
+    RED_CHECK_EQUAL(sizeof(clip_data_total), manager._cb_buffers.sizeTotal);
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(manager._cb_buffers.data.get()));
+    std::string data_sent_expected_part1(clip_txt_part1);
+    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+
+    // Format Data Response PDU part 2
+    StaticOutStream<1600> out_FormatDataResponsep_part2;
+    out_FormatDataResponsep_part2.out_copy_bytes(clip_data_part2, sizeof(clip_data_part2));
+    InStream chunk_FormatDataResponse_part2(out_FormatDataResponsep_part2.get_data(), out_FormatDataResponsep_part2.get_offset());
+    manager.receive(chunk_FormatDataResponse_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
+
+    // Manager state check
+    RED_CHECK_EQUAL(0, manager._cb_buffers.size);
+    RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
+
+    // check clip io data
+    std::string data_sent_to_local_clipboard(clip_io.data_text);
+    std::string data_sent_expected(clip_txt_total, sizeof(clip_txt_total));
+    RED_CHECK_EQUAL(clip_io.data_text, data_sent_expected);
+
+    // Unlock Clipboard Data PDU
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    InStream stream_unlock(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_UNLOCK_CLIPDATA);
+    RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 0x00000000);
 }
 
 
@@ -320,198 +320,198 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 {
-//     uint8_t clip_data_part1[1588] = {0};
-//     uint8_t clip_data_part2[212]  = {0};
-//     uint8_t clip_data_total[1800] = {0};
-//
-//     char clip_txt_part1[1588] = {0};
-//     char clip_txt_part2[212]  = {0};
-//     char clip_txt_total[1800] = {0};
-//
-//     memset (clip_data_part1, 97, 1588);
-//     memset (clip_data_part2, 97, 212 );
-//     memset (clip_data_total, 97, 1800);
-//     memset (clip_txt_part1, 'a', 1588);
-//     memset (clip_txt_part2, 'a', 212 );
-//     memset (clip_txt_total, 'a', 1800);
-//
-//     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
-//                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-//     FakeRDPChannelsMod mod;
-//     ClientChannelMod callback;
-//     callback.set_mod(&mod);
-//     FakeClientIOClipboard clip_io;
-//     clip_io.resize_chunk(sizeof(clip_data_total));
-//     RDPClipboardConfig conf;
-//     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
-//     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
-//     conf.add_format(RDPECLIP::CF_TEXT, {});
-//     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-//     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr, &callback, &clip_io, conf);
-//
-//     // Format List PDU
-//     StaticOutStream<512> out_FormatListPDU;
-//     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
-//     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
-//     out_FormatListPDU.out_uint32_le(46);
-//     out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-//     out_FormatListPDU.out_copy_bytes(RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
-//     //out_FormatListPDU.out_uint16_le(0);
-//     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
-//     manager.receive(chunk_FormatListPDU, flag_channel);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
-//
-//     // Format List Response PDU
-//     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 8);
-//     InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
-//     RED_CHECK_EQUAL(stream_formatListResponse.in_uint32_le(), 0);
-//
-//     // Lock Clipboard Data PDU (Optional)
-//     pdu_data = mod.stream();
-//     InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_LOCK_CLIPDATA);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 0x00000000);
-//
-//     // Format Data Request PDU
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-//
-//     // Format Data Response PDU
-//     StaticOutStream<1600> out_FormatDataResponse;
-//     out_FormatDataResponse.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
-//     out_FormatDataResponse.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
-//     out_FormatDataResponse.out_uint32_le(596);
-//
-//     out_FormatDataResponse.out_uint32_le(1);
-//
-//     out_FormatDataResponse.out_uint32_le(RDPECLIP::FD_SHOWPROGRESSUI |RDPECLIP::FD_FILESIZE | RDPECLIP::FD_WRITESTIME | RDPECLIP::FD_ATTRIBUTES);
-//     out_FormatDataResponse.out_clear_bytes(32);
-//     out_FormatDataResponse.out_uint32_le(0);
-//     out_FormatDataResponse.out_clear_bytes(16);
-//     out_FormatDataResponse.out_uint64_le(RDPECLIP::TIME64_FILE_LIST);
-//     out_FormatDataResponse.out_uint32_le(0);
-//     out_FormatDataResponse.out_uint32_le(sizeof(clip_data_total));
-//     std::string file_name("file_name.name");
-//     uint8_t utf16_file_name[520] = { 0 };
-//     size_t utf16_len = ::UTF8toUTF16(byte_ptr_cast(file_name.data()), utf16_file_name, file_name.size() *2);
-//     out_FormatDataResponse.out_copy_bytes(utf16_file_name, utf16_len);
-//     out_FormatDataResponse.out_clear_bytes(520-utf16_len);
-//     InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), 608/*out_FormatDataResponse.get_offset()*/);
-//     manager.receive(chunk_FormatDataResponse, flag_channel);
-//
-//     // Manager and client state checks
-//     RED_CHECK_EQUAL(manager.paste_data_len, sizeof(clip_data_total));
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
-//
-//     // File Content Request Size
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 36);
-//     InStream fileContentsRequest_size(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 28);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 1);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), RDPECLIP::FILECONTENTS_SIZE);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 8);
-//     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0x00000000);
-//
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
-//
-//     // File Content Response Size
-//     StaticOutStream<512> out_fileContentsResponse_size;
-//     out_fileContentsResponse_size.out_uint16_le(RDPECLIP::CB_FILECONTENTS_RESPONSE);
-//     out_fileContentsResponse_size.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
-//     out_fileContentsResponse_size.out_uint32_le(16);
-//     out_fileContentsResponse_size.out_uint32_le(1);
-//     out_fileContentsResponse_size.out_uint64_le(sizeof(clip_data_total));
-//     out_fileContentsResponse_size.out_uint32_le(0);
-//     InStream chunk_FileContentResponse_size(out_fileContentsResponse_size.get_data(), out_fileContentsResponse_size.get_offset());
-//     manager.receive(chunk_FileContentResponse_size, flag_channel);
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
-//
-//     // File Content Request Range
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 36);
-//     InStream fileContentsRequest_range(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 28);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 1);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), RDPECLIP::FILECONTENTS_RANGE);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint64_le(), 0);
-//     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total));
-//
-//     // Manager and clipboard_io checks
-//     RED_CHECK_EQUAL(manager._waiting_for_data, true);
-//     RED_CHECK_EQUAL(0, clip_io.offset);
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
-//
-//     // File Content Response Range part 1
-//     StaticOutStream<1600> out_fileContentsResponse_range_part1;
-//     out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_FILECONTENTS_RESPONSE);
-//     out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
-//     out_fileContentsResponse_range_part1.out_uint32_le(4 + sizeof(clip_data_total));
-//     out_fileContentsResponse_range_part1.out_uint32_le(1);
-//
-//     out_fileContentsResponse_range_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
-//     InStream chunk_FileContentResponse_range_part1(
-//             out_fileContentsResponse_range_part1.get_data(),
-//             out_fileContentsResponse_range_part1.get_offset());
-//     manager.receive(chunk_FileContentResponse_range_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
-//     RED_CHECK_EQUAL(manager._waiting_for_data, true);
-//     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
-//     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-//     std::string data_sent_to_local_clipboard_part1(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_part1));
-//     std::string data_sent_expected_part1(clip_txt_part1,  sizeof(clip_txt_part1));
-//     RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
-//
-//     // File Content Response Range part 2
-//     StaticOutStream<1600> out_FormatDataRequest_range_part2;
-//     out_FormatDataRequest_range_part2.out_copy_bytes(clip_data_part2, sizeof(clip_data_part2));
-//     InStream chunk_FileContentResponse_range_part2(
-//                         out_FormatDataRequest_range_part2.get_data(),
-//                         out_FormatDataRequest_range_part2.get_offset());
-//     manager.receive(chunk_FileContentResponse_range_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-//
-//     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
-//     RED_CHECK_EQUAL(manager._waiting_for_data, false);
-//     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 6);
-//
-//     // Unlock Clipboard Data PDU (Optional)
-//     pdu_data = mod.stream();
-//     RED_CHECK_EQUAL(pdu_data->size, 12);
-//     InStream stream_unlock(pdu_data->data, pdu_data->size);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_UNLOCK_CLIPDATA);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 4);
-//     RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 1);
-//
-//     // Clip Data buffered
-//     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-//     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
-//     RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
-//     std::string data_sent_to_local_clipboard_total(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_total));
-//     std::string data_sent_expected_total(clip_txt_total,  sizeof(clip_txt_total));
-//     RED_CHECK_EQUAL(data_sent_to_local_clipboard_total, data_sent_expected_total);
+    uint8_t clip_data_part1[1588] = {0};
+    uint8_t clip_data_part2[212]  = {0};
+    uint8_t clip_data_total[1800] = {0};
+
+    char clip_txt_part1[1588] = {0};
+    char clip_txt_part2[212]  = {0};
+    char clip_txt_total[1800] = {0};
+
+    memset (clip_data_part1, 97, 1588);
+    memset (clip_data_part2, 97, 212 );
+    memset (clip_data_total, 97, 1800);
+    memset (clip_txt_part1, 'a', 1588);
+    memset (clip_txt_part2, 'a', 212 );
+    memset (clip_txt_total, 'a', 1800);
+
+    const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
+                                                        CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+    FakeRDPChannelsMod mod;
+    ClientChannelMod callback;
+    callback.set_mod(&mod);
+    FakeClientIOClipboard clip_io;
+    clip_io.resize_chunk(sizeof(clip_data_total));
+    RDPClipboardConfig conf;
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW, RDPECLIP::FILEGROUPDESCRIPTORW.data());
+    conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
+    conf.add_format(RDPECLIP::CF_TEXT, {});
+    conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
+    ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr, &callback, &clip_io, conf);
+
+    // Format List PDU
+    StaticOutStream<512> out_FormatListPDU;
+    out_FormatListPDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST);
+    out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
+    out_FormatListPDU.out_uint32_le(46);
+    out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
+    out_FormatListPDU.out_copy_bytes(RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
+    //out_FormatListPDU.out_uint16_le(0);
+    InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
+    manager.receive(chunk_FormatListPDU, flag_channel);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
+
+    // Format List Response PDU
+    FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 8);
+    InStream stream_formatListResponse(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
+    RED_CHECK_EQUAL(stream_formatListResponse.in_uint32_le(), 0);
+
+    // Lock Clipboard Data PDU (Optional)
+    pdu_data = mod.stream();
+    InStream stream_lockClipdata(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_LOCK_CLIPDATA);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_lockClipdata.in_uint32_le(), 0x00000000);
+
+    // Format Data Request PDU
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
+
+    // Format Data Response PDU
+    StaticOutStream<1600> out_FormatDataResponse;
+    out_FormatDataResponse.out_uint16_le(RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+    out_FormatDataResponse.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+    out_FormatDataResponse.out_uint32_le(596);
+
+    out_FormatDataResponse.out_uint32_le(1);
+
+    out_FormatDataResponse.out_uint32_le(RDPECLIP::FD_SHOWPROGRESSUI |RDPECLIP::FD_FILESIZE | RDPECLIP::FD_WRITESTIME | RDPECLIP::FD_ATTRIBUTES);
+    out_FormatDataResponse.out_clear_bytes(32);
+    out_FormatDataResponse.out_uint32_le(0);
+    out_FormatDataResponse.out_clear_bytes(16);
+    out_FormatDataResponse.out_uint64_le(RDPECLIP::TIME64_FILE_LIST);
+    out_FormatDataResponse.out_uint32_le(0);
+    out_FormatDataResponse.out_uint32_le(sizeof(clip_data_total));
+    std::string file_name("file_name.name");
+    uint8_t utf16_file_name[520] = { 0 };
+    size_t utf16_len = ::UTF8toUTF16(byte_ptr_cast(file_name.data()), utf16_file_name, file_name.size() *2);
+    out_FormatDataResponse.out_copy_bytes(utf16_file_name, utf16_len);
+    out_FormatDataResponse.out_clear_bytes(520-utf16_len);
+    InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), 608/*out_FormatDataResponse.get_offset()*/);
+    manager.receive(chunk_FormatDataResponse, flag_channel);
+
+    // Manager and client state checks
+    RED_CHECK_EQUAL(manager.paste_data_len, sizeof(clip_data_total));
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 4);
+
+    // File Content Request Size
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 36);
+    InStream fileContentsRequest_size(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 28);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 1);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), RDPECLIP::FILECONTENTS_SIZE);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 8);
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0x00000000);
+
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
+
+    // File Content Response Size
+    StaticOutStream<512> out_fileContentsResponse_size;
+    out_fileContentsResponse_size.out_uint16_le(RDPECLIP::CB_FILECONTENTS_RESPONSE);
+    out_fileContentsResponse_size.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+    out_fileContentsResponse_size.out_uint32_le(16);
+    out_fileContentsResponse_size.out_uint32_le(1);
+    out_fileContentsResponse_size.out_uint64_le(sizeof(clip_data_total));
+    out_fileContentsResponse_size.out_uint32_le(0);
+    InStream chunk_FileContentResponse_size(out_fileContentsResponse_size.get_data(), out_fileContentsResponse_size.get_offset());
+    manager.receive(chunk_FileContentResponse_size, flag_channel);
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
+
+    // File Content Request Range
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 36);
+    InStream fileContentsRequest_range(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 28);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 1);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), RDPECLIP::FILECONTENTS_RANGE);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint64_le(), 0);
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total));
+
+    // Manager and clipboard_io checks
+    RED_CHECK_EQUAL(manager._waiting_for_data, true);
+    RED_CHECK_EQUAL(0, clip_io.offset);
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
+
+    // File Content Response Range part 1
+    StaticOutStream<1600> out_fileContentsResponse_range_part1;
+    out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_FILECONTENTS_RESPONSE);
+    out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
+    out_fileContentsResponse_range_part1.out_uint32_le(4 + sizeof(clip_data_total));
+    out_fileContentsResponse_range_part1.out_uint32_le(1);
+
+    out_fileContentsResponse_range_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
+    InStream chunk_FileContentResponse_range_part1(
+            out_fileContentsResponse_range_part1.get_data(),
+            out_fileContentsResponse_range_part1.get_offset());
+    manager.receive(chunk_FileContentResponse_range_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
+    RED_CHECK_EQUAL(manager._waiting_for_data, true);
+    RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
+    RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
+    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_part1));
+    std::string data_sent_expected_part1(clip_txt_part1,  sizeof(clip_txt_part1));
+    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
+
+    // File Content Response Range part 2
+    StaticOutStream<1600> out_FormatDataRequest_range_part2;
+    out_FormatDataRequest_range_part2.out_copy_bytes(clip_data_part2, sizeof(clip_data_part2));
+    InStream chunk_FileContentResponse_range_part2(
+                        out_FormatDataRequest_range_part2.get_data(),
+                        out_FormatDataRequest_range_part2.get_offset());
+    manager.receive(chunk_FileContentResponse_range_part2, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+    RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
+    RED_CHECK_EQUAL(manager._waiting_for_data, false);
+    RED_CHECK_EQUAL(mod.get_total_stream_produced(), 6);
+
+    // Unlock Clipboard Data PDU (Optional)
+    pdu_data = mod.stream();
+    RED_CHECK_EQUAL(pdu_data->size, 12);
+    InStream stream_unlock(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_UNLOCK_CLIPDATA);
+    RED_CHECK_EQUAL(stream_unlock.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_unlock.in_uint32_le(), 1);
+
+    // Clip Data buffered
+    RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
+    RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
+    RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
+    std::string data_sent_to_local_clipboard_total(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_total));
+    std::string data_sent_expected_total(clip_txt_total,  sizeof(clip_txt_total));
+    RED_CHECK_EQUAL(data_sent_to_local_clipboard_total, data_sent_expected_total);
 }
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)

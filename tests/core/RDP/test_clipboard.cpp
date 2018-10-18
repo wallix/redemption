@@ -43,10 +43,10 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
-            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00";
+            "\x01\x00\x00\x00";
 
-        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 12);
-        std::string const expected(char_ptr_cast(file_list_data), 12);
+        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 4);
+        std::string const expected(char_ptr_cast(file_list_data), 4);
         RED_CHECK_EQUAL(expected, out_data);
     }
 
@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         const int cItems = 1;
 
         const uint8_t file_list_data[] =
-            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+            "\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
             "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         fdr.emit(ou_stream_metaFilePic);
 
         auto metafilepic_out_data = cstr_array_view(
-            "\x05\x00\x01\x00\xb6\xbc\x00\x00\x08\x00\x00\x00\x60\x22\x00\x00"
+            "\x08\x00\x00\x00\x60\x22\x00\x00"
             "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
             "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
             "\x00\x00\x0c\x02\xb7\xff\xdc\x00\x05\x00\x00\x00\x0b\x02\x00\x00"
@@ -141,10 +141,10 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int data_lenght = height * width * 3;
         const double ARBITRARY_SCALE = 40;
         const char metafilepic_out_data[] =
-            // header
-            "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
-            "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
-            "\xb6\xbc\x00\x00" // dataLen : 48310
+//             // header
+//             "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
+//             "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
+//             "\xb6\xbc\x00\x00" // dataLen : 48310
 
             // 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
             "\x08\x00\x00\x00" // mappingMode
@@ -206,7 +206,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00" // ColorImportant : 0
             ;
 
-        InStream stream(metafilepic_out_data, 132);
+        InStream stream(metafilepic_out_data, 124);
 
         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
         fdr.recv(stream);
