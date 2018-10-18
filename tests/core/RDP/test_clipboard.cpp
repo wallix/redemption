@@ -452,17 +452,17 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     uint32_t ID = 1;
     uint32_t index = 3;
     uint32_t flag = RDPECLIP::FILECONTENTS_RANGE;
-    uint64_t size = 0x0000000000000007;
+    uint32_t size_low = 0x00000007;
+    uint32_t size_high = 0x00000000;
 
     // Init Stream
     StaticOutStream<64> out_stream;
-    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size);
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size_low, size_high, true);
     fileContentsRequest.emit(out_stream);
 
     auto exp_data = cstr_array_view(
-        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
-        "\x00\x00\x00\x00");
+        "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
+        "\x00\x00\x00\x00\x01\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
@@ -476,18 +476,17 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     uint64_t size = 0x0000000000000007;
 
     const char data[] =
-        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
-        "\x01\x00\x00\x00";
+        "\x01\x00\x00\x00\x03\x00\x00\x00\x02\x00\x00\x00\x07\x00\x00\x00"
+        "\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
-    fileContentsRequest.recv(stream);
+    fileContentsRequest.receive(stream);
 
-    RED_CHECK_EQUAL(fileContentsRequest.streamID, ID);
-    RED_CHECK_EQUAL(fileContentsRequest.flag, flag);
-    RED_CHECK_EQUAL(fileContentsRequest.lindex, index);
-    RED_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+    RED_CHECK_EQUAL(fileContentsRequest.streamId(), ID);
+    RED_CHECK_EQUAL(fileContentsRequest.dwFlags() , flag);
+    RED_CHECK_EQUAL(fileContentsRequest.lindex() , index);
+    RED_CHECK_EQUAL(fileContentsRequest.position(), size);
 
     }
 
@@ -501,13 +500,12 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
 
     // Init Stream
     StaticOutStream<64> out_stream;
-    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size);
+    RDPECLIP::FileContentsRequestPDU fileContentsRequest(ID, flag, index, size, size, true);
     fileContentsRequest.emit(out_stream);
 
     auto exp_data = cstr_array_view(
-        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
-        "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
-        "\x00\x00\x00\x00");
+        "\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
+        "\x07\x00\x00\x00\x01\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
@@ -521,18 +519,18 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     uint64_t size = 0x0000000000000007;
 
     const char data[] =
-        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x01\x00\x00\x00\x03\x00\x00\x00"
         "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
         "\x01\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
-    fileContentsRequest.recv(stream);
+    fileContentsRequest.receive(stream);
 
-    RED_CHECK_EQUAL(fileContentsRequest.streamID, ID);
-    RED_CHECK_EQUAL(fileContentsRequest.flag, flag);
-    RED_CHECK_EQUAL(fileContentsRequest.lindex, index);
-    RED_CHECK_EQUAL(fileContentsRequest.sizeRequested, size);
+    RED_CHECK_EQUAL(fileContentsRequest.streamId(), ID);
+    RED_CHECK_EQUAL(fileContentsRequest.dwFlags() , flag);
+    RED_CHECK_EQUAL(fileContentsRequest.lindex()  , index);
+    RED_CHECK_EQUAL(fileContentsRequest.position(), size);
 
     }
 }

@@ -336,8 +336,8 @@ private:
         chunk.in_skip_bytes(2); // msgFlags(2)
         uint32_t const dataLen = chunk.in_uint32_le();
 
-        if (dataLen > RDPECLIP::FileContentsRequestPDUEx::minimum_size()) {
-            RDPECLIP::FileContentsRequestPDUEx file_contents_request_pdu;
+        if (dataLen > RDPECLIP::FileContentsRequestPDU::minimum_size()) {
+            RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
 
             file_contents_request_pdu.receive(chunk);
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1260,8 +1260,8 @@ public:
         chunk.in_skip_bytes(2); // msgFlags(2)
         uint32_t const dataLen = chunk.in_uint32_le();
 
-        if (dataLen > RDPECLIP::FileContentsRequestPDUEx::minimum_size()) {
-            RDPECLIP::FileContentsRequestPDUEx file_contents_request_pdu;
+        if (dataLen > RDPECLIP::FileContentsRequestPDU::minimum_size()) {
+            RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
 
             file_contents_request_pdu.receive(chunk);
             if (bool(this->verbose & RDPVerbose::cliprdr)) {

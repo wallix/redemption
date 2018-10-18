@@ -912,7 +912,9 @@
                                                                         , RDPECLIP::FILECONTENTS_SIZE
                                                                         , cb_filesList.lindexToRequest
                                                                         , 0
-                                                                        , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
+                                                                        , 0
+                                                                        , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED
+                                                                        , true);
                     StaticOutStream<64> out_streamRequest;
                     fileContentsRequest.emit(out_streamRequest);
                     const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
@@ -951,7 +953,9 @@
                                                                             , this->file_content_flag
                                                                             , cb_filesList.lindexToRequest
                                                                             , 0
-                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size);
+                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
+                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size >> 32
+                                                                            , true);
                         fileContentsRequest.emit(out_streamRequest);
                         const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
 
@@ -1013,6 +1017,7 @@
                                 RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                                     , this->file_content_flag
                                                                                     , cb_filesList.lindexToRequest
+                                                                                    , 0
                                                                                     , 0
                                                                                     , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
                                 fileContentsRequest.emit(out_streamRequest);

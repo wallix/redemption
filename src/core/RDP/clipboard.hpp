@@ -1424,79 +1424,79 @@ enum : uint32_t {
   , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
 };
 
-struct FileContentsRequestPDU     // Resquest RANGE
-{
-    CliprdrHeader header;
-    uint32_t streamID;
-    uint32_t flag;
-    uint32_t lindex;
-    uint64_t sizeRequested;
-    uint32_t cbRequested;
-    uint32_t clipDataId = 0;
+// struct FileContentsRequestPDU     // Resquest RANGE
+// {
+//      CliprdrHeader header;
+//     uint32_t streamID;
+//     uint32_t flag;
+//     uint32_t lindex;
+//     uint64_t sizeRequested;
+//     uint32_t cbRequested;
+//     uint32_t clipDataId = 0;
+//
+//     explicit FileContentsRequestPDU( int streamID
+//                                    , int flag
+//                                    , int lindex
+//                                    , uint64_t sizeRequested
+//                                    , uint32_t cbRequested)
+//     : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
+//     , streamID(streamID)
+//     , flag(flag)
+//     , lindex(lindex)
+//     , sizeRequested(sizeRequested)
+//     , cbRequested(cbRequested)
+//     {}
+//
+//     explicit FileContentsRequestPDU()
+//     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
+//     {}
+//
+//     void emit(OutStream & stream) const {
+//         this->header.emit(stream);
+//         stream.out_uint32_le(this->streamID);
+//         stream.out_uint32_le(this->lindex);
+//         stream.out_uint32_le(this->flag);
+//         stream.out_uint32_le(this->sizeRequested);
+//         stream.out_uint32_le(this->sizeRequested >> 32);
+//         if (flag & FILECONTENTS_SIZE) {
+//             stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
+//         } else {
+//             stream.out_uint32_le(this->cbRequested);
+//         }
+//         stream.out_uint32_le(this->clipDataId);
+//
+//     }
+//
+//     void recv(InStream & stream) {
+//         this->header.recv(stream);
+//         this->streamID = stream.in_uint32_le();
+//         this->lindex = stream.in_uint32_le();
+//         this->flag = stream.in_uint32_le();
+//         uint64_t low = stream.in_uint32_le();
+//         uint64_t high = stream.in_uint32_le();
+//         this->sizeRequested = low + (high << 32);
+//         this->cbRequested = stream.in_uint32_le();
+//         if (stream.in_remain() == 4) {
+//             this->clipDataId = stream.in_uint32_le();
+//         }
+//     }
+//
+//     void log() const {
+//         this->header.log();
+//         LOG(LOG_INFO, "     File Contents Request PDU:");
+//         LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
+//         LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
+//         LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
+//         LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
+//         LOG(LOG_INFO, "          * cbRequested   = %u (4 bytes)", this->cbRequested);
+//         if (this->clipDataId) {
+//             LOG(LOG_INFO, "          * clipDataId    = %08x (4 bytes)", this->clipDataId);
+//         }
+//     }
+//
+// };
 
-    explicit FileContentsRequestPDU( int streamID
-                                   , int flag
-                                   , int lindex
-                                   , uint64_t sizeRequested
-                                   , uint32_t cbRequested)
-    : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
-    , streamID(streamID)
-    , flag(flag)
-    , lindex(lindex)
-    , sizeRequested(sizeRequested)
-    , cbRequested(cbRequested)
-    {}
-
-    explicit FileContentsRequestPDU()
-    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
-    {}
-
-    void emit(OutStream & stream) const {
-        this->header.emit(stream);
-        stream.out_uint32_le(this->streamID);
-        stream.out_uint32_le(this->lindex);
-        stream.out_uint32_le(this->flag);
-        stream.out_uint32_le(this->sizeRequested);
-        stream.out_uint32_le(this->sizeRequested >> 32);
-        if (flag & FILECONTENTS_SIZE) {
-            stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
-        } else {
-            stream.out_uint32_le(this->cbRequested);
-        }
-        stream.out_uint32_le(this->clipDataId);
-
-    }
-
-    void recv(InStream & stream) {
-        this->header.recv(stream);
-        this->streamID = stream.in_uint32_le();
-        this->lindex = stream.in_uint32_le();
-        this->flag = stream.in_uint32_le();
-        uint64_t low = stream.in_uint32_le();
-        uint64_t high = stream.in_uint32_le();
-        this->sizeRequested = low + (high << 32);
-        this->cbRequested = stream.in_uint32_le();
-        if (stream.in_remain() == 4) {
-            this->clipDataId = stream.in_uint32_le();
-        }
-    }
-
-    void log() const {
-        this->header.log();
-        LOG(LOG_INFO, "     File Contents Request PDU:");
-        LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
-        LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
-        LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
-        LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
-        LOG(LOG_INFO, "          * cbRequested   = %u (4 bytes)", this->cbRequested);
-        if (this->clipDataId) {
-            LOG(LOG_INFO, "          * clipDataId    = %08x (4 bytes)", this->clipDataId);
-        }
-    }
-
-};
-
-class FileContentsRequestPDUEx {
+class FileContentsRequestPDU {
     uint32_t streamId_      = 0;
     uint32_t lindex_        = 0;
     uint32_t dwFlags_       = 0;
@@ -1508,28 +1508,32 @@ class FileContentsRequestPDUEx {
     bool has_optional_clipDataId_ = false;
 
 public:
-    explicit FileContentsRequestPDUEx() = default;
+    explicit FileContentsRequestPDU() = default;
 
-private:
-    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
-        uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
-        uint32_t cbRequested, uint32_t clipDataId, bool has_optional_clipDataId) :
+    FileContentsRequestPDU(uint32_t streamId,
+                           uint32_t lindex,
+                           uint32_t dwFlags,
+                           uint32_t nPositionLow,
+                           uint32_t nPositionHigh,
+                           uint32_t cbRequested,
+                           uint32_t clipDataId,
+                           bool has_optional_clipDataId) :
             streamId_(streamId), lindex_(lindex), dwFlags_(dwFlags),
             nPositionLow_(nPositionLow), nPositionHigh_(nPositionHigh),
             cbRequested_(cbRequested), clipDataId_(clipDataId),
             has_optional_clipDataId_(has_optional_clipDataId) {}
 
 public:
-    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
+    FileContentsRequestPDU(uint32_t streamId, uint32_t lindex,
         uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
         uint32_t cbRequested) :
-            FileContentsRequestPDUEx(streamId, lindex, dwFlags, nPositionLow,
+            FileContentsRequestPDU(streamId, lindex, dwFlags, nPositionLow,
                 nPositionHigh, cbRequested, 0, false) {}
 
-    FileContentsRequestPDUEx(uint32_t streamId, uint32_t lindex,
+    FileContentsRequestPDU(uint32_t streamId, uint32_t lindex,
         uint32_t dwFlags, uint32_t nPositionLow, uint32_t nPositionHigh,
         uint32_t cbRequested, uint32_t clipDataId) :
-            FileContentsRequestPDUEx(streamId, lindex, dwFlags, nPositionLow,
+            FileContentsRequestPDU(streamId, lindex, dwFlags, nPositionLow,
                 nPositionHigh, cbRequested, clipDataId, true) {}
 
     void emit(OutStream& stream) const {
@@ -2426,7 +2430,6 @@ struct FormatDataResponsePDU_FileList {
     int cItems{0};
 
     void log() const {
-//         this->header.log();
         LOG(LOG_INFO, "     Format Data Response File List PDU:");
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
@@ -2434,17 +2437,14 @@ struct FormatDataResponsePDU_FileList {
     explicit FormatDataResponsePDU_FileList() = default;
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
-//       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
     : cItems(cItems)
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
         stream.out_uint32_le(this->cItems);
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
         this->cItems = stream.in_uint32_le();
     }
 };
@@ -2751,10 +2751,10 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_FILECONTENTS_REQUEST:
             {
                 FileContentsRequestPDU pdu;
-                pdu.recv(stream);
-                pdu.log();
+                pdu.receive(stream);
+                pdu.log(LOG_INFO);
 
-                state.file_content_request_flag = pdu.flag;
+                state.file_content_request_flag = pdu.dwFlags();
             }
                 break;
 
