@@ -273,7 +273,7 @@ public:
 
     uint8_t mod_state = MOD_RDP;
 
-    bool enable_shared_clipboard = false;
+    bool enable_shared_clipboard = true;
 
 
     bool                 is_recording = false;
@@ -316,14 +316,14 @@ public:
     {
         this->setDefaultConfig();
 
-//         this->info.screen_info.width  = 800;
-//         this->info.screen_info.height = 600;
-//         this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-//         this->info.console_session = false;
-//         this->info.brush_cache_code = 0;
-//         this->info.screen_info.bpp = BitsPerPixel{24};
-//         this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
-//         this->info.cs_monitor.monitorCount = 1;
+        this->info.screen_info.width  = 800;
+        this->info.screen_info.height = 600;
+        this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
+        this->info.console_session = false;
+        this->info.brush_cache_code = 0;
+        this->info.screen_info.bpp = BitsPerPixel{24};
+        this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+        this->info.cs_monitor.monitorCount = 1;
 
         this->rDPRemoteAppConfig.source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
         this->rDPRemoteAppConfig.source_of_WorkingDir = "C:\\Users\\user1";
@@ -1097,111 +1097,106 @@ public:
                 auto pos(line.find(' '));
                 std::string info = line.substr(pos + 1);
 
-                if (!info.empty()) {
+                if (line.compare(0, pos, "id") == 0) {
+                    read_id = std::stoi(info);
+                } else
+                if (line.compare(0, pos, "name") == 0) {
+                    if (read_id) {
+                        this->userProfils.emplace_back(read_id, info);
+                    }
+                } else
+                if (this->current_user_profil == read_id) {
 
-                    if (line.compare(0, pos, "id") == 0) {
-                        read_id = std::stoi(info);
+                    if (line.compare(0, pos, "keylayout") == 0) {
+                        this->info.keylayout = std::stoi(info);
                     } else
-                    if (line.compare(0, pos, "name") == 0) {
-                        if (read_id) {
-                            this->userProfils.emplace_back(read_id, info);
+                    if (line.compare(0, pos, "console_session") == 0) {
+                        this->info.console_session = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "brush_cache_code") == 0) {
+                        this->info.brush_cache_code = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "bpp") == 0) {
+                        this->info.screen_info.bpp = checked_int(std::stoi(info));
+                    } else
+                    if (line.compare(0, pos, "width") == 0) {
+                        this->rdp_width     = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "height") == 0) {
+                        this->rdp_height     = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "monitorCount") == 0) {
+                        this->info.cs_monitor.monitorCount = std::stoi(info);
+//                         this->_monitorCount                 = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "span") == 0) {
+                        if (std::stoi(info)) {
+                            this->is_spanning = true;
+                        } else {
+                            this->is_spanning = false;
                         }
                     } else
-                    if (this->current_user_profil == read_id) {
-
-                        if (line.compare(0, pos, "keylayout") == 0) {
-                            this->info.keylayout = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "console_session") == 0) {
-                            this->info.console_session = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "brush_cache_code") == 0) {
-                            this->info.brush_cache_code = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "bpp") == 0) {
-                            this->info.screen_info.bpp = checked_int(std::stoi(info));
-                        } else
-                        if (line.compare(0, pos, "width") == 0) {
-                            this->rdp_width     = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "height") == 0) {
-                            this->rdp_height     = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "monitorCount") == 0) {
-                            this->info.cs_monitor.monitorCount = std::stoi(info);
-    //                         this->_monitorCount                 = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "span") == 0) {
-                            if (std::stoi(info)) {
-                                this->is_spanning = true;
-                            } else {
-                                this->is_spanning = false;
-                            }
-                        } else
-                        if (line.compare(0, pos, "record") == 0) {
-                            if (std::stoi(info)) {
-                                this->is_recording = true;
-                            } else {
-                                this->is_recording = false;
-                            }
-                        } else
-                        if (line.compare(0, pos, "tls") == 0) {
-                            if (std::stoi(info)) {
-                                this->modRDPParamsData.enable_tls = true;
-                            } else { this->modRDPParamsData.enable_tls = false; }
-                        } else
-                        if (line.compare(0, pos, "nla") == 0) {
-                            if (std::stoi(info)) {
-                                this->modRDPParamsData.enable_nla = true;
-                            } else { this->modRDPParamsData.enable_nla = false; }
-                        } else
-                        if (line.compare(0, pos, "sound") == 0) {
-                            if (std::stoi(info)) {
-                                this->modRDPParamsData.enable_sound = true;
-                            } else { this->modRDPParamsData.enable_sound = false; }
-                        } else
-                        if (line.compare(0, pos, "console_mode") == 0) {
-                            this->info.console_session = (std::stoi(info) > 0);
-                        } else
-                        if (line.compare(0, pos, "enable_shared_clipboard") == 0) {
-                            if (std::stoi(info)) {
-                                this->enable_shared_clipboard = true;
-                            } else {
-                                this->enable_shared_clipboard = false;
-                            }
-                        } else
-                        if (line.compare(0, pos, "enable_shared_remoteapp") == 0) {
-                            if (std::stoi(info)) {
-                                this->modRDPParamsData.enable_shared_remoteapp = true;
-                            }
-                        } else
-                        if (line.compare(0, pos, "enable_shared_virtual_disk") == 0) {
-                            if (std::stoi(info)) {
-                                this->modRDPParamsData.enable_shared_virtual_disk = true;
-                            }
-                        } else
-                        if (line.compare(0, pos, "mod") == 0) {
-                            this->mod_state = std::stoi(info);
-                        } else
-                        if (line.compare(0, pos, "remote-exe") == 0) {
-                            this->rDPRemoteAppConfig.full_cmd_line                = info;
-                        } else
-                        if (line.compare(0, pos, "remote-dir") == 0) {
-                            this->rDPRemoteAppConfig.source_of_WorkingDir                = info;
-                        } else
-                        if (line.compare(0, pos, "rdp5_performanceflags") == 0) {
-                            this->info.rdp5_performanceflags |= std::stoi(info);
-                        } else
-
-                        if (line.compare(0, pos, "vnc-applekeyboard ") == 0) {
-                            if (std::stoi(info)) {
-                                this->vnc_conf.is_apple = true;
-                            }
-                        } else
-                        if (line.compare(0, pos, "share-dir") == 0) {
-                            this->SHARE_DIR                 = info;
-                            read_id = -1;
+                    if (line.compare(0, pos, "record") == 0) {
+                        if (std::stoi(info)) {
+                            this->is_recording = true;
+                        } else {
+                            this->is_recording = false;
                         }
+                    } else
+                    if (line.compare(0, pos, "tls") == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_tls = true;
+                        } else { this->modRDPParamsData.enable_tls = false; }
+                    } else
+                    if (line.compare(0, pos, "nla") == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_nla = true;
+                        } else { this->modRDPParamsData.enable_nla = false; }
+                    } else
+                    if (line.compare(0, pos, "sound") == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_sound = true;
+                        } else { this->modRDPParamsData.enable_sound = false; }
+                    } else
+                    if (line.compare(0, pos, "console_mode") == 0) {
+                        this->info.console_session = (std::stoi(info) > 0);
+                    } else
+                    if (line.compare(0, pos, "enable_shared_clipboard") == 0) {
+                        if (std::stoi(info)) {
+                            this->enable_shared_clipboard = true;
+                        }
+                    } else
+                    if (line.compare(0, pos, "enable_shared_remoteapp") == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_shared_remoteapp = true;
+                        }
+                    } else
+                    if (line.compare(0, pos, "enable_shared_virtual_disk") == 0) {
+                        if (std::stoi(info)) {
+                            this->modRDPParamsData.enable_shared_virtual_disk = true;
+                        }
+                    } else
+                    if (line.compare(0, pos, "mod") == 0) {
+                        this->mod_state = std::stoi(info);
+                    } else
+                    if (line.compare(0, pos, "remote-exe") == 0) {
+                         this->rDPRemoteAppConfig.full_cmd_line                = info;
+                    } else
+                    if (line.compare(0, pos, "remote-dir") == 0) {
+                        this->rDPRemoteAppConfig.source_of_WorkingDir                = info;
+                    } else
+                    if (line.compare(0, pos, "rdp5_performanceflags") == 0) {
+                        this->info.rdp5_performanceflags |= std::stoi(info);
+                    } else
+
+                    if (line.compare(0, pos, "vnc-applekeyboard ") == 0) {
+                        if (std::stoi(info)) {
+                            this->vnc_conf.is_apple = true;
+                        }
+                    } else
+                    if (line.compare(0, pos, "share-dir") == 0) {
+                        this->SHARE_DIR                 = info;
+                        read_id = -1;
                     }
                 }
             }
@@ -1488,8 +1483,7 @@ public:
                 new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                int bpp = int(this->info.screen_info.bpp);
-                new_ofile << "bpp "                   << bpp << "\n";
+                new_ofile << "bpp "                   << this->info.screen_info.bpp         << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
                 new_ofile << "height "                << this->rdp_height                  << "\n";
                 new_ofile << "rdp5_performanceflags " << static_cast<int>(this->info.rdp5_performanceflags) << "\n";
@@ -1504,10 +1498,10 @@ public:
                 new_ofile << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 new_ofile << "enable_shared_virtual_disk " << this->modRDPParamsData.enable_shared_virtual_disk << "\n";
                 new_ofile << "enable_shared_remoteapp " << this->modRDPParamsData.enable_shared_remoteapp << "\n";
-                new_ofile << "share-dir "                              << this->SHARE_DIR << "\n";
-                new_ofile << "remote-exe "                              << this->rDPRemoteAppConfig.full_cmd_line << "\n";
-                new_ofile << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << "\n";
-                new_ofile << "vnc- applekeyboard "                       << this->vnc_conf.is_apple << "\n";
+                new_ofile << "share-dir "                              << this->SHARE_DIR << std::endl;
+                new_ofile << "remote-exe "                              << this->rDPRemoteAppConfig.full_cmd_line << std::endl;
+                new_ofile << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;
+                new_ofile << "vnc- applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
                 new_ofile << "mod"                              << static_cast<int>(this->mod_state) << std::endl;
 
                 new_ofile.close();
@@ -1519,7 +1513,7 @@ public:
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                ofichier << "bpp "                   << int(this->info.screen_info.bpp)        << "\n";
+                ofichier << "bpp "                   << this->info.screen_info.bpp        << "\n";
                 ofichier << "width "                 << this->rdp_width                   << "\n";
                 ofichier << "height "                << this->rdp_height                  << "\n";
                 ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
@@ -1534,10 +1528,10 @@ public:
                 ofichier << "enable_shared_clipboard "    << this->enable_shared_clipboard    << "\n";
                 ofichier << "enable_shared_virtual_disk " << this->modRDPParamsData.enable_shared_virtual_disk << "\n";
                 ofichier << "enable_shared_remoteapp " << this->modRDPParamsData.enable_shared_remoteapp << "\n";
-                ofichier << "share-dir "                              << this->SHARE_DIR << "\n";
-                ofichier << "remote-exe "                              <<  this->rDPRemoteAppConfig.full_cmd_line << "\n";
-                ofichier << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << "\n";
-                ofichier << "vnc-applekeyboard "                       << this->vnc_conf.is_apple << "\n";
+                ofichier << "share-dir "                              << this->SHARE_DIR << std::endl;
+                ofichier << "remote-exe "                              <<  this->rDPRemoteAppConfig.full_cmd_line << std::endl;
+                ofichier << "remote-dir "                              << this->rDPRemoteAppConfig.source_of_WorkingDir << std::endl;
+                ofichier << "vnc-applekeyboard "                       << this->vnc_conf.is_apple << std::endl;
                 ofichier << "mod "                              << static_cast<int>(this->mod_state) << std::endl;
             }
         }

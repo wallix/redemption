@@ -68,7 +68,6 @@
 class ClientRedemption : public ClientRedemptionAPI
 {
 
-
 public:
     ClientRedemptionConfig config;
 
@@ -81,12 +80,11 @@ private:
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
 
+
+
 public:
     ClientCallback _callback;
-
-private:
     ClientChannelMod channel_mod;
-
     SessionReactor& session_reactor;
 
     std::unique_ptr<Transport> _socket_in_recorder;
@@ -102,7 +100,6 @@ private:
 
     // RDP
     CHANNELS::ChannelDefArray   cl;
-private:
     std::string          _error;
     std::string   error_message;
     std::unique_ptr<Random> gen;
@@ -138,7 +135,7 @@ private:
     timeval start_win_session_time;                         // when the first memblt is received
 
     bool secondary_connection_finished;
-//     bool primary_connection_finished;
+    bool primary_connection_finished;
 
     struct Capture
     {
@@ -237,25 +234,13 @@ public:
         , impl_io_disk(impl_io_disk)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
-        , clientChannelRDPSNDManager(this->config.verbose,
-                                     &(this->channel_mod),
-                                     this->impl_sound,
-                                     this->config.rDPSoundConfig)
-        , clientChannelCLIPRDRManager(this->config.verbose,
-                                      &(this->channel_mod),
-                                      this->impl_clipboard,
-                                      this->config.rDPClipboardConfig)
-        , clientChannelRDPDRManager(this->config.verbose,
-                                    &(this->channel_mod),
-                                    this->impl_io_disk,
-                                    this->config.rDPDiskConfig)
-        , clientChannelRemoteAppManager(this->config.verbose,
-                                        &(this->_callback),
-                                        &(this->channel_mod),
-                                        this->impl_graphic)
+        , clientChannelRDPSNDManager(this->config.verbose, &(this->channel_mod), this->impl_sound, this->config.rDPSoundConfig)
+        , clientChannelCLIPRDRManager(this->config.verbose, &(this->channel_mod), this->impl_clipboard, this->config.rDPClipboardConfig)
+        , clientChannelRDPDRManager(this->config.verbose, &(this->channel_mod), this->impl_io_disk, this->config.rDPDiskConfig)
+        , clientChannelRemoteAppManager(this->config.verbose, &(this->_callback), &(this->channel_mod), this->impl_graphic)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
-//         , primary_connection_finished(false)
+        , primary_connection_finished(false)
         , local_IP("unknow_local_IP")
     {
         SSL_load_error_strings();
@@ -883,7 +868,7 @@ public:
 
         std::string const movie_name = (last_delimiter_it == movie_path.rend())
         ? movie_path
-        : movie_path.substr(pos);
+        : movie_path.substr(movie_path.size() - (last_delimiter_it - movie_path.rbegin()));
 
         this->config.mod_state = ClientRedemptionConfig::MOD_RDP_REPLAY;
         this->config._movie_name = movie_name;

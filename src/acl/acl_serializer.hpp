@@ -411,7 +411,7 @@ public:
                 auto const& target_ip    = (isdigit(this->ini.get<cfg::context::target_host>()[0])
                     ? this->ini.get<cfg::context::target_host>()
                     : this->ini.get<cfg::context::ip_target>());
-                auto const& formted_date = arcsight_gmdatetime(time);
+                auto const& formted_date = siem_log_gmdatetime(time);
                 auto const& user         = this->ini.get<cfg::globals::auth_user>();
                 auto const& account      = this->ini.get<cfg::globals::target_user>();
                 auto const& session_id   = this->ini.get<cfg::context::session_id>();
@@ -445,7 +445,7 @@ public:
                 if (!asl_info.message.empty()) {
                     extension += " msg=\"";
                     this->arcsight_text_formating(extension, asl_info.message);
-                    extension += "\"";
+                    extension +="\"";
                 }
                 if (!asl_info.oldFilePath.empty()) {
                     extension += " oldFilePath=";

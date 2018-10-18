@@ -1306,20 +1306,27 @@ struct FormatListResponsePDU
 
 struct FormatDataRequestPDU
 {
+    CliprdrHeader header;
     uint32_t requestedFormatId{0};
 
     FormatDataRequestPDU()
-             {}   // FormatDataRequestPDU()
+            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
+             {
+    }   // FormatDataRequestPDU()
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
-        :  requestedFormatId(requestedFormatId) {
+            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
+            , requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
     void emit(OutStream & stream) const {
+        this->header.emit(stream);
+
         stream.out_uint32_le(this->requestedFormatId);
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
+        this->header.recv(stream);
         const unsigned expected = 4;   // requestedFormatId
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_INFO
@@ -1331,11 +1338,8 @@ struct FormatDataRequestPDU
         this->requestedFormatId = stream.in_uint32_le();
     }
 
-    size_t size() const {
-        return 4;
-    }
-
     void log() const {
+        this->header.log();
         LOG(LOG_INFO, "     Format Data Request PDU:");
         LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes): %s", this->requestedFormatId, get_FormatId_name(this->requestedFormatId));
     }
@@ -1422,7 +1426,7 @@ enum : uint32_t {
 
 struct FileContentsRequestPDU     // Resquest RANGE
 {
-//     CliprdrHeader header;
+    CliprdrHeader header;
     uint32_t streamID;
     uint32_t flag;
     uint32_t lindex;
@@ -1435,8 +1439,8 @@ struct FileContentsRequestPDU     // Resquest RANGE
                                    , int lindex
                                    , uint64_t sizeRequested
                                    , uint32_t cbRequested)
-    : /*header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
-    ,*/ streamID(streamID)
+    : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
+    , streamID(streamID)
     , flag(flag)
     , lindex(lindex)
     , sizeRequested(sizeRequested)
@@ -1444,11 +1448,11 @@ struct FileContentsRequestPDU     // Resquest RANGE
     {}
 
     explicit FileContentsRequestPDU()
-//     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
+    : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
         stream.out_uint32_le(this->lindex);
         stream.out_uint32_le(this->flag);
@@ -1464,7 +1468,7 @@ struct FileContentsRequestPDU     // Resquest RANGE
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
         this->lindex = stream.in_uint32_le();
         this->flag = stream.in_uint32_le();
@@ -1477,12 +1481,8 @@ struct FileContentsRequestPDU     // Resquest RANGE
         }
     }
 
-    size_t size() const {
-        return 28;
-    }
-
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     File Contents Request PDU:");
         LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
         LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
@@ -1661,28 +1661,25 @@ public:
 
 struct FileContentsResponse
 {
-//     CliprdrHeader header;
+    CliprdrHeader header;
 
     uint32_t streamID{0};
-    uint64_t _size{0};
+    uint64_t size{0};
 
 
-    explicit FileContentsResponse(const uint32_t streamID, const uint64_t _size, uint32_t data_size)
-//     : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
-  :  streamID(streamID)
-    , _size(_size)
+    explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
+    : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
+    , streamID(streamID)
+    , size(size)
     {}
 
-    explicit FileContentsResponse()
-//     : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
+    explicit FileContentsResponse(bool response_ok = false)
+    : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
+
     {}
 
-    void emit(OutStream & /*stream*/) const {
-//         this->header.emit(stream);
-    }
-
-    size_t size() const {
-        return this->_size;
+    void emit(OutStream & stream) const {
+        this->header.emit(stream);
     }
 
 };
@@ -1696,23 +1693,23 @@ struct FileContentsResponse_Size : FileContentsResponse {
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
-        stream.out_uint64_le(this->_size);
+        stream.out_uint64_le(this->size);
         stream.out_uint32_le(0);
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
-        this->_size = stream.in_uint64_le();
+        this->size = stream.in_uint64_le();
     }
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     File Contents Response Size:");
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
-        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->_size);
+        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
         LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
 };
@@ -1726,17 +1723,17 @@ struct FileContentsResponse_Range : FileContentsResponse {
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->streamID);
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
         this->streamID = stream.in_uint32_le();
     }
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     File Contents Response Range:");
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
     }
@@ -2090,45 +2087,63 @@ enum : int {
 
 struct FormatDataResponsePDU
 {
-//     CliprdrHeader header;
+    CliprdrHeader header;
 
-    std::size_t data_len = 0;
-    const uint8_t * data;
 
     FormatDataResponsePDU()
-      : data(nullptr)
-//         : header( CB_FORMAT_DATA_RESPONSE
-//                 , CB_RESPONSE_FAIL
-//                 , 0)
+        : header( CB_FORMAT_DATA_RESPONSE
+                , CB_RESPONSE_FAIL
+                , 0)
     {
     }
 
-    explicit FormatDataResponsePDU(const uint8_t * data, std::size_t data_len)
-      : data_len(data_len)
-      , data(data)
+    explicit FormatDataResponsePDU(std::size_t data_len)
+        : header( CB_FORMAT_DATA_RESPONSE
+                , CB_RESPONSE_OK
+                , data_len)
     {
     }
 
-    void emit(OutStream & stream) const {
+    explicit FormatDataResponsePDU(bool response_ok)
+        : header( CB_FORMAT_DATA_RESPONSE
+                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+                , 0)
+    {
+    }
 
-            if (this->data_len) {
-                stream.out_copy_bytes(data, this->data_len);
+    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
+        stream.out_uint16_le(this->header.msgType());
+        stream.out_uint16_le(this->header.msgFlags());
+
+        if (this->header.msgFlags() == CB_RESPONSE_OK) {
+            stream.out_uint32_le(data_length);  // dataLen(4)
+
+            if (data_length) {
+                stream.out_copy_bytes(data, data_length);
             }
-    }
-
-    size_t size() const {
-        return this->data_len;
+        }
+        else {
+            stream.out_uint32_le(0);    // dataLen(4)
+        }
     }
 
     void emit_ex(OutStream & stream, size_t data_length) const {
+        stream.out_uint16_le(this->header.msgType());
+        stream.out_uint16_le(this->header.msgFlags());
+
+        stream.out_uint32_le(                           // dataLen(4)
+                (this->header.msgFlags() == CB_RESPONSE_OK) ?
+                data_length :
+                0
+            );
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
     }
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     Format Data Response PDU:");
     }
 
@@ -2136,7 +2151,7 @@ struct FormatDataResponsePDU
 }; // struct FormatDataResponsePDU
 
 
-struct FormatDataResponsePDU_MetaFilePic{
+struct FormatDataResponsePDU_MetaFilePic : FormatDataResponsePDU {
 
     // 2.2.5.2.1 Packed Metafile Payload
 
@@ -2237,7 +2252,7 @@ struct FormatDataResponsePDU_MetaFilePic{
     };
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     Packed Metafile Payload:");
         LOG(LOG_INFO, "          * mappingMode = 0x%08x (4 bytes)", this->mappingMode);
         LOG(LOG_INFO, "          * xExt        = %d (4 bytes)", int(this->xExt));
@@ -2262,8 +2277,8 @@ struct FormatDataResponsePDU_MetaFilePic{
                                               , const uint16_t height
                                               , const uint16_t depth
                                               , const double ARBITRARY_SCALE)
-//       : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
-  :  mappingMode(MM_ANISOTROPIC)
+      : FormatDataResponsePDU(data_length + METAFILE_HEADERS_SIZE)
+      , mappingMode(MM_ANISOTROPIC)
       , xExt(int(double(width ) * ARBITRARY_SCALE))
       , yExt(int(double(height) * ARBITRARY_SCALE))
       , metaHeader(MFF::MEMORYMETAFILE, MFF::METAVERSION300, data_length)
@@ -2274,8 +2289,8 @@ struct FormatDataResponsePDU_MetaFilePic{
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
-//
+        this->header.emit(stream);
+
         // 2.2.5.2.1 Packed Metafile Payload
         // 12 bytes
         stream.out_uint32_le(this->mappingMode);
@@ -2295,7 +2310,7 @@ struct FormatDataResponsePDU_MetaFilePic{
 
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
         this->mappingMode = stream.in_uint32_le();
         this->xExt = stream.in_uint32_le();
         this->yExt = stream.in_uint32_le();
@@ -2351,7 +2366,7 @@ struct FormatDataResponsePDU_MetaFilePic{
     }
 };
 
-struct FormatDataResponsePDU_Text {
+struct FormatDataResponsePDU_Text : FormatDataResponsePDU {
 
     struct Ender {
         enum : uint32_t {
@@ -2367,20 +2382,20 @@ struct FormatDataResponsePDU_Text {
     explicit FormatDataResponsePDU_Text() = default;
 
     explicit FormatDataResponsePDU_Text(std::size_t length)
-//       : FormatDataResponsePDU(length)
+      : FormatDataResponsePDU(length)
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
     }
 
     void log() const {
-//         this->header.log();
-        LOG(LOG_INFO, "     Format Data Response Text PDU: - ");
+        this->header.log();
+        LOG(LOG_INFO, "     Format Data Response Text PDU:");
     }
 
 };
@@ -2406,12 +2421,12 @@ struct FormatDataResponsePDU_Text {
 
 // fileDescriptorArray (variable): An array of File Descriptors (section 2.2.5.2.3.1). The number of elements in the array is specified by the cItems field.
 
-struct FormatDataResponsePDU_FileList {
+struct FormatDataResponsePDU_FileList : FormatDataResponsePDU {
 
     int cItems{0};
 
     void log() const {
-//         this->header.log();
+        this->header.log();
         LOG(LOG_INFO, "     Format Data Response File List PDU:");
         LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
     }
@@ -2419,17 +2434,17 @@ struct FormatDataResponsePDU_FileList {
     explicit FormatDataResponsePDU_FileList() = default;
 
     explicit FormatDataResponsePDU_FileList(const std::size_t cItems)
-//       : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
-  :  cItems(cItems)
+      : FormatDataResponsePDU((FileDescriptor::size() * cItems) + 4)
+      , cItems(cItems)
     {}
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
+        this->header.emit(stream);
         stream.out_uint32_le(this->cItems);
     }
 
     void recv(InStream & stream) {
-//         this->header.recv(stream);
+        this->header.recv(stream);
         this->cItems = stream.in_uint32_le();
     }
 };
@@ -2548,26 +2563,32 @@ public:
 
 struct LockClipboardDataPDU
 {
+    CliprdrHeader header;
 
     uint32_t streamDataID;
 
-    explicit LockClipboardDataPDU()
+    explicit LockClipboardDataPDU(): header(CB_LOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
     {}
 
     explicit LockClipboardDataPDU(uint32_t streamDataID)
-      :  streamDataID(streamDataID)
+    : header(CB_LOCK_CLIPDATA, 0, 4)
+    , streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->streamDataID);
+        this->header.emit(stream);
+        stream.out_uint32_le(streamDataID);
     }
 
     void recv(InStream & stream) {
-        this->streamDataID = stream.in_uint32_le();
+        this->header.recv(stream);
+        streamDataID = stream.in_uint32_le();
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Lock Clipboard Data PDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+        this->header.log();
+        LOG(LOG_INFO, "     Lock Clipboard Data PDU:");
+        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
 
 };
@@ -2595,29 +2616,35 @@ struct LockClipboardDataPDU
 
 struct UnlockClipboardDataPDU
 {
+    CliprdrHeader header;
 
     uint32_t streamDataID;
 
-    explicit UnlockClipboardDataPDU()
+    explicit UnlockClipboardDataPDU(): header(CB_UNLOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
     {}
 
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
-    :  streamDataID(streamDataID)
+    : header(CB_UNLOCK_CLIPDATA, 0, 4)
+    , streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) const
     {
+        this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
 
     void recv(InStream & stream)
     {
+        this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 
     void log() const
     {
-        LOG(LOG_INFO, "     Unlock Clipboard Data PDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
+        this->header.log();
+        LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");
+        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
 };
 

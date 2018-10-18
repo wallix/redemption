@@ -43,10 +43,10 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         fdr.emit(ou_stream_fileList);
 
         const uint8_t file_list_data[] =
-            "\x01\x00\x00\x00";
+            "\x05\x00\x01\x00\x54\x02\x00\x00\x01\x00\x00\x00";
 
-        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 4);
-        std::string const expected(char_ptr_cast(file_list_data), 4);
+        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 12);
+        std::string const expected(char_ptr_cast(file_list_data), 12);
         RED_CHECK_EQUAL(expected, out_data);
     }
 
@@ -95,8 +95,6 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
             "\x00\x00\x00\x00\x00\x00\x00\x00";
 
         InStream in_stream_fileList_to_recv(file_list_data, 608);
-        RDPECLIP::CliprdrHeader header;
-        header.recv(in_stream_fileList_to_recv);
         RDPECLIP::FormatDataResponsePDU_FileList fdr_recv;
         fdr_recv.recv(in_stream_fileList_to_recv);
 
@@ -111,13 +109,10 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
         int height=73;
         int width=220;
         int bpp=24;
-        int data_length = height * width * 3;
+        int data_lenght = height * width * 3;
         const double ARBITRARY_SCALE = 40;
 
-        RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, data_length+RDPECLIP::METAFILE_HEADERS_SIZE);
-        formatDataResponseHeader.emit(ou_stream_metaFilePic);
-
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_length, width, height, bpp, ARBITRARY_SCALE);
+        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
         fdr.emit(ou_stream_metaFilePic);
 
         auto metafilepic_out_data = cstr_array_view(
@@ -213,8 +208,6 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
 
         InStream stream(metafilepic_out_data, 132);
 
-        RDPECLIP::CliprdrHeader header;
-        header.recv(stream);
         RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
         fdr.recv(stream);
 
@@ -467,8 +460,9 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     fileContentsRequest.emit(out_stream);
 
     auto exp_data = cstr_array_view(
-        "\x01\x00\x00\x00\x03\x00\x00\x00\x02\x00\x00\x00\x07\x00\x00\x00"
-        "\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00");
+        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
+        "\x00\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
@@ -482,13 +476,11 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     uint64_t size = 0x0000000000000007;
 
     const char data[] =
-        "\x01\x00\x00\x00\x03\x00\x00\x00\x02\x00\x00\x00\x07\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00"  //............ !]
-    ;
+        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x02\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x07\x00\x00\x00"
+        "\x01\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
-//     RDPECLIP::CliprdrHeader header;
-//     header.recv(stream);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.recv(stream);
 
@@ -513,9 +505,9 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     fileContentsRequest.emit(out_stream);
 
     auto exp_data = cstr_array_view(
-        "\x01\x00\x00\x00\x03\x00\x00\x00\x01\x00\x00\x00\x07\x00\x00\x00" //................ !
-        "\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00"                 //............ !
-      );
+        "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00"
+        "\x01\x00\x00\x00\x07\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00"
+        "\x00\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
     }
@@ -534,8 +526,6 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
         "\x01\x00\x00\x00";
 
     InStream stream(data, sizeof(data)-1);
-    RDPECLIP::CliprdrHeader header;
-    header.recv(stream);
     RDPECLIP::FileContentsRequestPDU fileContentsRequest;
     fileContentsRequest.recv(stream);
 

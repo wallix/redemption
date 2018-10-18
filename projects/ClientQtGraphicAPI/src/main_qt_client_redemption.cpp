@@ -46,6 +46,8 @@ int main(int argc, char** argv)
     QtInputSocket socket_api_obj(reactor, qwidget_parent);
     QtClientRDPKeyLayout keylayout_obj;
 
+
+
     ClientOutputGraphicAPI * graphic_qt    = &graphic_control_qt_obj;
     ClientIOClipboardAPI   * clipboard_api = &clipboard_api_obj;
     ClientOutputSoundAPI   * sound_api     = &sound_api_obj;

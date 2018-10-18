@@ -93,18 +93,7 @@ struct CopyPasteFront : FakeFront
                 buf[unicode_data_length    ] = 0;
                 buf[unicode_data_length + 1] = 0;
                 unicode_data_length += 2;
-
-                StaticOutStream<256> out_s;
-
-                RDPECLIP::CliprdrHeader format_data_response_header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, unicode_data_length);
-                format_data_response_header.emit(out_s);
-
-                RDPECLIP::FormatDataResponsePDU formatDataResponsePDU(buf, unicode_data_length);
-                formatDataResponsePDU.emit(out_s);
-
-
-                InStream in_s(out_s.get_data(), out_s.get_offset());
-                this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), buf, unicode_data_length);
             }
             break;
             default:
@@ -137,14 +126,6 @@ private:
     void send_to_server(PDU && pdu, Args && ...args) {
         StaticOutStream<256> out_s;
         pdu.emit(out_s, std::move(args)...);
-        InStream in_s(out_s.get_data(), out_s.get_offset());
-        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
-    }
-
-    template<class PDU>
-    void send_to_server_2(PDU && pdu) {
-        StaticOutStream<256> out_s;
-        pdu.emit(out_s);
         InStream in_s(out_s.get_data(), out_s.get_offset());
         this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
@@ -205,11 +186,6 @@ RED_AUTO_TEST_CASE(TestPaste)
                                                                    \
         RED_CHECK_SIG(gd, sig);                                    \
     }
-
-    keymap.push_kevent(Keymap2::KEVENT_PASTE);
-    copy_paste.paste(edit);
-    RED_CHECK_EQUAL("", edit.get_text());
-
     edit_paste("",
         "\x55\x78\x56\xd2\x65\x6c\x78\x4a\x23\x26\x2b\xf5\xfb\x67\xdd\x0f\xa9\x96\xaf\xa6");
     edit_paste("",
