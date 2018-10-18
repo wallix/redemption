@@ -569,6 +569,7 @@ public:
                                                 , this->authentifier
                                                 , this->reportMessage
                                                 , this->ini
+                                                , nullptr
                                                 ));
 
                     std::string target_info = this->ini.get<cfg::context::target_str>();
@@ -600,6 +601,7 @@ public:
                                                     , &this->vnc_conf.exe
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)
+                                                    , nullptr
                                                    )
                                         );
             }

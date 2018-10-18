@@ -33,6 +33,7 @@ from socket     import gethostname
 
 #TODO : remove these hardcoded strings
 RECORD_PATH = u'/var/wab/recorded/rdp/'
+METRICS_PATH = u'/var/wab/recorded/metrics/'
 
 from sesmanconf import TR, SESMANCONF
 import engine
@@ -882,6 +883,17 @@ class Sesman():
                 Logger().info(u"Failed creating recording path (%s)" % RECORD_PATH)
                 self.send_data({u'rejected': TR(u'error_getting_record_path')})
                 return False, TR(u'error_getting_record_path %s') % RECORD_PATH
+
+        try:
+            os.stat(METRICS_PATH)
+        except OSError:
+            try:
+                os.mkdir(METRICS_PATH)
+            except Exception:
+                Logger().info(u"Failed creating log metrics path (%s)" % METRICS_PATH)
+                self.send_data({u'rejected': TR(u'error_getting_metrics_path')})
+                return False, TR(u'error_getting_metrics_path %s') % METRICS_PATH
+
         return True, u''
 
     def generate_record_filebase(self, session_id, user, account, start_time):

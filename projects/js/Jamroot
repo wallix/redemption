@@ -53,6 +53,7 @@ constant LIB_PREFIX : [ setvar LIB_PREFIX : $(PREFIX)/lib ] ;
 constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(PREFIX)/share/rdpproxy ] ;
 constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : /var/rdpproxy/tmp ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : /var/rdpproxy/recorded ] ;
+constant METRICS_PATH : [ setvar METRICS_PATH : /var/rdpproxy/recorded/metrics ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : /etc/rdpproxy ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : /etc/rdpproxy/cert ] ;
 constant HASH_PATH : [ setvar HASH_PATH : /var/rdpproxy/hash ] ;
@@ -69,6 +70,7 @@ rule defines ( properties * )
     defs += <define>SHARE_PATH='\"$(PREFIX)/share/rdpproxy\"' ;
     defs += <define>CFG_PATH='\"$(ETC_PREFIX)\"' ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>METRICS_PATH='\"$(METRICS_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>VIDEO_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;

@@ -31,6 +31,7 @@
 #include <string.h>
 #include <assert.h>
 #include <dirent.h>
+#include <vector>
 
 #include <array>
 
@@ -193,15 +194,20 @@ public:
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
-                auto const tv = session_reactor.get_next_timeout(enable_graphics);
-                auto tv_now = tvtime();
+                timeval const tv = session_reactor.get_next_timeout(enable_graphics);
+                timeval tv_now = tvtime();
                 // LOG(LOG_DEBUG, "%ld %ld - %ld %ld", tv.tv_sec, tv.tv_usec, tv_now.tv_sec, tv_now.tv_usec);
                 if (tv.tv_sec >= 0 && tv < timeout + tv_now) {
                     if (tv < tv_now) {
                         timeout = {0, 0};
                     }
                     else {
-                        timeout = tv - tv_now;
+                        std::chrono::microseconds tvusec = std::chrono::seconds(tv.tv_sec)
+                                     + std::chrono::microseconds(tv.tv_usec);
+                        std::chrono::microseconds tv_nowusec = std::chrono::seconds(tv_now.tv_sec)
+                                     + std::chrono::microseconds(tv_now.tv_usec);
+
+                        timeout = to_timeval(tvusec - tv_nowusec);
                     }
                 }
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);

@@ -41,10 +41,10 @@ struct array_view
     using const_reference = T const &;
 
     constexpr array_view() = default;
-    constexpr array_view(array_view const &) = default;
-    array_view & operator = (array_view const &) = default;
+    constexpr array_view(array_view const & other) = default;
+    array_view & operator = (array_view const & other) = default;
 
-    constexpr array_view(std::nullptr_t) noexcept
+    constexpr array_view(std::nullptr_t /*null*/) noexcept
     : array_view(nullptr, nullptr)
     {}
 
@@ -98,6 +98,8 @@ struct array_view
     REDEMPTION_CONSTEXPR_AFTER_CXX11 type const & operator[](std::size_t i) const noexcept
     { assert(i < this->size()); return this->data()[i]; }
 
+    // TODO free functions
+    //@{
     REDEMPTION_CONSTEXPR_AFTER_CXX11 array_view first(std::size_t n) const noexcept
     {
         assert(n <= this->size());
@@ -134,6 +136,7 @@ struct array_view
         assert(offset <= this->size() && count <= this->size() - offset);
         return {this->data() + offset, count};
     }
+    //@}
 
 private:
     type * p        = nullptr;
@@ -219,4 +222,9 @@ using array_view_const_s64 = array_view<int64_t const>;
 
 using array_view_char = array_view<char>;
 using array_view_const_char = array_view<char const>;
+
+constexpr array_view_const_char operator "" _av(char const * s, size_t len) noexcept
+{
+    return {s, len};
+}
 

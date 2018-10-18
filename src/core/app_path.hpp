@@ -49,7 +49,7 @@ enum class AppPath
     LockDir,
     LockFile,
     DefaultFontFile,
-    Record_Metrics, 
+    Metrics, 
 };
 char const * app_path(AppPath) noexcept;
 std::string app_path_s(AppPath);

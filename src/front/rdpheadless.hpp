@@ -716,6 +716,7 @@ public:
               , false
               , nullptr
               , to_verbose_flags(this->_verbose)
+              , nullptr
               );
         } else {
             auto rdp = std::make_unique<mod_rdp>(
@@ -729,7 +730,9 @@ public:
               , mod_rdp_params
               , this->authentifier
               , this->report_message
-              , ini);
+              , ini
+              , nullptr
+              );
 
             GCC::UserData::CSSecurity & cs_security = rdp->cs_security;
             cs_security.encryptionMethods = encryptionMethods;

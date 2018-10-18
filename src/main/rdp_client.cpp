@@ -193,7 +193,8 @@ int main(int argc, char** argv)
               , report_message
               , false
               , nullptr
-              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace);
+              , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
+              , nullptr);
         }) ? 1 : 0;
     }
     else {

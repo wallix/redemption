@@ -19,6 +19,7 @@
  */
 
 
+#include <vector>
 #include "mod/internal/copy_paste.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/channel_list.hpp"

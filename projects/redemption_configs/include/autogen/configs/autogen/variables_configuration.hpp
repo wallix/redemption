@@ -2161,34 +2161,46 @@ namespace cfg {
 
     /// type: bool <br/>
     /// value{0} <br/>
-    struct rdp_metrics::activate_log_metrics {
+    struct metrics::enable_rdp_metrics {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "rdp_metrics"; }
-        static constexpr char const * name() { return "activate_log_metrics"; }
+        static constexpr char const * section() { return "metrics"; }
+        static constexpr char const * name() { return "enable_rdp_metrics"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct metrics::enable_vnc_metrics {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "metrics"; }
+        static constexpr char const * name() { return "enable_vnc_metrics"; }
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
     /// type: ::configs::spec_types::directory_path <br/>
-    /// value = app_path(AppPath::Record_Metrics) <br/>
-    struct rdp_metrics::log_dir_path {
+    /// value = app_path(AppPath::Metrics) <br/>
+    struct metrics::log_dir_path {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "rdp_metrics"; }
+        static constexpr char const * section() { return "metrics"; }
         static constexpr char const * name() { return "log_dir_path"; }
         using type = ::configs::spec_types::directory_path;
         using sesman_and_spec_type = ::configs::spec_types::directory_path;
         using mapped_type = sesman_and_spec_type;
-        type value = app_path(AppPath::Record_Metrics);
+        type value = app_path(AppPath::Metrics);
     };
     /// type: std::chrono::seconds <br/>
     /// value{5} <br/>
-    struct rdp_metrics::log_interval {
+    struct metrics::log_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "rdp_metrics"; }
+        static constexpr char const * section() { return "metrics"; }
         static constexpr char const * name() { return "log_interval"; }
         using type = std::chrono::seconds;
         using sesman_and_spec_type = std::chrono::seconds;
@@ -2197,10 +2209,10 @@ namespace cfg {
     };
     /// type: std::chrono::hours <br/>
     /// value{24} <br/>
-    struct rdp_metrics::log_file_turnover_interval {
+    struct metrics::log_file_turnover_interval {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "rdp_metrics"; }
+        static constexpr char const * section() { return "metrics"; }
         static constexpr char const * name() { return "log_file_turnover_interval"; }
         using type = std::chrono::hours;
         using sesman_and_spec_type = std::chrono::hours;
@@ -2210,10 +2222,10 @@ namespace cfg {
     /// signature key to digest log metrics header info <br/>
     /// type: std::array<unsigned char, 32> <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
-    struct rdp_metrics::sign_key {
+    struct metrics::sign_key {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
-        static constexpr char const * section() { return "rdp_metrics"; }
+        static constexpr char const * section() { return "metrics"; }
         static constexpr char const * name() { return "sign_key"; }
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
@@ -4768,12 +4780,13 @@ struct mod_rdp
 , cfg::mod_rdp::experimental_fix_too_long_cookie
 { static constexpr bool is_section = true; };
 
-struct rdp_metrics
-: cfg::rdp_metrics::activate_log_metrics
-, cfg::rdp_metrics::log_dir_path
-, cfg::rdp_metrics::log_interval
-, cfg::rdp_metrics::log_file_turnover_interval
-, cfg::rdp_metrics::sign_key
+struct metrics
+: cfg::metrics::enable_rdp_metrics
+, cfg::metrics::enable_vnc_metrics
+, cfg::metrics::log_dir_path
+, cfg::metrics::log_interval
+, cfg::metrics::log_file_turnover_interval
+, cfg::metrics::sign_key
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
@@ -4972,7 +4985,7 @@ struct VariablesConfiguration
 , cfg_section::session_log
 , cfg_section::client
 , cfg_section::mod_rdp
-, cfg_section::rdp_metrics
+, cfg_section::metrics
 , cfg_section::mod_vnc
 , cfg_section::mod_replay
 , cfg_section::ocr

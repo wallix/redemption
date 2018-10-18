@@ -48,6 +48,7 @@ class opts(object):
   config["%ETC_PREFIX%"] = 'etc/rdpproxy'
   config["%CERT_PREFIX%"] = 'etc/rdpproxy/cert'
   config["%RECORD_PATH%"] = '/var/rdpproxy/recorded'
+  config["%METRICS_PATH%"] = '/var/rdpproxy/recorded/metrics'
   config["%RECORD_TMP_PATH%"] = '/var/rdpproxy/tmp'
   config["%PKG_DISTRIBUTION%"] = 'unstable'
   config["%ARCHI%"] = 'any'

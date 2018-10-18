@@ -378,6 +378,9 @@ RED_AUTO_TEST_CASE(TestConfig1)
         "compression=256\n"
         "cache=128\n"
         "[translation]\n"
+        "[metrics]\n"
+        "metrics_path=/mnt/wab/recorded/metrics\n"
+
         "\n"
     );
 
@@ -537,6 +540,8 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(800,                              ini.get<cfg::context::opt_width>());
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
+
+    RED_CHECK_EQUAL("",                               ini.get<cfg::metrics::log_dir_path>());
 }
 
 RED_AUTO_TEST_CASE(TestConfig1bis)

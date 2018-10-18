@@ -23,6 +23,7 @@
 
 #ifdef IN_IDE_PARSER
 # define RECORD_PATH "/var/rdpproxy/recorded"
+# define METRICS_PATH "/var/rdpproxy/recorded/metrics"
 # define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 # define VIDEO_PATH "/tmp"
 # define OCR_PATH "/tmp"
@@ -73,7 +74,7 @@ char const * app_path(AppPath k) noexcept
         case AppPath::LockDir: return PID_PATH "/redemption";
         case AppPath::LockFile: return PID_PATH "/redemption/" LOCKFILE;
         case AppPath::DefaultFontFile: return SHARE_PATH "/" DEFAULT_FONT_NAME;
-        case AppPath::Record_Metrics: return RECORD_PATH "/metrics";
+        case AppPath::Metrics: return METRICS_PATH;
     }
 
     assert(false);

@@ -281,7 +281,38 @@ void ModuleManager::create_mod_rdp(
             client_execute.reset(false);
         }
 
-        ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
+        const char * target_user = ini.get<cfg::globals::target_user>().c_str();
+
+        auto metrics = std::make_unique<Metrics>(
+            ini.get<cfg::metrics::log_dir_path>().to_string()
+          , ini.get<cfg::context::session_id>()
+          , hmac_user(ini.get<cfg::globals::auth_user>(),
+                      ini.get<cfg::metrics::sign_key>())
+          , hmac_account({target_user, strlen(target_user)},
+                         ini.get<cfg::metrics::sign_key>())
+          , hmac_device_service(ini.get<cfg::globals::target_device>(),
+                                ini.get<cfg::context::target_service>(),
+                                ini.get<cfg::metrics::sign_key>())
+          , hmac_client_info(ini.get<cfg::globals::host>(),
+                             client_info.bpp, client_info.width, client_info.height,
+                             ini.get<cfg::metrics::sign_key>())
+          , this->timeobj.get_time()
+          , ini.get<cfg::metrics::log_file_turnover_interval>()
+          , ini.get<cfg::metrics::log_interval>());
+
+        auto protocol_metrics = std::make_unique<RDPMetrics>(metrics.get());
+
+        struct ModRDPWithMetrics : public mod_rdp
+        {
+            std::unique_ptr<Metrics> metrics = nullptr;
+            std::unique_ptr<RDPMetrics> protocol_metrics = nullptr;
+            SessionReactor::TimerPtr metrics_timer;
+
+            using mod_rdp::mod_rdp;
+
+        };
+
+        auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
             authentifier,
             name,
@@ -298,9 +329,22 @@ void ModuleManager::create_mod_rdp(
             mod_rdp_params,
             authentifier,
             report_message,
-            ini
+            ini,
+            (ini.get<cfg::metrics::enable_rdp_metrics>()
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
         );
-        std::unique_ptr<mod_api> managed_mod(new_mod);
+
+        new_mod->metrics = std::move(metrics);
+        new_mod->protocol_metrics = std::move(protocol_metrics);
+
+        new_mod->metrics_timer = session_reactor.create_timer()
+            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+            .on_action(jln::always_ready([mod = new_mod.get()]{
+                    if (mod->metrics) {
+                        mod->metrics->log(tvtime());
+                    }
+                }))
+            ;
 
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
@@ -319,7 +363,7 @@ void ModuleManager::create_mod_rdp(
                 client_info.width,
                 client_info.height,
                 adjusted_client_execute_rect,
-                std::move(managed_mod),
+                std::move(new_mod),
                 client_execute,
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()
@@ -330,9 +374,9 @@ void ModuleManager::create_mod_rdp(
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }
         else {
-            rdp_api*       rdpapi = new_mod;
+            rdp_api*       rdpapi = new_mod.get();
             windowing_api* winapi = new_mod->get_windowing_api();
-            this->set_mod(managed_mod.release(), rdpapi, winapi);
+            this->set_mod(new_mod.release(), rdpapi, winapi);
         }
 
         /* If provided by connection policy, session timeout update */

@@ -228,7 +228,7 @@ RED_AUTO_TEST_CASE(TestFront)
     NullAuthentifier authentifier;
     mod_rdp mod(
         t, session_reactor, front, info, ini.get_ref<cfg::mod_rdp::redir_info>(),
-        gen2, timeobj, mod_rdp_params, authentifier, report_message, ini);
+        gen2, timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
 
     if (verbose > 2){
         LOG(LOG_INFO, "========= CREATION OF MOD DONE ====================\n\n");

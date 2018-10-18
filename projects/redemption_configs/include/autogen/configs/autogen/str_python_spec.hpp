@@ -558,13 +558,16 @@
 "#_advanced\n"
 "experimental_fix_too_long_cookie = boolean(default=True)\n\n"
 
-"[rdp_metrics]\n\n"
+"[metrics]\n\n"
 
 "#_advanced\n"
-"activate_log_metrics = boolean(default=False)\n\n"
+"enable_rdp_metrics = boolean(default=False)\n\n"
 
 "#_advanced\n"
-"log_dir_path = string(max=4096, default='" << app_path(AppPath::Record_Metrics) << "')\n\n"
+"enable_vnc_metrics = boolean(default=False)\n\n"
+
+"#_hidden\n"
+"log_dir_path = string(max=4096, default='" << app_path(AppPath::Metrics) << "')\n\n"
 
 "# (is in second)\n"
 "#_advanced\n"

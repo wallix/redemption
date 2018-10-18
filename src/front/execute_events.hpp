@@ -59,7 +59,12 @@ inline ExecuteEventsResult execute_events(
             timeout = {0, 0};
         }
         else {
-            timeout = tv - tv_now;
+            std::chrono::microseconds tvusec = std::chrono::seconds(tv.tv_sec)
+                         + std::chrono::microseconds(tv.tv_usec);
+            std::chrono::microseconds tv_nowusec = std::chrono::seconds(tv_now.tv_sec)
+                         + std::chrono::microseconds(tv_now.tv_usec);
+
+            timeout = to_timeval(tvusec - tv_nowusec);
         }
     }
 

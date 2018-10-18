@@ -56,6 +56,8 @@ h
 #include "utils/zlib.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 
+#include "mod/metrics_hmac.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
 #include "mod/vnc/encoder/zrle.hpp"
 #include "mod/vnc/encoder/raw.hpp"
@@ -63,6 +65,8 @@ h
 #include "mod/vnc/encoder/copyrect.hpp"
 #include "mod/vnc/encoder/cursor.hpp"
 #include "mod/vnc/encoder/hextile.hpp"
+
+#define IF_EXISTS(p, m) do { if (p) p->m; } while (0)
 
 // got extracts of VNC documentation from
 // http://tigervnc.sourceforge.net/cgi-bin/rfbproto
@@ -206,6 +210,8 @@ private:
     SessionReactor::GraphicFdPtr fd_event;
     SessionReactor::GraphicEventPtr wait_client_up_and_running_event;
 
+    VNCMetrics * metrics;
+
 public:
     mod_vnc( Transport & t
            , SessionReactor& session_reactor
@@ -225,6 +231,7 @@ public:
            , bool server_is_apple
            , ClientExecute* client_execute
            , VNCVerbose verbose
+           , VNCMetrics * metrics
            )
     : mod_name{0}
     , username{0}
@@ -251,6 +258,7 @@ public:
     , session_reactor(session_reactor)
     , frame_buffer_update_ctx(this->zd, verbose)
     , clipboard_data_ctx(verbose)
+    , metrics(metrics)
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'VNC'");
@@ -580,6 +588,8 @@ public:
         out_stream.out_copy_bytes(cp_password, 64);
 
         this->t.send(out_stream.get_data(), out_stream.get_offset());
+        IF_EXISTS(this->metrics, data_from_client(out_stream.get_offset()));
+        
         // sec result
 
         return true;
@@ -884,21 +894,32 @@ public:
 
         if (device_flags & MOUSE_FLAG_MOVE) {
             this->mouse.move(this->t, x, y);
+            IF_EXISTS(this->metrics, mouse_move(x, y));
         }
         else if (device_flags & MOUSE_FLAG_BUTTON1) {
             this->mouse.click(this->t, x, y, 1 << 0, device_flags & MOUSE_FLAG_DOWN);
+            IF_EXISTS(this->metrics, right_click());
         }
         else if (device_flags & MOUSE_FLAG_BUTTON2) {
             this->mouse.click(this->t, x, y, 1 << 2, device_flags & MOUSE_FLAG_DOWN);
+            IF_EXISTS(this->metrics, left_click());
         }
         else if (device_flags & MOUSE_FLAG_BUTTON3) {
             this->mouse.click(this->t, x, y, 1 << 1, device_flags & MOUSE_FLAG_DOWN);
+            IF_EXISTS(this->metrics, right_click());
+            IF_EXISTS(this->metrics, left_click());
         }
         else if (device_flags == MOUSE_FLAG_BUTTON4 || device_flags == 0x0278) {
             this->mouse.scroll(this->t, 1 << 3);
+            IF_EXISTS(this->metrics, right_click());
+            IF_EXISTS(this->metrics, right_click());
+            IF_EXISTS(this->metrics, left_click());
         }
         else if (device_flags == MOUSE_FLAG_BUTTON5 || device_flags == 0x0388) {
             this->mouse.scroll(this->t, 1 << 4);
+            IF_EXISTS(this->metrics, right_click());
+            IF_EXISTS(this->metrics, left_click());
+            IF_EXISTS(this->metrics, left_click());
         }
     } // rdp_input_mouse
 
@@ -923,6 +944,9 @@ public:
         }
 
         uint8_t downflag = !(device_flags & KBD_FLAG_UP);
+        if (downflag) {
+            IF_EXISTS(this->metrics, key_pressed());
+        }
 
         if (this->server_is_apple) {
             this->apple_keyboard_translation(device_flags, param1, downflag);
@@ -971,6 +995,7 @@ public:
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
         this->t.send(stream.get_data(), stream.get_offset());
+        IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
     }
 
     void apple_keyboard_translation(int device_flags, long param1, uint8_t downflag) {
@@ -1195,6 +1220,8 @@ protected:
         stream.out_copy_bytes(data, length);      // text
 
         this->t.send(stream.get_data(), (length + 8));
+        IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
+
 
         this->event.set(1000);
     } // rdp_input_clip_data
@@ -1214,6 +1241,8 @@ protected:
             stream.out_copy_bytes(str, str_len);    // text
 
             this->t.send(stream.get_data(), stream.get_offset());
+            IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
+            IF_EXISTS(this->metrics, clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset()));
         };
 
         if (this->state == UP_AND_RUNNING) {
@@ -1299,6 +1328,7 @@ private:
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
         this->t.send(stream.get_data(), stream.get_offset());
+        IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
     } // update_screen
 
 public:
@@ -1548,11 +1578,16 @@ public:
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "vnc::draw_event");
         }
+        
+        uint64_t data_server_before = this->server_data_buf.remaining();
 
         this->server_data_buf.read_from(this->t);
 
         while (this->draw_event_impl(drawable)) {
         }
+
+        uint64_t data_server_after = this->server_data_buf.remaining();
+        IF_EXISTS(this->metrics, data_from_server(data_server_before-data_server_after));
 
         if (bool(this->verbose & VNCVerbose::draw_event)) {
             LOG(LOG_INFO, "Remaining in buffer : %u", this->server_data_buf.remaining());
@@ -1615,6 +1650,7 @@ private:
                 this->server_data_buf.advance(protocol_version_len);
 
                 this->t.send("RFB 003.003\n", 12);
+                IF_EXISTS(this->metrics, data_from_client(12));
                 // sec type
 
                 this->state = WAIT_SECURITY_TYPES_LEVEL;
@@ -1679,6 +1715,7 @@ private:
                     LOG(LOG_INFO, "Sending Password");
                 }
                 this->t.send(random_buf, 16);
+                IF_EXISTS(this->metrics, data_from_client(16));
             }
             this->state = WAIT_SECURITY_TYPES_PASSWORD_AND_SERVER_RANDOM_RESPONSE;
             REDEMPTION_CXX_FALLTHROUGH;
@@ -1763,6 +1800,7 @@ private:
 
         case SERVER_INIT:
             this->t.send("\x01", 1); // share flag
+            IF_EXISTS(this->metrics, data_from_client(1));
             this->state = SERVER_INIT_RESPONSE;
             REDEMPTION_CXX_FALLTHROUGH;
 
@@ -1865,6 +1903,7 @@ private:
 
                 stream.out_copy_bytes(pixel_format, 16);
                 this->t.send(stream.get_data(), stream.get_offset());
+                IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
 
                 this->bpp = 16;
                 this->depth  = 16;
@@ -1990,6 +2029,7 @@ private:
                 }   // (-239) cursor
 
                 this->t.send(stream.get_data(), 4 + number_of_encodings * 4);
+                IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
             }
 
 
@@ -2729,6 +2769,8 @@ private:
             this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
+            IF_EXISTS(this->metrics, clipboard_data_from_client(chunk_size));
+
         }
     }
 
@@ -3355,4 +3397,6 @@ public:
     Dimension get_dim() const override
     { return Dimension(this->width, this->height); }
 };
+
+#undef IF_EXISTS
 
