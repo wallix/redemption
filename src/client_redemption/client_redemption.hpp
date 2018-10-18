@@ -864,7 +864,7 @@ public:
     void replay( const std::string & movie_path) override {
 
         auto const last_delimiter_it = std::find(movie_path.rbegin(), movie_path.rend(), '/');
-        int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
+//         int pos = movie_path.size() - (last_delimiter_it - movie_path.rbegin());
 
         std::string const movie_name = (last_delimiter_it == movie_path.rend())
         ? movie_path

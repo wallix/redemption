@@ -2563,30 +2563,24 @@ public:
 
 struct LockClipboardDataPDU
 {
-    CliprdrHeader header;
-
     uint32_t streamDataID;
 
-    explicit LockClipboardDataPDU(): header(CB_LOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
+    explicit LockClipboardDataPDU()
     {}
 
     explicit LockClipboardDataPDU(uint32_t streamDataID)
-    : header(CB_LOCK_CLIPDATA, 0, 4)
-    , streamDataID(streamDataID)
+    : streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
         stream.out_uint32_le(streamDataID);
     }
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Lock Clipboard Data PDU:");
         LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }
@@ -2616,33 +2610,27 @@ struct LockClipboardDataPDU
 
 struct UnlockClipboardDataPDU
 {
-    CliprdrHeader header;
-
     uint32_t streamDataID;
 
-    explicit UnlockClipboardDataPDU(): header(CB_UNLOCK_CLIPDATA, CB_RESPONSE_FAIL, 4)
+     explicit UnlockClipboardDataPDU()
     {}
 
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
-    : header(CB_UNLOCK_CLIPDATA, 0, 4)
-    , streamDataID(streamDataID)
+    : streamDataID(streamDataID)
     {}
 
     void emit(OutStream & stream) const
     {
-        this->header.emit(stream);
-        stream.out_uint32_le(streamDataID);
+        stream.out_uint32_le(this->streamDataID);
     }
 
     void recv(InStream & stream)
     {
-        this->header.recv(stream);
         streamDataID = stream.in_uint32_le();
     }
 
     void log() const
     {
-        this->header.log();
         LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");
         LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
     }

@@ -453,8 +453,10 @@
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
                             }
 
+                            RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
                             RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
                             StaticOutStream<32> out_stream_lock;
+                            lockClipboardDataHeader.emit(out_stream_lock);
                             lockClipboardDataPDU.emit(out_stream_lock);
                             InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
 
@@ -1048,8 +1050,10 @@
     }
 
     void ClientChannelCLIPRDRManager::send_UnlockPDU(uint32_t streamID) {
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
         RDPECLIP::UnlockClipboardDataPDU unlockClipboardDataPDU(streamID);
         StaticOutStream<32> out_stream_unlock;
+        header.emit(out_stream_unlock);
         unlockClipboardDataPDU.emit(out_stream_unlock);
         InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
 
