@@ -325,12 +325,15 @@ public:
 
         StaticOutStream<1024> out_s;
 
-        const bool response_ok = true;
-        const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(
-            response_ok);
+//         const bool response_ok = true;
+//
+//         const RDPECLIP::FormatDataResponsePDU format_data_response_pdu(
+//             response_ok);
 
         size_t alternate_shell_length = this->alternate_shell.length() + 1;
-        format_data_response_pdu.emit_ex(out_s, alternate_shell_length);
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, alternate_shell_length);
+        header.emit(out_s);
+//         format_data_response_pdu.emit_ex(out_s, alternate_shell_length);
         out_s.out_copy_bytes(this->alternate_shell.c_str(),
             alternate_shell_length);
 

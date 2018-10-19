@@ -1951,7 +1951,7 @@ enum {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
 // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+FormatDataResponsePDU-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                           clipHeader                          |
 // +---------------------------------------------------------------+
 // |                              ...                              |
@@ -1995,63 +1995,83 @@ enum : int {
 
 struct FormatDataResponsePDU
 {
+private:
     CliprdrHeader header;
 
+public:
+    const uint8_t * data;
+    size_t data_length = 0;
 
     FormatDataResponsePDU()
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_FAIL
-                , 0)
+//         : header( CB_FORMAT_DATA_RESPONSE
+//                 , CB_RESPONSE_FAIL
+//                 , 0)
+    {
+    }
+
+    explicit FormatDataResponsePDU(const uint8_t * data, size_t data_length)
+      : data(data)
+      , data_length(data_length)
     {
     }
 
     explicit FormatDataResponsePDU(std::size_t data_len)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_OK
-                , data_len)
+//         : header( CB_FORMAT_DATA_RESPONSE
+//                 , CB_RESPONSE_OK
+//                 , data_len)
     {
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                , 0)
+//         : header( CB_FORMAT_DATA_RESPONSE
+//                 , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+//                 , 0)
     {
     }
 
-    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
+    void emit(OutStream & stream) {
+        if (this->data_length) {
+            stream.out_copy_bytes(this->data, this->data_length);
+        }
+    }
 
-        if (this->header.msgFlags() == CB_RESPONSE_OK) {
-            stream.out_uint32_le(data_length);  // dataLen(4)
+    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
+//         stream.out_uint16_le(this->header.msgType());
+//         stream.out_uint16_le(this->header.msgFlags());
+
+//         if (this->header.msgFlags() == CB_RESPONSE_OK) {
+//             stream.out_uint32_le(data_length);  // dataLen(4)
 
             if (data_length) {
                 stream.out_copy_bytes(data, data_length);
             }
-        }
-        else {
-            stream.out_uint32_le(0);    // dataLen(4)
-        }
+//         }
+//         else {
+//             stream.out_uint32_le(0);    // dataLen(4)
+//         }
     }
 
     void emit_ex(OutStream & stream, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
+//         stream.out_uint16_le(this->header.msgType());
+//         stream.out_uint16_le(this->header.msgFlags());
 
-        stream.out_uint32_le(                           // dataLen(4)
-                (this->header.msgFlags() == CB_RESPONSE_OK) ?
-                data_length :
-                0
-            );
+//         stream.out_uint32_le(                           // dataLen(4)
+//                 (this->header.msgFlags() == CB_RESPONSE_OK) ?
+//                 data_length :
+//                 0
+//             );
+    }
+
+    size_t size() const {
+        return this->data_length;
     }
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
+//         this->header.recv(stream);
     }
 
     void log() const {
-        this->header.log();
+//         this->header.log();
         LOG(LOG_INFO, "     Format Data Response PDU:");
     }
 
