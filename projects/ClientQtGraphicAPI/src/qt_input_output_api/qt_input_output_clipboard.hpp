@@ -52,6 +52,16 @@
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
 
+    struct TextEnder {
+        enum : uint32_t {
+            SIZE = 2
+        };
+
+        void emit (uint8_t * chunk, size_t data_len) {
+            chunk[data_len + 1] = 0;
+            chunk[data_len + 2] = 0;
+        }
+    };
 
 class QtInputOutputClipboard : public QObject, public ClientIOClipboardAPI
 {
@@ -370,10 +380,10 @@ public Q_SLOTS:
                         // UTF8toUTF16_CrLf for linux install
                         this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
 
-                        RDPECLIP::FormatDataResponsePDU_Text::Ender ender;
+                        TextEnder ender;
                         ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
-                        this->_cliboard_data_length += RDPECLIP::FormatDataResponsePDU_Text::Ender::SIZE;
+                        this->_cliboard_data_length += TextEnder::SIZE;
 
                         this->manager->send_FormatListPDU();
                 //==========================================================================

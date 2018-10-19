@@ -325,35 +325,6 @@
                                     , this->channel_flags
                                     );
                     }
-
-
-/*
-                    if (this->server_use_long_format_names) {
-
-
-
-
-
-                        StaticOutStream<1600> out_stream;
-                        RDPECLIP::CliprdrHeader format_list_header(RDPECLIP::CB_FORMAT_LIST, 0, this->total_format_list_pdu_size);
-                        format_list_header.emit(out_stream);
-
-                        for (auto & format : formats_list) {
-                            format.emit(out_stream);
-                        }
-
-                        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-                        this->callback->send_to_mod_channel( channel_names::cliprdr
-                                    , chunk
-                                    , out_stream.get_offset()
-                                    , this->channel_flags
-                                    );
-                    } else {
-
-                    }
-*/
-
                 break;
 
     // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -588,9 +559,6 @@
                                     RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length());
 
                                     formatDataResponseHeader.emit(out_stream_first_part);
-//                                     RDPECLIP::FormatDataResponsePDU_Text fdr(this->clientIOClipboardAPI->get_cliboard_data_length());
-//
-//                                     fdr.emit(out_stream_first_part);
 
                                     this->callback->process_client_channel_out_data(
                                         channel_names::cliprdr
@@ -733,7 +701,6 @@
                                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
                                 RDPECLIP::FileContentsResponse fileRange(streamID);
 
-                                //this->clientIOClipboardAPI->get_cliboard_data_length() = this->clientIOClipboardAPI->get_file_item(lindex).size();
                                 int first_part_data_size(this->clientIOClipboardAPI->get_file_item(lindex).size());
                                 int total_length(first_part_data_size + 12);
                                 if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
@@ -1096,10 +1063,10 @@
         this->clientIOClipboardAPI->set_local_clipboard_stream(false);
 
         if (is_utf16) {
-            auto utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal);
+            auto utf8_string = std::make_unique<uint8_t[]>(this->_cb_buffers.sizeTotal+2);
             size_t len = ::UTF16toUTF8(
-                this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal,
-                utf8_string.get(), this->_cb_buffers.sizeTotal);
+                this->_cb_buffers.data.get(), this->_cb_buffers.sizeTotal+2,
+                utf8_string.get(), this->_cb_buffers.sizeTotal+2);
             char const* str_data = char_ptr_cast(utf8_string.get());
             this->clientIOClipboardAPI->setClipboard_text({str_data, len});
         } else {

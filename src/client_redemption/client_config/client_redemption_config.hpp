@@ -1483,7 +1483,7 @@ public:
                 new_ofile << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 new_ofile << "keylayout "             << this->info.keylayout               << "\n";
                 new_ofile << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                new_ofile << "bpp "                   << this->info.screen_info.bpp         << "\n";
+                new_ofile << "bpp "                   << static_cast<int>(this->info.screen_info.bpp)         << "\n";
                 new_ofile << "width "                 << this->rdp_width                   << "\n";
                 new_ofile << "height "                << this->rdp_height                  << "\n";
                 new_ofile << "rdp5_performanceflags " << static_cast<int>(this->info.rdp5_performanceflags) << "\n";

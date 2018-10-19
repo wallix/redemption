@@ -1423,77 +1423,6 @@ enum : uint32_t {
   , FILECONTENTS_SIZE_CB_REQUESTED = 0x00000008
 };
 
-// struct FileContentsRequestPDU     // Resquest RANGE
-// {
-//      CliprdrHeader header;
-//     uint32_t streamID;
-//     uint32_t flag;
-//     uint32_t lindex;
-//     uint64_t sizeRequested;
-//     uint32_t cbRequested;
-//     uint32_t clipDataId = 0;
-//
-//     explicit FileContentsRequestPDU( int streamID
-//                                    , int flag
-//                                    , int lindex
-//                                    , uint64_t sizeRequested
-//                                    , uint32_t cbRequested)
-//     : header(CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
-//     , streamID(streamID)
-//     , flag(flag)
-//     , lindex(lindex)
-//     , sizeRequested(sizeRequested)
-//     , cbRequested(cbRequested)
-//     {}
-//
-//     explicit FileContentsRequestPDU()
-//     : header( CB_FILECONTENTS_REQUEST, CB_RESPONSE__NONE_, 28)
-//     {}
-//
-//     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
-//         stream.out_uint32_le(this->streamID);
-//         stream.out_uint32_le(this->lindex);
-//         stream.out_uint32_le(this->flag);
-//         stream.out_uint32_le(this->sizeRequested);
-//         stream.out_uint32_le(this->sizeRequested >> 32);
-//         if (flag & FILECONTENTS_SIZE) {
-//             stream.out_uint32_le(FILECONTENTS_SIZE_CB_REQUESTED);
-//         } else {
-//             stream.out_uint32_le(this->cbRequested);
-//         }
-//         stream.out_uint32_le(this->clipDataId);
-//
-//     }
-//
-//     void recv(InStream & stream) {
-//         this->header.recv(stream);
-//         this->streamID = stream.in_uint32_le();
-//         this->lindex = stream.in_uint32_le();
-//         this->flag = stream.in_uint32_le();
-//         uint64_t low = stream.in_uint32_le();
-//         uint64_t high = stream.in_uint32_le();
-//         this->sizeRequested = low + (high << 32);
-//         this->cbRequested = stream.in_uint32_le();
-//         if (stream.in_remain() == 4) {
-//             this->clipDataId = stream.in_uint32_le();
-//         }
-//     }
-//
-//     void log() const {
-//         this->header.log();
-//         LOG(LOG_INFO, "     File Contents Request PDU:");
-//         LOG(LOG_INFO, "          * streamID      = %08x (4 bytes)", this->streamID);
-//         LOG(LOG_INFO, "          * lindex        = %08x (4 bytes)", this->lindex);
-//         LOG(LOG_INFO, "          * flag          = %08x (4 bytes)", this->flag);
-//         LOG(LOG_INFO, "          * sizeRequested = %" PRIu64 " (8 bytes)", this->sizeRequested);
-//         LOG(LOG_INFO, "          * cbRequested   = %u (4 bytes)", this->cbRequested);
-//         if (this->clipDataId) {
-//             LOG(LOG_INFO, "          * clipDataId    = %08x (4 bytes)", this->clipDataId);
-//         }
-//     }
-//
-// };
 
 class FileContentsRequestPDU {
     uint32_t streamId_      = 0;
@@ -2405,39 +2334,30 @@ struct FormatDataResponsePDU_MetaFilePic {
     }
 };
 
-struct FormatDataResponsePDU_Text {
+// struct FormatDataResponsePDU_Text {
+//
 
-    struct Ender {
-        enum : uint32_t {
-            SIZE = 2
-        };
-
-        void emit (uint8_t * chunk, size_t data_len) {
-            chunk[data_len + 1] = 0;
-            chunk[data_len + 2] = 0;
-        }
-    };
-
-//     explicit FormatDataResponsePDU_Text() = default;
-
-    explicit FormatDataResponsePDU_Text()
-//       : FormatDataResponsePDU(length)
-    {}
-
-    void emit(OutStream & stream) const {
-//         this->header.emit(stream);
-    }
-
-    void recv(InStream & stream) {
-//         this->header.recv(stream);
-    }
-
-    void log() const {
-//         this->header.log();
-        LOG(LOG_INFO, "     Format Data Response Text PDU:");
-    }
-
-};
+//
+// //     explicit FormatDataResponsePDU_Text() = default;
+//
+//     explicit FormatDataResponsePDU_Text()
+// //       : FormatDataResponsePDU(length)
+//     {}
+//
+//     void emit(OutStream & stream) const {
+// //         this->header.emit(stream);
+//     }
+//
+//     void recv(InStream & stream) {
+// //         this->header.recv(stream);
+//     }
+//
+//     void log() const {
+// //         this->header.log();
+//         LOG(LOG_INFO, "     Format Data Response Text PDU:");
+//     }
+//
+// };
 
 
 
@@ -2735,18 +2655,18 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
                     case CF_METAFILEPICT:
                     {
-                        FormatDataResponsePDU_MetaFilePic pdu;
-                        pdu.recv(stream);
-                        pdu.log();
+//                         FormatDataResponsePDU_MetaFilePic pdu;
+//                         pdu.recv(stream);
+//                         pdu.log();
                     }
                         break;
 
                     case CF_TEXT:
                     case CF_UNICODETEXT:
                     {
-                        FormatDataResponsePDU_Text pdu;
-                        pdu.recv(stream);
-                        pdu.log();
+//                         FormatDataResponsePDU_Text pdu;
+//                         pdu.recv(stream);
+//                         pdu.log();
                     }
                         break;
 
