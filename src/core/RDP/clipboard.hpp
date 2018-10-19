@@ -1379,7 +1379,6 @@ struct FormatDataRequestPDU
 // |                       clipDataId (optional)                   |
 // +---------------------------------------------------------------+
 
-
 // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FILECONTENTS_REQUEST (0x0008), while the msgFlags field MUST be set to 0x0000.
 
 // streamId (4 bytes): An unsigned, 32-bit format ID used to associate the File Contents Request PDU with the corresponding File Contents Response PDU. The File Contents Response PDU is sent as a reply and contains an identical value in the streamId field.
@@ -1603,15 +1602,18 @@ public:
         return 24;  // streamId(4) + lindex(4) + dwFlags(4) +
                     //     nPositionLow(4) + nPositionHigh(4) +
                     //     cbRequested(4)
+
     }
+
+
 
 private:
     size_t str(char * buffer, size_t size) const {
         size_t length = 0;
 
         size_t result = ::snprintf(buffer + length, size - length,
-            "FileContentsRequestPDU: streamId=%u lindex=%u dwFlags=%u "
-                "nPositionLow=%u nPositionHigh=%u cbRequested=%u",
+            "FileContentsRequestPDU: streamId=%u(4 bytes) lindex=%u(4 bytes) dwFlags=%u(4 bytes) "
+                "nPositionLow=%u(4 bytes) nPositionHigh=%u(4 bytes) cbRequested=%u(4 bytes)",
             this->streamId_, this->lindex_, this->dwFlags_,
             this->nPositionLow_, this->nPositionHigh_, this->cbRequested_);
         length += ((result < size - length) ? result : (size - length - 1));
@@ -1670,21 +1672,54 @@ struct FileContentsResponse
     uint32_t streamID{0};
     uint64_t size{0};
 
+    bool is_size;
+
+    // SIZE (16 bytes)
+    explicit FileContentsResponse(const uint32_t streamID, const uint64_t size)
+    : streamID(streamID)
+    , size(size)
+    , is_size(true)
+    {}
+
+    // RANGE (4 + Data_Len Bytes)
+    explicit FileContentsResponse(const uint32_t streamID)
+        : streamID(streamID)
+        , is_size(false)
+    {}
+
+//     explicit FileContentsResponse(bool is_size)
+//       : is_size(is_size)
+//       {}
+
+    void receive(InStream & stream) {
+        this->streamID = stream.in_uint32_le();
+        if (this->is_size) {
+            this->size = stream.in_uint64_le();
+        }
+    }
+
+    void emit(OutStream & stream) const {
+//         this->header.emit(stream);
+
+        stream.out_uint32_le(this->streamID);
+
+        if (this->is_size) {                                // SIZE
+            stream.out_uint64_le(this->size);
+            stream.out_uint32_le(0);
+        }
+    }
+
+
 
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
-    : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
-    , streamID(streamID)
-    , size(size)
+        : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
+        , streamID(streamID)
+        , size(size)
     {}
 
     explicit FileContentsResponse(bool response_ok = false)
     : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
-
     {}
-
-    void emit(OutStream & stream) const {
-        this->header.emit(stream);
-    }
 
 };
 

@@ -355,7 +355,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatListPDU.out_uint16_le(RDPECLIP::CB_RESPONSE__NONE_);
     out_FormatListPDU.out_uint32_le(46);
     out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-    out_FormatListPDU.out_copy_bytes(RDPECLIP::FILEGROUPDESCRIPTORW.data(), RDPECLIP::FILEGROUPDESCRIPTORW.size());
+    uint8_t file_groupe_descr_data[50] = {0};
+    size_t file_groupe_descr_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *> (RDPECLIP::FILEGROUPDESCRIPTORW.data()), file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
+    out_FormatListPDU.out_copy_bytes(file_groupe_descr_data, file_groupe_descr_size+2);
     //out_FormatListPDU.out_uint16_le(0);
     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
     manager.receive(chunk_FormatListPDU, flag_channel);
@@ -422,13 +424,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
     RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 28);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 1);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), RDPECLIP::FILECONTENTS_SIZE);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 8);
-    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0x00000000);
+
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 1); // streamId
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0); // lindex
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), RDPECLIP::FILECONTENTS_SIZE); // dwFlags
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0); // nPositionLow
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0); // nPositionHigh
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 8); // cbRequested
+    RED_CHECK_EQUAL(fileContentsRequest_size.in_uint32_le(), 0x00000000); // clipDataId
 
     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_SIZE);
 
@@ -452,11 +455,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_FILECONTENTS_REQUEST);
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 28);
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 1);
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0);
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), RDPECLIP::FILECONTENTS_RANGE);
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint64_le(), 0);
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total));
+
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 1); // streamId
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0); // lindex
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), RDPECLIP::FILECONTENTS_RANGE); // dwFlags
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0); // nPositionLow
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total)); //nPositionHigh
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total));  // cbRequested
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0x00000000); // clipDataId
 
     // Manager and clipboard_io checks
     RED_CHECK_EQUAL(manager._waiting_for_data, true);

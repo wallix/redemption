@@ -848,10 +848,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
    }
 
    {  // FORMAT LIST FILE COPY ON CLIENT
-       std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
-       expected_log_metrics += expected_log_metrics_next;
-       epoch += 5s;
-       StaticOutStream<1600> out_stream;
+        std::string expected_log_metrics_next("2018-08-02 12:08:11 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 108 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0\n");
+        expected_log_metrics += expected_log_metrics_next;
+        epoch += 5s;
+        StaticOutStream<1600> out_stream;
 
         RDPECLIP::FormatListPDUEx format_list_pdu;
         format_list_pdu.add_format_name(49562, RDPECLIP::FILEGROUPDESCRIPTORW.data());
@@ -860,19 +860,19 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
         RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-            format_list_pdu.size(use_long_format_names));
+                                        RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                                        format_list_pdu.size(use_long_format_names));
 
         clipboard_header.emit(out_stream);
         format_list_pdu.emit(out_stream, use_long_format_names);
 
-       InStream chunk(out_stream.get_data(), out_stream.get_offset());
+        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
-       metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
+        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
-       m.log(epoch);
+        m.log(epoch);
 
-       RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
+        RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
    }
 
    {  // FORMAT FILE DATA REQUEST PASTE ON CLIENT
