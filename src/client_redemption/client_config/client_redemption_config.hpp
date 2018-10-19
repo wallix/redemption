@@ -1513,10 +1513,10 @@ public:
                 ofichier << "name "   << this->userProfils[this->current_user_profil].name << "\n";
                 ofichier << "keylayout "             << this->info.keylayout               << "\n";
                 ofichier << "brush_cache_code "      << this->info.brush_cache_code        << "\n";
-                ofichier << "bpp "                   << this->info.screen_info.bpp        << "\n";
+                ofichier << "bpp "                   << static_cast<int>(this->info.screen_info.bpp)        << "\n";
                 ofichier << "width "                 << this->rdp_width                   << "\n";
                 ofichier << "height "                << this->rdp_height                  << "\n";
-                ofichier << "rdp5_performanceflags " << this->info.rdp5_performanceflags   << "\n";
+                ofichier << "rdp5_performanceflags " << static_cast<int>(this->info.rdp5_performanceflags)   << "\n";
                 ofichier << "monitorCount "          << this->info.cs_monitor.monitorCount << "\n";
                 ofichier << "span "                  << this->is_spanning                  << "\n";
                 ofichier << "record "                << this->is_recording                 << "\n";
