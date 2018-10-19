@@ -150,8 +150,8 @@ public:
 
     struct CB_Buffers {
         std::unique_ptr<uint8_t[]>  data = nullptr;
-        size_t size = 0;
-        size_t sizeTotal = 0;
+        uint64_t size = 0;
+        uint64_t sizeTotal = 0;
         int    pic_width = 0;
         int    pic_height = 0;
         int    pic_bpp = 0;
@@ -160,7 +160,7 @@ public:
 
     struct CB_FilesList {
         struct CB_in_Files {
-            int         size;
+            uint64_t         size;
             std::string name;
         };
         uint32_t                 cItems = 0;

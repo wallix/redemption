@@ -440,10 +440,10 @@
                                 LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
                             }
 
-//                             RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE_OK, 4);
+                            RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
                             RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
                             StaticOutStream<256> out_streamRequest;
-//                             formatListRequestPDUHeader.emit(out_streamRequest);
+                            formatListRequestPDUHeader.emit(out_streamRequest);
                             formatDataRequestPDU.emit(out_streamRequest);
                             InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
 
@@ -890,13 +890,13 @@
                     StaticOutStream<64> out_streamRequest;
                     fileContentsRequestHeader.emit(out_streamRequest);
                     fileContentsRequest.emit(out_streamRequest);
-                    const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
+                    const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                    InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+                    InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                   , chunkRequest
-                                                  , total_length_FormatDataRequestPDU
+                                                  , total_length_FormatContentRequestPDU
                                                   , this->channel_flags
                                                   );
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -924,23 +924,25 @@
                         StaticOutStream<64> out_streamRequest;
                         RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
 
+                        int lololo = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
+
                         RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                             , cb_filesList.lindexToRequest
                                                                             , this->file_content_flag
-                                                                            , 0
                                                                             , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
                                                                             , cb_filesList.itemslist[cb_filesList.lindexToRequest].size >> 32
+                                                                            , 0
                                                                             , 0
                                                                             , true);
                         fileContentsRequestHeader.emit(out_streamRequest);
                         fileContentsRequest.emit(out_streamRequest);
-                        const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
+                        const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                        InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+                        InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
 
                         this->callback->send_to_mod_channel( channel_names::cliprdr
                                                               , chunkRequest
-                                                              , total_length_FormatDataRequestPDU
+                                                              , total_length_FormatContentRequestPDU
                                                               , this->channel_flags
                                                               );
 
@@ -998,13 +1000,13 @@
                                                                                     , 0
                                                                                     , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED);
                                 fileContentsRequest.emit(out_streamRequest);
-                                const uint32_t total_length_FormatDataRequestPDU = out_streamRequest.get_offset();
+                                const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
 
-                                InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatDataRequestPDU);
+                                InStream chunkRequest(out_streamRequest.get_data(), total_length_FormatContentRequestPDU);
 
                                 this->callback->send_to_mod_channel( channel_names::cliprdr
                                                                         , chunkRequest
-                                                                        , total_length_FormatDataRequestPDU
+                                                                        , total_length_FormatContentRequestPDU
                                                                         , this->channel_flags
                                                                         );
 

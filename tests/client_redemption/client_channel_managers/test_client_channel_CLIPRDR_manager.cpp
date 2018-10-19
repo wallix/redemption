@@ -459,9 +459,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 1); // streamId
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0); // lindex
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), RDPECLIP::FILECONTENTS_RANGE); // dwFlags
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0); // nPositionLow
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total)); //nPositionHigh
-    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total));  // cbRequested
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), sizeof(clip_data_total)); // nPositionLow
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0); //nPositionHigh
+    RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0);  // cbRequested
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0x00000000); // clipDataId
 
     // Manager and clipboard_io checks

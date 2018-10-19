@@ -1306,27 +1306,20 @@ struct FormatListResponsePDU
 
 struct FormatDataRequestPDU
 {
-    CliprdrHeader header;
+
     uint32_t requestedFormatId{0};
 
-    FormatDataRequestPDU()
-            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
-             {
-    }   // FormatDataRequestPDU()
+    FormatDataRequestPDU() = default;
 
     explicit FormatDataRequestPDU(uint32_t requestedFormatId)
-            : header(CB_FORMAT_DATA_REQUEST, 0, 4)
-            , requestedFormatId(requestedFormatId) {
+  :  requestedFormatId(requestedFormatId) {
     }   // FormatDataRequestPDU(uint32_t requestedFormatId)
 
     void emit(OutStream & stream) const {
-        this->header.emit(stream);
-
         stream.out_uint32_le(this->requestedFormatId);
     }   // void emit(OutStream & stream)
 
     void recv(InStream & stream) {
-        this->header.recv(stream);
         const unsigned expected = 4;   // requestedFormatId
         if (!stream.in_check_rem(expected)) {
             LOG(LOG_INFO
@@ -1339,9 +1332,12 @@ struct FormatDataRequestPDU
     }
 
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Format Data Request PDU:");
         LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes): %s", this->requestedFormatId, get_FormatId_name(this->requestedFormatId));
+    }
+
+    constexpr static size_t size() {
+       return 4;                                            // requestedFormatId(4)
     }
 
 };  // struct FormatDataRequestPDU
@@ -1596,12 +1592,12 @@ public:
 
 struct FileContentsResponse
 {
-    CliprdrHeader header;
-
     uint32_t streamID{0};
     uint64_t size{0};
 
     bool is_size;
+
+    FileContentsResponse() = default;
 
     // SIZE (16 bytes)
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size)
@@ -1616,10 +1612,6 @@ struct FileContentsResponse
         , is_size(false)
     {}
 
-//     explicit FileContentsResponse(bool is_size)
-//       : is_size(is_size)
-//       {}
-
     void receive(InStream & stream) {
         this->streamID = stream.in_uint32_le();
         if (this->is_size) {
@@ -1628,8 +1620,6 @@ struct FileContentsResponse
     }
 
     void emit(OutStream & stream) const {
-//         this->header.emit(stream);
-
         stream.out_uint32_le(this->streamID);
 
         if (this->is_size) {                                // SIZE
@@ -1638,73 +1628,23 @@ struct FileContentsResponse
         }
     }
 
-
-
-    explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
-        : header( CB_FILECONTENTS_RESPONSE, CB_RESPONSE_OK, data_size)
-        , streamID(streamID)
-        , size(size)
-    {}
-
-    explicit FileContentsResponse(bool response_ok = false)
-    : header( CB_FILECONTENTS_RESPONSE, (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL), 4)
-    {}
-
-};
-
-struct FileContentsResponse_Size : FileContentsResponse {
-
-    explicit FileContentsResponse_Size() = default;
-
-    explicit FileContentsResponse_Size(const uint32_t streamID, const uint64_t size)
-    : FileContentsResponse(streamID, size, 16)
-    {}
-
-    void emit(OutStream & stream) const {
-        this->header.emit(stream);
-        stream.out_uint32_le(this->streamID);
-        stream.out_uint64_le(this->size);
-        stream.out_uint32_le(0);
-    }
-
-    void recv(InStream & stream) {
-        this->header.recv(stream);
-        this->streamID = stream.in_uint32_le();
-        this->size = stream.in_uint64_le();
-    }
-
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     File Contents Response Size:");
         LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
         LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
         LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
-};
 
-struct FileContentsResponse_Range : FileContentsResponse {
 
-    explicit FileContentsResponse_Range() = default;
 
-    explicit FileContentsResponse_Range(const uint32_t streamID, const uint64_t size)
-    : FileContentsResponse(streamID, size, size+4)
-    {}
+//     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
+//   :  streamID(streamID)
+//         , size(size)
+//     {}
 
-    void emit(OutStream & stream) const {
-        this->header.emit(stream);
-        stream.out_uint32_le(this->streamID);
-    }
+//     explicit FileContentsResponse(bool response_ok = false)
+//     {}
 
-    void recv(InStream & stream) {
-        this->header.recv(stream);
-        this->streamID = stream.in_uint32_le();
-    }
-
-    void log() const {
-        this->header.log();
-        LOG(LOG_INFO, "     File Contents Response Range:");
-        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
-    }
 };
 
 
@@ -2334,31 +2274,6 @@ struct FormatDataResponsePDU_MetaFilePic {
     }
 };
 
-// struct FormatDataResponsePDU_Text {
-//
-
-//
-// //     explicit FormatDataResponsePDU_Text() = default;
-//
-//     explicit FormatDataResponsePDU_Text()
-// //       : FormatDataResponsePDU(length)
-//     {}
-//
-//     void emit(OutStream & stream) const {
-// //         this->header.emit(stream);
-//     }
-//
-//     void recv(InStream & stream) {
-// //         this->header.recv(stream);
-//     }
-//
-//     void log() const {
-// //         this->header.log();
-//         LOG(LOG_INFO, "     Format Data Response Text PDU:");
-//     }
-//
-// };
-
 
 
 // 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
@@ -2655,9 +2570,9 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
                     case CF_METAFILEPICT:
                     {
-//                         FormatDataResponsePDU_MetaFilePic pdu;
-//                         pdu.recv(stream);
-//                         pdu.log();
+                        FormatDataResponsePDU_MetaFilePic pdu;
+                        pdu.recv(stream);
+                        pdu.log();
                     }
                         break;
 
@@ -2719,16 +2634,16 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
 
                     case FILECONTENTS_SIZE:
                     {
-                        FileContentsResponse_Size pdu;
-                        pdu.recv(stream);
+                        FileContentsResponse pdu;
+                        pdu.receive(stream);
                         pdu.log();
                     }
                         break;
 
                     case FILECONTENTS_RANGE:
                     {
-                        FileContentsResponse_Range pdu;
-                        pdu.recv(stream);
+                        FileContentsResponse pdu;
+                        pdu.receive(stream);
                         pdu.log();
                     }
                         break;

@@ -162,9 +162,8 @@ void CopyPaste::paste(WidgetEdit & edit)
     }
     else {
         this->paste_edit_ = &edit;
-        send_to_front_channel(
-            *this->front_, *this->channel_,
-            RDPECLIP::FormatDataRequestPDU(RDPECLIP::CF_UNICODETEXT));
+        send_to_front_channel_2<RDPECLIP::FormatDataRequestPDU>(
+            *this->front_, *this->channel_, RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_);
     }
 }
 

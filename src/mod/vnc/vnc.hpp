@@ -2105,8 +2105,10 @@ private:
             // 04 00 00 00 04 00 00 00 0? 00 00 00
             // 00 00 00 00
             RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
+            RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, format_data_request_pdu.size());
             StaticOutStream<256>           out_s;
 
+            format_data_request_header.emit(out_s);
             format_data_request_pdu.emit(out_s);
 
             size_t length     = out_s.get_offset();
@@ -2953,9 +2955,12 @@ private:
                         // Build and send a CB_FORMAT_DATA_REQUEST to front (for format CF_TEXT or CF_UNICODETEXT)
                         // 04 00 00 00 04 00 00 00 0? 00 00 00
                         // 00 00 00 00
+
                         RDPECLIP::FormatDataRequestPDU format_data_request_pdu(this->clipboard_requested_format_id);
+                        RDPECLIP::CliprdrHeader format_data_request_header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, format_data_request_pdu.size());
                         out_s.rewind();
 
+                        format_data_request_header.emit(out_s);
                         format_data_request_pdu.emit(out_s);
 
                         chunk_size = out_s.get_offset();
@@ -3048,17 +3053,19 @@ private:
                 //  to VNC server. Instead, the RDP PDU is handled localy and
                 //  the clipboard PDU, if any, is likewise built localy and
                 //  sent back to front.
+                RDPECLIP::CliprdrHeader format_data_request_header;
                 RDPECLIP::FormatDataRequestPDU format_data_request_pdu;
 
                 // 04 00 00 00 04 00 00 00 0d 00 00 00 00 00 00 00
+                format_data_request_header.recv(chunk);
                 format_data_request_pdu.recv(chunk);
 
                 if (bool(this->verbose & VNCVerbose::clipboard)) {
                     LOG( LOG_INFO
                        , "mod_vnc::clipboard_send_to_vnc: CB_FORMAT_DATA_REQUEST(%u) msgFlags=0x%02x datalen=%u requestedFormatId=%s(%u)"
                        , RDPECLIP::CB_FORMAT_DATA_REQUEST
-                       , format_data_request_pdu.header.msgFlags()
-                       , format_data_request_pdu.header.dataLen()
+                       , format_data_request_header.msgFlags()
+                       , format_data_request_header.dataLen()
                        , RDPECLIP::get_FormatId_name(format_data_request_pdu.requestedFormatId)
                        , format_data_request_pdu.requestedFormatId
                        );
