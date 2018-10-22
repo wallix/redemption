@@ -163,6 +163,27 @@ public:
     }
 
 private:
+    void send_pdu_to_client_RDPECLIP_FormatDataResponsePDU() {
+        RDPECLIP::FormatDataResponsePDU pdu;
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+
+        StaticOutStream<256> out_stream;
+
+        pdu.emit(out_stream, nullptr, 0, header);
+
+        const uint32_t total_length      = out_stream.get_offset();
+        const uint32_t flags             =
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        const uint8_t* chunk_data        = out_stream.get_data();
+        const uint32_t chunk_data_length = total_length;
+
+        this->send_message_to_client(
+            total_length,
+            flags,
+            chunk_data,
+            chunk_data_length);
+    }
+
     template<class PDU, class... Args>
     void send_pdu_to_client(bool response_ok, Args&&... args) {
         PDU             pdu(response_ok);
@@ -202,6 +223,27 @@ private:
         const uint32_t chunk_data_length = total_length;
 
         this->send_message_to_client(
+            total_length,
+            flags,
+            chunk_data,
+            chunk_data_length);
+    }
+
+    void send_pdu_to_server_RDPECLIP_FormatDataResponsePDU() {
+        RDPECLIP::FormatDataResponsePDU pdu;
+
+        StaticOutStream<256> out_stream;
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+
+        pdu.emit(out_stream, nullptr, 0, header);
+
+        const uint32_t total_length      = out_stream.get_offset();
+        const uint32_t flags             =
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+        const uint8_t* chunk_data        = out_stream.get_data();
+        const uint32_t chunk_data_length = total_length;
+
+        this->send_message_to_server(
             total_length,
             flags,
             chunk_data,
@@ -373,8 +415,7 @@ private:
                         "Serveur to client Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_client<RDPECLIP::FormatDataResponsePDU>(
-                false, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_client_RDPECLIP_FormatDataResponsePDU();
 
             return false;
         }
@@ -1322,8 +1363,7 @@ public:
                         "Client to server Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_server<RDPECLIP::FormatDataResponsePDU>(
-                false, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_server_RDPECLIP_FormatDataResponsePDU();
 
             return false;
         }

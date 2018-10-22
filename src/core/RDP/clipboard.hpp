@@ -1995,35 +1995,35 @@ enum : int {
 
 struct FormatDataResponsePDU
 {
-    CliprdrHeader header;
+//    CliprdrHeader header;
 
 
     FormatDataResponsePDU()
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_FAIL
-                , 0)
+//        : header( CB_FORMAT_DATA_RESPONSE
+//                , CB_RESPONSE_FAIL
+//                , 0)
     {
     }
 
     explicit FormatDataResponsePDU(std::size_t data_len)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_OK
-                , data_len)
+//        : header( CB_FORMAT_DATA_RESPONSE
+//                , CB_RESPONSE_OK
+//                , data_len)
     {
     }
 
     explicit FormatDataResponsePDU(bool response_ok)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                , 0)
+//        : header( CB_FORMAT_DATA_RESPONSE
+//                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
+//                , 0)
     {
     }
 
-    void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
+    void emit(OutStream & stream, const uint8_t * data, size_t data_length, CliprdrHeader & header) const {
+        stream.out_uint16_le(header.msgType());
+        stream.out_uint16_le(header.msgFlags());
 
-        if (this->header.msgFlags() == CB_RESPONSE_OK) {
+        if (header.msgFlags() == CB_RESPONSE_OK) {
             stream.out_uint32_le(data_length);  // dataLen(4)
 
             if (data_length) {
@@ -2035,23 +2035,23 @@ struct FormatDataResponsePDU
         }
     }
 
-    void emit_ex(OutStream & stream, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
+    void emit_ex(OutStream & stream, size_t data_length, CliprdrHeader & header) const {
+        stream.out_uint16_le(header.msgType());
+        stream.out_uint16_le(header.msgFlags());
 
         stream.out_uint32_le(                           // dataLen(4)
-                (this->header.msgFlags() == CB_RESPONSE_OK) ?
+                (header.msgFlags() == CB_RESPONSE_OK) ?
                 data_length :
                 0
             );
     }
 
-    void recv(InStream & stream) {
-        this->header.recv(stream);
+    void recv(InStream & stream, CliprdrHeader & header) {
+        header.recv(stream);
     }
 
-    void log() const {
-        this->header.log();
+    void log(CliprdrHeader & header) const {
+        header.log();
         LOG(LOG_INFO, "     Format Data Response PDU:");
     }
 

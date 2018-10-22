@@ -347,9 +347,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        size_t size = 42;
-       RDPECLIP::FormatDataResponsePDU format(size);
+       RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, size);
+       RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
        const uint8_t data[42] = { 0 };
-       format.emit(out_stream, data, size);
+       format_data_response_pdu.emit(out_stream, data, size, header);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -545,9 +546,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        size_t size = 42;
-       RDPECLIP::FormatDataResponsePDU format(size);
+       RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, size);
+       RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
        const uint8_t data[42] = { 0 };
-       format.emit(out_stream, data, size);
+       format_data_response_pdu.emit(out_stream, data, size, header);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_server_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -793,9 +795,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        size_t size = 42;
-       RDPECLIP::FormatDataResponsePDU format(size);
+       RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, size);       
+       RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
        const uint8_t data[42] = { 0 };
-       format.emit(out_stream, data, size);
+       format_data_response_pdu.emit(out_stream, data, size, header);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
@@ -1044,9 +1047,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        size_t size = 42;
-       RDPECLIP::FormatDataResponsePDU format(size);
+       RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, size);
+       RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
        const uint8_t data[42] = { 0 };
-       format.emit(out_stream, data, size);
+       format_data_response_pdu.emit(out_stream, data, size, header);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
 
        metrics.set_client_cliprdr_metrics(chunk, out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
