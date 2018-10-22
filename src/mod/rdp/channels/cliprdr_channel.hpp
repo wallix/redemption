@@ -373,7 +373,8 @@ private:
                         "Serveur to client Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_client_2<RDPECLIP::FormatDataResponsePDU>(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_client<RDPECLIP::FormatDataResponsePDU>(
+                false, static_cast<uint8_t *>(nullptr), 0);
 
             return false;
         }
@@ -1321,7 +1322,8 @@ public:
                         "Client to server Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_client_2<RDPECLIP::FormatDataResponsePDU>(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, static_cast<uint8_t *>(nullptr), 0);
+            this->send_pdu_to_server<RDPECLIP::FormatDataResponsePDU>(
+                false, static_cast<uint8_t *>(nullptr), 0);
 
             return false;
         }
