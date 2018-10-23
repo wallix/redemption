@@ -1995,30 +1995,6 @@ enum : int {
 
 struct FormatDataResponsePDU
 {
-//    CliprdrHeader header;
-
-
-    FormatDataResponsePDU()
-//        : header( CB_FORMAT_DATA_RESPONSE
-//                , CB_RESPONSE_FAIL
-//                , 0)
-    {
-    }
-
-    explicit FormatDataResponsePDU(std::size_t data_len)
-//        : header( CB_FORMAT_DATA_RESPONSE
-//                , CB_RESPONSE_OK
-//                , data_len)
-    {
-    }
-
-    explicit FormatDataResponsePDU(bool response_ok)
-//        : header( CB_FORMAT_DATA_RESPONSE
-//                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-//                , 0)
-    {
-    }
-
     void emit(OutStream & stream, const uint8_t * data, size_t data_length, CliprdrHeader & header) const {
         stream.out_uint16_le(header.msgType());
         stream.out_uint16_le(header.msgFlags());
