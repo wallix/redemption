@@ -168,8 +168,8 @@ private:
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
 
         StaticOutStream<256> out_stream;
-
-        pdu.emit(out_stream, nullptr, 0, header);
+        header.emit(out_stream);
+        pdu.emit(out_stream, nullptr, 0);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
@@ -230,12 +230,12 @@ private:
     }
 
     void send_pdu_to_server_RDPECLIP_FormatDataResponsePDU() {
-        RDPECLIP::FormatDataResponsePDU pdu;
 
         StaticOutStream<256> out_stream;
+        RDPECLIP::FormatDataResponsePDU pdu;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
-
-        pdu.emit(out_stream, nullptr, 0, header);
+        header.emit(out_stream);
+        pdu.emit(out_stream, nullptr, 0);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
