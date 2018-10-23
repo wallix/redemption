@@ -1996,20 +1996,13 @@ enum : int {
 struct FormatDataResponsePDU
 {
     void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        if (data_length) {
+        if (data_length 
+        // in some case (VNC clipboard) we already have data inplace
+        // in thesecases no need to copy anything
+        && data != stream.get_data()) 
+        {
             stream.out_copy_bytes(data, data_length);
         }
-    }
-
-    void emit_ex(OutStream & stream, size_t data_length, CliprdrHeader & header) const {
-        stream.out_uint16_le(header.msgType());
-        stream.out_uint16_le(header.msgFlags());
-
-        stream.out_uint32_le(                           // dataLen(4)
-                (header.msgFlags() == CB_RESPONSE_OK) ?
-                data_length :
-                0
-            );
     }
 
     void recv(InStream & stream, CliprdrHeader & header) {
