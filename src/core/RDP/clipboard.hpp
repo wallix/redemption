@@ -1082,7 +1082,11 @@ public:
                 const size_t size_of_formatName_UTF8_data = ::UTF16toUTF8(
                     stream.get_current(), (format_name_UTF16_length + 1),
                     byte_ptr_cast(format_name.data()), formatName_UTF8_data_size);
-                assert(size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size);
+
+                if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
+                    LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
+                        size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
+                }
 
                 this->format_names.emplace_back(
                         formatId,
