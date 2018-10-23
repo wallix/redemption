@@ -1993,24 +1993,22 @@ enum : int {
 
 };
 
+// TODO: We should only create a FormatDataResponsePDU when we have enough data to build it
+// this probably implies reading the header and checking if we received enough data
+
 struct FormatDataResponsePDU
 {
     void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
         if (data_length 
         // in some case (VNC clipboard) we already have data inplace
-        // in thesecases no need to copy anything
+        // in these cases no need to copy anything
         && data != stream.get_data()) 
         {
             stream.out_copy_bytes(data, data_length);
         }
     }
 
-    void recv(InStream & stream, CliprdrHeader & header) {
-        header.recv(stream);
-    }
-
-    void log(CliprdrHeader & header) const {
-        header.log();
+    void log() const {
         LOG(LOG_INFO, "     Format Data Response PDU:");
     }
 

@@ -268,8 +268,12 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
         //    break;
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
             RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
-            RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
-            format_data_response_pdu.recv(stream, header);
+            // TODO: format data response PDU is bypassed and the raw data is managed directly
+            // we should not do that but reassemble data response packet from PDU before pasting
+            // see also condition on this->long_data_response_size
+//            RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
+            header.recv(stream);
+//            format_data_response_pdu.recv(stream);
             if (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
