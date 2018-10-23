@@ -1993,65 +1993,22 @@ enum : int {
 
 };
 
+// TODO: We should only create a FormatDataResponsePDU when we have enough data to build it
+// this probably implies reading the header and checking if we received enough data
+
 struct FormatDataResponsePDU
 {
-    CliprdrHeader header;
-
-
-    FormatDataResponsePDU()
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_FAIL
-                , 0)
-    {
-    }
-
-    explicit FormatDataResponsePDU(std::size_t data_len)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , CB_RESPONSE_OK
-                , data_len)
-    {
-    }
-
-    explicit FormatDataResponsePDU(bool response_ok)
-        : header( CB_FORMAT_DATA_RESPONSE
-                , (response_ok ? CB_RESPONSE_OK : CB_RESPONSE_FAIL)
-                , 0)
-    {
-    }
-
     void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
-
-        if (this->header.msgFlags() == CB_RESPONSE_OK) {
-            stream.out_uint32_le(data_length);  // dataLen(4)
-
-            if (data_length) {
-                stream.out_copy_bytes(data, data_length);
-            }
+        if (data_length 
+        // in some case (VNC clipboard) we already have data inplace
+        // in these cases no need to copy anything
+        && data != stream.get_data()) 
+        {
+            stream.out_copy_bytes(data, data_length);
         }
-        else {
-            stream.out_uint32_le(0);    // dataLen(4)
-        }
-    }
-
-    void emit_ex(OutStream & stream, size_t data_length) const {
-        stream.out_uint16_le(this->header.msgType());
-        stream.out_uint16_le(this->header.msgFlags());
-
-        stream.out_uint32_le(                           // dataLen(4)
-                (this->header.msgFlags() == CB_RESPONSE_OK) ?
-                data_length :
-                0
-            );
-    }
-
-    void recv(InStream & stream) {
-        this->header.recv(stream);
     }
 
     void log() const {
-        this->header.log();
         LOG(LOG_INFO, "     Format Data Response PDU:");
     }
 

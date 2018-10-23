@@ -267,19 +267,24 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
         //    );
         //    break;
         case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-            RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
-            format_data_response_pdu.recv(stream);
-            if (format_data_response_pdu.header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+            // TODO: format data response PDU is bypassed and the raw data is managed directly
+            // we should not do that but reassemble data response packet from PDU before pasting
+            // see also condition on this->long_data_response_size
+//            RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
+            header.recv(stream);
+//            format_data_response_pdu.recv(stream);
+            if (header.msgFlags() == RDPECLIP::CB_RESPONSE_OK) {
 
                 if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
-                    if (!stream.in_check_rem(format_data_response_pdu.header.dataLen())) {
+                    if (!stream.in_check_rem(header.dataLen())) {
                         LOG( LOG_ERR
                             , "CopyPaste::send_to_mod_channel truncated CB_FORMAT_DATA_RESPONSE dataU16, need=%" PRIu32 " remains=%zu"
-                            , format_data_response_pdu.header.dataLen(), stream.in_remain());
+                            , header.dataLen(), stream.in_remain());
                         throw Error(ERR_RDP_PROTOCOL);
                     }
 
-                    this->clipboard_str_.utf16_push_back(stream.get_current(), format_data_response_pdu.header.dataLen() / 2);
+                    this->clipboard_str_.utf16_push_back(stream.get_current(), header.dataLen() / 2);
 
                     if (this->paste_edit_) {
                         this->paste_edit_->insert_text(this->clipboard_str_.c_str());
@@ -296,7 +301,7 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
                         throw Error(ERR_RDP_PROTOCOL);
                     }
 
-                    this->long_data_response_size = format_data_response_pdu.header.dataLen() - stream.in_remain();
+                    this->long_data_response_size = header.dataLen() - stream.in_remain();
                     this->clipboard_str_.utf16_push_back(stream.get_current(), stream.in_remain() / 2);
                 }
             }
