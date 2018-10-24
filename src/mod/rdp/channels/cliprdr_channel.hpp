@@ -205,9 +205,8 @@ private:
             chunk_data_length);
     }
 
-    template<class PDU, class... Args>
-    void send_pdu_to_client_2(uint16_t msgType, uint16_t msgFlags, Args&&... args) {
-        PDU pdu(args...);
+    void send_pdu_to_client_RDPECLIP_FormatListResponsePDU(uint16_t msgType, uint16_t msgFlags) {
+        RDPECLIP::FormatListResponsePDU pdu;
 
         RDPECLIP::CliprdrHeader header(msgType, msgFlags, pdu.size());
 
@@ -271,9 +270,8 @@ private:
             chunk_data_length);
     }
 
-    template<class PDU, class... Args>
-    void send_pdu_to_server_2(uint16_t msgType, uint16_t msgFlags, Args&&... args) {
-        PDU pdu(args...);
+    void send_pdu_to_server_RDPECLIP_FormatListResponsePDU(uint16_t msgType, uint16_t msgFlags) {
+        RDPECLIP::FormatListResponsePDU pdu;
 
         RDPECLIP::CliprdrHeader header(msgType, msgFlags, pdu.size());
 
@@ -776,7 +774,7 @@ public:
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "Clipboard is fully disabled.");
 
-            this->send_pdu_to_client_2<RDPECLIP::FormatListResponsePDU>(
+            this->send_pdu_to_client_RDPECLIP_FormatListResponsePDU(
                 RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK);
 
             return false;
@@ -787,7 +785,7 @@ public:
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "!!!CHUNKED!!! Format List PDU is not yet supported!");
 
-            this->send_pdu_to_client_2<RDPECLIP::FormatListResponsePDU>(
+            this->send_pdu_to_client_RDPECLIP_FormatListResponsePDU(
                 RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK);
 
             return false;
@@ -1594,7 +1592,7 @@ public:
                 "ClipboardVirtualChannel::process_server_format_list_pdu: "
                     "Clipboard is fully disabled.");
 
-            this->send_pdu_to_server_2<RDPECLIP::FormatListResponsePDU>(
+            this->send_pdu_to_server_RDPECLIP_FormatListResponsePDU(
                 RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK);
 
             return false;
