@@ -82,20 +82,20 @@ const char * CopyPaste::LimitString::c_str() /*const*/
 
 namespace
 {
-    template<class PDU, class... Args>
-    void send_to_front_channel(
-        FrontAPI & front, const CHANNELS::ChannelDef channel,
-        PDU && pdu, Args && ...args)
-    {
-        StaticOutStream<256> out_s;
-        pdu.emit(out_s, args...);
-        const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
-        front.send_to_channel(
-            channel, out_s.get_data(), length, chunk_size,
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-        );
-    }
+//    template<class PDU, class... Args>
+//    void send_to_front_channel(
+//        FrontAPI & front, const CHANNELS::ChannelDef channel,
+//        PDU && pdu, Args && ...args)
+//    {
+//        StaticOutStream<256> out_s;
+//        pdu.emit(out_s, args...);
+//        const size_t length     = out_s.get_offset();
+//        const size_t chunk_size = length;
+//        front.send_to_channel(
+//            channel, out_s.get_data(), length, chunk_size,
+//            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+//        );
+//    }
 
 } // namespace
 
