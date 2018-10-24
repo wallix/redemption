@@ -203,8 +203,19 @@ void CopyPaste::paste(WidgetEdit & edit)
     }
     else {
         this->paste_edit_ = &edit;
-        send_to_front_channel_RDPECLIP_FormatDataRequestPDU(
-            *this->front_, *this->channel_, RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_);
+        
+        RDPECLIP::FormatDataRequestPDU pdu;
+        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, pdu.size());
+
+        StaticOutStream<256> out_s;
+        header.emit(out_s);
+        pdu.emit(out_s);
+        const size_t length     = out_s.get_offset();
+        const size_t chunk_size = length;
+        this->front_->send_to_channel(
+            *this->channel_, out_s.get_data(), length, chunk_size,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+        );
     }
 }
 
