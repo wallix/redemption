@@ -97,48 +97,6 @@ namespace
         );
     }
 
-    void send_to_front_channel_RDPECLIP_ServerMonitorReadyPDU(
-        FrontAPI & front, const CHANNELS::ChannelDef channel,
-        uint16_t msgType, uint16_t msgFlags)
-    {
-        RDPECLIP::ServerMonitorReadyPDU pdu;
-
-        RDPECLIP::CliprdrHeader header(msgType, msgFlags, pdu.size());
-
-        StaticOutStream<256> out_s;
-
-        header.emit(out_s);
-        pdu.emit(out_s);
-
-        const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
-        front.send_to_channel(
-            channel, out_s.get_data(), length, chunk_size,
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-        );
-    }
-    
-    void send_to_front_channel_RDPECLIP_FormatDataRequestPDU(
-        FrontAPI & front, const CHANNELS::ChannelDef channel,
-        uint16_t msgType, uint16_t msgFlags)
-    {
-        RDPECLIP::FormatDataRequestPDU pdu;
-        RDPECLIP::CliprdrHeader header(msgType, msgFlags, pdu.size());
-
-        StaticOutStream<256> out_s;
-
-        header.emit(out_s);
-        pdu.emit(out_s);
-
-        const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
-        front.send_to_channel(
-            channel, out_s.get_data(), length, chunk_size,
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-        );
-    }
-
-    
 } // namespace
 
 
@@ -152,23 +110,34 @@ bool CopyPaste::ready(FrontAPI & front)
     this->channel_ = front.get_channel_list().get_by_name(channel_names::cliprdr);
 
     if (this->channel_) {
-        StaticOutStream<256> out_s;
+        StaticOutStream<256> out_s_cb_clip_caps;
 
         RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
         RDPECLIP::ClipboardCapabilitiesPDU clip_cap_pdu(1);
-        RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0,
-            clip_cap_pdu.size() + general_cap_set.size());
+        RDPECLIP::CliprdrHeader clip_header(RDPECLIP::CB_CLIP_CAPS, 0, clip_cap_pdu.size() + general_cap_set.size());
 
-        clip_header.emit(out_s);
-        clip_cap_pdu.emit(out_s);
-        general_cap_set.emit(out_s);
+        clip_header.emit(out_s_cb_clip_caps);
+        clip_cap_pdu.emit(out_s_cb_clip_caps);
+        general_cap_set.emit(out_s_cb_clip_caps);
 
-        const size_t length     = out_s.get_offset();
-        const size_t chunk_size = length;
-        this->front_->send_to_channel(*(this->channel_), out_s.get_data(), length, chunk_size,
+        const size_t length_cb_clip_caps     = out_s_cb_clip_caps.get_offset();
+        const size_t chunk_size_cb_clip_caps = length_cb_clip_caps;
+        this->front_->send_to_channel(*(this->channel_), out_s_cb_clip_caps.get_data(), length_cb_clip_caps, chunk_size_cb_clip_caps,
                                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
-        send_to_front_channel_RDPECLIP_ServerMonitorReadyPDU(*this->front_, *this->channel_, RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_);
+        RDPECLIP::ServerMonitorReadyPDU monitor_ready_pdu;
+        RDPECLIP::CliprdrHeader monitor_ready_header(RDPECLIP::CB_MONITOR_READY, RDPECLIP::CB_RESPONSE__NONE_, monitor_ready_pdu.size());
+        StaticOutStream<256> out_s_cb_monitor_ready;
+        monitor_ready_header.emit(out_s_cb_monitor_ready);
+        monitor_ready_pdu.emit(out_s_cb_monitor_ready);
+
+        const size_t length_cb_monitor_ready  = out_s_cb_monitor_ready.get_offset();
+        const size_t chunk_size_cb_monitor_ready = length_cb_monitor_ready;
+        this->front_->send_to_channel(
+            *this->channel_, out_s_cb_monitor_ready.get_data(), length_cb_monitor_ready, chunk_size_cb_monitor_ready,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+        );
+
         return true;
     }
 
@@ -284,7 +253,6 @@ void CopyPaste::send_to_mod_channel(InStream & chunk, uint32_t flags)
                 format_list_pdu.recv(stream, use_long_format_names, in_ASCII_8);
 
                 RDPECLIP::FormatListResponsePDU pdu;
-
                 RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, pdu.size());
 
                 StaticOutStream<256> out_s;
