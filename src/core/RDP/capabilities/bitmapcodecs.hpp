@@ -218,10 +218,6 @@ enum {
      };
 
 enum {
-       CT_TILE_64X64 = 0x40
-     };
-
-enum {
        CODEC_MODE = 0x02
      };
 
@@ -354,6 +350,9 @@ struct RFXSrvrCaps : public CodecGenCaps {
 };
 
 struct RFXICap {
+	enum {
+	   CT_TILE_64X64 = 0x40
+	};
 
     uint16_t version{CLW_VERSION_1_0};          // MUST be set to 0x0100 CLW_VERSION_1_0
     uint16_t tileSize{CT_TILE_64X64};           // MUST be set to CT_TILE_64x64 (0x0040)
