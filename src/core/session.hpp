@@ -128,33 +128,76 @@ public:
             // fd_set wfds;
             // io_fd_zero(wfds);
 
+            using namespace std::chrono_literals;
+
+            session_reactor.set_current_time(tvtime());
+
             while (run_session) {
+
+                timeval default_timeout = session_reactor.get_current_time();
+                default_timeout.tv_sec += this->select_timeout_tv_sec;
+            
                 struct Select {
-                    unsigned max = 0;
+                    unsigned max;
                     fd_set rfds;
-                    timeval timeoutastv;
-                    int select()
+                    timeval timeout;
+                                        
+                    Select(timeval timeout)
+                     : max(0)
+                     , timeout{timeout}
                     {
-                        return ::select(this->max + 1, &this->rfds, nullptr/*&wfds*/, nullptr, &this->timeoutastv);
+                        io_fd_zero(this->rfds);
                     }
-                } ioswitch;
+                    int select(timeval now)
+                    {
+                        timeval timeoutastv = {0,0};
+                        const timeval & ultimatum = this->timeout;
+                        const timeval & starttime = now;
+                        if (ultimatum > starttime) {
+                            timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                             - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+                        }
+                        return ::select(this->max + 1, &this->rfds, nullptr/*&wfds*/, nullptr, &timeoutastv);
+                    }
+                    
+                    void set_timeout(timeval next_timeout){
+                        this->timeout = next_timeout;
+                    }
+
+                    std::chrono::milliseconds get_timeout(timeval now)
+                    {
+                        const timeval & ultimatum = this->timeout;
+                        const timeval & starttime = now;
+                        if (ultimatum > starttime) {
+                            return std::chrono::duration_cast<std::chrono::milliseconds>(
+                                std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                                 - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+                        }
+                        return 0ms;
+                    }
+                    
+                    void set_read_sck(int sck) {
+                        this->max = prepare_rfds(sck, this->max, this->rfds);
+                    }
+                    void immediate_wakeup(timeval now){
+                        this->timeout = now;
+                    }
+                } ioswitch(default_timeout);
                 
-                io_fd_zero(ioswitch.rfds);
 
                 if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
-                    ioswitch.max = prepare_rfds(front_trans.sck, ioswitch.max, ioswitch.rfds);
+                    ioswitch.set_read_sck(front_trans.sck);
                 }
 
                 if (acl) {
-                    ioswitch.max = prepare_rfds(acl->auth_trans.sck, ioswitch.max, ioswitch.rfds);
+                    ioswitch.set_read_sck(acl->auth_trans.sck);
                 }
 
-                using namespace std::chrono_literals;
-                std::chrono::milliseconds timeout = std::chrono::seconds(
-                        (  front_trans.has_pending_data()
-                        || mm.has_pending_data()
-                        || (acl && acl->auth_trans.has_pending_data())) 
-                        ? 0 : this->select_timeout_tv_sec);
+                if (front_trans.has_pending_data()
+                || mm.has_pending_data()
+                || (acl && acl->auth_trans.has_pending_data())){
+                    ioswitch.immediate_wakeup(session_reactor.get_current_time());
+                }
 
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
@@ -162,21 +205,24 @@ public:
                 session_reactor.for_each_fd(
                     enable_graphics,
                     [&](int fd){
-                        io_fd_set(fd, ioswitch.rfds);
-                        ioswitch.max = std::max(ioswitch.max, unsigned(fd));
+                        ioswitch.set_read_sck(fd);
                     }
                 );
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 session_reactor.set_current_time(tvtime());
+                ioswitch.set_timeout(
+                    session_reactor.get_next_timeout(
+                        enable_graphics, ioswitch.get_timeout(session_reactor.get_current_time())));
+
                 // 0 if tv < tv_now : returns immediately
-                ioswitch.timeoutastv = to_timeval(
-                                        session_reactor.get_next_timeout(enable_graphics, timeout)
-                                      - session_reactor.get_current_time());
+//                ioswitch.timeoutastv = to_timeval(
+//                                        session_reactor.get_next_timeout(enable_graphics, timeout)
+//                                      - session_reactor.get_current_time());
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
                 
-                int num = ioswitch.select();
+                int num = ioswitch.select(session_reactor.get_current_time());
 
                 // for (unsigned i = 0; i <= max; ++i) {
                 //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
