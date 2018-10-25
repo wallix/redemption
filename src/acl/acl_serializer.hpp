@@ -35,6 +35,7 @@
 #include "core/set_server_redirection_target.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
 #include "utils/fileutils.hpp"
@@ -1119,3 +1120,23 @@ public:
         }
     }
 };
+
+
+struct Acl
+{
+    SocketTransport auth_trans;
+    AclSerializer   acl_serial;
+
+    Acl(Inifile & ini, unique_fd client_sck, time_t now,
+        CryptoContext & cctx, Random & rnd, Fstat & fstat)
+    : auth_trans(
+        "Authentifier", std::move(client_sck),
+        ini.get<cfg::globals::authfile>().c_str(), 0,
+        std::chrono::seconds(1),
+        to_verbose_flags(ini.get<cfg::debug::auth>()))
+    , acl_serial(
+        ini, now, this->auth_trans, cctx, rnd, fstat,
+        to_verbose_flags(ini.get<cfg::debug::auth>()))
+    {}
+};
+

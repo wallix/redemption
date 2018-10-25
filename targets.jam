@@ -453,6 +453,7 @@ test-run tests/acl/test_acl_serializer :
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/core/date_dir_from_filename.o
@@ -460,9 +461,11 @@ test-run tests/acl/test_acl_serializer :
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <variant>coverage:<library>dl
@@ -481,6 +484,7 @@ test-run tests/acl/test_authentifier :
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
+  <library>openssl
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/acl/module_manager/mm_ini.o
@@ -489,9 +493,11 @@ test-run tests/acl/test_authentifier :
   <library>src/core/set_server_redirection_target.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
   <library>src/utils/cfgloader.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <variant>coverage:<library>dl

@@ -59,24 +59,6 @@
 
 class Session
 {
-    struct Acl
-    {
-        SocketTransport auth_trans;
-        AclSerializer   acl_serial;
-
-        Acl(Inifile & ini, unique_fd client_sck, time_t now,
-            CryptoContext & cctx, Random & rnd, Fstat & fstat)
-        : auth_trans(
-            "Authentifier", std::move(client_sck),
-            ini.get<cfg::globals::authfile>().c_str(), 0,
-            std::chrono::seconds(1),
-            to_verbose_flags(ini.get<cfg::debug::auth>()))
-        , acl_serial(
-            ini, now, this->auth_trans, cctx, rnd, fstat,
-            to_verbose_flags(ini.get<cfg::debug::auth>()))
-        {}
-    };
-
     Inifile & ini;
 
     time_t      perf_last_info_collect_time = 0;
@@ -84,20 +66,6 @@ class Session
     File        perf_file = nullptr;
 
     static const time_t select_timeout_tv_sec = 3;
-
-    static void wait_on_sck(SocketTransport& sck, fd_set& rfds, unsigned& max)
-    {
-        if (sck.sck > INVALID_SOCKET) {
-            io_fd_set(sck.sck, rfds);
-            max = std::max(static_cast<unsigned>(sck.sck), max);
-        }
-    }
-
-    static bool sck_is_set(SocketTransport& sck, fd_set& rfds)
-    {
-        return sck.has_pending_data() || io_fd_isset(sck.sck, rfds);
-    }
-
 
 public:
     Session(unique_fd sck, Inifile & ini, CryptoContext & cctx, Random & rnd, Fstat & fstat)
@@ -161,20 +129,24 @@ public:
             // io_fd_zero(wfds);
 
             while (run_session) {
-                unsigned max = 0;
-                fd_set rfds;
-
-                io_fd_zero(rfds);
+                struct Select {
+                    unsigned max = 0;
+                    fd_set rfds;
+                    timeval timeoutastv;
+                    int select()
+                    {
+                        return ::select(this->max + 1, &this->rfds, nullptr/*&wfds*/, nullptr, &this->timeoutastv);
+                    }
+                } ioswitch;
+                
+                io_fd_zero(ioswitch.rfds);
 
                 if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
-                    // TODO: check that, looks like blocking code
-                    wait_on_sck(front_trans, rfds, max);
+                    ioswitch.max = prepare_rfds(front_trans.sck, ioswitch.max, ioswitch.rfds);
                 }
 
                 if (acl) {
-                    // TODO: check that, looks like blocking code
-                    // shouldn't we wait on both sockets ?
-                    wait_on_sck(acl->auth_trans, rfds, max);
+                    ioswitch.max = prepare_rfds(acl->auth_trans.sck, ioswitch.max, ioswitch.rfds);
                 }
 
                 using namespace std::chrono_literals;
@@ -190,20 +162,21 @@ public:
                 session_reactor.for_each_fd(
                     enable_graphics,
                     [&](int fd){
-                        io_fd_set(fd, rfds);
-                        max = std::max(max, unsigned(fd));
+                        io_fd_set(fd, ioswitch.rfds);
+                        ioswitch.max = std::max(ioswitch.max, unsigned(fd));
                     }
                 );
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 session_reactor.set_current_time(tvtime());
                 // 0 if tv < tv_now : returns immediately
-                timeval timeoutastv = to_timeval(
+                ioswitch.timeoutastv = to_timeval(
                                         session_reactor.get_next_timeout(enable_graphics, timeout)
                                       - session_reactor.get_current_time());
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
-                int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeoutastv);
+                
+                int num = ioswitch.select();
 
                 // for (unsigned i = 0; i <= max; ++i) {
                 //     LOG(LOG_DEBUG, "fd %u is set %d", i, io_fd_isset(i, rfds));
@@ -305,11 +278,11 @@ public:
                     check_exception(e);
                 }
 
-                session_reactor.execute_events([&rfds](int fd, auto& /*e*/){
-                    return io_fd_isset(fd, rfds);
+                session_reactor.execute_events([&ioswitch](int fd, auto& /*e*/){
+                    return io_fd_isset(fd, ioswitch.rfds);
                 });
 
-                bool const front_is_set = sck_is_set(front_trans, rfds);
+                bool const front_is_set = front_trans.has_pending_data() || io_fd_isset(front_trans.sck, ioswitch.rfds);
                 if (session_reactor.has_front_event() || front_is_set) {
                     try {
                         if (session_reactor.has_front_event()) {
@@ -356,8 +329,8 @@ public:
                             if (BACK_EVENT_NONE == session_reactor.signal) {
                                 // Process incoming module trafic
                                 auto& gd = mm.get_graphic_wrapper();
-                                session_reactor.execute_graphics([&rfds](int fd, auto& /*e*/){
-                                    return io_fd_isset(fd, rfds);
+                                session_reactor.execute_graphics([&ioswitch](int fd, auto& /*e*/){
+                                    return io_fd_isset(fd, ioswitch.rfds);
                                 }, gd);
                             }
                         }
@@ -372,7 +345,7 @@ public:
                                 try {
                                     // now is authentifier start time
                                     acl = std::make_unique<Acl>(
-                                        ini, this->acl_connect(), now, cctx, rnd, fstat
+                                        ini, Session::acl_connect(this->ini.get<cfg::globals::authfile>()), now, cctx, rnd, fstat
                                     );
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     session_reactor.set_next_event(BACK_EVENT_NEXT);
@@ -387,7 +360,7 @@ public:
                                 }
                             }
                         }
-                        else if (sck_is_set(acl->auth_trans, rfds)) {
+                        else if (acl->auth_trans.has_pending_data() || io_fd_isset(acl->auth_trans.sck, ioswitch.rfds)) {
                             // authentifier received updated values
                             acl->acl_serial.receive();
                             if (!ini.changed_field_size()) {
@@ -580,9 +553,8 @@ private:
         while (this->perf_last_info_collect_time + this->select_timeout_tv_sec <= now);
     }
 
-    unique_fd acl_connect()
+    static unique_fd acl_connect(std::string const & authtarget)
     {
-        std::string const & authtarget = this->ini.get<cfg::globals::authfile>();
         size_t const pos = authtarget.find(':');
         unique_fd client_sck = (pos == std::string::npos)
             ? local_connect(authtarget.c_str(), 30, 1000)
@@ -600,7 +572,7 @@ private:
         if (!client_sck.is_open()) {
             LOG(LOG_ERR,
                 "Failed to connect to authentifier (%s)",
-                this->ini.get<cfg::globals::authfile>().c_str());
+                authtarget.c_str());
             throw Error(ERR_SOCKET_CONNECT_FAILED);
         }
 
