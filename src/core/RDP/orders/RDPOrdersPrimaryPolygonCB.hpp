@@ -211,16 +211,13 @@ public:
     struct DeltaPoint {
         int16_t xDelta;
         int16_t yDelta;
-    } deltaPoints [128];
+    } deltaPoints [128] = {};
 
     static uint8_t id() {
         return RDP::POLYGONCB;
     }
 
-    RDPPolygonCB()
-    {
-        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
-    }
+    RDPPolygonCB() = default;
 
     RDPPolygonCB(int16_t xStart, int16_t yStart, uint8_t bRop2, uint8_t fillMode,
                  RDPColor backColor, RDPColor foreColor, const RDPBrush & brush,
@@ -235,7 +232,6 @@ public:
         , NumDeltaEntries(0)
     {
         this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaPoints) / sizeof(this->deltaPoints[0]));
-        ::memset(this->deltaPoints, 0, sizeof(this->deltaPoints));
         for (int i = 0; i < this->NumDeltaEntries; i++) {
             this->deltaPoints[i].xDelta = deltaPoints.in_sint16_le();
             this->deltaPoints[i].yDelta = deltaPoints.in_sint16_le();

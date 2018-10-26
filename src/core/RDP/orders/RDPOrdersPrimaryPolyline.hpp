@@ -191,16 +191,13 @@ public:
     struct DeltaEncodedPoint {
         int16_t xDelta;
         int16_t yDelta;
-    } deltaEncodedPoints[128];
+    } deltaEncodedPoints[128] = {};
 
     static uint8_t id() {
         return RDP::POLYLINE;
     }
 
-    RDPPolyline()
-    {
-        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
-    }
+    RDPPolyline() = default;
 
     RDPPolyline(int16_t xStart, int16_t yStart, uint8_t bRop2, uint16_t BrushCacheEntry, RDPColor PenColor,
         uint8_t NumDeltaEntries, InStream & deltaEncodedPoints) {
@@ -210,7 +207,6 @@ public:
         this->BrushCacheEntry = BrushCacheEntry;
         this->PenColor        = PenColor;
         this->NumDeltaEntries = std::min<uint8_t>(NumDeltaEntries, sizeof(this->deltaEncodedPoints) / sizeof(this->deltaEncodedPoints[0]));
-        ::memset(this->deltaEncodedPoints, 0, sizeof(this->deltaEncodedPoints));
         for (int i = 0; i < this->NumDeltaEntries; i++) {
             this->deltaEncodedPoints[i].xDelta = deltaEncodedPoints.in_sint16_le();
             this->deltaEncodedPoints[i].yDelta = deltaEncodedPoints.in_sint16_le();

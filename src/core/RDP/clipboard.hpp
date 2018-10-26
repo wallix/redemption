@@ -1575,7 +1575,11 @@ public:
 
     // 2.2.5.4 File Contents Response PDU (CLIPRDR_FILECONTENTS_RESPONSE)
 
-    // The File Contents Response PDU is sent as a reply to the File Contents Request PDU. It is used to indicate whether processing of the File Contents Request PDU was successful. If the processing was successful, the File Contents Response PDU includes either a file size or extracted file data, based on the operation requested in the corresponding File Contents Request PDU.
+    // The File Contents Response PDU is sent as a reply to the File Contents Request PDU.
+    // It is used to indicate whether processing of the File Contents Request PDU
+    // was successful. If the processing was successful, the File Contents Response PDU
+    // includes either a file size or extracted file data, based on the operation
+    // requested in the corresponding File Contents Request PDU.
 
     // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
@@ -1592,11 +1596,22 @@ public:
     // |                             ...                               |
     // +---------------------------------------------------------------+
 
-    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009). The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set in the msgFlags field of the Clipboard PDU Header.
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the 
+    // Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009). 
+    // The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set
+    // in the msgFlags field of the Clipboard PDU Header.
 
-    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the File Contents Response PDU with the corresponding File Contents Request PDU. The File Contents Request PDU that triggered the response MUST contain an identical value in the streamId field.
+    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the 
+    // File Contents Response PDU with the corresponding File Contents Request PDU.
+    // The File Contents Request PDU that triggered the response MUST contain an
+    // identical value in the streamId field.
 
-    // requestedFileContentsData (variable): This field contains a variable number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001) operation, the requestedFileContentsData field holds a 64-bit, unsigned integer containing the size of the file. In the case of a FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData field contains a byte-stream of data extracted from the file.
+    // requestedFileContentsData (variable): This field contains a variable 
+    // number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001)
+    // operation, the requestedFileContentsData field holds a 64-bit, unsigned
+    // integer containing the size of the file. In the case of a 
+    // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData 
+    // field contains a byte-stream of data extracted from the file.
 
 struct FileContentsResponse
 {
@@ -1642,18 +1657,101 @@ struct FileContentsResponse
         LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
         LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
     }
-
-
-
-//     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size, uint32_t data_size)
-//   :  streamID(streamID)
-//         , size(size)
-//     {}
-
-//     explicit FileContentsResponse(bool response_ok = false)
-//     {}
-
 };
+
+
+//struct FileContentsResponseToFileContentsSize
+//{
+//    uint32_t streamID{0};
+//    uint64_t size{0};
+
+//    bool is_size;
+
+//    FileContentsResponseToFileContentsSize() = default;
+
+//    // SIZE (16 bytes)
+//    explicit FileContentsResponseToFileContentsSize(const uint32_t streamID, const uint64_t size)
+//    : streamID(streamID)
+//    , size(size)
+//    , is_size(true)
+//    {}
+
+//    // RANGE (4 + Data_Len Bytes)
+//    explicit FileContentsResponseToFileContentsSize(const uint32_t streamID)
+//        : streamID(streamID)
+//        , is_size(false)
+//    {}
+
+//    void receive(InStream & stream) {
+//        this->streamID = stream.in_uint32_le();
+//        if (this->is_size) {
+//            this->size = stream.in_uint64_le();
+//        }
+//    }
+
+//    void emit(OutStream & stream) const {
+//        stream.out_uint32_le(this->streamID);
+
+//        if (this->is_size) {                                // SIZE
+//            stream.out_uint64_le(this->size);
+//            stream.out_uint32_le(0);
+//        }
+//    }
+
+//    void log() const {
+//        LOG(LOG_INFO, "     File Contents Response Size:");
+//        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
+//        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
+//        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
+//    }
+//};
+
+
+//struct FileContentsResponseToFileContentsRange
+//{
+//    uint32_t streamID{0};
+//    uint64_t size{0};
+
+//    bool is_size;
+
+//    FileContentsResponseToFileContentsRange() = default;
+
+//    // SIZE (16 bytes)
+//    explicit FileContentsResponseToFileContentsRange(const uint32_t streamID, const uint64_t size)
+//    : streamID(streamID)
+//    , size(size)
+//    , is_size(true)
+//    {}
+
+//    // RANGE (4 + Data_Len Bytes)
+//    explicit FileContentsResponseToFileContentsRange(const uint32_t streamID)
+//        : streamID(streamID)
+//        , is_size(false)
+//    {}
+
+//    void receive(InStream & stream) {
+//        this->streamID = stream.in_uint32_le();
+//        if (this->is_size) {
+//            this->size = stream.in_uint64_le();
+//        }
+//    }
+
+//    void emit(OutStream & stream) const {
+//        stream.out_uint32_le(this->streamID);
+
+//        if (this->is_size) {                                // SIZE
+//            stream.out_uint64_le(this->size);
+//            stream.out_uint32_le(0);
+//        }
+//    }
+
+//    void log() const {
+//        LOG(LOG_INFO, "     File Contents Response Size:");
+//        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
+//        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
+//        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
+//    }
+//};
 
 
 struct PacketFileList {
@@ -2400,8 +2498,7 @@ struct LockClipboardDataPDU
 {
     uint32_t streamDataID;
 
-    explicit LockClipboardDataPDU()
-    {}
+    explicit LockClipboardDataPDU() = default;
 
     explicit LockClipboardDataPDU(uint32_t streamDataID)
     : streamDataID(streamDataID)
@@ -2447,8 +2544,7 @@ struct UnlockClipboardDataPDU
 {
     uint32_t streamDataID;
 
-     explicit UnlockClipboardDataPDU()
-    {}
+     explicit UnlockClipboardDataPDU() = default;
 
     explicit UnlockClipboardDataPDU(uint32_t streamDataID)
     : streamDataID(streamDataID)
