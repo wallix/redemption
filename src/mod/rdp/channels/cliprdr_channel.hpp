@@ -163,26 +163,26 @@ public:
     }
 
 private:
-    void send_pdu_to_client_RDPECLIP_FormatDataResponsePDU() {
-        RDPECLIP::FormatDataResponsePDU pdu;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+//    void send_pdu_to_client_RDPECLIP_FormatDataResponsePDU() {
+//        RDPECLIP::FormatDataResponsePDU pdu;
+//        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
 
-        StaticOutStream<256> out_stream;
-        header.emit(out_stream);
-        pdu.emit(out_stream, nullptr, 0);
+//        StaticOutStream<256> out_stream;
+//        header.emit(out_stream);
+//        pdu.emit(out_stream, nullptr, 0);
 
-        const uint32_t total_length      = out_stream.get_offset();
-        const uint32_t flags             =
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_stream.get_data();
-        const uint32_t chunk_data_length = total_length;
+//        const uint32_t total_length      = out_stream.get_offset();
+//        const uint32_t flags             =
+//            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+//        const uint8_t* chunk_data        = out_stream.get_data();
+//        const uint32_t chunk_data_length = total_length;
 
-        this->send_message_to_client(
-            total_length,
-            flags,
-            chunk_data,
-            chunk_data_length);
-    }
+//        this->send_message_to_client(
+//            total_length,
+//            flags,
+//            chunk_data,
+//            chunk_data_length);
+//    }
 
     void send_pdu_to_client_RDPECLIP_FileContentsResponse(bool response_ok) {
         RDPECLIP::FileContentsResponse  pdu(response_ok);
@@ -411,7 +411,24 @@ private:
                         "Serveur to client Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_client_RDPECLIP_FormatDataResponsePDU();
+            RDPECLIP::FormatDataResponsePDU pdu;
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+
+            StaticOutStream<256> out_stream;
+            header.emit(out_stream);
+            pdu.emit(out_stream, nullptr, 0);
+
+            const uint32_t total_length      = out_stream.get_offset();
+            const uint32_t flags             =
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            const uint8_t* chunk_data        = out_stream.get_data();
+            const uint32_t chunk_data_length = total_length;
+
+            this->send_message_to_client(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
 
             return false;
         }
