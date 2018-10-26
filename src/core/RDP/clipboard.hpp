@@ -175,7 +175,6 @@ inline static const char * get_msgType_name(uint16_t msgType) {
         case CB_FILECONTENTS_RESPONSE: return "CB_FILECONTENTS_RESPONSE";
         case CB_LOCK_CLIPDATA:         return "CB_LOCK_CLIPDATA";
         case CB_UNLOCK_CLIPDATA:       return "CB_UNLOCK_CLIPDATA";
-
         case CB_CHUNKED_FORMAT_DATA_RESPONSE: return "CB_CHUNKED_FORMAT_DATA_RESPONSE";
     }
 
