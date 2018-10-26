@@ -65,6 +65,8 @@
 
 
 
+
+
 class ClientRedemption : public ClientRedemptionAPI
 {
 
@@ -222,7 +224,7 @@ public:
                      ClientInputSocketAPI * impl_socket_listener,
                      ClientKeyLayoutAPI * impl_keylayout,
                      ClientIODiskAPI * impl_io_disk)
-        : config(session_reactor, argv, argc, verbose, *(this))
+        : config(session_reactor, argv, argc, verbose, *(this), CLIENT_REDEMPTION_MAIN_PATH)
         , client_sck(-1)
         , _callback(this, impl_keylayout)
         , session_reactor(session_reactor)

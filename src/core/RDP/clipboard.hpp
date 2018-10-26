@@ -353,10 +353,7 @@ public:
     }
 
     void log() const {
-        LOG(LOG_INFO, "     CliprdrHeader:");
-        LOG(LOG_INFO, "          * MsgType  = 0x%x (2 bytes): %s", this->msgType_, get_msgType_name(this->msgType_));
-        LOG(LOG_INFO, "          * MsgFlags = 0x%x (2 bytes): %s", this->msgFlags_, get_msgFlag_name(this->msgFlags_));
-        LOG(LOG_INFO, "          * DataLen  = %u Byte(s) (4 bytes)", this->dataLen_);
+        LOG(LOG_INFO, "     CliprdrHeader: MsgType=0x%x(2 bytes):%s MsgFlags=0x%x(2 bytes):%s DataLen=%uByte(s)(4 bytes)", this->msgType_, get_msgType_name(this->msgType_), this->msgFlags_, get_msgFlag_name(this->msgFlags_), this->dataLen_);
     }
 };  // struct CliprdrHeader
 
@@ -441,9 +438,7 @@ public:
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Clipboard Capabilities PDU:");
-        LOG(LOG_INFO, "          * cCapabilitiesSets = %d (2 bytes)", this->cCapabilitiesSets_);
-        LOG(LOG_INFO, "          * Padding - (2 byte) NOT USED");
+        LOG(LOG_INFO, "     Clipboard Capabilities PDU: cCapabilitiesSets=%d(2 bytes) Padding-(2 byte):NOT USED", this->cCapabilitiesSets_);
     }
 };  // struct ClipboardCapabilitiesPDU
 
@@ -757,11 +752,7 @@ public:
     }
 
     void log() const {
-        LOG(LOG_INFO, "     General Capability Set:");
-        LOG(LOG_INFO, "          * capabilitySetType = 0x%04x (2 bytes): CB_CAPSTYPE_GENERAL", this->capabilitySetType);
-        LOG(LOG_INFO, "          * lengthCapability  = 0x%04x (2 bytes)", this->lengthCapability);
-        LOG(LOG_INFO, "          * version           = 0x%08x (4 bytes)", this->version_);
-        LOG(LOG_INFO, "          * generalFlags      = 0x%08x (4 bytes): %s", this->generalFlags_, generalFlags_to_string(this->generalFlags_));
+        LOG(LOG_INFO, "GeneralCapabilitySet: capabilitySetType=0x%04x(2 bytes):CB_CAPSTYPE_GENERAL lengthCapability=0x%04x(2 bytes) version=0x%08x(4 bytes) generalFlags=0x%08x(4 bytes):%s", this->capabilitySetType, this->lengthCapability, this->version_, this->generalFlags_, generalFlags_to_string(this->generalFlags_));
     }
 };  // GeneralCapabilitySet
 
@@ -796,12 +787,8 @@ public:
         return 0;
     }
 
-    void log(int level) const {
+    void log(int level = LOG_INFO) const {
         LOG(level, "ServerMonitorReadyPDU");
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Server Monitor Ready PDU");
     }
 };  // struct ServerMonitorReadyPDU
 
@@ -888,13 +875,8 @@ public:
         return 520;  // wszTempDir(520)
     }
 
-    void log(int level) const {
+    void log(int level = LOG_INFO) const {
         LOG(level, "ClientTemporaryDirectoryPDU: wszTempDir=\"%s\"", temp_dir.c_str());
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     Client Temporary Directory PDU:");
-        LOG(LOG_INFO, "          * wszTempDir = \"%s\"", this->temp_dir.c_str());
     }
 };  // struct ClientTemporaryDirectoryPDU
 
@@ -1124,7 +1106,7 @@ public:
                     const size_t size_of_formatName_UTF8_data = ::UTF16toUTF8(
                         stream.get_current(), format_name_UTF16_length,
                         byte_ptr_cast(format_name.data()), formatName_UTF8_data_size);
-                        
+
                     if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
                         LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
@@ -1277,13 +1259,10 @@ struct FormatListResponsePDU
         return 0;
     }
 
-    void log(int level) const {
+    void log(int level = LOG_INFO) const {
         LOG(level, "FormatListResponsePDU");
     }
 
-    void log() const {
-        LOG(LOG_INFO, "     Format List Response PDU");
-    }
 };  // struct FormatListResponsePDU
 
 // [MS-RDPECLIP] 2.2.5.1 Format Data Request PDU (CLIPRDR_FORMAT_DATA_REQUEST)
@@ -1340,8 +1319,7 @@ struct FormatDataRequestPDU
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Format Data Request PDU:");
-        LOG(LOG_INFO, "          * requestedFormatId = 0x%08x (4 bytes): %s", this->requestedFormatId, get_FormatId_name(this->requestedFormatId));
+        LOG(LOG_INFO, "FormatDataRequestPDU: requestedFormatId=0x%08x(4 bytes):%s", this->requestedFormatId, get_FormatId_name(this->requestedFormatId));
     }
 
     constexpr static size_t size() {
@@ -1449,7 +1427,7 @@ public:
                            uint32_t nPositionHigh,
                            uint32_t cbRequested,
                            uint32_t clipDataId,
-                           bool has_optional_clipDataId) 
+                           bool has_optional_clipDataId)
         : streamId_(streamId)
         , lindex_(lindex)
         , dwFlags_(dwFlags)
@@ -1599,21 +1577,21 @@ public:
     // |                             ...                               |
     // +---------------------------------------------------------------+
 
-    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the 
-    // Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009). 
+    // clipHeader (8 bytes): A Clipboard PDU Header. The msgType field of the
+    // Clipboard PDU Header MUST be set to CB_FILECONTENTS_RESPONSE (0x0009).
     // The CB_RESPONSE_OK (0x0001) or CB_RESPONSE_FAIL (0x0002) flag MUST be set
     // in the msgFlags field of the Clipboard PDU Header.
 
-    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the 
+    // streamId (4 bytes): An unsigned, 32-bit numeric ID used to associate the
     // File Contents Response PDU with the corresponding File Contents Request PDU.
     // The File Contents Request PDU that triggered the response MUST contain an
     // identical value in the streamId field.
 
-    // requestedFileContentsData (variable): This field contains a variable 
+    // requestedFileContentsData (variable): This field contains a variable
     // number of bytes. If the response is to a FILECONTENTS_SIZE (0x00000001)
     // operation, the requestedFileContentsData field holds a 64-bit, unsigned
-    // integer containing the size of the file. In the case of a 
-    // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData 
+    // integer containing the size of the file. In the case of a
+    // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
     // field contains a byte-stream of data extracted from the file.
 
 struct FileContentsResponse
@@ -1655,10 +1633,7 @@ struct FileContentsResponse
     }
 
     void log() const {
-        LOG(LOG_INFO, "     File Contents Response Size:");
-        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
-        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
-        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
+        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->size);
     }
 };
 
@@ -2108,17 +2083,17 @@ enum : int {
 struct FormatDataResponsePDU
 {
     void emit(OutStream & stream, const uint8_t * data, size_t data_length) const {
-        if (data_length 
+        if (data_length
         // in some case (VNC clipboard) we already have data inplace
         // in these cases no need to copy anything
-        && data != stream.get_data()) 
+        && data != stream.get_data())
         {
             stream.out_copy_bytes(data, data_length);
         }
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Format Data Response PDU:");
+        LOG(LOG_INFO, "FormatDataResponsePDU:");
     }
 
 
@@ -2366,8 +2341,7 @@ struct FormatDataResponsePDU_FileList {
     int cItems{0};
 
     void log() const {
-        LOG(LOG_INFO, "     Format Data Response File List PDU:");
-        LOG(LOG_INFO, "          * cItems       = %d (4 bytes)", this->cItems);
+        LOG(LOG_INFO, "FormatDataResponseFileListPDU: cItems=%d(4 bytes)", this->cItems);
     }
 
     explicit FormatDataResponsePDU_FileList() = default;
@@ -2516,8 +2490,7 @@ struct LockClipboardDataPDU
     }
 
     void log() const {
-        LOG(LOG_INFO, "     Lock Clipboard Data PDU:");
-        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
+        LOG(LOG_INFO, "LockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
     }
 
 };
@@ -2565,8 +2538,7 @@ struct UnlockClipboardDataPDU
 
     void log() const
     {
-        LOG(LOG_INFO, "     Unlock Clipboard Data PDU:");
-        LOG(LOG_INFO, "          * streamDataID = 0x%08x (4 bytes)", this->streamDataID);
+        LOG(LOG_INFO, "UnlockClipboardDataPDU: streamDataID=0x%08x(4 bytes)", this->streamDataID);
     }
 };
 

@@ -1105,6 +1105,34 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
+test-run tests/client_redemption/client_config/test_client_redemption_config :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
+:
+  <covfile>src/client_redemption/client_config/client_redemption_config.hpp
+  <library>app_path_test.o
+  <library>boost_stacktrace
+  <library>crypto
+  <library>openssl
+  <library>png
+  <library>snappy
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/rle.o
+  <library>src/utils/strutils.o
+  <library>src/utils/utf.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
 :
@@ -5574,6 +5602,8 @@ alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channe
 alias test_client_channel_RDPSND_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.coverage ;
 alias test_client_channel_remoteapp_manager : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager ;
 alias test_client_channel_remoteapp_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.coverage ;
+alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
+alias test_client_redemption_config.coverage : tests/client_redemption/client_config/test_client_redemption_config.coverage ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_FileInformation.coverage : tests/core/FSCC/test_FileInformation.coverage ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -6221,6 +6251,9 @@ alias tests/client_redemption/client_channel_managers.norec :
   tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
   tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager
 ;
+alias tests/client_redemption/client_config.norec :
+  tests/client_redemption/client_config/test_client_redemption_config
+;
 alias tests/core/FSCC.norec :
   tests/core/FSCC/test_FileInformation
 ;
@@ -6629,6 +6662,9 @@ alias tests/client_mods :
 alias tests/client_redemption/client_channel_managers :
   tests/client_redemption/client_channel_managers.norec
 ;
+alias tests/client_redemption/client_config :
+  tests/client_redemption/client_config.norec
+;
 alias tests/core/FSCC :
   tests/core/FSCC.norec
 ;
@@ -6792,6 +6828,7 @@ explicit
   tests/capture/utils.norec
   tests/client_mods.norec
   tests/client_redemption/client_channel_managers.norec
+  tests/client_redemption/client_config.norec
   tests/core/FSCC.norec
   tests/core/RDP/caches.norec
   tests/core/RDP/capabilities.norec
@@ -6839,6 +6876,7 @@ explicit
   tests/capture/utils
   tests/client_mods
   tests/client_redemption/client_channel_managers
+  tests/client_redemption/client_config
   tests/core/FSCC
   tests/core/RDP/caches
   tests/core/RDP/capabilities

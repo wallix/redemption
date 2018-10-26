@@ -30,6 +30,7 @@
 #include "qt_input_output_api/keymaps/qt_client_rdp_keylayout.hpp"
 
 
+
 int main(int argc, char** argv)
 {
     set_exception_handler_pretty_message();
