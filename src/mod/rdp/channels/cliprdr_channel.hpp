@@ -489,7 +489,7 @@ private:
         //    "requestedFormatId=%u client_file_list_format_id=%u",
         //    this->requestedFormatId, this->client_file_list_format_id);
 
-        if (this->client_file_list_format_id 
+        if (this->client_file_list_format_id
         && (this->requestedFormatId == this->client_file_list_format_id)) {
             const auto saved_chunk_p = chunk.get_current();
 
@@ -1198,35 +1198,6 @@ public:
     {
         (void)total_length;
         (void)flags;
-        (void)chunk;
-
-        if (!this->param_clipboard_file_authorized) {
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
-                        "Requesting the contents of client file is denied.");
-            }
-
-            RDPECLIP::FileContentsResponse pdu(false);
-
-            StaticOutStream<256> out_stream;
-
-            pdu.emit(out_stream);
-
-            const uint32_t total_length      = out_stream.get_offset();
-            const uint32_t flags             =
-                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-            const uint8_t* chunk_data        = out_stream.get_data();
-            const uint32_t chunk_data_length = total_length;
-
-            this->send_message_to_server(
-                total_length,
-                flags,
-                chunk_data,
-                chunk_data_length);
-
-            return false;
-        }
 
         {
             const unsigned int expected = 6;    // msgFlags(2) +
@@ -1251,6 +1222,49 @@ public:
                 file_contents_request_pdu.log(LOG_INFO);
             }
 
+            if (!this->param_clipboard_file_authorized) {
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
+                            "Requesting the contents of client file is denied.");
+                }
+
+                StaticOutStream<256> out_stream;
+
+                switch (file_contents_request_pdu.dwFlags()) {
+                    case RDPECLIP::FILECONTENTS_RANGE:
+                    {
+                        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
+                        RDPECLIP::FileContentsResponse pdu(file_contents_request_pdu.streamId());
+                        header.emit(out_stream);
+                        pdu.emit(out_stream);
+                    }
+                        break;
+                    case RDPECLIP::FILECONTENTS_SIZE:
+                    {
+                        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 16);
+                        RDPECLIP::FileContentsResponse pdu(file_contents_request_pdu.streamId(), 0);
+                        header.emit(out_stream);
+                        pdu.emit(out_stream);
+                    }
+                        break;
+                }
+
+                const uint32_t total_length      = out_stream.get_offset();
+                const uint32_t flags             =
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+                const uint8_t* chunk_data        = out_stream.get_data();
+                const uint32_t chunk_data_length = total_length;
+
+                this->send_message_to_server(
+                    total_length,
+                    flags,
+                    chunk_data,
+                    chunk_data_length);
+
+                return false;
+            }
+
             if ((RDPECLIP::FILECONTENTS_RANGE == file_contents_request_pdu.dwFlags()) &&
                 file_contents_request_pdu.has_optional_clipDataId()) {
                 this->server_file_contents_request_info_inventory[file_contents_request_pdu.streamId()] =
@@ -1263,6 +1277,8 @@ public:
                     };
             }
         }
+
+
 
         return true;
     }
