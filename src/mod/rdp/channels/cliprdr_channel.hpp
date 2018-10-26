@@ -164,27 +164,6 @@ public:
 
 private:
 
-    void send_pdu_to_server_RDPECLIP_FormatDataResponsePDU() {
-
-        StaticOutStream<256> out_stream;
-        RDPECLIP::FormatDataResponsePDU pdu;
-        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
-        header.emit(out_stream);
-        pdu.emit(out_stream, nullptr, 0);
-
-        const uint32_t total_length      = out_stream.get_offset();
-        const uint32_t flags             =
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_stream.get_data();
-        const uint32_t chunk_data_length = total_length;
-
-        this->send_message_to_server(
-            total_length,
-            flags,
-            chunk_data,
-            chunk_data_length);
-    }
-
     void send_pdu_to_server_RDPECLIP_FileContentsResponse(bool response_ok) {
         RDPECLIP::FileContentsResponse pdu(response_ok);
 
@@ -1285,7 +1264,24 @@ public:
                     "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
                         "Requesting the contents of client file is denied.");
             }
-            this->send_pdu_to_server_RDPECLIP_FileContentsResponse(false);
+
+            RDPECLIP::FileContentsResponse pdu(false);
+
+            StaticOutStream<256> out_stream;
+
+            pdu.emit(out_stream);
+
+            const uint32_t total_length      = out_stream.get_offset();
+            const uint32_t flags             =
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            const uint8_t* chunk_data        = out_stream.get_data();
+            const uint32_t chunk_data_length = total_length;
+
+            this->send_message_to_server(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
 
             return false;
         }
@@ -1367,7 +1363,23 @@ public:
                         "Client to server Clipboard operation is not allowed.");
             }
 
-            this->send_pdu_to_server_RDPECLIP_FormatDataResponsePDU();
+            StaticOutStream<256> out_stream;
+            RDPECLIP::FormatDataResponsePDU pdu;
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
+            header.emit(out_stream);
+            pdu.emit(out_stream, nullptr, 0);
+
+            const uint32_t total_length      = out_stream.get_offset();
+            const uint32_t flags             =
+                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
+            const uint8_t* chunk_data        = out_stream.get_data();
+            const uint32_t chunk_data_length = total_length;
+
+            this->send_message_to_server(
+                total_length,
+                flags,
+                chunk_data,
+                chunk_data_length);
 
             return false;
         }
