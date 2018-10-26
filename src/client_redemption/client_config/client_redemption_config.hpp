@@ -74,8 +74,6 @@
 #define CLIENT_REDEMPTION_MAIN_PATH ""
 #endif
 
-//#include "client_redemption/client_config/client_redemption_path.hpp"
-
 
 
     struct UserProfil {
