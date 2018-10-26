@@ -184,13 +184,12 @@ private:
             chunk_data_length);
     }
 
-    template<class PDU, class... Args>
-    void send_pdu_to_client(bool response_ok, Args&&... args) {
-        PDU             pdu(response_ok);
+    void send_pdu_to_client_RDPECLIP_FileContentsResponse(bool response_ok) {
+        RDPECLIP::FileContentsResponse  pdu(response_ok);
 
         StaticOutStream<256> out_stream;
 
-        pdu.emit(out_stream, args...);
+        pdu.emit(out_stream);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
@@ -249,13 +248,12 @@ private:
             chunk_data_length);
     }
 
-    template<class PDU, class... Args>
-    void send_pdu_to_server(bool response_ok, Args&&... args) {
-        PDU             pdu(response_ok);
+    void send_pdu_to_server_RDPECLIP_FileContentsResponse(bool response_ok) {
+        RDPECLIP::FileContentsResponse pdu(response_ok);
 
         StaticOutStream<256> out_stream;
 
-        pdu.emit(out_stream, args...);
+        pdu.emit(out_stream);
 
         const uint32_t total_length      = out_stream.get_offset();
         const uint32_t flags             =
@@ -356,7 +354,7 @@ private:
                     "ClipboardVirtualChannel::process_client_file_contents_request_pdu: "
                         "Requesting the contents of server file is denied.");
             }
-            this->send_pdu_to_client<RDPECLIP::FileContentsResponse>(false);
+            this->send_pdu_to_client_RDPECLIP_FileContentsResponse(false);
 
             return false;
         }
@@ -1279,7 +1277,7 @@ public:
                     "ClipboardVirtualChannel::process_server_file_contents_request_pdu: "
                         "Requesting the contents of client file is denied.");
             }
-            this->send_pdu_to_server<RDPECLIP::FileContentsResponse>(false);
+            this->send_pdu_to_server_RDPECLIP_FileContentsResponse(false);
 
             return false;
         }
