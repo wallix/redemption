@@ -1449,11 +1449,16 @@ public:
                            uint32_t nPositionHigh,
                            uint32_t cbRequested,
                            uint32_t clipDataId,
-                           bool has_optional_clipDataId) :
-            streamId_(streamId), lindex_(lindex), dwFlags_(dwFlags),
-            nPositionLow_(nPositionLow), nPositionHigh_(nPositionHigh),
-            cbRequested_(cbRequested), clipDataId_(clipDataId),
-            has_optional_clipDataId_(has_optional_clipDataId) {}
+                           bool has_optional_clipDataId) 
+        : streamId_(streamId)
+        , lindex_(lindex)
+        , dwFlags_(dwFlags)
+        , nPositionLow_(nPositionLow)
+        , nPositionHigh_(nPositionHigh)
+        , cbRequested_(cbRequested)
+        , clipDataId_(clipDataId)
+        , has_optional_clipDataId_(has_optional_clipDataId)
+    {}
 
 public:
     FileContentsRequestPDU(uint32_t streamId, uint32_t lindex,
@@ -1481,16 +1486,16 @@ public:
     }
 
     void receive(InStream& stream) {
-        {
-            const unsigned int expected = this->minimum_size();
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "FileContentsRequestPDUEx::recv: "
-                        "Truncated File Contents Request PDU, "
-                        "need=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+        LOG(LOG_INFO, "====================== Receive File Contents Request PDU ========================");
+
+        const unsigned int expected = this->minimum_size();
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR,
+                "FileContentsRequestPDUEx::recv: "
+                    "Truncated File Contents Request PDU, "
+                    "need=%u remains=%zu",
+                expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
         this->streamId_      = stream.in_uint32_le();
@@ -1502,13 +1507,11 @@ public:
 
         if (stream.in_remain() >= 4 /* clipDataId(4) */) {
             this->clipDataId_ = stream.in_uint32_le();
-
             this->has_optional_clipDataId_ = true;
         }
         else {
             this->has_optional_clipDataId_ = false;
         }
-
     }
 
     uint32_t streamId() const { return this->streamId_; }
@@ -2057,7 +2060,7 @@ enum {
 // +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // | | | | | | | | | | |1| | | | | | | | | |2| | | | | | | | | |3| |
 // |0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|2|3|4|5|6|7|8|9|0|1|
-// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+FormatDataResponsePDU-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+// +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // |                           clipHeader                          |
 // +---------------------------------------------------------------+
 // |                              ...                              |
