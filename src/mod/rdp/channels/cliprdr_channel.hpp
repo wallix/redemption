@@ -1597,7 +1597,7 @@ public:
     }   // process_server_format_list_pdu
 
     bool process_server_monitor_ready_pdu(uint32_t total_length, uint32_t flags,
-        InStream& chunk)
+        InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
         (void)flags;
@@ -1895,25 +1895,25 @@ public:
                             "Lock Clipboard Data PDU");
                 }
 
-                {
-                    const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
-                    if (!chunk.in_check_rem(expected)) {
-                        LOG(LOG_ERR,
-                            "ClipboardVirtualChannel::process_server_message: "
-                                "Truncated CLIPRDR_HEADER (2), "
-                                "need=%u remains=%zu",
-                            expected, chunk.in_remain());
-                        throw Error(ERR_RDP_DATA_TRUNCATED);
-                    }
-                }
+//                 {
+//                     const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
+//                     if (!chunk.in_check_rem(expected)) {
+//                         LOG(LOG_ERR,
+//                             "ClipboardVirtualChannel::process_server_message: "
+//                                 "Truncated CLIPRDR_HEADER (2), "
+//                                 "need=%u remains=%zu",
+//                             expected, chunk.in_remain());
+//                         throw Error(ERR_RDP_DATA_TRUNCATED);
+//                     }
+//                 }
 
-                chunk.in_skip_bytes(2); // msgFlags(2)
-                uint32_t const dataLen = chunk.in_uint32_le();
+//                 chunk.in_skip_bytes(2); // msgFlags(2)
+//                 uint32_t const dataLen = chunk.in_uint32_le();
 
-                if (dataLen >= 4 /* clipDataId(4) */) {
+                if (header.dataLen() >= 4 /* clipDataId(4) */) {
                     {
                         const unsigned int expected = 4;    // msgFlags(2) + dataLen(4)
-                        if (!chunk.in_check_rem(expected)) {
+                        if (!chunk_serie.in_check_rem(expected)) {
                             LOG(LOG_ERR,
                                 "ClipboardVirtualChannel::process_server_message: "
                                     "Truncated CLIPRDR_LOCK_CLIPDATA, "
@@ -1923,7 +1923,7 @@ public:
                         }
                     }
 
-                    uint32_t const clipDataId = chunk.in_uint32_le();
+                    uint32_t const clipDataId = chunk_serie.in_uint32_le();
 
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
                         LOG(LOG_INFO,
@@ -1946,7 +1946,7 @@ public:
 
                 send_message_to_client =
                     this->process_server_monitor_ready_pdu(
-                        total_length, flags, chunk);
+                        total_length, flags, chunk_serie, header);
             break;
 
             case RDPECLIP::CB_UNLOCK_CLIPDATA: {
