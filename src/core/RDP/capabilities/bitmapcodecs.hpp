@@ -492,7 +492,7 @@ struct RFXCapset {
     	if (numIcaps)
     		icapsData = new RFXICap[numIcaps]();
 
-    	int expected = numIcaps * icapLen;
+    	unsigned expected = numIcaps * icapLen;
     	if (!stream.in_check_rem(expected)) {
 			LOG(LOG_ERR, "Truncated RFXCapset, needs=%u remains=%zu", expected, stream.in_remain());
 			throw Error(ERR_MCS_PDU_TRUNCATED);
@@ -641,16 +641,16 @@ struct BitmapCodec {
             break;
         case CODEC_GUID_REMOTEFX:
         case CODEC_GUID_IMAGE_REMOTEFX:
-        	if (codecGUID == CODEC_GUID_IMAGE_REMOTEFX)
-        		memcpy(this->codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16);
-        	else
-        		memcpy(this->codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16);
-
-        	if (client)
-            	this->codecProperties = new RFXClntCaps();
+            if (codecGUID == CODEC_GUID_IMAGE_REMOTEFX)
+                memcpy(this->codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16);
             else
-            	this->codecProperties = new RFXSrvrCaps();
-        	this->codecType = CODEC_REMOTEFX;
+                memcpy(this->codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16);
+
+            if (client)
+                this->codecProperties = new RFXClntCaps();
+            else
+                this->codecProperties = new RFXSrvrCaps();
+            this->codecType = CODEC_REMOTEFX;
             break;
         default:
         	memset(this->codecGUID, 0, 16);
@@ -783,7 +783,7 @@ struct BitmapCodecCaps : public Capability {
     void recv(InStream & stream, uint16_t len) {
         (void)len;
 
-        int expected = 1;
+        unsigned expected = 1;
         if (!stream.in_check_rem(expected)){
 			LOG(LOG_ERR, "Truncated BitmapCodecs, need=%u remains=%zu",	expected, stream.in_remain());
 			throw Error(ERR_MCS_PDU_TRUNCATED);
