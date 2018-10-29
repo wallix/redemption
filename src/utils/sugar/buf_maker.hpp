@@ -29,7 +29,7 @@ struct BufMaker
 {
     array_view<T> dyn_array(std::size_t n) &
     {
-        uint8_t * p = this->buf_;
+        T * p = this->buf_;
         if (n > StaticLen) {
             this->dyn_buf_ = std::make_unique<T[]>(n);
             p = this->dyn_buf_.get();

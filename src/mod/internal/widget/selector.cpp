@@ -23,6 +23,7 @@
 #include "mod/internal/widget/selector.hpp"
 #include "utils/translation.hpp"
 #include "utils/theme.hpp"
+#include "utils/sugar/buf_maker.hpp"
 #include "gdi/graphic_api.hpp"
 
 WidgetSelector::temporary_number_of_page::temporary_number_of_page(const char * s)
@@ -45,122 +46,56 @@ WidgetSelector::WidgetSelector(
     Font const & font, Theme const & theme, Translation::language_t lang)
 : WidgetParent(drawable, parent, notifier)
 , less_than_800(width < 800)
-, nb_columns((selector_params.nb_columns > 3) ? selector_params.nb_columns : 3)
+, nb_columns(std::min(selector_params.nb_columns, WidgetSelectorParams::nb_max_columns))
 , device_label(drawable, *this, nullptr, device_name,
                -10, theme.global.fgcolor, theme.global.bgcolor, font)
-, header_label{
-    {
+, header_labels{
+    WidgetLabel{
         drawable, *this, nullptr, selector_params.label[0], -10,
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     },
-    {
+    WidgetLabel{
         drawable, *this, nullptr, selector_params.label[1], -10,
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     },
-    {
+    WidgetLabel{
         drawable, *this, nullptr, selector_params.label[2], -10,
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     },
-    {
+    WidgetLabel{
         drawable, *this, nullptr, selector_params.label[3], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[4], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[5], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[6], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[7], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[8], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
-    },
-    {
-        drawable, *this, nullptr, selector_params.label[9], -10,
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
     }
 }
-, edit_filter{
-    {
+, edit_filters{
+    WidgetEdit{
         drawable, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
-    {
+    WidgetEdit{
         drawable, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
-    {
+    WidgetEdit{
         drawable, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
-    {
+    WidgetEdit{
         drawable, *this, this,
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
     },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    {
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    }
 }
 , selector_lines(drawable,
                  *this, this, 0, this->nb_columns,
@@ -216,8 +151,8 @@ WidgetSelector::WidgetSelector(
 
     for (int i = 0; i < this->nb_columns; i++) {
         this->base_len[i] = selector_params.base_len[i];
-        this->add_widget(&this->header_label[i]);
-        this->add_widget(&this->edit_filter[i]);
+        this->add_widget(&this->header_labels[i]);
+        this->add_widget(&this->edit_filters[i]);
     }
 
     this->add_widget(&this->apply);
@@ -258,11 +193,11 @@ void WidgetSelector::move_size_widget(int16_t left, int16_t top, uint16_t width,
 
 
     for (int i = 0; i < this->nb_columns; i++) {
-        dim = this->header_label[i].get_optimal_dim();
-        this->header_label[i].set_wh(dim);
+        dim = this->header_labels[i].get_optimal_dim();
+        this->header_labels[i].set_wh(dim);
 
-        dim = this->edit_filter[i].get_optimal_dim();
-        this->edit_filter[i].set_wh(dim);
+        dim = this->edit_filters[i].get_optimal_dim();
+        this->edit_filters[i].set_wh(dim);
     }
 
     dim = this->first_page.get_optimal_dim();
@@ -314,19 +249,20 @@ BGRColor WidgetSelector::get_bg_color() const
 
 void WidgetSelector::rearrange()
 {
-    ColumnWidthStrategy column_width_strategies[GRID_NB_COLUMNS_MAX];
+    ColumnWidthStrategy column_width_strategies[WidgetSelectorParams::nb_max_columns];
 
     for (int i = 0; i < this->nb_columns; i++) {
-        gdi::TextMetrics tm (this->font, this->header_label[i].get_text());
+        gdi::TextMetrics tm (this->font, this->header_labels[i].get_text());
         column_width_strategies[i] = { static_cast<uint16_t>(tm.width + 5), this->base_len[i]};
     };
 
-    uint16_t rows_height[GRID_NB_ROWS_MAX]      = { 0 };
-    uint16_t columns_width[GRID_NB_COLUMNS_MAX] = { 0 };
+    BufMaker<128, uint16_t> rows_height_buffer;
+    auto rows_height = rows_height_buffer.dyn_array(this->selector_lines.get_nb_rows());
+    uint16_t columns_width[WidgetSelectorParams::nb_max_columns] = { 0 };
 
     compute_format(this->selector_lines, column_width_strategies,
-                    rows_height, columns_width);
-    apply_format(this->selector_lines, rows_height, columns_width);
+                   rows_height.data(), columns_width);
+    apply_format(this->selector_lines, rows_height.data(), columns_width);
 
 
     {
@@ -339,27 +275,25 @@ void WidgetSelector::rearrange()
         // labels and filters position
         uint16_t offset = this->less_than_800 ? 0 : HORIZONTAL_MARGIN;
         uint16_t labels_y = this->device_label.bottom() + HORIZONTAL_MARGIN;
-        uint16_t filters_y = labels_y + this->header_label[0].cy()
+        uint16_t filters_y = labels_y + this->header_labels[0].cy()
             + FILTER_SEPARATOR;
 
         for (int i = 0; i < this->nb_columns; i++) {
-            this->header_label[i].set_wh(
+            this->header_labels[i].set_wh(
                 columns_width[i] + this->selector_lines.border * 2,
-                this->header_label[i].cy());
-            this->header_label[i].set_xy(this->left + offset, labels_y);
-            this->edit_filter[i].set_xy(this->header_label[i].x(), filters_y);
-            this->edit_filter[i].set_wh(
-                this->header_label[i].cx() - ((i == this->nb_columns-1) ? 0 : FILTER_SEPARATOR),
-                this->edit_filter[i].cy());
-            offset += this->header_label[i].cx();
+                this->header_labels[i].cy());
+            this->header_labels[i].set_xy(this->left + offset, labels_y);
+            this->edit_filters[i].set_xy(this->header_labels[i].x(), filters_y);
+            this->edit_filters[i].set_wh(
+                this->header_labels[i].cx() - ((i == this->nb_columns-1) ? 0 : FILTER_SEPARATOR),
+                this->edit_filters[i].cy());
+            offset += this->header_labels[i].cx();
         }
-
-        (void)offset;
     }
     {
         // selector list position
         this->selector_lines.set_xy(this->left + (this->less_than_800 ? 0 : HORIZONTAL_MARGIN),
-                                    this->edit_filter[0].bottom() + FILTER_SEPARATOR);
+                                    this->edit_filters[0].bottom() + FILTER_SEPARATOR);
     }
     {
         // Navigation buttons

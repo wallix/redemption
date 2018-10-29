@@ -61,26 +61,28 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     wgrid.set_wh(640, 480);
     wgrid.set_xy(x, y);
 
-    Widget  * widgetTable[128] = { nullptr };
     uint16_t   widget_count     = 0;
 
     for (uint16_t line_index = 0; line_index < line_number; line_index++) {
         for (uint16_t column_index = 0; column_index < column_number; column_index++) {
             char text[256];
             snprintf(text, sizeof(text), "Label %ux%u", unsigned(line_index), unsigned(column_index));
+            std::unique_ptr<Widget> w;
             if ((line_index == 2) && (column_index == 3)) {
-                widgetTable[widget_count] = new WidgetFlatButton(drawable, wgrid, notifier,
-                                                            text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2, global_font_lato_light_16(), 2, 2);
+                w = std::make_unique<WidgetFlatButton>(
+                    drawable, wgrid, notifier, text, id, WHITE, MEDIUM_BLUE, LIGHT_BLUE, 2,
+                    global_font_lato_light_16(), 2, 2);
             }
             else {
-                widgetTable[widget_count] = new WidgetLabel(drawable, wgrid, notifier,
-                                                            text, id, fg_color, bg_color, global_font_lato_light_16());
+                w = std::make_unique<WidgetLabel>(
+                    drawable, wgrid, notifier, text, id, fg_color, bg_color,
+                    global_font_lato_light_16());
             }
 
-            Dimension dim = widgetTable[widget_count]->get_optimal_dim();
-            widgetTable[widget_count]->set_wh(dim);
+            Dimension dim = w->get_optimal_dim();
+            w->set_wh(dim);
 
-            wgrid.set_widget(line_index, column_index, widgetTable[widget_count]);
+            wgrid.set_widget(line_index, column_index, std::move(w));
             widget_count++;
         }
     }
@@ -89,8 +91,8 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
     };
 
-    uint16_t row_height[GRID_NB_ROWS_MAX]      = { 0 };
-    uint16_t column_width[GRID_NB_COLUMNS_MAX] = { 0 };
+    uint16_t row_height[line_number]     = { 0 };
+    uint16_t column_width[column_number] = { 0 };
 
     compute_format(wgrid, column_width_strategies, row_height, column_width);
     apply_format(wgrid, row_height, column_width);
@@ -121,7 +123,7 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
 
 
     uint16_t mouse_x = wgrid.x() + 50;
-    uint16_t mouse_y = widgetTable[5]->y();
+    uint16_t mouse_y = wgrid.get_widget(1, 0)->y();
 
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN, mouse_x, mouse_y, nullptr);
     wgrid.rdp_input_mouse(MOUSE_FLAG_BUTTON1, mouse_x, mouse_y, nullptr);
@@ -158,10 +160,6 @@ RED_AUTO_TEST_CASE(TraceWidgetGrid)
     RED_CHECK_SIG(drawable, "\x78\x12\xfc\xd9\xc4\xdc\x38\x69\x02\x42\xd0\x3d\xb8\x39\xbf\x03\x0a\x27\x4d\x1e");
 
     wgrid.clear();
-
-    for (Widget ** w = widgetTable; *w; w++) {
-        delete (*w);
-    }
 }
 
 /*

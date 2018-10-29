@@ -34,11 +34,11 @@ class Theme;
 
 struct WidgetSelectorParams
 {
-    uint16_t nb_columns = 0;
-    const char * label[GRID_NB_COLUMNS_MAX] = {nullptr};
-    uint16_t base_len[GRID_NB_COLUMNS_MAX] = {0};
+    static constexpr uint16_t nb_max_columns = 4;
 
-    WidgetSelectorParams() = default;
+    uint16_t nb_columns = 0;
+    const char * label[nb_max_columns] = {nullptr};
+    uint16_t base_len[nb_max_columns] = {0};
 };
 
 
@@ -53,6 +53,7 @@ public:
         explicit temporary_number_of_page(const char * s);
     };
 
+private:
     CompositeArray composite_array;
 
     bool less_than_800;
@@ -60,8 +61,9 @@ public:
 
     WidgetLabel device_label;
 
-    WidgetLabel header_label[GRID_NB_COLUMNS_MAX];
-    WidgetEdit  edit_filter[GRID_NB_COLUMNS_MAX];
+    std::array<WidgetLabel, WidgetSelectorParams::nb_max_columns> header_labels;
+public:
+    std::array<WidgetEdit, WidgetSelectorParams::nb_max_columns>  edit_filters;
 
     WidgetLabelGrid selector_lines;
 
@@ -72,10 +74,13 @@ public:
     WidgetLabel number_page;
     WidgetFlatButton next_page;
     WidgetFlatButton last_page;
+private:
     WidgetFlatButton logout;
+public:
     WidgetFlatButton apply;
     WidgetFlatButton connect;
 
+private:
     BGRColor bg_color;
 
     Font const & font;
@@ -101,7 +106,7 @@ public:
 
     WidgetFlatButton * extra_button;
 
-    uint16_t base_len[GRID_NB_COLUMNS_MAX] = {0};
+    uint16_t base_len[WidgetSelectorParams::nb_max_columns] = {0};
 
 
 

@@ -54,19 +54,14 @@ void WidgetLabelGrid::clean_labels()
 {
     for (int i = 0; i < this->get_nb_columns(); i++) {
         for (int j = 0; j < this->get_nb_rows(); j++) {
-            Widget* w = this->remove_widget(j, i);
-            delete w;
+            this->remove_widget(j, i);
         }
     }
 }
 
-uint16_t WidgetLabelGrid::add_line(array_view<const array_view_const_char> entries)
+void WidgetLabelGrid::add_line(array_view<const array_view_const_char> entries)
 {
-    uint16_t const old_nb_row = this->get_nb_rows();
-
-    assert(old_nb_row < GRID_NB_ROWS_MAX);
-
-    this->set_nb_rows(old_nb_row + 1);
+    auto line = this->WidgetGrid::add_line();
 
     bool const odd = this->get_nb_rows() & 1;
     auto const fg_color = odd ? this->fg_color_1 : this->fg_color_2;
@@ -74,8 +69,8 @@ uint16_t WidgetLabelGrid::add_line(array_view<const array_view_const_char> entri
     auto const max_column = std::min(std::size_t(this->get_nb_columns()), entries.size());
 
     for (std::size_t i = 0; i < max_column; ++i) {
-        WidgetLabel * label = new WidgetLabel(
-            this->drawable, *this, this, entries[i], this->group_id,
+        auto label = std::make_unique<WidgetLabel>(
+            this->drawable, this->parent, this, entries[i], this->group_id,
             fg_color, bg_color, this->font, x_padding_label, y_padding_label
         );
 
@@ -83,10 +78,8 @@ uint16_t WidgetLabelGrid::add_line(array_view<const array_view_const_char> entri
         label->set_wh(dim);
 
         label->tool = true;
-        this->set_widget(old_nb_row, i, label);
+        line[i] = std::move(label);
     }
-
-    return old_nb_row;
 }
 
 const char * WidgetLabelGrid::get_cell_text(uint16_t row_index, uint16_t column_index)
@@ -94,7 +87,7 @@ const char * WidgetLabelGrid::get_cell_text(uint16_t row_index, uint16_t column_
     const char * result = "";
     Widget * w = this->get_widget(row_index, column_index);
     if (w) {
-        WidgetLabel * label = static_cast<WidgetLabel*>(w);
+        WidgetLabel * label = static_cast<WidgetLabel*>(w); /*NOLINT*/
         result = label->get_text();
     }
     return result;
