@@ -982,7 +982,7 @@ public:
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(SecBuffer& output_buffer) {
+    SEC_STATUS write_negotiate(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
@@ -1015,7 +1015,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_challenge(SecBuffer& output_buffer) {
+    SEC_STATUS write_challenge(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
@@ -1045,7 +1045,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_authenticate(SecBuffer& output_buffer) {
+    SEC_STATUS write_authenticate(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }

@@ -286,8 +286,7 @@ protected:
         }
 
         return this->table->EncryptMessage(
-            public_key,
-            static_cast<SecBuffer&>(this->ts_request.pubKeyAuth), this->send_seq_num++);
+            public_key, this->ts_request.pubKeyAuth, this->send_seq_num++);
     }
 
     SEC_STATUS credssp_decrypt_public_key_echo() {
@@ -295,7 +294,7 @@ protected:
             LOG(LOG_INFO, "rdpCredsspClient::decrypt_public_key_echo");
         }
 
-        SecBuffer Buffer;
+        Array Buffer;
 
         SEC_STATUS const status = this->table->DecryptMessage(
             this->ts_request.pubKeyAuth.av(), Buffer, this->recv_seq_num++);
@@ -418,7 +417,7 @@ public:
 
         return this->table->EncryptMessage(
             {ts_credentials_send.get_data(), ts_credentials_send.get_offset()},
-            static_cast<SecBuffer&>(this->ts_request.authInfo), this->send_seq_num++);
+            this->ts_request.authInfo, this->send_seq_num++);
     }
 
 private:
@@ -455,7 +454,7 @@ private:
     struct ClientAuthenticateData
     {
         enum : uint8_t { Start, Loop, Final } state = Start;
-        SecBuffer input_buffer;
+        Array input_buffer;
     };
     ClientAuthenticateData client_auth_data;
 
@@ -474,7 +473,7 @@ private:
         SEC_STATUS status = this->table->InitializeSecurityContext(
             char_ptr_cast(this->ServicePrincipalName.get_data()),
             this->client_auth_data.input_buffer.av(),
-            /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
+            /*output*/this->ts_request.negoTokens);
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&
             (status != SEC_I_COMPLETE_NEEDED) &&
             (status != SEC_E_OK) &&
@@ -656,7 +655,7 @@ public:
             return SEC_E_INVALID_TOKEN;
         }
 
-        SecBuffer Buffer;
+        Array Buffer;
 
         const SEC_STATUS status = this->table->DecryptMessage(
             this->ts_request.authInfo.av(), Buffer, this->recv_seq_num++);
@@ -740,7 +739,7 @@ public:
         //     | ASC_REQ_EXTENDED_ERROR;
         SEC_STATUS status = this->table->AcceptSecurityContext(
             this->ts_request.negoTokens.av(),
-            /*output*/static_cast<SecBuffer&>(this->ts_request.negoTokens));
+            /*output*/this->ts_request.negoTokens);
         this->state_accept_security_context = status;
         if (status == SEC_I_LOCAL_LOGON) {
             return Res::Ok;

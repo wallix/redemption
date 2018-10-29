@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     client_status = client_table.AcquireCredentialsHandle("NTLM", nullptr, &client_server_id);
     RED_CHECK_EQUAL(client_status, SEC_E_OK);
 
-    SecBuffer output_buffer;
+    Array output_buffer;
 
     // client first call, no input buffer, no context
     client_status = client_table.InitializeSecurityContext(
@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     fsContextReq |= ASC_REQ_EXTENDED_ERROR;
 
-    SecBuffer input_buffer;
+    Array input_buffer;
 
     // server first call, no context
     // got input buffer (output of client): Negotiate message
@@ -106,7 +106,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
 
     // ENCRYPT
     uint8_t message[] = "$ds$qùdù*qsdlçàMessagetobeEncrypted !!!";
-    SecBuffer Result;
+    Array Result;
     server_status = server_table.EncryptMessage(message, Result, 0);
     RED_CHECK_EQUAL(server_status, SEC_E_OK);
 
@@ -117,7 +117,7 @@ RED_AUTO_TEST_CASE(TestInitialize)
     // hexdump_c(Result.get_data(), Result.size());
 
     // DECRYPT
-    SecBuffer Result2;
+    Array Result2;
     client_status = client_table.DecryptMessage({Result.get_data(), Result.size()}, Result2, 0);
 
     RED_CHECK_EQUAL(Result.size(), make_array_view(message).size() + cbMaxSignature);
