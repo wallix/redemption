@@ -2550,9 +2550,9 @@ struct CliprdrLogState
 };
 
 
-static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogState & state) {
+static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState & state) {
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        InStream chunk =  stream.clone();
+//         InStream chunk =  stream.clone();
 
         CliprdrHeader header;
         header.recv(chunk);
@@ -2592,7 +2592,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_FORMAT_DATA_REQUEST:
             {
                 FormatDataRequestPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 pdu.log();
 
                 state.requestedFormatId = pdu.requestedFormatId;
@@ -2606,7 +2606,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     case CF_METAFILEPICT:
                     {
                         FormatDataResponsePDU_MetaFilePic pdu;
-                        pdu.recv(stream);
+                        pdu.recv(chunk);
                         pdu.log();
                     }
                         break;
@@ -2656,7 +2656,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_FILECONTENTS_REQUEST:
             {
                 FileContentsRequestPDU pdu;
-                pdu.receive(stream);
+                pdu.receive(chunk);
                 pdu.log(LOG_INFO);
 
                 state.file_content_request_flag = pdu.dwFlags();
@@ -2670,7 +2670,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     case FILECONTENTS_SIZE:
                     {
                         FileContentsResponse pdu;
-                        pdu.receive(stream);
+                        pdu.receive(chunk);
                         pdu.log();
                     }
                         break;
@@ -2678,7 +2678,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
                     case FILECONTENTS_RANGE:
                     {
                         FileContentsResponse pdu;
-                        pdu.receive(stream);
+                        pdu.receive(chunk);
                         pdu.log();
                     }
                         break;
@@ -2691,7 +2691,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_LOCK_CLIPDATA:
             {
                 LockClipboardDataPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 pdu.log();
             }
                 break;
@@ -2699,7 +2699,7 @@ static inline void streamLogCliprdr(InStream & stream, int flags, CliprdrLogStat
             case CB_UNLOCK_CLIPDATA:
             {
                 UnlockClipboardDataPDU pdu;
-                pdu.recv(stream);
+                pdu.recv(chunk);
                 pdu.log();
             }
                 break;

@@ -178,6 +178,8 @@ public:
 
     RDPECLIP::FormatListPDUEx format_list_pdu;
 
+    size_t last_header_data_len = 0;
+
 
     ClientChannelCLIPRDRManager(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
 

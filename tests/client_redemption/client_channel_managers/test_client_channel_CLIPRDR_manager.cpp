@@ -33,6 +33,7 @@
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 {
+    LOG(LOG_INFO, "TestCLIPRDRChannelInitialization");
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
                                                         CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
 
@@ -109,6 +110,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 {
+    LOG(LOG_INFO, "TestCLIPRDRChannelTextCopyFromServerToCLient");
     uint8_t clip_data_part1[1592] = {0};
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -169,11 +171,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     // Format Data Request PDU
     pdu_data = mod.stream();
     RED_CHECK_EQUAL(pdu_data->size, 12);
-    InStream stream_formataDataRequest(pdu_data->data, pdu_data->size);
-    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
-    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
-    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), 4);
-    RED_CHECK_EQUAL(stream_formataDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
+    InStream stream_formatDataRequest(pdu_data->data, pdu_data->size);
+    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_REQUEST);
+    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint16_le(), RDPECLIP::CB_RESPONSE__NONE_);
+    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint32_le(), 4);
+    RED_CHECK_EQUAL(stream_formatDataRequest.in_uint32_le(), RDPECLIP::CF_TEXT);
 
     // Format Data Response PDU part 1
     StaticOutStream<1600> out_FormatDataResponsep_part1;
@@ -222,6 +224,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 {
+    LOG(LOG_INFO, "TestCLIPRDRChannelTextCopyFromClientToServer");
     uint8_t clip_data_part1[1592] = {0};
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -252,6 +255,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, &clip_io, conf);
 
     // COPY from clipboard
+    LOG(LOG_INFO, "COPY from clipboard");
     clip_io._bufferTypeID = RDPECLIP::CF_TEXT;
     clip_io._chunk = std::make_unique<uint8_t[]>(sizeof(clip_data_total));
     for (size_t i = 0; i < sizeof(clip_data_total); i++) {
@@ -263,6 +267,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 1);
 
     // Format List PDU
+    LOG(LOG_INFO, "Format List PDU");
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     InStream stream_formatListPDU(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), RDPECLIP::CB_FORMAT_LIST);
@@ -272,6 +277,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatListPDU.in_uint16_le(), 0);
 
     // Format List Response PDU
+    LOG(LOG_INFO, "Format List Response PDU");
     StaticOutStream<512> out_FormatListResponsePDU;
     out_FormatListResponsePDU.out_uint16_le(RDPECLIP::CB_FORMAT_LIST_RESPONSE);
     out_FormatListResponsePDU.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
@@ -320,6 +326,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 {
+    LOG(LOG_INFO, "TestCLIPRDRChannelFileCopyFromServerToCLient");
+
     uint8_t clip_data_part1[1588] = {0};
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};
@@ -465,7 +473,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(fileContentsRequest_range.in_uint32_le(), 0x00000000); // clipDataId
 
     // Manager and clipboard_io checks
-    RED_CHECK_EQUAL(manager._waiting_for_data, true);
+    RED_CHECK_EQUAL(manager._waiting_for_data, false);
     RED_CHECK_EQUAL(0, clip_io.offset);
     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
 
@@ -474,13 +482,15 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_FILECONTENTS_RESPONSE);
     out_fileContentsResponse_range_part1.out_uint16_le(RDPECLIP::CB_RESPONSE_OK);
     out_fileContentsResponse_range_part1.out_uint32_le(4 + sizeof(clip_data_total));
-    out_fileContentsResponse_range_part1.out_uint32_le(1);
-
+    out_fileContentsResponse_range_part1.out_uint32_le(1);  // streamID
     out_fileContentsResponse_range_part1.out_copy_bytes(clip_data_part1, sizeof(clip_data_part1));
+
     InStream chunk_FileContentResponse_range_part1(
             out_fileContentsResponse_range_part1.get_data(),
             out_fileContentsResponse_range_part1.get_offset());
+
     manager.receive(chunk_FileContentResponse_range_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+    
     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
     RED_CHECK_EQUAL(manager._waiting_for_data, true);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
@@ -522,6 +532,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
 {
+    LOG(LOG_INFO, "TestCLIPRDRChannelFileCopyFromClientToServer");
+
     uint8_t clip_data_part1[1588] = {0};
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};
