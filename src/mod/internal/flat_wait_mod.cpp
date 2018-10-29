@@ -75,7 +75,7 @@ void FlatWaitMod::notify(Widget * sender, notify_event_t event)
         case NOTIFY_TEXT_CHANGED: this->confirm(); break;
         case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:
             if (this->copy_paste) {
-                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event);
+                copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit *>(sender), event); /*NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)*/
             };
             break;
         default:;
