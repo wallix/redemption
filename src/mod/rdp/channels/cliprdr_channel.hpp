@@ -214,11 +214,11 @@ private:
     }
 
     bool process_client_filecontents_request(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
         (void)flags;
-        (void)chunk;
+//         (void)chunk;
 
         if (!this->param_clipboard_file_authorized) {
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -248,22 +248,22 @@ private:
             return false;
         }
 
-        {
-            const unsigned int expected = 6;    // msgFlags(2) +
-                                                //     dataLen(4)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_filecontents_request: "
-                        "Truncated CLIPRDR_HEADER, need=%u remains=%zu",
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
+//         {
+//             const unsigned int expected = 6;    // msgFlags(2) +
+//                                                 //     dataLen(4)
+//             if (!chunk.in_check_rem(expected)) {
+//                 LOG(LOG_ERR,
+//                     "ClipboardVirtualChannel::process_client_filecontents_request: "
+//                         "Truncated CLIPRDR_HEADER, need=%u remains=%zu",
+//                     expected, chunk.in_remain());
+//                 throw Error(ERR_RDP_DATA_TRUNCATED);
+//             }
+//         }
+//
+//         chunk.in_skip_bytes(2); // msgFlags(2)
+//         uint32_t const dataLen = chunk.in_uint32_le();
 
-        chunk.in_skip_bytes(2); // msgFlags(2)
-        uint32_t const dataLen = chunk.in_uint32_le();
-
-        if (dataLen > RDPECLIP::FileContentsRequestPDU::minimum_size()) {
+        if (in_header.dataLen() > RDPECLIP::FileContentsRequestPDU::minimum_size()) {
             RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
 
             file_contents_request_pdu.receive(chunk);
@@ -979,7 +979,7 @@ public:
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                send_message_to_server = this->process_client_filecontents_request(total_length, flags, chunk);
+                send_message_to_server = this->process_client_filecontents_request(total_length, flags, chunk_serie, header);
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
