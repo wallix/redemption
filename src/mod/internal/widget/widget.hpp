@@ -123,10 +123,10 @@ public:
 
     virtual void show_tooltip(
         Widget * widget, const char * text, int x, int y,
-        Rect preferred_display_rect, int iter = 10)
+        Rect preferred_display_rect)
     {
-        if (iter > 0) {
-            this->parent.show_tooltip(widget, text, x, y, preferred_display_rect, iter - 1);
+        if (!this->is_root()) {
+            this->parent.show_tooltip(widget, text, x, y, preferred_display_rect);
         }
     }
 

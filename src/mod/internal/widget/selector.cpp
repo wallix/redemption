@@ -394,9 +394,8 @@ void WidgetSelector::rdp_input_scancode(long int param1, long int param2, long i
 
 void WidgetSelector::show_tooltip(
     Widget * widget, const char * text, int x, int y,
-    Rect const preferred_display_rect, int iter)
+    Rect const preferred_display_rect)
 {
     WidgetParent::show_tooltip(widget, text, x, y,
-        (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect),
-        iter);
+        (preferred_display_rect.isempty() ? this->get_rect() : preferred_display_rect));
 }

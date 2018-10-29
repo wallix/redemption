@@ -135,7 +135,7 @@ public:
     void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2* keymap) override;
 
     void show_tooltip(Widget * widget, const char * text, int x, int y,
-                      Rect const preferred_display_rect, int iter) override;
+                      Rect const preferred_display_rect) override;
 
 private:
     void rearrange();
