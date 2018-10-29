@@ -122,11 +122,11 @@ namespace BER {
             return false;
         }
         byte = s.in_uint8();
-        return byte == (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
+        return byte == (CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
     }
 
     inline int write_universal_tag(OutStream & s, uint8_t tag, bool pc) {
-        s.out_uint8(CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag));
+        s.out_uint8(CLASS_UNIV | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
         return 1;
     }
 
@@ -186,7 +186,7 @@ namespace BER {
         }
         byte = s.peek_uint8();
         // LOG(LOG_INFO, "read_contextual_tag read: %x\n", byte);
-        if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) {
+        if (byte != (CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag))) { /*NOLINT*/
             return false;
         }
         s.in_skip_bytes(1);
@@ -194,7 +194,7 @@ namespace BER {
     }
 
     inline int write_contextual_tag(OutStream & s, uint8_t tag, int length, bool pc) {
-        s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag));
+        s.out_uint8(CLASS_CTXT | ber_pc(pc) | (TAG_MASK & tag)); /*NOLINT*/
         return 1 + write_length(s, length);
     }
 
@@ -212,7 +212,7 @@ namespace BER {
         }
         byte = s.in_uint8();
 
-        if (byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF)) {
+        if (byte != (CLASS_UNIV | PC_CONSTRUCT | TAG_SEQUENCE_OF)) { /*NOLINT*/
             return false;
         }
 
@@ -221,7 +221,7 @@ namespace BER {
     }
 
     inline int write_sequence_tag(OutStream & s, int length) {
-        s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE));
+        s.out_uint8(CLASS_UNIV | PC_CONSTRUCT | (TAG_MASK & TAG_SEQUENCE)); /*NOLINT*/
         return 1 + write_length(s, length);
     }
 

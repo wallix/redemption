@@ -779,7 +779,7 @@ namespace
             this->draw_tile(tile_data, drawable);
         }
     }; // class Zrle
-}
+} // namespace
 
 Encoder zrle_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect, Zdecompressor<>& zd, VNCVerbose verbose)
 {

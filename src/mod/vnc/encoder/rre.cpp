@@ -194,7 +194,7 @@ namespace
             }
         }
     };
-}
+} // namespace
 
 Encoder rre_encoder(BitsPerPixel bpp, BytesPerPixel Bpp, Rect rect)
 {

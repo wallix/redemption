@@ -516,7 +516,7 @@ class WrmCaptureImpl :
                 RDPBitmapData target_bitmap_data = bitmap_data;
 
                 target_bitmap_data.bits_per_pixel = safe_int(bmp.bpp());
-                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                target_bitmap_data.flags          = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;  /*NOLINT*/
                 target_bitmap_data.bitmap_length  = bmp_stream.get_offset();
 
                 GraphicToFile::draw(target_bitmap_data, bmp);
