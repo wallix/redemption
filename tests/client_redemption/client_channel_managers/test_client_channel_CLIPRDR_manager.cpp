@@ -255,7 +255,6 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     ClientChannelCLIPRDRManager manager(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, &clip_io, conf);
 
     // COPY from clipboard
-    LOG(LOG_INFO, "COPY from clipboard");
     clip_io._bufferTypeID = RDPECLIP::CF_TEXT;
     clip_io._chunk = std::make_unique<uint8_t[]>(sizeof(clip_data_total));
     for (size_t i = 0; i < sizeof(clip_data_total); i++) {
@@ -490,7 +489,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
             out_fileContentsResponse_range_part1.get_offset());
 
     manager.receive(chunk_FileContentResponse_range_part1, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-    
+
     RED_CHECK_EQUAL(manager.file_content_flag, RDPECLIP::FILECONTENTS_RANGE);
     RED_CHECK_EQUAL(manager._waiting_for_data, true);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
