@@ -165,14 +165,13 @@ public:
 private:
 
     bool process_client_clipboard_capabilities_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & /*in_header*/)
     {
         (void)total_length;
         (void)flags;
 
         {
-            const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
-                                                //     cCapabilitiesSets(2) +
+            const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
                                                 //     pad1(2)
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
@@ -183,7 +182,7 @@ private:
             }
         }
 
-        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+//         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
         assert(1 == cCapabilitiesSets);
@@ -668,7 +667,7 @@ private:
 
 public:
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
-        InStream& chunk)
+        InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
 
@@ -733,21 +732,21 @@ public:
             return false;
         }
 
-        {
-            const unsigned int expected = 6;    // msgFlags(2) +
-                                                //     dataLen(4)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_format_list_pdu: "
-                        "Truncated CLIPRDR_FORMAT_LIST, "
-                        "need=%u remains=%zu",
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
-
-        const uint16_t msgFlags = chunk.in_uint16_le();
-        const uint32_t dataLen  = chunk.in_uint32_le();
+//         {
+//             const unsigned int expected = 6;    // msgFlags(2) +
+//                                                 //     dataLen(4)
+//             if (!chunk.in_check_rem(expected)) {
+//                 LOG(LOG_ERR,
+//                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
+//                         "Truncated CLIPRDR_FORMAT_LIST, "
+//                         "need=%u remains=%zu",
+//                     expected, chunk.in_remain());
+//                 throw Error(ERR_RDP_DATA_TRUNCATED);
+//             }
+//         }
+//
+//         const uint16_t msgFlags = chunk.in_uint16_le();
+//         const uint32_t dataLen  = chunk.in_uint32_le();
 
         this->format_name_inventory.clear();
 
@@ -758,11 +757,11 @@ public:
                     "ClipboardVirtualChannel::process_client_format_list_pdu: "
                         "Short Format Name%s variant of Format List PDU is used "
                         "for exchanging updated format names.",
-                    ((msgFlags & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
+                    ((in_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES) ? " (ASCII 8)"
                                                            : ""));
             }
 
-            for (uint32_t remaining_data_length = dataLen;
+            for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
                 {
                     const unsigned int expected = 36;   // formatId(4) + formatName(32)
@@ -826,7 +825,7 @@ public:
 
 
 
-            for (uint32_t remaining_data_length = dataLen;
+            for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
                 {
                     const unsigned int expected = 6;    // formatId(4) + min_len(formatName)(2)
@@ -937,6 +936,10 @@ public:
         }
 
         InStream chunk(chunk_data, chunk_data_length);
+        InStream chunk_serie = chunk.clone();
+
+        RDPECLIP::CliprdrHeader header;
+        header.recv(chunk_serie);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             if (!chunk.in_check_rem(2 /* msgType(2) */)) {
@@ -961,13 +964,13 @@ public:
             case RDPECLIP::CB_CLIP_CAPS:
                 send_message_to_server =
                     this->process_client_clipboard_capabilities_pdu(
-                        total_length, flags, chunk);
+                        total_length, flags, chunk_serie, header);
             break;
 
             case RDPECLIP::CB_FORMAT_LIST:
                 send_message_to_server =
                     this->process_client_format_list_pdu(
-                        total_length, flags, chunk);
+                        total_length, flags, chunk_serie, header);
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
