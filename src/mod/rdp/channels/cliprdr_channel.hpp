@@ -288,7 +288,7 @@ private:
     }
 
     bool process_client_format_data_request_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & /*in_header*/)
     {
         (void)total_length;
         (void)flags;
