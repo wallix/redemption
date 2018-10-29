@@ -288,7 +288,7 @@ private:
     }
 
     bool process_client_format_data_request_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
         (void)flags;
@@ -323,8 +323,7 @@ private:
         }
 
         {
-            const unsigned int expected = 10;   // msgFlags(2) + dataLen(4) +
-                                                //     requestedFormatId(4)
+            const unsigned int expected = 4;   //     requestedFormatId(4)
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
@@ -334,7 +333,7 @@ private:
             }
         }
 
-        chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
+//         chunk.in_skip_bytes(6); // msgFlags(2) + dataLen(4)
 
         this->requestedFormatId = chunk.in_uint32_le();
 
@@ -976,7 +975,7 @@ public:
             case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 send_message_to_server =
                     this->process_client_format_data_request_pdu(
-                        total_length, flags, chunk);
+                        total_length, flags, chunk_serie, header);
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
