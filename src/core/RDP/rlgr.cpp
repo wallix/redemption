@@ -19,7 +19,7 @@
 
    Run-Length Golomb-Rice compression
 */
-#include "rlgr.hpp"
+#include "core/RDP/rlgr.hpp"
 
 #include <utils/bitstream.hpp>
 #include <cstring>

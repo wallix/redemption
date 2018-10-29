@@ -21,16 +21,19 @@
 #define RED_TEST_MODULE TestBitmapCodecs
 #include "system/redemption_unit_tests.hpp"
 
+#include "core/error.hpp"
+#include "utils/hexdump.hpp"
 #include "core/RDP/capabilities/bitmapcodecs.hpp"
-#include "utils/stream.hpp"
+
 
 RED_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
 {
     StaticOutStream<1024> out_stream;
-    BitmapCodecCaps cap;
+    BitmapCodecCaps cap(true);
     cap.emit(out_stream);
 
-    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
-    BitmapCodecCaps cap2;
-    cap2.recv(in_stream, CAPLEN_BITMAP_CODECS);
+    // Note : +4 because at this point we already have read Caps header
+    InStream in_stream(out_stream.get_data()+4, out_stream.get_offset()-4);
+    BitmapCodecCaps cap2(true);
+    cap2.recv(in_stream, CAPLEN_BITMAP_CODECS_CAPS);
 }

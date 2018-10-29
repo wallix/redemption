@@ -4563,11 +4563,12 @@ public:
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
                 {
-                    BitmapCodecCaps caps(false);
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
+                    BitmapCodecCaps caps(true);
+                    stream.in_skip_bytes(capset_length-4);
+//                    caps.recv(stream, capset_length);
+//                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+//                        caps.log("Receiving from server");
+//                    }
                 }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:

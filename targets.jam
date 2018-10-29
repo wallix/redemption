@@ -1217,7 +1217,13 @@ test-run tests/core/RDP/capabilities/test_bitmapcodecs :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcodecs.cpp
 :
   <covfile>src/core/RDP/capabilities/bitmapcodecs.hpp
+  <library>boost_stacktrace
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/utf.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
 ;
 test-run tests/core/RDP/capabilities/test_bmpcache2 :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bmpcache2.cpp
@@ -2186,6 +2192,13 @@ test-run tests/core/RDP/test_remote_programs :
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
+;
+test-run tests/core/RDP/test_rlgr :
+  $(REDEMPTION_TEST_PATH)/core/RDP/test_rlgr.cpp
+:
+  <covfile>src/core/RDP/rlgr.cpp
+  <covfile>src/core/RDP/rlgr.hpp
+  <library>src/core/RDP/rlgr.o
 ;
 test-run tests/core/RDP/test_sec :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_sec.cpp
@@ -5139,6 +5152,11 @@ test-run tests/utils/test_bitmap_shrink :
 :
   <covfile>src/utils/bitmap_shrink.hpp
 ;
+test-run tests/utils/test_bitstream :
+  $(REDEMPTION_TEST_PATH)/utils/test_bitstream.cpp
+:
+  <covfile>src/utils/bitstream.hpp
+;
 test-run tests/utils/test_cfgloader :
   $(REDEMPTION_TEST_PATH)/utils/test_cfgloader.cpp
 :
@@ -5464,8 +5482,10 @@ obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder
 obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
 obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
 obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
+obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
@@ -5554,6 +5574,7 @@ obj src/utils/load_theme.o : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
 obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 obj src/utils/pattutils.o : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 obj src/utils/png.o : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
+obj src/utils/primitives/primitives.o : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 obj src/utils/rle.o : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 obj src/utils/set_exception_handler_pretty_message.o : $(REDEMPTION_SRC_PATH)/utils/set_exception_handler_pretty_message.cpp ;
 obj src/utils/strutils.o : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
@@ -5826,6 +5847,8 @@ alias test_rdp_pointer : tests/core/RDP/test_rdp_pointer ;
 alias test_rdp_pointer.coverage : tests/core/RDP/test_rdp_pointer.coverage ;
 alias test_remote_programs : tests/core/RDP/test_remote_programs ;
 alias test_remote_programs.coverage : tests/core/RDP/test_remote_programs.coverage ;
+alias test_rlgr : tests/core/RDP/test_rlgr ;
+alias test_rlgr.coverage : tests/core/RDP/test_rlgr.coverage ;
 alias test_sec : tests/core/RDP/test_sec ;
 alias test_sec.coverage : tests/core/RDP/test_sec.coverage ;
 alias test_share : tests/core/RDP/test_share ;
@@ -6139,6 +6162,8 @@ alias test_bitmap_from_file : tests/utils/test_bitmap_from_file ;
 alias test_bitmap_from_file.coverage : tests/utils/test_bitmap_from_file.coverage ;
 alias test_bitmap_shrink : tests/utils/test_bitmap_shrink ;
 alias test_bitmap_shrink.coverage : tests/utils/test_bitmap_shrink.coverage ;
+alias test_bitstream : tests/utils/test_bitstream ;
+alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
 alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
 alias test_colors : tests/utils/test_colors ;
@@ -6388,6 +6413,7 @@ alias tests/core/RDP.norec :
   tests/core/RDP/test_protocol
   tests/core/RDP/test_rdp_pointer
   tests/core/RDP/test_remote_programs
+  tests/core/RDP/test_rlgr
   tests/core/RDP/test_sec
   tests/core/RDP/test_share
   tests/core/RDP/test_slowpath
@@ -6601,6 +6627,7 @@ alias tests/utils.norec :
   tests/utils/test_bitmap_data_allocator
   tests/utils/test_bitmap_from_file
   tests/utils/test_bitmap_shrink
+  tests/utils/test_bitstream
   tests/utils/test_cfgloader
   tests/utils/test_colors
   tests/utils/test_compression_transport_builder
