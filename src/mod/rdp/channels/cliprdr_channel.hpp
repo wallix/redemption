@@ -1779,7 +1779,7 @@ public:
                     this->server_dataLen = header.dataLen();          //chunk.in_uint32_le();
 
                     if (this->server_dataLen >= 4 /* streamId(4) */) {
-                        this->server_streamId = chunk.in_uint32_le();
+                        this->server_streamId = chunk_serie.in_uint32_le();
                     }
                 }
 
@@ -1798,15 +1798,15 @@ public:
 
                         uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
 
-                        if (chunk.in_remain()) {
+                        if (chunk_serie.in_remain()) {
                             if (file_info.sequential_access_offset == file_contents_request_position_current) {
                                 uint32_t const length_ = std::min({
-                                        static_cast<uint32_t>(chunk.in_remain()),
+                                        static_cast<uint32_t>(chunk_serie.in_remain()),
                                         static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
                                         file_contents_request.cbRequested - file_contents_request.offset
                                     });
 
-                                file_info.sha256.update({ chunk.get_current(), length_ });
+                                file_info.sha256.update({ chunk_serie.get_current(), length_ });
 
                                 file_contents_request.offset       += length_;
                                 file_info.sequential_access_offset += length_;
