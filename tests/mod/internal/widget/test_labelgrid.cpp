@@ -68,7 +68,7 @@ RED_AUTO_TEST_CASE(TraceLabelGrid)
         { 50, 150 }, { 150, 800 }, { 50, 150 }, { 50, 100 }
     };
 
-    uint16_t row_height[line_number]      = { 0 };
+    uint16_t row_height[line_number+4]      = { 0 };
     uint16_t column_width[column_number] = { 0 };
 
     compute_format(wgrid, column_width_strategies, row_height, column_width);
