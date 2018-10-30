@@ -27,6 +27,8 @@
 #include "test_only/check_sig.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/drawable.hpp"
+#include "utils/drawable_pointer.hpp"
+#include "utils/ellipse.hpp"
 #include "utils/timestamp_tracer.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 

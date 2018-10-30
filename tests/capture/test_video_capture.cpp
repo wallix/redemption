@@ -27,6 +27,7 @@
 
 #ifndef REDEMPTION_NO_FFMPEG
 
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "capture/full_video_params.hpp"
 #include "capture/capture_params.hpp"
 #include "core/RDP/RDPDrawable.hpp"
