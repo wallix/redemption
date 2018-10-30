@@ -65,7 +65,7 @@ class ACLPassthrough():
             Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
         # replace MAGICASK with ASK and send data on the wire
         _list = []
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self.shared[key] = value
             if value != MAGICASK:
                 _pair = u"%s\n!%s\n" % (key, value)
@@ -82,7 +82,7 @@ class ACLPassthrough():
         _len = len(_r_data)
 
         _chunk_size = 1024 * 64 - 1
-        _chunks = _len / _chunk_size
+        _chunks = _len // _chunk_size
 
         if _chunks == 0:
             self.proxy_conx.sendall(pack(">L", _len))
@@ -108,15 +108,15 @@ class ACLPassthrough():
             try:
                 _packet_size, = unpack(">L", self.proxy_conx.recv(4))
                 _data = self.proxy_conx.recv(_packet_size)
-            except Exception, e:
+            except Exception as e:
                 if DEBUG:
                     import traceback
                     Logger().info(u"Socket Closed : %s" % traceback.format_exc(e))
                 raise AuthentifierSocketClosed()
             _data = _data.decode('utf-8')
-        except AuthentifierSocketClosed, e:
+        except AuthentifierSocketClosed as e:
             raise
-        except Exception, e:
+        except Exception as e:
             raise AuthentifierSocketClosed()
 
         if _status:
@@ -129,7 +129,7 @@ class ACLPassthrough():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception, e:
+            except Exception as e:
                 if DEBUG:
                     import traceback
                     Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
@@ -249,12 +249,12 @@ class ACLPassthrough():
             Logger().debug(u"End Of Keep Alive")
 
 
-        except AuthentifierSocketClosed, e:
+        except AuthentifierSocketClosed as e:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-        except Exception, e:
+        except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
@@ -299,6 +299,7 @@ from logger import Logger
 socket_path = '/tmp/redemption-sesman-sock'
 
 def standalone():
+    print('open socket at', socket_path)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     # create socket from bounded port
     s1 = socket.socket(AF_UNIX, SOCK_STREAM)
@@ -332,12 +333,12 @@ def standalone():
         if client_socket:
             client_socket.close()
         sys.exit(1)
-    except socket.error, e:
+    except socket.error as e:
         pass
-    except AuthentifierSocketClosed, e:
+    except AuthentifierSocketClosed as e:
         Logger().info("Authentifier Socket Closed")
-    except Exception, e:
-        Logger().exception("%s" % e)
+    # except Exception as e:
+        # Logger().exception("%s" % e)
 
 if __name__ == '__main__':
     standalone()
