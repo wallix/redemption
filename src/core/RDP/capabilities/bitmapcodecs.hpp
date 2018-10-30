@@ -373,7 +373,7 @@ struct RFXICap {
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-    
+
         this->version = stream.in_uint16_le();
         if (this->version != CLW_VERSION_1_0) {
             LOG(LOG_ERR, "RFXICap expecting version=1.0");
@@ -713,7 +713,7 @@ struct BitmapCodec {
             codecProperties = new NSCodecCaps();
             codecType = CODEC_NS;
             this->codecProperties->recv(stream, this->codecPropertiesLength);
-        } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0) 
+        } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0)
                || (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
             /* CODEC_GUID_REMOTEFX or CODEC_GUID_IMAGE_REMOTEFX */
             if (clientMode){
@@ -810,7 +810,7 @@ struct BitmapCodecCaps : public Capability {
 
         unsigned expected = 1;
         if (this->len < expected){
-            LOG(LOG_ERR, "Truncated BitmapCodecs, need=%u remains=%zu", expected, this->len);
+            LOG(LOG_ERR, "Truncated BitmapCodecs, need=%u remains=%hu", expected, this->len);
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
