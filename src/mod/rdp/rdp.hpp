@@ -4563,7 +4563,9 @@ public:
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
                 {
-                    BitmapCodecCaps caps(true);
+                    BitmapCodecCaps caps(false);
+                    LOG(LOG_INFO, "Dumping CAPSETTYPE_BITMAP_CODECS");
+                    hexdump_d(stream.get_current()-4, capset_length);
                     stream.in_skip_bytes(capset_length-4);
 //                    caps.recv(stream, capset_length);
 //                    if (bool(this->verbose & RDPVerbose::capabilities)) {

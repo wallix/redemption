@@ -1380,6 +1380,7 @@ test-run tests/core/RDP/capabilities/test_order :
   <covfile>src/core/RDP/capabilities/order.hpp
   <library>boost_stacktrace
   <library>src/core/error.o
+  <library>src/utils/hexdump.o
   <library>src/utils/utf.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl

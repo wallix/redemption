@@ -367,6 +367,13 @@ struct RFXICap {
     RFXICap() = default;
 
     void recv(InStream & stream, uint16_t len) {
+
+        if (len < 7) {
+            LOG(LOG_ERR, "Truncated RFXICap, needs=7 remains=%u", len);
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+    
         this->version = stream.in_uint16_le();
         if (this->version != CLW_VERSION_1_0) {
             LOG(LOG_ERR, "RFXICap expecting version=1.0");
@@ -496,7 +503,7 @@ struct RFXCapset {
         }
 
         unsigned expected = this->numIcaps * this->icapLen;
-        if (!stream.in_check_rem(expected)) {
+        if (len < expected + 13) {
             LOG(LOG_ERR, "Truncated RFXCapset, needs=%u remains=%zu", expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -535,6 +542,10 @@ struct RFXCaps {
     }
 
     void recv(InStream & stream, uint16_t len) {
+        if (len < 8){
+            LOG(LOG_ERR, "RFXCaps, truncated pdu need=8 got=%u", len);
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
         this->blockType = stream.in_uint16_le();
         if (this->blockType != CBY_CAPS) {
             LOG(LOG_ERR, "RFXCaps, expecting blockType=CBY_CAPS");
@@ -586,7 +597,7 @@ struct RFXClntCaps : public CodecGenCaps {
     }
 
     void recv(InStream & stream, uint16_t len) override {
-        if (stream.in_remain() < 12) {
+        if (len < 12) {
             LOG(LOG_ERR, "Truncated RFXClntCaps, need=%u remains=%zu", this->capsLength, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -595,7 +606,7 @@ struct RFXClntCaps : public CodecGenCaps {
         this->captureFlags = stream.in_uint32_le();
         this->capsLength = stream.in_uint32_le();
 
-        if (!stream.in_check_rem(this->capsLength)) {
+        if (len < this->capsLength + 12) {
             LOG(LOG_ERR, "Truncated RFXClntCaps, need=%u remains=%zu", this->capsLength, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
@@ -645,15 +656,19 @@ struct BitmapCodec {
             break;
         case CODEC_GUID_REMOTEFX:
         case CODEC_GUID_IMAGE_REMOTEFX:
-            if (codecGUID == CODEC_GUID_IMAGE_REMOTEFX)
+            if (codecGUID == CODEC_GUID_IMAGE_REMOTEFX){
                 memcpy(this->codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16);
-            else
+            }
+            else {
                 memcpy(this->codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16);
+            }
 
-            if (client)
+            if (client) {
                 this->codecProperties = new RFXClntCaps();
-            else
+            }
+            else {
                 this->codecProperties = new RFXSrvrCaps();
+            }
             this->codecType = CODEC_REMOTEFX;
             break;
         default:
@@ -675,47 +690,49 @@ struct BitmapCodec {
         return ret;
     }
 
-    void recv(InStream & stream, bool clientMode) {
-        size_t expected = 19;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated BitmapCodecs, need=%lu remains=%zu", expected, stream.in_remain());
+    void recv(InStream & stream, uint16_t & len, bool clientMode) {
+        if (len < 19){
+            LOG(LOG_ERR, "Truncated BitmapCodecs, need=19 remains=%u", len);
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
         stream.in_copy_bytes(codecGUID, 16);
         this->codecID = stream.in_uint8();
         this->codecPropertiesLength = stream.in_uint16_le();
+        len -= 19;
 
-        expected = this->codecPropertiesLength;
-        if (!stream.in_check_rem(expected)){
-            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%lu remains=%zu", expected, stream.in_remain());
+        uint16_t expected = this->codecPropertiesLength;
+        if (len < expected){
+            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%u remains=%u", expected, len);
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
+        len -= this->codecPropertiesLength;
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */
             codecProperties = new NSCodecCaps();
             codecType = CODEC_NS;
-        } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0) ||
-                  (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
+            this->codecProperties->recv(stream, this->codecPropertiesLength);
+        } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0) 
+               || (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
             /* CODEC_GUID_REMOTEFX or CODEC_GUID_IMAGE_REMOTEFX */
             if (clientMode){
                 this->codecProperties = new RFXClntCaps();
+                this->codecProperties->recv(stream, this->codecPropertiesLength);
             }
             else {
                 this->codecProperties = new RFXSrvrCaps();
+                this->codecProperties->recv(stream, this->codecPropertiesLength);
             }
             this->codecType = CODEC_REMOTEFX;
         } else if (memcmp(codecGUID, "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58", 16) == 0) {
             /* CODEC_GUID_IGNORE */
             this->codecType = CODEC_IGNORE;
+            stream.in_skip_bytes(this->codecPropertiesLength);
         } else {
             this->codecType = CODEC_UNKNOWN;
+            stream.in_skip_bytes(this->codecPropertiesLength);
             LOG(LOG_ERR, "unknown codec");
-        }
-
-        if (this->codecProperties){
-            this->codecProperties->recv(stream, this->codecPropertiesLength);
         }
     }
 
@@ -798,8 +815,9 @@ struct BitmapCodecCaps : public Capability {
         }
 
         this->supportedBitmapCodecs.bitmapCodecCount = stream.in_uint8();
+        uint16_t tmplen = this->len-5;
         for (int i = 0; i < this->supportedBitmapCodecs.bitmapCodecCount; i++) {
-            this->supportedBitmapCodecs.bitmapCodecArray[i].recv(stream, this->clientMode);
+            this->supportedBitmapCodecs.bitmapCodecArray[i].recv(stream, tmplen, this->clientMode);
             if (this->supportedBitmapCodecs.bitmapCodecArray[i].codecType == CODEC_REMOTEFX){
                 this->remoteFxCodecId = this->supportedBitmapCodecs.bitmapCodecArray[i].codecID;
             }

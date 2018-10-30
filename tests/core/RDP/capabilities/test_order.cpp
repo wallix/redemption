@@ -26,6 +26,7 @@
 
 
 #include "core/RDP/capabilities/order.hpp"
+#include "utils/hexdump.hpp"
 
 RED_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 {
@@ -87,6 +88,8 @@ RED_AUTO_TEST_CASE(TestCapabilityOrderEmit)
 
     StaticOutStream<1024> out_stream;
     order_caps.emit(out_stream);
+
+    hexdump_d(out_stream.get_data(), out_stream.get_offset());
 
     InStream stream(out_stream.get_data(), out_stream.get_offset());
 
