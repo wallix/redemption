@@ -163,18 +163,8 @@ Example with freerdp when the proxy runs on the same host as the client:
 $ `xfreerdp 127.0.0.1`
 
 A dialog box should open in which you can type a username and a password.
-With default authhook at least internal services should work. Try login: bouncer
-and password: bouncer, or login: card and password: card. To access your own
-remote RDP hosts you'll of course have to configure them in authhook.py.
-Hopefully at some time in the future these won't be hardcoded, but authhook.py
-will access to some configuration file. If you want to provide such extensions
-to current authhook.py, please contribute it, it will be much appreciated.
-
-You can also bypass login dialog box and go directly to the RDP server by
-providing a login and a password from command line.
-
-$ `xfreerdp -u 'bouncer' -p 'bouncer' 127.0.0.1`
-
+With default passthrough.py at least internal services should work. Try login: internal, password: internal and device: bouncer2 or card. If you want to provide such extensions
+to current passthrough.py, please contribute it, it will be much appreciated.
 
 Generate target and lib/obj dependencies
 ========================================

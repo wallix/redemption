@@ -22,32 +22,17 @@ import socket
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 DEBUG = False
-def mdecode(item):
-    if not item:
-        return ""
-    try:
-        item = item.decode('utf8')
-    except:
-        pass
-    return item
+
 def rvalue(value):
-    if value == MAGICASK:
-        return u''
-    return value
-def truncat_string(item, maxsize=20):
-    return (item[:maxsize] + '..') if len(item) > maxsize else item
+    if value:
+        return value
+    return MAGICASK
 
 class AuthentifierSocketClosed(Exception):
     pass
 
-################################################################################
 class ACLPassthrough():
-################################################################################
-
-    # __INIT__
-    #===============================================================================
     def __init__(self, conn, addr):
-    #===============================================================================
         self.cn = u'Unknown'
 
         self.proxy_conx  = conn
@@ -191,31 +176,24 @@ class ACLPassthrough():
 
     def start(self):
         _status, _error = self.receive_data()
+
         interactive_data = {}
-        if not rvalue(self.shared.get(u'password')):
-            interactive_data[u'target_password'] = MAGICASK
-        else:
-            interactive_data[u'target_password'] = rvalue(self.shared.get(u'password'))
-        if not rvalue(self.shared.get(u'login')):
-            interactive_data[u'target_login'] = MAGICASK
-        else:
-            interactive_data[u'target_login'] = rvalue(self.shared.get(u'login'))
-        if not rvalue(self.shared.get(u'real_target_device')):
-            interactive_data[u'target_host'] = MAGICASK
-        else:
-            interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
+        interactive_data[u'target_password'] = rvalue(self.shared.get(u'password'))
+        interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
+        interactive_data[u'target_login'] = rvalue(self.shared.get(u'login'))
         interactive_data[u'target_device'] = (
             "<host>$<application path>$<working dir>$"
             "<args> for Application"
         )
-        if interactive_data:
-            _status, _error = self.interactive_target(interactive_data)
+
+        _status, _error = self.interactive_target(interactive_data)
+
         kv = {}
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
         kv[u'session_id'] = "0000"
-        kv[u'module'] = "RDP"
+        kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else 'INTERNAL'
         kv[u'mode_console'] = u"allow"
         kv[u'target_password'] = self.shared.get(u'target_password')
         kv[u'target_login'] = self.shared.get(u'target_login')
