@@ -457,9 +457,7 @@ enum : int {
           , headerSize(9)
           , version(version)
           , size((data_length/2) + METAFILE_WORDS_HEADER_SIZE)
-          ,
-           maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
-
+          , maxRecord((data_length + META_DIBSTRETCHBLT_HEADER_SIZE)/2)
         {}
 
         void emit(OutStream & stream) const {
@@ -487,14 +485,7 @@ enum : int {
         }
 
         void log() const {
-            LOG(LOG_INFO, "     Meta Header:");
-            LOG(LOG_INFO, "          * type            = 0x%04x (2 bytes)", this->type);
-            LOG(LOG_INFO, "          * headerSize      = %d (2 bytes)", this->headerSize);
-            LOG(LOG_INFO, "          * version         = 0x%04x (2 bytes): %s", this->version, get_MetaVersion_name(this->version));
-            LOG(LOG_INFO, "          * size            = %u (4 bytes)", this->size);
-            LOG(LOG_INFO, "          * numberOfObjects = %u (2 bytes)", this->numberOfObjects);
-            LOG(LOG_INFO, "          * maxRecord       = %u (4 bytes)", this->maxRecord);
-            LOG(LOG_INFO, "          * numberOfMembers = %u (2 bytes)", this->numberOfMembers);
+            LOG(LOG_INFO, "Meta Header: type=0x%04x(2 bytes) headerSize= %d(2 bytes) version=0x%04x(2 bytes):%s size=%u(4 bytes) numberOfObjects=%u(2 bytes) maxRecord=%u(4 bytes) numberOfMembers=%u(2 bytes)", this->type, this->headerSize, this->version, get_MetaVersion_name(this->version), this->size, this->numberOfObjects, this->maxRecord, this->numberOfMembers);
         }
 
     };
@@ -543,9 +534,7 @@ enum : int {
         }
 
         void log() const {
-            LOG(LOG_INFO, "     Record Header:");
-            LOG(LOG_INFO, "          * recordSize     = %u (4 bytes)", this->recordSize);
-            LOG(LOG_INFO, "          * recordFunction = 0x%04x (2 bytes): %s", this->recordFunction, MFF::get_RecordType_name(this->recordFunction));
+            LOG(LOG_INFO, "Record Header: recordSize=%u(4 bytes) recordFunction=0x%04x(2 bytes):%s", this->recordSize, this->recordFunction, MFF::get_RecordType_name(this->recordFunction));
         }
     };
 
@@ -599,8 +588,7 @@ enum : int {
 
         void log() const {
             Record::log();
-            LOG(LOG_INFO, "     Meta Set Map Mod:");
-            LOG(LOG_INFO, "          * mappingMode = 0x%04x (2 bytes)", this->mappingMode);
+            LOG(LOG_INFO, "Meta Set Map Mod: mappingMode=0x%04x(2 bytes)", this->mappingMode);
         }
 
     };
@@ -663,9 +651,7 @@ enum : int {
 
         void log() const {
             Record::log();
-            LOG(LOG_INFO, "     Meta Set Window Ext:");
-            LOG(LOG_INFO, "          * height = 0x%04x (2 bytes)", this->height);
-            LOG(LOG_INFO, "          * width  = 0x%04x (2 bytes)", this->width);
+            LOG(LOG_INFO, "Meta Set Window Ext: height=0x%04x(2 bytes) width=0x%04x(2 bytes)", this->height, this->width);
         }
     };
 
@@ -727,9 +713,7 @@ enum : int {
 
         void log() const {
             Record::log();
-            LOG(LOG_INFO, "     Meta Set Window Org:");
-            LOG(LOG_INFO, "          * yOrg = %d (2 bytes)", this->yOrg);
-            LOG(LOG_INFO, "          * xOrg = %d (2 bytes)", this->xOrg);
+            LOG(LOG_INFO, "Meta Set Window Org: yOrg=%d(2 bytes) xOrg=%d(2 bytes)", this->yOrg, this->xOrg);
         }
     };
 
@@ -949,18 +933,7 @@ enum : int {
             }
 
             void log() const {
-                LOG(LOG_INFO, "     Bitmap Info Header:");
-                LOG(LOG_INFO, "          * headerSize     = %d (4 bytes)", int(this->headerSize));
-                LOG(LOG_INFO, "          * width          = %d (4 bytes)", int(this->width));
-                LOG(LOG_INFO, "          * height         = %d (4 bytes)", int(this->height));
-                LOG(LOG_INFO, "          * planes         = 0x%04x (2 bytes)", this->planes);
-                LOG(LOG_INFO, "          * bitCount       = %d (2 bytes)", int(this->bitCount));
-                LOG(LOG_INFO, "          * compression    = 0x%08x (4 bytes)", this->compression);
-                LOG(LOG_INFO, "          * imageSize      = %d (4 bytes)", int(this->imageSize));
-                LOG(LOG_INFO, "          * xPelsPerMeter  = %d (4 bytes)", int(this->xPelsPerMeter));
-                LOG(LOG_INFO, "          * yPelsPerMeter  = %d (4 bytes)", int(this->yPelsPerMeter));
-                LOG(LOG_INFO, "          * colorUsed      = %d (4 bytes)", int(this->colorUsed));
-                LOG(LOG_INFO, "          * colorImportant = %d (4 bytes)", int(this->colorImportant));
+                LOG(LOG_INFO, "Bitmap Info Header: headerSize=%d(4 bytes) width=%d(4 bytes) height=%d(4 bytes) planes=0x%04x(2 bytes) bitCount=%d(2 bytes) compression=0x%08x(4 bytes) imageSize=%d(4 bytes) xPelsPerMeter=%d(4 bytes) yPelsPerMeter=%d(4 bytes) colorUsed=%d(4 bytes) colorImportant=%d(4 bytes)", int(this->headerSize), int(this->width), int(this->height), this->planes, int(this->bitCount), this->compression, int(this->imageSize), int(this->xPelsPerMeter), int(this->yPelsPerMeter), int(this->colorUsed), int(this->colorImportant));
             }
 
         } bitmapInfoHeader;
@@ -1075,16 +1048,7 @@ enum : int {
 
         void log() const {
             Record::log();
-            LOG(LOG_INFO, "     Dib Stretch BLT:");
-            LOG(LOG_INFO, "          * rasterOperation = 0x%08x (4 bytes)", this->rasterOperation);
-            LOG(LOG_INFO, "          * srcHeight       = %d (2 bytes)", this->srcHeight);
-            LOG(LOG_INFO, "          * srcWidth        = %d (2 bytes)", this->srcWidth);
-            LOG(LOG_INFO, "          * ySrc            = %d (2 bytes)", this->ySrc);
-            LOG(LOG_INFO, "          * xSrc            = %d (2 bytes)", this->xSrc);
-            LOG(LOG_INFO, "          * destHeight      = %d (2 bytes)", this->destHeight);
-            LOG(LOG_INFO, "          * destWidth       = %d (2 bytes)", this->destWidth);
-            LOG(LOG_INFO, "          * yDest           = %d (2 bytes)", this->yDest);
-            LOG(LOG_INFO, "          * xDest           = %d (2 bytes)", this->xDest);
+            LOG(LOG_INFO, "Dib Stretch BLT: rasterOperation=0x%08x(4 bytes) srcHeight=%d(2 bytes) srcWidth=%d(2 bytes) ySrc=%d(2bytes) xSrc=%d(2 bytes) destHeight=%d(2 bytes) destWidth=%d(2 bytes) yDest=%d(2 bytes) xDest=%d(2 bytes)", this->rasterOperation, this->srcHeight, this->srcWidth, this->ySrc, this->xSrc, this->destHeight, this->destWidth, this->yDest, this->xDest);
 
             this->bitmapInfoHeader.log();
         }

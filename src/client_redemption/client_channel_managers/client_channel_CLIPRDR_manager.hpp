@@ -206,5 +206,14 @@ public:
 
     void send_UnlockPDU(uint32_t streamID);
 
+    void process_monitor_ready();
+
+    void process_capabilities(InStream & chunk);
+
+    void process_format_list(InStream & chunk, uint32_t msgFlags);
+
+    void process_format_data_request(InStream & chunk);
+
+    void process_filecontents_request(InStream & chunk);
 };
 

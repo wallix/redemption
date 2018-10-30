@@ -1596,7 +1596,7 @@ public:
 struct FileContentsResponse
 {
     uint32_t streamID{0};
-    uint64_t size{0};
+    uint64_t _size{0};
 
     bool is_size;
 
@@ -1605,7 +1605,7 @@ struct FileContentsResponse
     // SIZE (16 bytes)
     explicit FileContentsResponse(const uint32_t streamID, const uint64_t size)
     : streamID(streamID)
-    , size(size)
+    , _size(size)
     , is_size(true)
     {}
 
@@ -1618,7 +1618,7 @@ struct FileContentsResponse
     void receive(InStream & stream) {
         this->streamID = stream.in_uint32_le();
         if (this->is_size) {
-            this->size = stream.in_uint64_le();
+            this->_size = stream.in_uint64_le();
         }
     }
 
@@ -1626,13 +1626,17 @@ struct FileContentsResponse
         stream.out_uint32_le(this->streamID);
 
         if (this->is_size) {                                // SIZE
-            stream.out_uint64_le(this->size);
+            stream.out_uint64_le(this->_size);
             stream.out_uint32_le(0);
         }
     }
 
     void log() const {
-        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->size);
+        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->_size);
+    }
+
+    size_t size() const {
+        return this->is_size ? 16 : 4;
     }
 };
 

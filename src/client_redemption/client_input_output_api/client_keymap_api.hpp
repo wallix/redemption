@@ -22,8 +22,6 @@
 
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-// #include "client_redemption/client_config/client_redemption_config.hpp"
-// #include "client_redemption/mod_wrapper/client_callback.hpp"
 
 
 
@@ -57,6 +55,4 @@ public:
     virtual KeyCustomDefinition get_key_info(int /*keycode*/, std::string const& /*text*/) {
         return KeyCustomDefinition{};
     }
-
-
 };

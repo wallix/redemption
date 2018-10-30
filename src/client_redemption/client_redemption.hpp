@@ -1015,10 +1015,10 @@ public:
             case CHANID_CLIPDRD: this->clientChannelCLIPRDRManager.receive(chunk, flags);
                 break;
 
-            case CHANID_RDPDR: this->clientChannelRDPDRManager.receive(chunk);
+            case CHANID_RDPDR:   this->clientChannelRDPDRManager.receive(chunk);
                 break;
 
-            case CHANID_RDPSND: this->clientChannelRDPSNDManager.receive(chunk);
+            case CHANID_RDPSND:  this->clientChannelRDPSNDManager.receive(chunk);
                 break;
 
             case CHANID_RAIL:    this->clientChannelRemoteAppManager.receive(chunk);
