@@ -454,11 +454,11 @@ struct RFXCapset {
     uint16_t numIcaps{0};           // number of elements in icapsData array
     uint16_t icapLen{8};            // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
 
-    RFXICap * icapsData{nullptr};
+    std::unique_ptr<RFXICap[]> icapsData;
 
     RFXCapset()
     : numIcaps(1)
-    , icapsData(new RFXICap[1]())
+    , icapsData(std::make_unique<RFXICap[]>(this->numIcaps))
     {
         this->blockLen = 13 + 8;
     }
@@ -499,7 +499,7 @@ struct RFXCapset {
         this->icapLen = stream.in_uint16_le();
 
         if (this->numIcaps){
-            icapsData = new RFXICap[numIcaps]();
+            icapsData = std::make_unique<RFXICap[]>(numIcaps);
         }
 
         unsigned expected = this->numIcaps * this->icapLen;
@@ -524,13 +524,13 @@ struct RFXCaps {
     uint32_t blockLen{8};         // MUST be set to 0x0008
     uint16_t numCapsets{1};       // MUST be set to 0x0001
 
-    RFXCapset * capsetsData{nullptr};
+    std::unique_ptr<RFXCapset> capsetsData{nullptr};
 
     RFXCaps()
     : blockType(CBY_CAPS)
     , blockLen(8)
     , numCapsets(1)
-    , capsetsData(new RFXCapset())
+    , capsetsData(std::make_unique<RFXCapset>())
     {
     }
 
@@ -576,11 +576,11 @@ struct RFXClntCaps : public CodecGenCaps {
     uint32_t captureFlags{0};
     uint32_t capsLength{0};
 
-    RFXCaps * capsData{nullptr};
+    std::unique_ptr<RFXCaps> capsData{nullptr};
 
     RFXClntCaps()
     : captureFlags(CARDP_CAPS_CAPTURE_NON_CAC)
-    , capsData(new RFXCaps())
+    , capsData(std::make_unique<RFXCaps>())
     {
          this->capsLength = capsData->computeSize();
          this->length = 12 + this->capsLength;
@@ -612,7 +612,7 @@ struct RFXClntCaps : public CodecGenCaps {
         }
 
         if (capsLength) {
-            this->capsData = new RFXCaps();
+            this->capsData = std::make_unique<RFXCaps>();
             this->capsData->recv(stream, this->capsLength);
         }
     }
@@ -639,7 +639,7 @@ struct BitmapCodec {
     uint16_t codecPropertiesLength{0}; // size in bytes of the next field
 
     BitmapCodecType codecType{CODEC_UNKNOWN};
-    CodecGenCaps * codecProperties{nullptr};
+    std::unique_ptr<CodecGenCaps> codecProperties{nullptr};
 
     BitmapCodec()
     {
@@ -653,6 +653,7 @@ struct BitmapCodec {
             memcpy(this->codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16);
             this->codecID = 1;
             this->codecType = CODEC_NS;
+            this->codecProperties = nullptr;
             break;
         case CODEC_GUID_REMOTEFX:
         case CODEC_GUID_IMAGE_REMOTEFX:
@@ -664,16 +665,17 @@ struct BitmapCodec {
             }
 
             if (client) {
-                this->codecProperties = new RFXClntCaps();
+                this->codecProperties = std::make_unique<RFXClntCaps>();
             }
             else {
-                this->codecProperties = new RFXSrvrCaps();
+                this->codecProperties = std::make_unique<RFXSrvrCaps>();
             }
             this->codecType = CODEC_REMOTEFX;
             break;
         default:
             memset(this->codecGUID, 0, 16);
             this->codecType = CODEC_UNKNOWN;
+            this->codecProperties = nullptr;
             break;
         }
 
@@ -710,20 +712,19 @@ struct BitmapCodec {
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */
-            codecProperties = new NSCodecCaps();
-            codecType = CODEC_NS;
+            this->codecProperties = std::make_unique<NSCodecCaps>();
+            this->codecType = CODEC_NS;
             this->codecProperties->recv(stream, this->codecPropertiesLength);
         } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0)
                || (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
             /* CODEC_GUID_REMOTEFX or CODEC_GUID_IMAGE_REMOTEFX */
             if (clientMode){
-                this->codecProperties = new RFXClntCaps();
-                this->codecProperties->recv(stream, this->codecPropertiesLength);
+                this->codecProperties = std::make_unique<RFXClntCaps>();
             }
             else {
-                this->codecProperties = new RFXSrvrCaps();
-                this->codecProperties->recv(stream, this->codecPropertiesLength);
+                this->codecProperties = std::make_unique<RFXSrvrCaps>();
             }
+            this->codecProperties->recv(stream, this->codecPropertiesLength);
             this->codecType = CODEC_REMOTEFX;
         } else if (memcmp(codecGUID, "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58", 16) == 0) {
             /* CODEC_GUID_IGNORE */
