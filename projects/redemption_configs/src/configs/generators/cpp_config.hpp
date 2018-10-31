@@ -288,12 +288,14 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
       "//\n\n"
       "#pragma once\n"
       "\n"
+      "#include \"utils/sugar/array_view.hpp\"\n"
+      "\n"
       "enum authid_t : unsigned;\n\n"
       "inline authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
-      "constexpr char const * const authstr[] = {\n"
+      "constexpr array_view_const_char const authstr[] = {\n"
     ;
     for (auto & authstr : writer.authstrs) {
-        out_authid << "    \"" << authstr << "\",\n";
+        out_authid << "    \"" << authstr << "\"_av,\n";
     }
     out_authid << "};\n";
 }

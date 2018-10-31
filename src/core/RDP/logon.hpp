@@ -1088,7 +1088,13 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(char_ptr_cast(this->Password), password_printing_mode));
+        {
+            array_view_const_char const av = ::get_printable_password({
+                char_ptr_cast(this->Password),
+                strlen(char_ptr_cast(this->Password))
+            }, password_printing_mode);
+            LOG(LOG_INFO, "InfoPacket::Password %.*s", int(av.size()), av.data());
+        }
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);

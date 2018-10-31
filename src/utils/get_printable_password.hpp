@@ -20,16 +20,20 @@
 
 #pragma once
 
+#include "utils/sugar/array_view.hpp"
+
 #include <cstdint>
 
-inline const char * get_printable_password(const char * password, uint32_t printing_mode) {
+
+inline array_view_const_char get_printable_password(array_view_const_char password, uint32_t printing_mode)
+{
     switch (printing_mode) {
         case 1:
-            return ((*password) ? "<hidden>" : "<null>");
+            return password.empty() ? "<null>"_av : "<hidden>"_av;
         case 2:
             return password;
         default:
-            return "<hidden>";
+            return "<hidden>"_av;
     }
 }
 

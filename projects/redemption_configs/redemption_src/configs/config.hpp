@@ -328,10 +328,6 @@ public:
             return this->field->to_string_view(this->ini->variables, this->ini->buffers);
         }
 
-        char const * c_str() const {
-            return this->to_string_view().data();
-        }
-
         explicit operator bool () const {
             return this->field;
         }
