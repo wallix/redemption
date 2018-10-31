@@ -61,7 +61,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     };
 
     std::vector<std::pair<std::string, std::string>> sections_parser;
-    std::vector<std::pair<std::string, std::string>> authids;
+    std::vector<std::string> authstrs;
     std::vector<Section> sections;
     std::vector<std::string> member_names;
     std::vector<std::string> variables_acl;
@@ -115,16 +115,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->out() << cpp_doxygen_comment(desc.value, 4);
         });
         if (bool(properties)) {
-            this->tab();
-            this->out() << "/// AUTHID_";
-            std::string str = section_name;
-            str += '_';
-            str += varname;
-            for (auto & c : str) {
-                c = char(std::toupper(c));
-            }
-            this->out() << str << " <br/>\n";
-            this->authids.emplace_back(str, pack_get<sesman::name>(infos));
+            this->authstrs.emplace_back(pack_get<sesman::name>(infos));
         }
         this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
         if ((properties & sesman::internal::io::rw) == sesman::internal::io::sesman_to_proxy) {
@@ -298,11 +289,11 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
       "#pragma once\n"
       "\n"
       "enum authid_t : unsigned;\n\n"
-      "inline authid_t MAX_AUTHID = authid_t(" << writer.authids.size() << ");\n\n"
+      "inline authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
       "constexpr char const * const authstr[] = {\n"
     ;
-    for (auto & body : writer.authids) {
-        out_authid << "    \"" << body.second << "\",\n";
+    for (auto & authstr : writer.authstrs) {
+        out_authid << "    \"" << authstr << "\",\n";
     }
     out_authid << "};\n";
 }

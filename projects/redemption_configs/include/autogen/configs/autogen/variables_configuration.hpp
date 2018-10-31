@@ -3,7 +3,6 @@
 //
 
 namespace cfg {
-    /// AUTHID_GLOBALS_CAPTURE_CHUNK <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -20,7 +19,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_AUTH_USER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -37,7 +35,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_HOST <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -54,7 +51,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -71,7 +67,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_DEVICE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -88,7 +83,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_DEVICE_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -105,7 +99,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_PRIMARY_USER_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -122,7 +115,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_USER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -139,7 +131,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -156,7 +147,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -173,7 +163,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -302,7 +291,6 @@ namespace cfg {
         type value{900};
     };
     /// No traffic auto disconnection. <br/>
-    /// AUTHID_GLOBALS_INACTIVITY_TIMEOUT <br/>
     /// type: std::chrono::seconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -358,7 +346,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    /// AUTHID_GLOBALS_TRACE_TYPE <br/>
     /// type: TraceType <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -437,7 +424,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Wrm);
     };
-    /// AUTHID_GLOBALS_IS_REC <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -454,7 +440,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_GLOBALS_MOVIE_PATH <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -606,7 +591,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_GLOBALS_UNICODE_KEYBOARD_EVENT_SUPPORT <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -623,7 +607,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_GLOBALS_MOD_RECV_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{1000} <br/>
@@ -689,7 +672,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_SESSION_LOG_LOG_PATH <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -731,7 +713,6 @@ namespace cfg {
         type value{false};
     };
 
-    /// AUTHID_CLIENT_KEYBOARD_LAYOUT <br/>
     /// type: unsigned int <br/>
     /// sesman <- proxy <br/>
     /// value{0} <br/>
@@ -878,7 +859,6 @@ namespace cfg {
         type value{true};
     };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
-    /// AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1138,7 +1118,6 @@ namespace cfg {
         type value = "15,16,17,18,22";
     };
     /// NLA authentication in secondary target. <br/>
-    /// AUTHID_MOD_RDP_ENABLE_NLA <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1157,7 +1136,6 @@ namespace cfg {
     };
     /// If enabled, NLA authentication will try Kerberos before NTLM. <br/>
     /// (if enable_nla is disabled, this value is ignored). <br/>
-    /// AUTHID_MOD_RDP_ENABLE_KERBEROS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1254,7 +1232,6 @@ namespace cfg {
         type value{true};
     };
     /// Enables Server Redirection Support. <br/>
-    /// AUTHID_MOD_RDP_SERVER_REDIRECTION_SUPPORT <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1282,7 +1259,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_LOAD_BALANCE_INFO <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1300,7 +1276,6 @@ namespace cfg {
         type value{};
     };
     /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
-    /// AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1317,7 +1292,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1334,7 +1308,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1377,7 +1350,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "";
     };
-    /// AUTHID_MOD_RDP_ALTERNATE_SHELL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1394,7 +1366,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_SHELL_ARGUMENTS <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1411,7 +1382,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1428,7 +1398,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1445,7 +1414,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1462,7 +1430,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1479,7 +1446,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_ENABLE_SESSION_PROBE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1498,7 +1464,6 @@ namespace cfg {
     };
     /// Minimum supported server : Windows Server 2008. <br/>
     /// Clipboard redirection should be remain enabled on Terminal Server. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1515,7 +1480,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1532,7 +1496,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE <br/>
     /// type: SessionProbeOnLaunchFailure <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(2) <br/>
@@ -1551,7 +1514,6 @@ namespace cfg {
     };
     /// This parameter is used if session_probe_on_launch_failure is 1 (disconnect user). <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{20000} <br/>
@@ -1570,7 +1532,6 @@ namespace cfg {
     };
     /// This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{7000} <br/>
@@ -1588,7 +1549,6 @@ namespace cfg {
         type value{7000};
     };
     /// Minimum supported server : Windows Server 2008. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1605,7 +1565,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{5000} <br/>
@@ -1622,7 +1581,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5000};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT <br/>
     /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1640,7 +1598,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// End automatically a disconnected session <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1669,7 +1626,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1686,7 +1642,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG_ROTATION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1705,7 +1660,6 @@ namespace cfg {
     };
     /// This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1724,7 +1678,6 @@ namespace cfg {
     };
     /// This policy setting allows you to configure a time limit for disconnected Terminal Services sessions. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1743,7 +1696,6 @@ namespace cfg {
     };
     /// This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1784,7 +1736,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS;
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_CLIPBOARD_INITIALIZATION_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{2000} <br/>
@@ -1801,7 +1752,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{2000};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_START_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1818,7 +1768,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_LONG_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{500} <br/>
@@ -1835,7 +1784,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{500};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_SHORT_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{50} <br/>
@@ -1864,7 +1812,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_CRASH_DUMP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1881,7 +1828,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_HANDLE_USAGE_LIMIT <br/>
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1898,7 +1844,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_MEMORY_USAGE_LIMIT <br/>
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1915,7 +1860,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_PUBLIC_SESSION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1933,7 +1877,6 @@ namespace cfg {
         type value{false};
     };
     /// Keep known server certificates on WAB <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_STORE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1950,7 +1893,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SERVER_CERT_CHECK <br/>
     /// type: ServerCertCheck <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1968,7 +1910,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn if check allow connexion to server. <br/>
-    /// AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1986,7 +1927,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that new server certificate file was created. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2004,7 +1944,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate file was successfully checked. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2022,7 +1961,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate file checking failed. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2040,7 +1978,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate check raised some internal error. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2094,7 +2031,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_ENABLE_RDPDR_DATA_ANALYSIS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -2239,7 +2175,6 @@ namespace cfg {
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
-    /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -2257,7 +2192,6 @@ namespace cfg {
         type value{};
     };
     /// Enable or disable the clipboard from server (server to client). <br/>
-    /// AUTHID_MOD_VNC_CLIPBOARD_DOWN <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -2293,7 +2227,6 @@ namespace cfg {
         type value{};
     };
     /// VNC server clipboard data encoding type. <br/>
-    /// AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE <br/>
     /// type: ClipboardEncodingType <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2310,7 +2243,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP <br/>
     /// type: VncBogusClipboardInfiniteLoop <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -2327,7 +2259,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_MOD_VNC_SERVER_IS_APPLE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2359,7 +2290,6 @@ namespace cfg {
         type value{false};
     };
     /// 0 - replay once, 1 - loop replay <br/>
-    /// AUTHID_MOD_REPLAY_REPLAY_ON_LOOP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2604,7 +2534,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// AUTHID_VIDEO_RT_DISPLAY <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2867,7 +2796,6 @@ namespace cfg {
         type value = static_cast<type>(0);
     };
 
-    /// AUTHID_CRYPTO_KEY0 <br/>
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
@@ -2884,7 +2812,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
-    /// AUTHID_CRYPTO_KEY1 <br/>
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
@@ -3227,7 +3154,6 @@ namespace cfg {
         type value{2};
     };
 
-    /// AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -3245,7 +3171,6 @@ namespace cfg {
         type value{true};
     };
 
-    /// AUTHID_TRANSLATION_LANGUAGE <br/>
     /// type: Language <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -3262,7 +3187,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_TRANSLATION_PASSWORD_EN <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3279,7 +3203,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_TRANSLATION_PASSWORD_FR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3310,7 +3233,6 @@ namespace cfg {
         type value{};
     };
 
-    /// AUTHID_CONTEXT_OPT_BITRATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{40000} <br/>
@@ -3327,7 +3249,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{40000};
     };
-    /// AUTHID_CONTEXT_OPT_FRAMERATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{5} <br/>
@@ -3344,7 +3265,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// AUTHID_CONTEXT_OPT_QSCALE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{15} <br/>
@@ -3361,7 +3281,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{15};
     };
-    /// AUTHID_CONTEXT_OPT_BPP <br/>
     /// type: ColorDepth <br/>
     /// sesman <-> proxy <br/>
     /// value = static_cast<type>(24) <br/>
@@ -3378,7 +3297,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(24);
     };
-    /// AUTHID_CONTEXT_OPT_HEIGHT <br/>
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{600} <br/>
@@ -3395,7 +3313,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    /// AUTHID_CONTEXT_OPT_WIDTH <br/>
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{800} <br/>
@@ -3423,7 +3340,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -3440,7 +3356,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{1} <br/>
@@ -3457,7 +3372,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    /// AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3474,7 +3388,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_GROUP_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3491,7 +3404,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_PROTO_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3508,7 +3420,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{0} <br/>
@@ -3525,7 +3436,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{1} <br/>
@@ -3542,7 +3452,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    /// AUTHID_CONTEXT_TARGET_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3559,7 +3468,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_HOST <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3576,7 +3484,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_STR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3593,7 +3500,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_SERVICE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3610,7 +3516,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_PORT <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{3389} <br/>
@@ -3627,7 +3532,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
-    /// AUTHID_CONTEXT_TARGET_PROTOCOL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value = "RDP" <br/>
@@ -3644,7 +3548,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "RDP";
     };
-    /// AUTHID_CONTEXT_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3661,7 +3564,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_REPORTING <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3678,7 +3580,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3695,7 +3596,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_CHANNEL_TARGET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3712,7 +3612,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3729,7 +3628,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_ACCEPT_MESSAGE <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -3746,7 +3644,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISPLAY_MESSAGE <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3763,7 +3660,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_REJECTED <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3780,7 +3676,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTHENTICATED <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{false} <br/>
@@ -3797,7 +3692,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_KEEPALIVE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -3814,7 +3708,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_SESSION_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3831,7 +3724,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_END_DATE_CNX <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -3848,7 +3740,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_END_TIME <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3865,7 +3756,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_MODE_CONSOLE <br/>
     /// type: RdpModeConsole <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -3882,7 +3772,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_CONTEXT_TIMEZONE <br/>
     /// type: int <br/>
     /// sesman -> proxy <br/>
     /// value{-3600} <br/>
@@ -3899,7 +3788,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{-3600};
     };
-    /// AUTHID_CONTEXT_REAL_TARGET_DEVICE <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3916,7 +3804,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3933,7 +3820,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TICKET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3950,7 +3836,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_COMMENT <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3967,7 +3852,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DURATION <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3984,7 +3868,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DURATION_MAX <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -4001,7 +3884,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_WAITINFORETURN <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -4018,7 +3900,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SHOWFORM <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -4035,7 +3916,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_FORMFLAG <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{0} <br/>
@@ -4052,7 +3932,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_MODULE <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value = "login" <br/>
@@ -4069,7 +3948,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "login";
     };
-    /// AUTHID_CONTEXT_FORCEMODULE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -4086,7 +3964,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_PROXY_OPT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4103,7 +3980,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_PATTERN_KILL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4120,7 +3996,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_PATTERN_NOTIFY <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4137,7 +4012,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_OPT_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4154,7 +4028,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_LOGIN_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4171,7 +4044,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4188,7 +4060,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4205,7 +4076,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4222,7 +4092,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISCONNECT_REASON <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4239,7 +4108,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISCONNECT_REASON_ACK <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{false} <br/>
@@ -4267,7 +4135,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_CONTEXT_RECORDING_STARTED <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{false} <br/>
@@ -4284,7 +4151,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_RT_READY <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{false} <br/>
@@ -4312,7 +4178,6 @@ namespace cfg {
         using mapped_type = type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4329,7 +4194,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4346,7 +4210,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS <br/>
     /// type: unsigned int <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4363,7 +4226,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4380,7 +4242,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4397,7 +4258,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4414,7 +4274,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4431,7 +4290,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4448,7 +4306,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4465,7 +4322,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4482,7 +4338,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4499,7 +4354,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4516,7 +4370,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{3000} <br/>
@@ -4533,7 +4386,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
-    /// AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -4550,7 +4402,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_LAUNCH_ERROR_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
