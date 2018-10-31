@@ -170,6 +170,13 @@ namespace spec
         }
     }
 
+    enum class log_policy : unsigned char
+    {
+        loggable,
+        unloggable,
+        unloggable_value_with_password,
+    };
+
     inline namespace constants
     {
         inline internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
@@ -182,6 +189,10 @@ namespace spec
 
         inline internal::spec_attr_t<internal::attr::connection_policy_with_ini> connection_policy_with_ini{};
         inline internal::spec_attr_t<internal::attr::connection_policy_without_ini> connection_policy_without_ini{};
+
+        inline auto loggable = log_policy::loggable;
+        inline auto unloggable = log_policy::unloggable;
+        inline auto unloggable_value_with_password = log_policy::unloggable_value_with_password;
     }
 }
 

@@ -1869,6 +1869,16 @@ RED_AUTO_TEST_CASE(TestConfigTools)
     }
 }
 
+RED_AUTO_TEST_CASE(TestLogPolicy)
+{
+    Inifile ini;
+    RED_CHECK(ini.get_acl_field(cfg::globals::auth_user::index).is_loggable());
+    RED_CHECK(!ini.get_acl_field(cfg::globals::target_application_password::index).is_loggable());
+    RED_CHECK(ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
+    ini.set<cfg::context::auth_channel_answer>("blah blah password blah blah");
+    RED_CHECK(!ini.get_acl_field(cfg::context::auth_channel_answer::index).is_loggable());
+}
+
 RED_AUTO_TEST_CASE(TestContextSetValue)
 {
     Inifile             ini;
@@ -1882,9 +1892,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(6,     ini.get<cfg::context::opt_framerate>());
     RED_CHECK_EQUAL(16,    ini.get<cfg::context::opt_qscale>());
 
-    RED_CHECK_EQUAL("80000", ini.get_acl_field(cfg::context::opt_bitrate::index).c_str());
-    RED_CHECK_EQUAL("6",     ini.get_acl_field(cfg::context::opt_framerate::index).c_str());
-    RED_CHECK_EQUAL("16",    ini.get_acl_field(cfg::context::opt_qscale::index).c_str());
+    RED_CHECK_EQUAL("80000", ini.get_acl_field(cfg::context::opt_bitrate::index).to_string_view().data());
+    RED_CHECK_EQUAL("6",     ini.get_acl_field(cfg::context::opt_framerate::index).to_string_view().data());
+    RED_CHECK_EQUAL("16",    ini.get_acl_field(cfg::context::opt_qscale::index).to_string_view().data());
 
 
     // bpp, height, width
@@ -1908,9 +1918,9 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(1024, ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(1280, ini.get<cfg::context::opt_width>());
 
-    RED_CHECK_EQUAL("16",   ini.get_acl_field(cfg::context::opt_bpp::index).c_str());
-    RED_CHECK_EQUAL("1024", ini.get_acl_field(cfg::context::opt_height::index).c_str());
-    RED_CHECK_EQUAL("1280", ini.get_acl_field(cfg::context::opt_width::index).c_str());
+    RED_CHECK_EQUAL("16",   ini.get_acl_field(cfg::context::opt_bpp::index).to_string_view().data());
+    RED_CHECK_EQUAL("1024", ini.get_acl_field(cfg::context::opt_height::index).to_string_view().data());
+    RED_CHECK_EQUAL("1280", ini.get_acl_field(cfg::context::opt_width::index).to_string_view().data());
 
 
     // selector, ...
@@ -1946,12 +1956,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL(25,        ini.get<cfg::context::selector_lines_per_page>());
     RED_CHECK_EQUAL(2,         ini.get<cfg::context::selector_number_of_pages>());
 
-    RED_CHECK_EQUAL("True",    ini.get_acl_field(cfg::context::selector::index).c_str());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_current_page::index).c_str());
-    RED_CHECK_EQUAL("Windows", ini.get_acl_field(cfg::context::selector_device_filter::index).c_str());
-    RED_CHECK_EQUAL("RDP",     ini.get_acl_field(cfg::context::selector_group_filter::index).c_str());
-    RED_CHECK_EQUAL("25",      ini.get_acl_field(cfg::context::selector_lines_per_page::index).c_str());
-    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_number_of_pages::index).c_str());
+    RED_CHECK_EQUAL("True",    ini.get_acl_field(cfg::context::selector::index).to_string_view().data());
+    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_current_page::index).to_string_view().data());
+    RED_CHECK_EQUAL("Windows", ini.get_acl_field(cfg::context::selector_device_filter::index).to_string_view().data());
+    RED_CHECK_EQUAL("RDP",     ini.get_acl_field(cfg::context::selector_group_filter::index).to_string_view().data());
+    RED_CHECK_EQUAL("25",      ini.get_acl_field(cfg::context::selector_lines_per_page::index).to_string_view().data());
+    RED_CHECK_EQUAL("2",       ini.get_acl_field(cfg::context::selector_number_of_pages::index).to_string_view().data());
 
 
     // target_xxxx
@@ -1975,12 +1985,12 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
     RED_CHECK_EQUAL("admin",        ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("wallix@putty", ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL("127.0.0.1",    ini.get_acl_field(cfg::globals::target_device::index).c_str());
-    RED_CHECK_EQUAL("12345678",     ini.get_acl_field(cfg::context::target_password::index).c_str());
-    RED_CHECK_EQUAL("3390",         ini.get_acl_field(cfg::context::target_port::index).c_str());
-    RED_CHECK_EQUAL("RDP",          ini.get_acl_field(cfg::context::target_protocol::index).c_str());
-    RED_CHECK_EQUAL("admin",        ini.get_acl_field(cfg::globals::target_user::index).c_str());
-    RED_CHECK_EQUAL("wallix@putty", ini.get_acl_field(cfg::globals::target_application::index).c_str());
+    RED_CHECK_EQUAL("127.0.0.1",    ini.get_acl_field(cfg::globals::target_device::index).to_string_view().data());
+    RED_CHECK_EQUAL("12345678",     ini.get_acl_field(cfg::context::target_password::index).to_string_view().data());
+    RED_CHECK_EQUAL("3390",         ini.get_acl_field(cfg::context::target_port::index).to_string_view().data());
+    RED_CHECK_EQUAL("RDP",          ini.get_acl_field(cfg::context::target_protocol::index).to_string_view().data());
+    RED_CHECK_EQUAL("admin",        ini.get_acl_field(cfg::globals::target_user::index).to_string_view().data());
+    RED_CHECK_EQUAL("wallix@putty", ini.get_acl_field(cfg::globals::target_application::index).to_string_view().data());
 
 
     // host
@@ -1994,7 +2004,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("127.0.0.1", ini.get<cfg::globals::host>());
 
-    RED_CHECK_EQUAL("127.0.0.1", ini.get_acl_field(cfg::globals::host::index).c_str());
+    RED_CHECK_EQUAL("127.0.0.1", ini.get_acl_field(cfg::globals::host::index).to_string_view().data());
     RED_CHECK_EQUAL(9,           ini.get_acl_field(cfg::globals::host::index).to_string_view().size());
 
 
@@ -2009,7 +2019,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("192.168.0.1", ini.get<cfg::globals::target>());
 
-    RED_CHECK_EQUAL("192.168.0.1", ini.get_acl_field(cfg::globals::target::index).c_str());
+    RED_CHECK_EQUAL("192.168.0.1", ini.get_acl_field(cfg::globals::target::index).to_string_view().data());
 
 
     // auth_user
@@ -2019,7 +2029,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("admin", ini.get<cfg::globals::auth_user>());
 
-    RED_CHECK_EQUAL("admin", ini.get_acl_field(cfg::globals::auth_user::index).c_str());
+    RED_CHECK_EQUAL("admin", ini.get_acl_field(cfg::globals::auth_user::index).to_string_view().data());
 
 
     // password
@@ -2033,7 +2043,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("12345678", ini.get<cfg::context::password>());
 
-    RED_CHECK_EQUAL("12345678", ini.get_acl_field(cfg::context::password::index).c_str());
+    RED_CHECK_EQUAL("12345678", ini.get_acl_field(cfg::context::password::index).to_string_view().data());
 
 
     // answer
@@ -2053,7 +2063,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("target", ini.get<cfg::context::auth_channel_target>());
 
-    RED_CHECK_EQUAL("target", ini.get_acl_field(cfg::context::auth_channel_target::index).c_str());
+    RED_CHECK_EQUAL("target", ini.get_acl_field(cfg::context::auth_channel_target::index).to_string_view().data());
 
 
     // message
@@ -2067,7 +2077,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("rejected", ini.get<cfg::context::rejected>());
 
-    RED_CHECK_EQUAL("rejected", ini.get_acl_field(cfg::context::rejected::index).c_str());
+    RED_CHECK_EQUAL("rejected", ini.get_acl_field(cfg::context::rejected::index).to_string_view().data());
 
 
     // authenticated
@@ -2075,7 +2085,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(true,   ini.get<cfg::context::authenticated>());
 
-    RED_CHECK_EQUAL("True", ini.get_acl_field(cfg::context::authenticated::index).c_str());
+    RED_CHECK_EQUAL("True", ini.get_acl_field(cfg::context::authenticated::index).to_string_view().data());
 
 
     // keepalive
@@ -2121,7 +2131,7 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL("10.0.0.1", ini.get<cfg::context::real_target_device>());
 
-    RED_CHECK_EQUAL("10.0.0.1", ini.get_acl_field(cfg::context::real_target_device::index).c_str());
+    RED_CHECK_EQUAL("10.0.0.1", ini.get_acl_field(cfg::context::real_target_device::index).to_string_view().data());
 
 
     // authentication_challenge

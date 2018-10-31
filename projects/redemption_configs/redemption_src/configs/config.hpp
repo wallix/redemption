@@ -241,12 +241,62 @@ public:
 
     static const uint32_t ENABLE_DEBUG_CONFIG = 1;
 
-    struct FieldReference
+private:
+    template<bool is_constant>
+    struct FieldReferenceBase
     {
         bool is_asked() const {
             return this->field->asked_;
         }
 
+        array_view_const_char to_string_view() const {
+            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
+        }
+
+        explicit operator bool () const {
+            return this->field;
+        }
+
+        authid_t authid() const {
+            return this->id;
+        }
+
+        bool is_loggable() const
+        {
+            if (configs::is_loggable_array[unsigned(this->authid())])  {
+                return true;
+            }
+            if (configs::is_unloggable_value_array[unsigned(this->authid())]) {
+                return nullptr == strcasestr(this->to_string_view().data(), "password");
+            }
+            return false;
+        }
+
+        FieldReferenceBase(FieldReferenceBase &&) = default;
+
+        FieldReferenceBase() = default;
+
+        FieldReferenceBase(FieldReferenceBase const &) = delete;
+        FieldReferenceBase & operator=(FieldReferenceBase const &) = delete;
+
+    private:
+        using InternalInifile = std::conditional_t<is_constant, Inifile const, Inifile>;
+        std::conditional_t<is_constant, FieldBase const, FieldBase> * field = nullptr;
+        InternalInifile* ini = nullptr;
+        authid_t id = MAX_AUTHID;
+
+        FieldReferenceBase(InternalInifile& ini, authid_t id)
+        : field(&ini.fields[id])
+        , ini(&ini)
+        , id(id)
+        {}
+
+        friend class Inifile;
+    };
+
+public:
+    struct FieldReference : FieldReferenceBase<false>
+    {
         void ask() {
             this->field->asked_ = true;
         }
@@ -262,22 +312,6 @@ public:
             return err;
         }
 
-        array_view_const_char to_string_view() const {
-            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
-        }
-
-        char const * c_str() const {
-            return this->to_string_view().data();
-        }
-
-        explicit operator bool () const {
-            return this->field;
-        }
-
-        authid_t authid() const {
-            return this->id;
-        }
-
         FieldReference(FieldReference &&) = default;
 
         FieldReference() = default;
@@ -286,16 +320,7 @@ public:
         FieldReference & operator=(FieldReference const &) = delete;
 
     private:
-        FieldBase * field = nullptr;
-        Inifile * ini = nullptr;
-        authid_t id = MAX_AUTHID;
-
-        FieldReference(Inifile & ini, authid_t id)
-        : field(&ini.fields[id])
-        , ini(&ini)
-        , id(id)
-        {}
-
+        using FieldReferenceBase<false>::FieldReferenceBase;
         friend class Inifile;
     };
 
@@ -318,42 +343,9 @@ public:
         this->to_send_index.clear();
     }
 
-    struct FieldConstReference
+    struct FieldConstReference : FieldReferenceBase<true>
     {
-        bool is_asked() const {
-            return this->field->asked_;
-        }
-
-        array_view_const_char to_string_view() const {
-            return this->field->to_string_view(this->ini->variables, this->ini->buffers);
-        }
-
-        explicit operator bool () const {
-            return this->field;
-        }
-
-        authid_t authid() const {
-            return this->id;
-        }
-
-        FieldConstReference(FieldConstReference &&) = default;
-
-        FieldConstReference() = default;
-
-        FieldConstReference(FieldConstReference const &) = delete;
-        FieldConstReference & operator=(FieldConstReference const &) = delete;
-
-    private:
-        FieldBase const * field = nullptr;
-        Inifile const * ini = nullptr;
-        authid_t id = MAX_AUTHID;
-
-        FieldConstReference(Inifile const & ini, authid_t id)
-        : field(&ini.fields[id])
-        , ini(&ini)
-        , id(id)
-        {}
-
+        using FieldReferenceBase<true>::FieldReferenceBase;
         friend class Inifile;
     };
 

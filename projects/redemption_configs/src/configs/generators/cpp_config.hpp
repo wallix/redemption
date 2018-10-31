@@ -34,6 +34,7 @@
 #include <chrono>
 #include <unordered_map>
 #include <memory>
+#include <bitset>
 
 #include <cerrno>
 #include <cstring>
@@ -65,7 +66,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     std::vector<Section> sections;
     std::vector<std::string> member_names;
     std::vector<std::string> variables_acl;
-    unsigned index_authid = 0;
+    std::vector<spec::log_policy> authid_policy;
 
     std::ostream & out() { return *this->out_; }
 
@@ -131,14 +132,14 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::internal::io::sesman_to_proxy) ? "true" : "false") << ";\n";
         this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::internal::io::proxy_to_sesman) ? "true" : "false") << ";\n";
-
         this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
         this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
 
         if (bool(properties)) {
             this->tab(); this->out() << "    // for old cppcheck\n";
             this->tab(); this->out() << "    // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->index_authid++ << ");\n";
+            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->authid_policy.size() << ");\n";
+            this->authid_policy.emplace_back(infos);
         }
 
         this->tab(); this->out() << "    using type = ";
@@ -344,7 +345,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     }
 
     auto join = [&](
-        std::vector<std::string> const & cont,
+        auto const & cont,
         auto const & before,
         auto const & after
     ) {
@@ -353,9 +354,9 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         if (first == last) {
             return ;
         }
-        out_varconf << before << *first << after << "\n";
+        out_varconf << before << *first << after;
         while (++first != last) {
-            out_varconf << ", " << before << *first << after << "\n";
+            out_varconf << ", " << before << *first << after;
         }
     };
 
@@ -369,7 +370,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
        if (!body.section_name.empty()) {
            section_names.emplace_back("cfg_section::" + body.section_name);
            out_varconf << "struct " << body.section_name << "\n: ";
-           join(body.member_names, "cfg::" + body.section_name + "::", "");
+           join(body.member_names, "cfg::" + body.section_name + "::", "\n");
            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
        }
     }
@@ -378,7 +379,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "struct VariablesConfiguration\n"
       ": "
     ;
-    join(section_names, "", "");
+    join(section_names, "", "\n");
     auto it = std::find_if(begin(writer.sections), end(writer.sections), [](auto & p){ return p.section_name.empty(); });
     if (it != writer.sections.end()) {
        for (auto & s : it->member_names) {
@@ -389,9 +390,49 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "{};\n\n"
       "using VariablesAclPack = Pack<\n  "
     ;
-    join(writer.variables_acl, "cfg::", "");
+    join(writer.variables_acl, "cfg::", "\n");
     out_varconf <<
-      ">;\n"
+      ">;\n\n\n"
+    ;
+
+    std::vector<std::bitset<64>> loggables;
+    std::vector<std::bitset<64>> unloggable_value_with_passwords;
+    int i = 0;
+
+    for (auto log_policy : writer.authid_policy)
+    {
+        if ((i % 64) == 0) {
+            i = 0;
+            loggables.push_back(0);
+            unloggable_value_with_passwords.push_back(0);
+        }
+
+        switch (log_policy) {
+            case spec::log_policy::loggable:
+                loggables.back().set(i);
+                break;
+            case spec::log_policy::unloggable:
+                break;
+            case spec::log_policy::unloggable_value_with_password:
+                unloggable_value_with_passwords.back().set(i);
+                break;
+        }
+        ++i;
+    }
+
+    out_varconf <<
+      "struct BitArray {\n"
+      "  uint64_t bits_[" << loggables.size() << "];\n"
+      "  bool operator[](unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }\n"
+      "};\n\n"
+    ;
+
+    out_varconf << "constexpr inline BitArray is_loggable_array{{\n  ";
+    join(loggables, "0b", "\n");
+    out_varconf << "}};\nconstexpr inline BitArray is_unloggable_value_array{{\n  ";
+    join(unloggable_value_with_passwords, "0b", "\n");
+    out_varconf <<
+      "}};\n"
       "} // namespace configs\n"
     ;
 }

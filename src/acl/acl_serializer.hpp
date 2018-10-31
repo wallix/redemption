@@ -951,18 +951,8 @@ public:
                 if (reader.is_set_value()) {
                     if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
                         array_view_const_char val         = field.to_string_view();
-                        array_view_const_char display_val = val;
-                        if (cfg::crypto::key0::index == authid ||
-                            cfg::crypto::key1::index == authid ||
-                            cfg::context::password::index == authid ||
-                            cfg::context::target_password::index == authid ||
-                            cfg::globals::target_application_password::index == authid ||
-                            cfg::context::auth_command_rail_exec_password::index == authid ||
-                            (cfg::context::auth_channel_answer::index == authid &&
-                            strcasestr(val.data(), "password") != nullptr)
-                        ) {
-                            display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
-                        }
+                        array_view_const_char display_val = field.is_loggable()
+                            ? val : ::get_printable_password(val, this->ini.get<cfg::debug::password>());
                         LOG(LOG_INFO, "receiving '%.*s'='%.*s'", int(key.size()), key.data(), int(display_val.size()), display_val.data());
                     }
                 }
@@ -1097,11 +1087,8 @@ public:
                         buffers.push('!');
                         buffers.push(val);
                         buffers.push('\n');
-                        auto display_val = val;
-                        if (field.authid() == cfg::context::password::index
-                         || field.authid() == cfg::context::target_password::index) {
-                            display_val = get_printable_password(val, password_printing_mode);
-                        }
+                        array_view_const_char display_val = field.is_loggable()
+                          ? val : get_printable_password(val, password_printing_mode);
                         if (bool(this->verbose & Verbose::variable)) {
                             LOG(LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(), int(display_val.size()), display_val.data());
                         }

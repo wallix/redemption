@@ -371,6 +371,11 @@ public:
             static_assert(decltype(has_attr) {} || decltype(has_no_attr_t) {}, "sesman::io is missing");
             static_assert(! (decltype(has_attr) {} && decltype(has_no_attr_t) {}), "There is two sesman::io value");
         }
+        // check spec::log_policy
+        {
+            auto has_attr = pack_contains<cfg_attributes::spec::log_policy>(u->infos);
+            static_assert(decltype(has_attr) {}, "spec::log_policy is missing");
+        }
 
         std::string varname = pack_get<AttributeName>(u->infos);
         auto it = this->section_->members.find(varname);
