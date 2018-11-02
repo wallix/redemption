@@ -38,26 +38,11 @@ struct val
     operator T const & () const { return this->x; }
 };
 
-template<class T>
-struct val<T*>
-{
-    T const * const x;
-    operator T const * const & () const { return this->x; }
-};
-
-template<class T> using val_t = val<
-    std::conditional_t<
-        std::is_array<T>::value,
-        std::remove_extent_t<T> const *,
-        T
-    >
->;
-
 template<class... Ts>
-struct pack_type : val_t<Ts>...
+struct pack_type : val<Ts>...
 {
     explicit pack_type(Ts const &... x)
-    : val_t<Ts>{x}...
+    : val<Ts>{x}...
     {}
 };
 
