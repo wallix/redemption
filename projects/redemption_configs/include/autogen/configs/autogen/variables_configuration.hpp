@@ -4961,17 +4961,17 @@ using VariablesAclPack = Pack<
 >;
 
 
-struct BitArray {
+struct BitFlags {
   uint64_t bits_[3];
-  bool operator[](unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }
+  bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }
 };
 
-constexpr inline BitArray is_loggable_array{{
+constexpr inline BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111101111111111
 , 0b1111111111111111111111111111101011111011111111111111111001111111
 , 0b0000000000000000000000000000000000000000000111011111111111111111
 }};
-constexpr inline BitArray is_unloggable_value_array{{
+constexpr inline BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000
 , 0b0000000000000000000000000000010000000000000000000000000000000000
 , 0b0000000000000000000000000000000000000000000000000000000000000000

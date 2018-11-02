@@ -91,7 +91,7 @@ void config_spec_definition(Writer && W)
 
     auto L = loggable;
     auto NL = unloggable;
-    auto VNL = unloggable_value_with_password;
+    auto VNL = unloggable_if_value_contains_password;
 
     W.section("globals", [&]
     {

@@ -396,7 +396,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     ;
 
     std::vector<std::bitset<64>> loggables;
-    std::vector<std::bitset<64>> unloggable_value_with_passwords;
+    std::vector<std::bitset<64>> unloggable_if_value_contains_passwords;
     int i = 0;
 
     for (auto log_policy : writer.authid_policy)
@@ -404,7 +404,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         if ((i % 64) == 0) {
             i = 0;
             loggables.push_back(0);
-            unloggable_value_with_passwords.push_back(0);
+            unloggable_if_value_contains_passwords.push_back(0);
         }
 
         switch (log_policy) {
@@ -413,24 +413,24 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
                 break;
             case spec::log_policy::unloggable:
                 break;
-            case spec::log_policy::unloggable_value_with_password:
-                unloggable_value_with_passwords.back().set(i);
+            case spec::log_policy::unloggable_if_value_contains_password:
+                unloggable_if_value_contains_passwords.back().set(i);
                 break;
         }
         ++i;
     }
 
     out_varconf <<
-      "struct BitArray {\n"
+      "struct BitFlags {\n"
       "  uint64_t bits_[" << loggables.size() << "];\n"
-      "  bool operator[](unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }\n"
+      "  bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }\n"
       "};\n\n"
     ;
 
-    out_varconf << "constexpr inline BitArray is_loggable_array{{\n  ";
+    out_varconf << "constexpr inline BitFlags is_loggable{{\n  ";
     join(loggables, "0b", "\n");
-    out_varconf << "}};\nconstexpr inline BitArray is_unloggable_value_array{{\n  ";
-    join(unloggable_value_with_passwords, "0b", "\n");
+    out_varconf << "}};\nconstexpr inline BitFlags is_unloggable_if_value_with_password{{\n  ";
+    join(unloggable_if_value_contains_passwords, "0b", "\n");
     out_varconf <<
       "}};\n"
       "} // namespace configs\n"

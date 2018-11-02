@@ -174,7 +174,7 @@ namespace spec
     {
         loggable,
         unloggable,
-        unloggable_value_with_password,
+        unloggable_if_value_contains_password,
     };
 
     inline namespace constants
@@ -192,7 +192,7 @@ namespace spec
 
         inline auto loggable = log_policy::loggable;
         inline auto unloggable = log_policy::unloggable;
-        inline auto unloggable_value_with_password = log_policy::unloggable_value_with_password;
+        inline auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
     }
 }
 

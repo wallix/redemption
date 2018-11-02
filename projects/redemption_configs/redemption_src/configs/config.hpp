@@ -263,10 +263,10 @@ private:
 
         bool is_loggable() const
         {
-            if (configs::is_loggable_array[unsigned(this->authid())])  {
+            if (configs::is_loggable(unsigned(this->authid())))  {
                 return true;
             }
-            if (configs::is_unloggable_value_array[unsigned(this->authid())]) {
+            if (configs::is_unloggable_if_value_with_password(unsigned(this->authid()))) {
                 return nullptr == strcasestr(this->to_string_view().data(), "password");
             }
             return false;
