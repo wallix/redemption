@@ -1,10 +1,10 @@
 #include "configs/specs/config_spec.hpp"
 #include "configs/specs/config_type.hpp"
-#include "configs/generators/ini.hpp"
+#include "configs/generators/connection_policy.hpp"
 
 int main(int ac, char ** av)
 {
-    struct Writer : cfg_generators::ini_writer::IniWriterBase<Writer>
+    struct Writer : cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase<Writer>
     {
         using base_type::base_type;
 
@@ -15,5 +15,5 @@ int main(int ac, char ** av)
             cfg_specs::config_spec_definition(*this);
         }
     };
-    return cfg_generators::app_write_ini<Writer>(ac, av);
+    return cfg_generators::app_write_connection_policy<Writer>(ac, av);
 }

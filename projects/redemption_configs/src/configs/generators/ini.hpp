@@ -55,6 +55,14 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     using base_type_::base_type_;
     using base_type_::write_type_info;
 
+    void do_init()
+    {
+        this->out_file_ <<
+            "#include \"config_variant.hpp\"\n\n"
+            "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
+        ;
+    }
+
     template<class Pack>
     void do_member(
         std::string const & section_name,

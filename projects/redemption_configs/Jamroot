@@ -32,9 +32,10 @@ constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
 constant FILEGEN_CONF_FWD : $(AUTOGENDIR)/variables_configuration_fwd.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
 constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
+constant FILEGEN_CONNPOLICY : $(AUTOGENDIR)/str_connection_policy.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
-actions generate_cpp_configs {
+actions generate_cpp_config {
     $(>[0]) \
         $(AUTOGENDIR)/authid.hpp \
         $(FILEGEN_CONF_FWD) \
@@ -50,41 +51,39 @@ actions generate_ini {
     $(>[0]) $(FILEGEN_INI)
 }
 
-actions generate_enum {
-    $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
+actions generate_connection_policy {
+    $(>[0]) $(FILEGEN_CONNPOLICY)
 }
 
-make $(FILEGEN_CONF) : make_cpp_config generate_enum : @generate_cpp_configs : <location>. ;
-make $(FILEGEN_SPEC) : make_python_spec generate_enum : @generate_python_spec : <location>. ;
-make $(FILEGEN_ENUM) : make_cpp_enum : @generate_enum : <location>. ;
-make $(FILEGEN_INI) : make_ini : @generate_ini : <location>. ;
-
-alias generate_cpp_configs : $(FILEGEN_CONF) ;
-alias generate_python_spec : $(FILEGEN_SPEC) ;
-alias generate_enum : $(FILEGEN_ENUM) ;
-alias generate_ini : $(FILEGEN_INI) ;
+actions generate_cpp_enumeration {
+    $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
+}
 
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
 obj error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : <define>NDEBUG ;
 obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 
-exe make_cpp_config : src/configs/write_cpp_config.cpp : <library>keymap <library>log_test.o ;
-exe make_python_spec : src/configs/write_python_spec.cpp : <library>keymap <library>log_test.o ;
-exe make_cpp_enum : src/configs/write_cpp_enumeration.cpp : <library>keymap <library>log_test.o ;
-exe make_ini : src/configs/write_ini.cpp : <library>keymap <library>log_test.o ;
+rule create_generator ( name : file : requirements * )
+{
+    make $(file) : make_$(name) $(requirements) : @generate_$(name) : <location>. ;
+    alias generate_$(name) : $(file) ;
+    exe make_$(name) : src/configs/write_$(name).cpp : <library>keymap <library>log_test.o ;
+}
+
+create_generator cpp_enumeration : $(FILEGEN_ENUM) ;
+create_generator cpp_config : $(FILEGEN_CONF) ;
+create_generator python_spec : $(FILEGEN_SPEC) ;
+create_generator connection_policy : $(FILEGEN_CONNPOLICY) ;
+create_generator ini : $(FILEGEN_INI) ;
 
 
-alias generate_types :
-    generate_enum
-;
-
-alias generate_descs :
+alias generate :
+    generate_cpp_enumeration
     generate_ini
     generate_python_spec
-    generate_cpp_configs
+    generate_cpp_config
+    generate_connection_policy
 ;
-
-alias generate : generate_types generate_descs ;
 
 
 include ../../jam/testing-coverage.jam ;
@@ -103,31 +102,35 @@ obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 obj config.o : redemption_src/configs/config.cpp
 :
     <include>redemption_src
-    <implicit-dependency>generate_cpp_configs
+    <implicit-dependency>generate_cpp_config
     <implicit-dependency>generate_python_spec
-    <implicit-dependency>generate_enum
+    <implicit-dependency>generate_cpp_enumeration
 ;
 
-constant TEST_DEPENDENCIES :
-    $(UNIT_TEST_DEPENDENCIES)
-    <library>libunit_test
-    <library>app_path_test.o
-    <library>cfgloader.o
-    <library>config.o
-    <library>error.o
-    <library>strutils.o
-    <library>fileutils.o
-    <library>font.o
-    <library>hexdump.o
-    <library>log_test.o
-    <cxxflags>-frtti
-    <include>redemption_src
-    <conditional>@defines-for-test
-;
+rule test-run ( name )
+{
+    unit-test $(name) : tests/$(name).cpp generate_cpp_config :
+        $(UNIT_TEST_DEPENDENCIES)
+        <library>libunit_test
+        <library>app_path_test.o
+        <library>cfgloader.o
+        <library>config.o
+        <library>error.o
+        <library>strutils.o
+        <library>fileutils.o
+        <library>font.o
+        <library>hexdump.o
+        <library>log_test.o
+        <cxxflags>-frtti
+        <include>redemption_src
+        <conditional>@defines-for-test
+    ;
+
+}
 
 ## Tests
 ## @{
-unit-test test_config : tests/test_config.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_parser : tests/test_parser.cpp : $(TEST_DEPENDENCIES) ;
-unit-test test_config_assign : tests/test_config_assign.cpp : $(TEST_DEPENDENCIES) ;
+test-run test_config ;
+test-run test_parser ;
+test-run test_config_assign ;
 ## }

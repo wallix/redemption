@@ -4044,6 +4044,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*) <br/>
+    /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4060,6 +4062,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Comma-separated rules (Ex.: $deny:Taskmgr) <br/>
+    /// @ = All child processes of Bastion Application (Ex.: $deny:@) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4076,6 +4080,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4370,6 +4375,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{3000} <br/>
@@ -4386,6 +4392,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
+    /// Use Session Probe to launch Remote Program as much as possible. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>

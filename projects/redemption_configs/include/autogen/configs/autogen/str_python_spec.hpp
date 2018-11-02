@@ -1,6 +1,6 @@
 #include "config_variant.hpp"
 
-"## Config file for RDP proxy.\n\n\n"
+"## Python spec file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
 "# Support of Bitmap Cache.\n"

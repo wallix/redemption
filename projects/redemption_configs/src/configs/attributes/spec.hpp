@@ -135,9 +135,6 @@ namespace spec
             advanced_in_gui = 1 << 4,
             iptables_in_gui = 1 << 5,
             password_in_gui = 1 << 6,
-
-            connection_policy_with_ini    = hidden_in_gui,
-            connection_policy_without_ini = no_ini_no_gui
         };
 
         constexpr attr operator | (attr x, attr y) {
@@ -187,9 +184,6 @@ namespace spec
         inline internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
         inline internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
 
-        inline internal::spec_attr_t<internal::attr::connection_policy_with_ini> connection_policy_with_ini{};
-        inline internal::spec_attr_t<internal::attr::connection_policy_without_ini> connection_policy_without_ini{};
-
         inline auto loggable = log_policy::loggable;
         inline auto unloggable = log_policy::unloggable;
         inline auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
@@ -208,8 +202,9 @@ namespace sesman
     {
         enum class io {
             none,
-            sesman_to_proxy = 1 << 0,
-            proxy_to_sesman = 1 << 1,
+            sesman_to_proxy   = 1 << 0,
+            proxy_to_sesman   = 1 << 1,
+            connection_policy = (1 << 2) | sesman_to_proxy,
             rw = sesman_to_proxy | proxy_to_sesman,
         };
 
@@ -227,11 +222,20 @@ namespace sesman
 
     inline namespace constants
     {
-        inline internal::sesman_io_t<internal::io::none>            no_sesman{};
-        inline internal::sesman_io_t<internal::io::proxy_to_sesman> proxy_to_sesman{};
-        inline internal::sesman_io_t<internal::io::sesman_to_proxy> sesman_to_proxy{};
-        inline internal::sesman_io_t<internal::io::rw>              sesman_rw{};
+        inline internal::sesman_io_t<internal::io::none>              no_sesman{};
+        inline internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
+        inline internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
+        inline internal::sesman_io_t<internal::io::connection_policy> connection_policy{};
+        inline internal::sesman_io_t<internal::io::rw>                sesman_rw{};
     }
+}
+
+
+namespace connpolicy
+{
+    using name = bind_<class name_tag, ::cfg_attributes::name_>;
+
+    struct section { char const* name; };
 }
 
 }

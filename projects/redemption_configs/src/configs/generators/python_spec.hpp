@@ -56,10 +56,13 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
 
     PythonSpecWriterBase(char const * filename)
     : out_file_(filename)
+    {}
+
+    void do_init()
     {
         this->out_file_ <<
             "#include \"config_variant.hpp\"\n\n"
-            "\"## Config file for RDP proxy.\\n\\n\\n\"\n"
+            "\"## Python spec file for RDP proxy.\\n\\n\\n\"\n"
         ;
     }
 
@@ -81,7 +84,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
         std::string const & member_name,
         Pack const & infos
     ) {
-        apply_if_contains<spec::internal::attr>(infos, [&, this](auto && attr, auto && infos) {
+        apply_if_contains<spec::internal::attr>(infos, [&, this](auto attr, auto && infos) {
             auto type = pack_get<spec::type_>(infos);
 
             this->write_description(pack_contains<desc>(infos), type, infos);
