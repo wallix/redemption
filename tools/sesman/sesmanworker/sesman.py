@@ -1512,8 +1512,7 @@ class Sesman():
                     if physical_proto_info.protocol == u'RDP':
                         kv[u'proxy_opt'] = ",".join(physical_proto_info.subprotocols)
 
-                    connectionpolicy_kv = self.fetch_connectionpolicy(conn_opts)
-                    kv.update({k:v for (k, v) in connectionpolicy_kv.items() if v is not None})
+                    kv.update(self.fetch_connectionpolicy(conn_opts))
 
                 kv[u'disable_tsk_switch_shortcuts'] = u'no'
                 if application:
@@ -2050,9 +2049,6 @@ class Sesman():
                 u'session_probe_keepalive_timeout' : 'keepalive_timeout',
                 u'session_probe_on_keepalive_timeout' : 'on_keepalive_timeout',
                 u'session_probe_end_disconnected_session' : 'end_disconnected_session',
-                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
-                u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
-                u'session_probe_idle_session_limit' : 'idle_session_limit',
                 u'session_probe_outbound_connection_monitoring_rules' : 'outbound_connection_monitoring_rules',
                 u'session_probe_process_monitoring_rules' : 'process_monitoring_rules',
                 u'session_probe_extra_system_processes' : 'extra_system_processes',
@@ -2066,12 +2062,12 @@ class Sesman():
                 u'session_probe_handle_usage_limit' : 'handle_usage_limit',
                 u'session_probe_memory_usage_limit' : 'memory_usage_limit',
                 u'session_probe_public_session'     : 'public_session',
-                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
-                u'session_probe_disconnected_session_limit'     : 'disconnected_session_limit',
-                u'session_probe_idle_session_limit'             : 'idle_session_limit',
 
                 # Deprecated. For compatibility only.
-                u'enable_session_probe_launch_mask' : 'enable_launch_mask'
+                u'enable_session_probe_launch_mask' : 'enable_launch_mask',
+                u'session_probe_disconnected_application_limit' : 'disconnected_application_limit',
+                u'session_probe_disconnected_session_limit' : 'disconnected_session_limit',
+                u'session_probe_idle_session_limit' : 'idle_session_limit',
                 },
             'server_cert': {
                 u'server_cert_store' : 'server_cert_store',
@@ -2098,7 +2094,9 @@ class Sesman():
             section_values = conn_opts.get(section)
             if section_values is not None:
                 for (config_key, cp_key) in matches.items():
-                    connectionpolicy_kv[config_key] = section_values.get(cp_key)
+                    value = section_values.get(cp_key)
+                    if value is not None:
+                        connectionpolicy_kv[config_key] = value
 
         return connectionpolicy_kv
 
