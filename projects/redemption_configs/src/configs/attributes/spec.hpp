@@ -44,7 +44,7 @@ namespace globals {
 namespace cfg_attributes
 {
 
-using name_ = char const *;
+struct name_ { std::string name; };
 
 template<class T>
 struct type_ { using type = T; };

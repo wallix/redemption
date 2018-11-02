@@ -49,8 +49,6 @@ struct pack_type : val<Ts>...
 
 namespace detail_
 {
-    template<class...> using void_t = void;
-
     template<class T>
     T const & unwrap(T const & val)
     { return val; }
@@ -344,11 +342,11 @@ public:
         using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
         std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});
 
-        std::string varname = pack_get<AttributeName>(u->infos);
+        std::string const& varname = pack_get<AttributeName>(u->infos).name;
         auto it = this->section_->members.find(varname);
         if (it == this->section_->members.end()) {
             this->section_->members_ordered.push_back(varname);
-            this->section_->members.emplace(std::move(varname), std::move(u));
+            this->section_->members.emplace(varname, std::move(u));
         }
         else {
             it->second = std::move(u);

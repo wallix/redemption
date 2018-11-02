@@ -116,7 +116,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             this->out() << cpp_doxygen_comment(desc.value, 4);
         });
         if (bool(properties)) {
-            this->authstrs.emplace_back(pack_get<sesman::name>(infos));
+            this->authstrs.emplace_back(pack_get<sesman::name>(infos).name);
         }
         this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
         if ((properties & sesman::internal::io::rw) == sesman::internal::io::sesman_to_proxy) {
@@ -178,7 +178,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         apply_if_contains<spec::internal::attr>(infos, [this, &infos, &varname_with_section](auto&&){
             auto type_spec = pack_get<spec::type_>(infos);
-            this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos) << "\")) {\n"
+            this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos).name << "\")) {\n"
             "            ::configs::parse_and_log(\n"
             "                context, key,\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
