@@ -160,64 +160,24 @@ auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 { return detail_::get_default<T>(t, &infos); }
 
 
-namespace detail_
-{
-    template<class To, class Pack, class Default>
-    To const & value_or(std::true_type, Pack const & pack, Default const &)
-    { return pack_get<To>(pack); }
-
-    template<class To, class Pack, class Default>
-    To const & value_or(std::false_type, Pack const &, Default const & default_)
-    { return default_; }
-
-    template<template<class> class To, class Pack, class Default>
-    auto const & value_or(std::true_type, Pack const & pack, Default const &)
-    { return pack_get<To>(pack); }
-
-    template<template<class> class To, class Pack, class Default>
-    Default const & value_or(std::false_type, Pack const &, Default const & default_)
-    { return default_; }
-}
-
 template<class T, class...Ts>
 T const & value_or(pack_type<Ts...> const & pack, T const & default_)
-{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
-
-template<class T, class...Ts, class Default>
-T const & value_or(pack_type<Ts...> const & pack, Default const & default_)
-{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
-
-template<template<class> class T, class...Ts, class Default>
-auto const & value_or(pack_type<Ts...> const & pack, Default const & default_)
-{ return detail_::value_or<T>(pack_contains<T>(pack), pack, default_); }
-
-
-namespace detail_
 {
-    template<class To, class Pack, class Fn, class... Args>
-    void apply_if_contains(std::true_type, Pack const & pack, Fn & fn, Args const & ... args)
-    { fn(pack_get<To>(pack), args...); }
-
-    template<class To, class Pack, class Fn, class... Args>
-    void apply_if_contains(std::false_type, Pack const &, Fn &, Args const & ...)
-    {}
-
-    template<template<class> class To, class Pack, class Fn, class... Args>
-    void apply_if_contains(std::true_type, Pack const & pack, Fn & fn, Args const & ... args)
-    { fn(pack_get<To>(pack), args...); }
-
-    template<template<class> class To, class Pack, class Fn, class... Args>
-    void apply_if_contains(std::false_type, Pack const &, Fn &, Args const & ...)
-    {}
+    if constexpr (decltype(pack_contains<T>(pack))::value) {
+        return pack_get<T>(pack);
+    }
+    else {
+        return default_;
+    }
 }
 
 template<class T, class... Ts, class Fn, class... Args>
 void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... args)
-{ detail_::apply_if_contains<T>(pack_contains<T>(pack), pack, fn, args...); }
-
-template<template<class> class T, class... Ts, class Fn, class... Args>
-void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... args)
-{ detail_::apply_if_contains<T>(pack_contains<T>(pack), pack, fn, args...); }
+{
+    if constexpr (decltype(pack_contains<T>(pack))::value) {
+        fn(pack_get<T>(pack), args...);
+    }
+}
 
 
 namespace detail_
