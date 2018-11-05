@@ -1827,7 +1827,7 @@ public:
 
             header.recv(chunk);
 
-            this->server_message_type = header.dataLen();
+            this->server_message_type = header.msgType();
         }
 
         bool send_message_to_client = true;
