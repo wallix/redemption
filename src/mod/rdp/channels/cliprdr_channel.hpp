@@ -631,7 +631,7 @@ private:
                     this->report_message.log6(info, arc_info, tvtime());
                 }
 
-                if (!this->param_dont_log_data_into_syslog) {
+                if (!this->param_dont_log_data_into_syslog && log_current_activity) {
                     LOG(LOG_INFO, "%s", info);
                 }
 
@@ -1450,7 +1450,7 @@ public:
                     this->report_message.log6(info, arc_info, tvtime());
                 }
 
-                if (!this->param_dont_log_data_into_syslog) {
+                if (!this->param_dont_log_data_into_syslog && log_current_activity) {
                     LOG(LOG_INFO, "%s", info);
                 }
 
