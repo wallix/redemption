@@ -424,6 +424,8 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
+    const bool param_log_only_relevant_clipbortd_activities;
+
     uint32_t client_dataLen = 0;
     uint32_t client_streamId = 0;
 
@@ -451,6 +453,8 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
+        bool log_only_relevant_clipbortd_activities;
+
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)
         {}
@@ -469,6 +473,7 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
+    , param_log_only_relevant_clipbortd_activities(params.log_only_relevant_clipbortd_activities)
 
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {
@@ -582,6 +587,16 @@ private:
                     format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
                 }
 
+                bool const log_current_activity = (
+                        (!this->param_log_only_relevant_clipbortd_activities) ||
+                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                    );
+
+                format_name += "(";
+                format_name += std::to_string(this->requestedFormatId);
+                format_name += ")";
+
                 char const* type = (receiver.data_to_dump.empty() ?
                     "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
                     "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
@@ -612,7 +627,9 @@ private:
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
-                this->report_message.log6(info, arc_info, tvtime());
+                if (log_current_activity) {
+                    this->report_message.log6(info, arc_info, tvtime());
+                }
 
                 if (!this->param_dont_log_data_into_syslog) {
                     LOG(LOG_INFO, "%s", info);
@@ -1393,6 +1410,16 @@ public:
                     format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
                 }
 
+                bool const log_current_activity = (
+                        (!this->param_log_only_relevant_clipbortd_activities) ||
+                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                    );
+
+                format_name += "(";
+                format_name += std::to_string(this->requestedFormatId);
+                format_name += ")";
+
                 auto const size_str = std::to_string(in_header.dataLen());
 
                 std::string info;
@@ -1419,7 +1446,9 @@ public:
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                this->report_message.log6(info, arc_info, tvtime());
+                if (log_current_activity) {
+                    this->report_message.log6(info, arc_info, tvtime());
+                }
 
                 if (!this->param_dont_log_data_into_syslog) {
                     LOG(LOG_INFO, "%s", info);

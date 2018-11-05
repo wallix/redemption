@@ -424,6 +424,8 @@ private:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
+    const bool log_only_relevant_clipbortd_activities;
+
     struct AsynchronousTaskContainer
     {
     private:
@@ -835,6 +837,7 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
         , metrics(metrics)
+        , log_only_relevant_clipbortd_activities(mod_rdp_params.log_only_relevant_clipbortd_activities)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1234,6 +1237,8 @@ private:
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
+        clipboard_virtual_channel_params.log_only_relevant_clipbortd_activities =
+            this->log_only_relevant_clipbortd_activities;
 
         return clipboard_virtual_channel_params;
     }
