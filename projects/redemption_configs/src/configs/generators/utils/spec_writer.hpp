@@ -279,18 +279,22 @@ private:
     template<class BaseName, class... Name>
     struct Names_
     {
+        template<class T, class Pack>
+        auto foo(T x, Pack const& pack)
+        {
+            if constexpr (std::is_convertible_v<Pack, val<decltype(x)>>) {
+                return static_cast<val<decltype(x)> const&>(pack).x.binded.name;
+            }
+            else {
+                return std::string{};
+            }
+        }
+
         template<class Pack>
         explicit Names_(Pack const& pack)
         : names{
             static_cast<val<BaseName> const&>(pack).x.name,
-            [&]{
-                if constexpr (std::is_convertible_v<Pack, val<Name>>) {
-                    return static_cast<val<Name> const&>(pack).x.binded.name;
-                }
-                else {
-                    return std::string{};
-                }
-            }()...
+            foo(Name{""}, pack)...
         }
         {}
 
