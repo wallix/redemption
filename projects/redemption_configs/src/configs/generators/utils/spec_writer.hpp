@@ -32,124 +32,65 @@
 
 namespace cfg_generators {
 
-template<class T>
-struct val
-{
-    T const x;
-    operator T const & () const { return this->x; }
-};
-
 template<class... Ts>
-struct pack_type : val<Ts>...
+struct pack_type : Ts...
+{};
+
+
+namespace detail
 {
-    explicit pack_type(Ts const &... x)
-    : val<Ts>{x}...
-    {}
-};
-
-
-namespace detail_
-{
-    template<class T>
-    T const & unwrap(T const & val)
-    { return val; }
-
-    template<class Tag, class T>
-    T const & unwrap(cfg_attributes::bind_<Tag, T> const & val)
-    { return val.binded; }
-
-
-    template<class T>
-    auto pack_get(val<T> const & val, int)
-    -> decltype(unwrap(val.x))
-    { return unwrap(val.x); }
-
-    template<class T, class Pack>
-    std::enable_if_t<!std::is_base_of<val<T>, Pack>::value, typename T::bind_type const &>
-    pack_get(Pack const & pack, char)
-    { return static_cast<typename T::bind_type const &>(pack); }
-
-
-    template<template<class> class Tpl, class T>
-    auto pack_get_tpl_val(val<Tpl<T>> const & val)
-    -> decltype(unwrap(val.x))
-    { return unwrap(val.x); }
-
-    template<template<class> class Tpl, class T>
-    auto pack_get_tpl(T const & val, int)
-    -> decltype(pack_get_tpl_val<Tpl>(val))
-    { return pack_get_tpl_val<Tpl>(val); }
-
-    template<class T> struct pack_get_binded_tpl;
-
-    template<class Tag, template<class> class Tpl, class T>
-    struct pack_get_binded_tpl<cfg_attributes::bind_<Tag, Tpl<T>>>
-    {
-        template<class U>
-        static Tpl<U> const & pack_get(val<Tpl<U>> const & val)
-        { return val.x; }
-    };
-
-    template<template<class> class Tpl, class T>
-    auto pack_get_tpl(T const & val, char)
-    -> decltype(pack_get_binded_tpl<Tpl<int>>::pack_get(val))
-    { return pack_get_binded_tpl<Tpl<int>>::pack_get(val); }
-}
-
-
-template<class T, class...Ts>
-auto pack_get(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_get<T>(pack, 1))
-{ return detail_::pack_get<T>(pack, 1); }
-
-template<template<class> class Tpl, class...Ts>
-auto pack_get(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_get_tpl<Tpl>(pack, 1))
-{ return detail_::pack_get_tpl<Tpl>(pack, 1); }
-
-
-namespace detail_
-{
-    template<class T, class Pack>
-    auto pack_contains(Pack const & pack, int)
-    -> decltype(void(pack_get<T>(pack)), std::true_type{})
+    template<class From, class To, class
+      = decltype(static_cast<void(*)(To)>(nullptr)(*static_cast<From*>(nullptr)))>
+    std::true_type is_convertible(int)
     { return {}; }
 
-    template<class T, class Pack>
-    std::false_type pack_contains(Pack const &, char)
+    template<class From, class To>
+    std::false_type is_convertible(...)
     { return {}; }
 
-    template<template<class> class Tpl, class Pack>
-    auto pack_contains_tpl(Pack const & pack, int)
-    -> decltype(void(pack_get<Tpl>(pack)), std::true_type{})
+    template<template<class...> class To, class... Ts>
+    std::true_type is_t_convertible_impl_aux(To<Ts...> const&)
     { return {}; }
 
-    template<template<class> class Tpl, class Pack>
-    std::false_type pack_contains_tpl(Pack const &, char)
+    template<template<class...> class To, class From>
+    auto is_t_convertible_impl(From const& pack, int)
+    -> decltype(is_t_convertible_impl_aux<To>(pack))
+    { return {}; }
+
+    template<template<class...> class To, class From>
+    std::false_type is_t_convertible_impl(From const&, char)
     { return {}; }
 }
 
-template<class T, class...Ts>
-auto pack_contains(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_contains<T>(pack, 1))
-{ return detail_::pack_contains<T>(pack, 1); }
+template<class From, class To>
+using is_convertible = decltype(detail::is_convertible<From, To>(0));
 
-template<template<class> class Tpl, class...Ts>
-auto pack_contains(pack_type<Ts...> const & pack)
--> decltype(detail_::pack_contains_tpl<Tpl>(pack, 1))
-{ return detail_::pack_contains_tpl<Tpl>(pack, 1); }
+template<class From, class To>
+constexpr bool is_convertible_v = is_convertible<From, To>::value;
 
+template<class From, template<class...> class To>
+using is_t_convertible = decltype(detail::is_t_convertible_impl<To>(*static_cast<From*>(nullptr), 1));
 
-inline bool is_empty(char const * s) { return !*s; }
-inline bool is_empty(std::string const & str) { return str.empty(); }
-template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return true; }
+template<class From, template<class...> class To>
+constexpr bool is_t_convertible_v = is_t_convertible<From, To>::value;
 
+template<class T>
+T const& get_elem(T const& x)
+{
+    return x;
+}
+
+template<template<class...> class T, class... Ts>
+T<Ts...> const& get_t_elem(T<Ts...> const& x)
+{
+    return x;
+}
 
 namespace detail_
 {
     template<class T, class U>
-    U const & get_default(cfg_attributes::type_<T>, val<cfg_attributes::default_<U>> const * d)
-    { return d->x.value; }
+    U const & get_default(cfg_attributes::type_<T>, cfg_attributes::default_<U> const * d)
+    { return d->value; }
 
     template<class T>
     T const & get_default(cfg_attributes::type_<T>, ...)
@@ -161,78 +102,121 @@ auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 { return detail_::get_default<T>(t, &infos); }
 
 
-template<class T, class...Ts>
-T const & value_or(pack_type<Ts...> const & pack, T const & default_)
+template<class T, class Pack, class D>
+decltype(auto) value_or(Pack const& pack, D&& default_)
 {
-    if constexpr (decltype(pack_contains<T>(pack))::value) {
-        return pack_get<T>(pack);
+    if constexpr (is_convertible_v<Pack, T>) {
+        return get_elem<T>(pack);
     }
     else {
-        return default_;
+        return D(static_cast<D&&>(default_));
     }
 }
 
-template<class T, class... Ts, class Fn, class... Args>
-void apply_if_contains(pack_type<Ts...> const & pack, Fn fn, Args const & ... args)
+template<class T, class Pack>
+std::string const& get_name(Pack const & pack)
 {
-    if constexpr (decltype(pack_contains<T>(pack))::value) {
-        fn(pack_get<T>(pack), args...);
+    if constexpr (is_convertible_v<Pack, T>) {
+        return get_elem<T>(pack).name;
+    }
+    else {
+        return get_elem<cfg_attributes::name_>(pack).name;
     }
 }
 
+template<template<class...> class T, class Pack>
+auto get_type(Pack const & pack)
+{
+    if constexpr (is_t_convertible_v<Pack, T>) {
+        return get_t_elem<T>(pack).to_type();
+    }
+    else {
+        return get_t_elem<cfg_attributes::type_>(pack);
+    }
+}
+
+template<class Pack>
+std::string const& get_desc(Pack const & pack)
+{
+    static cfg_attributes::desc d{};
+    return value_or<cfg_attributes::desc>(pack, d).value;
+}
+
+
+inline bool is_empty(char const * s) { return !*s; }
+inline bool is_empty(std::string const & str) { return str.empty(); }
+template<class T> bool is_empty(cfg_attributes::types::list<T> const &) { return true; }
+
+
+struct no_spec_attr_t {};
+struct no_sesman_io_t {};
+
+struct spec_attr_t { cfg_attributes::spec::internal::attr value; };
+struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
+struct log_policy_t { cfg_attributes::spec::log_policy value; };
+struct connection_policy_t : sesman_io_t { char const* file; };
 
 namespace detail_
 {
-    struct no_spec_attr_t {};
-    struct no_sesman_io_t {};
-
     template<class T>
     auto normalize_info_arg(T const& x)
     {
-        if constexpr (std::is_convertible_v<T, cfg_attributes::spec::internal::attr>) {
+        if constexpr (is_convertible_v<T, cfg_attributes::spec::internal::attr>) {
             static_assert(!std::is_same<cfg_attributes::spec::internal::attr, T>::value, "Has a direct spec::attr value");
             if constexpr (T::value == cfg_attributes::spec::internal::attr::no_ini_no_gui) {
                 return no_spec_attr_t{};
             }
             else {
-                return T::value;
+                return spec_attr_t{T::value};
             }
         }
-        else if constexpr (std::is_convertible_v<T, cfg_attributes::sesman::internal::io>) {
+        else if constexpr (is_convertible_v<T, cfg_attributes::sesman::internal::io>) {
             static_assert(!std::is_same<cfg_attributes::sesman::internal::io, T>::value, "Has a direct sesman::io value");
             if constexpr (T::value == cfg_attributes::sesman::internal::io::none) {
                 return no_sesman_io_t{};
             }
             else {
-                return T::value;
+                return sesman_io_t{T::value};
             }
         }
-        else if constexpr (std::is_convertible_v<T, char const*>) {
+        else if constexpr (is_convertible_v<T, cfg_attributes::spec::log_policy>) {
+            return log_policy_t{x};
+        }
+        else if constexpr (is_convertible_v<T, cfg_attributes::sesman::connection_policy>) {
+            return connection_policy_t{
+                {cfg_attributes::sesman::internal::io::sesman_to_proxy},
+                x.file
+            };
+        }
+        else if constexpr (is_convertible_v<T, char const*>) {
             return cfg_attributes::name_{x};
         }
         else {
             return T(x);
         }
     }
+
+    template<class... Ts>
+    struct check_name_type
+    {
+        template<class T>
+        static constexpr bool is_name = (std::is_same_v<Ts, T> || ...);
+    };
+
+    using name_type_checker = cfg_attributes::names::f<check_name_type>;
 
     template<class T>
     auto normalize_name(T const& x)
     {
-        if constexpr (std::is_convertible_v<T, char const*>) {
+        if constexpr (is_convertible_v<T, char const*>) {
             return cfg_attributes::name_{x};
         }
         else {
-            static_assert(std::is_same_v<typename T::bind_type, cfg_attributes::name_>, "not a name type");
+            static_assert(name_type_checker::template is_name<T>, "not a name type");
             return T(x);
         }
     }
 }
-
-
-template<class T, class U = void>
-using enable_if_enum_t = typename std::enable_if<std::is_enum<T>::value, U>::type;
-template<class T, class U = void>
-using disable_if_enum_t = typename std::enable_if<!std::is_enum<T>::value, U>::type;
 
 
 template<class Inherit, class AttributeName>
@@ -245,56 +229,38 @@ struct ConfigSpecWriterBase
 private:
     struct InfosBase
     {
-        virtual void apply(
-            std::string const & section_name,
-            std::string const & member_name,
-            Inherit & x
-        ) = 0;
+        virtual void apply(std::string const & section_name, Inherit & x) = 0;
         virtual ~InfosBase() = default;
     };
 
     template<class... Ts>
     struct Infos final : InfosBase
     {
-        Infos(Ts const & ... args)
-        : infos(args...)
+        template<class... Us>
+        Infos(Us&& ... args)
+        : infos{static_cast<Us&&>(args)...}
         {}
 
-        void apply(
-            std::string const & section_name,
-            std::string const & member_name,
-            Inherit & x
-        ) override
-        { x.do_member(section_name, member_name, this->infos); }
+        void apply(std::string const& section_name, Inherit& x) override
+        { x.do_member(section_name, this->infos); }
 
         pack_type<Ts...> infos;
     };
 
     struct Sep final : InfosBase
     {
-        void apply(std::string const &, std::string const &, Inherit & x) override
+        void apply(std::string const&, Inherit& x) override
         { x.do_sep(); }
     };
 
     template<class BaseName, class... Name>
     struct Names_
     {
-        template<class T, class Pack>
-        auto foo(T x, Pack const& pack)
-        {
-            if constexpr (std::is_convertible_v<Pack, val<decltype(x)>>) {
-                return static_cast<val<decltype(x)> const&>(pack).x.binded.name;
-            }
-            else {
-                return std::string{};
-            }
-        }
-
         template<class Pack>
         explicit Names_(Pack const& pack)
         : names{
-            static_cast<val<BaseName> const&>(pack).x.name,
-            foo(Name{""}, pack)...
+            static_cast<BaseName const&>(pack).name,
+            value_or<Name>(pack, Name{}).name...
         }
         {}
 
@@ -380,17 +346,23 @@ public:
     template<class... Ts>
     void member(Ts const& ... args)
     {
-        static_assert((std::is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...),
+        static_assert((is_convertible_v<Ts, cfg_attributes::spec::internal::attr> || ...),
             "spec::attr is missing");
-        static_assert((std::is_convertible_v<Ts, cfg_attributes::sesman::internal::io> || ...),
-            "sesman::io is missing");
+        static_assert((
+            (is_convertible_v<Ts, cfg_attributes::sesman::internal::io>
+          || is_convertible_v<Ts, cfg_attributes::sesman::connection_policy>) || ...),
+            "sesman::io or connection_policy are missing");
+        static_assert((
+            !((!is_convertible_v<Ts, cfg_attributes::sesman::internal::io>
+            && !is_convertible_v<Ts, cfg_attributes::sesman::connection_policy>) && ...)),
+            "has sesman::io and connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
 
         using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
         std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});
 
-        std::string const& varname = pack_get<AttributeName>(u->infos).name;
+        std::string const& varname = get_elem<cfg_attributes::name_>(u->infos).name;
         auto it = this->section_->members.find(varname);
         if (it == this->section_->members.end()) {
             this->section_->members_ordered.push_back(varname);
@@ -414,7 +386,7 @@ public:
                 }
                 else {
                     section.members.find(member_name)->second
-                    ->apply(section_name, member_name, this->inherit());
+                    ->apply(section_name, this->inherit());
                 }
             }
             this->inherit().do_stop_section(section_name);

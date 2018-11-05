@@ -27,18 +27,14 @@
 
 #include "configs/generators/python_spec.hpp"
 
-#include <algorithm>
 #include <iostream>
 #include <fstream>
-#include <chrono>
-#include <locale>
 #include <vector>
 #include <unordered_map>
 
 #include <cerrno>
 #include <cstring>
 
-#include <iostream>
 
 namespace cfg_generators {
 
@@ -50,48 +46,71 @@ template<class Inherit>
 struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>
 {
     using base_type = ConnectionPolicyWriterBase;
-    using base_type_ = python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>;
-    using base_type_::base_type_;
+
+    using filename_map_t = std::array<std::pair<std::string, char const*>, 2>;
+
+    ConnectionPolicyWriterBase(filename_map_t filename_map, char const* sesman_map_filename)
+    : python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>(sesman_map_filename)
+    , filename_map(std::move(filename_map))
+    {}
 
     template<class Pack>
-    void do_member(
-        std::string const & section_name,
-        std::string const & member_name,
-        Pack const & infos
-    ) {
-        apply_if_contains<sesman::internal::io>(infos, [&, this](auto connpolicy, auto&& infos) {
-            if (sesman::internal::io::connection_policy == connpolicy) {
-                auto section = value_or<connpolicy::section>(infos,
-                    connpolicy::section{section_name.c_str()});
-                std::cout << (section_name == section.name) << ' ' << section_name << ' ' << section.name << ' ' << member_name << "\n";
+    void do_member(std::string const & section_name, Pack const& infos)
+    {
+        if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+            auto type = get_type<spec::type_>(infos);
+            std::string const& member_name = get_name<connpolicy::name>(infos);
 
-                auto type = pack_get<spec::type_>(infos);
+            this->write_description(type, infos);
+            this->inherit().write_type_info(type);
+            this->write_enumeration_value_description(type, infos);
 
-                this->write_description(pack_contains<desc>(infos), type, infos);
-                this->inherit().write_type_info(type);
-                this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
+            using attr_t = spec::internal::attr;
+            auto attr = value_or<spec_attr_t>(infos, spec_attr_t{attr_t::no_ini_no_gui}).value;
 
-                auto spec_attr = value_or<spec::internal::attr>(infos, spec::internal::attr::no_ini_no_gui);
+            if (bool(attr & attr_t::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
+            if (bool(attr & attr_t::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
 
-                if (bool(spec_attr & spec::internal::attr::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
-                if (bool(spec_attr & spec::internal::attr::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
+            this->out() << "\"" << member_name << " = ";
+            this->inherit().write_type(type, get_default(type, infos));
+            this->out() << "\\n\\n\"\n\n";
 
-                this->out() << "\"" << member_name << " = ";
-                this->inherit().write_type(type, get_default(type, infos));
-                this->out() << "\\n\\n\"\n\n";
+            auto&& sections = file_map[get_elem<connection_policy_t>(infos).file];
+            auto const& section = value_or<connpolicy::section>(
+                infos, connpolicy::section{section_name.c_str()});
 
-                if (section_name == section.name) {
-                    std::cout << "section\n";
-                    sections[section.name] += this->out_member_.str();
+            Section& sec = (section_name == section.name)
+             ? sections.section_map[section.name]
+             : sections.delayed_section_map[section.name];
+
+            auto& sesman_name = get_name<sesman::name>(infos);
+
+            sec.contains += this->out_member_.str();
+            update_sesman_contains(sec.sesman_contains, sesman_name, member_name);
+
+            if constexpr (is_convertible_v<Pack, sesman::deprecated_names>) {
+                for (auto&& old_name : get_elem<sesman::deprecated_names>(infos).names) {
+                    update_sesman_contains(sec.sesman_contains, old_name, member_name, " # Deprecated, for compatibility only.");
                 }
-                else{
-                    std::cout << "new section\n";
-                    new_sections[section.name] += this->out_member_.str();
-                }
-
-                this->out_member_.str("");
             }
-        }, infos);
+
+            this->out_member_.str("");
+        }
+    }
+
+    static void update_sesman_contains(
+        std::string& s,
+        std::string const sesman_name,
+        std::string const connpolicy_name,
+        char const* extra = "")
+    {
+        s += "    u'";
+        s += sesman_name;
+        s += "': '";
+        s += connpolicy_name;
+        s += "',";
+        s += extra;
+        s += '\n';
     }
 
     void do_init()
@@ -100,25 +119,94 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
 
     void do_finish()
     {
-        for (auto&& [section_name, contains] : sections) {
-            this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
-            auto it = new_sections.find(section_name);
-            if (it != new_sections.end()) {
-                this->out_file_ << it->second;
-                it->second.clear();
+        auto& out_sesman = this->out_file_;
+
+        out_sesman <<
+          "#!/usr/bin/python -O\n"
+          "# -*- coding: utf-8 -*-\n\n"
+          "cp_spec = {\n"
+        ;
+
+        for (auto const& [cat, filename] : filename_map) {
+            auto file_it = file_map.find(cat);
+            if (file_it == file_map.end()) {
+                this->errorstring += "Config: unknown ";
+                this->errorstring += cat;
+                this->errorstring += " for connpolicy";
+                return ;
             }
+
+            std::ofstream out_spec(filename);
+            out_spec << R"g(R"([general]
+
+# Secondary login Transformation rule
+# ${LOGIN} will be replaced by login
+# ${DOMAIN} (optional) will be replaced by domain if it exists.
+# Empty value means no transformation rule.
+transformation_rule = string(default='')
+
+# Account Mapping password retriever
+# Transformation to apply to find the correct account.
+# ${USER} will be replaced by the user's login.
+# ${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).
+# ${USER_DOMAIN} will be replaced by the user's login + "@" + user's domain (or just user's login if there's no domain).
+# ${GROUP} will be replaced by the authorization's user group.
+# ${DEVICE} will be replaced by the device's name.
+# A regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \1, \2, ...
+# For example to replace leading "A" by "B" in the username: ${USER:/^A/B}
+# Empty value means no transformation rule.
+vault_transformation_rule = string(default='')
+
+
+)")g";
+
+            auto& section_map = file_it->second.section_map;
+            auto& delayed_section_map = file_it->second.delayed_section_map;
+
+            for (auto const& [section_name, section] : section_map) {
+                out_spec << "\"[" << section_name << "]\\n\\n\"\n\n" << section.contains;
+                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains;
+                auto it = delayed_section_map.find(section_name);
+                if (it != delayed_section_map.end()) {
+                    out_spec << it->second.contains;
+                    out_sesman << it->second.sesman_contains;
+                    delayed_section_map.erase(it);
+                }
+                out_sesman << "  },\n";
+            }
+
+            for (auto const& [section_name, section] : delayed_section_map) {
+                out_spec << "\"[" << section_name << "]\\n\\n\"\n\n" << section.contains;
+                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains << "},\n";
+            }
+
+            if (!out_spec) {
+                this->errorstring = filename;
+                return;
+            }
+            out_spec.close();
         }
 
-        for (auto&& [section_name, contains] : new_sections) {
-            if (not contains.empty()) {
-                this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
-            }
-        }
+        out_sesman << "}\n";
     }
 
 private:
-    std::unordered_map<std::string, std::string> sections;
-    std::unordered_map<std::string, std::string> new_sections;
+    struct Section
+    {
+        std::string contains;
+        std::string sesman_contains;
+    };
+    using data_by_section_t = std::unordered_map<std::string, Section>;
+    struct File
+    {
+        data_by_section_t section_map;
+        data_by_section_t delayed_section_map;
+    };
+    std::unordered_map<std::string, File> file_map;
+    filename_map_t filename_map;
+
+public:
+    std::string errorstring;
 };
 
 }
@@ -127,16 +215,23 @@ private:
 template<class SpecWriter>
 int app_write_connection_policy(int ac, char const * const * av)
 {
-    if (ac < 2) {
-        std::cerr << av[0] << " out-spec.h\n";
+    if (ac < 4) {
+        std::cerr << av[0] << " sesman-map.py rdp-out-spec.h vnc-out-spec.h\n";
         return 1;
     }
 
-    SpecWriter writer(av[1]);
+    SpecWriter writer(typename SpecWriter::filename_map_t{
+        std::pair{"rdp", av[2]},
+        std::pair{"vnc", av[3]}
+    }, av[1]);
     writer.evaluate();
 
     if (!writer.out_file_) {
         std::cerr << av[0] << ": " << av[1] << ": " << strerror(errno) << "\n";
+        return 1;
+    }
+    if (!writer.errorstring.empty()) {
+        std::cerr << av[0] << ": " << writer.errorstring << "\n";
         return 1;
     }
     return 0;

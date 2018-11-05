@@ -20,13 +20,13 @@
 
 #pragma once
 
-#include <iostream>
-#include <utility>
-
 #include "configs/generators/utils/write_template.hpp"
 #include "configs/generators/utils/multi_filename_writer.hpp"
 
 #include "configs/enumeration.hpp"
+
+#include <iostream>
+#include <utility>
 
 
 namespace cfg_generators {

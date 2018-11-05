@@ -6,7 +6,7 @@ REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_ROOT_PATH)/include ;
 SYSTEM_TYPE ?= linux ;
 SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 
-include ../../jam/redemption-config.jam
+include ../../jam/redemption-config.jam ;
 include ../../jam/cxxflags.jam ;
 include ../../jam/defines.jam ;
 
@@ -32,7 +32,9 @@ constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
 constant FILEGEN_CONF_FWD : $(AUTOGENDIR)/variables_configuration_fwd.hpp ;
 constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
 constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
-constant FILEGEN_CONNPOLICY : $(AUTOGENDIR)/str_connection_policy.hpp ;
+constant FILEGEN_SESMAN_CP_SPEC : $(REDEMPTION_ROOT_PATH)/tools/sesman/sesmanworker/sesmanconnpolicyspec.py ;
+constant FILEGEN_RDP_CONNPOLICY : $(AUTOGENDIR)/str_rdp_connection_policy.hpp ;
+constant FILEGEN_VNC_CONNPOLICY : $(AUTOGENDIR)/str_vnc_connection_policy.hpp ;
 constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
 
 actions generate_cpp_config {
@@ -52,7 +54,7 @@ actions generate_ini {
 }
 
 actions generate_connection_policy {
-    $(>[0]) $(FILEGEN_CONNPOLICY)
+    $(>[0]) $(FILEGEN_SESMAN_CP_SPEC) $(FILEGEN_RDP_CONNPOLICY) $(FILEGEN_VNC_CONNPOLICY)
 }
 
 actions generate_cpp_enumeration {
@@ -73,7 +75,7 @@ rule create_generator ( name : file : requirements * )
 create_generator cpp_enumeration : $(FILEGEN_ENUM) ;
 create_generator cpp_config : $(FILEGEN_CONF) ;
 create_generator python_spec : $(FILEGEN_SPEC) ;
-create_generator connection_policy : $(FILEGEN_CONNPOLICY) ;
+create_generator connection_policy : $(FILEGEN_RDP_CONNPOLICY) ;
 create_generator ini : $(FILEGEN_INI) ;
 
 

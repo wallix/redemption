@@ -29,10 +29,8 @@
 
 #include <iostream>
 #include <sstream>
-#include <iomanip>
 #include <vector>
 #include <chrono>
-#include <unordered_map>
 #include <memory>
 #include <bitset>
 
@@ -66,7 +64,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     std::vector<Section> sections;
     std::vector<std::string> member_names;
     std::vector<std::string> variables_acl;
-    std::vector<spec::log_policy> authid_policy;
+    std::vector<log_policy_t> authid_policy;
 
     std::ostream & out() { return *this->out_; }
 
@@ -94,29 +92,35 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     void tab() { this->out() << /*std::setw(this->depth*4+4) << */"    "; }
 
     template<class Pack>
-    void do_member(
-        std::string const & section_name,
-        std::string const & varname,
-        Pack const & infos
-    ) {
+    void do_member(std::string const & section_name, Pack const & infos)
+    {
+        std::string const& varname = get_name<cpp::name>(infos);
+
         this->member_names.push_back(varname);
-        auto type = pack_get<cpp::type_>(infos);
+        auto type = get_type<cpp::type_>(infos);
 
         std::string const & varname_with_section = section_name.empty() ? varname : section_name + "::" + varname;
 
-        auto const properties = value_or(infos, sesman::internal::io::none);
+        auto const properties = [&]{
+            if constexpr (is_convertible_v<Pack, sesman_io_t>) {
+                return get_elem<sesman_io_t>(infos).value;
+            }
+            else {
+                return sesman::internal::io::none;
+            }
+        }();
         if (bool(/*PropertyFieldFlags::read & */properties)) {
             this->variables_acl.emplace_back(varname_with_section);
         }
 
         this->out_ = &this->out_member_;
 
-        apply_if_contains<desc>(infos, [this](auto desc){
+        if constexpr (is_convertible_v<Pack, desc>) {
             //this->tab();
-            this->out() << cpp_doxygen_comment(desc.value, 4);
-        });
+            this->out() << cpp_doxygen_comment(get_elem<desc>(infos).value, 4);
+        };
         if (bool(properties)) {
-            this->authstrs.emplace_back(pack_get<sesman::name>(infos).name);
+            this->authstrs.emplace_back(get_name<sesman::name>(infos));
         }
         this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
         if ((properties & sesman::internal::io::rw) == sesman::internal::io::sesman_to_proxy) {
@@ -128,7 +132,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         else if ((properties & sesman::internal::io::rw) == sesman::internal::io::rw) {
             this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
-        this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
+        this->tab(); this->out() << "/// value"; this->write_assignable_default(is_t_convertible<Pack, default_>(), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::internal::io::sesman_to_proxy) ? "true" : "false") << ";\n";
         this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::internal::io::proxy_to_sesman) ? "true" : "false") << ";\n";
@@ -147,15 +151,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->out() << ";\n";
 
         // write type
-        if (bool(properties) || pack_contains<spec::internal::attr>(infos)) {
-            auto type_sesman = pack_get<sesman::type_>(infos);
-            auto type_spec = pack_get<spec::type_>(infos);
+        if (bool(properties) || is_convertible_v<Pack, spec_attr_t>) {
+            auto type_sesman = get_type<sesman::type_>(infos);
+            auto type_spec = get_type<spec::type_>(infos);
             static_assert(
-                std::is_same<decltype(type_spec), decltype(type_sesman)>{}
-             || !std::is_same<
-                    decltype(pack_contains<sesman::internal::io>(infos)),
-                    decltype(pack_contains<spec::internal::attr>(infos))
-                >{},
+                std::is_same_v<decltype(type_spec), decltype(type_sesman)>
+             || is_convertible_v<Pack, sesman_io_t> != is_convertible_v<Pack, spec_attr_t>,
                 "different type for sesman and spec isn't supported (go code :D)"
             );
             this->tab(); this->out() << "    using sesman_and_spec_type = ";
@@ -169,16 +170,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         // write value
         this->tab(); this->out() << "    type value";
-        this->write_assignable_default(pack_contains<default_>(infos), type, &infos);
+        this->write_assignable_default(is_t_convertible<Pack, default_>(), type, &infos);
         this->out() << ";\n";
 
         this->tab(); this->out() << "};\n";
 
         this->out_ = &this->out_body_parser_;
 
-        apply_if_contains<spec::internal::attr>(infos, [this, &infos, &varname_with_section](auto&&){
-            auto type_spec = pack_get<spec::type_>(infos);
-            this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos).name << "\")) {\n"
+        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            auto type_spec = get_type<spec::type_>(infos);
+            this->out() << "        else if (0 == strcmp(key, \"" << get_name<spec::name>(infos) << "\")) {\n"
             "            ::configs::parse_and_log(\n"
             "                context, key,\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
@@ -188,24 +189,21 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             "                av\n"
             "            );\n"
             "        }\n";
-        });
+        }
     }
 
 
-    template<class E>
-    enable_if_enum_t<E>
-    write_value(E const & e)
-    { this->out() << " = static_cast<type>(" << static_cast<unsigned long>(e) << ")"; }
-
     template<class T>
-    disable_if_enum_t<T>
-    write_value(T const & r)
+    void write_value(T const & x)
     {
-        if (std::is_same<T, bool>{}) {
-            this->out() << '{' << (r ? "true" : "false") << '}';
+        if constexpr (std::is_enum_v<T>) {
+            this->out() << " = static_cast<type>(" << static_cast<std::underlying_type_t<T>>(x) << ")";
+        }
+        else if constexpr (std::is_same_v<T, bool>) {
+            this->out() << '{' << (x ? "true" : "false") << '}';
         }
         else {
-            this->out() << '{' << r << '}';
+            this->out() << '{' << x << '}';
         }
     }
 
@@ -218,16 +216,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
 
     template<class T, class U>
-    void write_assignable_default(std::true_type, type_<T>, val<default_<U>> const * d)
-    { this->inherit().write_value(d->x.value); }
+    void write_assignable_default(std::true_type, type_<T>, default_<U> const * d)
+    { this->inherit().write_value(d->value); }
 
     template<unsigned N, class U>
-    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, val<default_<U>> const * d)
+    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, default_<U> const * d)
     {
-        if (d->x.value.size() != N) {
+        if (d->value.size() != N) {
             throw std::runtime_error("invalide keys size");
         }
-        this->out() << "{{" << io_hexkey{d->x.value.c_str(), N, "0x", ", "} << "}}";
+        this->out() << "{{" << io_hexkey{d->value.c_str(), N, "0x", ", "} << "}}";
     }
 
     void write_assignable_default(std::false_type, ...)
@@ -407,7 +405,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
             unloggable_if_value_contains_passwords.push_back(0);
         }
 
-        switch (log_policy) {
+        switch (log_policy.value) {
             case spec::log_policy::loggable:
                 loggables.back().set(i);
                 break;

@@ -27,13 +27,9 @@
 
 #include "configs/generators/python_spec.hpp"
 
-#include <algorithm>
 #include <iostream>
-#include <fstream>
 #include <chrono>
-#include <locale>
 #include <vector>
-#include <unordered_map>
 
 #include <cerrno>
 #include <cstring>
@@ -64,13 +60,12 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class Pack>
-    void do_member(
-        std::string const & section_name,
-        std::string const & member_name,
-        Pack const & infos
-    ) {
-        // comments variable
-        base_type_::do_member(section_name, '#' + member_name, infos);
+    void do_member(std::string const & section_name, Pack const & infos)
+    {
+        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            // comments variable
+            this->do_member_impl(infos, get_type<spec::type_>(infos), '#'+get_name<spec::name>(infos));
+        }
     }
 
     template<class... Ts>
@@ -120,7 +115,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     { this->write_type_info(type_<typename types::dirpath::fixed_type>{}, x); }
 
     template<class T, class E>
-    enable_if_enum_t<T>
+    std::enable_if_t<std::is_enum_v<T>>
     write_type_info(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
@@ -220,7 +215,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class T, class E>
-    enable_if_enum_t<T>
+    std::enable_if_t<std::is_enum_v<T>>
     write_type(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");

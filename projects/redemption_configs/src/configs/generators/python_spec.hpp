@@ -30,7 +30,6 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
-#include <locale>
 #include <vector>
 #include <unordered_map>
 
@@ -74,33 +73,37 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
                 this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n";
             }
             this->out_file_ << str;
+            this->out_member_.str("");
         }
-        this->out_member_.str("");
     }
 
     template<class Pack>
-    void do_member(
-        std::string const & /*section_name*/,
-        std::string const & member_name,
-        Pack const & infos
-    ) {
-        apply_if_contains<spec::internal::attr>(infos, [&, this](auto attr, auto && infos) {
-            auto type = pack_get<spec::type_>(infos);
+    void do_member(std::string const & /*section_name*/, Pack const & infos)
+    {
+        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            do_member_impl(infos, get_type<spec::type_>(infos), get_name<spec::name>(infos));
+        }
+    }
 
-            this->write_description(pack_contains<desc>(infos), type, infos);
-            this->inherit().write_type_info(type);
-            this->write_enumeration_value_description(pack_contains<prefix_value>(infos), type, infos);
+    template<class Type, class Pack>
+    void do_member_impl(Pack const & infos, Type type, std::string const & member_name)
+    {
+        this->write_description(type, infos);
+        this->inherit().write_type_info(type);
+        this->write_enumeration_value_description(type, infos);
 
-            if (bool(attr & spec::internal::attr::iptables_in_gui)) this->out() << "\"#_iptables\\n\"\n";
-            if (bool(attr & spec::internal::attr::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
-            if (bool(attr & spec::internal::attr::hidden_in_gui))   this->out() << "\"#_hidden\\n\"\n";
-            if (bool(attr & spec::internal::attr::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
-            if (bool(attr & spec::internal::attr::password_in_gui)) this->out() << "\"#_password\\n\"\n";
+        using attr_t = spec::internal::attr;
+        auto attr = get_elem<spec_attr_t>(infos).value;
 
-            this->out() << "\"" << member_name << " = ";
-            this->inherit().write_type(type, get_default(type, infos));
-            this->out() << "\\n\\n\"\n\n";
-        }, infos);
+        if (bool(attr & attr_t::iptables_in_gui)) this->out() << "\"#_iptables\\n\"\n";
+        if (bool(attr & attr_t::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
+        if (bool(attr & attr_t::hidden_in_gui))   this->out() << "\"#_hidden\\n\"\n";
+        if (bool(attr & attr_t::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
+        if (bool(attr & attr_t::password_in_gui)) this->out() << "\"#_password\\n\"\n";
+
+        this->out() << "\"" << member_name << " = ";
+        this->inherit().write_type(type, get_default(type, infos));
+        this->out() << "\\n\\n\"\n\n";
     }
 
 
@@ -154,25 +157,20 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
         return io_prefix_lines{s, "\"# ", "\\n\"", 0};
     }
 
-
     template<class T, class Pack>
-    void write_description(std::true_type, type_<T>, Pack const & pack)
-    { this->out() << comment(pack_get<desc>(pack).value.c_str()); }
-
-    template<class T, class Pack>
-    disable_if_enum_t<T>
-    write_description(std::false_type, type_<T>, Pack const &)
-    {}
-
-    template<class T, class Pack>
-    enable_if_enum_t<T>
-    write_description(std::false_type, type_<T>, Pack const &)
+    void write_description(type_<T>, Pack const & pack)
     {
-        apply_enumeration_for<T>(this->enums, [this](auto const & e) {
-            if (e.desc) {
-                this->out() << this->comment(e.desc);
-            }
-        });
+        auto& d = get_desc(pack);
+        if (!d.empty()) {
+            this->out() << comment(d.c_str());
+        }
+        else if constexpr (std::is_enum_v<T>) {
+            apply_enumeration_for<T>(this->enums, [this](auto const & e) {
+                if (e.desc) {
+                    this->out() << this->comment(e.desc);
+                }
+            });
+        }
     }
 
 
@@ -252,29 +250,21 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
         }
     }
 
-    template<class Pack>
-    std::nullptr_t get_prefix(std::false_type, Pack const &)
-    { return nullptr; }
-
-    template<class Pack>
-    char const * get_prefix(std::true_type, Pack const & pack)
-    { return pack_get<prefix_value>(pack).value; }
-
-    template<bool HasPrefix, class T, class Pack>
-    enable_if_enum_t<T>
-    write_enumeration_value_description(std::integral_constant<bool, HasPrefix>, type_<T>, Pack const & pack)
+    template<class T, class Pack>
+    void write_enumeration_value_description(type_<T>, Pack const & pack)
     {
-        apply_enumeration_for<T>(this->enums, [this, &pack](auto const & e) {
-            this->write_desc_value(e, this->get_prefix(pack_contains<prefix_value>(pack), pack));
-            if (e.info) {
-                this->out() << this->comment(e.info);
-            }
-        });
+        if constexpr (std::is_enum_v<T>) {
+            apply_enumeration_for<T>(this->enums, [this, &pack](auto const & e) {
+                this->write_desc_value(e, value_or<prefix_value>(pack, prefix_value{}).value);
+                if (e.info) {
+                    this->out() << this->comment(e.info);
+                }
+            });
+        }
+        else {
+            static_assert(!is_convertible_v<Pack, prefix_value>, "prefix_value only with enums type");
+        }
     }
-
-    template<bool HasPrefix, class T, class Pack>
-    void write_enumeration_value_description(std::integral_constant<bool, HasPrefix>, T, Pack const &)
-    { static_assert(!HasPrefix, "prefix_value only with enums type"); }
 
     template<class T>
     void write_type(type_<bool>, T x)
@@ -345,7 +335,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     }
 
     template<class T, class E>
-    enable_if_enum_t<T>
+    std::enable_if_t<std::is_enum_v<E>>
     write_type(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
