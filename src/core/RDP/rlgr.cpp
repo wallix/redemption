@@ -1,23 +1,23 @@
 /*
-   This program is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2 of the License, or
-   (at your option) any later version.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2 of the License, or
+  (at your option) any later version.
 
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
 
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  You should have received a copy of the GNU General Public License
+  along with this program; if not, write to the Free Software
+  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-   Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2018
-   Author(s): David Fort
+  Product name: redemption, a FLOSS RDP proxy
+  Copyright (C) Wallix 2018
+  Author(s): David Fort
 
-   Run-Length Golomb-Rice compression
+  Run-Length Golomb-Rice compression
 */
 #include "core/RDP/rlgr.hpp"
 
@@ -25,383 +25,422 @@
 #include <cstring>
 
 /* Constants used in RLGR1/RLGR3 algorithm */
-#define KPMAX	(80)	/* max value for kp or krp */
-#define LSGR	(3)	/* shift count to convert kp to k */
-#define UP_GR	(4)	/* increase in kp after a zero run in RL mode */
-#define DN_GR	(6)	/* decrease in kp after a nonzero symbol in RL mode */
-#define UQ_GR	(3)	/* increase in kp after nonzero symbol in GR mode */
-#define DQ_GR	(3)	/* decrease in kp after zero symbol in GR mode */
+#define KPMAX    (80)    /* max value for kp or krp */
+#define LSGR    (3)    /* shift count to convert kp to k */
+#define UP_GR    (4)    /* increase in kp after a zero run in RL mode */
+#define DN_GR    (6)    /* decrease in kp after a nonzero symbol in RL mode */
+#define UQ_GR    (3)    /* increase in kp after nonzero symbol in GR mode */
+#define DQ_GR    (3)    /* decrease in kp after zero symbol in GR mode */
 
 static inline uint32_t lzcnt_s(uint32_t x)
 {
-	uint32_t y;
-	int n = 32;
+    uint32_t y;
+    int n = 32;
 
-	if (!x)
-		return 32;
+    if (!x) {
+        return 32;
+    }
 
-	y = x >> 16;
-	if (y != 0) {
-		n = n - 16;	x = y;
-	}
+    y = x >> 16;
+    if (y != 0) {
+        n = n - 16;
+        x = y;
+    }
 
-	y = x >>  8;
-	if (y != 0) {
-		n = n - 8; x = y;
-	}
+    y = x >>  8;
+    if (y != 0) {
+        n = n - 8;
+        x = y;
+    }
 
-	y = x >>  4;
-	if (y != 0) {
-		n = n - 4; x = y;
-	}
+    y = x >>  4;
+    if (y != 0) {
+        n = n - 4;
+        x = y;
+    }
 
-	y = x >>  2;
-	if (y != 0) {
-		n = n - 2; x = y;
-	}
+    y = x >>  2;
+    if (y != 0) {
+        n = n - 2;
+        x = y;
+    }
 
-	y = x >>  1;
-	if (y != 0)
-		return n - 2;
+    y = x >>  1;
+    if (y != 0) {
+        return n - 2;
+    }
 
-	return n - x;
+    return n - x;
 }
 
 bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize)
 {
-	int vk;
-	int run;
-	int cnt;
-	int size;
-	int nbits;
-	unsigned int offset;
-	int16_t mag;
-	int k, kp;
-	int kr, krp;
-	uint16_t code;
-	uint32_t sign;
-	uint32_t nIdx;
-	uint32_t val1;
-	uint32_t val2;
-	int16_t* pOutput;
+    int vk;
+    int run;
+    int cnt;
+    int size;
+    int nbits;
+    unsigned int offset;
+    int16_t mag;
+    int k, kp;
+    int kr, krp;
+    uint16_t code;
+    uint32_t sign;
+    uint32_t nIdx;
+    uint32_t val1;
+    uint32_t val2;
+    int16_t* pOutput;
 
-	k = 1;
-	kp = k << LSGR;
+    k = 1;
+    kp = k << LSGR;
 
-	kr = 1;
-	krp = kr << LSGR;
+    kr = 1;
+    krp = kr << LSGR;
 
-	if ((mode != RLGR1) && (mode != RLGR3))
-		mode = RLGR1;
+    if ((mode != RLGR1) && (mode != RLGR3)) {
+        mode = RLGR1;
+    }
 
-	if (!pSrcData || !srcSize) // TODO: asserts
-		return false;
+    if (!pSrcData || !srcSize) { // TODO: asserts
+        return false;
+    }
 
-	InBitStream bs(pSrcData, srcSize);
+    InBitStream bs(pSrcData, srcSize);
 
-	if (!pDstData || !dstSize)
-		return false;
+    if (!pDstData || !dstSize) {
+        return false;
+    }
 
-	pOutput = pDstData;
+    pOutput = pDstData;
 
-	while ((bs.getRemainingLength() > 0) && ((pOutput - pDstData) < dstSize)) {
-		if (k) {
-			/* Run-Length (RL) Mode */
-			run = 0;
+    while ((bs.getRemainingLength() > 0) && ((pOutput - pDstData) < dstSize)) {
+        if (k) {
+            /* Run-Length (RL) Mode */
+            run = 0;
 
-			/* count number of leading 0s */
-			cnt = lzcnt_s(bs.peekBits(32));
-			nbits = bs.getRemainingLength();
-			if (cnt > nbits)
-				cnt = nbits;
+            /* count number of leading 0s */
+            cnt = lzcnt_s(bs.peekBits(32));
+            nbits = bs.getRemainingLength();
+            if (cnt > nbits) {
+                cnt = nbits;
+            }
 
-			vk = cnt;
+            vk = cnt;
 
-			while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
-				bs.shift(32);
+            while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
+                bs.shift(32);
 
-				cnt = lzcnt_s(bs.peekBits(32));
-				nbits = bs.getRemainingLength();
+                cnt = lzcnt_s(bs.peekBits(32));
+                nbits = bs.getRemainingLength();
 
-				if (cnt > nbits)
-					cnt = nbits;
+                if (cnt > nbits) {
+                    cnt = nbits;
+                }
 
-				vk += cnt;
-			}
+                vk += cnt;
+            }
 
-			bs.shift(vk % 32);
+            bs.shift(vk % 32);
 
-			if (bs.getRemainingLength() < 1)
-				break;
+            if (bs.getRemainingLength() < 1) {
+                break;
+            }
 
-			bs.shift(1);
+            bs.shift(1);
 
-			while (vk--) {
-				run += (1 << k); /* add (1 << k) to run length */
+            while (vk--) {
+                run += (1 << k); /* add (1 << k) to run length */
 
-				/* update k, kp params */
+                /* update k, kp params */
 
-				kp += UP_GR;
+                kp += UP_GR;
 
-				if (kp > KPMAX)
-					kp = KPMAX;
+                if (kp > KPMAX) {
+                    kp = KPMAX;
+                }
 
-				k = kp >> LSGR;
-			}
+                k = kp >> LSGR;
+            }
 
-			/* next k bits contain run length remainder */
-			if (bs.getRemainingLength() < k)
-				break;
-			run += bs.getBits(k);
+            /* next k bits contain run length remainder */
+            if (bs.getRemainingLength() < k) {
+                break;
+            }
+            run += bs.getBits(k);
 
-			/* read sign bit */
-			if (bs.getRemainingLength() < 1)
-				break;
-			sign = bs.getBits(1) ? 1 : 0;
+            /* read sign bit */
+            if (bs.getRemainingLength() < 1) {
+                break;
+            }
+            sign = bs.getBits(1) ? 1 : 0;
 
-			/* count number of leading 1s */
-			cnt = lzcnt_s(~bs.peekBits(32));
-			nbits = bs.getRemainingLength();
+            /* count number of leading 1s */
+            cnt = lzcnt_s(~bs.peekBits(32));
+            nbits = bs.getRemainingLength();
 
-			if (cnt > nbits)
-				cnt = nbits;
+            if (cnt > nbits) {
+                cnt = nbits;
+            }
 
-			vk = cnt;
+            vk = cnt;
 
-			while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
-				bs.shift(32);
+            while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
+                bs.shift(32);
 
-				cnt = lzcnt_s(~(bs.peekBits(32)));
+                cnt = lzcnt_s(~(bs.peekBits(32)));
 
-				nbits = bs.getRemainingLength();
+                nbits = bs.getRemainingLength();
 
-				if (cnt > nbits)
-					cnt = nbits;
+                if (cnt > nbits) {
+                    cnt = nbits;
+                }
 
-				vk += cnt;
-			}
+                vk += cnt;
+            }
 
-			bs.shift(vk % 32);
+            bs.shift(vk % 32);
 
-			if (bs.getRemainingLength() < 1)
-				break;
+            if (bs.getRemainingLength() < 1) {
+                break;
+            }
 
-			bs.shift(1);
+            bs.shift(1);
 
-			/* next kr bits contain code remainder */
-			if (bs.getRemainingLength() < kr)
-				break;
-			code = bs.getBits(kr);
+            /* next kr bits contain code remainder */
+            if (bs.getRemainingLength() < kr) {
+                break;
+            }
+            code = bs.getBits(kr);
 
-			/* add (vk << kr) to code */
-			code |= (vk << kr);
+            /* add (vk << kr) to code */
+            code |= (vk << kr);
 
-			if (!vk) {
-				/* update kr, krp params */
-				krp -= 2;
+            if (!vk) {
+                /* update kr, krp params */
+                krp -= 2;
 
-				if (krp < 0)
-					krp = 0;
+                if (krp < 0) {
+                    krp = 0;
+                }
 
-				kr = krp >> LSGR;
-			} else if (vk != 1)	{
-				/* update kr, krp params */
-				krp += vk;
+                kr = krp >> LSGR;
+            } else if (vk != 1)    {
+                /* update kr, krp params */
+                krp += vk;
 
-				if (krp > KPMAX)
-					krp = KPMAX;
+                if (krp > KPMAX) {
+                    krp = KPMAX;
+                }
 
-				kr = krp >> LSGR;
-			}
+                kr = krp >> LSGR;
+            }
 
-			/* update k, kp params */
-			kp -= DN_GR;
+            /* update k, kp params */
+            kp -= DN_GR;
 
-			if (kp < 0)
-				kp = 0;
+            if (kp < 0) {
+                kp = 0;
+            }
 
-			k = kp >> LSGR;
+            k = kp >> LSGR;
 
-			/* compute magnitude from code */
-			if (sign)
-				mag = (static_cast<int16_t>(code + 1)) * -1;
-			else
-				mag = static_cast<int16_t>(code + 1);
+            /* compute magnitude from code */
+            if (sign) {
+                mag = (static_cast<int16_t>(code + 1)) * -1;
+            } else {
+                mag = static_cast<int16_t>(code + 1);
+            }
 
-			/* write to output stream */
+            /* write to output stream */
 
-			offset = static_cast<int>(pOutput - pDstData);
-			size = run;
+            offset = static_cast<int>(pOutput - pDstData);
+            size = run;
 
-			if ((offset + size) > dstSize)
-				size = dstSize - offset;
+            if ((offset + size) > dstSize) {
+                size = dstSize - offset;
+            }
 
-			if (size) {
-				std::memset(pOutput, 0, size * sizeof(int16_t));
-				pOutput += size;
-			}
+            if (size) {
+                std::memset(pOutput, 0, size * sizeof(int16_t));
+                pOutput += size;
+            }
 
-			if ((pOutput - pDstData) < dstSize)	{
-				*pOutput = mag;
-				pOutput++;
-			}
-		} else {
-			/* Golomb-Rice (GR) Mode */
+            if ((pOutput - pDstData) < dstSize)    {
+                *pOutput = mag;
+                pOutput++;
+            }
+        } else {
+            /* Golomb-Rice (GR) Mode */
 
-			/* count number of leading 1s */
-			cnt = lzcnt_s(~bs.peekBits(32));
-			nbits = bs.getRemainingLength();
+            /* count number of leading 1s */
+            cnt = lzcnt_s(~bs.peekBits(32));
+            nbits = bs.getRemainingLength();
 
-			if (cnt > nbits)
-				cnt = nbits;
+            if (cnt > nbits) {
+                cnt = nbits;
+            }
 
-			vk = cnt;
+            vk = cnt;
 
-			while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
-				bs.shift(32);
+            while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
+                bs.shift(32);
 
-				cnt = lzcnt_s(~bs.peekBits(32));
-				nbits = bs.getRemainingLength();
+                cnt = lzcnt_s(~bs.peekBits(32));
+                nbits = bs.getRemainingLength();
 
-				if (cnt > nbits)
-					cnt = nbits;
+                if (cnt > nbits) {
+                    cnt = nbits;
+                }
 
-				vk += cnt;
-			}
+                vk += cnt;
+            }
 
-			bs.shift(vk % 32);
+            bs.shift(vk % 32);
 
-			if (bs.getRemainingLength() < 1)
-				break;
-			bs.shift(1);
+            if (bs.getRemainingLength() < 1) {
+                break;
+            }
+            bs.shift(1);
 
-			/* next kr bits contain code remainder */
-			if (bs.getRemainingLength() < kr)
-				break;
-			code = bs.getBits(kr);
+            /* next kr bits contain code remainder */
+            if (bs.getRemainingLength() < kr) {
+                break;
+            }
+            code = bs.getBits(kr);
 
-			/* add (vk << kr) to code */
-			code |= (vk << kr);
+            /* add (vk << kr) to code */
+            code |= (vk << kr);
 
-			if (!vk) {
-				/* update kr, krp params */
-				krp -= 2;
+            if (!vk) {
+                /* update kr, krp params */
+                krp -= 2;
 
-				if (krp < 0)
-					krp = 0;
+                if (krp < 0) {
+                    krp = 0;
+                }
 
-				kr = krp >> LSGR;
-			} else if (vk != 1)	{
-				/* update kr, krp params */
-				krp += vk;
+                kr = krp >> LSGR;
+            } else if (vk != 1)    {
+                /* update kr, krp params */
+                krp += vk;
 
-				if (krp > KPMAX)
-					krp = KPMAX;
+                if (krp > KPMAX) {
+                    krp = KPMAX;
+                }
 
-				kr = krp >> LSGR;
-			}
+                kr = krp >> LSGR;
+            }
 
-			if (mode == RLGR1) { /* RLGR1 */
-				if (!code) {
-					/* update k, kp params */
-					kp += UQ_GR;
+            if (mode == RLGR1) { /* RLGR1 */
+                if (!code) {
+                    /* update k, kp params */
+                    kp += UQ_GR;
+
+                    if (kp > KPMAX) {
+                        kp = KPMAX;
+                    }
 
-					if (kp > KPMAX)
-						kp = KPMAX;
+                    k = kp >> LSGR;
+
+                    mag = 0;
+                } else {
+                    /* update k, kp params */
+                    kp -= DQ_GR;
 
-					k = kp >> LSGR;
+                    if (kp < 0) {
+                        kp = 0;
+                    }
 
-					mag = 0;
-				} else {
-					/* update k, kp params */
-					kp -= DQ_GR;
+                    k = kp >> LSGR;
 
-					if (kp < 0)
-						kp = 0;
+                    /*
+                     * code = 2 * mag - sign
+                     * sign + code = 2 * mag
+                     */
 
-					k = kp >> LSGR;
+                    if (code & 1) {
+                        mag = static_cast<int16_t>((code + 1) >> 1) * -1;
+                    } else {
+                        mag = static_cast<int16_t>(code >> 1);
+                    }
+                }
 
-					/*
-					 * code = 2 * mag - sign
-					 * sign + code = 2 * mag
-					 */
+                if ((pOutput - pDstData) < dstSize) {
+                    *pOutput = mag;
+                    pOutput++;
+                }
+            } else if (mode == RLGR3) { /* RLGR3 */
+                nIdx = 0;
 
-					if (code & 1)
-						mag = static_cast<int16_t>((code + 1) >> 1) * -1;
-					else
-						mag = static_cast<int16_t>(code >> 1);
-				}
+                if (code) {
+                    mag = static_cast<uint32_t>(code);
+                    nIdx = 32 - lzcnt_s(mag);
+                }
 
-				if ((pOutput - pDstData) < dstSize) {
-					*pOutput = mag;
-					pOutput++;
-				}
-			} else if (mode == RLGR3) { /* RLGR3 */
-				nIdx = 0;
+                if (bs.getRemainingLength() < nIdx) {
+                    break;
+                }
+                val1 = bs.getBits(nIdx);
 
-				if (code) {
-					mag = static_cast<uint32_t>(code);
-					nIdx = 32 - lzcnt_s(mag);
-				}
+                val2 = code - val1;
 
-				if (bs.getRemainingLength() < nIdx)
-					break;
-				val1 = bs.getBits(nIdx);
+                if (val1 && val2) {
+                    /* update k, kp params */
+                    kp -= (2 * DQ_GR);
 
-				val2 = code - val1;
+                    if (kp < 0) {
+                        kp = 0;
+                    }
 
-				if (val1 && val2) {
-					/* update k, kp params */
-					kp -= (2 * DQ_GR);
+                    k = kp >> LSGR;
+                } else if (!val1 && !val2) {
+                    /* update k, kp params */
+                    kp += (2 * UQ_GR);
 
-					if (kp < 0)
-						kp = 0;
+                    if (kp > KPMAX) {
+                        kp = KPMAX;
+                    }
 
-					k = kp >> LSGR;
-				} else if (!val1 && !val2) {
-					/* update k, kp params */
-					kp += (2 * UQ_GR);
+                    k = kp >> LSGR;
+                }
 
-					if (kp > KPMAX)
-						kp = KPMAX;
+                if (val1 & 1) {
+                    mag = (static_cast<int16_t>((val1 + 1) >> 1)) * -1;
+                } else {
+                    mag = static_cast<int16_t>(val1 >> 1);
+                }
 
-					k = kp >> LSGR;
-				}
+                if ((pOutput - pDstData) < dstSize)    {
+                    *pOutput = mag;
+                    pOutput++;
+                }
 
-				if (val1 & 1)
-					mag = (static_cast<int16_t>((val1 + 1) >> 1)) * -1;
-				else
-					mag = static_cast<int16_t>(val1 >> 1);
+                if (val2 & 1) {
+                    mag = (static_cast<int16_t>((val2 + 1) >> 1)) * -1;
+                } else {
+                    mag = static_cast<int16_t>(val2 >> 1);
+                }
 
-				if ((pOutput - pDstData) < dstSize)	{
-					*pOutput = mag;
-					pOutput++;
-				}
+                if ((pOutput - pDstData) < dstSize)    {
+                    *pOutput = mag;
+                    pOutput++;
+                }
+            }
+        }
+    }
 
-				if (val2 & 1)
-					mag = (static_cast<int16_t>((val2 + 1) >> 1)) * -1;
-				else
-					mag = static_cast<int16_t>(val2 >> 1);
+    offset = static_cast<int>(pOutput - pDstData);
+    if (offset < dstSize) {
+        size = dstSize - offset;
+        memset(pOutput, 0, size * 2);
+        pOutput += size;
+    }
 
-				if ((pOutput - pDstData) < dstSize)	{
-					*pOutput = mag;
-					pOutput++;
-				}
-			}
-		}
-	}
+    offset = static_cast<int>(pOutput - pDstData);
 
-	offset = static_cast<int>(pOutput - pDstData);
-	if (offset < dstSize) {
-		size = dstSize - offset;
-		memset(pOutput, 0, size * 2);
-		pOutput += size;
-	}
+    if (offset != dstSize) {
+        return -1;
+    }
 
-	offset = static_cast<int>(pOutput - pDstData);
-
-	if (offset != dstSize)
-		return -1;
-
-	return 1;
+    return 1;
 }

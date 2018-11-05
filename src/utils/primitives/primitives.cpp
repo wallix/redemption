@@ -98,22 +98,26 @@ static inline fkt_writePixel getPixelWriteFunction(uint16_t format)
 }
 
 static inline uint8_t CLIP(int32_t X) {
-    if (X > 255L)
+    if (X > 255L) {
         return 255L;
+    }
 
-    if (X < 0L)
+    if (X < 0L) {
         return 0L;
+    }
 
     return X;
 }
 
 static Primitives::pstatus_t general_lShiftC_16s(const int16_t * pSrc, uint32_t val, int16_t * pDst, uint32_t len)
 {
-    if (val == 0)
+    if (val == 0) {
         return Primitives::SUCCESS;
+    }
 
-    while (len--)
+    while (len--) {
         *pDst++ = *pSrc++ << val;
+    }
 
     return Primitives::SUCCESS;
 }
@@ -171,6 +175,7 @@ static Primitives::pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(
     const int16_t *pCr = pSrc[2];
     int srcPad = (srcStep - (roi->width * 2)) / 2;
     int dstPad = (dstStep - (roi->width * 4)) / 4;
+    // TODO: use templates instead of function pointer
     fkt_writePixel writePixel = getPixelWriteFunction(dstFormat);
     const uint16_t formatSize = Primitives::pixelFormatSize(dstFormat);
 
