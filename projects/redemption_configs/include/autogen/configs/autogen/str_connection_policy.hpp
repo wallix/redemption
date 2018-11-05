@@ -18,45 +18,6 @@
 
 "use_native_remoteapp_capability = boolean(default=True)\n\n"
 
-"enable_log = boolean(default=False)\n\n"
-
-"enable_log_rotation = boolean(default=True)\n\n"
-
-"# This policy setting allows you to configure a time limit for disconnected application sessions.\n"
-"# 0 to disable timeout.\n"
-"# (is in millisecond)\n"
-"disconnected_application_limit = integer(min=0, default=0)\n\n"
-
-"# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
-"# 0 to disable timeout.\n"
-"# (is in millisecond)\n"
-"disconnected_session_limit = integer(min=0, default=0)\n\n"
-
-"# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
-"# 0 to disable timeout.\n"
-"# (is in millisecond)\n"
-"idle_session_limit = integer(min=0, default=0)\n\n"
-
-"# (is in millisecond)\n"
-"smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)\n\n"
-
-"# (is in millisecond)\n"
-"smart_launcher_start_delay = integer(min=0, default=0)\n\n"
-
-"# (is in millisecond)\n"
-"smart_launcher_long_delay = integer(min=0, default=500)\n\n"
-
-"# (is in millisecond)\n"
-"smart_launcher_short_delay = integer(min=0, default=50)\n\n"
-
-"enable_crash_dump = boolean(default=False)\n\n"
-
-"handle_usage_limit = integer(min=0, default=0)\n\n"
-
-"memory_usage_limit = integer(min=0, default=0)\n\n"
-
-"public_session = boolean(default=False)\n\n"
-
 "# Delay before showing disconnect message after the last RemoteApp window is closed.\n"
 "# (is in millisecond)\n"
 "remote_programs_disconnect_message_delay = integer(min=0, default=3000)\n\n"
@@ -109,14 +70,6 @@
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "server_cert_failure_message = integer(min=0, max=7, default=1)\n\n"
 
-"# Warn that server certificate check raised some internal error.\n"
-"#   0: nobody\n"
-"#   1: message sent to syslog\n"
-"#   2: User notified (through proxy interface)\n"
-"#   4: admin notified (wab notification)\n"
-"# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
-"server_cert_error_message = integer(min=0, max=7, default=1)\n\n"
-
 "[session]\n\n"
 
 "# No traffic auto disconnection.\n"
@@ -162,6 +115,45 @@
 
 "# End automatically a disconnected session\n"
 "end_disconnected_session = boolean(default=False)\n\n"
+
+"enable_log = boolean(default=False)\n\n"
+
+"enable_log_rotation = boolean(default=True)\n\n"
+
+"# This policy setting allows you to configure a time limit for disconnected application sessions.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"disconnected_application_limit = integer(min=0, default=0)\n\n"
+
+"# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"disconnected_session_limit = integer(min=0, default=0)\n\n"
+
+"# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
+"# 0 to disable timeout.\n"
+"# (is in millisecond)\n"
+"idle_session_limit = integer(min=0, default=0)\n\n"
+
+"# (is in millisecond)\n"
+"smart_launcher_clipboard_initialization_delay = integer(min=0, default=2000)\n\n"
+
+"# (is in millisecond)\n"
+"smart_launcher_start_delay = integer(min=0, default=0)\n\n"
+
+"# (is in millisecond)\n"
+"smart_launcher_long_delay = integer(min=0, default=500)\n\n"
+
+"# (is in millisecond)\n"
+"smart_launcher_short_delay = integer(min=0, default=50)\n\n"
+
+"enable_crash_dump = boolean(default=False)\n\n"
+
+"handle_usage_limit = integer(min=0, default=0)\n\n"
+
+"memory_usage_limit = integer(min=0, default=0)\n\n"
+
+"public_session = boolean(default=False)\n\n"
 
 "# Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)\n"
 "# (Ex. for backwards compatibility only: 10.1.0.0/16:22)\n"

@@ -341,18 +341,18 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_customize_executable_name", set(false));
 
-        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "session_probe_enable_log", connpolicy::name{"enable_log"}, set(false));
-        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "session_probe_enable_log_rotation", connpolicy::name{"enable_log_rotation"}, set(true));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), "session_probe_enable_log", connpolicy::name{"enable_log"}, set(false));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), "session_probe_enable_log_rotation", connpolicy::name{"enable_log_rotation"}, set(true));
 
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", connpolicy::name{"disconnected_application_limit"}, desc{
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_disconnected_application_limit", connpolicy::name{"disconnected_application_limit"}, desc{
             "This policy setting allows you to configure a time limit for disconnected application sessions.\n"
             "0 to disable timeout."
         }, set(0));
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_disconnected_session_limit", connpolicy::name{"disconnected_session_limit"}, desc{
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_disconnected_session_limit", connpolicy::name{"disconnected_session_limit"}, desc{
             "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
             "0 to disable timeout."
         }, set(0));
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_idle_session_limit", connpolicy::name{"idle_session_limit"}, desc{
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_idle_session_limit", connpolicy::name{"idle_session_limit"}, desc{
             "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
             "0 to disable timeout."
         }, set(0));
@@ -361,23 +361,23 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, no_sesman, L, type_<types::fixed_string<511>>(), "session_probe_arguments", set(CPP_EXPR(REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS)));
         W.sep();
 
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, connpolicy::name{"smart_launcher_clipboard_initialization_delay"}, set(2000));
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, connpolicy::name{"smart_launcher_start_delay"}, set(0));
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", connpolicy::name{"smart_launcher_long_delay"}, sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
-        W.member(hidden_in_gui, connection_policy, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", connpolicy::name{"smart_launcher_short_delay"}, sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_clipboard_initialization_delay", sesman::name{"session_probe_smart_launcher_clipboard_initialization_delay"}, connpolicy::name{"smart_launcher_clipboard_initialization_delay"}, set(2000));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_start_delay", sesman::name{"session_probe_smart_launcher_start_delay"}, connpolicy::name{"smart_launcher_start_delay"}, set(0));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_long_delay", connpolicy::name{"smart_launcher_long_delay"}, sesman::name{"session_probe_smart_launcher_long_delay"}, set(500));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<std::chrono::milliseconds>(), "session_probe_clipboard_based_launcher_short_delay", connpolicy::name{"smart_launcher_short_delay"}, sesman::name{"session_probe_smart_launcher_short_delay"}, set(50));
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "session_probe_allow_multiple_handshake", set(false));
         W.sep();
 
-        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "session_probe_enable_crash_dump", connpolicy::name{"enable_crash_dump"}, set(false));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), "session_probe_enable_crash_dump", connpolicy::name{"enable_crash_dump"}, set(false));
         W.sep();
 
-        W.member(hidden_in_gui, connection_policy, L, type_<types::u32>(), "session_probe_handle_usage_limit", connpolicy::name{"handle_usage_limit"}, set(0));
-        W.member(hidden_in_gui, connection_policy, L, type_<types::u32>(), "session_probe_memory_usage_limit", connpolicy::name{"memory_usage_limit"}, set(0));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<types::u32>(), "session_probe_handle_usage_limit", connpolicy::name{"handle_usage_limit"}, set(0));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<types::u32>(), "session_probe_memory_usage_limit", connpolicy::name{"memory_usage_limit"}, set(0));
         W.sep();
 
-        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", set(false));
+        W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", set(false));
         W.sep();
 
         W.member(hidden_in_gui, connection_policy, co_cert, L, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
@@ -389,10 +389,10 @@ void config_spec_definition(Writer && W)
             P{"server_cert_create_message", "Warn that new server certificate file was created."},
             P{"server_cert_success_message", "Warn that server certificate file was successfully checked."},
             P{"server_cert_failure_message", "Warn that server certificate file checking failed."},
-            P{"server_cert_error_message", "Warn that server certificate check raised some internal error."},
         }) {
             W.member(hidden_in_gui, connection_policy, co_cert, L, type_<ServerNotification>(), p.name, desc{p.desc}, set(ServerNotification::syslog));
         }
+        W.member(hidden_in_gui, no_sesman, L, type_<ServerNotification>(), "server_cert_error_message", desc{"Warn that server certificate check raised some internal error."}, set(ServerNotification::syslog));
         W.sep();
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "hide_client_name", desc{"Do not transmit client machine name or RDP server."}, set(false));

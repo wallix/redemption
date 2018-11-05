@@ -38,6 +38,7 @@
 #include <cerrno>
 #include <cstring>
 
+#include <iostream>
 
 namespace cfg_generators {
 
@@ -52,8 +53,6 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     using base_type_ = python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>;
     using base_type_::base_type_;
 
-    std::unordered_map<std::string, std::string> rebind_sections;
-
     template<class Pack>
     void do_member(
         std::string const & section_name,
@@ -64,6 +63,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             if (sesman::internal::io::connection_policy == connpolicy) {
                 auto section = value_or<connpolicy::section>(infos,
                     connpolicy::section{section_name.c_str()});
+                std::cout << (section_name == section.name) << ' ' << section_name << ' ' << section.name << ' ' << member_name << "\n";
 
                 auto type = pack_get<spec::type_>(infos);
 
@@ -80,17 +80,13 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
                 this->inherit().write_type(type, get_default(type, infos));
                 this->out() << "\\n\\n\"\n\n";
 
-                if (section.name == section_name) {
-                    this->sections[section.name] += this->out_member_.str();
+                if (section_name == section.name) {
+                    std::cout << "section\n";
+                    sections[section.name] += this->out_member_.str();
                 }
-                else {
-                    auto it = this->sections.find(section.name);
-                    if (it == this->sections.end()) {
-                        rebind_sections[section.name] += this->out_member_.str();
-                    }
-                    else {
-                        it->second += this->out_member_.str();
-                    }
+                else{
+                    std::cout << "new section\n";
+                    new_sections[section.name] += this->out_member_.str();
                 }
 
                 this->out_member_.str("");
@@ -106,15 +102,23 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     {
         for (auto&& [section_name, contains] : sections) {
             this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
+            auto it = new_sections.find(section_name);
+            if (it != new_sections.end()) {
+                this->out_file_ << it->second;
+                it->second.clear();
+            }
         }
 
-        for (auto&& [section_name, contains] : rebind_sections) {
-            this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
+        for (auto&& [section_name, contains] : new_sections) {
+            if (not contains.empty()) {
+                this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
+            }
         }
     }
 
 private:
     std::unordered_map<std::string, std::string> sections;
+    std::unordered_map<std::string, std::string> new_sections;
 };
 
 }
