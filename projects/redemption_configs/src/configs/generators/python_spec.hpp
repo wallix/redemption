@@ -44,8 +44,8 @@ namespace python_spec_writer {
 
 using namespace cfg_attributes;
 
-template<class Inherit>
-struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, spec::name>
+template<class Inherit, class AttributeName = spec::name>
+struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
 {
     using base_type = PythonSpecWriterBase;
 

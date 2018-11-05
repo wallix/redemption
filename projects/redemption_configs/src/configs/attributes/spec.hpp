@@ -238,4 +238,23 @@ namespace connpolicy
     struct section { char const* name; };
 }
 
+
+namespace detail
+{
+    template<class... Ts>
+    struct names
+    {
+        template<template<class...> class F>
+        using f = F<Ts...>;
+    };
+}
+
+using names = detail::names<
+    name_,
+    cpp::name,
+    spec::name,
+    sesman::name,
+    connpolicy::name
+>;
+
 }

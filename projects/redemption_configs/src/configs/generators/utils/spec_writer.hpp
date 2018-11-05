@@ -23,6 +23,7 @@
 #include "configs/attributes/spec.hpp"
 #include "configs/enumeration.hpp"
 
+#include <stdexcept>
 #include <type_traits>
 #include <string>
 #include <unordered_map>
@@ -186,7 +187,7 @@ namespace detail_
     struct no_sesman_io_t {};
 
     template<class T>
-    inline auto normalize_info_arg(T const& x)
+    auto normalize_info_arg(T const& x)
     {
         if constexpr (std::is_convertible_v<T, cfg_attributes::spec::internal::attr>) {
             static_assert(!std::is_same<cfg_attributes::spec::internal::attr, T>::value, "Has a direct spec::attr value");
@@ -210,6 +211,18 @@ namespace detail_
             return cfg_attributes::name_{x};
         }
         else {
+            return T(x);
+        }
+    }
+
+    template<class T>
+    auto normalize_name(T const& x)
+    {
+        if constexpr (std::is_convertible_v<T, char const*>) {
+            return cfg_attributes::name_{x};
+        }
+        else {
+            static_assert(std::is_same_v<typename T::bind_type, cfg_attributes::name_>, "not a name type");
             return T(x);
         }
     }
@@ -263,30 +276,101 @@ private:
         { x.do_sep(); }
     };
 
-    struct Members
+    template<class BaseName, class... Name>
+    struct Names_
     {
+        template<class Pack>
+        explicit Names_(Pack const& pack)
+        : names{
+            static_cast<val<BaseName> const&>(pack).x.name,
+            [&]{
+                if constexpr (std::is_convertible_v<Pack, val<Name>>) {
+                    return static_cast<val<Name> const&>(pack).x.binded.name;
+                }
+                else {
+                    return std::string{};
+                }
+            }()...
+        }
+        {}
+
+        void merge(Names_ const& other)
+        {
+            for (std::size_t i = 0; i < std::size(names); ++i) {
+                if (!other.names[i].empty()) {
+                    if (names[i].empty()) {
+                        names[i] = other.names[i];
+                    }
+                    else if (names[i] != other.names[i]) {
+                        std::string msg = "name redifined: '";
+                        msg += names[i];
+                        msg += "' and '";
+                        msg += other.names[i];
+                        msg += "'";
+                        throw std::runtime_error(msg);
+                    }
+                }
+            }
+        }
+
+        template<class T>
+        std::string const& name() const
+        {
+            std::string const* p = &names[0];
+            std::size_t i = 1;
+            (void)(((std::is_same_v<T, Name> && ((void)(
+                !names[i].empty() && (void(p = &names[i]), true)
+            ), true)) || !++i) || ...);
+            return *p;
+        }
+
+        std::array<std::string, 1+sizeof...(Name)> names;
+    };
+
+    using Names = cfg_attributes::names::f<Names_>;
+
+    struct Sections
+    {
+        Names names;
         std::vector<std::string> members_ordered;
         std::unordered_map<std::string, std::unique_ptr<InfosBase>> members;
     };
-    std::unordered_map<std::string, Members> sections;
+    std::unordered_map<std::string, Sections> sections;
     std::vector<std::string> sections_ordered;
 
-    Members * section_;
+    Sections* section_;
 
 public:
     Inherit & inherit() { return static_cast<Inherit&>(*this); }
     void sep() { this->section_->members_ordered.emplace_back(); }
 
-    template<class Fn>
-    void section(std::string name, Fn fn)
+    template<class... Ts>
+    static Names names(Ts const&... s)
     {
-        auto it = this->sections.find(std::move(name));
+        return Names{pack_type<decltype(detail_::normalize_name(s))...>{
+            detail_::normalize_name(s)...}};
+    }
+
+    template<class Fn>
+    void section(Names names, Fn fn)
+    {
+        auto const& name = names.names[0];
+        auto it = this->sections.find(name);
         if (it == this->sections.end()) {
             this->sections_ordered.push_back(name);
-            it = this->sections.emplace(std::move(name), Members{}).first;
+            it = this->sections.emplace(name, Sections{names}).first;
+        }
+        else {
+            it->second.names.merge(names);
         }
         this->section_ = &it->second;
         fn();
+    }
+
+    template<class Fn>
+    void section(char const* name, Fn fn)
+    {
+        section(names(name), fn);
     }
 
     template<class... Ts>
@@ -316,8 +400,9 @@ public:
     void evaluate()
     {
         this->inherit().do_init();
-        for (std::string const & section_name : this->sections_ordered) {
-            auto const & section = this->sections.find(section_name)->second;
+        for (std::string const & global_section_name : this->sections_ordered) {
+            auto const & section = this->sections.find(global_section_name)->second;
+            auto const& section_name = section.names.template name<AttributeName>();
             this->inherit().do_start_section(section_name);
             for (std::string const & member_name : section.members_ordered) {
                 if (member_name.empty()) {

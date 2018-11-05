@@ -43,12 +43,22 @@ namespace cfg_specs {
 
 #ifdef IN_IDE_PARSER
     // for coloration...
-    struct Writer {
+    struct Writer
+    {
         template<class... Args>
         void member(Args...);
+
         template<class F>
         void section(char const * name, F closure_section);
+
         void sep();
+
+        struct Names {};
+        template<class... Name>
+        Names names(Name...);
+
+        template<class F>
+        void section(Names, F closure_section);
     };
 #else
 template<class Writer>
@@ -248,9 +258,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
     });
 
-    W.section("mod_rdp", [&]
+    W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]
     {
-        auto co_rdp = connpolicy::section{"rdp"};
         auto co_probe = connpolicy::section{"session_probe"};
         auto co_cert = connpolicy::section{"server_cert"};
 
@@ -269,8 +278,8 @@ void config_spec_definition(Writer && W)
             "  22: Polyline"
         }, set("15,16,17,18,22"));
         W.sep();
-        W.member(hidden_in_gui, connection_policy, co_rdp, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
-        W.member(hidden_in_gui, connection_policy, co_rdp, L, type_<bool>(), "enable_kerberos", desc{
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "enable_nla", desc{"NLA authentication in secondary target."}, set(true));
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "enable_kerberos", desc{
             "If enabled, NLA authentication will try Kerberos before NTLM.\n"
             "(if enable_nla is disabled, this value is ignored)."
         }, set(false));
@@ -284,10 +293,10 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
         W.sep();
-        W.member(hidden_in_gui, connection_policy, co_rdp, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, sesman::name{"server_redirection"}, connpolicy::name{"server_redirection"}, set(false));
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "server_redirection_support", desc{"Enables Server Redirection Support."}, sesman::name{"server_redirection"}, connpolicy::name{"server_redirection"}, set(false));
         W.sep();
         W.member(no_ini_no_gui, no_sesman, L, type_<RedirectionInfo>(), "redir_info");
-        W.member(no_ini_no_gui, connection_policy, co_rdp, L, type_<std::string>(), "load_balance_info");
+        W.member(no_ini_no_gui, connection_policy, L, type_<std::string>(), "load_balance_info");
         W.sep();
         W.member(advanced_in_gui, sesman_to_proxy, L, type_<bool>(), "bogus_sc_net_size", desc{"Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block."}, sesman::name{"rdp_bogus_sc_net_size"}, set(true));
         W.sep();
@@ -302,10 +311,10 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, L, type_<std::string>(), "shell_arguments");
         W.member(hidden_in_gui, sesman_to_proxy, L, type_<std::string>(), "shell_working_directory");
         W.sep();
-        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "use_client_provided_alternate_shell", co_rdp, set(false));
-        W.member(hidden_in_gui, connection_policy, co_rdp, L, type_<bool>(), "use_client_provided_remoteapp", set(false));
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "use_client_provided_alternate_shell", set(false));
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "use_client_provided_remoteapp", set(false));
         W.sep();
-        W.member(hidden_in_gui, connection_policy, co_rdp, L, type_<bool>(), "use_native_remoteapp_capability", set(true));
+        W.member(hidden_in_gui, connection_policy, L, type_<bool>(), "use_native_remoteapp_capability", set(true));
         W.sep();
         W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false));
         W.member(hidden_in_gui, connection_policy, co_probe, L, type_<bool>(), "session_probe_use_smart_launcher", cpp::name{"session_probe_use_clipboard_based_launcher"}, connpolicy::name{"use_smart_launcher"}, desc{

@@ -46,11 +46,13 @@ namespace connection_policy_writer {
 using namespace cfg_attributes;
 
 template<class Inherit>
-struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
+struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>
 {
     using base_type = ConnectionPolicyWriterBase;
-    using base_type_ = typename python_spec_writer::PythonSpecWriterBase<Inherit>::base_type;
+    using base_type_ = python_spec_writer::PythonSpecWriterBase<Inherit, connpolicy::name>;
     using base_type_::base_type_;
+
+    std::unordered_map<std::string, std::string> rebind_sections;
 
     template<class Pack>
     void do_member(
@@ -60,7 +62,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     ) {
         apply_if_contains<sesman::internal::io>(infos, [&, this](auto connpolicy, auto&& infos) {
             if (sesman::internal::io::connection_policy == connpolicy) {
-                auto const& section = value_or<connpolicy::section>(infos,
+                auto section = value_or<connpolicy::section>(infos,
                     connpolicy::section{section_name.c_str()});
 
                 auto type = pack_get<spec::type_>(infos);
@@ -78,7 +80,19 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
                 this->inherit().write_type(type, get_default(type, infos));
                 this->out() << "\\n\\n\"\n\n";
 
-                sections[section.name] += this->out_member_.str();
+                if (section.name == section_name) {
+                    this->sections[section.name] += this->out_member_.str();
+                }
+                else {
+                    auto it = this->sections.find(section.name);
+                    if (it == this->sections.end()) {
+                        rebind_sections[section.name] += this->out_member_.str();
+                    }
+                    else {
+                        it->second += this->out_member_.str();
+                    }
+                }
+
                 this->out_member_.str("");
             }
         }, infos);
@@ -91,6 +105,10 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     void do_finish()
     {
         for (auto&& [section_name, contains] : sections) {
+            this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
+        }
+
+        for (auto&& [section_name, contains] : rebind_sections) {
             this->out_file_ << "\"[" << section_name << "]\\n\\n\"\n\n" << contains;
         }
     }
