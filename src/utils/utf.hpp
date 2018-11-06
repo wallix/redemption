@@ -28,6 +28,7 @@
 #include "utils/sugar/byte_ptr.hpp"
 
 #include <cstdint>
+#include <string>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -60,7 +61,8 @@ void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len);
 bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source);
 
 // UTF8toUTF16 never writes the trailing zero
-std::size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, std::size_t t_len);
+size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len);
+//std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).

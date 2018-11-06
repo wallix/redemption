@@ -88,8 +88,7 @@ struct CopyPasteFront : FakeFront
                 RDPECLIP::FormatDataRequestPDU().recv(stream);
                 constexpr std::size_t buf_sz = 65535;
                 uint8_t buf[buf_sz];
-                size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
-                    buf, buf_sz);
+                size_t unicode_data_length = ::UTF8toUTF16(this->str, buf, buf_sz);
                 buf[unicode_data_length    ] = 0;
                 buf[unicode_data_length + 1] = 0;
                 unicode_data_length += 2;

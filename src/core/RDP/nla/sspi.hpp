@@ -165,7 +165,7 @@ private:
         if (data) {
             size_t user_len = UTF8Len(data);
             arr.init(user_len * 2);
-            UTF8toUTF16(data, arr.get_data(), user_len * 2);
+            UTF8toUTF16(std::string(char_ptr_cast(data)), arr.get_data(), user_len * 2);
         }
         else {
             arr.init(0);

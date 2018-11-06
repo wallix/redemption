@@ -161,9 +161,9 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
     uint8_t upassword[(sizeof(password) - 1) * 2];
     uint8_t uuser[(sizeof(user) - 1) * 2];
     uint8_t udomain[(sizeof(domain) - 1) * 2];
-    UTF8toUTF16(password, upassword, sizeof(upassword));
-    UTF8toUTF16(user, uuser, sizeof(uuser));
-    UTF8toUTF16(domain, udomain, sizeof(udomain));
+    UTF8toUTF16(std::string(char_ptr_cast(password)), upassword, sizeof(upassword));
+    UTF8toUTF16(std::string(char_ptr_cast(user)), uuser, sizeof(uuser));
+    UTF8toUTF16(std::string(char_ptr_cast(domain)), udomain, sizeof(udomain));
 
     context.NTOWFv2(make_array_view(upassword),
                     make_array_view(uuser),

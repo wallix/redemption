@@ -270,7 +270,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16)
     const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
     uint8_t target[target_length];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(source, target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);
@@ -295,7 +295,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
     const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
     uint8_t target[target_length];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(source, target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);
@@ -324,7 +324,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     uint8_t targetCr[target_lengthCr];
     uint8_t targetCrLf[target_lengthCrLf];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(source, targetCr, target_lengthCr);
+    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), targetCr, target_lengthCr);
 
     // Check result
     RED_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
@@ -661,7 +661,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16Limit)
 
     memset(target, 0xfe, sizeof(target));
 
-    size_t nbbytes_utf16 = UTF8toUTF16(byte_ptr_cast("abcdef"), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16(std::string("abcdef"), target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);      // 8
@@ -677,7 +677,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
 
     memset(target, 0xfe, sizeof(target));
 
-    size_t nbbytes_utf16 = UTF8toUTF16(byte_ptr_cast("abc"), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16(std::string("abc"), target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(6, nbbytes_utf16);      // 6

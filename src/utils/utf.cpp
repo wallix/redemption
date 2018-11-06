@@ -30,6 +30,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <string>
 
 using std::size_t;
 
@@ -179,8 +180,17 @@ bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_c
     return UTF8InsertAtPos(source, len, to_insert, max_source);
 }
 
+static size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, size_t t_len);
+
+size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len)
+{
+	return UTF8toUTF16(byte_ptr_cast(source.c_str()), source.length(), target, t_len);
+}
+
+
+
 // UTF8toUTF16 never writes the trailing zero
-size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
+static size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, size_t t_len)
 {
     size_t i_t = 0;
     uint32_t ucode = 0;

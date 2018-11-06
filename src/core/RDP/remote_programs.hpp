@@ -1067,7 +1067,7 @@ public:
 
         uint8_t * const unicode_data = stream.get_current();
         const size_t size_of_unicode_data = ::UTF8toUTF16(
-            byte_ptr_cast(this->color_scheme.c_str()), unicode_data, this->color_scheme.length() * 2);
+            this->color_scheme, unicode_data, this->color_scheme.length() * 2);
         stream.out_skip_bytes(size_of_unicode_data);
         stream.out_clear_bytes(2);  // null-terminator
 
@@ -3085,7 +3085,7 @@ public:
         uint8_t ApplicationId_unicode_data[512];
         ::memset(ApplicationId_unicode_data, 0, sizeof(ApplicationId_unicode_data));
         /*const size_t size_of_ApplicationId_unicode_data = */::UTF8toUTF16(
-            byte_ptr_cast(this->application_id.c_str()),
+            this->application_id,
             ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data) - 2 /* null-terminator */);
 
         stream.out_copy_bytes(ApplicationId_unicode_data, sizeof(ApplicationId_unicode_data));

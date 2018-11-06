@@ -839,7 +839,7 @@ public:
         uint8_t tempDir_unicode_data[520]; // wszTempDir(520)
 
         size_t size_of_tempDir_unicode_data = ::UTF8toUTF16(
-            byte_ptr_cast(this->temp_dir.c_str()),
+            this->temp_dir,
             tempDir_unicode_data, sizeof(tempDir_unicode_data));
 
         stream.out_copy_bytes(tempDir_unicode_data,
@@ -973,7 +973,7 @@ public:
                     formatName_unicode_data_size);
 
                 const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    byte_ptr_cast(format_name.format_name()),
+                    std::string(format_name.format_name()),
                     formatName_unicode_data.get(), formatName_unicode_data_size);
                 assert(size_of_formatName_unicode_data + 2 < formatName_unicode_data_size);
 
@@ -1013,7 +1013,7 @@ public:
                     uint8_t formatName_unicode_data[formatName_unicode_data_size];
 
                     const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                        byte_ptr_cast(format_name.format_name()),
+                        std::string(format_name.format_name()),
                         formatName_unicode_data, formatName_unicode_data_size - sizeof(uint16_t));
                     assert(size_of_formatName_unicode_data + 2 <= formatName_unicode_data_size);
 
@@ -1144,7 +1144,7 @@ public:
                     formatName_unicode_data_size);
 
                 const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    byte_ptr_cast(format_name.format_name()),
+                    std::string(format_name.format_name()),
                     formatName_unicode_data.get(), formatName_unicode_data_size);
                 sz += (size_of_formatName_unicode_data + 2);    // wszFormatName (variable)
             }
@@ -1896,7 +1896,7 @@ public:
         uint8_t fileName_unicode_data[520]; // fileName(520)
 
         size_t size_of_fileName_unicode_data = ::UTF8toUTF16(
-            byte_ptr_cast(this->file_name.c_str()),
+            this->file_name,
             fileName_unicode_data, sizeof(fileName_unicode_data));
 
         stream.out_copy_bytes(fileName_unicode_data,

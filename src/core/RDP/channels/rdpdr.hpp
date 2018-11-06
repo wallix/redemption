@@ -1377,9 +1377,9 @@ public:
 
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            this->Path_,
-            Path_unicode_data,
-            sizeof(Path_unicode_data));
+        		std::string(char_ptr_cast(this->Path_)),
+				Path_unicode_data,
+				sizeof(Path_unicode_data));
 
         assert(size_of_Path_unicode_data <= 65534);
 
@@ -2853,7 +2853,7 @@ public:
             // The null-terminator is included.
             uint8_t ComputerName_unicode_data[65536];
             size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
-                byte_ptr_cast(this->ComputerName),
+                std::string(this->ComputerName),
                 ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
             ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
@@ -4063,7 +4063,7 @@ public:
 
         uint8_t FileName_unicode_data[1000];
         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            byte_ptr_cast(this->FileName_),
+            std::string(this->FileName_),
             FileName_unicode_data, sizeof(FileName_unicode_data));
 
         uint8_t * temp_p = FileName_unicode_data;
@@ -4279,7 +4279,7 @@ public:
         // The null-terminator is included.
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            byte_ptr_cast(this->Path_),
+            std::string(this->Path_),
             Path_unicode_data, sizeof(Path_unicode_data));
 
         assert(size_of_Path_unicode_data <= 65534);

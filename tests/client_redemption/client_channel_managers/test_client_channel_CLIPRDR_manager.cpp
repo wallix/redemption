@@ -363,7 +363,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatListPDU.out_uint32_le(46);
     out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
     uint8_t file_groupe_descr_data[50] = {0};
-    size_t file_groupe_descr_size = ::UTF8toUTF16(reinterpret_cast<const uint8_t *> (RDPECLIP::FILEGROUPDESCRIPTORW.data()), file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
+    size_t file_groupe_descr_size = ::UTF8toUTF16(std::string(RDPECLIP::FILEGROUPDESCRIPTORW.data()), file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
     out_FormatListPDU.out_copy_bytes(file_groupe_descr_data, file_groupe_descr_size+2);
     //out_FormatListPDU.out_uint16_le(0);
     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
@@ -413,7 +413,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatDataResponse.out_uint32_le(sizeof(clip_data_total));
     std::string file_name("file_name.name");
     uint8_t utf16_file_name[520] = { 0 };
-    size_t utf16_len = ::UTF8toUTF16(byte_ptr_cast(file_name.data()), utf16_file_name, file_name.size() *2);
+    size_t utf16_len = ::UTF8toUTF16(file_name.data(), utf16_file_name, file_name.size() *2);
     out_FormatDataResponse.out_copy_bytes(utf16_file_name, utf16_len);
     out_FormatDataResponse.out_clear_bytes(520-utf16_len);
     InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), 608/*out_FormatDataResponse.get_offset()*/);

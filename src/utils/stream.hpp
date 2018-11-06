@@ -733,7 +733,7 @@ public:
 
     void out_unistr(const uint8_t * text)
     {
-        const size_t len = UTF8toUTF16(text, this->p, this->tailroom());
+        const size_t len = UTF8toUTF16(std::string(char_ptr_cast(text)), this->p, this->tailroom());
         this->p += len;
         this->out_clear_bytes(2);
     }
