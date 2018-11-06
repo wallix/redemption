@@ -1556,7 +1556,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         MetaParams const meta_params{
                             MetaParams::EnableSessionLog::No,
                             MetaParams::HideNonPrintable::No,
-                            MetaParams::LogOnlyRelevantClipbortdActivities(ini.get<cfg::mod_rdp::log_only_relevant_clipbortd_activities>())
+                            MetaParams::LogOnlyRelevantClipboardActivities(ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>())
                         };
 
                         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);

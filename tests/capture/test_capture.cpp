@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
-            MetaParams::LogOnlyRelevantClipbortdActivities::Yes
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -352,7 +352,7 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No,
-        MetaParams::LogOnlyRelevantClipbortdActivities::Yes
+        MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
     KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -2669,7 +2669,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No,
-        MetaParams::LogOnlyRelevantClipbortdActivities::Yes
+        MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
     KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -2934,7 +2934,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
-            MetaParams::LogOnlyRelevantClipbortdActivities::Yes
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -3182,7 +3182,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
-            MetaParams::LogOnlyRelevantClipbortdActivities::Yes
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);

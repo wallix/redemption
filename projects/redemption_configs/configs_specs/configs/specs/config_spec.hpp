@@ -417,7 +417,7 @@ void config_spec_definition(Writer && W)
         }, set(20000));
         W.sep();
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "log_only_relevant_clipbortd_activities", set(true));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "log_only_relevant_clipboard_activities", set(true));
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_fix_input_event_sync", set(true));

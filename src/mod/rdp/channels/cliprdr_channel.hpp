@@ -424,7 +424,7 @@ private:
     const bool param_dont_log_data_into_syslog;
     const bool param_dont_log_data_into_wrm;
 
-    const bool param_log_only_relevant_clipbortd_activities;
+    const bool param_log_only_relevant_clipboard_activities;
 
     uint32_t client_dataLen = 0;
     uint32_t client_streamId = 0;
@@ -453,7 +453,7 @@ public:
         bool dont_log_data_into_syslog;
         bool dont_log_data_into_wrm;
 
-        bool log_only_relevant_clipbortd_activities;
+        bool log_only_relevant_clipboard_activities;
 
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)
@@ -473,7 +473,7 @@ public:
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_log_only_relevant_clipbortd_activities(params.log_only_relevant_clipbortd_activities)
+    , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
 
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr) {
@@ -588,7 +588,7 @@ private:
                 }
 
                 bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipbortd_activities) ||
+                        (!this->param_log_only_relevant_clipboard_activities) ||
                         (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
                          strcasecmp("FileGroupDescriptorW", format_name.c_str()))
                     );
@@ -1411,7 +1411,7 @@ public:
                 }
 
                 bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipbortd_activities) ||
+                        (!this->param_log_only_relevant_clipboard_activities) ||
                         (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
                          strcasecmp("FileGroupDescriptorW", format_name.c_str()))
                     );
