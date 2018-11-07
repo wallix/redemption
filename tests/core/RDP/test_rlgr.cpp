@@ -562,15 +562,10 @@ static uint8_t refOutput[] = {
 
 RED_AUTO_TEST_CASE(TestRlgr) {
     int16_t output[4096];
-    uint8_t *ptr = reinterpret_cast<uint8_t *>(output);
 
-    printf("input size is %d\n", sizeof(refInput));
-    RED_CHECK_EQ(Rlgr::decode(Rlgr::RLGR3, refInput, sizeof(refInput), output, 4096), true);
+    RED_CHECK(Rlgr::decode(Rlgr::RLGR3, refInput, sizeof(refInput), output, 4096));
 
-    for(std::size_t i = 0; i < sizeof(refOutput); i++, ptr++)
-    {
-        if (*ptr != refOutput[i])
-            printf("mismatch at %u\n", i);
-        RED_CHECK_EQ(*ptr, refOutput[i]);
-    }
+    static_assert(sizeof(output) == sizeof(refOutput));
+    RED_CHECK_EQUAL_RANGES(
+        refOutput, array_view_const_u8(reinterpret_cast<uint8_t *>(output), sizeof(output)));
 }

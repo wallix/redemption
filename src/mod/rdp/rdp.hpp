@@ -817,6 +817,7 @@ public:
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
+        , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
@@ -837,7 +838,6 @@ public:
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
         , metrics(metrics)
-        , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");

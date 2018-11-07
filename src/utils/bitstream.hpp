@@ -106,13 +106,12 @@ public:
 	 * @return nbits of the stream
 	 */
 	uint32_t peekBits(std::size_t nbits) const {
-		std::size_t b, savedNbits = nbits;
 		uint32_t ret = 0;
 		const uint8_t *alias = p;
 		std::size_t localBitsLeft = bitsLeft;
 
 		while (alias < end && nbits > 0) {
-			b = nbits;
+            std::size_t b = nbits;
 			if (b > localBitsLeft)
 				b = localBitsLeft;
 			if (ret)
