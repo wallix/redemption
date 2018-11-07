@@ -512,7 +512,6 @@ def generate(type, files, requirements, get_target_cb = get_target):
         if type == 'test-run':
             if f.root in dir_nocoverage or f.path in file_nocoverage:
                 deps.append('$(GCOV_NO_BUILD)')
-                deps.append('$(GCOV_NO_BUILD)')
             else:
                 iright = len(f.root)
                 base = 'src/' + src[6:iright+1] + src[iright+6:-3]
