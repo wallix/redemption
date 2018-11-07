@@ -686,20 +686,20 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
 RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 {
-    const bool use_long_format_names = false;
+    const bool use_long_format_names_false = false;
 
     {
         RDPECLIP::FormatListPDUEx format_list_pdu;
 
         format_list_pdu.add_format_name(32000, "Test");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -718,13 +718,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
         format_list_pdu.add_format_name(32000, "Test1");
         format_list_pdu.add_format_name(32001, "Test2");
 
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -747,13 +747,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "RedemptionClipboard");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -770,13 +770,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "RédemptionClipboard");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -796,13 +796,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "0123456789012345678901234567890123456789");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"

@@ -330,7 +330,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     RED_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
     RED_CHECK_EQUAL_RANGES(targetCr, expected_targetCr);
 
-    nbbytes_utf16 = UTF8toUTF16_CrLf(source, targetCrLf, target_lengthCrLf);
+    nbbytes_utf16 = UTF8toUTF16_CrLf(std::string(char_ptr_cast(source)), targetCrLf, target_lengthCrLf);
 
     // Check result
     RED_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);

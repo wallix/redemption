@@ -66,7 +66,7 @@ size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len);
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-std::size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, std::size_t t_len);
+std::size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, std::size_t t_len);
 
 
 class UTF8toUnicodeIterator

@@ -343,16 +343,13 @@ public Q_SLOTS:
                                 }
                                 file->nameUTF8 = path.substr(posName+2, path.size());
                                 //std::string name = file->nameUTF8;
-                                int UTF8nameSize(file->nameUTF8.size() *2);
-                                if (UTF8nameSize > 520) {
-                                    UTF8nameSize = 520;
+                                int UTF16nameSize(file->nameUTF8.size() *2);
+                                if (UTF16nameSize > 520) {
+                                    UTF16nameSize = 520;
                                 }
                                 uint8_t UTF16nameData[520];
-                                int UTF16nameSize = ::UTF8toUTF16_CrLf(
-                                    reinterpret_cast<const uint8_t *>(file->nameUTF8.c_str())
-                                , UTF16nameData
-                                , UTF8nameSize);
-                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSize);
+                                int UTF16nameSizeReal = ::UTF8toUTF16_CrLf(file->nameUTF8, UTF16nameData, UTF16nameSize);
+                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSizeReal);
                                 this->_cItems++;
                                 this->_items_list.push_back(file);
 
@@ -378,7 +375,7 @@ public Q_SLOTS:
                         this->_chunk = std::make_unique<uint8_t[]>(size);
 
                         // UTF8toUTF16_CrLf for linux install
-                        this->_cliboard_data_length = ::UTF8toUTF16_CrLf(reinterpret_cast<const uint8_t *>(str.c_str()), this->_chunk.get(), size);
+                        this->_cliboard_data_length = ::UTF8toUTF16_CrLf(str, this->_chunk.get(), size);
 
                         TextEnder ender;
                         ender.emit(this->_chunk.get(), this->_cliboard_data_length);
