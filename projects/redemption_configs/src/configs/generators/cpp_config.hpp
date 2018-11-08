@@ -52,17 +52,28 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     std::ostringstream out_member_;
     std::ostream * out_ = nullptr;
 
+    struct Member
+    {
+        std::string name;
+        std::size_t align_of;
+
+        friend std::ostream& operator <<(std::ostream& out, Member const& x)
+        {
+            return out << x.name;
+        }
+    };
+
     struct Section
     {
         std::string section_name;
         std::string member_struct;
-        std::vector<std::string> member_names;
+        std::vector<Member> members;
     };
 
     std::vector<std::pair<std::string, std::string>> sections_parser;
     std::vector<std::string> authstrs;
     std::vector<Section> sections;
-    std::vector<std::string> member_names;
+    std::vector<Member> members;
     std::vector<std::string> variables_acl;
     std::vector<log_policy_t> authid_policy;
 
@@ -80,7 +91,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         if (!section_name.empty()) {
             --this->depth;
         }
-        this->sections.emplace_back(Section{section_name, this->out_member_.str(), std::move(this->member_names)});
+        this->sections.emplace_back(Section{section_name, this->out_member_.str(), std::move(this->members)});
         this->out_member_.str("");
         std::string str = this->out_body_parser_.str();
         if (!str.empty()) {
@@ -96,8 +107,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     {
         std::string const& varname = get_name<cpp::name>(infos);
 
-        this->member_names.push_back(varname);
         auto type = get_type<cpp::type_>(infos);
+        this->members.push_back({varname, alignof(typename decltype(type)::type)});
 
         std::string const & varname_with_section = section_name.empty() ? varname : section_name + "::" + varname;
 
@@ -313,13 +324,13 @@ void write_variables_configuration_fwd(std::ostream & out_varconf, ConfigCppWrit
     ;
     for (auto & section : writer.sections) {
         if (section.section_name.empty()) {
-            for (auto & var : section.member_names) {
+            for (auto & var : section.members) {
                 out_varconf << "    struct " << var << ";\n";
             }
         }
         else {
             out_varconf << "    struct " << section.section_name << " {\n";
-            for (auto & var : section.member_names) {
+            for (auto & var : section.members) {
                 out_varconf << "        struct " << var << ";\n";
             }
             out_varconf << "    };\n\n";
@@ -364,13 +375,18 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         "} // namespace cfg\n\n"
         "namespace cfg_section {\n"
     ;
+    using Member = typename ConfigCppWriter::Member;
     for (auto & body : writer.sections) {
-       if (!body.section_name.empty()) {
-           section_names.emplace_back("cfg_section::" + body.section_name);
-           out_varconf << "struct " << body.section_name << "\n: ";
-           join(body.member_names, "cfg::" + body.section_name + "::", "\n");
-           out_varconf << "{ static constexpr bool is_section = true; };\n\n";
-       }
+        if (!body.section_name.empty()) {
+            std::vector<std::reference_wrapper<Member>> v(body.members.begin(), body.members.end());
+            std::stable_sort(v.begin(), v.end(), [](Member& a, Member& b){
+                return a.align_of > b.align_of;
+            });
+            section_names.emplace_back("cfg_section::" + body.section_name);
+            out_varconf << "struct " << body.section_name << "\n: ";
+            join(v, "cfg::" + body.section_name + "::", "\n");
+            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
+        }
     }
     out_varconf << "} // namespace cfg_section\n\n"
       "namespace configs {\n"
@@ -380,9 +396,9 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     join(section_names, "", "\n");
     auto it = std::find_if(begin(writer.sections), end(writer.sections), [](auto & p){ return p.section_name.empty(); });
     if (it != writer.sections.end()) {
-       for (auto & s : it->member_names) {
-           out_varconf << ", cfg::" << s << "\n";
-       }
+        for (Member& mem : it->members) {
+            out_varconf << ", cfg::" << mem.name << "\n";
+        }
     }
     out_varconf <<
       "{};\n\n"

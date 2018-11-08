@@ -4449,8 +4449,7 @@ namespace cfg {
 
 namespace cfg_section {
 struct globals
-: cfg::globals::capture_chunk
-, cfg::globals::auth_user
+: cfg::globals::auth_user
 , cfg::globals::host
 , cfg::globals::target
 , cfg::globals::target_device
@@ -4460,12 +4459,6 @@ struct globals
 , cfg::globals::target_application
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
-, cfg::globals::bitmap_cache
-, cfg::globals::glyph_cache
-, cfg::globals::port
-, cfg::globals::nomouse
-, cfg::globals::notimestamp
-, cfg::globals::encryptionLevel
 , cfg::globals::authfile
 , cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
@@ -4473,14 +4466,23 @@ struct globals
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
+, cfg::globals::movie_path
+, cfg::globals::codec_id
+, cfg::globals::port
+, cfg::globals::encryptionLevel
 , cfg::globals::trace_type
+, cfg::globals::video_quality
+, cfg::globals::capture_chunk
+, cfg::globals::bitmap_cache
+, cfg::globals::glyph_cache
+, cfg::globals::nomouse
+, cfg::globals::notimestamp
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path
 , cfg::globals::is_rec
-, cfg::globals::movie_path
 , cfg::globals::enable_bitmap_update
 , cfg::globals::enable_close_box
 , cfg::globals::enable_osd
@@ -4489,8 +4491,6 @@ struct globals
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
-, cfg::globals::codec_id
-, cfg::globals::video_quality
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
@@ -4500,14 +4500,18 @@ struct globals
 { static constexpr bool is_section = true; };
 
 struct session_log
-: cfg::session_log::enable_session_log
-, cfg::session_log::log_path
+: cfg::session_log::log_path
 , cfg::session_log::keyboard_input_masking_level
+, cfg::session_log::enable_session_log
 , cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
 
 struct client
-: cfg::client::keyboard_layout
+: cfg::client::ssl_cipher_list
+, cfg::client::keyboard_layout
+, cfg::client::rdp_compression
+, cfg::client::max_color_depth
+, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -4519,27 +4523,47 @@ struct client
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts
-, cfg::client::rdp_compression
-, cfg::client::max_color_depth
 , cfg::client::persistent_disk_bitmap_cache
 , cfg::client::cache_waiting_list
 , cfg::client::persist_bitmap_cache_on_disk
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
-, cfg::client::ssl_cipher_list
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
-, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 { static constexpr bool is_section = true; };
 
 struct mod_rdp
-: cfg::mod_rdp::rdp_compression
+: cfg::mod_rdp::open_session_timeout
+, cfg::mod_rdp::load_balance_info
+, cfg::mod_rdp::alternate_shell
+, cfg::mod_rdp::shell_arguments
+, cfg::mod_rdp::shell_working_directory
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_launch_fallback_timeout
+, cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_disconnected_application_limit
+, cfg::mod_rdp::session_probe_disconnected_session_limit
+, cfg::mod_rdp::session_probe_idle_session_limit
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
+, cfg::mod_rdp::rdp_compression
+, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_on_keepalive_timeout
+, cfg::mod_rdp::server_cert_check
+, cfg::mod_rdp::server_access_allowed_message
+, cfg::mod_rdp::server_cert_create_message
+, cfg::mod_rdp::server_cert_success_message
+, cfg::mod_rdp::server_cert_failure_message
+, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::disconnect_on_logon_user_change
-, cfg::mod_rdp::open_session_timeout
 , cfg::mod_rdp::extra_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos
@@ -4551,78 +4575,54 @@ struct mod_rdp
 , cfg::mod_rdp::fast_path
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::redir_info
-, cfg::mod_rdp::load_balance_info
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel
 , cfg::mod_rdp::checkout_channel
-, cfg::mod_rdp::alternate_shell
-, cfg::mod_rdp::shell_arguments
-, cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::use_client_provided_alternate_shell
 , cfg::mod_rdp::use_client_provided_remoteapp
 , cfg::mod_rdp::use_native_remoteapp_capability
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
 , cfg::mod_rdp::session_probe_enable_launch_mask
-, cfg::mod_rdp::session_probe_on_launch_failure
-, cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
-, cfg::mod_rdp::session_probe_keepalive_timeout
-, cfg::mod_rdp::session_probe_on_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_enable_log
 , cfg::mod_rdp::session_probe_enable_log_rotation
-, cfg::mod_rdp::session_probe_disconnected_application_limit
-, cfg::mod_rdp::session_probe_disconnected_session_limit
-, cfg::mod_rdp::session_probe_idle_session_limit
 , cfg::mod_rdp::session_probe_exe_or_file
 , cfg::mod_rdp::session_probe_arguments
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
 , cfg::mod_rdp::session_probe_allow_multiple_handshake
 , cfg::mod_rdp::session_probe_enable_crash_dump
 , cfg::mod_rdp::session_probe_handle_usage_limit
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
-, cfg::mod_rdp::server_cert_check
-, cfg::mod_rdp::server_access_allowed_message
-, cfg::mod_rdp::server_cert_create_message
-, cfg::mod_rdp::server_cert_success_message
-, cfg::mod_rdp::server_cert_failure_message
-, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
-, cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
-, cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
 , cfg::mod_rdp::experimental_fix_input_event_sync
 , cfg::mod_rdp::experimental_fix_too_long_cookie
 { static constexpr bool is_section = true; };
 
 struct metrics
-: cfg::metrics::enable_rdp_metrics
-, cfg::metrics::enable_vnc_metrics
-, cfg::metrics::log_dir_path
-, cfg::metrics::log_interval
+: cfg::metrics::log_interval
 , cfg::metrics::log_file_turnover_interval
 , cfg::metrics::sign_key
+, cfg::metrics::enable_rdp_metrics
+, cfg::metrics::enable_vnc_metrics
+, cfg::metrics::log_dir_path
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
-: cfg::mod_vnc::clipboard_up
+: cfg::mod_vnc::server_clipboard_encoding_type
+, cfg::mod_vnc::bogus_clipboard_infinite_loop
+, cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::encodings
-, cfg::mod_vnc::server_clipboard_encoding_type
-, cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::mod_vnc::server_is_apple
 { static constexpr bool is_section = true; };
 
@@ -4640,23 +4640,17 @@ struct ocr
 { static constexpr bool is_section = true; };
 
 struct video
-: cfg::video::capture_groupid
+: cfg::video::break_interval
+, cfg::video::capture_groupid
 , cfg::video::capture_flags
 , cfg::video::png_interval
 , cfg::video::frame_interval
-, cfg::video::break_interval
 , cfg::video::png_limit
-, cfg::video::replay_path
-, cfg::video::hash_path
-, cfg::video::record_tmp_path
-, cfg::video::record_path
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
 , cfg::video::disable_file_system_log
-, cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
 , cfg::video::l_height
@@ -4673,6 +4667,12 @@ struct video
 , cfg::video::h_width
 , cfg::video::h_qscale
 , cfg::video::smart_video_cropping
+, cfg::video::replay_path
+, cfg::video::hash_path
+, cfg::video::record_tmp_path
+, cfg::video::record_path
+, cfg::video::rt_display
+, cfg::video::bogus_vlc_frame_rate
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -4682,6 +4682,7 @@ struct crypto
 
 struct debug
 : cfg::debug::fake_target_ip
+, cfg::debug::config
 , cfg::debug::x224
 , cfg::debug::mcs
 , cfg::debug::sec
@@ -4707,7 +4708,6 @@ struct debug
 , cfg::debug::pass_dialog_box
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
-, cfg::debug::config
 { static constexpr bool is_section = true; };
 
 struct remote_program
@@ -4715,9 +4715,9 @@ struct remote_program
 { static constexpr bool is_section = true; };
 
 struct translation
-: cfg::translation::language
-, cfg::translation::password_en
+: cfg::translation::password_en
 , cfg::translation::password_fr
+, cfg::translation::language
 { static constexpr bool is_section = true; };
 
 struct internal_mod
@@ -4725,52 +4725,29 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct context
-: cfg::context::opt_bitrate
-, cfg::context::opt_framerate
-, cfg::context::opt_qscale
-, cfg::context::opt_bpp
-, cfg::context::opt_height
-, cfg::context::opt_width
-, cfg::context::auth_error_message
-, cfg::context::selector
-, cfg::context::selector_current_page
+: cfg::context::auth_error_message
 , cfg::context::selector_device_filter
 , cfg::context::selector_group_filter
 , cfg::context::selector_proto_filter
-, cfg::context::selector_lines_per_page
-, cfg::context::selector_number_of_pages
 , cfg::context::target_password
 , cfg::context::target_host
 , cfg::context::target_str
 , cfg::context::target_service
-, cfg::context::target_port
 , cfg::context::target_protocol
 , cfg::context::password
 , cfg::context::reporting
 , cfg::context::auth_channel_answer
 , cfg::context::auth_channel_target
 , cfg::context::message
-, cfg::context::accept_message
-, cfg::context::display_message
 , cfg::context::rejected
-, cfg::context::authenticated
-, cfg::context::keepalive
 , cfg::context::session_id
-, cfg::context::end_date_cnx
 , cfg::context::end_time
-, cfg::context::mode_console
-, cfg::context::timezone
 , cfg::context::real_target_device
-, cfg::context::authentication_challenge
 , cfg::context::ticket
 , cfg::context::comment
 , cfg::context::duration
-, cfg::context::duration_max
 , cfg::context::waitinforeturn
-, cfg::context::showform
-, cfg::context::formflag
 , cfg::context::module
-, cfg::context::forcemodule
 , cfg::context::proxy_opt
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
@@ -4780,17 +4757,10 @@ struct context
 , cfg::context::session_probe_process_monitoring_rules
 , cfg::context::session_probe_extra_system_processes
 , cfg::context::disconnect_reason
-, cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
-, cfg::context::recording_started
-, cfg::context::rt_ready
-, cfg::context::perform_automatic_reconnection
 , cfg::context::auth_command
 , cfg::context::auth_notify
-, cfg::context::auth_notify_rail_exec_flags
 , cfg::context::auth_notify_rail_exec_exe_or_file
-, cfg::context::auth_command_rail_exec_exec_result
-, cfg::context::auth_command_rail_exec_flags
 , cfg::context::auth_command_rail_exec_original_exe_or_file
 , cfg::context::auth_command_rail_exec_exe_or_file
 , cfg::context::auth_command_rail_exec_working_dir
@@ -4798,9 +4768,39 @@ struct context
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
 , cfg::context::rail_disconnect_message_delay
-, cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
 , cfg::context::close_box_extra_message
+, cfg::context::opt_bitrate
+, cfg::context::opt_framerate
+, cfg::context::opt_qscale
+, cfg::context::opt_bpp
+, cfg::context::selector_current_page
+, cfg::context::selector_lines_per_page
+, cfg::context::selector_number_of_pages
+, cfg::context::target_port
+, cfg::context::end_date_cnx
+, cfg::context::mode_console
+, cfg::context::timezone
+, cfg::context::duration_max
+, cfg::context::formflag
+, cfg::context::auth_notify_rail_exec_flags
+, cfg::context::auth_command_rail_exec_exec_result
+, cfg::context::auth_command_rail_exec_flags
+, cfg::context::opt_height
+, cfg::context::opt_width
+, cfg::context::selector
+, cfg::context::accept_message
+, cfg::context::display_message
+, cfg::context::authenticated
+, cfg::context::keepalive
+, cfg::context::authentication_challenge
+, cfg::context::showform
+, cfg::context::forcemodule
+, cfg::context::disconnect_reason_ack
+, cfg::context::recording_started
+, cfg::context::rt_ready
+, cfg::context::perform_automatic_reconnection
+, cfg::context::use_session_probe_to_launch_remote_program
 { static constexpr bool is_section = true; };
 
 } // namespace cfg_section
