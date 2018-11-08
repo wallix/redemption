@@ -31,6 +31,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/uninit_checked.hpp"
 
 #include <map>
 #include <memory>
@@ -446,14 +447,14 @@ private:
 
 public:
     struct Params : public BaseVirtualChannel::Params {
-        bool clipboard_down_authorized;
-        bool clipboard_up_authorized;
-        bool clipboard_file_authorized;
+        uninit_checked<bool> clipboard_down_authorized;
+        uninit_checked<bool> clipboard_up_authorized;
+        uninit_checked<bool> clipboard_file_authorized;
 
-        bool dont_log_data_into_syslog;
-        bool dont_log_data_into_wrm;
+        uninit_checked<bool> dont_log_data_into_syslog;
+        uninit_checked<bool> dont_log_data_into_wrm;
 
-        bool log_only_relevant_clipboard_activities;
+        uninit_checked<bool> log_only_relevant_clipboard_activities;
 
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)
@@ -581,6 +582,8 @@ private:
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
             if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
+
+                // TODO code duplicated with process_server_format_data_response_pdu
 
                 std::string format_name = this->format_name_inventory[requestedFormatId];
                 if (format_name.empty()) {
@@ -1400,6 +1403,8 @@ public:
                     }
                     break;
                 }
+
+                // TODO code duplicated with process_client_format_data_response_pdu
 
                 char const* type = (data_to_dump.empty() ?
                     "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :

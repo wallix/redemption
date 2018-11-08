@@ -369,50 +369,51 @@ private:
     }
 
 public:
-    struct Params : public BaseVirtualChannel::Params {
-        std::chrono::milliseconds session_probe_launch_timeout;
-        std::chrono::milliseconds session_probe_launch_fallback_timeout;
-        std::chrono::milliseconds session_probe_keepalive_timeout;
+    struct Params : public BaseVirtualChannel::Params
+    {
+        uninit_checked<std::chrono::milliseconds> session_probe_launch_timeout;
+        uninit_checked<std::chrono::milliseconds> session_probe_launch_fallback_timeout;
+        uninit_checked<std::chrono::milliseconds> session_probe_keepalive_timeout;
 
-        SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout;
+        uninit_checked<SessionProbeOnKeepaliveTimeout> session_probe_on_keepalive_timeout;
 
-        SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+        uninit_checked<SessionProbeOnLaunchFailure> session_probe_on_launch_failure;
 
-        bool session_probe_end_disconnected_session;
+        uninit_checked<bool> session_probe_end_disconnected_session;
 
-        const char* target_informations;
+        uninit_checked<const char*> target_informations;
 
-        uint16_t front_width;
-        uint16_t front_height;
+        uninit_checked<uint16_t> front_width;
+        uninit_checked<uint16_t> front_height;
 
-        std::chrono::milliseconds session_probe_disconnected_application_limit;
-        std::chrono::milliseconds session_probe_disconnected_session_limit;
-        std::chrono::milliseconds session_probe_idle_session_limit;
+        uninit_checked<std::chrono::milliseconds> session_probe_disconnected_application_limit;
+        uninit_checked<std::chrono::milliseconds> session_probe_disconnected_session_limit;
+        uninit_checked<std::chrono::milliseconds> session_probe_idle_session_limit;
 
-        bool session_probe_enable_log;
-        bool session_probe_enable_log_rotation;
+        uninit_checked<bool> session_probe_enable_log;
+        uninit_checked<bool> session_probe_enable_log_rotation;
 
-        const char* real_alternate_shell;
-        const char* real_working_dir;
+        uninit_checked<const char*> real_alternate_shell;
+        uninit_checked<const char*> real_working_dir;
 
-        const char* session_probe_extra_system_processes;
+        uninit_checked<const char*> session_probe_extra_system_processes;
 
-        const char* session_probe_outbound_connection_monitoring_rules;
+        uninit_checked<const char*> session_probe_outbound_connection_monitoring_rules;
 
-        const char* session_probe_process_monitoring_rules;
+        uninit_checked<const char*> session_probe_process_monitoring_rules;
 
-        bool session_probe_allow_multiple_handshake;
+        uninit_checked<bool> session_probe_allow_multiple_handshake;
 
-        bool session_probe_enable_crash_dump;
+        uninit_checked<bool> session_probe_enable_crash_dump;
 
-        uint32_t session_probe_handle_usage_limit;
-        uint32_t session_probe_memory_usage_limit;
+        uninit_checked<uint32_t> session_probe_handle_usage_limit;
+        uninit_checked<uint32_t> session_probe_memory_usage_limit;
 
-        Translation::language_t lang;
+        uninit_checked<Translation::language_t> lang;
 
-        bool bogus_refresh_rect_ex;
+        uninit_checked<bool> bogus_refresh_rect_ex;
 
-        bool show_maximized;
+        uninit_checked<bool> show_maximized;
 
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)

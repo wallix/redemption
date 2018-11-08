@@ -101,25 +101,26 @@ private:
     std::vector<LaunchPendingApp> launch_pending_apps;
 
 public:
-    struct Params : public BaseVirtualChannel::Params {
-           uint16_t client_execute_flags;
-        const char* client_execute_exe_or_file;
-        const char* client_execute_working_dir;
-        const char* client_execute_arguments;
+    struct Params : public BaseVirtualChannel::Params
+    {
+        uninit_checked<   uint16_t> client_execute_flags;
+        uninit_checked<const char*> client_execute_exe_or_file;
+        uninit_checked<const char*> client_execute_working_dir;
+        uninit_checked<const char*> client_execute_arguments;
 
-           uint16_t client_execute_flags_2;
-        const char* client_execute_exe_or_file_2;
-        const char* client_execute_working_dir_2;
-        const char* client_execute_arguments_2;
+        uninit_checked<   uint16_t> client_execute_flags_2;
+        uninit_checked<const char*> client_execute_exe_or_file_2;
+        uninit_checked<const char*> client_execute_working_dir_2;
+        uninit_checked<const char*> client_execute_arguments_2;
 
-        RemoteProgramsSessionManager * rail_session_manager;
+        uninit_checked<RemoteProgramsSessionManager*> rail_session_manager;
 
-        bool should_ignore_first_client_execute;
+        uninit_checked<bool> should_ignore_first_client_execute;
 
-        bool use_session_probe_to_launch_remote_program;
+        uninit_checked<bool> use_session_probe_to_launch_remote_program;
 
-        bool client_supports_handshakeex_pdu;
-        bool client_supports_enhanced_remoteapp;
+        uninit_checked<bool> client_supports_handshakeex_pdu;
+        uninit_checked<bool> client_supports_enhanced_remoteapp;
 
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message)

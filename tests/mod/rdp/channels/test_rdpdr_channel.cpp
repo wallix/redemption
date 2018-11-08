@@ -30,6 +30,29 @@
 #include "./test_channel.hpp"
 #include "test_only/front/fake_front.hpp"
 
+namespace
+{
+    FileSystemVirtualChannel::Params file_system_param(
+        ReportMessageApi& report_message, RDPVerbose verbose)
+    {
+        FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
+
+        file_system_virtual_channel_params.exchanged_data_limit         = 0;
+        file_system_virtual_channel_params.verbose                      = verbose;
+
+        file_system_virtual_channel_params.client_name                  = "rzh";
+
+        file_system_virtual_channel_params.random_number                = 5245;
+
+        file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
+        file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
+
+        file_system_virtual_channel_params.proxy_managed_drive_prefix   = "";
+
+        return file_system_virtual_channel_params;
+    }
+}
+
 
 RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
@@ -38,12 +61,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -53,10 +72,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
 
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -84,12 +99,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -98,11 +109,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     file_system_virtual_channel_params.print_authorized             = true;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -130,12 +136,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -144,11 +146,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     file_system_virtual_channel_params.print_authorized             = false;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -176,12 +173,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -190,11 +183,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     file_system_virtual_channel_params.print_authorized             = false;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -222,12 +210,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -236,11 +220,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     file_system_virtual_channel_params.print_authorized             = true;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -268,12 +247,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -282,11 +257,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     file_system_virtual_channel_params.print_authorized             = true;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = true;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -314,12 +284,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-    file_system_virtual_channel_params.exchanged_data_limit         = 0;
-    file_system_virtual_channel_params.verbose                      = verbose;
-
-    file_system_virtual_channel_params.client_name                  = "rzh";
+    FileSystemVirtualChannel::Params file_system_virtual_channel_params
+      = file_system_param(report_message, verbose);
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -328,11 +294,6 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     file_system_virtual_channel_params.print_authorized             = true;
     file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = false;
-
-    file_system_virtual_channel_params.random_number                = 5245;
-
-    file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-    file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
 
     FileSystemDriveManager file_system_drive_manager;
 

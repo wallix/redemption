@@ -927,22 +927,22 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 public:
     struct Params : public BaseVirtualChannel::Params
     {
-        const char* client_name;
+        uninit_checked<const char*> client_name;
 
-        bool file_system_read_authorized;
-        bool file_system_write_authorized;
+        uninit_checked<bool> file_system_read_authorized;
+        uninit_checked<bool> file_system_write_authorized;
 
-        bool parallel_port_authorized;
-        bool print_authorized;
-        bool serial_port_authorized;
-        bool smart_card_authorized;
+        uninit_checked<bool> parallel_port_authorized;
+        uninit_checked<bool> print_authorized;
+        uninit_checked<bool> serial_port_authorized;
+        uninit_checked<bool> smart_card_authorized;
 
-        uint32_t random_number;
+        uninit_checked<uint32_t> random_number;
 
-        bool dont_log_data_into_syslog;
-        bool dont_log_data_into_wrm;
+        uninit_checked<bool> dont_log_data_into_syslog;
+        uninit_checked<bool> dont_log_data_into_wrm;
 
-        const char* proxy_managed_drive_prefix;
+        uninit_checked<const char*> proxy_managed_drive_prefix;
 
         explicit Params(ReportMessageApi & report_message)
           : BaseVirtualChannel::Params(report_message) {}

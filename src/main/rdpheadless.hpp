@@ -562,6 +562,8 @@ public:
         params.dont_log_data_into_syslog = true;
         params.dont_log_data_into_wrm = true;
 
+        params.log_only_relevant_clipboard_activities = false;
+
         return params;
     }())
     , mod_bpp(info.screen_info.bpp)
