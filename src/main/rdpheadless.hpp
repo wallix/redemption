@@ -1130,7 +1130,7 @@ public:
                             rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                             , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
                             sharedHeader.emit(stream);
-                            char username[LOGIN_NAME_MAX];
+                            char username[LOGIN_NAME_MAX+1];
                             gethostname(username, LOGIN_NAME_MAX);
 
                             rdpdr::ClientNameRequest clientNameRequest(username);

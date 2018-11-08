@@ -82,7 +82,7 @@ inline std::string arcsight_gmdatetime(const timeval tv)
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
-    char buf[21] = {};
+    char buf[64] = {};
     snprintf(buf, sizeof(buf), "%s %02d %04d %02d:%02d:%02d", get_short_text_month(1+t.tm_mon), t.tm_mday,1900+t.tm_year, t.tm_hour, t.tm_min, t.tm_sec);
     return std::string(buf);
 }

@@ -415,7 +415,7 @@ public:
         {this->elements.get() + c0.entries + c1.entries + c2.entries + c3.entries, c4, this->storage}
     }
     , size_lite_elements(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0)
-    , lite_elements(new cache_lite_element[this->size_lite_elements])
+    , lite_elements(use_waiting_list ? new cache_lite_element[this->size_lite_elements] : nullptr)
     , waiting_list(this->lite_elements.get(), CacheOption(use_waiting_list ? MAXIMUM_NUMBER_OF_CACHE_ENTRIES : 0), this->lite_storage)
     , stamp(0)
     , verbose(verbose)
