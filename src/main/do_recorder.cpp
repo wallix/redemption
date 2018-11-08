@@ -1807,7 +1807,8 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                                 record_tmp_path,
                                 record_path,
                                 groupid,
-                                nullptr
+                                nullptr,
+                                ini.get<cfg::debug::capture>()
                             };
                             auto * capture = new(storage.get_storage()) Capture(
                                   capture_params

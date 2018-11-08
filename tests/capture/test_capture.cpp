@@ -193,7 +193,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
             record_tmp_path,
             record_path,
             groupid,
-            nullptr
+            nullptr,
+            false
         };
 
         Capture capture(
@@ -407,7 +408,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
         record_tmp_path,
         record_path,
         groupid,
-        nullptr
+        nullptr,
+        false
     };
 
     Capture capture(
@@ -2742,7 +2744,8 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         record_tmp_path,
         record_path,
         groupid,
-        nullptr
+        nullptr,
+        false
     };
 
     {
@@ -3021,6 +3024,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
             record_path,
             groupid,
             nullptr,
+            false
         };
 
         Capture capture(
@@ -3280,6 +3284,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
             record_path,
             groupid,
             nullptr,
+            false
         };
 
         Capture capture(

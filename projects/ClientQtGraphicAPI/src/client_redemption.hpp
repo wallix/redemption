@@ -554,7 +554,7 @@ public:
         if (this->is_recording) {
             this->set_capture();
         }
-        
+
         if (this->mod_state != MOD_VNC) {
 
             if (this->mod_state == MOD_RDP_REMOTE_APP) {
@@ -746,6 +746,7 @@ public:
             captureParams.record_path = record_path.c_str();
             captureParams.groupid = 0;
             captureParams.report_message = nullptr;
+            captureParams.verbose = ini.get<cfg::debug::capture>()
 
             DrawableParams drawableParams;
             drawableParams.width  = this->info.width;

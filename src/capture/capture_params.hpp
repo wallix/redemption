@@ -33,4 +33,6 @@ struct CaptureParams
     char const * record_path;
     int groupid;
     ReportMessageApi * report_message;
+
+    uint32_t verbose;
 };

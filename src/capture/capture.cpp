@@ -623,6 +623,8 @@ private:
 
     TimestampTracer timestamp_tracer;
 
+    uint32_t verbose;
+
 protected:
     gdi::ImageFrameApi & image_frame_api;
 
@@ -641,6 +643,7 @@ protected:
     , scaled_width{(((image_view.width() * this->zoom_factor) / 100)+3) & 0xFFC}
     , scaled_height{((image_view.height() * this->zoom_factor) / 100)}
     , timestamp_tracer(image_view)
+    , verbose(capture_params.verbose)
     , image_frame_api(imageFrameApi)
     {
         if (this->zoom_factor != 100) {
@@ -704,9 +707,27 @@ public:
         (void)ignore_frame_in_timeval;
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
+        if (this->verbose & 0x80000000) {
+            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 1");
+        }
+        if (this->verbose & 0x80000000) {
+            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): duration=%" PRId64 " interval=%" PRId64,
+                duration.count(), interval.count());
+            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): (duration >= interval) ... %s",
+                ((duration >= interval) ? "Yes" : "No"));
+        }
         if (duration >= interval) {
+            if (this->verbose & 0x80000000) {
+                LOG(LOG_INFO, "PngCapture::periodic_snapshot(): (this->drawable.logical_frame_ended()) ... %s",
+                    (this->drawable.logical_frame_ended() ? "Yes" : "No"));
+                LOG(LOG_INFO, "PngCapture::periodic_snapshot(): (duration >= interval * 3 / 2) ... %s",
+                    ((duration >= interval * 3 / 2) ? "Yes" : "No"));
+            }
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
             if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
+                if (this->verbose & 0x80000000) {
+                    LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 2");
+                }
                 this->drawable.trace_mouse();
                 tm ptm;
                 localtime_r(&now.tv_sec, &ptm);
@@ -727,6 +748,9 @@ public:
                 // Wait 0.3 x frame_interval.
                 return this->frame_interval / 3;
             }
+        }
+        if (this->verbose & 0x80000000) {
+            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 3");
         }
         return interval - duration;
     }

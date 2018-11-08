@@ -1023,7 +1023,8 @@ public:
             record_tmp_path,
             record_path,
             groupid,
-            &this->report_message
+            &this->report_message,
+            ini.get<cfg::debug::capture>()
         };
 
         this->capture = new Capture( capture_params
