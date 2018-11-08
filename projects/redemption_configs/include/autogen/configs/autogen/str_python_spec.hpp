@@ -579,7 +579,7 @@
 
 "# signature key to digest log metrics header info\n"
 "#_advanced\n"
-"sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')\n\n"
+"sign_key = string(default='')\n\n"
 
 "[mod_vnc]\n\n"
 

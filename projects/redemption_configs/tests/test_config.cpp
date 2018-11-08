@@ -541,7 +541,7 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::context::opt_height>());
     RED_CHECK_EQUAL(24,                               ini.get<cfg::context::opt_bpp>());
 
-    RED_CHECK_EQUAL("",                               ini.get<cfg::metrics::log_dir_path>());
+    RED_CHECK_EQUAL("/tmp/redemption_recorded_metrics/", ini.get<cfg::metrics::log_dir_path>());
 }
 
 RED_AUTO_TEST_CASE(TestConfig1bis)
