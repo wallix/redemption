@@ -708,9 +708,7 @@ public:
         std::chrono::microseconds const duration = difftimeval(now, this->start_capture);
         std::chrono::microseconds const interval = this->frame_interval;
         if (this->verbose & 0x80000000) {
-            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 1");
-        }
-        if (this->verbose & 0x80000000) {
+            LOG(LOG_INFO, " ");
             LOG(LOG_INFO, "PngCapture::periodic_snapshot(): duration=%" PRId64 " interval=%" PRId64,
                 duration.count(), interval.count());
             LOG(LOG_INFO, "PngCapture::periodic_snapshot(): (duration >= interval) ... %s",
@@ -726,7 +724,7 @@ public:
              // Snapshot at end of Frame or force snapshot if diff_time_val >= 1.5 x frame_interval.
             if (this->drawable.logical_frame_ended() || (duration >= interval * 3 / 2)) {
                 if (this->verbose & 0x80000000) {
-                    LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 2");
+                    LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Creates image.");
                 }
                 this->drawable.trace_mouse();
                 tm ptm;
@@ -745,12 +743,12 @@ public:
                 return interval.count() ? interval - duration % interval : interval;
             }
             else {
+                if (this->verbose & 0x80000000) {
+                    LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Waits.");
+                }
                 // Wait 0.3 x frame_interval.
                 return this->frame_interval / 3;
             }
-        }
-        if (this->verbose & 0x80000000) {
-            LOG(LOG_INFO, "PngCapture::periodic_snapshot(): Checkpoint 3");
         }
         return interval - duration;
     }
