@@ -1100,7 +1100,7 @@
             {
                 StaticOutStream<32> out_stream;
                 RDPECLIP::CliprdrHeader fileSizeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
-                RDPECLIP::FileContentsResponse fileSize(
+                RDPECLIP::FileContentsResponseSize fileSize(
                     streamID
                     , this->clientIOClipboardAPI->get_file_item(lindex).size()
                     );
@@ -1124,7 +1124,7 @@
             {
                 RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_file_item(lindex).size()+4);
                 StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-                RDPECLIP::FileContentsResponse fileRange(streamID);
+                RDPECLIP::FileContentsResponseRange fileRange(streamID);
 
                 int first_part_data_size(this->clientIOClipboardAPI->get_file_item(lindex).size());
                 int total_length(first_part_data_size + 12);

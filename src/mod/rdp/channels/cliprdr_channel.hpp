@@ -135,7 +135,7 @@ struct ClientFilecontentsRequestSend {
             switch (dwFlags) {
                 case RDPECLIP::FILECONTENTS_RANGE:
                     {
-                        RDPECLIP::FileContentsResponse pdu(streamID);
+                        RDPECLIP::FileContentsResponseRange pdu(streamID);
                         RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                         RDPECLIP::CB_RESPONSE_FAIL,
                                                         pdu.size());
@@ -146,7 +146,7 @@ struct ClientFilecontentsRequestSend {
 
                 case RDPECLIP::FILECONTENTS_SIZE:
                     {
-                        RDPECLIP::FileContentsResponse pdu(streamID, 0);
+                        RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
                         RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                         RDPECLIP::CB_RESPONSE_FAIL,
                                                         pdu.size());
@@ -1243,7 +1243,7 @@ public:
                     case RDPECLIP::FILECONTENTS_RANGE:
                     {
                         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
-                        RDPECLIP::FileContentsResponse pdu(file_contents_request_pdu.streamId());
+                        RDPECLIP::FileContentsResponseRange pdu(file_contents_request_pdu.streamId());
                         header.emit(out_stream);
                         pdu.emit(out_stream);
                     }
@@ -1251,7 +1251,7 @@ public:
                     case RDPECLIP::FILECONTENTS_SIZE:
                     {
                         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 16);
-                        RDPECLIP::FileContentsResponse pdu(file_contents_request_pdu.streamId(), 0);
+                        RDPECLIP::FileContentsResponseSize pdu(file_contents_request_pdu.streamId(), 0);
                         header.emit(out_stream);
                         pdu.emit(out_stream);
                     }

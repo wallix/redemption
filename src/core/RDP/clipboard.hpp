@@ -1593,50 +1593,64 @@ public:
     // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
     // field contains a byte-stream of data extracted from the file.
 
-struct FileContentsResponse
+struct FileContentsResponseSize
 {
     uint32_t streamID{0};
-    uint64_t _size{0};
+    uint64_t dataSize{0};
 
-    bool is_size;
-
-    FileContentsResponse() = default;
+    FileContentsResponseSize() = default;
 
     // SIZE (16 bytes)
-    explicit FileContentsResponse(const uint32_t streamID, const uint64_t size)
+    explicit FileContentsResponseSize(const uint32_t streamID, const uint64_t size)
     : streamID(streamID)
-    , _size(size)
-    , is_size(true)
-    {}
-
-    // RANGE (4 + Data_Len Bytes)
-    explicit FileContentsResponse(const uint32_t streamID)
-        : streamID(streamID)
-        , is_size(false)
+    , dataSize(size)
     {}
 
     void receive(InStream & stream) {
         this->streamID = stream.in_uint32_le();
-        if (this->is_size) {
-            this->_size = stream.in_uint64_le();
-        }
+        this->dataSize = stream.in_uint64_le();
     }
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->streamID);
-
-        if (this->is_size) {                                // SIZE
-            stream.out_uint64_le(this->_size);
-            stream.out_uint32_le(0);
-        }
+        stream.out_uint64_le(this->dataSize);
+        stream.out_uint32_le(0);
     }
 
     void log() const {
-        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->_size);
+        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->dataSize);
     }
 
-    size_t size() const {
-        return this->is_size ? 16 : 4;
+    static size_t size() {
+        return 16;
+    }
+};
+
+struct FileContentsResponseRange
+{
+    uint32_t streamID{0};
+
+    FileContentsResponseRange() = default;
+
+    // RANGE (4 + Data_Len Bytes)
+    explicit FileContentsResponseRange(const uint32_t streamID)
+    : streamID(streamID)
+    {}
+
+    void receive(InStream & stream) {
+        this->streamID = stream.in_uint32_le();
+    }
+
+    void emit(OutStream & stream) const {
+        stream.out_uint32_le(this->streamID);
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     File Contents Response Range: streamID=0X%08x(4 bytes)" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID);
+    }
+
+    static size_t size() {
+        return 4;
     }
 };
 
@@ -2673,7 +2687,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_SIZE:
                     {
-                        FileContentsResponse pdu;
+                        FileContentsResponseSize pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }
@@ -2681,7 +2695,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_RANGE:
                     {
-                        FileContentsResponse pdu;
+                        FileContentsResponseRange pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }

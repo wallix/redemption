@@ -1344,7 +1344,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -2121,7 +2121,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -2306,7 +2306,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -2965,7 +2965,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -3454,7 +3454,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);

@@ -458,7 +458,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
-       RDPECLIP::FileContentsResponse fcrp_size(0, 42);
+       RDPECLIP::FileContentsResponseSize fcrp_size(0, 42);
        header.emit(out_stream);
        fcrp_size.emit(out_stream);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
@@ -933,7 +933,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
        epoch += 5s;
        StaticOutStream<1600> out_stream;
        RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
-       RDPECLIP::FileContentsResponse fcrp_size(0, 42);
+       RDPECLIP::FileContentsResponseSize fcrp_size(0, 42);
        header.emit(out_stream);
        fcrp_size.emit(out_stream);
        InStream chunk(out_stream.get_data(), out_stream.get_offset());
