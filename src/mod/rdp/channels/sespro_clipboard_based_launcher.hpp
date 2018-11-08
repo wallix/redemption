@@ -46,6 +46,7 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
     bool drive_redirection_initialized = false;
     bool image_readed = false;
     bool clipboard_initialized = false;
+    bool clipboard_initialized_by_proxy = false;
     bool clipboard_monitor_ready = false;
 
     bool format_data_requested = false;
@@ -221,6 +222,8 @@ public:
                     if (this->cliprdr_channel) {
                         this->cliprdr_channel->disable_to_client_sender();
                     }
+
+                    this->clipboard_initialized_by_proxy = true;
 
                     // Client Clipboard Capabilities PDU.
                     {
@@ -716,14 +719,18 @@ public:
             }
         }
 
-        if (this->clipboard_initialized &&
-            bool(this->current_client_format_list_pdu)) {
-            // Sends client Format List PDU to server
-            this->cliprdr_channel->process_client_message(
-                    this->current_client_format_list_pdu_length,
-                    this->current_client_format_list_pdu_flags,
-                    this->current_client_format_list_pdu.get(),
-                    this->current_client_format_list_pdu_length);
+        if (this->clipboard_initialized) {
+            if (!this->clipboard_initialized_by_proxy && bool(this->current_client_format_list_pdu)) {
+                // Sends client Format List PDU to server
+                this->cliprdr_channel->process_client_message(
+                        this->current_client_format_list_pdu_length,
+                        this->current_client_format_list_pdu_flags,
+                        this->current_client_format_list_pdu.get(),
+                        this->current_client_format_list_pdu_length);
+            }
+            else {
+                this->cliprdr_channel->empty_client_clipboard();
+            }
         }
     }
 
