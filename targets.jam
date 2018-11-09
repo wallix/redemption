@@ -5195,6 +5195,11 @@ test-run tests/utils/sugar/test_range :
 :
   <covfile>src/utils/sugar/range.hpp
 ;
+test-run tests/utils/sugar/test_safe_iterator :
+  $(REDEMPTION_TEST_PATH)/utils/sugar/test_safe_iterator.cpp
+:
+  <covfile>src/utils/sugar/safe_iterator.hpp
+;
 test-run tests/utils/sugar/test_splitter :
   $(REDEMPTION_TEST_PATH)/utils/sugar/test_splitter.cpp
 :
@@ -6275,6 +6280,8 @@ alias test_noncopyable : tests/utils/sugar/test_noncopyable ;
 alias test_noncopyable.coverage : tests/utils/sugar/test_noncopyable.coverage ;
 alias test_range : tests/utils/sugar/test_range ;
 alias test_range.coverage : tests/utils/sugar/test_range.coverage ;
+alias test_safe_iterator : tests/utils/sugar/test_safe_iterator ;
+alias test_safe_iterator.coverage : tests/utils/sugar/test_safe_iterator.coverage ;
 alias test_splitter : tests/utils/sugar/test_splitter ;
 alias test_splitter.coverage : tests/utils/sugar/test_splitter.coverage ;
 alias test_unique_fd : tests/utils/sugar/test_unique_fd ;
@@ -6748,6 +6755,7 @@ alias tests/utils/sugar.norec :
   tests/utils/sugar/test_multisz
   tests/utils/sugar/test_noncopyable
   tests/utils/sugar/test_range
+  tests/utils/sugar/test_safe_iterator
   tests/utils/sugar/test_splitter
   tests/utils/sugar/test_unique_fd
   tests/utils/sugar/test_update_lock

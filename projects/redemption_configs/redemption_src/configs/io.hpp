@@ -466,9 +466,8 @@ parse_error parse(
 
 namespace detail
 {
-    template<class T>
-    inline T * ignore_0(T * buf, std::size_t sz)
-    { return std::find_if_not(buf, buf + sz, [](char c){ return c == '0'; }); }
+    inline char const * ignore_0(char const * buf, char const * end)
+    { return std::find_if_not(buf, end, [](char c){ return c == '0'; }); }
 
     template<bool InList = false, class TInt, TInt min, TInt max>
     parse_error parse_integral(
@@ -485,7 +484,7 @@ namespace detail
                 idx = 2;
                 base = 16;
             }
-            std::size_t ignored = ignore_0(rng.begin()+idx, rng.size()-idx) - rng.begin();
+            std::size_t ignored = ignore_0(rng.begin()+idx, rng.end()) - rng.begin();
             std::size_t sz = rng.size() - ignored;
 
             constexpr std::size_t buf_sz = detail::integral_buffer_size<TInt>();
