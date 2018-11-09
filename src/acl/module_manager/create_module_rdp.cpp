@@ -283,24 +283,31 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        auto metrics = std::make_unique<Metrics>(
-            ini.get<cfg::metrics::log_dir_path>().to_string()
-          , ini.get<cfg::context::session_id>()
-          , hmac_user(ini.get<cfg::globals::auth_user>(),
-                      ini.get<cfg::metrics::sign_key>())
-          , hmac_account({target_user, strlen(target_user)},
-                         ini.get<cfg::metrics::sign_key>())
-          , hmac_device_service(ini.get<cfg::globals::target_device>(),
-                                ini.get<cfg::context::target_service>(),
-                                ini.get<cfg::metrics::sign_key>())
-          , hmac_client_info(ini.get<cfg::globals::host>(),
-                             client_info.bpp, client_info.width, client_info.height,
-                             ini.get<cfg::metrics::sign_key>())
-          , this->timeobj.get_time()
-          , ini.get<cfg::metrics::log_file_turnover_interval>()
-          , ini.get<cfg::metrics::log_interval>());
+        bool enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
 
-        auto protocol_metrics = std::make_unique<RDPMetrics>(metrics.get());
+        auto metrics = (enable_metrics)
+                     ?(std::make_unique<Metrics>(
+                        ini.get<cfg::metrics::log_dir_path>().to_string()
+                      , ini.get<cfg::context::session_id>()
+                      , hmac_user(ini.get<cfg::globals::auth_user>(),
+                                  ini.get<cfg::metrics::sign_key>())
+                      , hmac_account({target_user, strlen(target_user)},
+                                     ini.get<cfg::metrics::sign_key>())
+                      , hmac_device_service(ini.get<cfg::globals::target_device>(),
+                                            ini.get<cfg::context::target_service>(),
+                                            ini.get<cfg::metrics::sign_key>())
+                      , hmac_client_info(ini.get<cfg::globals::host>(),
+                                         client_info.bpp, client_info.width, client_info.height,
+                                         ini.get<cfg::metrics::sign_key>())
+                      , this->timeobj.get_time()
+                      , ini.get<cfg::metrics::log_file_turnover_interval>()
+                      , ini.get<cfg::metrics::log_interval>()))
+                     : std::unique_ptr<Metrics>{nullptr};
+
+        auto protocol_metrics = (enable_metrics)
+                              ? std::make_unique<RDPMetrics>(metrics.get())
+                              : std::unique_ptr<RDPMetrics>{nullptr};
 
         struct ModRDPWithMetrics : public mod_rdp
         {
@@ -330,21 +337,22 @@ void ModuleManager::create_mod_rdp(
             authentifier,
             report_message,
             ini,
-            (ini.get<cfg::metrics::enable_rdp_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
+            enable_metrics?protocol_metrics.get():nullptr
         );
 
         new_mod->metrics = std::move(metrics);
         new_mod->protocol_metrics = std::move(protocol_metrics);
 
-        new_mod->metrics_timer = session_reactor.create_timer()
-            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-            .on_action(jln::always_ready([mod = new_mod.get()]{
-                    if (mod->metrics) {
-                        mod->metrics->log(tvtime());
-                    }
-                }))
-            ;
+        if (enable_metrics){
+            new_mod->metrics_timer = session_reactor.create_timer()
+                .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+                .on_action(jln::always_ready([mod = new_mod.get()]{
+                        if (mod->metrics) {
+                            mod->metrics->log(tvtime());
+                        }
+                    }))
+                ;
+        }
 
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
