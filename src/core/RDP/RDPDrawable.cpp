@@ -109,16 +109,16 @@ namespace
 
     // TODO removed when RDPMultiDstBlt and RDPMultiOpaqueRect contains a rect member
     //@{
-    static Rect to_rect(RDPMultiDstBlt const & cmd)
+    Rect to_rect(RDPMultiDstBlt const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
 
-    static Rect to_rect(RDPMultiOpaqueRect const & cmd)
+    Rect to_rect(RDPMultiOpaqueRect const & cmd)
     { return Rect(cmd.nLeftRect, cmd.nTopRect, cmd.nWidth, cmd.nHeight); }
 
-    static Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
+    Rect to_rect(RDP::RDPMultiPatBlt const & cmd)
     { return cmd.rect; }
 
-    static Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
+    Rect to_rect(RDP::RDPMultiScrBlt const & cmd)
     { return cmd.rect; }
     //@}
 

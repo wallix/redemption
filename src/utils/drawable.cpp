@@ -235,7 +235,7 @@ namespace details
         }
         return std::unique_ptr<uint8_t[]>(new uint8_t[sz]{});
     }
-}
+} // namespace details
 
 namespace
 {
@@ -771,7 +771,7 @@ namespace
             }
         }
     };
-}
+} // namespace
 
 
 namespace

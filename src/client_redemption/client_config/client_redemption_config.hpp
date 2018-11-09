@@ -182,8 +182,8 @@ struct WindowsData {
 
     bool no_data = true;
 
-    WindowsData(const std::string & config_file_path)
-      : config_file_path(config_file_path)
+    WindowsData(std::string config_file_path)
+      : config_file_path(std::move(config_file_path))
     {}
 
     void writeWindowsData()  {

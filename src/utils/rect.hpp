@@ -70,10 +70,10 @@ struct Rect {
     }
 
     bool contains_pt(int x, int y) const {
-        return    x  >= this->x
-                && y  >= this->y
-                && x   < this->right()
-                && y   < this->bottom();
+        return x  >= this->x
+            && y  >= this->y
+            && x   < this->x + this->cx
+            && y   < this->y + this->cy;
     }
 
     bool has_intersection(int16_t x, int16_t y) const
