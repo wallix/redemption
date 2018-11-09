@@ -46,24 +46,6 @@ void ModuleManager::create_mod_vnc(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
-        auto metrics = std::make_unique<Metrics>(
-            ini.get<cfg::metrics::log_dir_path>().to_string()
-          , ini.get<cfg::context::session_id>()
-          , hmac_user(ini.get<cfg::globals::auth_user>(),
-                      ini.get<cfg::metrics::sign_key>())
-          , hmac_account({target_user, strlen(target_user)},
-                         ini.get<cfg::metrics::sign_key>())
-          , hmac_device_service(ini.get<cfg::globals::target_device>(),
-                                ini.get<cfg::context::target_service>(),
-                                ini.get<cfg::metrics::sign_key>())
-          , hmac_client_info(ini.get<cfg::globals::host>(),
-                             client_info.screen_info, ini.get<cfg::metrics::sign_key>())
-          , this->timeobj.get_time()
-          , ini.get<cfg::metrics::log_file_turnover_interval>()
-          , ini.get<cfg::metrics::log_interval>());
-
-        auto protocol_metrics = std::make_unique<VNCMetrics>(metrics.get());
-
         struct ModVNCWithMetrics : public mod_vnc
         {
             std::unique_ptr<Metrics> metrics = nullptr;
@@ -71,8 +53,38 @@ void ModuleManager::create_mod_vnc(
             SessionReactor::TimerPtr metrics_timer;
 
             using mod_vnc::mod_vnc;
-
         };
+
+        bool const enable_metrics = (ini.get<cfg::metrics::enable_vnc_metrics>()
+            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+
+        std::unique_ptr<Metrics> metrics;
+        std::unique_ptr<VNCMetrics> protocol_metrics;
+
+        if (enable_metrics) {
+            metrics = std::make_unique<Metrics>(
+                ini.get<cfg::metrics::log_dir_path>().to_string(),
+                ini.get<cfg::context::session_id>(),
+                hmac_user(
+                    ini.get<cfg::globals::auth_user>(),
+                    ini.get<cfg::metrics::sign_key>()),
+                hmac_account(
+                    {target_user, strlen(target_user)},
+                    ini.get<cfg::metrics::sign_key>()),
+                hmac_device_service(
+                    ini.get<cfg::globals::target_device>(),
+                    ini.get<cfg::context::target_service>(),
+                    ini.get<cfg::metrics::sign_key>()),
+                hmac_client_info(
+                    ini.get<cfg::globals::host>(),
+                    client_info.screen_info,
+                    ini.get<cfg::metrics::sign_key>()),
+                this->timeobj.get_time(),
+                ini.get<cfg::metrics::log_file_turnover_interval>(),
+                ini.get<cfg::metrics::log_interval>());
+
+            protocol_metrics = std::make_unique<VNCMetrics>(metrics.get());
+        }
 
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,
@@ -103,21 +115,19 @@ void ModuleManager::create_mod_vnc(
             (client_info.remote_program ? &client_execute : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
-            (ini.get<cfg::metrics::enable_vnc_metrics>()
-            && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()))?protocol_metrics.get():nullptr
+            enable_metrics ? protocol_metrics.get() : nullptr
         );
 
-        new_mod->metrics     = std::move(metrics);
-        new_mod->protocol_metrics = std::move(protocol_metrics);
-
-        new_mod->metrics_timer = session_reactor.create_timer()
-            .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-            .on_action(jln::always_ready([mod = new_mod.get()]{
-                    if (mod->metrics) {
-                        mod->metrics->log(tvtime());
-                    }
+        if (enable_metrics) {
+            new_mod->metrics     = std::move(metrics);
+            new_mod->protocol_metrics = std::move(protocol_metrics);
+            new_mod->metrics_timer = session_reactor.create_timer()
+                .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
+                .on_action(jln::always_ready([mod = new_mod.get()]{
+                    mod->metrics->log(tvtime());
                 }))
             ;
+        }
 
         if (client_info.remote_program) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
