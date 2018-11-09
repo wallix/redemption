@@ -2936,7 +2936,7 @@ private:
                 RDPECLIP::FormatListPDUEx format_list_pdu;
                 format_list_pdu.recv(chunk, this->client_use_long_format_names,
                     (incoming_header.msgFlags() & RDPECLIP::CB_ASCII_NAMES));
-                    
+
                 if (bool(this->verbose & VNCVerbose::clipboard)) {
                     format_list_pdu.log(LOG_INFO);
                 }
@@ -3113,7 +3113,7 @@ private:
                        );
                 }
 
-                if (this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::delayed 
+                if (this->bogus_clipboard_infinite_loop != VncBogusClipboardInfiniteLoop::delayed
                 && this->clipboard_owned_by_client) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
@@ -3130,7 +3130,7 @@ private:
                     break;
                 }
 
-                if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT) 
+                if ((format_data_request_pdu.requestedFormatId == RDPECLIP::CF_TEXT)
                 && !this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                     StreamBufMaker<65536> buf_maker;
                     OutStream out_stream = buf_maker.reserve_out_stream(
@@ -3160,38 +3160,46 @@ private:
                     }
                 }
                 else if (format_data_request_pdu.requestedFormatId == RDPECLIP::CF_UNICODETEXT) {
-                    StreamBufMaker<65536> buf_maker;
-                    OutStream out_stream = buf_maker.reserve_out_stream(
+                    BufMaker<65536> buf_maker;
+                    auto uninit_buf_av = buf_maker.dyn_array(
                         8 +                                         // clipHeader(8)
                         this->clipboard_data_ctx.clipboard_data().size() * 4 +    // data
-                        1                                           // Null character
+                        2                                           // Null character
                     );
+                    auto const header_size = RDPECLIP::CliprdrHeader::size();
 
-                    size_t utf16_data_length;
+                    // [ .................... out_stream .................... ]
+                    // [ [ ... header_stream(8) ... ] [ ... data_stream ... ] ]
+                    OutStream out_stream(uninit_buf_av);
+                    OutStream data_stream(uninit_buf_av.array_from_offset(header_size));
+
                     if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
                     	auto av = this->clipboard_data_ctx.clipboard_data();
 
-                        utf16_data_length = UTF8toUTF16_CrLf(
+                        size_t utf16_data_length = UTF8toUTF16_CrLf(
                             std::string(char_ptr_cast(av.data()), av.size()),
-                            out_stream.get_data()+8,
-                            out_stream.get_capacity()-10
+                            data_stream.get_data(),
+                            data_stream.get_capacity()-2
                         );
-                        out_stream.out_uint16_le(0x0000);  // Null character
+                        data_stream.out_skip_bytes(utf16_data_length);
                     }
                     else {
-                        utf16_data_length = Latin1toUTF16(
+                        size_t utf16_data_length = Latin1toUTF16(
                             this->clipboard_data_ctx.clipboard_data().data(),
                             this->clipboard_data_ctx.clipboard_data().size(),
-                            out_stream.get_data()+8,
-                            out_stream.get_capacity()-10
+                            data_stream.get_data(),
+                            data_stream.get_capacity()-2
                         );
-                        out_stream.out_uint16_le(0x0000);  // Null character
+                        data_stream.out_skip_bytes(utf16_data_length);
                     }
+                    data_stream.out_uint16_le(0x0000);  // Null character
 
-                    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, out_stream.get_offset()-8);
-                    const RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
+                    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, data_stream.get_offset());
+                    //const RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                     header.emit(out_stream);
-                    format_data_response_pdu.emit(out_stream, out_stream.get_data()+8, out_stream.get_offset()-8);
+                    assert(out_stream.get_current() == data_stream.get_data());
+                    out_stream.out_skip_bytes(data_stream.get_offset());
+                    //format_data_response_pdu.emit(out_stream, data_stream.get_data(), out_stream.get_offset());
 
                     this->send_clipboard_pdu_to_front(out_stream);
 
@@ -3212,7 +3220,7 @@ private:
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
                 RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 0);
                 // TODO: really we are not using format data response but reading underlying data directly
-                // we should not do that! We should reassemble consecutive data packets until data_response 
+                // we should not do that! We should reassemble consecutive data packets until data_response
                 // is reassembled, then check if it is full and should be send or not.
 //                RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
 
@@ -3221,11 +3229,11 @@ private:
                     // TODO: we should be able to unify both sides of the condition
                     // the case where we have only one PDU is the extreme case of
                     // when we have a train of consecutive PDU
-                    
+
                     // Here is where we receive the first packet, the followup will be treated
                     // in state RDPECLIP::CB_CHUNKED_FORMAT_DATA_RESPONSE (pseudo state
                     // when we do not have a first packet)
-                    
+
                     if ((flags & CHANNELS::CHANNEL_FLAG_LAST) != 0) {
                         if (!chunk.in_check_rem(header.dataLen())) {
                             LOG( LOG_ERR
