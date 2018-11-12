@@ -24,8 +24,8 @@
 
 struct WidgetLabelGrid : public WidgetGrid
 {
-    static const unsigned x_padding_label = 3;
-    static const unsigned y_padding_label = 1;
+    static constexpr unsigned x_padding_label = 3;
+    static constexpr unsigned y_padding_label = 1;
 
     Font const & font;
 
@@ -42,7 +42,7 @@ struct WidgetLabelGrid : public WidgetGrid
     void clear() override;
     void clean_labels();
 
-    uint16_t add_line(array_view<const array_view_const_char> entries);
+    void add_line(array_view<const array_view_const_char> entries);
 
     const char * get_cell_text(uint16_t row_index, uint16_t column_index);
 };

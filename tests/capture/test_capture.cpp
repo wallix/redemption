@@ -147,7 +147,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -350,7 +351,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No
+        MetaParams::HideNonPrintable::No,
+        MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
     KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -454,7 +456,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -506,7 +508,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -545,7 +547,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -584,7 +586,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -629,7 +631,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -678,7 +680,7 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
+        SessionMeta meta(now, trans, false, true);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -775,8 +777,8 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false);
-        SessionLogAgent log_agent(meta);
+        SessionMeta meta(now, trans, false, true);
+        SessionLogAgent log_agent(meta, true);
 
         log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
         log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
@@ -798,7 +800,7 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, true);
+        SessionMeta meta(now, trans, true, true);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -2666,7 +2668,8 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
 
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
-        MetaParams::HideNonPrintable::No
+        MetaParams::HideNonPrintable::No,
+        MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
     KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -2930,7 +2933,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);
@@ -3177,7 +3181,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
 
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
-            MetaParams::HideNonPrintable::No
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
         KbdLogParams kbd_log_params = kbd_log_params_from_ini(ini);

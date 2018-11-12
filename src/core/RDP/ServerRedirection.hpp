@@ -575,13 +575,13 @@ struct ServerRedirectionPDU {
         size_t utf8_len = 0;
         if (rinfo.host[0] != 0) {
             utf8_len = UTF8Len(rinfo.host);
+            std::string rinfo_host(char_ptr_cast(rinfo.host));
             if (rinfo.host_is_fqdn) {
-                field_length = UTF8toUTF16(rinfo.host, this->TargetFQDN,
-                                           utf8_len * 2);
+                field_length = UTF8toUTF16(rinfo_host, this->TargetFQDN, utf8_len * 2);
                 this->TargetFQDNLength = field_length;
                 this->RedirFlags |= LB_TARGET_FQDN;
             } else {
-                field_length = UTF8toUTF16(rinfo.host, this->TargetNetAddress,
+                field_length = UTF8toUTF16(rinfo_host, this->TargetNetAddress,
                                            utf8_len * 2);
                 this->TargetNetAddressLength = field_length;
                 this->RedirFlags |= LB_TARGET_NET_ADDRESS;
@@ -589,22 +589,23 @@ struct ServerRedirectionPDU {
         }
         if (rinfo.username[0] != 0) {
             utf8_len = UTF8Len(rinfo.username);
-            field_length = UTF8toUTF16(rinfo.username, this->UserName,
+            std::string rinfo_username(char_ptr_cast(rinfo.username));
+            field_length = UTF8toUTF16(rinfo_username, this->UserName,
                                        utf8_len * 2);
             this->UserNameLength = field_length;
             this->RedirFlags |= LB_USERNAME;
         }
         if (rinfo.password[0] != 0) {
             utf8_len = UTF8Len(rinfo.password);
-            field_length = UTF8toUTF16(rinfo.password, this->Password,
-                                       utf8_len * 2);
+            std::string rinfo_password(char_ptr_cast(rinfo.password));
+            field_length = UTF8toUTF16(rinfo_password, this->Password, utf8_len * 2);
             this->PasswordLength = field_length;
             this->RedirFlags |= LB_PASSWORD;
         }
         if (rinfo.domain[0] != 0) {
             utf8_len = UTF8Len(rinfo.domain);
-            field_length = UTF8toUTF16(rinfo.domain, this->Domain,
-                                       utf8_len * 2);
+            std::string rinfo_domain(char_ptr_cast(rinfo.domain));
+            field_length = UTF8toUTF16(rinfo_domain, this->Domain, utf8_len * 2);
             this->DomainLength = field_length;
             this->RedirFlags |= LB_DOMAIN;
         }

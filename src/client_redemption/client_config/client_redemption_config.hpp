@@ -58,7 +58,21 @@
 #include <cstdint>
 #include <openssl/ssl.h>
 
-#include "client_redemption/client_config/client_redemption_path.hpp"
+#define CLIENT_REDEMPTION_REPLAY_PATH "/DATA/replay"
+#define CLIENT_REDEMPTION_LOGINS_PATH "/DATA/config/login.config"
+#define CLIENT_REDEMPTION_WINODW_CONF_PATH "/DATA/config/windows_config.config"
+#define CLIENT_REDEMPTION_SHARE_PATH "/DATA/share"
+#define CLIENT_REDEMPTION_CB_FILE_TEMP_PATH "/DATA/clipboard_temp"
+#define CLIENT_REDEMPTION_KEY_SETTING_PATH "/DATA/config/keySetting.config"
+#define CLIENT_REDEMPTION_USER_CONF_PATH "/DATA/config/userConfig.config"
+#define CLIENT_REDEMPTION_SOUND_TEMP_PATH "/DATA/sound_temp"
+#define CLIENT_REDEMPTION_DATA_PATH "/DATA"
+#define CLIENT_REDEMPTION_DATA_CONF_PATH "/DATA/config"
+
+
+#ifndef CLIENT_REDEMPTION_MAIN_PATH
+#define CLIENT_REDEMPTION_MAIN_PATH ""
+#endif
 
 
 
@@ -140,8 +154,8 @@
 
     struct ModRDPParamsData
     {
-        int rdp_width;
-        int rdp_height;
+        int rdp_width = 0;
+        int rdp_height = 0;
         bool enable_tls   = false;
         bool enable_nla   = false;
         bool enable_sound = false;
@@ -168,8 +182,8 @@ struct WindowsData {
 
     bool no_data = true;
 
-    WindowsData(const std::string & config_file_path)
-      : config_file_path(config_file_path)
+    WindowsData(std::string config_file_path)
+      : config_file_path(std::move(config_file_path))
     {}
 
     void writeWindowsData()  {
@@ -205,7 +219,7 @@ public:
     std::vector<IconMovieData> icons_movie_data;
 
 
-    const std::string    MAIN_DIR = CLIENT_REDEMPTION_MAIN_PATH;
+    const std::string    MAIN_DIR /*= CLIENT_REDEMPTION_MAIN_PATH*/;
     const std::string    REPLAY_DIR = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_REPLAY_PATH;
     const std::string    USER_CONF_LOG = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_LOGINS_PATH;
     const std::string    WINDOWS_CONF = CLIENT_REDEMPTION_MAIN_PATH CLIENT_REDEMPTION_WINODW_CONF_PATH;
@@ -215,6 +229,7 @@ public:
     const std::string    SOUND_TEMP_DIR = CLIENT_REDEMPTION_SOUND_TEMP_PATH;
     const std::string    DATA_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_PATH;
     const std::string    DATA_CONF_DIR = MAIN_DIR + CLIENT_REDEMPTION_DATA_CONF_PATH;
+
 
     enum : int {
         COMMAND_VALID = 15
@@ -303,8 +318,9 @@ public:
 
 
 
-    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front)
-    : verbose(verbose)
+    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front, const std::string &MAIN_DIR )
+    : MAIN_DIR(MAIN_DIR)
+    , verbose(verbose)
     //, _recv_disconnect_ultimatum(false)
     , wab_diag_question(false)
     , quick_connection_test(true)
@@ -339,9 +355,11 @@ public:
                 &this->DATA_CONF_DIR,
                 &this->SOUND_TEMP_DIR
             }) {
-                if (!file_exist(pstr->c_str())) {
-                    LOG(LOG_INFO, "Create file \"%s\".", pstr->c_str());
-                    mkdir(pstr->c_str(), 0775);
+                if (!pstr->empty()) {
+                    if (!file_exist(pstr->c_str())) {
+                        LOG(LOG_INFO, "Create file \"%s\".", pstr->c_str());
+                        mkdir(pstr->c_str(), 0775);
+                    }
                 }
             }
         }
@@ -362,8 +380,6 @@ public:
         this->rDPDiskConfig.add_drive(this->SHARE_DIR, rdpdr::RDPDR_DTYP_FILESYSTEM);
         this->rDPDiskConfig.enable_drive_type = true;
         this->rDPDiskConfig.enable_printer_type = true;
-        this->rDPDiskConfig.enable_drive_type = true;
-        this->rDPDiskConfig.enable_drive_type = true;
 
 
         // Set RDP SND config
@@ -375,7 +391,6 @@ public:
         this->rDPSoundConfig.wVersion = 0x06;
 
 
-
         this->setUserProfil();
         this->setClientInfo();
         this->setCustomKeyConfig();
@@ -385,7 +400,8 @@ public:
         std::fill(std::begin(this->info.order_caps.orderSupport), std::end(this->info.order_caps.orderSupport), 1);
         this->info.glyph_cache_caps.GlyphSupportLevel = GlyphCacheCaps::GLYPH_SUPPORT_FULL;
 
-        //this->parse_options(argc, argv);
+//         this->parse_options(argc, argv);
+
 
         auto options = cli::options(
             cli::helper("Client ReDemPtion Help menu."),
@@ -402,27 +418,27 @@ public:
             .action(cli::arg([this](std::string s){
                 this->user_name = std::move(s);
 
-                this->connection_info_cmd_complete += NAME_GOT;
+                this->connection_info_cmd_complete |= NAME_GOT;
             })),
 
             cli::option('p', "password").help("Set target session user password")
             .action(cli::arg([this](std::string s){
                 this->user_password = std::move(s);
 
-                this->connection_info_cmd_complete += PWD_GOT;
+                this->connection_info_cmd_complete |= PWD_GOT;
             })),
 
             cli::option('i', "ip").help("Set target IP address")
             .action(cli::arg([this](std::string s){
                 this->target_IP = std::move(s);
 
-                this->connection_info_cmd_complete += IP_GOT;
+                this->connection_info_cmd_complete |= IP_GOT;
             })),
 
             cli::option('P', "port").help("Set port to use on target")
             .action(cli::arg([this](int n){
                 this->port = n;
-                this->connection_info_cmd_complete += PORT_GOT;
+                this->connection_info_cmd_complete |= PORT_GOT;
             })),
 
             cli::helper("========= Verbose ========="),

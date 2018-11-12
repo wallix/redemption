@@ -161,9 +161,9 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
     uint8_t upassword[(sizeof(password) - 1) * 2];
     uint8_t uuser[(sizeof(user) - 1) * 2];
     uint8_t udomain[(sizeof(domain) - 1) * 2];
-    UTF8toUTF16(password, upassword, sizeof(upassword));
-    UTF8toUTF16(user, uuser, sizeof(uuser));
-    UTF8toUTF16(domain, udomain, sizeof(udomain));
+    UTF8toUTF16(std::string(char_ptr_cast(password)), upassword, sizeof(upassword));
+    UTF8toUTF16(std::string(char_ptr_cast(user)), uuser, sizeof(uuser));
+    UTF8toUTF16(std::string(char_ptr_cast(domain)), udomain, sizeof(udomain));
 
     context.NTOWFv2(make_array_view(upassword),
                     make_array_view(uuser),
@@ -457,7 +457,8 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     context_write.NegotiateFlags |= NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED;
     NTLMContext context_read(true, rand, timeobj, 0x400);
     SEC_STATUS status;
-    SecBuffer nego;
+
+    Array nego;
     status = context_write.write_negotiate(nego);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_CHALLENGE);
@@ -465,8 +466,7 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_CHALLENGE);
 
-
-    SecBuffer chal;
+    Array chal;
     status = context_write.write_challenge(chal);
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_AUTHENTICATE);
@@ -474,7 +474,7 @@ RED_AUTO_TEST_CASE(TestWrittersReaders)
     RED_CHECK_EQUAL(status, SEC_I_CONTINUE_NEEDED);
     RED_CHECK_EQUAL(context_read.state, NTLM_STATE_AUTHENTICATE);
 
-    SecBuffer auth;
+    Array auth;
     status = context_write.write_authenticate(auth);
     RED_CHECK_EQUAL(status, SEC_I_COMPLETE_NEEDED);
     RED_CHECK_EQUAL(context_write.state, NTLM_STATE_FINAL);

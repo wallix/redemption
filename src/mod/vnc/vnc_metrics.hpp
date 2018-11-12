@@ -41,10 +41,10 @@ private:
         CLIPBOARD_DATA_FROM_CLIENT,     // number of byte sent from client to server
         CLIPBOARD_DATA_FROM_SERVER,     // number of byte sent from server to client
 
-        MOUSE_MOVE,
-        KEY_PRESSED,
-        RIGHT_CLICK,
-        LEFT_CLICK,
+        MOUSE_MOVE,                     // total distance of mouse move in pixels
+        KEY_PRESSED,                    // number of keys pressed (down)
+        RIGHT_CLICK,                    // number of right click on mouse
+        LEFT_CLICK,                     // number of left click on mouse
 
         COUNT_FIELD
     };

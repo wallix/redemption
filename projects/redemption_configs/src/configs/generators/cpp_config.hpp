@@ -29,11 +29,10 @@
 
 #include <iostream>
 #include <sstream>
-#include <iomanip>
 #include <vector>
 #include <chrono>
-#include <unordered_map>
 #include <memory>
+#include <bitset>
 
 #include <cerrno>
 #include <cstring>
@@ -53,19 +52,30 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     std::ostringstream out_member_;
     std::ostream * out_ = nullptr;
 
+    struct Member
+    {
+        std::string name;
+        std::size_t align_of;
+
+        friend std::ostream& operator <<(std::ostream& out, Member const& x)
+        {
+            return out << x.name;
+        }
+    };
+
     struct Section
     {
         std::string section_name;
         std::string member_struct;
-        std::vector<std::string> member_names;
+        std::vector<Member> members;
     };
 
     std::vector<std::pair<std::string, std::string>> sections_parser;
-    std::vector<std::pair<std::string, std::string>> authids;
+    std::vector<std::string> authstrs;
     std::vector<Section> sections;
-    std::vector<std::string> member_names;
+    std::vector<Member> members;
     std::vector<std::string> variables_acl;
-    unsigned index_authid = 0;
+    std::vector<log_policy_t> authid_policy;
 
     std::ostream & out() { return *this->out_; }
 
@@ -81,7 +91,7 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         if (!section_name.empty()) {
             --this->depth;
         }
-        this->sections.emplace_back(Section{section_name, this->out_member_.str(), std::move(this->member_names)});
+        this->sections.emplace_back(Section{section_name, this->out_member_.str(), std::move(this->members)});
         this->out_member_.str("");
         std::string str = this->out_body_parser_.str();
         if (!str.empty()) {
@@ -93,38 +103,35 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     void tab() { this->out() << /*std::setw(this->depth*4+4) << */"    "; }
 
     template<class Pack>
-    void do_member(
-        std::string const & section_name,
-        std::string const & varname,
-        Pack const & infos
-    ) {
-        this->member_names.push_back(varname);
-        auto type = pack_get<cpp::type_>(infos);
+    void do_member(std::string const & section_name, Pack const & infos)
+    {
+        std::string const& varname = get_name<cpp::name>(infos);
+
+        auto type = get_type<cpp::type_>(infos);
+        this->members.push_back({varname, alignof(typename decltype(type)::type)});
 
         std::string const & varname_with_section = section_name.empty() ? varname : section_name + "::" + varname;
 
-        auto const properties = value_or(infos, sesman::internal::io::none);
+        auto const properties = [&]{
+            if constexpr (is_convertible_v<Pack, sesman_io_t>) {
+                return get_elem<sesman_io_t>(infos).value;
+            }
+            else {
+                return sesman::internal::io::none;
+            }
+        }();
         if (bool(/*PropertyFieldFlags::read & */properties)) {
             this->variables_acl.emplace_back(varname_with_section);
         }
 
         this->out_ = &this->out_member_;
 
-        apply_if_contains<desc>(infos, [this](auto desc){
+        if constexpr (is_convertible_v<Pack, desc>) {
             //this->tab();
-            this->out() << cpp_doxygen_comment(desc.value, 4);
-        });
+            this->out() << cpp_doxygen_comment(get_elem<desc>(infos).value, 4);
+        };
         if (bool(properties)) {
-            this->tab();
-            this->out() << "/// AUTHID_";
-            std::string str = section_name;
-            str += '_';
-            str += varname;
-            for (auto & c : str) {
-                c = char(std::toupper(c));
-            }
-            this->out() << str << " <br/>\n";
-            this->authids.emplace_back(str, pack_get<sesman::name>(infos));
+            this->authstrs.emplace_back(get_name<sesman::name>(infos));
         }
         this->tab(); this->out() << "/// type: "; this->inherit().write_type(type); this->out() << " <br/>\n";
         if ((properties & sesman::internal::io::rw) == sesman::internal::io::sesman_to_proxy) {
@@ -136,18 +143,18 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         else if ((properties & sesman::internal::io::rw) == sesman::internal::io::rw) {
             this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
-        this->tab(); this->out() << "/// value"; this->write_assignable_default(pack_contains<default_>(infos), type, &infos); this->out() << " <br/>\n";
+        this->tab(); this->out() << "/// value"; this->write_assignable_default(is_t_convertible<Pack, default_>(), type, &infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman::internal::io::sesman_to_proxy) ? "true" : "false") << ";\n";
         this->tab(); this->out() << "    static constexpr bool is_proxy_to_sesman = " << (bool(properties & sesman::internal::io::proxy_to_sesman) ? "true" : "false") << ";\n";
-
         this->tab(); this->out() << "    static constexpr char const * section = \"" << section_name << "\";\n";
         this->tab(); this->out() << "    static constexpr char const * name = \"" << varname << "\";\n";
 
         if (bool(properties)) {
             this->tab(); this->out() << "    // for old cppcheck\n";
             this->tab(); this->out() << "    // cppcheck-suppress obsoleteFunctionsindex\n";
-            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->index_authid++ << ");\n";
+            this->tab(); this->out() << "    static constexpr authid_t index = authid_t(" << this->authid_policy.size() << ");\n";
+            this->authid_policy.emplace_back(infos);
         }
 
         this->tab(); this->out() << "    using type = ";
@@ -155,15 +162,12 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
         this->out() << ";\n";
 
         // write type
-        if (bool(properties) || pack_contains<spec::internal::attr>(infos)) {
-            auto type_sesman = pack_get<sesman::type_>(infos);
-            auto type_spec = pack_get<spec::type_>(infos);
+        if (bool(properties) || is_convertible_v<Pack, spec_attr_t>) {
+            auto type_sesman = get_type<sesman::type_>(infos);
+            auto type_spec = get_type<spec::type_>(infos);
             static_assert(
-                std::is_same<decltype(type_spec), decltype(type_sesman)>{}
-             || !std::is_same<
-                    decltype(pack_contains<sesman::internal::io>(infos)),
-                    decltype(pack_contains<spec::internal::attr>(infos))
-                >{},
+                std::is_same_v<decltype(type_spec), decltype(type_sesman)>
+             || is_convertible_v<Pack, sesman_io_t> != is_convertible_v<Pack, spec_attr_t>,
                 "different type for sesman and spec isn't supported (go code :D)"
             );
             this->tab(); this->out() << "    using sesman_and_spec_type = ";
@@ -177,16 +181,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         // write value
         this->tab(); this->out() << "    type value";
-        this->write_assignable_default(pack_contains<default_>(infos), type, &infos);
+        this->write_assignable_default(is_t_convertible<Pack, default_>(), type, &infos);
         this->out() << ";\n";
 
         this->tab(); this->out() << "};\n";
 
         this->out_ = &this->out_body_parser_;
 
-        apply_if_contains<spec::internal::attr>(infos, [this, &infos, &varname_with_section](auto&&){
-            auto type_spec = pack_get<spec::type_>(infos);
-            this->out() << "        else if (0 == strcmp(key, \"" << pack_get<spec::name>(infos) << "\")) {\n"
+        if constexpr (is_convertible_v<Pack, spec_attr_t>) {
+            auto type_spec = get_type<spec::type_>(infos);
+            this->out() << "        else if (0 == strcmp(key, \"" << get_name<spec::name>(infos) << "\")) {\n"
             "            ::configs::parse_and_log(\n"
             "                context, key,\n"
             "                static_cast<cfg::" << varname_with_section << "&>(this->variables).value,\n"
@@ -196,24 +200,21 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
             "                av\n"
             "            );\n"
             "        }\n";
-        });
+        }
     }
 
 
-    template<class E>
-    enable_if_enum_t<E>
-    write_value(E const & e)
-    { this->out() << " = static_cast<type>(" << static_cast<unsigned long>(e) << ")"; }
-
     template<class T>
-    disable_if_enum_t<T>
-    write_value(T const & r)
+    void write_value(T const & x)
     {
-        if (std::is_same<T, bool>{}) {
-            this->out() << '{' << (r ? "true" : "false") << '}';
+        if constexpr (std::is_enum_v<T>) {
+            this->out() << " = static_cast<type>(" << static_cast<std::underlying_type_t<T>>(x) << ")";
+        }
+        else if constexpr (std::is_same_v<T, bool>) {
+            this->out() << '{' << (x ? "true" : "false") << '}';
         }
         else {
-            this->out() << '{' << r << '}';
+            this->out() << '{' << x << '}';
         }
     }
 
@@ -226,16 +227,16 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
 
     template<class T, class U>
-    void write_assignable_default(std::true_type, type_<T>, val<default_<U>> const * d)
-    { this->inherit().write_value(d->x.value); }
+    void write_assignable_default(std::true_type, type_<T>, default_<U> const * d)
+    { this->inherit().write_value(d->value); }
 
     template<unsigned N, class U>
-    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, val<default_<U>> const * d)
+    void write_assignable_default(std::true_type, type_<types::fixed_binary<N>>, default_<U> const * d)
     {
-        if (d->x.value.size() != N) {
+        if (d->value.size() != N) {
             throw std::runtime_error("invalide keys size");
         }
-        this->out() << "{{" << io_hexkey{d->x.value.c_str(), N, "0x", ", "} << "}}";
+        this->out() << "{{" << io_hexkey{d->value.c_str(), N, "0x", ", "} << "}}";
     }
 
     void write_assignable_default(std::false_type, ...)
@@ -297,12 +298,14 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
       "//\n\n"
       "#pragma once\n"
       "\n"
+      "#include \"utils/sugar/array_view.hpp\"\n"
+      "\n"
       "enum authid_t : unsigned;\n\n"
-      "inline authid_t MAX_AUTHID = authid_t(" << writer.authids.size() << ");\n\n"
-      "constexpr char const * const authstr[] = {\n"
+      "inline authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
+      "constexpr array_view_const_char const authstr[] = {\n"
     ;
-    for (auto & body : writer.authids) {
-        out_authid << "    \"" << body.second << "\",\n";
+    for (auto & authstr : writer.authstrs) {
+        out_authid << "    \"" << authstr << "\"_av,\n";
     }
     out_authid << "};\n";
 }
@@ -321,13 +324,13 @@ void write_variables_configuration_fwd(std::ostream & out_varconf, ConfigCppWrit
     ;
     for (auto & section : writer.sections) {
         if (section.section_name.empty()) {
-            for (auto & var : section.member_names) {
+            for (auto & var : section.members) {
                 out_varconf << "    struct " << var << ";\n";
             }
         }
         else {
             out_varconf << "    struct " << section.section_name << " {\n";
-            for (auto & var : section.member_names) {
+            for (auto & var : section.members) {
                 out_varconf << "        struct " << var << ";\n";
             }
             out_varconf << "    };\n\n";
@@ -351,7 +354,7 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
     }
 
     auto join = [&](
-        std::vector<std::string> const & cont,
+        auto const & cont,
         auto const & before,
         auto const & after
     ) {
@@ -360,9 +363,9 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         if (first == last) {
             return ;
         }
-        out_varconf << before << *first << after << "\n";
+        out_varconf << before << *first << after;
         while (++first != last) {
-            out_varconf << ", " << before << *first << after << "\n";
+            out_varconf << ", " << before << *first << after;
         }
     };
 
@@ -372,33 +375,78 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
         "} // namespace cfg\n\n"
         "namespace cfg_section {\n"
     ;
+    using Member = typename ConfigCppWriter::Member;
     for (auto & body : writer.sections) {
-       if (!body.section_name.empty()) {
-           section_names.emplace_back("cfg_section::" + body.section_name);
-           out_varconf << "struct " << body.section_name << "\n: ";
-           join(body.member_names, "cfg::" + body.section_name + "::", "");
-           out_varconf << "{ static constexpr bool is_section = true; };\n\n";
-       }
+        if (!body.section_name.empty()) {
+            std::vector<std::reference_wrapper<Member>> v(body.members.begin(), body.members.end());
+            std::stable_sort(v.begin(), v.end(), [](Member& a, Member& b){
+                return a.align_of > b.align_of;
+            });
+            section_names.emplace_back("cfg_section::" + body.section_name);
+            out_varconf << "struct " << body.section_name << "\n: ";
+            join(v, "cfg::" + body.section_name + "::", "\n");
+            out_varconf << "{ static constexpr bool is_section = true; };\n\n";
+        }
     }
     out_varconf << "} // namespace cfg_section\n\n"
       "namespace configs {\n"
       "struct VariablesConfiguration\n"
       ": "
     ;
-    join(section_names, "", "");
+    join(section_names, "", "\n");
     auto it = std::find_if(begin(writer.sections), end(writer.sections), [](auto & p){ return p.section_name.empty(); });
     if (it != writer.sections.end()) {
-       for (auto & s : it->member_names) {
-           out_varconf << ", cfg::" << s << "\n";
-       }
+        for (Member& mem : it->members) {
+            out_varconf << ", cfg::" << mem.name << "\n";
+        }
     }
     out_varconf <<
       "{};\n\n"
       "using VariablesAclPack = Pack<\n  "
     ;
-    join(writer.variables_acl, "cfg::", "");
+    join(writer.variables_acl, "cfg::", "\n");
     out_varconf <<
-      ">;\n"
+      ">;\n\n\n"
+    ;
+
+    std::vector<std::bitset<64>> loggables;
+    std::vector<std::bitset<64>> unloggable_if_value_contains_passwords;
+    int i = 0;
+
+    for (auto log_policy : writer.authid_policy)
+    {
+        if ((i % 64) == 0) {
+            i = 0;
+            loggables.push_back(0);
+            unloggable_if_value_contains_passwords.push_back(0);
+        }
+
+        switch (log_policy.value) {
+            case spec::log_policy::loggable:
+                loggables.back().set(i);
+                break;
+            case spec::log_policy::unloggable:
+                break;
+            case spec::log_policy::unloggable_if_value_contains_password:
+                unloggable_if_value_contains_passwords.back().set(i);
+                break;
+        }
+        ++i;
+    }
+
+    out_varconf <<
+      "struct BitFlags {\n"
+      "  uint64_t bits_[" << loggables.size() << "];\n"
+      "  bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }\n"
+      "};\n\n"
+    ;
+
+    out_varconf << "constexpr inline BitFlags is_loggable{{\n  ";
+    join(loggables, "0b", "\n");
+    out_varconf << "}};\nconstexpr inline BitFlags is_unloggable_if_value_with_password{{\n  ";
+    join(unloggable_if_value_contains_passwords, "0b", "\n");
+    out_varconf <<
+      "}};\n"
       "} // namespace configs\n"
     ;
 }

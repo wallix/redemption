@@ -51,6 +51,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
@@ -83,6 +85,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -117,6 +121,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
 
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
 
@@ -149,6 +155,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -187,6 +195,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     NullSender to_client_sender;
     NullSender to_server_sender;
@@ -245,6 +255,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     NullSender to_client_sender;
     NullSender to_server_sender;

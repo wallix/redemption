@@ -35,6 +35,7 @@
 #include "core/set_server_redirection_target.hpp"
 #include "transport/crypto_transport.hpp"
 #include "transport/transport.hpp"
+#include "transport/socket_transport.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/texttime.hpp"
 #include "utils/fileutils.hpp"
@@ -48,6 +49,7 @@
 
 #include <string>
 #include <utility>
+#include <algorithm>
 
 #include <ctime>
 #include <cinttypes>
@@ -800,7 +802,8 @@ private:
             this->safe_read_packet();
         }
 
-        char const * key(bool always_internal_copy) {
+        array_view_const_char key(bool always_internal_copy)
+        {
             auto m = std::find(this->p, this->e, '\n');
             if (m == e) {
                 size_t key_buf_len = this->e - this->p;
@@ -825,22 +828,19 @@ private:
                         LOG(LOG_ERR, "Error: ACL key length too big (got %" PRIdPTR " max 64o)", m - this->p);
                         throw Error(ERR_ACL_MESSAGE_TOO_BIG);
                     }
-                    *m = 0;
-                    ++m;
-                    memcpy(this->key_name_buf, this->p, m - this->p);
-                    this->p = m;
-                    return this->key_name_buf;
+                    always_internal_copy = true;
                 }
             }
-            if (always_internal_copy) {
-                *m = 0;
-                ++m;
-                memcpy(this->key_name_buf, this->p, m - this->p);
-                this->p = m;
-                return this->key_name_buf;
-            }
+
+            std::size_t const len = m - this->p;
             *m = 0;
-            return std::exchange(this->p, m+1);
+            ++m;
+            if (always_internal_copy) {
+                memcpy(this->key_name_buf, this->p, len);
+                this->p = m;
+                return {this->key_name_buf, len};
+            }
+            return {std::exchange(this->p, m), len};
         }
 
         bool is_set_value() {
@@ -943,32 +943,23 @@ public:
     void in_items()
     {
         Reader reader(this->auth_trans, this->verbose);
+        array_view_const_char key;
 
-        while (auto key = reader.key(bool(this->verbose & Verbose::variable))) {
+        while (!(key = reader.key(bool(this->verbose & Verbose::variable))).empty()) {
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
                     if (field.set(reader.get_val()) && bool(this->verbose & Verbose::variable)) {
-                        const char * val         = field.c_str();
-                        const char * display_val = val;
-                        if (cfg::crypto::key0::index == authid ||
-                            cfg::crypto::key1::index == authid ||
-                            cfg::context::password::index == authid ||
-                            cfg::context::target_password::index == authid ||
-                            cfg::globals::target_application_password::index == authid ||
-                            cfg::context::auth_command_rail_exec_password::index == authid ||
-                            (cfg::context::auth_channel_answer::index == authid &&
-                            strcasestr(val, "password") != nullptr)
-                        ) {
-                            display_val = ::get_printable_password(val, this->ini.get<cfg::debug::password>());
-                        }
-                        LOG(LOG_INFO, "receiving '%s'='%s'", key, display_val);
+                        array_view_const_char val         = field.to_string_view();
+                        array_view_const_char display_val = field.is_loggable()
+                            ? val : ::get_printable_password(val, this->ini.get<cfg::debug::password>());
+                        LOG(LOG_INFO, "receiving '%.*s'='%.*s'", int(key.size()), key.data(), int(display_val.size()), display_val.data());
                     }
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
                     if (bool(this->verbose & Verbose::variable)) {
-                        LOG(LOG_INFO, "receiving ASK '%s'", key);
+                        LOG(LOG_INFO, "receiving ASK '%.*s'", int(key.size()), key.data());
                     }
                 }
                 else {
@@ -979,8 +970,8 @@ public:
             }
             else {
                 auto val = reader.get_val();
-                LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
-                    key, int(val.size()), val.data());
+                LOG(LOG_WARNING, "Unexpected receving '%.*s' - '%.*s'",
+                    int(key.size()), key.data(), int(val.size()), val.data());
             }
         }
     }
@@ -1035,16 +1026,16 @@ private:
             this->buf.data[this->buf.sz++] = c;
         }
 
-        void push(char const * s) {
-            while (*s) {
-                while (this->buf.sz != buf_len && *s) {
-                    this->buf.data[this->buf.sz++] = *s;
-                    ++s;
-                }
-                if (*s) {
+        void push(array_view_const_char av) {
+            do {
+                auto n = std::min<std::size_t>(av.size(), this->buf_len - this->buf.sz);
+                memcpy(this->buf.data + this->buf.sz, av.data(), n);
+                this->buf.sz += n;
+                av = av.array_from_offset(n);
+                if (!av.empty()) {
                     this->new_buffer();
                 }
-            }
+            } while(!av.empty());
         }
 
         void send_buffer() {
@@ -1082,27 +1073,24 @@ public:
                 Buffers buffers(this->auth_trans, this->verbose);
 
                 for (auto field : this->ini.get_fields_changed()) {
-                    char const * key = string_from_authid(field.authid());
+                    array_view_const_char key = string_from_authid(field.authid());
                     buffers.push(key);
                     buffers.push('\n');
                     if (field.is_asked()) {
-                        buffers.push("ASK\n");
+                        buffers.push("ASK\n"_av);
                         if (bool(this->verbose & Verbose::variable)) {
-                            LOG(LOG_INFO, "sending %s=ASK", key);
+                            LOG(LOG_INFO, "sending %.*s=ASK", int(key.size()), key.data());
                         }
                     }
                     else {
-                        char const * val = field.c_str();
+                        auto val = field.to_string_view();
                         buffers.push('!');
                         buffers.push(val);
                         buffers.push('\n');
-                        char const * display_val = val;
-                        if (field.authid() == cfg::context::password::index
-                         || field.authid() == cfg::context::target_password::index) {
-                            display_val = get_printable_password(val, password_printing_mode);
-                        }
+                        array_view_const_char display_val = field.is_loggable()
+                          ? val : get_printable_password(val, password_printing_mode);
                         if (bool(this->verbose & Verbose::variable)) {
-                            LOG(LOG_INFO, "sending %s=%s", key, display_val);
+                            LOG(LOG_INFO, "sending %.*s=%.*s", int(key.size()), key.data(), int(display_val.size()), display_val.data());
                         }
                     }
                 }
@@ -1119,3 +1107,23 @@ public:
         }
     }
 };
+
+
+struct Acl
+{
+    SocketTransport auth_trans;
+    AclSerializer   acl_serial;
+
+    Acl(Inifile & ini, unique_fd client_sck, time_t now,
+        CryptoContext & cctx, Random & rnd, Fstat & fstat)
+    : auth_trans(
+        "Authentifier", std::move(client_sck),
+        ini.get<cfg::globals::authfile>().c_str(), 0,
+        std::chrono::seconds(1),
+        to_verbose_flags(ini.get<cfg::debug::auth>()))
+    , acl_serial(
+        ini, now, this->auth_trans, cctx, rnd, fstat,
+        to_verbose_flags(ini.get<cfg::debug::auth>()))
+    {}
+};
+

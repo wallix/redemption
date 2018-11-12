@@ -1,6 +1,6 @@
 #include "config_variant.hpp"
 
-"## Config file for RDP proxy.\n\n\n"
+"## Python spec file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
 "# Support of Bitmap Cache.\n"
@@ -546,6 +546,9 @@
 "# (is in millisecond)\n"
 "#_advanced\n"
 "remoteapp_bypass_legal_notice_timeout = integer(min=0, default=20000)\n\n"
+
+"#_advanced\n"
+"log_only_relevant_clipboard_activities = boolean(default=True)\n\n"
 
 "#_advanced\n"
 "experimental_fix_input_event_sync = boolean(default=True)\n\n"

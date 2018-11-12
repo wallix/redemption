@@ -117,16 +117,13 @@ public:
     RDPColor _Color;
     uint8_t  nDeltaEntries{0};
 
-    struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];
+    struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45] = {};
 
     static uint8_t id() {
         return RDP::MULTIOPAQUERECT;
     }
 
-    RDPMultiOpaqueRect()
-    {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
-    }
+    RDPMultiOpaqueRect() = default;
 
     RDPMultiOpaqueRect(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight,
         RDPColor _Color, uint8_t nDeltaEntries,
@@ -138,7 +135,6 @@ public:
     , _Color(_Color)
     , nDeltaEntries(nDeltaEntries)
     {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
             this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();
             this->deltaEncodedRectangles[i].topDelta  = deltaEncodedRectangles.in_sint16_le();

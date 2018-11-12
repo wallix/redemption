@@ -29,9 +29,9 @@ inline std::string text_gmdate(const timeval tv)
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
-    char buf[11] = {};
-    snprintf(buf, sizeof(buf), "%04d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday);
-    return std::string(buf, 10);
+    char buf[20];
+    int len = snprintf(buf, sizeof(buf), "%04d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday);
+    return std::string(buf, len);
 }
 
 
@@ -40,9 +40,9 @@ inline std::string text_gmdatetime(const timeval tv)
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
-    char buf[20] = {};
-    snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
-    return std::string(buf, 19);
+    char buf[35];
+    int len = snprintf(buf, sizeof(buf), "%04d-%02d-%02d %02d:%02d:%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+    return std::string(buf, len);
 }
 
 
@@ -51,9 +51,9 @@ inline std::string filename_gmdatetime(const timeval tv)
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
-    char buf[20] = {};
-    snprintf(buf, sizeof(buf), "%04d-%02d-%02d_%02d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
-    return std::string(buf, 19);
+    char buf[35];
+    int len = snprintf(buf, sizeof(buf), "%04d-%02d-%02d_%02d-%02d-%02d",1900+t.tm_year, 1+t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec);
+    return std::string(buf, len);
 }
 
 
@@ -82,7 +82,7 @@ inline std::string arcsight_gmdatetime(const timeval tv)
     struct tm t;
     time_t time = tv.tv_sec;
     gmtime_r(&time, &t);
-    char buf[21] = {};
+    char buf[64] = {};
     snprintf(buf, sizeof(buf), "%s %02d %04d %02d:%02d:%02d", get_short_text_month(1+t.tm_mon), t.tm_mday,1900+t.tm_year, t.tm_hour, t.tm_min, t.tm_sec);
     return std::string(buf);
 }

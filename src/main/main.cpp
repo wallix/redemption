@@ -234,8 +234,10 @@ int main(int argc, char** argv)
 
     std::string config_filename = app_path(AppPath::CfgIni);
 
-    static constexpr char const * opt_print_spec = "print-spec";
+    static constexpr char const * opt_print_ini_spec = "print-spec";
     static constexpr char const * opt_print_ini = "print-default-ini";
+    static constexpr char const * opt_print_rdp_connpolicy_spec = "print-rdp-connpolicy-spec";
+    static constexpr char const * opt_print_vnc_connpolicy_spec = "print-vnc-connpolicy-spec";
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -259,13 +261,23 @@ int main(int argc, char** argv)
 
         {"config-file", &config_filename, "use an another ini file"},
 
-        {opt_print_spec, "Configuration file spec for rdpproxy.ini"},
-        {opt_print_ini, "Show rdpproxy.ini by default"}
+        {opt_print_ini_spec, "Show file spec for rdpproxy.ini"},
+        {opt_print_ini, "Show default rdpproxy.ini"},
+        {opt_print_rdp_connpolicy_spec, "Show file spec for rdp connection policy"},
+        {opt_print_vnc_connpolicy_spec, "Show file spec for vnc connection policy"}
 
         //{"test", "check Inifile syntax"}
     });
 
-    auto options = program_options::parse_command_line(argc, argv, desc);
+    program_options::variables_map options;
+
+    try {
+        options = program_options::parse_command_line(argc, argv, desc);
+    }
+    catch (std::exception const& e) {
+        std::cerr << argv[0] << ": error: " << e.what() << "\n";
+        return 17;
+    }
 
     if (options.count("kill")) {
         int status = shutdown();
@@ -289,7 +301,7 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if (options.count(opt_print_spec)) {
+    if (options.count(opt_print_ini_spec)) {
         std::cout <<
             #include "configs/autogen/str_python_spec.hpp"
         ;
@@ -298,6 +310,18 @@ int main(int argc, char** argv)
     if (options.count(opt_print_ini)) {
         std::cout <<
             #include "configs/autogen/str_ini.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_rdp_connpolicy_spec)) {
+        std::cout <<
+            #include "configs/autogen/str_rdp_connection_policy.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_vnc_connpolicy_spec)) {
+        std::cout <<
+            #include "configs/autogen/str_vnc_connection_policy.hpp"
         ;
         return 0;
     }

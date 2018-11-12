@@ -20,6 +20,10 @@
 
 */
 
+// TODO: this should move to src/system as results are highly dependent on compilation system
+// maybe some external utility could detect the target/variant of library and could avoid
+// non determinist sizes in generated movies.
+
 #include "capture/video_recorder.hpp"
 
 #ifndef REDEMPTION_NO_FFMPEG
@@ -82,10 +86,9 @@ void video_recorder::default_sws_free_context::operator()(SwsContext * sws_ctx)
     sws_freeContext(sws_ctx);
 }
 
-video_recorder::AVFramePtr::AVFramePtr()
-: frame(av_frame_alloc())
-{
-}
+video_recorder::AVFramePtr::AVFramePtr() 
+    : frame(av_frame_alloc()) 
+{}
 
 video_recorder::AVFramePtr::~AVFramePtr()
 {
@@ -478,10 +481,10 @@ video_recorder::video_recorder(
     write_packet_fn(io_params, buf, 0);
 }
 
-video_recorder::~video_recorder() {}
+video_recorder::~video_recorder() = default;
 
-void video_recorder::preparing_video_frame() {}
+void video_recorder::preparing_video_frame() {};
 
-void video_recorder::encoding_video_frame(uint64_t /*frame_index*/) {}
+void video_recorder::encoding_video_frame(uint64_t /*frame_index*/) {};
 
 #endif

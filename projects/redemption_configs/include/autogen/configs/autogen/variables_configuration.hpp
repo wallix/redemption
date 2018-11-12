@@ -3,7 +3,6 @@
 //
 
 namespace cfg {
-    /// AUTHID_GLOBALS_CAPTURE_CHUNK <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -20,7 +19,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_AUTH_USER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -37,7 +35,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_HOST <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -54,7 +51,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -71,7 +67,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_DEVICE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -88,7 +83,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_DEVICE_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -105,7 +99,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_PRIMARY_USER_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -122,7 +115,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_USER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -139,7 +131,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -156,7 +147,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION_ACCOUNT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -173,7 +163,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_GLOBALS_TARGET_APPLICATION_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -302,7 +291,6 @@ namespace cfg {
         type value{900};
     };
     /// No traffic auto disconnection. <br/>
-    /// AUTHID_GLOBALS_INACTIVITY_TIMEOUT <br/>
     /// type: std::chrono::seconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -358,7 +346,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    /// AUTHID_GLOBALS_TRACE_TYPE <br/>
     /// type: TraceType <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -437,7 +424,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = app_path(AppPath::Wrm);
     };
-    /// AUTHID_GLOBALS_IS_REC <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -454,7 +440,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_GLOBALS_MOVIE_PATH <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -606,7 +591,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_GLOBALS_UNICODE_KEYBOARD_EVENT_SUPPORT <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -623,7 +607,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_GLOBALS_MOD_RECV_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{1000} <br/>
@@ -689,7 +672,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_SESSION_LOG_LOG_PATH <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -731,7 +713,6 @@ namespace cfg {
         type value{false};
     };
 
-    /// AUTHID_CLIENT_KEYBOARD_LAYOUT <br/>
     /// type: unsigned int <br/>
     /// sesman <- proxy <br/>
     /// value{0} <br/>
@@ -878,7 +859,6 @@ namespace cfg {
         type value{true};
     };
     /// If enabled, ignore CTRL+ALT+DEL and CTRL+SHIFT+ESCAPE (or the equivalents) keyboard sequences. <br/>
-    /// AUTHID_CLIENT_DISABLE_TSK_SWITCH_SHORTCUTS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1138,7 +1118,6 @@ namespace cfg {
         type value = "15,16,17,18,22";
     };
     /// NLA authentication in secondary target. <br/>
-    /// AUTHID_MOD_RDP_ENABLE_NLA <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1157,7 +1136,6 @@ namespace cfg {
     };
     /// If enabled, NLA authentication will try Kerberos before NTLM. <br/>
     /// (if enable_nla is disabled, this value is ignored). <br/>
-    /// AUTHID_MOD_RDP_ENABLE_KERBEROS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1254,7 +1232,6 @@ namespace cfg {
         type value{true};
     };
     /// Enables Server Redirection Support. <br/>
-    /// AUTHID_MOD_RDP_SERVER_REDIRECTION_SUPPORT <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1282,7 +1259,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_LOAD_BALANCE_INFO <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1300,7 +1276,6 @@ namespace cfg {
         type value{};
     };
     /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
-    /// AUTHID_MOD_RDP_BOGUS_SC_NET_SIZE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1317,7 +1292,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_PROXY_MANAGED_DRIVES <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1334,7 +1308,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_IGNORE_AUTH_CHANNEL <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1377,7 +1350,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "";
     };
-    /// AUTHID_MOD_RDP_ALTERNATE_SHELL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1394,7 +1366,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_SHELL_ARGUMENTS <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1411,7 +1382,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_SHELL_WORKING_DIRECTORY <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1428,7 +1398,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_ALTERNATE_SHELL <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1445,7 +1414,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_USE_CLIENT_PROVIDED_REMOTEAPP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1462,7 +1430,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_USE_NATIVE_REMOTEAPP_CAPABILITY <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1479,7 +1446,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_ENABLE_SESSION_PROBE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1498,7 +1464,6 @@ namespace cfg {
     };
     /// Minimum supported server : Windows Server 2008. <br/>
     /// Clipboard redirection should be remain enabled on Terminal Server. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_USE_CLIPBOARD_BASED_LAUNCHER <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1515,7 +1480,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LAUNCH_MASK <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1532,7 +1496,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_LAUNCH_FAILURE <br/>
     /// type: SessionProbeOnLaunchFailure <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(2) <br/>
@@ -1551,7 +1514,6 @@ namespace cfg {
     };
     /// This parameter is used if session_probe_on_launch_failure is 1 (disconnect user). <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{20000} <br/>
@@ -1570,7 +1532,6 @@ namespace cfg {
     };
     /// This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_LAUNCH_FALLBACK_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{7000} <br/>
@@ -1588,7 +1549,6 @@ namespace cfg {
         type value{7000};
     };
     /// Minimum supported server : Windows Server 2008. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_START_LAUNCH_TIMEOUT_TIMER_ONLY_AFTER_LOGON <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1605,7 +1565,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_KEEPALIVE_TIMEOUT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{5000} <br/>
@@ -1622,7 +1581,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{5000};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ON_KEEPALIVE_TIMEOUT <br/>
     /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1640,7 +1598,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// End automatically a disconnected session <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_END_DISCONNECTED_SESSION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1669,7 +1626,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1686,7 +1642,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_LOG_ROTATION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1705,7 +1660,6 @@ namespace cfg {
     };
     /// This policy setting allows you to configure a time limit for disconnected application sessions. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_APPLICATION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1724,7 +1678,6 @@ namespace cfg {
     };
     /// This policy setting allows you to configure a time limit for disconnected Terminal Services sessions. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_DISCONNECTED_SESSION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1743,7 +1696,6 @@ namespace cfg {
     };
     /// This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe. <br/>
     /// 0 to disable timeout. <br/>
-    /// AUTHID_MOD_RDP_SESSION_PROBE_IDLE_SESSION_LIMIT <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1784,7 +1736,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = REDEMPTION_CONFIG_SESSION_PROBE_ARGUMENTS;
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_CLIPBOARD_INITIALIZATION_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{2000} <br/>
@@ -1801,7 +1752,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{2000};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_START_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1818,7 +1768,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_LONG_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{500} <br/>
@@ -1835,7 +1784,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{500};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_CLIPBOARD_BASED_LAUNCHER_SHORT_DELAY <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{50} <br/>
@@ -1864,7 +1812,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_ENABLE_CRASH_DUMP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1881,7 +1828,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_HANDLE_USAGE_LIMIT <br/>
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1898,7 +1844,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_MEMORY_USAGE_LIMIT <br/>
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1915,7 +1860,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_MOD_RDP_SESSION_PROBE_PUBLIC_SESSION <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1933,7 +1877,6 @@ namespace cfg {
         type value{false};
     };
     /// Keep known server certificates on WAB <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_STORE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1950,7 +1893,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_SERVER_CERT_CHECK <br/>
     /// type: ServerCertCheck <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1968,7 +1910,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn if check allow connexion to server. <br/>
-    /// AUTHID_MOD_RDP_SERVER_ACCESS_ALLOWED_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -1986,7 +1927,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that new server certificate file was created. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_CREATE_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2004,7 +1944,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate file was successfully checked. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_SUCCESS_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2022,7 +1961,6 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate file checking failed. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_FAILURE_MESSAGE <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2040,18 +1978,13 @@ namespace cfg {
         type value = static_cast<type>(1);
     };
     /// Warn that server certificate check raised some internal error. <br/>
-    /// AUTHID_MOD_RDP_SERVER_CERT_ERROR_MESSAGE <br/>
     /// type: ServerNotification <br/>
-    /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_cert_error_message {
-        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_sesman_to_proxy = false;
         static constexpr bool is_proxy_to_sesman = false;
         static constexpr char const * section = "mod_rdp";
         static constexpr char const * name = "server_cert_error_message";
-        // for old cppcheck
-        // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(62);
         using type = ServerNotification;
         using sesman_and_spec_type = ServerNotification;
         using mapped_type = sesman_and_spec_type;
@@ -2094,7 +2027,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_MOD_RDP_ENABLE_RDPDR_DATA_ANALYSIS <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -2105,7 +2037,7 @@ namespace cfg {
         static constexpr char const * name = "enable_rdpdr_data_analysis";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(63);
+        static constexpr authid_t index = authid_t(62);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2138,6 +2070,18 @@ namespace cfg {
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
         type value{20000};
+    };
+    /// type: bool <br/>
+    /// value{true} <br/>
+    struct mod_rdp::log_only_relevant_clipboard_activities {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "log_only_relevant_clipboard_activities";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{true};
     };
     /// type: bool <br/>
     /// value{true} <br/>
@@ -2239,7 +2183,6 @@ namespace cfg {
     };
 
     /// Enable or disable the clipboard from client (client to server). <br/>
-    /// AUTHID_MOD_VNC_CLIPBOARD_UP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -2250,14 +2193,13 @@ namespace cfg {
         static constexpr char const * name = "clipboard_up";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(64);
+        static constexpr authid_t index = authid_t(63);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
     /// Enable or disable the clipboard from server (server to client). <br/>
-    /// AUTHID_MOD_VNC_CLIPBOARD_DOWN <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -2268,7 +2210,7 @@ namespace cfg {
         static constexpr char const * name = "clipboard_down";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(65);
+        static constexpr authid_t index = authid_t(64);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2293,7 +2235,6 @@ namespace cfg {
         type value{};
     };
     /// VNC server clipboard data encoding type. <br/>
-    /// AUTHID_MOD_VNC_SERVER_CLIPBOARD_ENCODING_TYPE <br/>
     /// type: ClipboardEncodingType <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
@@ -2304,13 +2245,12 @@ namespace cfg {
         static constexpr char const * name = "server_clipboard_encoding_type";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(66);
+        static constexpr authid_t index = authid_t(65);
         using type = ClipboardEncodingType;
         using sesman_and_spec_type = ClipboardEncodingType;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// AUTHID_MOD_VNC_BOGUS_CLIPBOARD_INFINITE_LOOP <br/>
     /// type: VncBogusClipboardInfiniteLoop <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -2321,13 +2261,12 @@ namespace cfg {
         static constexpr char const * name = "bogus_clipboard_infinite_loop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(67);
+        static constexpr authid_t index = authid_t(66);
         using type = VncBogusClipboardInfiniteLoop;
         using sesman_and_spec_type = VncBogusClipboardInfiniteLoop;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_MOD_VNC_SERVER_IS_APPLE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2338,7 +2277,7 @@ namespace cfg {
         static constexpr char const * name = "server_is_apple";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(68);
+        static constexpr authid_t index = authid_t(67);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2359,7 +2298,6 @@ namespace cfg {
         type value{false};
     };
     /// 0 - replay once, 1 - loop replay <br/>
-    /// AUTHID_MOD_REPLAY_REPLAY_ON_LOOP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2370,7 +2308,7 @@ namespace cfg {
         static constexpr char const * name = "replay_on_loop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(69);
+        static constexpr authid_t index = authid_t(68);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2604,7 +2542,6 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// AUTHID_VIDEO_RT_DISPLAY <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -2615,7 +2552,7 @@ namespace cfg {
         static constexpr char const * name = "rt_display";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(70);
+        static constexpr authid_t index = authid_t(69);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -2867,7 +2804,6 @@ namespace cfg {
         type value = static_cast<type>(0);
     };
 
-    /// AUTHID_CRYPTO_KEY0 <br/>
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
@@ -2878,13 +2814,12 @@ namespace cfg {
         static constexpr char const * name = "key0";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(71);
+        static constexpr authid_t index = authid_t(70);
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
         type value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }};
     };
-    /// AUTHID_CRYPTO_KEY1 <br/>
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
     /// value{{0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, }} <br/>
@@ -2895,7 +2830,7 @@ namespace cfg {
         static constexpr char const * name = "key1";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(72);
+        static constexpr authid_t index = authid_t(71);
         using type = std::array<unsigned char, 32>;
         using sesman_and_spec_type = ::configs::spec_types::fixed_binary;
         using mapped_type = sesman_and_spec_type;
@@ -3227,7 +3162,6 @@ namespace cfg {
         type value{2};
     };
 
-    /// AUTHID_REMOTE_PROGRAM_ALLOW_RESIZE_HOSTED_DESKTOP <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -3238,14 +3172,13 @@ namespace cfg {
         static constexpr char const * name = "allow_resize_hosted_desktop";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(73);
+        static constexpr authid_t index = authid_t(72);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
 
-    /// AUTHID_TRANSLATION_LANGUAGE <br/>
     /// type: Language <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -3256,13 +3189,12 @@ namespace cfg {
         static constexpr char const * name = "language";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(74);
+        static constexpr authid_t index = authid_t(73);
         using type = Language;
         using sesman_and_spec_type = Language;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_TRANSLATION_PASSWORD_EN <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3273,13 +3205,12 @@ namespace cfg {
         static constexpr char const * name = "password_en";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(75);
+        static constexpr authid_t index = authid_t(74);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_TRANSLATION_PASSWORD_FR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3290,7 +3221,7 @@ namespace cfg {
         static constexpr char const * name = "password_fr";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(76);
+        static constexpr authid_t index = authid_t(75);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -3310,7 +3241,6 @@ namespace cfg {
         type value{};
     };
 
-    /// AUTHID_CONTEXT_OPT_BITRATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{40000} <br/>
@@ -3321,13 +3251,12 @@ namespace cfg {
         static constexpr char const * name = "opt_bitrate";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(77);
+        static constexpr authid_t index = authid_t(76);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{40000};
     };
-    /// AUTHID_CONTEXT_OPT_FRAMERATE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{5} <br/>
@@ -3338,13 +3267,12 @@ namespace cfg {
         static constexpr char const * name = "opt_framerate";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(78);
+        static constexpr authid_t index = authid_t(77);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{5};
     };
-    /// AUTHID_CONTEXT_OPT_QSCALE <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{15} <br/>
@@ -3355,13 +3283,12 @@ namespace cfg {
         static constexpr char const * name = "opt_qscale";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(79);
+        static constexpr authid_t index = authid_t(78);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{15};
     };
-    /// AUTHID_CONTEXT_OPT_BPP <br/>
     /// type: ColorDepth <br/>
     /// sesman <-> proxy <br/>
     /// value = static_cast<type>(24) <br/>
@@ -3372,13 +3299,12 @@ namespace cfg {
         static constexpr char const * name = "opt_bpp";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(80);
+        static constexpr authid_t index = authid_t(79);
         using type = ColorDepth;
         using sesman_and_spec_type = ColorDepth;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(24);
     };
-    /// AUTHID_CONTEXT_OPT_HEIGHT <br/>
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{600} <br/>
@@ -3389,13 +3315,12 @@ namespace cfg {
         static constexpr char const * name = "opt_height";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(81);
+        static constexpr authid_t index = authid_t(80);
         using type = uint16_t;
         using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
         type value{600};
     };
-    /// AUTHID_CONTEXT_OPT_WIDTH <br/>
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
     /// value{800} <br/>
@@ -3406,7 +3331,7 @@ namespace cfg {
         static constexpr char const * name = "opt_width";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(82);
+        static constexpr authid_t index = authid_t(81);
         using type = uint16_t;
         using sesman_and_spec_type = uint16_t;
         using mapped_type = sesman_and_spec_type;
@@ -3423,7 +3348,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -3434,13 +3358,12 @@ namespace cfg {
         static constexpr char const * name = "selector";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(83);
+        static constexpr authid_t index = authid_t(82);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_SELECTOR_CURRENT_PAGE <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{1} <br/>
@@ -3451,13 +3374,12 @@ namespace cfg {
         static constexpr char const * name = "selector_current_page";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(84);
+        static constexpr authid_t index = authid_t(83);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    /// AUTHID_CONTEXT_SELECTOR_DEVICE_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3468,13 +3390,12 @@ namespace cfg {
         static constexpr char const * name = "selector_device_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(85);
+        static constexpr authid_t index = authid_t(84);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_GROUP_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3485,13 +3406,12 @@ namespace cfg {
         static constexpr char const * name = "selector_group_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(86);
+        static constexpr authid_t index = authid_t(85);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_PROTO_FILTER <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3502,13 +3422,12 @@ namespace cfg {
         static constexpr char const * name = "selector_proto_filter";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(87);
+        static constexpr authid_t index = authid_t(86);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SELECTOR_LINES_PER_PAGE <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{0} <br/>
@@ -3519,13 +3438,12 @@ namespace cfg {
         static constexpr char const * name = "selector_lines_per_page";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(88);
+        static constexpr authid_t index = authid_t(87);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_SELECTOR_NUMBER_OF_PAGES <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{1} <br/>
@@ -3536,13 +3454,12 @@ namespace cfg {
         static constexpr char const * name = "selector_number_of_pages";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(89);
+        static constexpr authid_t index = authid_t(88);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
-    /// AUTHID_CONTEXT_TARGET_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3553,13 +3470,12 @@ namespace cfg {
         static constexpr char const * name = "target_password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(90);
+        static constexpr authid_t index = authid_t(89);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_HOST <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3570,13 +3486,12 @@ namespace cfg {
         static constexpr char const * name = "target_host";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(91);
+        static constexpr authid_t index = authid_t(90);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_STR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3587,13 +3502,12 @@ namespace cfg {
         static constexpr char const * name = "target_str";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(92);
+        static constexpr authid_t index = authid_t(91);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_SERVICE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3604,13 +3518,12 @@ namespace cfg {
         static constexpr char const * name = "target_service";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(93);
+        static constexpr authid_t index = authid_t(92);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TARGET_PORT <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{3389} <br/>
@@ -3621,13 +3534,12 @@ namespace cfg {
         static constexpr char const * name = "target_port";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(94);
+        static constexpr authid_t index = authid_t(93);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{3389};
     };
-    /// AUTHID_CONTEXT_TARGET_PROTOCOL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value = "RDP" <br/>
@@ -3638,13 +3550,12 @@ namespace cfg {
         static constexpr char const * name = "target_protocol";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(95);
+        static constexpr authid_t index = authid_t(94);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value = "RDP";
     };
-    /// AUTHID_CONTEXT_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3655,13 +3566,12 @@ namespace cfg {
         static constexpr char const * name = "password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(96);
+        static constexpr authid_t index = authid_t(95);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_REPORTING <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3672,13 +3582,12 @@ namespace cfg {
         static constexpr char const * name = "reporting";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(97);
+        static constexpr authid_t index = authid_t(96);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_CHANNEL_ANSWER <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3689,13 +3598,12 @@ namespace cfg {
         static constexpr char const * name = "auth_channel_answer";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(98);
+        static constexpr authid_t index = authid_t(97);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_CHANNEL_TARGET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3706,13 +3614,12 @@ namespace cfg {
         static constexpr char const * name = "auth_channel_target";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(99);
+        static constexpr authid_t index = authid_t(98);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3723,13 +3630,12 @@ namespace cfg {
         static constexpr char const * name = "message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(100);
+        static constexpr authid_t index = authid_t(99);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_ACCEPT_MESSAGE <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -3740,13 +3646,12 @@ namespace cfg {
         static constexpr char const * name = "accept_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(101);
+        static constexpr authid_t index = authid_t(100);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISPLAY_MESSAGE <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3757,13 +3662,12 @@ namespace cfg {
         static constexpr char const * name = "display_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(102);
+        static constexpr authid_t index = authid_t(101);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_REJECTED <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3774,13 +3678,12 @@ namespace cfg {
         static constexpr char const * name = "rejected";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(103);
+        static constexpr authid_t index = authid_t(102);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTHENTICATED <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{false} <br/>
@@ -3791,13 +3694,12 @@ namespace cfg {
         static constexpr char const * name = "authenticated";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(104);
+        static constexpr authid_t index = authid_t(103);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_KEEPALIVE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -3808,13 +3710,12 @@ namespace cfg {
         static constexpr char const * name = "keepalive";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(105);
+        static constexpr authid_t index = authid_t(104);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_SESSION_ID <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3825,13 +3726,12 @@ namespace cfg {
         static constexpr char const * name = "session_id";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(106);
+        static constexpr authid_t index = authid_t(105);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_END_DATE_CNX <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -3842,13 +3742,12 @@ namespace cfg {
         static constexpr char const * name = "end_date_cnx";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(107);
+        static constexpr authid_t index = authid_t(106);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_END_TIME <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3859,13 +3758,12 @@ namespace cfg {
         static constexpr char const * name = "end_time";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(108);
+        static constexpr authid_t index = authid_t(107);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_MODE_CONSOLE <br/>
     /// type: RdpModeConsole <br/>
     /// sesman -> proxy <br/>
     /// value = static_cast<type>(0) <br/>
@@ -3876,13 +3774,12 @@ namespace cfg {
         static constexpr char const * name = "mode_console";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(109);
+        static constexpr authid_t index = authid_t(108);
         using type = RdpModeConsole;
         using sesman_and_spec_type = RdpModeConsole;
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
-    /// AUTHID_CONTEXT_TIMEZONE <br/>
     /// type: int <br/>
     /// sesman -> proxy <br/>
     /// value{-3600} <br/>
@@ -3893,13 +3790,12 @@ namespace cfg {
         static constexpr char const * name = "timezone";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(110);
+        static constexpr authid_t index = authid_t(109);
         using type = int;
         using sesman_and_spec_type = int;
         using mapped_type = sesman_and_spec_type;
         type value{-3600};
     };
-    /// AUTHID_CONTEXT_REAL_TARGET_DEVICE <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3910,13 +3806,12 @@ namespace cfg {
         static constexpr char const * name = "real_target_device";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(111);
+        static constexpr authid_t index = authid_t(110);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTHENTICATION_CHALLENGE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -3927,13 +3822,12 @@ namespace cfg {
         static constexpr char const * name = "authentication_challenge";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(112);
+        static constexpr authid_t index = authid_t(111);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_TICKET <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3944,13 +3838,12 @@ namespace cfg {
         static constexpr char const * name = "ticket";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(113);
+        static constexpr authid_t index = authid_t(112);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_COMMENT <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3961,13 +3854,12 @@ namespace cfg {
         static constexpr char const * name = "comment";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(114);
+        static constexpr authid_t index = authid_t(113);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DURATION <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -3978,13 +3870,12 @@ namespace cfg {
         static constexpr char const * name = "duration";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(115);
+        static constexpr authid_t index = authid_t(114);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DURATION_MAX <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -3995,13 +3886,12 @@ namespace cfg {
         static constexpr char const * name = "duration_max";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(116);
+        static constexpr authid_t index = authid_t(115);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_WAITINFORETURN <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value{} <br/>
@@ -4012,13 +3902,12 @@ namespace cfg {
         static constexpr char const * name = "waitinforeturn";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(117);
+        static constexpr authid_t index = authid_t(116);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SHOWFORM <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -4029,13 +3918,12 @@ namespace cfg {
         static constexpr char const * name = "showform";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(118);
+        static constexpr authid_t index = authid_t(117);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_FORMFLAG <br/>
     /// type: unsigned int <br/>
     /// sesman <-> proxy <br/>
     /// value{0} <br/>
@@ -4046,13 +3934,12 @@ namespace cfg {
         static constexpr char const * name = "formflag";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(119);
+        static constexpr authid_t index = authid_t(118);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
-    /// AUTHID_CONTEXT_MODULE <br/>
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
     /// value = "login" <br/>
@@ -4063,13 +3950,12 @@ namespace cfg {
         static constexpr char const * name = "module";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(120);
+        static constexpr authid_t index = authid_t(119);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value = "login";
     };
-    /// AUTHID_CONTEXT_FORCEMODULE <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -4080,13 +3966,12 @@ namespace cfg {
         static constexpr char const * name = "forcemodule";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(121);
+        static constexpr authid_t index = authid_t(120);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_PROXY_OPT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4097,13 +3982,12 @@ namespace cfg {
         static constexpr char const * name = "proxy_opt";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(122);
+        static constexpr authid_t index = authid_t(121);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_PATTERN_KILL <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4114,13 +3998,12 @@ namespace cfg {
         static constexpr char const * name = "pattern_kill";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(123);
+        static constexpr authid_t index = authid_t(122);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_PATTERN_NOTIFY <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4131,13 +4014,12 @@ namespace cfg {
         static constexpr char const * name = "pattern_notify";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(124);
+        static constexpr authid_t index = authid_t(123);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_OPT_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4148,13 +4030,12 @@ namespace cfg {
         static constexpr char const * name = "opt_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(125);
+        static constexpr authid_t index = authid_t(124);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_LOGIN_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4165,13 +4046,14 @@ namespace cfg {
         static constexpr char const * name = "login_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(126);
+        static constexpr authid_t index = authid_t(125);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_OUTBOUND_CONNECTION_MONITORING_RULES <br/>
+    /// Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*) <br/>
+    /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4182,13 +4064,14 @@ namespace cfg {
         static constexpr char const * name = "session_probe_outbound_connection_monitoring_rules";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(127);
+        static constexpr authid_t index = authid_t(126);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_PROCESS_MONITORING_RULES <br/>
+    /// Comma-separated rules (Ex.: $deny:Taskmgr) <br/>
+    /// @ = All child processes of Bastion Application (Ex.: $deny:@) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4199,13 +4082,13 @@ namespace cfg {
         static constexpr char const * name = "session_probe_process_monitoring_rules";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(128);
+        static constexpr authid_t index = authid_t(127);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_EXTRA_SYSTEM_PROCESSES <br/>
+    /// Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4216,13 +4099,12 @@ namespace cfg {
         static constexpr char const * name = "session_probe_extra_system_processes";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(129);
+        static constexpr authid_t index = authid_t(128);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISCONNECT_REASON <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4233,13 +4115,12 @@ namespace cfg {
         static constexpr char const * name = "disconnect_reason";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(130);
+        static constexpr authid_t index = authid_t(129);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_DISCONNECT_REASON_ACK <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{false} <br/>
@@ -4250,7 +4131,7 @@ namespace cfg {
         static constexpr char const * name = "disconnect_reason_ack";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(131);
+        static constexpr authid_t index = authid_t(130);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4267,7 +4148,6 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
-    /// AUTHID_CONTEXT_RECORDING_STARTED <br/>
     /// type: bool <br/>
     /// sesman <- proxy <br/>
     /// value{false} <br/>
@@ -4278,13 +4158,12 @@ namespace cfg {
         static constexpr char const * name = "recording_started";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(132);
+        static constexpr authid_t index = authid_t(131);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_RT_READY <br/>
     /// type: bool <br/>
     /// sesman <-> proxy <br/>
     /// value{false} <br/>
@@ -4295,7 +4174,7 @@ namespace cfg {
         static constexpr char const * name = "rt_ready";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(133);
+        static constexpr authid_t index = authid_t(132);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
@@ -4312,7 +4191,6 @@ namespace cfg {
         using mapped_type = type;
         type value{false};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4323,13 +4201,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(134);
+        static constexpr authid_t index = authid_t(133);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4340,13 +4217,12 @@ namespace cfg {
         static constexpr char const * name = "auth_notify";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(135);
+        static constexpr authid_t index = authid_t(134);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_FLAGS <br/>
     /// type: unsigned int <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4357,13 +4233,12 @@ namespace cfg {
         static constexpr char const * name = "auth_notify_rail_exec_flags";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(136);
+        static constexpr authid_t index = authid_t(135);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_NOTIFY_RAIL_EXEC_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4374,13 +4249,12 @@ namespace cfg {
         static constexpr char const * name = "auth_notify_rail_exec_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(137);
+        static constexpr authid_t index = authid_t(136);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXEC_RESULT <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4391,13 +4265,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_exec_result";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(138);
+        static constexpr authid_t index = authid_t(137);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_FLAGS <br/>
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4408,13 +4281,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_flags";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(139);
+        static constexpr authid_t index = authid_t(138);
         using type = unsigned int;
         using sesman_and_spec_type = unsigned int;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ORIGINAL_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4425,13 +4297,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_original_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(140);
+        static constexpr authid_t index = authid_t(139);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_EXE_OR_FILE <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4442,13 +4313,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_exe_or_file";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(141);
+        static constexpr authid_t index = authid_t(140);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_WORKING_DIR <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4459,13 +4329,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_working_dir";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(142);
+        static constexpr authid_t index = authid_t(141);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ARGUMENTS <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4476,13 +4345,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_arguments";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(143);
+        static constexpr authid_t index = authid_t(142);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_ACCOUNT <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4493,13 +4361,12 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_account";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(144);
+        static constexpr authid_t index = authid_t(143);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_AUTH_COMMAND_RAIL_EXEC_PASSWORD <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4510,13 +4377,13 @@ namespace cfg {
         static constexpr char const * name = "auth_command_rail_exec_password";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(145);
+        static constexpr authid_t index = authid_t(144);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
-    /// AUTHID_CONTEXT_RAIL_DISCONNECT_MESSAGE_DELAY <br/>
+    /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
     /// value{3000} <br/>
@@ -4527,13 +4394,13 @@ namespace cfg {
         static constexpr char const * name = "rail_disconnect_message_delay";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(146);
+        static constexpr authid_t index = authid_t(145);
         using type = std::chrono::milliseconds;
         using sesman_and_spec_type = std::chrono::milliseconds;
         using mapped_type = sesman_and_spec_type;
         type value{3000};
     };
-    /// AUTHID_CONTEXT_USE_SESSION_PROBE_TO_LAUNCH_REMOTE_PROGRAM <br/>
+    /// Use Session Probe to launch Remote Program as much as possible. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -4544,13 +4411,12 @@ namespace cfg {
         static constexpr char const * name = "use_session_probe_to_launch_remote_program";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(147);
+        static constexpr authid_t index = authid_t(146);
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
-    /// AUTHID_CONTEXT_SESSION_PROBE_LAUNCH_ERROR_MESSAGE <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>
@@ -4561,7 +4427,7 @@ namespace cfg {
         static constexpr char const * name = "session_probe_launch_error_message";
         // for old cppcheck
         // cppcheck-suppress obsoleteFunctionsindex
-        static constexpr authid_t index = authid_t(148);
+        static constexpr authid_t index = authid_t(147);
         using type = std::string;
         using sesman_and_spec_type = std::string;
         using mapped_type = sesman_and_spec_type;
@@ -4583,8 +4449,7 @@ namespace cfg {
 
 namespace cfg_section {
 struct globals
-: cfg::globals::capture_chunk
-, cfg::globals::auth_user
+: cfg::globals::auth_user
 , cfg::globals::host
 , cfg::globals::target
 , cfg::globals::target_device
@@ -4594,12 +4459,6 @@ struct globals
 , cfg::globals::target_application
 , cfg::globals::target_application_account
 , cfg::globals::target_application_password
-, cfg::globals::bitmap_cache
-, cfg::globals::glyph_cache
-, cfg::globals::port
-, cfg::globals::nomouse
-, cfg::globals::notimestamp
-, cfg::globals::encryptionLevel
 , cfg::globals::authfile
 , cfg::globals::handshake_timeout
 , cfg::globals::session_timeout
@@ -4607,14 +4466,23 @@ struct globals
 , cfg::globals::keepalive_grace_delay
 , cfg::globals::authentication_timeout
 , cfg::globals::close_timeout
+, cfg::globals::movie_path
+, cfg::globals::codec_id
+, cfg::globals::port
+, cfg::globals::encryptionLevel
 , cfg::globals::trace_type
+, cfg::globals::video_quality
+, cfg::globals::capture_chunk
+, cfg::globals::bitmap_cache
+, cfg::globals::glyph_cache
+, cfg::globals::nomouse
+, cfg::globals::notimestamp
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode
 , cfg::globals::certificate_password
 , cfg::globals::png_path
 , cfg::globals::wrm_path
 , cfg::globals::is_rec
-, cfg::globals::movie_path
 , cfg::globals::enable_bitmap_update
 , cfg::globals::enable_close_box
 , cfg::globals::enable_osd
@@ -4623,8 +4491,6 @@ struct globals
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
-, cfg::globals::codec_id
-, cfg::globals::video_quality
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
@@ -4634,14 +4500,18 @@ struct globals
 { static constexpr bool is_section = true; };
 
 struct session_log
-: cfg::session_log::enable_session_log
-, cfg::session_log::log_path
+: cfg::session_log::log_path
 , cfg::session_log::keyboard_input_masking_level
+, cfg::session_log::enable_session_log
 , cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
 
 struct client
-: cfg::client::keyboard_layout
+: cfg::client::ssl_cipher_list
+, cfg::client::keyboard_layout
+, cfg::client::rdp_compression
+, cfg::client::max_color_depth
+, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -4653,27 +4523,47 @@ struct client
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts
-, cfg::client::rdp_compression
-, cfg::client::max_color_depth
 , cfg::client::persistent_disk_bitmap_cache
 , cfg::client::cache_waiting_list
 , cfg::client::persist_bitmap_cache_on_disk
 , cfg::client::bitmap_compression
 , cfg::client::fast_path
 , cfg::client::enable_suppress_output
-, cfg::client::ssl_cipher_list
 , cfg::client::show_target_user_in_f12_message
 , cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
-, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 { static constexpr bool is_section = true; };
 
 struct mod_rdp
-: cfg::mod_rdp::rdp_compression
+: cfg::mod_rdp::open_session_timeout
+, cfg::mod_rdp::load_balance_info
+, cfg::mod_rdp::alternate_shell
+, cfg::mod_rdp::shell_arguments
+, cfg::mod_rdp::shell_working_directory
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_launch_fallback_timeout
+, cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_disconnected_application_limit
+, cfg::mod_rdp::session_probe_disconnected_session_limit
+, cfg::mod_rdp::session_probe_idle_session_limit
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
+, cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
+, cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
+, cfg::mod_rdp::rdp_compression
+, cfg::mod_rdp::session_probe_on_launch_failure
+, cfg::mod_rdp::session_probe_on_keepalive_timeout
+, cfg::mod_rdp::server_cert_check
+, cfg::mod_rdp::server_access_allowed_message
+, cfg::mod_rdp::server_cert_create_message
+, cfg::mod_rdp::server_cert_success_message
+, cfg::mod_rdp::server_cert_failure_message
+, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::disconnect_on_logon_user_change
-, cfg::mod_rdp::open_session_timeout
 , cfg::mod_rdp::extra_orders
 , cfg::mod_rdp::enable_nla
 , cfg::mod_rdp::enable_kerberos
@@ -4685,77 +4575,54 @@ struct mod_rdp
 , cfg::mod_rdp::fast_path
 , cfg::mod_rdp::server_redirection_support
 , cfg::mod_rdp::redir_info
-, cfg::mod_rdp::load_balance_info
 , cfg::mod_rdp::bogus_sc_net_size
 , cfg::mod_rdp::proxy_managed_drives
 , cfg::mod_rdp::ignore_auth_channel
 , cfg::mod_rdp::auth_channel
 , cfg::mod_rdp::checkout_channel
-, cfg::mod_rdp::alternate_shell
-, cfg::mod_rdp::shell_arguments
-, cfg::mod_rdp::shell_working_directory
 , cfg::mod_rdp::use_client_provided_alternate_shell
 , cfg::mod_rdp::use_client_provided_remoteapp
 , cfg::mod_rdp::use_native_remoteapp_capability
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
 , cfg::mod_rdp::session_probe_enable_launch_mask
-, cfg::mod_rdp::session_probe_on_launch_failure
-, cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
-, cfg::mod_rdp::session_probe_keepalive_timeout
-, cfg::mod_rdp::session_probe_on_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_enable_log
 , cfg::mod_rdp::session_probe_enable_log_rotation
-, cfg::mod_rdp::session_probe_disconnected_application_limit
-, cfg::mod_rdp::session_probe_disconnected_session_limit
-, cfg::mod_rdp::session_probe_idle_session_limit
 , cfg::mod_rdp::session_probe_exe_or_file
 , cfg::mod_rdp::session_probe_arguments
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
-, cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay
 , cfg::mod_rdp::session_probe_allow_multiple_handshake
 , cfg::mod_rdp::session_probe_enable_crash_dump
 , cfg::mod_rdp::session_probe_handle_usage_limit
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
-, cfg::mod_rdp::server_cert_check
-, cfg::mod_rdp::server_access_allowed_message
-, cfg::mod_rdp::server_cert_create_message
-, cfg::mod_rdp::server_cert_success_message
-, cfg::mod_rdp::server_cert_failure_message
-, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
 , cfg::mod_rdp::enable_rdpdr_data_analysis
-, cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
-, cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
+, cfg::mod_rdp::log_only_relevant_clipboard_activities
 , cfg::mod_rdp::experimental_fix_input_event_sync
 , cfg::mod_rdp::experimental_fix_too_long_cookie
 { static constexpr bool is_section = true; };
 
 struct metrics
-: cfg::metrics::enable_rdp_metrics
-, cfg::metrics::enable_vnc_metrics
-, cfg::metrics::log_dir_path
-, cfg::metrics::log_interval
+: cfg::metrics::log_interval
 , cfg::metrics::log_file_turnover_interval
 , cfg::metrics::sign_key
+, cfg::metrics::enable_rdp_metrics
+, cfg::metrics::enable_vnc_metrics
+, cfg::metrics::log_dir_path
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
-: cfg::mod_vnc::clipboard_up
+: cfg::mod_vnc::server_clipboard_encoding_type
+, cfg::mod_vnc::bogus_clipboard_infinite_loop
+, cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::encodings
-, cfg::mod_vnc::server_clipboard_encoding_type
-, cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::mod_vnc::server_is_apple
 { static constexpr bool is_section = true; };
 
@@ -4773,23 +4640,17 @@ struct ocr
 { static constexpr bool is_section = true; };
 
 struct video
-: cfg::video::capture_groupid
+: cfg::video::break_interval
+, cfg::video::capture_groupid
 , cfg::video::capture_flags
 , cfg::video::png_interval
 , cfg::video::frame_interval
-, cfg::video::break_interval
 , cfg::video::png_limit
-, cfg::video::replay_path
-, cfg::video::hash_path
-, cfg::video::record_tmp_path
-, cfg::video::record_path
 , cfg::video::disable_keyboard_log
 , cfg::video::disable_clipboard_log
 , cfg::video::disable_file_system_log
-, cfg::video::rt_display
 , cfg::video::wrm_color_depth_selection_strategy
 , cfg::video::wrm_compression_algorithm
-, cfg::video::bogus_vlc_frame_rate
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
 , cfg::video::l_height
@@ -4806,6 +4667,12 @@ struct video
 , cfg::video::h_width
 , cfg::video::h_qscale
 , cfg::video::smart_video_cropping
+, cfg::video::replay_path
+, cfg::video::hash_path
+, cfg::video::record_tmp_path
+, cfg::video::record_path
+, cfg::video::rt_display
+, cfg::video::bogus_vlc_frame_rate
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -4815,6 +4682,7 @@ struct crypto
 
 struct debug
 : cfg::debug::fake_target_ip
+, cfg::debug::config
 , cfg::debug::x224
 , cfg::debug::mcs
 , cfg::debug::sec
@@ -4840,7 +4708,6 @@ struct debug
 , cfg::debug::pass_dialog_box
 , cfg::debug::ocr
 , cfg::debug::ffmpeg
-, cfg::debug::config
 { static constexpr bool is_section = true; };
 
 struct remote_program
@@ -4848,9 +4715,9 @@ struct remote_program
 { static constexpr bool is_section = true; };
 
 struct translation
-: cfg::translation::language
-, cfg::translation::password_en
+: cfg::translation::password_en
 , cfg::translation::password_fr
+, cfg::translation::language
 { static constexpr bool is_section = true; };
 
 struct internal_mod
@@ -4858,52 +4725,29 @@ struct internal_mod
 { static constexpr bool is_section = true; };
 
 struct context
-: cfg::context::opt_bitrate
-, cfg::context::opt_framerate
-, cfg::context::opt_qscale
-, cfg::context::opt_bpp
-, cfg::context::opt_height
-, cfg::context::opt_width
-, cfg::context::auth_error_message
-, cfg::context::selector
-, cfg::context::selector_current_page
+: cfg::context::auth_error_message
 , cfg::context::selector_device_filter
 , cfg::context::selector_group_filter
 , cfg::context::selector_proto_filter
-, cfg::context::selector_lines_per_page
-, cfg::context::selector_number_of_pages
 , cfg::context::target_password
 , cfg::context::target_host
 , cfg::context::target_str
 , cfg::context::target_service
-, cfg::context::target_port
 , cfg::context::target_protocol
 , cfg::context::password
 , cfg::context::reporting
 , cfg::context::auth_channel_answer
 , cfg::context::auth_channel_target
 , cfg::context::message
-, cfg::context::accept_message
-, cfg::context::display_message
 , cfg::context::rejected
-, cfg::context::authenticated
-, cfg::context::keepalive
 , cfg::context::session_id
-, cfg::context::end_date_cnx
 , cfg::context::end_time
-, cfg::context::mode_console
-, cfg::context::timezone
 , cfg::context::real_target_device
-, cfg::context::authentication_challenge
 , cfg::context::ticket
 , cfg::context::comment
 , cfg::context::duration
-, cfg::context::duration_max
 , cfg::context::waitinforeturn
-, cfg::context::showform
-, cfg::context::formflag
 , cfg::context::module
-, cfg::context::forcemodule
 , cfg::context::proxy_opt
 , cfg::context::pattern_kill
 , cfg::context::pattern_notify
@@ -4913,17 +4757,10 @@ struct context
 , cfg::context::session_probe_process_monitoring_rules
 , cfg::context::session_probe_extra_system_processes
 , cfg::context::disconnect_reason
-, cfg::context::disconnect_reason_ack
 , cfg::context::ip_target
-, cfg::context::recording_started
-, cfg::context::rt_ready
-, cfg::context::perform_automatic_reconnection
 , cfg::context::auth_command
 , cfg::context::auth_notify
-, cfg::context::auth_notify_rail_exec_flags
 , cfg::context::auth_notify_rail_exec_exe_or_file
-, cfg::context::auth_command_rail_exec_exec_result
-, cfg::context::auth_command_rail_exec_flags
 , cfg::context::auth_command_rail_exec_original_exe_or_file
 , cfg::context::auth_command_rail_exec_exe_or_file
 , cfg::context::auth_command_rail_exec_working_dir
@@ -4931,9 +4768,39 @@ struct context
 , cfg::context::auth_command_rail_exec_account
 , cfg::context::auth_command_rail_exec_password
 , cfg::context::rail_disconnect_message_delay
-, cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
 , cfg::context::close_box_extra_message
+, cfg::context::opt_bitrate
+, cfg::context::opt_framerate
+, cfg::context::opt_qscale
+, cfg::context::opt_bpp
+, cfg::context::selector_current_page
+, cfg::context::selector_lines_per_page
+, cfg::context::selector_number_of_pages
+, cfg::context::target_port
+, cfg::context::end_date_cnx
+, cfg::context::mode_console
+, cfg::context::timezone
+, cfg::context::duration_max
+, cfg::context::formflag
+, cfg::context::auth_notify_rail_exec_flags
+, cfg::context::auth_command_rail_exec_exec_result
+, cfg::context::auth_command_rail_exec_flags
+, cfg::context::opt_height
+, cfg::context::opt_width
+, cfg::context::selector
+, cfg::context::accept_message
+, cfg::context::display_message
+, cfg::context::authenticated
+, cfg::context::keepalive
+, cfg::context::authentication_challenge
+, cfg::context::showform
+, cfg::context::forcemodule
+, cfg::context::disconnect_reason_ack
+, cfg::context::recording_started
+, cfg::context::rt_ready
+, cfg::context::perform_automatic_reconnection
+, cfg::context::use_session_probe_to_launch_remote_program
 { static constexpr bool is_section = true; };
 
 } // namespace cfg_section
@@ -5020,7 +4887,6 @@ using VariablesAclPack = Pack<
 , cfg::mod_rdp::server_cert_create_message
 , cfg::mod_rdp::server_cert_success_message
 , cfg::mod_rdp::server_cert_failure_message
-, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::enable_rdpdr_data_analysis
 , cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
@@ -5108,4 +4974,21 @@ using VariablesAclPack = Pack<
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
 >;
+
+
+struct BitFlags {
+  uint64_t bits_[3];
+  bool operator()(unsigned i) const noexcept { return bits_[i/64] & (uint64_t{1} << (i%64)); }
+};
+
+constexpr inline BitFlags is_loggable{{
+  0b1111111111111111111111111111111111111111111111111111101111111111
+, 0b1111111111111111111111111111110101111101111111111111111100111111
+, 0b0000000000000000000000000000000000000000000011101111111111111111
+}};
+constexpr inline BitFlags is_unloggable_if_value_with_password{{
+  0b0000000000000000000000000000000000000000000000000000000000000000
+, 0b0000000000000000000000000000001000000000000000000000000000000000
+, 0b0000000000000000000000000000000000000000000000000000000000000000
+}};
 } // namespace configs

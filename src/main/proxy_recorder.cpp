@@ -425,7 +425,7 @@ private:
                     std::string const& str, Array& arr
                 ) mutable {
                     vec.resize(str.size() * 2);
-                    UTF8toUTF16(byte_ptr_cast(str.data()), vec.data(), vec.size());
+                    UTF8toUTF16(std::string(str.data()), vec.data(), vec.size());
                     return vec.size() == arr.size()
                         && 0 == memcmp(vec.data(), arr.get_data(), vec.size());
                 };

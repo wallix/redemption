@@ -691,17 +691,14 @@ public:
                     {
                     StaticOutStream<1600> out_stream;
 
-                    const char * source_of_ExeOrFile = this->source_of_ExeOrFile.c_str();
                     uint8_t unicode_ExeOrFile[500];
-                    const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(byte_ptr_cast(source_of_ExeOrFile), unicode_ExeOrFile, 500);
+                    const size_t size_of_unicode_ExeOrFile = ::UTF8toUTF16(this->source_of_ExeOrFile, unicode_ExeOrFile, 500);
 
-                    const char * source_of_WorkingDir = this->source_of_WorkingDir.c_str();
                     uint8_t unicode_WorkingDir[500];
-                    const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(byte_ptr_cast(source_of_WorkingDir), unicode_WorkingDir, 500);
+                    const size_t size_of_unicode_WorkingDir = ::UTF8toUTF16(this->source_of_WorkingDir, unicode_WorkingDir, 500);
 
-                    const char * source_of_Arguments = this->source_of_Arguments.c_str();
                     uint8_t unicode_Arguments[500];
-                    const size_t size_of_unicode_Arguments = ::UTF8toUTF16(byte_ptr_cast(source_of_Arguments), unicode_Arguments, 500);
+                    const size_t size_of_unicode_Arguments = ::UTF8toUTF16(this->source_of_Arguments, unicode_Arguments, 500);
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_EXEC);
                     out_stream.out_uint16_le(12 + size_of_unicode_ExeOrFile + size_of_unicode_WorkingDir +size_of_unicode_Arguments);
@@ -712,7 +709,7 @@ public:
                     out_stream.out_uint16_le(size_of_unicode_Arguments);
                     out_stream.out_copy_bytes(unicode_ExeOrFile, size_of_unicode_ExeOrFile);
                     out_stream.out_copy_bytes(unicode_WorkingDir, size_of_unicode_WorkingDir);
-                    out_stream.out_copy_bytes(source_of_Arguments, size_of_unicode_Arguments);
+                    out_stream.out_copy_bytes(unicode_Arguments, size_of_unicode_Arguments);
 
                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
 

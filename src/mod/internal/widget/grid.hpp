@@ -20,28 +20,83 @@
 
 #pragma once
 
-#include "utils/log.hpp"
-#include "mod/internal/widget/widget.hpp"
-#include "keyboard/keymap2.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "gdi/graphic_api.hpp"
+#include "keyboard/keymap2.hpp"
+#include "mod/internal/widget/widget.hpp"
 #include "utils/difftimeval.hpp"
+#include "utils/sugar/update_lock.hpp"
 
-static const uint16_t GRID_NB_COLUMNS_MAX = 10;
-static const uint16_t GRID_NB_ROWS_MAX    = 250;
+#include <vector>
 
 
-struct WidgetGrid : public Widget {
+struct WidgetGrid : public Widget
+{
 private:
-    Widget  * widgets[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
-    void     * meta_data[GRID_NB_COLUMNS_MAX][GRID_NB_ROWS_MAX];
+    struct Widgets
+    {
+        uint16_t nb_rows;
+        uint16_t nb_columns;
+        std::vector<std::unique_ptr<Widget>> widgets;
+        std::vector<uint16_t> column_and_row_height;
 
-    uint16_t nb_rows;
+        Widgets(uint16_t nb_rows, uint16_t nb_columns)
+        : nb_rows(nb_rows)
+        , nb_columns(nb_columns)
+        , widgets(nb_columns * nb_rows)
+        , column_and_row_height(nb_columns + nb_rows)
+        {}
 
-    uint16_t nb_columns;
+        array_view<std::unique_ptr<Widget>> add_line()
+        {
+            for (uint16_t i = 0; i < this->nb_columns; ++i) {
+                this->widgets.emplace_back();
+            }
+            this->column_and_row_height.emplace_back(0);
+            ++this->nb_rows;
+            return this->line(this->nb_rows-1);
+        }
 
-    uint16_t column_width[GRID_NB_COLUMNS_MAX];
-    uint16_t row_height[GRID_NB_ROWS_MAX];
+        array_view<const std::unique_ptr<Widget>> line(uint16_t i) const
+        {
+            auto* p = &this->widgets[i * this->nb_columns];
+            return {p, p + this->nb_columns};
+        }
+
+        array_view<std::unique_ptr<Widget>> line(uint16_t i)
+        {
+            auto* p = &this->widgets[i * this->nb_columns];
+            return {p, p + this->nb_columns};
+        }
+
+        array_view<const uint16_t> row_heights() const
+        {
+            return make_array_view(this->column_and_row_height).array_from_offset(nb_columns);
+        }
+
+        array_view<const uint16_t> column_widths() const
+        {
+            return make_array_view(this->column_and_row_height).subarray(0, nb_columns);
+        }
+
+        array_view<uint16_t> row_heights()
+        {
+            return make_array_view(this->column_and_row_height).array_from_offset(nb_columns);
+        }
+
+        array_view<uint16_t> column_widths()
+        {
+            return make_array_view(this->column_and_row_height).subarray(0, nb_columns);
+        }
+
+        void clear()
+        {
+            this->widgets.clear();
+            this->nb_rows = 0;
+        }
+    };
+
+    Widgets widgets;
 
 public:
     const BGRColor bg_color_1;    // Odd
@@ -59,7 +114,7 @@ public:
     const uint16_t border;    // Width and height of cell's border.
 
 private:
-    uint16_t selection_y;   // Index of seleted row.
+    uint16_t selection_y = static_cast<uint16_t>(-1u);   // Index of seleted row.
 
     // TODO: see why grid object need a difftimer ?
     struct difftimer {
@@ -85,12 +140,7 @@ public:
                BGRColor bg_color_selection, BGRColor fg_color_selection,
                uint16_t border = 0, int group_id = 0)
         : Widget(drawable, parent, notifier, group_id)
-        , widgets()
-        , meta_data()
-        , nb_rows(nb_rows)
-        , nb_columns(nb_columns)
-        , column_width()
-        , row_height()
+        , widgets(nb_rows, nb_columns)
         , bg_color_1(bg_color_1)
         , fg_color_1(fg_color_1)
         , bg_color_2(bg_color_2)
@@ -100,39 +150,28 @@ public:
         , bg_color_selection(bg_color_selection)
         , fg_color_selection(fg_color_selection)
         , border(border)
-        , selection_y(static_cast<uint16_t>(-1u))
+    {}
+
+    virtual void clear()
     {
-        assert(nb_columns <= GRID_NB_COLUMNS_MAX);
-    }
-
-    ~WidgetGrid() override = default;
-
-    virtual void clear() {
-        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            for (uint16_t row_index = 1; row_index < GRID_NB_ROWS_MAX; row_index++) {
-                this->widgets[column_index][row_index]   = nullptr;
-                this->meta_data[column_index][row_index] = nullptr;
-            }
-        }
-        this->nb_rows = 0;
+        this->widgets.clear();
         this->selection_y = static_cast<uint16_t>(-1);
     }
 
-    void rdp_input_invalidate(Rect clip) override {
-        Rect rect_intersect = clip.intersect(this->get_rect());
+    void rdp_input_invalidate(Rect clip) override
+    {
+        Rect const rect_intersect = clip.intersect(this->get_rect());
 
         if (!rect_intersect.isempty()) {
-            this->drawable.begin_update();
-
-            for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
+            update_lock lock{this->drawable};
+            for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; ++row_index) {
                 this->draw_row(row_index, rect_intersect);
             }
-
-            this->drawable.end_update();
         }
     }
 
-    void draw_row(uint16_t row_index, Rect const clip) {
+    void draw_row(uint16_t row_index, Rect const clip)
+    {
         BGRColor bg_color;
         BGRColor fg_color;
 
@@ -146,22 +185,23 @@ public:
             fg_color = (odd ? this->fg_color_1 : this->fg_color_2);
         }
 
+        auto row_heights = this->widgets.row_heights();
+
         uint16_t y = this->y();
-        for (uint16_t r_index = 0, r_count = std::min<uint16_t>(row_index, this->nb_rows);
-             r_index < r_count; r_index++) {
-            y += this->row_height[r_index] + this->border * 2;
+        for (auto h : row_heights.subarray(0, std::min(row_index, this->widgets.nb_rows))) {
+            y += h + this->border * 2;
         }
 
         uint16_t x = this->x();
-        Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
+        Rect rectRow(x, y, this->cx(), row_heights[row_index] + this->border * 2);
         this->drawable.draw(RDPOpaqueRect(rectRow, encode_color24()(bg_color)), clip, gdi::ColorCtx::depth24());
 
         x += this->border;
         y += this->border;
 
-        for (uint16_t column_index = 0; column_index < this->nb_columns; column_index++) {
-            Widget * w = this->widgets[column_index][row_index];
-            Rect rectCell(x, y, this->column_width[column_index], this->row_height[row_index]);
+        auto column_width_it = this->widgets.column_widths().begin();
+        for (auto&& w : this->widgets.line(row_index)) {
+            Rect rectCell(x, y, *column_width_it, row_heights[row_index]);
             if (w) {
                 w->set_xy(rectCell.x, rectCell.y);
                 w->set_wh(rectCell.cx, rectCell.cy);
@@ -174,115 +214,96 @@ public:
                 }
             }
 
-            x += this->column_width[column_index] + this->border * 2;
+            x += *column_width_it + this->border * 2;
+            ++column_width_it;
         }
     }
 
-    uint16_t get_column_width(uint16_t column_index) const {
-        assert(column_index < this->nb_columns);
+    uint16_t get_column_width(uint16_t column_index) const
+    {
+        assert(column_index < this->widgets.nb_columns);
 
-        return this->column_width[column_index];
-    }
-    void set_column_width(uint16_t column_index, uint16_t width) {
-        assert(column_index < this->nb_columns);
-
-        this->column_width[column_index] = width;
+        return this->widgets.column_widths()[column_index];
     }
 
-    void * get_meta_data(uint16_t row_index, uint16_t column_index) const {
-        assert(column_index <= this->nb_columns);
-        assert(row_index <= GRID_NB_ROWS_MAX);
-        return this->meta_data[column_index][row_index];
-    }
-    void * set_meta_data(uint16_t row_index, uint16_t column_index, void * meta_data) {
-        assert(column_index <= this->nb_columns);
-        assert(row_index <= GRID_NB_ROWS_MAX);
-        void * res = this->meta_data[column_index][row_index];
-        this->meta_data[column_index][row_index] = meta_data;
-        return res;
+    void set_column_width(uint16_t column_index, uint16_t width)
+    {
+        assert(column_index < this->widgets.nb_columns);
+
+        this->widgets.column_widths()[column_index] = width;
     }
 
-    uint16_t get_nb_rows() const {
-        return this->nb_rows;
-    }
-    uint16_t set_nb_rows(uint16_t nb_rows) {
-        assert(nb_rows <= GRID_NB_ROWS_MAX);
-
-        uint16_t old_nb_rows = this->nb_rows;
-        this->nb_rows = nb_rows;
-        return old_nb_rows;
+    uint16_t get_nb_rows() const
+    {
+        return this->widgets.nb_rows;
     }
 
-    uint16_t get_nb_columns() const {
-        return this->nb_columns;
+    uint16_t get_nb_columns() const
+    {
+        return this->widgets.nb_columns;
     }
 
-
-    uint16_t get_row_height(uint16_t row_index) const {
-        assert(row_index < this->nb_rows);
-
-        return this->row_height[row_index];
-    }
-    void set_row_height(uint16_t row_index, uint16_t height) {
-        assert(row_index < this->nb_rows);
-
-        this->row_height[row_index] = height;
+    array_view<std::unique_ptr<Widget>> add_line()
+    {
+        return this->widgets.add_line();
     }
 
-    Widget * get_widget(uint16_t row_index, uint16_t column_index) const {
-        assert(column_index <= this->nb_columns);
-        assert(row_index <= GRID_NB_ROWS_MAX);
-        return this->widgets[column_index][row_index];
-    }
-    Widget * remove_widget(uint16_t row_index, uint16_t column_index, void** meta_data = nullptr) {
-        assert(column_index <= this->nb_columns);
-        assert(row_index <= GRID_NB_ROWS_MAX);
-        Widget * w = this->widgets[column_index][row_index];
-        this->widgets[column_index][row_index] = nullptr;
-        if (meta_data) {
-            *meta_data = this->meta_data[column_index][row_index];
-        }
-        this->meta_data[column_index][row_index] = nullptr;
-        return w;
-    }
-    Widget * set_widget(uint16_t row_index, uint16_t column_index, Widget * w,
-                         void * meta_data = nullptr) {
-        assert(column_index <= this->nb_columns);
-        assert(row_index <= GRID_NB_ROWS_MAX);
-        Widget * res = this->widgets[column_index][row_index];
-        this->widgets[column_index][row_index]   = w;
-        this->meta_data[column_index][row_index] = meta_data;
-
-        return res;
+    uint16_t get_row_height(uint16_t row_index) const
+    {
+        return this->widgets.row_heights()[row_index];
     }
 
-    Widget * widget_at_pos(int16_t x, int16_t y) override {
-        for (unsigned row_index = 0; row_index < this->nb_rows; row_index++) {
-            bool empty_row = true;
-            for (unsigned column_index = 0; column_index < this->nb_columns; column_index++) {
-                if (this->widgets[column_index][row_index]) {
-                    empty_row = false;
+    void set_row_height(uint16_t row_index, uint16_t height)
+    {
+        this->widgets.row_heights()[row_index] = height;
+    }
 
-                    if (this->widgets[column_index][row_index]->get_rect().contains_pt(x, y)) {
-                        return this->widgets[column_index][row_index];
+    Widget* get_widget(uint16_t row_index, uint16_t column_index) const
+    {
+        return this->widgets.line(row_index)[column_index].get();
+    }
+
+    std::unique_ptr<Widget> remove_widget(uint16_t row_index, uint16_t column_index)
+    {
+        return std::move(this->widgets.line(row_index)[column_index]);
+    }
+
+    void set_widget(uint16_t row_index, uint16_t column_index, std::unique_ptr<Widget>&& w)
+    {
+        this->widgets.line(row_index)[column_index] = std::move(w);
+    }
+
+    Widget* widget_at_pos(int16_t x, int16_t y) override
+    {
+        auto&& row_heights = this->widgets.row_heights();
+        uint16_t wy = this->y();
+        uint16_t const wx = this->x();
+        for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; row_index++) {
+            Rect rectRow(wx, wy, this->cx(), row_heights[row_index] + this->border * 2);
+
+            if (rectRow.contains_pt(x, y)) {
+                for (auto& w : this->widgets.line(row_index)) {
+                    if (w && w->get_rect().contains_pt(x, y)) {
+                        return w.get();
                     }
                 }
-            }
-
-            if (empty_row) {
                 break;
             }
+
+            wy += row_heights[row_index] + this->border * 2;
         }
 
         return nullptr;
     }
 
-    void get_selection(uint16_t & row_index, uint16_t & column_index) const {
+    void get_selection(uint16_t & row_index, uint16_t & column_index) const
+    {
         row_index    = this->selection_y;
         column_index = static_cast<uint16_t>(-1);
     }
 
-    void set_selection(uint16_t row_index) {
+    void set_selection(uint16_t row_index)
+    {
         if (this->focus_flag == Widget::IGNORE_FOCUS) {
             return;
         }
@@ -291,26 +312,26 @@ public:
             uint16_t previous_selection_y = this->selection_y;
             this->selection_y = row_index;
 
-            this->drawable.begin_update();
-            if (previous_selection_y < this->nb_rows) {
+            update_lock lock{this->drawable};
+            if (previous_selection_y < this->widgets.nb_rows) {
                 this->draw_row(previous_selection_y, this->get_rect());
             }
-            if (this->selection_y < this->nb_rows) {
+            if (this->selection_y < this->widgets.nb_rows) {
                 this->draw_row(this->selection_y, this->get_rect());
             }
-            this->drawable.end_update();
         }
     }
 
-    void refresh_selected() {
-        if (this->selection_y < this->nb_rows) {
-            this->drawable.begin_update();
+    void refresh_selected()
+    {
+        if (this->selection_y < this->widgets.nb_rows) {
+            update_lock lock{this->drawable};
             this->draw_row(this->selection_y, this->get_rect());
-            this->drawable.end_update();
         }
     }
 
-    void focus(int reason) override {
+    void focus(int reason) override
+    {
         (void)reason;
         if (!this->has_focus){
             this->has_focus = true;
@@ -319,7 +340,8 @@ public:
         }
     }
 
-    void blur() override {
+    void blur() override
+    {
         if (this->has_focus){
             this->has_focus = false;
             this->send_notify(NOTIFY_FOCUS_END);
@@ -327,12 +349,14 @@ public:
         }
     }
 
-    void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override {
+    void rdp_input_mouse(int device_flags, int mouse_x, int mouse_y, Keymap2 * keymap) override
+    {
         if (device_flags == (MOUSE_FLAG_BUTTON1 | MOUSE_FLAG_DOWN)) {
             uint16_t y = this->y();
-            for (uint16_t row_index = 0; row_index < this->nb_rows; row_index++) {
-                uint16_t x = this->x();
-                Rect rectRow(x, y, this->cx(), this->row_height[row_index] + this->border * 2);
+            uint16_t const x = this->x();
+            auto&& row_heights = this->widgets.row_heights();
+            for (uint16_t row_index = 0; row_index < this->widgets.nb_rows; row_index++) {
+                Rect rectRow(x, y, this->cx(), row_heights[row_index] + this->border * 2);
 
                 if (rectRow.contains_pt(mouse_x, mouse_y)) {
                     if (row_index != this->selection_y) {
@@ -345,9 +369,11 @@ public:
                             return;
                         }
                     }
+
+                    break;
                 }
 
-                y += this->row_height[row_index] + this->border * 2;
+                y += row_heights[row_index] + this->border * 2;
             }
         }
         else if (device_flags == MOUSE_FLAG_MOVE) {
@@ -360,38 +386,39 @@ public:
         Widget::rdp_input_mouse(device_flags, mouse_x, mouse_y, keymap);
     }
 
-    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) override {
+    void rdp_input_scancode(long int param1, long int param2, long int param3, long int param4, Keymap2 * keymap) override
+    {
         if (keymap->nb_kevent_available() > 0) {
             switch (keymap->top_kevent()) {
                 case Keymap2::KEVENT_LEFT_ARROW:
                 case Keymap2::KEVENT_UP_ARROW:
                     keymap->get_kevent();
-                    if (this->nb_rows > 1) {
-                        this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->nb_rows - 1);
+                    if (this->widgets.nb_rows > 1) {
+                        this->set_selection((this->selection_y > 0) ? this->selection_y - 1 : this->widgets.nb_rows - 1);
                     }
                 break;
                 case Keymap2::KEVENT_RIGHT_ARROW:
                 case Keymap2::KEVENT_DOWN_ARROW:
                     keymap->get_kevent();
-                    if (this->nb_rows > 1) {
-                        this->set_selection((this->selection_y + 1 != this->nb_rows) ? this->selection_y + 1 : 0);
+                    if (this->widgets.nb_rows > 1) {
+                        this->set_selection((this->selection_y + 1 != this->widgets.nb_rows) ? this->selection_y + 1 : 0);
                     }
                 break;
                 case Keymap2::KEVENT_END:
                     keymap->get_kevent();
-                    if ((this->nb_rows > 1) && (this->nb_rows - 1 != this->selection_y)) {
-                        this->set_selection(this->nb_rows - 1);
+                    if (this->widgets.nb_rows > 1 && this->widgets.nb_rows - 1 != this->selection_y) {
+                        this->set_selection(this->widgets.nb_rows - 1);
                     }
                     break;
                 case Keymap2::KEVENT_HOME:
                     keymap->get_kevent();
-                    if ((this->nb_rows > 1) && this->selection_y) {
+                    if ((this->widgets.nb_rows > 1) && this->selection_y) {
                         this->set_selection(0);
                     }
                     break;
                 case Keymap2::KEVENT_ENTER:
                     keymap->get_kevent();
-                    if (this->nb_rows) {
+                    if (this->widgets.nb_rows) {
                         this->send_notify(NOTIFY_SUBMIT);
                     }
                     break;
@@ -403,14 +430,19 @@ public:
     }
 };
 
-struct ColumnWidthStrategy {
+struct ColumnWidthStrategy
+{
     uint16_t min;
     uint16_t max;
 };
 
 inline
-void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width) {
-    uint16_t column_width_optimal[GRID_NB_COLUMNS_MAX] = { 0 };
+void compute_format(WidgetGrid const& grid, ColumnWidthStrategy * column_width_strategies, uint16_t * row_height, uint16_t * column_width)
+{
+    BufMaker<16, uint16_t> column_width_optimal_buffer;
+    auto column_width_optimal = column_width_optimal_buffer.dyn_array(grid.get_nb_columns());
+    std::fill(column_width_optimal.begin(), column_width_optimal.end(), 0);
+    std::fill(row_height, row_height+grid.get_nb_rows(), 0);
 
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
         for (uint16_t column_index = 0; column_index < grid.get_nb_columns(); column_index++) {
@@ -430,8 +462,7 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
         }
     }
 
-
-    // TODO Optiomize this
+    // TODO Optimize this
     uint16_t unsatisfied_column_count = 0;
     // min
     uint16_t unused_width = static_cast<int16_t>(grid.cx() - grid.border * 2 * grid.get_nb_columns());
@@ -491,7 +522,8 @@ void compute_format(WidgetGrid & grid, ColumnWidthStrategy * column_width_strate
 }
 
 inline
-void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width) {
+void apply_format(WidgetGrid & grid, uint16_t * row_height, uint16_t * column_width)
+{
     uint16_t height = 0;
     for (uint16_t row_index = 0; row_index < grid.get_nb_rows(); row_index++) {
         grid.set_row_height(row_index, row_height[row_index]);

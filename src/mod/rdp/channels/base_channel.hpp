@@ -23,6 +23,7 @@
 
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp"
 #include "utils/asynchronous_task_manager.hpp"
+#include "utils/uninit_checked.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/report_message_api.hpp"
 
@@ -49,8 +50,8 @@ public:
     struct Params
     {
         ReportMessageApi & report_message;
-        data_size_type  exchanged_data_limit;
-        RDPVerbose verbose;
+        uninit_checked<data_size_type> exchanged_data_limit;
+        uninit_checked<RDPVerbose> verbose;
 
         explicit Params(ReportMessageApi & report_message)
           : report_message(report_message)

@@ -55,28 +55,23 @@ RED_AUTO_TEST_CASE(TraceWidgetSelector)
     WidgetSelector selector(drawable, "x@127.0.0.1", 0, 0, w, h, parent, notifier, "1", "1", extra_button, params, global_font_deja_vu_14(), Theme(), Translation::EN);
 
     array_view_const_char const add1[] = {
-        "rdp"_av, "qa\\administrateur@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "rdp"_av, "qa\\administrateur@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add1);
 
     array_view_const_char const add2[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.111"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "rdp"_av, "administrateur@qa@10.10.14.111"_av, "RDP"_av};
     selector.add_device(add2);
 
     array_view_const_char const add3[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.27"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "rdp"_av, "administrateur@qa@10.10.14.27"_av, "RDP"_av};
     selector.add_device(add3);
 
     array_view_const_char const add4[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.103"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "rdp"_av, "administrateur@qa@10.10.14.103"_av, "RDP"_av};
     selector.add_device(add4);
 
     array_view_const_char const add5[] = {
-        "rdp"_av, "administrateur@qa@10.10.14.33"_av,
-        "RDP"_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av, ""_av};
+        "rdp"_av, "administrateur@qa@10.10.14.33"_av, "RDP"_av};
     selector.add_device(add5);
 
     selector.selector_lines.set_selection(0);
@@ -466,8 +461,8 @@ RED_AUTO_TEST_CASE(TraceWidgetSelectorFilter)
 
     selector.selector_lines.set_selection(0);
 
-    curx = selector.edit_filter[0].x() + 2;
-    cury = selector.edit_filter[0].y() + 2;
+    curx = selector.edit_filters[0].x() + 2;
+    cury = selector.edit_filters[0].y() + 2;
     selector.rdp_input_mouse(MOUSE_FLAG_BUTTON1|MOUSE_FLAG_DOWN,
                              curx, cury,
                              nullptr);

@@ -24,6 +24,7 @@
 #include <type_traits>
 
 #include <string>
+#include <vector>
 
 #if __has_include(<linux/limits.h>)
 # include <linux/limits.h>
@@ -44,7 +45,7 @@ namespace globals {
 namespace cfg_attributes
 {
 
-using name_ = char const *;
+struct name_ { std::string name; };
 
 template<class T>
 struct type_ { using type = T; };
@@ -55,6 +56,11 @@ struct default_
     using type = T;
     T value;
 };
+
+class novalue {};
+
+using nodefault = default_<novalue>;
+
 
 template<class T>
 default_<T> set(T const & x)
@@ -68,15 +74,6 @@ struct desc { std::string value; };
 
 struct prefix_value { char const * value; };
 
-
-
-template<class Tag, class T>
-struct bind_
-{
-    using tag_type = Tag;
-    using bind_type = T;
-    T binded;
-};
 
 template<template<class> class>
 struct tpl_t {};
@@ -108,10 +105,16 @@ namespace types
 
 namespace cpp
 {
-    using name = bind_<class name_tag, ::cfg_attributes::name_>;
+    struct name { std::string name; };
 
     template<class T>
-    using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
+    struct type_
+    {
+        ::cfg_attributes::type_<T> to_type() const
+        {
+            return {};
+        }
+    };
 
     struct expr { char const * value; };
     #define CPP_EXPR(name) ::cfg_attributes::cpp::expr{#name}
@@ -120,10 +123,16 @@ namespace cpp
 
 namespace spec
 {
-    using name = bind_<class name_tag, ::cfg_attributes::name_>;
+    struct name { std::string name; };
 
     template<class T>
-    using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
+    struct type_
+    {
+        ::cfg_attributes::type_<T> to_type() const
+        {
+            return {};
+        }
+    };
 
     namespace internal
     {
@@ -135,9 +144,6 @@ namespace spec
             advanced_in_gui = 1 << 4,
             iptables_in_gui = 1 << 5,
             password_in_gui = 1 << 6,
-
-            connection_policy_with_ini    = hidden_in_gui,
-            connection_policy_without_ini = no_ini_no_gui
         };
 
         constexpr attr operator | (attr x, attr y) {
@@ -170,6 +176,13 @@ namespace spec
         }
     }
 
+    enum class log_policy : unsigned char
+    {
+        loggable,
+        unloggable,
+        unloggable_if_value_contains_password,
+    };
+
     inline namespace constants
     {
         inline internal::spec_attr_t<internal::attr::no_ini_no_gui>   no_ini_no_gui{};
@@ -180,25 +193,33 @@ namespace spec
         inline internal::spec_attr_t<internal::attr::iptables_in_gui> iptables_in_gui{};
         inline internal::spec_attr_t<internal::attr::password_in_gui> password_in_gui{};
 
-        inline internal::spec_attr_t<internal::attr::connection_policy_with_ini> connection_policy_with_ini{};
-        inline internal::spec_attr_t<internal::attr::connection_policy_without_ini> connection_policy_without_ini{};
+        inline auto loggable = log_policy::loggable;
+        inline auto unloggable = log_policy::unloggable;
+        inline auto unloggable_if_value_contains_password = log_policy::unloggable_if_value_contains_password;
     }
 }
 
 
 namespace sesman
 {
-    using name = bind_<class name_tag, ::cfg_attributes::name_>;
+    struct name { std::string name; };
+
 
     template<class T>
-    using type_ = bind_<class type_tag, ::cfg_attributes::type_<T>>;
+    struct type_
+    {
+        ::cfg_attributes::type_<T> to_type() const
+        {
+            return {};
+        }
+    };
 
     namespace internal
     {
         enum class io {
             none,
-            sesman_to_proxy = 1 << 0,
-            proxy_to_sesman = 1 << 1,
+            sesman_to_proxy   = 1 << 0,
+            proxy_to_sesman   = 1 << 1,
             rw = sesman_to_proxy | proxy_to_sesman,
         };
 
@@ -216,11 +237,52 @@ namespace sesman
 
     inline namespace constants
     {
-        inline internal::sesman_io_t<internal::io::none>            no_sesman{};
-        inline internal::sesman_io_t<internal::io::proxy_to_sesman> proxy_to_sesman{};
-        inline internal::sesman_io_t<internal::io::sesman_to_proxy> sesman_to_proxy{};
-        inline internal::sesman_io_t<internal::io::rw>              sesman_rw{};
+        inline internal::sesman_io_t<internal::io::none>              no_sesman{};
+        inline internal::sesman_io_t<internal::io::proxy_to_sesman>   proxy_to_sesman{};
+        inline internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
+        inline internal::sesman_io_t<internal::io::rw>                sesman_rw{};
     }
+
+    struct connection_policy
+    {
+        char const* file;
+    };
+
+    struct deprecated_names
+    {
+        std::vector<std::string> names;
+
+        deprecated_names(std::initializer_list<char const*> l)
+        : names(l.begin(), l.end())
+        {}
+    };
 }
+
+
+namespace connpolicy
+{
+    struct name { std::string name; };
+
+    struct section { char const* name; };
+}
+
+
+namespace detail
+{
+    template<class... Ts>
+    struct names
+    {
+        template<template<class...> class F>
+        using f = F<Ts...>;
+    };
+}
+
+using names = detail::names<
+    name_,
+    cpp::name,
+    spec::name,
+    sesman::name,
+    connpolicy::name
+>;
 
 }

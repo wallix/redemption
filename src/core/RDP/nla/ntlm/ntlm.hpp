@@ -102,7 +102,7 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, array_view_const_u8 input_buffer, SecBuffer& output_buffer
+        char* pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     ) override
     {
         if (this->verbose) {
@@ -142,7 +142,7 @@ public:
     // GSS_Accept_sec_context
     // ACCEPT_SECURITY_CONTEXT AcceptSecurityContext;
     SEC_STATUS AcceptSecurityContext(
-        array_view_const_u8 input_buffer, SecBuffer& output_buffer
+        array_view_const_u8 input_buffer, Array& output_buffer
     ) override {
         if (!this->context) {
             this->context = std::make_unique<NTLMContext>(true, this->rand, this->timeobj);
@@ -235,7 +235,7 @@ private:
 public:
     // GSS_Wrap
     // ENCRYPT_MESSAGE EncryptMessage;
-    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS EncryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }
@@ -263,7 +263,7 @@ public:
 
     // GSS_Unwrap
     // DECRYPT_MESSAGE DecryptMessage;
-    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, SecBuffer& data_out, unsigned long MessageSeqNo) override {
+    SEC_STATUS DecryptMessage(array_view_const_u8 data_in, Array& data_out, unsigned long MessageSeqNo) override {
         if (!this->context) {
             return SEC_E_NO_CONTEXT;
         }

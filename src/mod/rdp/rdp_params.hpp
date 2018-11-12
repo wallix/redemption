@@ -214,6 +214,8 @@ struct ModRDPParams {
     bool experimental_fix_input_event_sync = true;
     bool experimental_fix_too_long_cookie  = true;
 
+    bool log_only_relevant_clipboard_activities = true;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -407,6 +409,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_input_event_sync);
         RDP_PARAMS_LOG("%s",     yes_or_no,             experimental_fix_too_long_cookie);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             log_only_relevant_clipboard_activities);
 
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, verbose);
         RDP_PARAMS_LOG("0x%08X", static_cast<unsigned>, cache_verbose);

@@ -664,7 +664,8 @@ struct ClientTimeZone {
     {
         // standard Name
 //        memcpy(this->StandardName, "GMT Standard Time", strlen("GMT Standard Time")+1);
-        ::UTF8toUTF16(::byte_ptr_cast("GMT"), this->StandardName, sizeof(this->StandardName));
+    	std::string gmt = "GMT";
+        ::UTF8toUTF16(gmt, this->StandardName, sizeof(this->StandardName));
         // standard date
         this->StandardDate.wYear            = 0;
         this->StandardDate.wMonth           = 10;
@@ -678,7 +679,8 @@ struct ClientTimeZone {
         this->StandardBias = 0;
         // daylight name
 //        memcpy(this->DaylightName, "GMT Daylight Time", strlen("GMT Daylight Time")+1);
-        ::UTF8toUTF16(::byte_ptr_cast("GMT (heure d'été)"), this->DaylightName, sizeof(this->DaylightName));
+        std::string gmt_summer = "GMT (heure d'été)";
+        ::UTF8toUTF16(gmt_summer, this->DaylightName, sizeof(this->DaylightName));
         // daylight date
         this->DaylightDate.wYear            = 0;
         this->DaylightDate.wMonth           = 3;
@@ -1088,7 +1090,13 @@ struct InfoPacket {
         LOG(LOG_INFO, "InfoPacket::cbWorkingDir %u", this->cbWorkingDir);
         LOG(LOG_INFO, "InfoPacket::Domain %s", this->Domain);
         LOG(LOG_INFO, "InfoPacket::UserName %s", this->UserName);
-        LOG(LOG_INFO, "InfoPacket::Password %s", ::get_printable_password(char_ptr_cast(this->Password), password_printing_mode));
+        {
+            array_view_const_char const av = ::get_printable_password({
+                char_ptr_cast(this->Password),
+                strlen(char_ptr_cast(this->Password))
+            }, password_printing_mode);
+            LOG(LOG_INFO, "InfoPacket::Password %.*s", int(av.size()), av.data());
+        }
 
         if (show_alternate_shell) {
             LOG(LOG_INFO, "InfoPacket::AlternateShell %s", this->AlternateShell);

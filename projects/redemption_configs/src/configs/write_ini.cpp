@@ -10,6 +10,7 @@ int main(int ac, char ** av)
 
         void do_init()
         {
+            base_type::do_init();
             cfg_specs::config_type_definition(this->enums);
             cfg_specs::config_spec_definition(*this);
         }

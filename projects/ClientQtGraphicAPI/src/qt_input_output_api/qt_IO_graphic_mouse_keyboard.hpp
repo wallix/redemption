@@ -56,7 +56,7 @@
 
 
 
-class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI/*, public ClientInputMouseKeyboardAPI*/
+class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI
 {
 
 public:

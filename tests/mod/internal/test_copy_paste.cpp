@@ -88,12 +88,18 @@ struct CopyPasteFront : FakeFront
                 RDPECLIP::FormatDataRequestPDU().recv(stream);
                 constexpr std::size_t buf_sz = 65535;
                 uint8_t buf[buf_sz];
-                size_t unicode_data_length = ::UTF8toUTF16(byte_ptr_cast(this->str.c_str()),
-                    buf, buf_sz);
+                size_t unicode_data_length = ::UTF8toUTF16(this->str, buf, buf_sz);
                 buf[unicode_data_length    ] = 0;
                 buf[unicode_data_length + 1] = 0;
                 unicode_data_length += 2;
-                this->send_to_server(RDPECLIP::FormatDataResponsePDU(true), buf, unicode_data_length);
+                
+                RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, unicode_data_length);
+                RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
+                StaticOutStream<256> out_s;
+                header.emit(out_s);
+                format_data_response_pdu.emit(out_s, buf, unicode_data_length);
+                InStream in_s(out_s.get_data(), out_s.get_offset());
+                this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
             }
             break;
             default:
@@ -122,13 +128,13 @@ struct CopyPasteFront : FakeFront
     }
 
 private:
-    template<class PDU, class... Args>
-    void send_to_server(PDU && pdu, Args && ...args) {
-        StaticOutStream<256> out_s;
-        pdu.emit(out_s, std::move(args)...);
-        InStream in_s(out_s.get_data(), out_s.get_offset());
-        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
-    }
+//    template<class PDU, class... Args>
+//    void send_to_server(PDU && pdu, Args && ...args) {
+//        StaticOutStream<256> out_s;
+//        pdu.emit(out_s, std::move(args)...);
+//        InStream in_s(out_s.get_data(), out_s.get_offset());
+//        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
+//    }
 
     CHANNELS::ChannelDefArray channel_def_array;
     CopyPaste & copy_paste;

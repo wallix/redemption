@@ -1208,8 +1208,7 @@ public:
     , FileAttributes(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -1345,7 +1344,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -1502,8 +1501,7 @@ public:
     , FileAttributes_(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -1798,8 +1796,7 @@ struct FileFsLabelInformation {
     explicit FileFsLabelInformation(char * volume_label)
     {
         this->VolumeLabelLength =
-            ::UTF8toUTF16(byte_ptr_cast(volume_label), this->volume_label_UTF16,
-                sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+            ::UTF8toUTF16(std::string(volume_label), this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
         this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
         this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
         this->VolumeLabelLength += 2;
@@ -2014,8 +2011,7 @@ public:
     , FileAttributes(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2125,7 +2121,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -2240,8 +2236,7 @@ public:
     explicit FileNamesInformation(const char * file_name)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2311,7 +2306,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -2444,8 +2439,7 @@ struct FileRenameInformation {
       , RootDirectory(RootDirectory)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2851,9 +2845,7 @@ public:
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
         this->FileSystemNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_system_name),
-                this->file_system_name_UTF16,
-                sizeof(this->file_system_name_UTF16));
+            ::UTF8toUTF16(std::string(file_system_name), this->file_system_name_UTF16, sizeof(this->file_system_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2973,7 +2965,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -3374,9 +3366,7 @@ public:
     , SupportsObjects(SupportsObjects)
     {
         this->VolumeLabelLength =
-            ::UTF8toUTF16(byte_ptr_cast(volume_label),
-                this->volume_label_UTF16,
-                sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+            ::UTF8toUTF16(std::string(volume_label), this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
         this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
         this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
         this->VolumeLabelLength += 2;
@@ -3464,7 +3454,7 @@ private:
 
 public:
     void log(int level) const {
-        char buffer[2048];
+        char buffer[65536+2048];
         this->str(buffer, sizeof(buffer));
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
@@ -3848,8 +3838,7 @@ struct FileNotifyInformation {
       , Action(Action)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(byte_ptr_cast(file_name), this->file_name_UTF16,
-                sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {

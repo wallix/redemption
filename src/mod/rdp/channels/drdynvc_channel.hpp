@@ -29,9 +29,7 @@ class DynamicChannelVirtualChannel final : public BaseVirtualChannel
 {
 public:
     struct Params : public BaseVirtualChannel::Params {
-        explicit Params(ReportMessageApi & report_message)
-          : BaseVirtualChannel::Params(report_message)
-        {}
+        using BaseVirtualChannel::Params::Params;
     };
 
     explicit DynamicChannelVirtualChannel(
@@ -48,49 +46,6 @@ protected:
         override
     {
         return "DRDYNVC_LIMIT";
-    }
-
-private:
-    template<class PDU, class... Args>
-    void send_pdu_to_client(bool response_ok, Args&&... args) {
-        PDU             pdu(response_ok);
-
-        StaticOutStream<256> out_stream;
-
-        pdu.emit(out_stream, args...);
-
-        const uint32_t total_length      = out_stream.get_offset();
-        const uint32_t flags             =
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_stream.get_data();
-        const uint32_t chunk_data_length = total_length;
-
-        this->send_message_to_client(
-            total_length,
-            flags,
-            chunk_data,
-            chunk_data_length);
-    }
-
-    template<class PDU, class... Args>
-    void send_pdu_to_server(bool response_ok, Args&&... args) {
-        PDU             pdu(response_ok);
-
-        StaticOutStream<256> out_stream;
-
-        pdu.emit(out_stream, args...);
-
-        const uint32_t total_length      = out_stream.get_offset();
-        const uint32_t flags             =
-            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-        const uint8_t* chunk_data        = out_stream.get_data();
-        const uint32_t chunk_data_length = total_length;
-
-        this->send_message_to_server(
-            total_length,
-            flags,
-            chunk_data,
-            chunk_data_length);
     }
 
 public:

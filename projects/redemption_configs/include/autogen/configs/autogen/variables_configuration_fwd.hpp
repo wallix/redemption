@@ -162,6 +162,7 @@ namespace cfg {
         struct enable_rdpdr_data_analysis;
         struct remoteapp_bypass_legal_notice_delay;
         struct remoteapp_bypass_legal_notice_timeout;
+        struct log_only_relevant_clipboard_activities;
         struct experimental_fix_input_event_sync;
         struct experimental_fix_too_long_cookie;
     };

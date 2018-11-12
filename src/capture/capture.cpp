@@ -757,8 +757,7 @@ public:
     , png_limit(png_params.png_limit)
     , enable_rt_display(png_params.rt_display)
     , smart_video_cropping(capture_params.smart_video_cropping)
-    {
-    }
+    {}
 
     ~PngCaptureRT(){
         this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
@@ -850,7 +849,7 @@ namespace {
     }
 }
 
-inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_char data)
+inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_char data, bool log_only_relevant_clipboard_activities)
 {
     using Av = array_view_const_char;
 
@@ -926,6 +925,9 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                 }
             }
         };
+
+        const char Format_PreferredDropEffect[]  = "Preferred DropEffect(";
+        const char Format_FileGroupDescriptorW[] = "FileGroupDescriptorW(";
 
         // TODO used string_id: switch (sid(order)) { case "string"_sid: ... }
         if (cstr_equal("PASSWORD_TEXT_BOX_GET_FOCUS", order)
@@ -1005,11 +1007,40 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
 
         else if (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION", order)
               || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION", order)) {
-            line_with_2_var("format", "size");
+            Av var1{"format"};
+            Av var2{"size"};
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const format = left(parameters, subitem_separator);
+                if ((!log_only_relevant_clipboard_activities) ||
+                    (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
+                     strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
+                    message.assign(order, {
+                        {zstr(var1), format},
+                        {zstr(var2), right(parameters, subitem_separator)},
+                    });
+                }
+            }
         }
         else if (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX", order)
               || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX", order)) {
-            line_with_3_var("format", "size", "partial_data");
+            Av var1{"format"};
+            Av var2{"size"};
+            Av var3{"partial_data"};
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const format = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    if ((!log_only_relevant_clipboard_activities) ||
+                        (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
+                         strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
+                        message.assign(order, {
+                            {zstr(var1), format},
+                            {zstr(var2), left(remaining, subitem_separator2)},
+                            {zstr(var3), right(remaining, subitem_separator2)},
+                        });
+                    }
+                }
+            }
         }
 
         else {
@@ -1059,13 +1090,15 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     bool is_probe_enabled_session = false;
     bool previous_char_is_event_flush = false;
     const bool key_markers_hidden_state;
+    const bool log_only_relevant_clipboard_activities;
 
 public:
-    explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state)
+    explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state, bool log_only_relevant_clipboard_activities)
     : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
     , last_time(now.tv_sec)
     , trans(trans)
     , key_markers_hidden_state(key_markers_hidden_state)
+    , log_only_relevant_clipboard_activities(log_only_relevant_clipboard_activities)
     {
         memcpy(this->kbd_buffer, session_meta_kbd_prefix().data(), session_meta_kbd_prefix().size());
 
@@ -1118,7 +1151,7 @@ public:
 
     void session_update(const timeval& now, array_view_const_char message) override {
         this->is_probe_enabled_session = (::strcasecmp(message.data(), "Probe.Status=Unknown") != 0);
-        agent_data_extractor(this->formatted_message, message);
+        agent_data_extractor(this->formatted_message, message, this->log_only_relevant_clipboard_activities);
         if (!this->formatted_message.av().empty()) {
             this->send_line(now.tv_sec, this->formatted_message.av());
         }
@@ -1246,13 +1279,16 @@ class SessionLogAgent : public gdi::CaptureProbeApi
     KeyQvalueFormatter line;
     SessionMeta & session_meta;
 
+    bool log_only_relevant_clipboard_activities;
+
 public:
-    explicit SessionLogAgent(SessionMeta & session_meta)
+    explicit SessionLogAgent(SessionMeta & session_meta, bool log_only_relevant_clipboard_activities)
     : session_meta(session_meta)
+    , log_only_relevant_clipboard_activities(log_only_relevant_clipboard_activities)
     {}
 
     void session_update(const timeval& now, array_view_const_char message) override {
-        agent_data_extractor(this->line, message);
+        agent_data_extractor(this->line, message, this->log_only_relevant_clipboard_activities);
         if (!this->line.str().empty()) {
             this->session_meta.send_line(now.tv_sec, this->line.av());
         }
@@ -1297,8 +1333,8 @@ public:
         }
         return fd;
     }()}, report_error_from_reporter(capture_params.report_message))
-    , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable))
-    , session_log_agent(this->meta)
+    , meta(capture_params.now, this->meta_trans, underlying_cast(meta_params.hide_non_printable), underlying_cast(meta_params.log_only_relevant_clipboard_activities))
+    , session_log_agent(this->meta, underlying_cast(meta_params.log_only_relevant_clipboard_activities))
     , enable_agent(underlying_cast(meta_params.enable_session_log))
     {
     }

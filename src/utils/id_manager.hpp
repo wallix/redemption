@@ -31,6 +31,7 @@ template <typename T, unsigned int next_usable,
 class IDManager
 {
 private:
+    // PERF very slow
     std::map<T, T>                  src_to_dest;
     std::map<T, std::pair<T, bool>> dest_to_src;
 

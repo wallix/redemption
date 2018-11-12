@@ -353,7 +353,7 @@ for name, f in all_files.items():
 
 # remove .cpp include from user_includes
 for f in tests:
-    l = [f'<library>{finc.path[:-3]}o' for finc in f.user_includes if finc.path.endswith('.cpp')]
+    l = ['<library>{fp}o'.format(fp=finc.path[:-3]) for finc in f.user_includes if finc.path.endswith('.cpp')]
     if l:
         remove_requirements.setdefault(f.path, []).extend(l)
 
@@ -511,7 +511,6 @@ def generate(type, files, requirements, get_target_cb = get_target):
 
         if type == 'test-run':
             if f.root in dir_nocoverage or f.path in file_nocoverage:
-                deps.append('$(GCOV_NO_BUILD)')
                 deps.append('$(GCOV_NO_BUILD)')
             else:
                 iright = len(f.root)

@@ -424,6 +424,8 @@ private:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
+    const bool log_only_relevant_clipboard_activities;
+
     struct AsynchronousTaskContainer
     {
     private:
@@ -815,6 +817,7 @@ public:
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
+        , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
@@ -1234,6 +1237,8 @@ private:
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
             this->disable_clipboard_log_wrm;
+        clipboard_virtual_channel_params.log_only_relevant_clipboard_activities =
+            this->log_only_relevant_clipboard_activities;
 
         return clipboard_virtual_channel_params;
     }
@@ -4563,11 +4568,14 @@ public:
                 break;
             case CAPSETTYPE_BITMAP_CODECS:
                 {
-                    BitmapCodecCaps caps;
-                    caps.recv(stream, capset_length);
-                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-                        caps.log("Receiving from server");
-                    }
+                    BitmapCodecCaps caps(false);
+                    LOG(LOG_INFO, "Dumping CAPSETTYPE_BITMAP_CODECS");
+                    hexdump_d(stream.get_current()-4, capset_length);
+                    stream.in_skip_bytes(capset_length-4);
+//                    caps.recv(stream, capset_length);
+//                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+//                        caps.log("Receiving from server");
+//                    }
                 }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:

@@ -548,6 +548,9 @@
 "#remoteapp_bypass_legal_notice_timeout = 20000\n\n"
 
 "#_advanced\n"
+"#log_only_relevant_clipboard_activities = 1\n\n"
+
+"#_advanced\n"
 "#experimental_fix_input_event_sync = 1\n\n"
 
 "#_advanced\n"

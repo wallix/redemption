@@ -958,7 +958,7 @@ public:
         if (workstation) {
             size_t host_len = UTF8Len(workstation);
             this->Workstation.init(host_len * 2);
-            UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
+            UTF8toUTF16(std::string(char_ptr_cast(workstation)), this->Workstation.get_data(), host_len * 2);
             this->SendWorkstationName = true;
         }
         else {
@@ -973,7 +973,7 @@ public:
         if (pszTargetName) {
             size_t host_len = UTF8Len(pszTargetName);
             this->ServicePrincipalName.init(host_len * 2);
-            UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
+            UTF8toUTF16(std::string(char_ptr_cast(pszTargetName)), this->ServicePrincipalName.get_data(), host_len * 2);
         }
         else {
             this->ServicePrincipalName.init(0);
@@ -982,7 +982,7 @@ public:
 
 
     // READ WRITE FUNCTIONS
-    SEC_STATUS write_negotiate(SecBuffer& output_buffer) {
+    SEC_STATUS write_negotiate(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Negotiate");
         }
@@ -1015,7 +1015,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_challenge(SecBuffer& output_buffer) {
+    SEC_STATUS write_challenge(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Challenge");
         }
@@ -1045,7 +1045,7 @@ public:
         return SEC_I_CONTINUE_NEEDED;
     }
 
-    SEC_STATUS write_authenticate(SecBuffer& output_buffer) {
+    SEC_STATUS write_authenticate(Array& output_buffer) {
         if (this->verbose) {
             LOG(LOG_INFO, "NTLMContext Write Authenticate");
         }

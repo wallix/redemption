@@ -1068,6 +1068,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "log_only_relevant_clipboard_activities")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::log_only_relevant_clipboard_activities&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "experimental_fix_input_event_sync")) {
             ::configs::parse_and_log(
                 context, key,

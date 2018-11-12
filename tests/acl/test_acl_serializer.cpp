@@ -95,10 +95,10 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     StaticOutStream<1024> stream;
     // NORMAL CASE WITH SESSION ID CHANGE
     stream.out_uint32_be(0);
-    stream.out_string(string_from_authid(cfg::globals::auth_user::index)); stream.out_string("\nASK\n");
-    stream.out_string(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
+    stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index)); stream.out_string("\nASK\n");
+    stream.out_copy_bytes(string_from_authid(cfg::context::password::index)); stream.out_string("\nASK\n");
 
-    stream.out_string(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
+    stream.out_copy_bytes(string_from_authid(cfg::context::session_id::index)); stream.out_string("\n!6455\n");
     stream.set_out_uint32_be(stream.get_offset() - 4 ,0);
 
     LCGRandom rnd(0);
@@ -125,7 +125,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeIncoming)
     OutStream big_stream(u.get(), sz);
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xFFFF);
-    big_stream.out_string(string_from_authid(cfg::globals::auth_user::index));
+    big_stream.out_copy_bytes(string_from_authid(cfg::globals::auth_user::index));
     big_stream.out_string("\n!");
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     big_stream.out_skip_bytes(k64 - big_stream.get_offset());
@@ -154,9 +154,9 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     ini.clear_send_index();
 
     std::string s("----");
-    s += string_from_authid(cfg::context::password::index);
+    s += string_from_authid(cfg::context::password::index).data();
     s += "\nASK\n";
-    s += string_from_authid(cfg::globals::auth_user::index);
+    s += string_from_authid(cfg::globals::auth_user::index).data();
     s += "\n!didier\n";
     OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
 
@@ -189,12 +189,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeSendBigData)
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
     auto const key = string_from_authid(cfg::context::rejected::index);
-    auto const total_sz = sz_string + 8u + strlen(key) + 3;
+    auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream(u.get(), total_sz);
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
-    big_stream.out_string(key);
+    big_stream.out_copy_bytes(key);
     big_stream.out_string("\n!");
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     auto subsz = k64 - big_stream.get_offset();
@@ -232,12 +232,12 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     size_t const k64 = 64 * 1024 - 1;
     size_t const sz_string = 1024*66;
     auto const key = string_from_authid(cfg::context::rejected::index);
-    auto const total_sz = sz_string + 8u + strlen(key) + 3;
+    auto const total_sz = sz_string + 8u + key.size() + 3;
     std::unique_ptr<char[]> u(new char[total_sz]);
     OutStream big_stream(u.get(), total_sz);
     big_stream.out_uint16_be(1);
     big_stream.out_uint16_be(0xffff - 4);
-    big_stream.out_string(key);
+    big_stream.out_copy_bytes(key);
     big_stream.out_string("\n!");
     memset(big_stream.get_current(), 'a', k64 - big_stream.get_offset());
     auto subsz = k64 - big_stream.get_offset();

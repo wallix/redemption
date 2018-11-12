@@ -3803,8 +3803,6 @@ static int rle_bin_to_run_order(
 
     auto get_run_order = [&image_data_current_p]() -> RunOrder {
         uint8_t image_data_current = *(image_data_current_p++);
-        LOG(LOG_INFO, "image_data_current=0x%X", image_data_current);
-
         switch (image_data_current & 0xF0) {
             case 0xF0:
                 switch (image_data_current) {
@@ -3816,7 +3814,6 @@ static int rle_bin_to_run_order(
                     case CodeIdentifier::MEGA_MEGA_SET_FG_RUN:      // 0xF6
                     case CodeIdentifier::MEGA_MEGA_SET_FGBG_IMAGE:  // 0xF7
                     case CodeIdentifier::MEGA_MEGA_DITHERED_RUN:    // 0xF8
-                        LOG(LOG_INFO, "0x%02X 0x%02X", *image_data_current_p, *(image_data_current_p + 1));
                         return {
                                 true,
                                 static_cast<CodeIdentifier>(image_data_current),
@@ -3843,8 +3840,7 @@ static int rle_bin_to_run_order(
                             };
 
                     default:
-                        LOG(LOG_ERR, "rle_bin_to_run_order: Unknown Run Order(1) 0x%X", image_data_current);
-
+                        RED_CHECK(false);
                         return {
                                 false,
                                 static_cast<CodeIdentifier>(image_data_current),
@@ -3913,8 +3909,7 @@ static int rle_bin_to_run_order(
                     };
 
             default:
-                LOG(LOG_ERR, "rle_bin_to_run_order: Unknown Run Order(2) 0x%X", static_cast<unsigned>(image_data_current & 0xF0));
-
+                RED_CHECK(false);
                 return {
                         true,
                         static_cast<CodeIdentifier>(image_data_current),
@@ -3933,31 +3928,24 @@ static int rle_bin_to_run_order(
         switch (run_order.code_identifier)
         {
             case CodeIdentifier::REGULAR_COLOR_IMAGE:
-                LOG(LOG_INFO, "REGULAR_COLOR_IMAGE RunLength=%u", run_order.length);
-
                 image_data_current_p += nb_bytes_per_pixel(image_bpp) * run_order.length;
             break;
 
             case CodeIdentifier::REGULAR_FG_RUN:
-                LOG(LOG_INFO, "REGULAR_FG_RUN RunLength=%u", run_order.length);
             break;
 
             case CodeIdentifier::LITE_SET_FG_FG_RUN:
-                LOG(LOG_INFO, "LITE_SET_FG_FG_RUN RunLength=%u", run_order.length);
-
                 image_data_current_p += nb_bytes_per_pixel(image_bpp);
             break;
 
             case CodeIdentifier::LITE_SET_FG_FGBG_IMAGE:
-                LOG(LOG_INFO, "LITE_SET_FG_FGBG_IMAGE RunLength=%u", run_order.length);
             break;
 
             case CodeIdentifier::MEGA_MEGA_BG_RUN:
-                LOG(LOG_INFO, "MEGA_MEGA_BG_RUN RunLength=%u", run_order.length);
             break;
 
             default:
-                LOG(LOG_ERR, "rle_bin_to_run_order: Unknown Run Order 0x%X (A)", run_order.code_identifier);
+                RED_CHECK(false);
                 break;
         }
     }

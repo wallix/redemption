@@ -180,5 +180,38 @@ public:
 
     void set_share_dir(const std::string & share_dir);
 
+    
+
+    void process_server_annnounce_request(InStream & chunk);
+
+    void process_core_server_capabilities(InStream & chunk);
+
+    void process_core_clientID_confirm();
+
+    void process_core_device_reply(InStream & chunk);
+
+    void process_core_device_iorequest(InStream & chunk);
+
+
+
+    void process_iorequest_lock_control(rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream);
+
+    void process_iorequest_create(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_query_information(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_close(rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_read(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_directory_control(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id, uint32_t minor_function);
+
+    void process_iorequest_query_volume_information(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void provess_iorequest_write(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_set_information(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id);
+
+    void process_iorequest_device_control(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream);
 };
 

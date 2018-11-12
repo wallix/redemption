@@ -25,19 +25,20 @@
 
 #include <cstring>
 
-static inline authid_t authid_from_string(const char * strauthid) {
-    auto res = MAX_AUTHID;
-    for (unsigned i = 0; i < MAX_AUTHID; i++) {
-        if (0 == strcmp(authstr[i], strauthid)) {
-            res = authid_t(i);
-            break;
+inline authid_t authid_from_string(array_view_const_char strauthid) noexcept
+{
+    for (unsigned i = 0; i < MAX_AUTHID; ++i) {
+        if (authstr[i].size() == strauthid.size()
+         && 0 == strncmp(authstr[i].data(), strauthid.data(), strauthid.size())) {
+            return authid_t(i);
         }
     }
-    return res;
+    return MAX_AUTHID;
 }
 
-static inline const char * string_from_authid(authid_t authid) {
+inline array_view_const_char string_from_authid(authid_t authid) noexcept
+{
     return (authid >= MAX_AUTHID)
-        ? ""
+        ? ""_av
         : authstr[static_cast<unsigned>(authid)];
 }

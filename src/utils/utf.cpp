@@ -30,6 +30,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <string>
 
 using std::size_t;
 
@@ -179,13 +180,14 @@ bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_c
     return UTF8InsertAtPos(source, len, to_insert, max_source);
 }
 
-// UTF8toUTF16 never writes the trailing zero
-size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len)
 {
-    size_t i_t = 0;
+	const uint8_t * s = byte_ptr_cast(source.c_str());
+
+	size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
-    for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
+    for (size_t i = 0; (i < source.length()) && (ucode = c = s[i]) != 0 ; i++){
         switch (c >> 4){
             case 0:
                 // allows control characters
@@ -202,17 +204,26 @@ size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
+            	if (i + 1 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+                ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+            	if (i + 2 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+                ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-                // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
-                ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+            	if (i + 3 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+// TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
+                ucode = ((c & 0x07) << 18)|((s[i+1] & 0x3F) << 12)|((s[i+2] & 0x3F) << 6)|(s[i+3] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
@@ -224,19 +235,21 @@ size_t UTF8toUTF16(const uint8_t * source, uint8_t * target, size_t t_len)
         target[i_t + 1] = (ucode >> 8) & 0xFF;
         i_t += 2;
     }
-    // write final 0
+    // do not write final 0
 UTF8toUTF16_exit:
     return i_t;
 }
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, size_t t_len)
 {
-    size_t i_t = 0;
+	const uint8_t * s = byte_ptr_cast(source.c_str());
+
+	size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
-    for (size_t i = 0; (ucode = c = source[i]) != 0 ; i++){
+    for (size_t i = 0; i < source.length() && (ucode = c = s[i]) != 0 ; i++){
         switch (c >> 4){
             case 0:
                 // allows control characters
@@ -253,16 +266,25 @@ size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-                ucode = ((c & 0x1F) << 6)|(source[i+1] & 0x3F);
+            	if (i + 1 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+                ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
                 i+=1;
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-                ucode = ((c & 0x0F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+            	if (i + 2 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+            	ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-                ucode = ((c & 0x07) << 18)|((source[i] & 0x3F) << 12)|((source[i+1] & 0x3F) << 6)|(source[i+2] & 0x3F);
+            	if (i + 3 > source.length()){
+            		goto UTF8toUTF16_exit;
+            	}
+            	ucode = ((c & 0x07) << 18)|((s[i] & 0x3F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=3;
             break;
             case 8: case 9: case 0x0A: case 0x0B:
@@ -270,7 +292,7 @@ size_t UTF8toUTF16_CrLf(const uint8_t * source, uint8_t * target, size_t t_len)
                 goto UTF8toUTF16_exit;
         }
 
-        if ((ucode == 0x0D) && (source[i+1] == 0x0A)){
+        if ((ucode == 0x0D) && (i + 1 < source.length()) && (s[i+1] == 0x0A)){
            continue;
         }
         if (ucode == 0x0A) {

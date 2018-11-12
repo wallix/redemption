@@ -47,6 +47,8 @@ namespace
         }
         return p - list;
     }
+
+    constexpr int nb_max_row = 1024;
 } // namespace
 
 SelectorMod::SelectorMod(
@@ -107,7 +109,7 @@ SelectorMod::SelectorMod(
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
+    this->selector_lines_per_page_saved = std::min<int>(available_height / line_height, nb_max_row);
     this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);
     this->ask_page();
     this->selector.rdp_input_invalidate(this->selector.get_rect());
@@ -127,9 +129,9 @@ void SelectorMod::ask_page()
 {
     this->vars.set_acl<cfg::context::selector_current_page>(static_cast<unsigned>(this->current_page));
 
-    this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filter[0].get_text());
-    this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filter[1].get_text());
-    this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filter[2].get_text());
+    this->vars.set_acl<cfg::context::selector_group_filter>(this->selector.edit_filters[0].get_text());
+    this->vars.set_acl<cfg::context::selector_device_filter>(this->selector.edit_filters[1].get_text());
+    this->vars.set_acl<cfg::context::selector_proto_filter>(this->selector.edit_filters[2].get_text());
 
     this->vars.ask<cfg::globals::target_user>();
     this->vars.ask<cfg::globals::target_device>();
@@ -220,7 +222,7 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
     } break;
     case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT: {
         if (this->copy_paste) {
-            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event);
+            copy_paste_process_event(this->copy_paste, *reinterpret_cast<WidgetEdit*>(widget), event); /*NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)*/
         }
     } break;
     default:;
@@ -370,7 +372,7 @@ void SelectorMod::move_size_widget(int16_t left, int16_t top, uint16_t width, ui
                             this->selector.selector_lines.border
                             +  this->selector.selector_lines.y_padding_label);
 
-    int const selector_lines_per_page = std::min<int>(available_height / line_height, GRID_NB_ROWS_MAX);
+    int const selector_lines_per_page = std::min<int>(available_height / line_height, nb_max_row);
     if (this->selector_lines_per_page_saved != selector_lines_per_page) {
         this->selector_lines_per_page_saved = selector_lines_per_page;
         this->vars.set_acl<cfg::context::selector_lines_per_page>(this->selector_lines_per_page_saved);

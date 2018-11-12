@@ -50,7 +50,7 @@ public:
     ~WidgetScreen() override;
 
     void show_tooltip(Widget * widget, const char * text, int x, int y,
-                      Rect const preferred_display_rect, int  /*iter*/= 10) override;
+                      Rect const preferred_display_rect) override;
 
     bool next_focus() override;
     bool previous_focus() override;

@@ -562,6 +562,8 @@ public:
         params.dont_log_data_into_syslog = true;
         params.dont_log_data_into_wrm = true;
 
+        params.log_only_relevant_clipboard_activities = false;
+
         return params;
     }())
     , mod_bpp(info.screen_info.bpp)
@@ -1128,7 +1130,7 @@ public:
                             rdpdr::SharedHeader sharedHeader( rdpdr::Component::RDPDR_CTYP_CORE
                                                             , rdpdr::PacketId::PAKID_CORE_CLIENT_NAME);
                             sharedHeader.emit(stream);
-                            char username[LOGIN_NAME_MAX];
+                            char username[LOGIN_NAME_MAX+1];
                             gethostname(username, LOGIN_NAME_MAX);
 
                             rdpdr::ClientNameRequest clientNameRequest(username);

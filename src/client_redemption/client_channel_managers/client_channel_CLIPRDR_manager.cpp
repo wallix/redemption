@@ -220,13 +220,11 @@
             return;
         }
 
-        InStream chunk_series = chunk.clone();
-
         // TODO: from the above documentation, are we not expecting at least 8 bytes ?
-        if (!chunk.in_check_rem(2  /*msgType(2)*/ )) {
+        if (!chunk.in_check_rem(8  /*msgType(2)*/ )) {
             LOG(LOG_ERR,
                 "ClipboardVirtualChannel::process_client_message: "
-                    "Truncated msgType, need=2 remains=%zu",
+                    "Truncated CliprdrHeader, need=8 remains=%zu",
                 chunk.in_remain());
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
@@ -236,28 +234,22 @@
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
             }
-            this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
+            this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
         } else {
+            if (!(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                return;
+            }
 
-            const uint16_t server_message_type = chunk.in_uint16_le();
-            switch (server_message_type) {
+            RDPECLIP::CliprdrHeader header;
+            header.recv(chunk);
+
+            switch (header.msgType()) {
 
                 case RDPECLIP::CB_CLIP_CAPS:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
                         LOG(LOG_INFO, "SERVER >> CB Channel: Clipboard Capabilities PDU");
                     }
-                    {
-                    RDPECLIP::CliprdrHeader header;
-                    header.recv(chunk_series);
-
-                    RDPECLIP::ClipboardCapabilitiesPDU pdu;
-                    pdu.recv(chunk_series);
-
-                    RDPECLIP::GeneralCapabilitySet pdu2;
-                    pdu2.recv(chunk_series);
-
-                    this->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
-                    }
+                    this->process_capabilities(chunk);
                 break;
 
 
@@ -275,56 +267,7 @@
                         LOG(LOG_INFO, "SERVER >> CB Channel: Monitor Ready PDU");
                     }
 
-                    {
-                        if (this->server_use_long_format_names) {
-                            this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
-                        }
-                        RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, this->generalFlags);
-                        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(this->cCapabilitiesSets);
-                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_CLIP_CAPS, 0,
-                            clipboard_caps_pdu.size() + general_cap_set.size());
-
-                        StaticOutStream<1024> out_stream;
-                        clipboard_header.emit(out_stream);
-                        clipboard_caps_pdu.emit(out_stream);
-                        general_cap_set.emit(out_stream);
-
-                        const uint32_t total_length = out_stream.get_offset();
-                        InStream chunk(out_stream.get_data(), total_length);
-
-                        this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunk
-                                                            , total_length
-                                                            , this->channel_flags
-                                                            );
-
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
-                        }
-                    }
-
-
-                    {
-                        const bool use_long_format_names = this->server_use_long_format_names;
-                        const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
-
-                        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
-                            RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
-                            format_list_pdu.size(use_long_format_names));
-
-                        StaticOutStream<1600> out_stream;
-
-                        clipboard_header.emit(out_stream);
-                        format_list_pdu.emit(out_stream, use_long_format_names);
-
-                        InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-                        this->callback->send_to_mod_channel( channel_names::cliprdr
-                                    , chunk
-                                    , out_stream.get_offset()
-                                    , this->channel_flags
-                                    );
-                    }
+                    this->process_monitor_ready();
                 break;
 
     // 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -338,7 +281,7 @@
 
                 case RDPECLIP::CB_FORMAT_LIST_RESPONSE:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
+                        if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
                             LOG(LOG_WARNING, "SERVER >> CB Channel: Format List Response PDU FAILED");
                         } else {
                             LOG(LOG_INFO, "SERVER >> CB Channel: Format List Response PDU");
@@ -363,102 +306,15 @@
     // the msgFlags field of the clipHeader must contain the CB_ASCII_NAMES (0x0004) flag.
 
                 case RDPECLIP::CB_FORMAT_LIST:
-                    {
-                        const uint16_t server_message_flags = chunk.in_uint16_le();
-                        if (server_message_flags == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_WARNING, "SERVER >> CB Channel: Format List PDU FAILED");
-                        } else {
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
-                            }
-
-                            uint32_t const data_len = chunk.in_uint32_le();
-                            if (data_len > chunk.in_remain()) {
-                                LOG(LOG_WARNING, "Server Format List PDU data length(%u) longer than chunk(%zu)", data_len, chunk.in_remain());
-                            }
-
-                            bool isSharedFormat = false;
-                            uint32_t formatID = 0;
-                            std::string format_name;
-
-                            RDPECLIP::FormatListPDUEx format_list_pdu_local;
-
-                            format_list_pdu_local.recv(chunk, this->server_use_long_format_names, (server_message_flags & RDPECLIP::CB_ASCII_NAMES));
-
-                            for (size_t index = 0, count = format_list_pdu_local.num_format_names(); (index < count) && !isSharedFormat; ++index) {
-                                RDPECLIP::FormatName const & format_name_local = format_list_pdu_local.format_name(index);
-
-                                formatID = format_name_local.formatId();
-                                format_name = format_name_local.format_name();
-
-                                for (size_t j = 0; j < this->format_list_pdu.num_format_names() && !isSharedFormat; ++j) {
-                                    RDPECLIP::FormatName const & format_name_ = this->format_list_pdu.format_name(j);
-
-                                    if (format_name_.formatId() == formatID) {
-                                        this->_requestedFormatId = formatID;
-                                        this->_requestedFormatName = format_name;
-                                        isSharedFormat = true;
-                                    }
-                                }
-
-                                auto const filedescunicode = RDPECLIP::FILEGROUPDESCRIPTORW;
-//                                 LOG(LOG_INFO, "filedesc=%s  formatID=%u  format_name=%s", filedescunicode.data(), formatID, format_name);
-
-                                if ((format_name == filedescunicode.data()) && !isSharedFormat) {
-                                    this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                                    isSharedFormat = true;
-                                }
-                            }
-
-                            StaticOutStream<256> out_stream;
-                            RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
-                            formatListResponsePDUHeader.emit(out_stream);
-                            InStream chunk(out_stream.get_data(), out_stream.get_offset());
-
-                            this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunk
-                                                            , out_stream.get_offset()
-                                                            , this->channel_flags
-                                                            );
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
-                            }
-
-                            RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-                            RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
-                            StaticOutStream<32> out_stream_lock;
-                            lockClipboardDataHeader.emit(out_stream_lock);
-                            lockClipboardDataPDU.emit(out_stream_lock);
-                            InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
-
-                            this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunk_lock
-                                                            , out_stream_lock.get_offset()
-                                                            , this->channel_flags
-                                                            );
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
-                            }
-
-                            RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
-                            RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
-                            StaticOutStream<256> out_streamRequest;
-                            formatListRequestPDUHeader.emit(out_streamRequest);
-                            formatDataRequestPDU.emit(out_streamRequest);
-                            InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
-
-                            this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                            , chunkRequest
-                                                            , out_streamRequest.get_offset()
-                                                            , this->channel_flags
-                                                            );
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
-                            }
-
-                            this->paste_data_request_time = tvtime();
-                        }
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format List PDU");
                     }
+
+                    if (header.dataLen() > chunk.in_remain()) {
+                        LOG(LOG_WARNING, "Server Format List PDU data length(%u) longer than chunk(%zu)", header.dataLen(), chunk.in_remain());
+                    }
+
+                    this->process_format_list(chunk, header.msgFlags());
                 break;
 
                 case RDPECLIP::CB_LOCK_CLIPDATA:
@@ -474,280 +330,62 @@
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
-                        this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-                    }
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-
-                        if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Response PDU FAILED");
-                        } else {
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
-                            }
-
-                            this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
+                    if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
+                        LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Response PDU FAILED");
+                    } else {
+                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Response PDU");
                         }
+
+                        if(this->_requestedFormatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
+                            this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                        }
+
+                        this->_cb_buffers.sizeTotal = header.dataLen();
+
+                        this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                     }
                 break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                {
-                    if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        LOG(LOG_WARNING, "SERVER >> CB Channel: Format Data Request PDU FAILED");
-                    } else {
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
-                        }
-
-                        chunk.in_skip_bytes(4);
-                        int first_part_data_size(0);
-                        uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
-                        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-
-                        if (this->clientIOClipboardAPI->get_buffer_type_id() == chunk.in_uint32_le()) {
-
-                            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
-                            }
-
-                            switch(this->clientIOClipboardAPI->get_buffer_type_id()) {
-
-                                case RDPECLIP::CF_METAFILEPICT:
-                                {
-                                    first_part_data_size = this->clientIOClipboardAPI->get_cliboard_data_length();
-                                    if (first_part_data_size > PASTE_PIC_CONTENT_SIZE) {
-                                        first_part_data_size = PASTE_PIC_CONTENT_SIZE;
-                                    }
-                                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
-                                    auto image = this->clientIOClipboardAPI->get_image();
-
-                                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length()+RDPECLIP::METAFILE_HEADERS_SIZE);
-                                    RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
-                                          this->clientIOClipboardAPI->get_cliboard_data_length()
-                                        , image.width()
-                                        , image.height()
-                                        , safe_int(image.bits_per_pixel())
-                                        , this->arbitrary_scale
-                                    );
-                                    formatDataResponseHeader.emit(out_stream_first_part);
-                                    fdr.emit(out_stream_first_part);
-
-                                    this->callback->process_client_channel_out_data(
-                                            channel_names::cliprdr
-                                        , total_length
-                                        , out_stream_first_part
-                                        , first_part_data_size
-                                        , {
-                                            image.data(),
-                                            this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
-                                        }
-                                        , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                    );
-                                }
-                                break;
-
-                                case RDPECLIP::CF_TEXT:
-                                case RDPECLIP::CF_UNICODETEXT:
-                                {
-                                    first_part_data_size = this->clientIOClipboardAPI->get_cliboard_data_length();
-                                    if (first_part_data_size > PASTE_TEXT_CONTENT_SIZE ) {
-                                        first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
-                                    }
-
-                                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length());
-
-                                    formatDataResponseHeader.emit(out_stream_first_part);
-
-                                    this->callback->process_client_channel_out_data(
-                                        channel_names::cliprdr
-                                        , total_length
-                                        , out_stream_first_part
-                                        , first_part_data_size
-                                        , {this->clientIOClipboardAPI->get_text()
-                                        , this->clientIOClipboardAPI->get_cliboard_data_length()}
-                                        , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                    );
-                                }
-                                break;
-
-                                case ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
-                                {
-                                    int data_sent(0);
-                                    first_part_data_size = RDPECLIP::CliprdrHeader::size() + 4;
-                                    total_length = (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 8 + RDPECLIP::CliprdrHeader::size();
-                                    int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-                                    //ClipBoard_Qt::CB_out_File file = this->clientIOClipboardAPI->_items_list[0];
-
-                                    RDPECLIP::CliprdrHeader formatDataResponseHeader_FileList(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 4);
-                                    RDPECLIP::FormatDataResponsePDU_FileList fdr(this->clientIOClipboardAPI->get_citems_number());
-                                    formatDataResponseHeader_FileList.emit(out_stream_first_part);
-                                    fdr.emit(out_stream_first_part);
-
-                                    RDPECLIP::FileDescriptor fdf(
-                                          this->clientIOClipboardAPI->get_file_item_name(0)
-                                        , this->clientIOClipboardAPI->get_file_item(0).size()
-                                        , fscc::FILE_ATTRIBUTE_ARCHIVE
-                                    );
-                                    fdf.emit(out_stream_first_part);
-
-                                    if (this->clientIOClipboardAPI->get_citems_number() == 1) {
-                                        flag_first = flag_first | CHANNELS::CHANNEL_FLAG_LAST;
-                                        out_stream_first_part.out_uint32_le(0);
-                                        data_sent += 4;
-                                    }
-                                    InStream chunk_first_part( out_stream_first_part.get_data()
-                                                            , out_stream_first_part.get_offset()
-                                                            );
-
-                                    this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                                        , chunk_first_part
-                                                                        , total_length
-                                                                        , flag_first
-                                                                        );
-
-                                    data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
-                                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
-                                    }
-
-                                    for (int i = 1; i < this->clientIOClipboardAPI->get_citems_number(); i++) {
-
-                                        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
-                                        //file = this->clientIOClipboardAPI->_items_list[i];
-                                        RDPECLIP::FileDescriptor fdn(
-                                            this->clientIOClipboardAPI->get_file_item_name(i)
-                                            , this->clientIOClipboardAPI->get_file_item(i).size()
-                                            , fscc::FILE_ATTRIBUTE_ARCHIVE
-                                            );
-                                        int flag_next(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
-
-                                        fdn.emit(out_stream_next_part);
-
-                                        if (i == this->clientIOClipboardAPI->get_citems_number() - 1) {
-                                            flag_next = flag_next | CHANNELS::CHANNEL_FLAG_LAST;
-                                            out_stream_next_part.out_uint32_le(0);
-                                            data_sent += 4;
-                                        }
-
-                                        InStream chunk_next_part( out_stream_next_part.get_data()
-                                                                , out_stream_next_part.get_offset()
-                                                                );
-
-                                        this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                                        , chunk_next_part
-                                                                        , total_length
-                                                                        , flag_next
-                                                                        );
-
-                                        data_sent += RDPECLIP::FileDescriptor::size();
-                                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
-                                        }
-                                    }
-                                }
-                                break;
-
-                                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", this->clientIOClipboardAPI->get_buffer_type_id());
-                                break;
-                            }
-                        }
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: Format Data Request PDU");
                     }
-                }
+
+                    this->process_format_data_request(chunk);
                 break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                    if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU FAIL");
-                    } else {
-                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
-                        }
-
-                        chunk.in_skip_bytes(4);                 // data_len
-                        uint32_t streamID(chunk.in_uint32_le());
-                        int lindex(chunk.in_uint32_le());
-
-                        switch (chunk.in_uint32_le()) {         // flag
-
-                            case RDPECLIP::FILECONTENTS_SIZE :
-                            {
-                                StaticOutStream<32> out_stream;
-                                RDPECLIP::CliprdrHeader fileSizeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
-                                RDPECLIP::FileContentsResponse fileSize(
-                                    streamID
-                                    , this->clientIOClipboardAPI->get_file_item(lindex).size()
-                                    );
-                                fileSizeHeader.emit(out_stream);
-                                fileSize.emit(out_stream);
-
-                                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
-                                this->callback->send_to_mod_channel( channel_names::cliprdr
-                                                                , chunk_to_send
-                                                                , out_stream.get_offset()
-                                                                , this->channel_flags
-                                                                );
-
-                                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
-                                }
-                            }
-                            break;
-
-                            case RDPECLIP::FILECONTENTS_RANGE :
-                            {
-                                RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_file_item(lindex).size()+4);
-                                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
-                                RDPECLIP::FileContentsResponse fileRange(streamID);
-
-                                int first_part_data_size(this->clientIOClipboardAPI->get_file_item(lindex).size());
-                                int total_length(first_part_data_size + 12);
-                                if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
-                                    first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
-                                }
-                                fileRangeHeader.emit(out_stream_first_part);
-                                fileRange.emit(out_stream_first_part);
-
-                                this->callback->process_client_channel_out_data(
-                                    channel_names::cliprdr
-                                    , total_length
-                                    , out_stream_first_part
-                                    , first_part_data_size
-                                    , this->clientIOClipboardAPI->get_file_item(lindex)
-                                    , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
-                                );
-
-                                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
-                                }
-                            }
-                            break;
-                        }
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Resquest PDU");
                     }
+
+                    this->process_filecontents_request(chunk);
                 break;
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                        if (chunk.in_uint16_le() == RDPECLIP::CB_RESPONSE_FAIL) {
-                            LOG(LOG_WARNING, "SERVER >> CB Channel: File Contents Response PDU FAILED");
-                        } else {
-
-                            if(this->_requestedFormatId == ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW) {
-                                this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
-                            }
-
-                            this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
+                    if (header.msgFlags() == RDPECLIP::CB_RESPONSE_FAIL) {
+                        LOG(LOG_WARNING, "SERVER >> CB Channel: File Contents Response PDU FAILED");
+                    } else {
+                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU");
                         }
+
+                        if (this->_requestedFormatId == ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW) {
+                            this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS;
+                        }
+
+                        this->_cb_buffers.sizeTotal = header.dataLen();
+
+                        this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
                     }
                 break;
 
                 default:
                     if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                        LOG(LOG_INFO, "SERVER >> Process server next part PDU data");
+                        LOG(LOG_INFO, "SERVER >> Default Process server PDU data");
                     }
-                    this->process_server_clipboard_indata(flags, chunk_series, this->_cb_buffers, this->_cb_filesList);
-
+                    this->process_server_clipboard_indata(flags, chunk, this->_cb_buffers, this->_cb_filesList);
 
                 break;
             }
@@ -799,7 +437,7 @@
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
             this->_waiting_for_data = true;
-            cb_buffers.sizeTotal = chunk.in_uint32_le();
+//             cb_buffers.sizeTotal = chunk.in_uint32_le();
             cb_buffers.data = std::make_unique<uint8_t[]>(cb_buffers.sizeTotal);
         }
 
@@ -917,14 +555,15 @@
                         }
 
                         {
+                        if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                            this->_waiting_for_data = false;
+                        }
                         this->file_content_flag = RDPECLIP::FILECONTENTS_RANGE;
 
                         cb_filesList.streamIDToRequest = chunk.in_uint32_le();
 
                         StaticOutStream<64> out_streamRequest;
                         RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
-
-                        int lololo = cb_filesList.itemslist[cb_filesList.lindexToRequest].size;
 
                         RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
                                                                             , cb_filesList.lindexToRequest
@@ -956,8 +595,7 @@
 
                         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
-
-                            cb_filesList.itemslist[cb_filesList.lindexToRequest].size = chunk.in_uint32_le();
+                            cb_filesList.itemslist[cb_filesList.lindexToRequest].size = cb_buffers.sizeTotal;
                             cb_filesList.streamIDToRequest = chunk.in_uint32_le();
                             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                                 LOG(LOG_INFO, "SERVER >> CB Channel: File Contents Response PDU RANGE");
@@ -1147,4 +785,369 @@
                     );
     }
 
+    void ClientChannelCLIPRDRManager::process_monitor_ready() {
+
+        if (this->server_use_long_format_names) {
+            this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
+        }
+
+        {
+            RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, this->generalFlags);
+            RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu(this->cCapabilitiesSets);
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_CLIP_CAPS, 0,
+                clipboard_caps_pdu.size() + general_cap_set.size());
+
+            StaticOutStream<1024> out_stream;
+            header.emit(out_stream);
+            clipboard_caps_pdu.emit(out_stream);
+            general_cap_set.emit(out_stream);
+
+            const uint32_t total_length = out_stream.get_offset();
+            InStream chunk(out_stream.get_data(), total_length);
+
+            this->callback->send_to_mod_channel( channel_names::cliprdr
+                                                , chunk
+                                                , total_length
+                                                , this->channel_flags
+                                                );
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                LOG(LOG_INFO, "CLIENT >> CB Channel: Clipboard Capabilities PDU");
+            }
+        }
+
+        {
+            const bool use_long_format_names = this->server_use_long_format_names;
+            const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
+
+            RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_LIST,
+                RDPECLIP::CB_RESPONSE__NONE_ | (in_ASCII_8 ? RDPECLIP::CB_ASCII_NAMES : 0),
+                format_list_pdu.size(use_long_format_names));
+
+            StaticOutStream<1600> out_stream;
+
+            header.emit(out_stream);
+            format_list_pdu.emit(out_stream, use_long_format_names);
+
+            InStream chunk(out_stream.get_data(), out_stream.get_offset());
+
+            this->callback->send_to_mod_channel( channel_names::cliprdr
+                        , chunk
+                        , out_stream.get_offset()
+                        , this->channel_flags
+                        );
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                LOG(LOG_INFO, "CLIENT >> CB Channel: Format List PDU");
+            }
+        }
+    }
+
+    void ClientChannelCLIPRDRManager::process_capabilities(InStream & chunk) {
+
+        RDPECLIP::ClipboardCapabilitiesPDU pdu;
+        pdu.recv(chunk);
+
+        RDPECLIP::GeneralCapabilitySet pdu2;
+        pdu2.recv(chunk);
+
+        this->server_use_long_format_names = bool(pdu2.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+    }
+
+    void ClientChannelCLIPRDRManager::process_format_list(InStream & chunk, uint32_t msgFlags) {
+        bool isSharedFormat = false;
+        uint32_t formatID = 0;
+        std::string format_name;
+
+        RDPECLIP::FormatListPDUEx format_list_pdu_local;
+
+        format_list_pdu_local.recv(chunk, this->server_use_long_format_names, (msgFlags & RDPECLIP::CB_ASCII_NAMES));
+
+        for (size_t index = 0, count = format_list_pdu_local.num_format_names(); (index < count) && !isSharedFormat; ++index) {
+            RDPECLIP::FormatName const & format_name_local = format_list_pdu_local.format_name(index);
+
+            formatID = format_name_local.formatId();
+            format_name = format_name_local.format_name();
+
+            for (size_t j = 0; j < this->format_list_pdu.num_format_names() && !isSharedFormat; ++j) {
+                RDPECLIP::FormatName const & format_name_ = this->format_list_pdu.format_name(j);
+
+                if (format_name_.formatId() == formatID) {
+                    this->_requestedFormatId = formatID;
+                    this->_requestedFormatName = format_name;
+                    isSharedFormat = true;
+                }
+            }
+
+            auto const filedescunicode = RDPECLIP::FILEGROUPDESCRIPTORW;
+
+            if ((format_name == filedescunicode.data()) && !isSharedFormat) {
+                this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+                isSharedFormat = true;
+            }
+        }
+
+        StaticOutStream<256> out_stream;
+        RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
+        formatListResponsePDUHeader.emit(out_stream);
+        InStream chunk_format_list(out_stream.get_data(), out_stream.get_offset());
+
+        this->callback->send_to_mod_channel( channel_names::cliprdr
+                                        , chunk_format_list
+                                        , out_stream.get_offset()
+                                        , this->channel_flags
+                                        );
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO, "CLIENT >> CB Channel: Format List Response PDU");
+        }
+
+        RDPECLIP::CliprdrHeader lockClipboardDataHeader(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::LockClipboardDataPDU lockClipboardDataPDU(0);
+        StaticOutStream<32> out_stream_lock;
+        lockClipboardDataHeader.emit(out_stream_lock);
+        lockClipboardDataPDU.emit(out_stream_lock);
+        InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
+
+        this->callback->send_to_mod_channel( channel_names::cliprdr
+                                        , chunk_lock
+                                        , out_stream_lock.get_offset()
+                                        , this->channel_flags
+                                        );
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO, "CLIENT >> CB Channel: Lock Clipboard Data PDU");
+        }
+
+        RDPECLIP::CliprdrHeader formatListRequestPDUHeader(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 4);
+        RDPECLIP::FormatDataRequestPDU formatDataRequestPDU(formatID);
+        StaticOutStream<256> out_streamRequest;
+        formatListRequestPDUHeader.emit(out_streamRequest);
+        formatDataRequestPDU.emit(out_streamRequest);
+        InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
+
+        this->callback->send_to_mod_channel( channel_names::cliprdr
+                                        , chunkRequest
+                                        , out_streamRequest.get_offset()
+                                        , this->channel_flags
+                                        );
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Request PDU");
+        }
+
+        this->paste_data_request_time = tvtime();
+    }
+
+    void ClientChannelCLIPRDRManager::process_format_data_request(InStream & chunk) {
+        int first_part_data_size(0);
+        uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
+        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
+
+        if (this->clientIOClipboardAPI->get_buffer_type_id() == chunk.in_uint32_le()) {
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
+            }
+
+            switch(this->clientIOClipboardAPI->get_buffer_type_id()) {
+
+                case RDPECLIP::CF_METAFILEPICT:
+                {
+                    first_part_data_size = this->clientIOClipboardAPI->get_cliboard_data_length();
+                    if (first_part_data_size > PASTE_PIC_CONTENT_SIZE) {
+                        first_part_data_size = PASTE_PIC_CONTENT_SIZE;
+                    }
+                    total_length += RDPECLIP::METAFILE_HEADERS_SIZE;
+                    auto image = this->clientIOClipboardAPI->get_image();
+
+                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length()+RDPECLIP::METAFILE_HEADERS_SIZE);
+                    RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(
+                            this->clientIOClipboardAPI->get_cliboard_data_length()
+                        , image.width()
+                        , image.height()
+                        , safe_int(image.bits_per_pixel())
+                        , this->arbitrary_scale
+                    );
+                    formatDataResponseHeader.emit(out_stream_first_part);
+                    fdr.emit(out_stream_first_part);
+
+                    this->callback->process_client_channel_out_data(
+                            channel_names::cliprdr
+                        , total_length
+                        , out_stream_first_part
+                        , first_part_data_size
+                        , {
+                            image.data(),
+                            this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender::SIZE
+                        }
+                        , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                    );
+                }
+                break;
+
+                case RDPECLIP::CF_TEXT:
+                case RDPECLIP::CF_UNICODETEXT:
+                {
+                    first_part_data_size = this->clientIOClipboardAPI->get_cliboard_data_length();
+                    if (first_part_data_size > PASTE_TEXT_CONTENT_SIZE ) {
+                        first_part_data_size = PASTE_TEXT_CONTENT_SIZE;
+                    }
+
+                    RDPECLIP::CliprdrHeader formatDataResponseHeader(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_cliboard_data_length());
+
+                    formatDataResponseHeader.emit(out_stream_first_part);
+
+                    this->callback->process_client_channel_out_data(
+                        channel_names::cliprdr
+                        , total_length
+                        , out_stream_first_part
+                        , first_part_data_size
+                        , {this->clientIOClipboardAPI->get_text()
+                        , this->clientIOClipboardAPI->get_cliboard_data_length()}
+                        , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                    );
+                }
+                break;
+
+                case ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW:
+                {
+                    int data_sent(0);
+                    first_part_data_size = RDPECLIP::CliprdrHeader::size() + 4;
+                    total_length = (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 8 + RDPECLIP::CliprdrHeader::size();
+                    int flag_first(CHANNELS::CHANNEL_FLAG_FIRST |CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+                    //ClipBoard_Qt::CB_out_File file = this->clientIOClipboardAPI->_items_list[0];
+
+                    RDPECLIP::CliprdrHeader formatDataResponseHeader_FileList(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (RDPECLIP::FileDescriptor::size() * this->clientIOClipboardAPI->get_citems_number()) + 4);
+                    RDPECLIP::FormatDataResponsePDU_FileList fdr(this->clientIOClipboardAPI->get_citems_number());
+                    formatDataResponseHeader_FileList.emit(out_stream_first_part);
+                    fdr.emit(out_stream_first_part);
+
+                    RDPECLIP::FileDescriptor fdf(
+                            this->clientIOClipboardAPI->get_file_item_name(0)
+                        , this->clientIOClipboardAPI->get_file_item(0).size()
+                        , fscc::FILE_ATTRIBUTE_ARCHIVE
+                    );
+                    fdf.emit(out_stream_first_part);
+
+                    if (this->clientIOClipboardAPI->get_citems_number() == 1) {
+                        flag_first = flag_first | CHANNELS::CHANNEL_FLAG_LAST;
+                        out_stream_first_part.out_uint32_le(0);
+                        data_sent += 4;
+                    }
+                    InStream chunk_first_part( out_stream_first_part.get_data()
+                                            , out_stream_first_part.get_offset()
+                                            );
+
+                    this->callback->send_to_mod_channel( channel_names::cliprdr
+                                                        , chunk_first_part
+                                                        , total_length
+                                                        , flag_first
+                                                        );
+
+                    data_sent += first_part_data_size + RDPECLIP::FileDescriptor::size();
+                    if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                        LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
+                    }
+
+                    for (int i = 1; i < this->clientIOClipboardAPI->get_citems_number(); i++) {
+
+                        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
+                        //file = this->clientIOClipboardAPI->_items_list[i];
+                        RDPECLIP::FileDescriptor fdn(
+                            this->clientIOClipboardAPI->get_file_item_name(i)
+                            , this->clientIOClipboardAPI->get_file_item(i).size()
+                            , fscc::FILE_ATTRIBUTE_ARCHIVE
+                            );
+                        int flag_next(CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
+
+                        fdn.emit(out_stream_next_part);
+
+                        if (i == this->clientIOClipboardAPI->get_citems_number() - 1) {
+                            flag_next = flag_next | CHANNELS::CHANNEL_FLAG_LAST;
+                            out_stream_next_part.out_uint32_le(0);
+                            data_sent += 4;
+                        }
+
+                        InStream chunk_next_part( out_stream_next_part.get_data()
+                                                , out_stream_next_part.get_offset()
+                                                );
+
+                        this->callback->send_to_mod_channel( channel_names::cliprdr
+                                                        , chunk_next_part
+                                                        , total_length
+                                                        , flag_next
+                                                        );
+
+                        data_sent += RDPECLIP::FileDescriptor::size();
+                        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                            LOG(LOG_INFO, "CLIENT >> CB Channel: Data PDU %d/%u", data_sent, total_length);
+                        }
+                    }
+                }
+                break;
+
+                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", this->clientIOClipboardAPI->get_buffer_type_id());
+                break;
+            }
+        }
+    }
+
+    void ClientChannelCLIPRDRManager::process_filecontents_request(InStream & chunk) {
+        uint32_t streamID(chunk.in_uint32_le());
+        int lindex(chunk.in_uint32_le());
+
+        switch (chunk.in_uint32_le()) {         // flag
+
+            case RDPECLIP::FILECONTENTS_SIZE :
+            {
+                StaticOutStream<32> out_stream;
+                RDPECLIP::CliprdrHeader fileSizeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
+                RDPECLIP::FileContentsResponseSize fileSize(
+                    streamID
+                    , this->clientIOClipboardAPI->get_file_item(lindex).size()
+                    );
+                fileSizeHeader.emit(out_stream);
+                fileSize.emit(out_stream);
+
+                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                this->callback->send_to_mod_channel( channel_names::cliprdr
+                                                , chunk_to_send
+                                                , out_stream.get_offset()
+                                                , this->channel_flags
+                                                );
+
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU SIZE");
+                }
+            }
+            break;
+
+            case RDPECLIP::FILECONTENTS_RANGE :
+            {
+                RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->clientIOClipboardAPI->get_file_item(lindex).size()+4);
+                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
+                RDPECLIP::FileContentsResponseRange fileRange(streamID);
+
+                int first_part_data_size(this->clientIOClipboardAPI->get_file_item(lindex).size());
+                int total_length(first_part_data_size + 12);
+                if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
+                    first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
+                }
+                fileRangeHeader.emit(out_stream_first_part);
+                fileRange.emit(out_stream_first_part);
+
+                this->callback->process_client_channel_out_data(
+                    channel_names::cliprdr
+                    , total_length
+                    , out_stream_first_part
+                    , first_part_data_size
+                    , this->clientIOClipboardAPI->get_file_item(lindex)
+                    , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
+                );
+
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO, "CLIENT >> CB Channel: File Contents Response PDU RANGE");
+                }
+            }
+            break;
+        }
+    }
 // };

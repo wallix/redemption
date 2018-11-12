@@ -21,246 +21,224 @@
 #define RED_TEST_MODULE TestGCC
 #include "system/redemption_unit_tests.hpp"
 
+#include "utils/sugar/array_view.hpp"
 #include "utils/sugar/cast.hpp"
 #include "core/RDP/clipboard.hpp"
 
 
-RED_AUTO_TEST_CASE(TestFormatDataResponsePDU)
+RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)
 {
-    {
-        //  emit_fileList
-        StaticOutStream<1024> ou_stream_fileList;
+    StaticOutStream<1024> ou_stream_fileList;
 
-        uint8_t UTF16nameData[20];
-        std::string nameUTF8("abcde.txt");
-        int UTF16nameSize = ::UTF8toUTF16(byte_ptr_cast(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
-        std::string nameUTF16 = std::string(char_ptr_cast(UTF16nameData), UTF16nameSize);
-        std::string name = nameUTF16 ;
-        //uint64_t size = 17 ;
-        const int cItems = 1;
+    const int cItems = 1;
+    RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
+    fdr.emit(ou_stream_fileList);
 
-        RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
-        fdr.emit(ou_stream_fileList);
+    RED_CHECK_MEM_C(stream_to_avchar(ou_stream_fileList), "\x01\x00\x00\x00");
+}
 
-        const uint8_t file_list_data[] =
-            "\x01\x00\x00\x00";
+RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFileList)
+{
+    //  recv_fileList
+    auto file_list_data =
+        "\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
+        "\x11\x00\x00\x00\x61\x00\x62\x00\x63\x00\x64\x00\x65\x00\x2e\x00\x74\x00\x78\x00"
+        "\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00"_av;
 
-        std::string const out_data(char_ptr_cast(ou_stream_fileList.get_data()), 4);
-        std::string const expected(char_ptr_cast(file_list_data), 4);
-        RED_CHECK_EQUAL(expected, out_data);
-    }
+    InStream in_stream_fileList_to_recv(file_list_data);
+    RDPECLIP::FormatDataResponsePDU_FileList fdr_recv;
+    fdr_recv.recv(in_stream_fileList_to_recv);
 
+    RED_CHECK_EQUAL(fdr_recv.cItems, 1);
+}
 
-    {
-        //  recv_fileList
-        uint8_t UTF16nameData[20];
-        std::string nameUTF8("abcde.txt");
-        int UTF16nameSize = ::UTF8toUTF16(byte_ptr_cast(nameUTF8.c_str()), UTF16nameData, nameUTF8.size() *2);
-        std::string nameUTF16 = std::string(char_ptr_cast(UTF16nameData), UTF16nameSize);
+RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
+{
+    // emit_metaFilePic
+    StaticOutStream<1600> ou_stream_metaFilePic;
 
-        std::string name = nameUTF16 ;
-        const int cItems = 1;
+    int height=73;
+    int width=220;
+    int bpp=24;
+    int data_lenght = height * width * 3;
+    const double ARBITRARY_SCALE = 40;
 
-        const uint8_t file_list_data[] =
-            "\x01\x00\x00\x00\x64\x40\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x04\xb5\x9f\x37\xa0\xe2\xd1\x01\x00\x00\x00\x00"
-            "\x11\x00\x00\x00\x61\x00\x62\x00\x63\x00\x64\x00\x65\x00\x2e\x00\x74\x00\x78\x00"
-            "\x74\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00";
+    RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
+    fdr.emit(ou_stream_metaFilePic);
 
-        InStream in_stream_fileList_to_recv(file_list_data, 608);
-        RDPECLIP::FormatDataResponsePDU_FileList fdr_recv;
-        fdr_recv.recv(in_stream_fileList_to_recv);
+    auto metafilepic_out_data = cstr_array_view(
+        "\x08\x00\x00\x00\x60\x22\x00\x00"
+        "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
+        "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
+        "\x00\x00\x0c\x02\xb7\xff\xdc\x00\x05\x00\x00\x00\x0b\x02\x00\x00"
+        "\x00\x00\x3b\x5e\x00\x00\x41\x0b\x20\x00\xcc\x00\x49\x00\xdc\x00"
+        "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
+        "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
+        "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00");
 
-        RED_CHECK_EQUAL(fdr_recv.cItems, cItems);
-    }
+    RED_CHECK_MEM(metafilepic_out_data, stream_to_avu8(ou_stream_metaFilePic));
+}
 
+RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
+{
+    // recv_metaFilePic
 
-    {
-        // emit_metaFilePic
-        StaticOutStream<1600> ou_stream_metaFilePic;
+    int height=73;
+    uint16_t negative_height16 = 0xFFFF - height + 1;
+    uint32_t negative_height32 = 0xFFFFFFFF - height + 1;
+    int width=220;
+    int bpp=24;
+    int data_lenght = height * width * 3;
+    const double ARBITRARY_SCALE = 40;
+    const char metafilepic_out_data[] =
+//         // header
+//         "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
+//         "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
+//         "\xb6\xbc\x00\x00" // dataLen : 48310
 
-        int height=73;
-        int width=220;
-        int bpp=24;
-        int data_lenght = height * width * 3;
-        const double ARBITRARY_SCALE = 40;
+        // 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
+        "\x08\x00\x00\x00" // mappingMode
+        "\x60\x22\x00\x00"                              // xExt
+        "\x68\x0b\x00\x00" // yExt
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr(data_lenght, width, height, bpp, ARBITRARY_SCALE);
-        fdr.emit(ou_stream_metaFilePic);
+        // metaFileData
+        "\x01\x00" // meta_header_type : 1 MEMORYMETAFILE
+        "\x09\x00" // meta_header_size : 9 = 18 bytes
+        "\x00\x03" // version 0x300 : WMF with DIBS
 
-        auto metafilepic_out_data = cstr_array_view(
-            "\x08\x00\x00\x00\x60\x22\x00\x00"
-            "\x68\x0b\x00\x00\x01\x00\x09\x00\x00\x03\x55\x5e\x00\x00\x00\x00"
-            "\x3b\x5e\x00\x00\x00\x00\x04\x00\x00\x00\x03\x01\x08\x00\x05\x00"
-            "\x00\x00\x0c\x02\xb7\xff\xdc\x00\x05\x00\x00\x00\x0b\x02\x00\x00"
-            "\x00\x00\x3b\x5e\x00\x00\x41\x0b\x20\x00\xcc\x00\x49\x00\xdc\x00"
-            "\x00\x00\x00\x00\xb7\xff\xdc\x00\x00\x00\x00\x00\x28\x00\x00\x00"
-            "\xdc\x00\x00\x00\xb7\xff\xff\xff\x01\x00\x18\x00\x00\x00\x00\x00"
-            "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00");
+        "\x55\x5e\x00\x00" // 0X5e55 * 2 = 24149 * 2 = 48298 bytes
 
-        RED_CHECK_MEM(metafilepic_out_data, stream_to_avu8(ou_stream_metaFilePic));
-    }
+        "\x00\x00" // NumberOfObjects : 0 objects in metafile
+        "\x3b\x5e\x00\x00" // MaxRecord : 0x5e3b = 24123 : 24123 * 2 = 48246 bytes
 
+        "\x00\x00" // NumberOfMembers (not used)
 
-    {
-        // recv_metaFilePic
+        // Records
+        "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
+        "\x03\x01"         // 0x0103 : META_SETMAPMODE
+        "\x08\x00"         // mappingMode: record specific placeholder
 
-        int height=73;
-        uint16_t negative_height16 = 0xFFFF - height + 1;
-        uint32_t negative_height32 = 0xFFFFFFFF - height + 1;
-        int width=220;
-        int bpp=24;
-        int data_lenght = height * width * 3;
-        const double ARBITRARY_SCALE = 40;
-        const char metafilepic_out_data[] =
-//             // header
-//             "\x05\x00" // msgType  : 5 = CB_FORMAT_DATA_RESPONSE
-//             "\x01\x00" // MsgFlags : 1 = CB_RESPONSE_OK
-//             "\xb6\xbc\x00\x00" // dataLen : 48310
+        "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
+        "\x0c\x02"         // META_SETWINDOWEXT
+        "\xb7\xff"         // height : -73 pixels (73 pixels upside down)
+        "\xdc\x00"         // width :  220 pixels
 
-            // 2.2.5.2.1 Packed Metafile Payload (CLIPRDR_MFPICT)
-            "\x08\x00\x00\x00" // mappingMode
-            "\x60\x22\x00\x00"                              // xExt
-            "\x68\x0b\x00\x00" // yExt
+        "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
+        "\x0b\x02"         // META_SETWINDOWORG
+        "\x00\x00"         // Origin y = 0
+        "\x00\x00"         // Origin x = 0
 
-            // metaFileData
-            "\x01\x00" // meta_header_type : 1 MEMORYMETAFILE
-            "\x09\x00" // meta_header_size : 9 = 18 bytes
-            "\x00\x03" // version 0x300 : WMF with DIBS
+        // META_DIBSTRETCHBLT This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
+        "\x3b\x5e\x00\x00" // RecordSize 0x5e3b = 24123 * 2 =  48246
+        "\x41\x0b"         // META_DIBSTRETCHBLT
+        "\x20\x00\xcc\x00" // rdParam (raster operation) : 0x00CC0020 : SRCCOPY
+        "\x49\x00"         // SrcHeight : 73
+        "\xdc\x00"         // SrcWidth : 220
+        "\x00\x00"         // YSrc : 0
+        "\x00\x00"         // XSrc : 0
+        "\xb7\xff"         // DstHeight : -73
+        "\xdc\x00"         // DstWidth : 220
+        "\x00\x00"         // YDest 0
+        "\x00\x00"         // XDest 0
 
-            "\x55\x5e\x00\x00" // 0X5e55 * 2 = 24149 * 2 = 48298 bytes
+        // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
+            // BitMapInfoHeader
+        "\x28\x00\x00\x00" // HeaderSize = 40 bytes
+        "\xdc\x00\x00\x00" // Width : 220 pixels
+        "\xb7\xff\xff\xff" // Height : -73 pixels
+        "\x01\x00"         // Planes : 0x0001
+        "\x18\x00"         // BitCount (depth) : 24 bpp
+        "\x00\x00\x00\x00" // Compression : 0
+        "\x34\xbc\x00\x00" // ImageSize : 48180 bytes
+        "\x00\x00\x00\x00" // XPelsPerMeter : 0
+        "\x00\x00\x00\x00" // YPelsPerMeter : 0
+        "\x00\x00\x00\x00" // ColorUsed : 0
+        "\x00\x00\x00\x00" // ColorImportant : 0
+        ;
 
-            "\x00\x00" // NumberOfObjects : 0 objects in metafile
-            "\x3b\x5e\x00\x00" // MaxRecord : 0x5e3b = 24123 : 24123 * 2 = 48246 bytes
+    InStream stream(metafilepic_out_data, 124);
 
-            "\x00\x00" // NumberOfMembers (not used)
+    RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
+    fdr.recv(stream);
 
-            // Records
-            "\x04\x00\x00\x00" // RecordSize 4 = 8 bytes
-            "\x03\x01"         // 0x0103 : META_SETMAPMODE
-            "\x08\x00"         // mappingMode: record specific placeholder
+    RED_CHECK_EQUAL(fdr.mappingMode, RDPECLIP::MM_ANISOTROPIC);
+    RED_CHECK_EQUAL(fdr.xExt, width * ARBITRARY_SCALE);
+    RED_CHECK_EQUAL(fdr.yExt, height * ARBITRARY_SCALE);
 
-            "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
-            "\x0c\x02"         // META_SETWINDOWEXT
-            "\xb7\xff"         // height : -73 pixels (73 pixels upside down)
-            "\xdc\x00"         // width :  220 pixels
+    MFF::MetaHeader & metaHeader = fdr.metaHeader;
+    RED_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
+    RED_CHECK_EQUAL(metaHeader.headerSize, 9);
+    RED_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
+    RED_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
+    RED_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
+    RED_CHECK_EQUAL(metaHeader.maxRecord, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+    RED_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
 
-            "\x05\x00\x00\x00" // RecordSize 0x5 = 5 * 2 =  10
-            "\x0b\x02"         // META_SETWINDOWORG
-            "\x00\x00"         // Origin y = 0
-            "\x00\x00"         // Origin x = 0
+    MFF::MetaSetWindowExt & metaSetWindowExt = fdr.metaSetWindowExt;
+    RED_CHECK_EQUAL(metaSetWindowExt.height, negative_height16);
+    RED_CHECK_EQUAL(metaSetWindowExt.width, width);
 
-            // META_DIBSTRETCHBLT This record specifies the transfer of a block of pixels in device-independent format according to a raster operation, with possible expansion or contraction.
-            "\x3b\x5e\x00\x00" // RecordSize 0x5e3b = 24123 * 2 =  48246
-            "\x41\x0b"         // META_DIBSTRETCHBLT
-            "\x20\x00\xcc\x00" // rdParam (raster operation) : 0x00CC0020 : SRCCOPY
-            "\x49\x00"         // SrcHeight : 73
-            "\xdc\x00"         // SrcWidth : 220
-            "\x00\x00"         // YSrc : 0
-            "\x00\x00"         // XSrc : 0
-            "\xb7\xff"         // DstHeight : -73
-            "\xdc\x00"         // DstWidth : 220
-            "\x00\x00"         // YDest 0
-            "\x00\x00"         // XDest 0
+    MFF::MetaSetWindowOrg & metaSetWindowOrg = fdr.metaSetWindowOrg;
+    RED_CHECK_EQUAL(metaSetWindowOrg.yOrg, 0);
+    RED_CHECK_EQUAL(metaSetWindowOrg.xOrg, 0);
 
-            // DeviceIndependentBitmap  2.2.2.9 DeviceIndependentBitmap Object
-                // BitMapInfoHeader
-            "\x28\x00\x00\x00" // HeaderSize = 40 bytes
-            "\xdc\x00\x00\x00" // Width : 220 pixels
-            "\xb7\xff\xff\xff" // Height : -73 pixels
-            "\x01\x00"         // Planes : 0x0001
-            "\x18\x00"         // BitCount (depth) : 24 bpp
-            "\x00\x00\x00\x00" // Compression : 0
-            "\x34\xbc\x00\x00" // ImageSize : 48180 bytes
-            "\x00\x00\x00\x00" // XPelsPerMeter : 0
-            "\x00\x00\x00\x00" // YPelsPerMeter : 0
-            "\x00\x00\x00\x00" // ColorUsed : 0
-            "\x00\x00\x00\x00" // ColorImportant : 0
-            ;
+    MFF::MetaSetMapMod & metaSetMapMod = fdr.metaSetMapMod;
+    RED_CHECK_EQUAL(metaSetMapMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
 
-        InStream stream(metafilepic_out_data, 124);
+    MFF::DibStretchBLT & dibStretchBLT = fdr.dibStretchBLT;
+    RED_CHECK_EQUAL(dibStretchBLT.recordSize, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
+    RED_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
+    RED_CHECK_EQUAL(dibStretchBLT.rasterOperation, RDPECLIP::SRCCOPY);
+    RED_CHECK_EQUAL(dibStretchBLT.srcHeight, height);
+    RED_CHECK_EQUAL(dibStretchBLT.srcWidth, width);
+    RED_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
+    RED_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
+    RED_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
+    RED_CHECK_EQUAL(dibStretchBLT.destWidth, width);
+    RED_CHECK_EQUAL(dibStretchBLT.yDest, 0);
+    RED_CHECK_EQUAL(dibStretchBLT.xDest, 0);
 
-        RDPECLIP::FormatDataResponsePDU_MetaFilePic fdr;
-        fdr.recv(stream);
-
-        RED_CHECK_EQUAL(fdr.mappingMode, RDPECLIP::MM_ANISOTROPIC);
-        RED_CHECK_EQUAL(fdr.xExt, width * ARBITRARY_SCALE);
-        RED_CHECK_EQUAL(fdr.yExt, height * ARBITRARY_SCALE);
-
-        MFF::MetaHeader & metaHeader = fdr.metaHeader;
-        RED_CHECK_EQUAL(metaHeader.type, MFF::MEMORYMETAFILE);
-        RED_CHECK_EQUAL(metaHeader.headerSize, 9);
-        RED_CHECK_EQUAL(metaHeader.version, MFF::METAVERSION300);
-        RED_CHECK_EQUAL(metaHeader.size, (data_lenght/2) + RDPECLIP::METAFILE_WORDS_HEADER_SIZE);
-        RED_CHECK_EQUAL(metaHeader.numberOfObjects, 0);
-        RED_CHECK_EQUAL(metaHeader.maxRecord, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        RED_CHECK_EQUAL(metaHeader.numberOfMembers, 0);
-
-        MFF::MetaSetWindowExt & metaSetWindowExt = fdr.metaSetWindowExt;
-        RED_CHECK_EQUAL(metaSetWindowExt.height, negative_height16);
-        RED_CHECK_EQUAL(metaSetWindowExt.width, width);
-
-        MFF::MetaSetWindowOrg & metaSetWindowOrg = fdr.metaSetWindowOrg;
-        RED_CHECK_EQUAL(metaSetWindowOrg.yOrg, 0);
-        RED_CHECK_EQUAL(metaSetWindowOrg.xOrg, 0);
-
-        MFF::MetaSetMapMod & metaSetMapMod = fdr.metaSetMapMod;
-        RED_CHECK_EQUAL(metaSetMapMod.mappingMode, RDPECLIP::MM_ANISOTROPIC);
-
-        MFF::DibStretchBLT & dibStretchBLT = fdr.dibStretchBLT;
-        RED_CHECK_EQUAL(dibStretchBLT.recordSize, (data_lenght + RDPECLIP::META_DIBSTRETCHBLT_HEADER_SIZE)/2);
-        RED_CHECK_EQUAL(dibStretchBLT.recordFunction, MFF::META_DIBSTRETCHBLT);
-        RED_CHECK_EQUAL(dibStretchBLT.rasterOperation, RDPECLIP::SRCCOPY);
-        RED_CHECK_EQUAL(dibStretchBLT.srcHeight, height);
-        RED_CHECK_EQUAL(dibStretchBLT.srcWidth, width);
-        RED_CHECK_EQUAL(dibStretchBLT.ySrc, 0);
-        RED_CHECK_EQUAL(dibStretchBLT.xSrc, 0);
-        RED_CHECK_EQUAL(dibStretchBLT.destHeight, negative_height16);
-        RED_CHECK_EQUAL(dibStretchBLT.destWidth, width);
-        RED_CHECK_EQUAL(dibStretchBLT.yDest, 0);
-        RED_CHECK_EQUAL(dibStretchBLT.xDest, 0);
-
-        MFF::DibStretchBLT::BitmapInfoHeader & bitmapInfoHeader = dibStretchBLT.bitmapInfoHeader;
-        RED_CHECK_EQUAL(bitmapInfoHeader.headerSize, 40);
-        RED_CHECK_EQUAL(bitmapInfoHeader.height, negative_height32);
-        RED_CHECK_EQUAL(bitmapInfoHeader.width, width);
-        RED_CHECK_EQUAL(bitmapInfoHeader.planes, 0x0001);
-        RED_CHECK_EQUAL(bitmapInfoHeader.bitCount, bpp);
-        RED_CHECK_EQUAL(bitmapInfoHeader.compression, 0);
-        RED_CHECK_EQUAL(bitmapInfoHeader.imageSize, data_lenght);
-        RED_CHECK_EQUAL(bitmapInfoHeader.xPelsPerMeter, 0);
-        RED_CHECK_EQUAL(bitmapInfoHeader.yPelsPerMeter, 0);
-        RED_CHECK_EQUAL(bitmapInfoHeader.colorUsed, 0);
-        RED_CHECK_EQUAL(bitmapInfoHeader.colorImportant, 0);
-    }
+    MFF::DibStretchBLT::BitmapInfoHeader & bitmapInfoHeader = dibStretchBLT.bitmapInfoHeader;
+    RED_CHECK_EQUAL(bitmapInfoHeader.headerSize, 40);
+    RED_CHECK_EQUAL(bitmapInfoHeader.height, negative_height32);
+    RED_CHECK_EQUAL(bitmapInfoHeader.width, width);
+    RED_CHECK_EQUAL(bitmapInfoHeader.planes, 0x0001);
+    RED_CHECK_EQUAL(bitmapInfoHeader.bitCount, bpp);
+    RED_CHECK_EQUAL(bitmapInfoHeader.compression, 0);
+    RED_CHECK_EQUAL(bitmapInfoHeader.imageSize, data_lenght);
+    RED_CHECK_EQUAL(bitmapInfoHeader.xPelsPerMeter, 0);
+    RED_CHECK_EQUAL(bitmapInfoHeader.yPelsPerMeter, 0);
+    RED_CHECK_EQUAL(bitmapInfoHeader.colorUsed, 0);
+    RED_CHECK_EQUAL(bitmapInfoHeader.colorImportant, 0);
 }
 
 
@@ -409,8 +387,8 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
 
 
-RED_AUTO_TEST_CASE(TestFormatListPDU) {
-
+RED_AUTO_TEST_CASE(TestFormatListPDU)
+{
     RDPECLIP::FormatListPDUEx format_list_pdu;
     format_list_pdu.add_format_name(48026, "FileContents");
     format_list_pdu.add_format_name(48025, "FileGroupDescriptorW");
@@ -445,9 +423,8 @@ RED_AUTO_TEST_CASE(TestFormatListPDU) {
 }
 
 
-RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
-
-    { // FILECONTENTS_RANGE emit TEST
+RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
+{
     // inData
     uint32_t ID = 1;
     uint32_t index = 3;
@@ -465,10 +442,10 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
         "\x00\x00\x00\x00\x01\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
-    }
+}
 
-
-    { // FILECONTENTS_RANGE recv TEST
+RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeRecv)
+{
     // inData
     uint32_t ID = 1;
     uint32_t index = 3;
@@ -487,12 +464,11 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RED_CHECK_EQUAL(fileContentsRequest.dwFlags() , flag);
     RED_CHECK_EQUAL(fileContentsRequest.lindex() , index);
     RED_CHECK_EQUAL(fileContentsRequest.position(), size);
+}
 
-    }
-
-
-    { // FILECONTENTS_SIZE emit TEST
-        // inData
+RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeEmit)
+{
+    // inData
     uint32_t ID = 1;
     uint32_t index = 3;
     uint32_t flag = RDPECLIP::FILECONTENTS_SIZE;
@@ -508,10 +484,10 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
         "\x07\x00\x00\x00\x01\x00\x00\x00");
 
     RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
-    }
+}
 
-
-    { // FILECONTENTS_SIZE recv TEST
+RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
+{
     // inData
     uint32_t ID = 1;
     uint32_t index = 3;
@@ -531,10 +507,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDU) {
     RED_CHECK_EQUAL(fileContentsRequest.dwFlags() , flag);
     RED_CHECK_EQUAL(fileContentsRequest.lindex()  , index);
     RED_CHECK_EQUAL(fileContentsRequest.position(), size);
-
-    }
 }
-
 
 RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
 {
@@ -713,20 +686,20 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
 RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 {
-    const bool use_long_format_names = false;
+    const bool use_long_format_names_false = false;
 
     {
         RDPECLIP::FormatListPDUEx format_list_pdu;
 
         format_list_pdu.add_format_name(32000, "Test");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -745,13 +718,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
         format_list_pdu.add_format_name(32000, "Test1");
         format_list_pdu.add_format_name(32001, "Test2");
 
-        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(72, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -774,13 +747,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "RedemptionClipboard");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -797,13 +770,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "RédemptionClipboard");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"
@@ -823,13 +796,13 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
 
         format_list_pdu.add_format_name(32000, "0123456789012345678901234567890123456789");
 
-        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
+        RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names_false));
 
-        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
+        RED_CHECK(format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names_false));
 
         StaticOutStream<512> out_stream;
 
-        format_list_pdu.emit(out_stream, use_long_format_names);
+        format_list_pdu.emit(out_stream, use_long_format_names_false);
 
         auto exp_data = cstr_array_view(
                 "\x00\x7D\x00\x00"

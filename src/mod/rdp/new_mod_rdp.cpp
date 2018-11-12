@@ -39,5 +39,5 @@ std::unique_ptr<mod_api> new_mod_rdp(
 {
     return std::make_unique<mod_rdp>(
         trans, session_reactor, front, info, redir_info, gen, timeobj,
-        mod_rdp_params, authentifier, report_message, std::move(vars), metrics);
+        mod_rdp_params, authentifier, report_message, vars, metrics);
 }

@@ -72,21 +72,21 @@ inline std::chrono::microseconds operator-(timeval const & ultimatum, timeval co
          - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec);
 }
 
-// TODO: should not exist, adding two dates is meaningless
-inline timeval operator+(timeval const & a, timeval const & b)
-{
-    timeval result;
+//// TODO: should not exist, adding two dates is meaningless
+//inline timeval operator+(timeval const & a, timeval const & b)
+//{
+//    timeval result;
 
-    result.tv_sec  = a.tv_sec  + b.tv_sec;
-    result.tv_usec = a.tv_usec + b.tv_usec;
-    if (result.tv_usec >= 1000000LL) {
-        result.tv_sec++;
+//    result.tv_sec  = a.tv_sec  + b.tv_sec;
+//    result.tv_usec = a.tv_usec + b.tv_usec;
+//    if (result.tv_usec >= 1000000LL) {
+//        result.tv_sec++;
 
-        result.tv_usec -= 1000000LL;
-    }
+//        result.tv_usec -= 1000000LL;
+//    }
 
-    return result;
-}
+//    return result;
+//}
 
 inline timeval to_timeval(std::chrono::seconds const& seconds)
 {

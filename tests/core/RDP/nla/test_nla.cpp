@@ -190,10 +190,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
             auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;
             vec.resize((std::size(user) - 1) * 2);
-            UTF8toUTF16(user, vec.data(), vec.size());
+            UTF8toUTF16(std::string(char_ptr_cast(user)), vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.User), vec);
             vec.resize((std::size(domain) - 1) * 2);
-            UTF8toUTF16(domain, vec.data(), vec.size());
+            UTF8toUTF16(std::string(char_ptr_cast(domain)), vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
             identity.SetPasswordFromUtf8(pass);
             return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;

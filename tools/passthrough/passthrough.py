@@ -22,32 +22,17 @@ import socket
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 DEBUG = False
-def mdecode(item):
-    if not item:
-        return ""
-    try:
-        item = item.decode('utf8')
-    except:
-        pass
-    return item
+
 def rvalue(value):
-    if value == MAGICASK:
-        return u''
-    return value
-def truncat_string(item, maxsize=20):
-    return (item[:maxsize] + '..') if len(item) > maxsize else item
+    if value:
+        return value
+    return MAGICASK
 
 class AuthentifierSocketClosed(Exception):
     pass
 
-################################################################################
 class ACLPassthrough():
-################################################################################
-
-    # __INIT__
-    #===============================================================================
     def __init__(self, conn, addr):
-    #===============================================================================
         self.cn = u'Unknown'
 
         self.proxy_conx  = conn
@@ -80,7 +65,7 @@ class ACLPassthrough():
             Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
         # replace MAGICASK with ASK and send data on the wire
         _list = []
-        for key, value in data.iteritems():
+        for key, value in data.items():
             self.shared[key] = value
             if value != MAGICASK:
                 _pair = u"%s\n!%s\n" % (key, value)
@@ -97,7 +82,7 @@ class ACLPassthrough():
         _len = len(_r_data)
 
         _chunk_size = 1024 * 64 - 1
-        _chunks = _len / _chunk_size
+        _chunks = _len // _chunk_size
 
         if _chunks == 0:
             self.proxy_conx.sendall(pack(">L", _len))
@@ -123,15 +108,15 @@ class ACLPassthrough():
             try:
                 _packet_size, = unpack(">L", self.proxy_conx.recv(4))
                 _data = self.proxy_conx.recv(_packet_size)
-            except Exception, e:
+            except Exception as e:
                 if DEBUG:
                     import traceback
                     Logger().info(u"Socket Closed : %s" % traceback.format_exc(e))
                 raise AuthentifierSocketClosed()
             _data = _data.decode('utf-8')
-        except AuthentifierSocketClosed, e:
+        except AuthentifierSocketClosed as e:
             raise
-        except Exception, e:
+        except Exception as e:
             raise AuthentifierSocketClosed()
 
         if _status:
@@ -144,7 +129,7 @@ class ACLPassthrough():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception, e:
+            except Exception as e:
                 if DEBUG:
                     import traceback
                     Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
@@ -191,31 +176,24 @@ class ACLPassthrough():
 
     def start(self):
         _status, _error = self.receive_data()
+
         interactive_data = {}
-        if not rvalue(self.shared.get(u'password')):
-            interactive_data[u'target_password'] = MAGICASK
-        else:
-            interactive_data[u'target_password'] = rvalue(self.shared.get(u'password'))
-        if not rvalue(self.shared.get(u'login')):
-            interactive_data[u'target_login'] = MAGICASK
-        else:
-            interactive_data[u'target_login'] = rvalue(self.shared.get(u'login'))
-        if not rvalue(self.shared.get(u'real_target_device')):
-            interactive_data[u'target_host'] = MAGICASK
-        else:
-            interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
+        interactive_data[u'target_password'] = rvalue(self.shared.get(u'password'))
+        interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
+        interactive_data[u'target_login'] = rvalue(self.shared.get(u'login'))
         interactive_data[u'target_device'] = (
             "<host>$<application path>$<working dir>$"
             "<args> for Application"
         )
-        if interactive_data:
-            _status, _error = self.interactive_target(interactive_data)
+
+        _status, _error = self.interactive_target(interactive_data)
+
         kv = {}
         kv[u'login'] = self.shared.get(u'target_login')
         kv[u'proto_dest'] = "RDP"
         kv[u'target_port'] = "3389"
         kv[u'session_id'] = "0000"
-        kv[u'module'] = "RDP"
+        kv[u'module'] = 'RDP' if self.shared.get(u'login') != 'internal' else 'INTERNAL'
         kv[u'mode_console'] = u"allow"
         kv[u'target_password'] = self.shared.get(u'target_password')
         kv[u'target_login'] = self.shared.get(u'target_login')
@@ -271,12 +249,12 @@ class ACLPassthrough():
             Logger().debug(u"End Of Keep Alive")
 
 
-        except AuthentifierSocketClosed, e:
+        except AuthentifierSocketClosed as e:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
                 Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
-        except Exception, e:
+        except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info(u"RDP/VNC connection terminated by client")
@@ -321,6 +299,7 @@ from logger import Logger
 socket_path = '/tmp/redemption-sesman-sock'
 
 def standalone():
+    print('open socket at', socket_path)
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     # create socket from bounded port
     s1 = socket.socket(AF_UNIX, SOCK_STREAM)
@@ -354,12 +333,12 @@ def standalone():
         if client_socket:
             client_socket.close()
         sys.exit(1)
-    except socket.error, e:
+    except socket.error as e:
         pass
-    except AuthentifierSocketClosed, e:
+    except AuthentifierSocketClosed as e:
         Logger().info("Authentifier Socket Closed")
-    except Exception, e:
-        Logger().exception("%s" % e)
+    # except Exception as e:
+        # Logger().exception("%s" % e)
 
 if __name__ == '__main__':
     standalone()

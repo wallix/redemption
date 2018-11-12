@@ -113,16 +113,13 @@ public:
     uint8_t bRop{0};
     uint8_t nDeltaEntries{0};
 
-    struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45];
+    struct RDP::DeltaEncodedRectangle deltaEncodedRectangles[45] = {};
 
     static uint8_t id() {
         return RDP::MULTIDSTBLT;
     }
 
-    RDPMultiDstBlt()
-     {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
-    }
+    RDPMultiDstBlt() = default;
 
     RDPMultiDstBlt(int16_t nLeftRect, int16_t nTopRect, int16_t nWidth, int16_t nHeight, uint8_t bRop, uint8_t nDeltaEntries,
         InStream & deltaEncodedRectangles)
@@ -132,7 +129,6 @@ public:
     , nHeight(nHeight)
     , bRop(bRop)
     , nDeltaEntries(nDeltaEntries) {
-        ::memset(this->deltaEncodedRectangles, 0, sizeof(this->deltaEncodedRectangles));
         for (int i = 0; i < this->nDeltaEntries; i++) {
             this->deltaEncodedRectangles[i].leftDelta = deltaEncodedRectangles.in_sint16_le();
             this->deltaEncodedRectangles[i].topDelta  = deltaEncodedRectangles.in_sint16_le();

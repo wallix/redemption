@@ -43,6 +43,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     uint8_t au8[3] = {0, 1, 2};
 
     array_view<const char>{} = array_view<char>{};
+    array_view<const char>{} = array_view<char>(a8, short(2));
 
     RED_CHECK_EQUAL(test_ambiguous(a8), 1);
     RED_CHECK_EQUAL(test_ambiguous(as8), 2);
@@ -76,6 +77,10 @@ RED_AUTO_TEST_CASE(TestArrayView)
     RED_CHECK_EQUAL(*av.begin(), 'a');
     auto it = av.begin();
     it++;
+    RED_CHECK_EQUAL(*it, 'b');
+    --it;
+    RED_CHECK_EQUAL(*it, 'a');
+    ++it;
     RED_CHECK_EQUAL(*it, 'b');
 
     auto const av_p = make_array_view(&s[0], &s[3]);

@@ -1,6 +1,10 @@
 #!/usr/bin/awk -f
 {
-  if (/^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
+  if (/^Running [0-9]+ test cases\.\.\.$/)
+  {
+    getline
+  }
+  else if (/^\*\*\* No errors detected$|^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
   {}
   else if (/[^.]+\.(compile\.c\+\+|link)|^testing\.unit-test|qt.?\.moc /)
   {
