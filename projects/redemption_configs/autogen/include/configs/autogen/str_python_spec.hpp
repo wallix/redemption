@@ -34,6 +34,7 @@
 "session_timeout = integer(min=0, default=900)\n\n"
 
 "# No traffic auto disconnection.\n"
+"# If value is 0, global value (session_timeout) is used.\n"
 "# (is in second)\n"
 "#_hidden\n"
 "inactivity_timeout = integer(min=0, default=0)\n\n"
@@ -345,12 +346,15 @@
 "#_hidden\n"
 "shell_working_directory = string(default='')\n\n"
 
+"# As far as possible, use client-provided initial program (Alternate Shell)\n"
 "#_hidden\n"
 "use_client_provided_alternate_shell = boolean(default=False)\n\n"
 
+"# As far as possible, use client-provided remote program (RemoteApp)\n"
 "#_hidden\n"
 "use_client_provided_remoteapp = boolean(default=False)\n\n"
 
+"# As far as possible, use native RemoteApp capability\n"
 "#_hidden\n"
 "use_native_remoteapp_capability = boolean(default=True)\n\n"
 
@@ -376,13 +380,13 @@
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_launch_timeout = integer(min=0, default=20000)\n\n"
+"session_probe_launch_timeout = integer(min=0, max=300000, default=40000)\n\n"
 
 "# This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_launch_fallback_timeout = integer(min=0, default=7000)\n\n"
+"session_probe_launch_fallback_timeout = integer(min=0, max=300000, default=10000)\n\n"
 
 "# Minimum supported server : Windows Server 2008.\n"
 "#_hidden\n"
@@ -390,7 +394,7 @@
 
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_keepalive_timeout = integer(min=0, default=5000)\n\n"
+"session_probe_keepalive_timeout = integer(min=0, max=60000, default=5000)\n\n"
 
 "#   0: ignore and continue\n"
 "#   1: disconnect user\n"
@@ -398,7 +402,8 @@
 "#_hidden\n"
 "session_probe_on_keepalive_timeout = option(0, 1, 2, default=1)\n\n"
 
-"# End automatically a disconnected session\n"
+"# End automatically a disconnected session.\n"
+"# Session Probe must be enabled to use this feature.\n"
 "#_hidden\n"
 "session_probe_end_disconnected_session = boolean(default=False)\n\n"
 
@@ -415,19 +420,19 @@
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_disconnected_application_limit = integer(min=0, default=0)\n\n"
+"session_probe_disconnected_application_limit = integer(min=0, max=172800000, default=0)\n\n"
 
 "# This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_disconnected_session_limit = integer(min=0, default=0)\n\n"
+"session_probe_disconnected_session_limit = integer(min=0, max=172800000, default=0)\n\n"
 
 "# This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"session_probe_idle_session_limit = integer(min=0, default=0)\n\n"
+"session_probe_idle_session_limit = integer(min=0, max=172800000, default=0)\n\n"
 
 "#_hidden\n"
 "session_probe_exe_or_file = string(max=511, default='||CMD')\n\n"
@@ -458,11 +463,12 @@
 "session_probe_enable_crash_dump = boolean(default=False)\n\n"
 
 "#_hidden\n"
-"session_probe_handle_usage_limit = integer(min=0, default=0)\n\n"
+"session_probe_handle_usage_limit = integer(min=0, max=1000, default=0)\n\n"
 
 "#_hidden\n"
-"session_probe_memory_usage_limit = integer(min=0, default=0)\n\n"
+"session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)\n\n"
 
+"# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"
 "session_probe_public_session = boolean(default=False)\n\n"
 

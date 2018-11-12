@@ -34,6 +34,7 @@
 "#session_timeout = 900\n\n"
 
 "# No traffic auto disconnection.\n"
+"# If value is 0, global value (session_timeout) is used.\n"
 "# (is in second)\n"
 "#_hidden\n"
 "#inactivity_timeout = 0\n\n"
@@ -345,12 +346,15 @@
 "#_hidden\n"
 "#shell_working_directory = \n\n"
 
+"# As far as possible, use client-provided initial program (Alternate Shell)\n"
 "#_hidden\n"
 "#use_client_provided_alternate_shell = 0\n\n"
 
+"# As far as possible, use client-provided remote program (RemoteApp)\n"
 "#_hidden\n"
 "#use_client_provided_remoteapp = 0\n\n"
 
+"# As far as possible, use native RemoteApp capability\n"
 "#_hidden\n"
 "#use_native_remoteapp_capability = 1\n\n"
 
@@ -376,13 +380,13 @@
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"#session_probe_launch_timeout = 20000\n\n"
+"#session_probe_launch_timeout = 40000\n\n"
 
 "# This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n"
 "# 0 to disable timeout.\n"
 "# (is in millisecond)\n"
 "#_hidden\n"
-"#session_probe_launch_fallback_timeout = 7000\n\n"
+"#session_probe_launch_fallback_timeout = 10000\n\n"
 
 "# Minimum supported server : Windows Server 2008.\n"
 "#_hidden\n"
@@ -398,7 +402,8 @@
 "#_hidden\n"
 "#session_probe_on_keepalive_timeout = 1\n\n"
 
-"# End automatically a disconnected session\n"
+"# End automatically a disconnected session.\n"
+"# Session Probe must be enabled to use this feature.\n"
 "#_hidden\n"
 "#session_probe_end_disconnected_session = 0\n\n"
 
@@ -463,6 +468,7 @@
 "#_hidden\n"
 "#session_probe_memory_usage_limit = 0\n\n"
 
+"# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"
 "#session_probe_public_session = 0\n\n"
 

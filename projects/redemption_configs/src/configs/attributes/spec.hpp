@@ -200,6 +200,39 @@ namespace spec
 }
 
 
+namespace connpolicy
+{
+    struct name { std::string name; };
+
+    struct section { char const* name; };
+
+    namespace internal
+    {
+        enum class attr {
+            unspecified            = 1 << 0,
+            hex_in_connpolicy      = 1 << 1,
+            advanced_in_connpolicy = 1 << 2,
+        };
+
+        attr operator | (attr x, attr y)
+        {
+            return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
+        }
+
+        attr operator & (attr x, attr y)
+        {
+            return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
+        }
+    }
+
+    namespace constants
+    {
+        constexpr auto hex_in_connpolicy = internal::attr::hex_in_connpolicy;
+        constexpr auto advanced_in_connpolicy = internal::attr::advanced_in_connpolicy;
+    }
+}
+
+
 namespace sesman
 {
     struct name { std::string name; };
@@ -246,7 +279,18 @@ namespace sesman
     struct connection_policy
     {
         char const* file;
+        connpolicy::internal::attr spec;
+
+        explicit connection_policy(char const* file, connpolicy::internal::attr spec = {})
+        : file(file)
+        , spec(spec)
+        {}
     };
+
+    connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
+    {
+        return connection_policy{x.file, x.spec | y};
+    }
 
     struct deprecated_names
     {
@@ -256,14 +300,6 @@ namespace sesman
         : names(l.begin(), l.end())
         {}
     };
-}
-
-
-namespace connpolicy
-{
-    struct name { std::string name; };
-
-    struct section { char const* name; };
 }
 
 

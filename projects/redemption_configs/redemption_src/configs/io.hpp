@@ -769,7 +769,7 @@ namespace detail
     {
         static void impl(T & x, T new_value)
         {
-            assert(x < T{min} || T{max} < x);
+            assert(T{min} <= new_value || new_value <= T{max});
             x = new_value;
         }
     };

@@ -291,6 +291,7 @@ namespace cfg {
         type value{900};
     };
     /// No traffic auto disconnection. <br/>
+    /// If value is 0, global value (session_timeout) is used. <br/>
     /// type: std::chrono::seconds <br/>
     /// sesman -> proxy <br/>
     /// value{0} <br/>
@@ -1259,6 +1260,7 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
+    /// Load balancing information <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -1398,6 +1400,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{};
     };
+    /// As far as possible, use client-provided initial program (Alternate Shell) <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1414,6 +1417,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// As far as possible, use client-provided remote program (RemoteApp) <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1430,6 +1434,7 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// As far as possible, use native RemoteApp capability <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{true} <br/>
@@ -1516,7 +1521,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
-    /// value{20000} <br/>
+    /// value{40000} <br/>
     struct mod_rdp::session_probe_launch_timeout {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1526,15 +1531,15 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(37);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         using mapped_type = sesman_and_spec_type;
-        type value{20000};
+        type value{40000};
     };
     /// This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe). <br/>
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
-    /// value{7000} <br/>
+    /// value{10000} <br/>
     struct mod_rdp::session_probe_launch_fallback_timeout {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -1544,9 +1549,9 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(38);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>;
         using mapped_type = sesman_and_spec_type;
-        type value{7000};
+        type value{10000};
     };
     /// Minimum supported server : Windows Server 2008. <br/>
     /// type: bool <br/>
@@ -1577,7 +1582,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(40);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>;
         using mapped_type = sesman_and_spec_type;
         type value{5000};
     };
@@ -1597,7 +1602,8 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(1);
     };
-    /// End automatically a disconnected session <br/>
+    /// End automatically a disconnected session. <br/>
+    /// Session Probe must be enabled to use this feature. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -1672,7 +1678,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(45);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -1690,7 +1696,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(46);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -1708,7 +1714,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(47);
         using type = std::chrono::milliseconds;
-        using sesman_and_spec_type = std::chrono::milliseconds;
+        using sesman_and_spec_type = ::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -1840,7 +1846,7 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(53);
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
+        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 1000>;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
@@ -1856,10 +1862,11 @@ namespace cfg {
         // cppcheck-suppress obsoleteFunctionsindex
         static constexpr authid_t index = authid_t(54);
         using type = uint32_t;
-        using sesman_and_spec_type = uint32_t;
+        using sesman_and_spec_type = ::configs::spec_types::range<uint32_t, 0, 200000000>;
         using mapped_type = sesman_and_spec_type;
         type value{0};
     };
+    /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
     /// value{false} <br/>
@@ -4054,6 +4061,7 @@ namespace cfg {
     };
     /// Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*) <br/>
     /// (Ex. for backwards compatibility only: 10.1.0.0/16:22) <br/>
+    /// Session Probe must be enabled to use this feature. <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4072,6 +4080,7 @@ namespace cfg {
     };
     /// Comma-separated rules (Ex.: $deny:Taskmgr) <br/>
     /// @ = All child processes of Bastion Application (Ex.: $deny:@) <br/>
+    /// Session Probe must be enabled to use this feature. <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -4542,12 +4551,6 @@ struct mod_rdp
 , cfg::mod_rdp::alternate_shell
 , cfg::mod_rdp::shell_arguments
 , cfg::mod_rdp::shell_working_directory
-, cfg::mod_rdp::session_probe_launch_timeout
-, cfg::mod_rdp::session_probe_launch_fallback_timeout
-, cfg::mod_rdp::session_probe_keepalive_timeout
-, cfg::mod_rdp::session_probe_disconnected_application_limit
-, cfg::mod_rdp::session_probe_disconnected_session_limit
-, cfg::mod_rdp::session_probe_idle_session_limit
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay
 , cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay
@@ -4586,11 +4589,17 @@ struct mod_rdp
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
 , cfg::mod_rdp::session_probe_enable_launch_mask
+, cfg::mod_rdp::session_probe_launch_timeout
+, cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
+, cfg::mod_rdp::session_probe_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_enable_log
 , cfg::mod_rdp::session_probe_enable_log_rotation
+, cfg::mod_rdp::session_probe_disconnected_application_limit
+, cfg::mod_rdp::session_probe_disconnected_session_limit
+, cfg::mod_rdp::session_probe_idle_session_limit
 , cfg::mod_rdp::session_probe_exe_or_file
 , cfg::mod_rdp::session_probe_arguments
 , cfg::mod_rdp::session_probe_allow_multiple_handshake

@@ -784,7 +784,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_launch_timeout&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
                 av
             );
         }
@@ -792,7 +792,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_launch_fallback_timeout&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 300000>>{},
                 av
             );
         }
@@ -808,7 +808,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_keepalive_timeout&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 60000>>{},
                 av
             );
         }
@@ -856,7 +856,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_disconnected_application_limit&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
                 av
             );
         }
@@ -864,7 +864,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_disconnected_session_limit&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
                 av
             );
         }
@@ -872,7 +872,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_idle_session_limit&>(this->variables).value,
-                ::configs::spec_type<std::chrono::milliseconds>{},
+                ::configs::spec_type<::configs::spec_types::range<std::chrono::milliseconds, 0, 172800000>>{},
                 av
             );
         }
@@ -944,7 +944,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_handle_usage_limit&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 1000>>{},
                 av
             );
         }
@@ -952,7 +952,7 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::session_probe_memory_usage_limit&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
+                ::configs::spec_type<::configs::spec_types::range<uint32_t, 0, 200000000>>{},
                 av
             );
         }

@@ -71,17 +71,25 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             this->inherit().write_type_info(type);
             this->write_enumeration_value_description(type, infos);
 
-            using attr_t = spec::internal::attr;
-            auto attr = value_or<spec_attr_t>(infos, spec_attr_t{attr_t::no_ini_no_gui}).value;
+            auto& connpolicy = get_elem<connection_policy_t>(infos);
 
-            if (bool(attr & attr_t::advanced_in_gui)) this->out() << "#_advanced\n";
-            if (bool(attr & attr_t::hex_in_gui))      this->out() << "#_hex\n";
+            using attr1_t = spec::internal::attr;
+            using attr2_t = connpolicy::internal::attr;
+            auto attr1 = value_or<spec_attr_t>(infos, spec_attr_t{attr1_t::no_ini_no_gui}).value;
+            auto attr2 = connpolicy.spec;
+
+            if (bool(attr1 & attr1_t::advanced_in_gui)
+             || bool(attr2 & attr2_t::advanced_in_connpolicy))
+                this->out() << "#_advanced\n";
+            if (bool(attr1 & attr1_t::hex_in_gui)
+             || bool(attr2 & attr2_t::hex_in_connpolicy))
+                this->out() << "#_hex\n";
 
             this->out() << member_name << " = ";
             this->inherit().write_type(type, get_default(type, infos));
             this->out() << "\n\n";
 
-            auto&& sections = file_map[get_elem<connection_policy_t>(infos).file];
+            auto&& sections = file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
                 infos, connpolicy::section{section_name.c_str()});
 

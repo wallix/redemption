@@ -154,7 +154,10 @@ struct no_sesman_io_t {};
 struct spec_attr_t { cfg_attributes::spec::internal::attr value; };
 struct sesman_io_t { cfg_attributes::sesman::internal::io value; };
 struct log_policy_t { cfg_attributes::spec::log_policy value; };
-struct connection_policy_t : sesman_io_t { char const* file; };
+struct connection_policy_t : sesman_io_t {
+    char const* file;
+    cfg_attributes::connpolicy::internal::attr spec;
+};
 
 namespace detail_
 {
@@ -185,7 +188,8 @@ namespace detail_
         else if constexpr (is_convertible_v<T, cfg_attributes::sesman::connection_policy>) {
             return connection_policy_t{
                 {cfg_attributes::sesman::internal::io::sesman_to_proxy},
-                x.file
+                x.file,
+                x.spec
             };
         }
         else if constexpr (is_convertible_v<T, char const*>) {
@@ -358,6 +362,13 @@ public:
             "has sesman::io and connection_policy");
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
+        constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
+        static_assert(
+            !has_conn_policy || ((
+                is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>
+             || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::hidden_in_gui)>
+            ) || ...),
+            "connection_policy only with no_ini_no_gui or hidden_in_gui");
 
         using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
         std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});
