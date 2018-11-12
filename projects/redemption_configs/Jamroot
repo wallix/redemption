@@ -13,7 +13,7 @@ include ../../jam/defines.jam ;
 project configs
     : requirements
     <include>$(REDEMPTION_CONFIG_PATH)/src
-    <include>$(REDEMPTION_CONFIG_PATH)/include/autogen
+    <include>$(REDEMPTION_CONFIG_PATH)/autogen/include
     <include>$(REDEMPTION_CONFIG_SPECS_PATH)
     <include>$(REDEMPTION_INCLUDE_PATH)
     <include>$(REDEMPTION_SRC_PATH)
@@ -27,22 +27,23 @@ project configs
    : default-build release
 ;
 
-constant AUTOGENDIR : include/autogen/configs/autogen ;
-constant FILEGEN_CONF : $(AUTOGENDIR)/variables_configuration.hpp ;
-constant FILEGEN_CONF_FWD : $(AUTOGENDIR)/variables_configuration_fwd.hpp ;
-constant FILEGEN_SPEC : $(AUTOGENDIR)/str_python_spec.hpp ;
-constant FILEGEN_INI : $(AUTOGENDIR)/str_ini.hpp ;
+constant AUTOGEN_SPEC_DIR : autogen/spec ;
+constant AUTOGEN_INC_DIR : autogen/include/configs/autogen ;
+constant FILEGEN_CONF : $(AUTOGEN_INC_DIR)/variables_configuration.hpp ;
+constant FILEGEN_CONF_FWD : $(AUTOGEN_INC_DIR)/variables_configuration_fwd.hpp ;
+constant FILEGEN_SPEC : $(AUTOGEN_INC_DIR)/str_python_spec.hpp ;
+constant FILEGEN_INI : $(AUTOGEN_INC_DIR)/str_ini.hpp ;
 constant FILEGEN_SESMAN_CP_SPEC : $(REDEMPTION_ROOT_PATH)/tools/sesman/sesmanworker/sesmanconnpolicyspec.py ;
-constant FILEGEN_RDP_CONNPOLICY : $(AUTOGENDIR)/str_rdp_connection_policy.hpp ;
-constant FILEGEN_VNC_CONNPOLICY : $(AUTOGENDIR)/str_vnc_connection_policy.hpp ;
-constant FILEGEN_ENUM : $(AUTOGENDIR)/enums.hpp ;
+constant FILEGEN_RDP_CONNPOLICY : $(AUTOGEN_SPEC_DIR)/rdp.spec ;
+constant FILEGEN_VNC_CONNPOLICY : $(AUTOGEN_SPEC_DIR)/vnc.spec ;
+constant FILEGEN_ENUM : $(AUTOGEN_INC_DIR)/enums.hpp ;
 
 actions generate_cpp_config {
     $(>[0]) \
-        $(AUTOGENDIR)/authid.hpp \
+        $(AUTOGEN_INC_DIR)/authid.hpp \
         $(FILEGEN_CONF_FWD) \
         $(FILEGEN_CONF) \
-        $(AUTOGENDIR)/set_value.tcc
+        $(AUTOGEN_INC_DIR)/set_value.tcc
 }
 
 actions generate_python_spec {
@@ -58,7 +59,7 @@ actions generate_connection_policy {
 }
 
 actions generate_cpp_enumeration {
-    $(>) $(FILEGEN_ENUM) $(AUTOGENDIR)/enums_func_ini.hpp
+    $(>) $(FILEGEN_ENUM) $(AUTOGEN_INC_DIR)/enums_func_ini.hpp
 }
 
 obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;

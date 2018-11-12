@@ -153,7 +153,8 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     }
 
 
-    static io_prefix_lines comment(char const * s) {
+    static io_prefix_lines comment(char const * s)
+    {
         return io_prefix_lines{s, "\"# ", "\\n\"", 0};
     }
 
@@ -162,12 +163,12 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     {
         auto& d = get_desc(pack);
         if (!d.empty()) {
-            this->out() << comment(d.c_str());
+            this->out() << this->inherit().comment(d.c_str());
         }
         else if constexpr (std::is_enum_v<T>) {
             apply_enumeration_for<T>(this->enums, [this](auto const & e) {
                 if (e.desc) {
-                    this->out() << this->comment(e.desc);
+                    this->out() << this->inherit().comment(e.desc);
                 }
             });
         }
@@ -179,20 +180,23 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     {}
 
     void write_type_info(type_<std::chrono::hours>)
-    { this->out() << "\"# (is in hour)\\n\"\n"; }
+    { this->out() << this->inherit().comment("(is in hour)"); }
 
     void write_type_info(type_<std::chrono::minutes>)
-    { this->out() << "\"# (is in minute)\\n\"\n"; }
+    { this->out() << this->inherit().comment("(is in minute)"); }
 
     void write_type_info(type_<std::chrono::seconds>)
-    { this->out() << "\"# (is in second)\\n\"\n"; }
+    { this->out() << this->inherit().comment("(is in second)"); }
 
     void write_type_info(type_<std::chrono::milliseconds>)
-    { this->out() << "\"# (is in millisecond)\\n\"\n"; }
+    { this->out() << this->inherit().comment("(is in millisecond)"); }
 
     template<class T, class Ratio>
     void write_type_info(type_<std::chrono::duration<T, Ratio>>)
-    { this->out() << "\"# (is in " << Ratio::num << "/" << Ratio::den << " second)\\n\"\n"; }
+    {
+        auto prefixes = this->inherit().comment("");
+        this->out() << prefixes.prefix << "(is in " << Ratio::num << "/" << Ratio::den << " second)" << prefixes.suffix << "\n";
+    }
 
     template<class T, class Ratio, long min, long max>
     void write_type_info(type_<types::range<std::chrono::duration<T, Ratio>, min, max>>)
@@ -202,18 +206,19 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     template<class T, class V>
     void write_value_(T const & name, V const & v, char const * prefix)
     {
-        this->out() << "\"#   " << name;
+        auto prefixes = this->inherit().comment("");
+        this->out() << prefixes.prefix << "  " << name;
         if (v.desc) {
             this->out() << ": ";
             if (prefix) {
                 this->out() << prefix << " ";
             }
-            this->out() << v.desc << "\\n";
+            this->out() << v.desc;
         }
         else if (std::is_integral<T>::value) {
-            this->out() << ": " << io_replace(v.name, '_', ' ') << "\\n";
+            this->out() << ": " << io_replace(v.name, '_', ' ');
         }
-        this->out() << "\"\n";
+        this->out() << prefixes.suffix << "\n";
     }
 
     void write_desc_value(type_enumeration const & e, char const * prefix)
@@ -239,7 +244,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
         }
 
         if (type_enumeration::flags == e.flag) {
-            this->out() << "\"# (note: values can be added (everyone: 1+2+4=7, mute: 0))\\n\"\n";
+            this->out() << this->inherit().comment("(note: values can be added (everyone: 1+2+4=7, mute: 0))");
         }
     }
 
@@ -257,7 +262,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
             apply_enumeration_for<T>(this->enums, [this, &pack](auto const & e) {
                 this->write_desc_value(e, value_or<prefix_value>(pack, prefix_value{}).value);
                 if (e.info) {
-                    this->out() << this->comment(e.info);
+                    this->out() << this->inherit().comment(e.info);
                 }
             });
         }

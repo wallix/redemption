@@ -54,6 +54,12 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     , filename_map(std::move(filename_map))
     {}
 
+    // used by python_spec_writer
+    static io_prefix_lines comment(char const * s)
+    {
+        return io_prefix_lines{s, "# ", "", 0};
+    }
+
     template<class Pack>
     void do_member(std::string const & section_name, Pack const& infos)
     {
@@ -68,12 +74,12 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             using attr_t = spec::internal::attr;
             auto attr = value_or<spec_attr_t>(infos, spec_attr_t{attr_t::no_ini_no_gui}).value;
 
-            if (bool(attr & attr_t::advanced_in_gui)) this->out() << "\"#_advanced\\n\"\n";
-            if (bool(attr & attr_t::hex_in_gui))      this->out() << "\"#_hex\\n\"\n";
+            if (bool(attr & attr_t::advanced_in_gui)) this->out() << "#_advanced\n";
+            if (bool(attr & attr_t::hex_in_gui))      this->out() << "#_hex\n";
 
-            this->out() << "\"" << member_name << " = ";
+            this->out() << member_name << " = ";
             this->inherit().write_type(type, get_default(type, infos));
-            this->out() << "\\n\\n\"\n\n";
+            this->out() << "\n\n";
 
             auto&& sections = file_map[get_elem<connection_policy_t>(infos).file];
             auto const& section = value_or<connpolicy::section>(
@@ -137,7 +143,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             }
 
             std::ofstream out_spec(filename);
-            out_spec << R"g(R"([general]
+            out_spec << R"g([general]
 
 # Secondary login Transformation rule
 # ${LOGIN} will be replaced by login
@@ -158,13 +164,13 @@ transformation_rule = string(default='')
 vault_transformation_rule = string(default='')
 
 
-)")g";
+)g";
 
             auto& section_map = file_it->second.section_map;
             auto& delayed_section_map = file_it->second.delayed_section_map;
 
             for (auto const& [section_name, section] : section_map) {
-                out_spec << "\"[" << section_name << "]\\n\\n\"\n\n" << section.contains;
+                out_spec << "[" << section_name << "]\n\n" << section.contains;
                 out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains;
                 auto it = delayed_section_map.find(section_name);
                 if (it != delayed_section_map.end()) {
@@ -176,7 +182,7 @@ vault_transformation_rule = string(default='')
             }
 
             for (auto const& [section_name, section] : delayed_section_map) {
-                out_spec << "\"[" << section_name << "]\\n\\n\"\n\n" << section.contains;
+                out_spec << "[" << section_name << "]\n\n" << section.contains;
                 out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains << "},\n";
             }
 
@@ -216,7 +222,7 @@ template<class SpecWriter>
 int app_write_connection_policy(int ac, char const * const * av)
 {
     if (ac < 4) {
-        std::cerr << av[0] << " sesman-map.py rdp-out-spec.h vnc-out-spec.h\n";
+        std::cerr << av[0] << " sesman-map.py rdp.spec vnc.spec\n";
         return 1;
     }
 
