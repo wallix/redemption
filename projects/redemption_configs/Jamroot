@@ -29,42 +29,18 @@ project configs
 
 constant AUTOGEN_SPEC_DIR : autogen/spec ;
 constant AUTOGEN_INC_DIR : autogen/include/configs/autogen ;
-constant FILEGEN_CONF : $(AUTOGEN_INC_DIR)/variables_configuration.hpp ;
-constant FILEGEN_CONF_FWD : $(AUTOGEN_INC_DIR)/variables_configuration_fwd.hpp ;
-constant FILEGEN_SPEC : $(AUTOGEN_INC_DIR)/str_python_spec.hpp ;
-constant FILEGEN_INI : $(AUTOGEN_INC_DIR)/str_ini.hpp ;
-constant FILEGEN_SESMAN_CP_SPEC : $(REDEMPTION_ROOT_PATH)/tools/sesman/sesmanworker/sesmanconnpolicyspec.py ;
-constant FILEGEN_RDP_CONNPOLICY : $(AUTOGEN_SPEC_DIR)/rdp.spec ;
-constant FILEGEN_VNC_CONNPOLICY : $(AUTOGEN_SPEC_DIR)/vnc.spec ;
 constant FILEGEN_ENUM : $(AUTOGEN_INC_DIR)/enums.hpp ;
+constant FILEGEN_CONF : $(AUTOGEN_INC_DIR)/variables_configuration.hpp ;
 
-actions generate_cpp_config {
-    $(>[0]) \
-        $(AUTOGEN_INC_DIR)/authid.hpp \
-        $(FILEGEN_CONF_FWD) \
-        $(FILEGEN_CONF) \
-        $(AUTOGEN_INC_DIR)/set_value.tcc
-}
-
-actions generate_python_spec {
-    $(>[0]) $(FILEGEN_SPEC)
-}
-
-actions generate_ini {
-    $(>[0]) $(FILEGEN_INI)
-}
-
-actions generate_connection_policy {
-    $(>[0]) $(FILEGEN_SESMAN_CP_SPEC) $(FILEGEN_RDP_CONNPOLICY) $(FILEGEN_VNC_CONNPOLICY)
-}
-
-actions generate_cpp_enumeration {
+actions generate_cpp_enumeration
+{
     $(>) $(FILEGEN_ENUM) $(AUTOGEN_INC_DIR)/enums_func_ini.hpp
 }
 
-obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
-obj error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : <define>NDEBUG ;
-obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
+actions generate_config_spec
+{
+    $(>)
+}
 
 rule create_generator ( name : file : requirements * )
 {
@@ -73,19 +49,16 @@ rule create_generator ( name : file : requirements * )
     exe make_$(name) : src/configs/write_$(name).cpp : <library>keymap <library>log_test.o ;
 }
 
-create_generator cpp_enumeration : $(FILEGEN_ENUM) ;
-create_generator cpp_config : $(FILEGEN_CONF) ;
-create_generator python_spec : $(FILEGEN_SPEC) ;
-create_generator connection_policy : $(FILEGEN_RDP_CONNPOLICY) ;
-create_generator ini : $(FILEGEN_INI) ;
+obj log_test.o : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+obj error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : <define>NDEBUG ;
+obj keymap : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp : ;
 
+create_generator cpp_enumeration : $(FILEGEN_ENUM) ;
+create_generator config_spec : $(FILEGEN_CONF) ;
 
 alias generate :
     generate_cpp_enumeration
-    generate_ini
-    generate_python_spec
-    generate_cpp_config
-    generate_connection_policy
+    generate_config_spec
 ;
 
 
@@ -105,14 +78,13 @@ obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 obj config.o : redemption_src/configs/config.cpp
 :
     <include>redemption_src
-    <implicit-dependency>generate_cpp_config
-    <implicit-dependency>generate_python_spec
+    <implicit-dependency>generate_config_spec
     <implicit-dependency>generate_cpp_enumeration
 ;
 
 rule test-run ( name )
 {
-    unit-test $(name) : tests/$(name).cpp generate_cpp_config :
+    unit-test $(name) : tests/$(name).cpp generate_config_spec :
         $(UNIT_TEST_DEPENDENCIES)
         <library>libunit_test
         <library>app_path_test.o
