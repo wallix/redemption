@@ -6,8 +6,9 @@ In your `~/.bashrc`:
 bf () {
   bjam "$@" 2>&1 \
   | stdbuf -o0 "$REDEMPTION_PATH"/tools/bjam/bjam_filter.awk \
-  | "$REDEMPTION_PATH"/tools/bjam/unit_test_color.sh -e ":a;s#$PWD#./#g;ta;s#$HOME/#~/#g;ta" -u
-  | "$REDEMPTION_PATH"/tools/bjam/oneliner.awk -v columns=$COLUMNS
+    -v columns=$COLUMNS \
+    -v "replacements=$PWD;;$HOME;" \
+  | "$REDEMPTION_PATH"/tools/bjam/unit_test_color.sh
   return ${PIPESTATUS[0]}
 }
 
@@ -27,8 +28,9 @@ In your `~/.zshrc`:
 bf () {
   bjam "$@" 2>&1 \
   | stdbuf -o0 $REDEMPTION_PATH/tools/bjam/bjam_filter.awk \
-  | $REDEMPTION_PATH/tools/bjam/unit_test_color.sh -e ":a;s#$PWD#./#g;ta;s#$HOME/#~/#g;ta" -u
-  | $REDEMPTION_PATH/tools/bjam/oneliner.awk -v columns=$COLUMNS
+    -v columns=$COLUMNS \
+    -v "replacements=$PWD;;$HOME;" \
+  | "$REDEMPTION_PATH"/tools/bjam/unit_test_color.sh
   return ${pipestatus[1]}
 }
 

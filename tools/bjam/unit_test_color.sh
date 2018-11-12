@@ -15,7 +15,8 @@ exception=$esc'1;37m'
 exec=$esc'34m'
 msg=$esc'1m'
 
-sed -E "$@" -e '/^tests\//{
+sed -E "$@" -e '/^\x1b/n
+/^tests\//{
   s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): error:? in "([^"]+)": check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset': '$err'error'$reset' in "'$name'\2'$reset'": '$cat'check'$reset' '$code'\3'$op'\4'$code'\5'$reset' failed ['$value'\6'$op'\7'$value'\8'$reset']/;t
 
   s/^(tests\/[^.]+\.[ch]pp\([0-9]+\)): fatal error:? in "([^"]+)": critical check (.*)( !=|==|<=|>=|>|< )(.*) failed \[(.*)( !=|==|<=|>=|>|< )(.*)\]$/'$file'\1'$reset': '$err'fatal error'$reset' in "'$name'\2'$reset'": '$cat'critical check'$reset' '$code'\3'$op'\4'$code'\5'$reset' failed ['$value'\6'$op'\7'$value'\8'$reset']/;t

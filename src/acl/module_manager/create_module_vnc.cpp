@@ -119,7 +119,7 @@ void ModuleManager::create_mod_vnc(
         );
 
         if (enable_metrics) {
-            new_mod->metrics     = std::move(metrics);
+            new_mod->metrics = std::move(metrics);
             new_mod->protocol_metrics = std::move(protocol_metrics);
             new_mod->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))

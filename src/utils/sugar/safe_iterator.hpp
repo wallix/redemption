@@ -122,7 +122,7 @@ public:
     safe_iterator operator+(difference_type n) const
     {
 #ifdef NDEBUG
-        return safe_iterator(p+n);
+        return safe_iterator(it+n, it);
 #else
         check_range(n);
         return safe_iterator(it+n, begin, end);
@@ -132,7 +132,7 @@ public:
     safe_iterator operator-(difference_type n) const
     {
 #ifdef NDEBUG
-        return safe_iterator(p-n);
+        return safe_iterator(it+n, it);
 #else
         check_range(-n);
         return safe_iterator(it-n, begin, end);
