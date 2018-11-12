@@ -153,7 +153,7 @@ class Sesman():
             seswabconfig = confwab.get(u'sesman', {})
             SESMANCONF.conf[u'sesman'].update(seswabconfig)
             # Logger().info(" WABCONFIG SESMANCONF = '%s'" % seswabconfig)
-        except Exception, e:
+        except Exception as e:
             Logger().info("Failed to load Sesman WabConfig")
         # Logger().info(" SESMANCONF = '%s'" % SESMANCONF[u'sesman'])
         if SESMANCONF[u'sesman'].get(u'debug', False):
@@ -311,7 +311,7 @@ class Sesman():
         try:
             with open('/var/wab/etc/proxys/messages/login.%s' % self.language) as f:
                 self.login_message = f.read().decode('utf-8')
-        except Exception, e:
+        except Exception as e:
             pass
 
     def set_language_from_keylayout(self):
@@ -401,9 +401,9 @@ class Sesman():
                 if not _is_multi_packet:
                     break
             _data = _data.decode('utf-8')
-        except AuthentifierSocketClosed, e:
+        except AuthentifierSocketClosed as e:
             raise
-        except Exception, e:
+        except Exception as e:
 #            import traceback
 #            Logger().info("%s <<<%s>>>" % (u"Failed to read data from rdpproxy authentifier socket", traceback.format_exc(e)))
             raise AuthentifierSocketClosed()
@@ -418,7 +418,7 @@ class Sesman():
         if _status:
             try:
                 _data = dict(zip(_elem[0::2], _elem[1::2]))
-            except Exception, e:
+            except Exception as e:
                 if DEBUG:
                     import traceback
                     Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
@@ -654,7 +654,7 @@ class Sesman():
                     target_info = u"%s@%s" % (target_login, target_device)
             try:
                 target_info = target_info.encode('utf8')
-            except Exception, e:
+            except Exception as e:
                 target_info = None
             #Check if X509 Authentication is active
             if self.engine.is_x509_connected(
@@ -706,7 +706,7 @@ class Sesman():
 
             Logger().info(u'lang=%s' % self.language)
 
-        except Exception, e:
+        except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
@@ -865,7 +865,7 @@ class Sesman():
                             return None, TR(u"Invalid user, try again")
 
                         _status = None # One more loop
-                    except Exception, e:
+                    except Exception as e:
                         if DEBUG:
                             import traceback
                             Logger().info(u"Unexpected error in selector pagination %s" % traceback.format_exc(e))
@@ -927,7 +927,7 @@ class Sesman():
                 else:
                     message = TR(u'Your Bastion password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
-        except Exception, e:
+        except Exception as e:
             if DEBUG:
                 import traceback
                 Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
@@ -1016,7 +1016,7 @@ class Sesman():
             try:
                 with open('/var/wab/etc/proxys/messages/motd.%s' % self.language) as f:
                     message = f.read().decode('utf-8')
-            except Exception, e:
+            except Exception as e:
                 pass
             data_to_send[u'message'] = cut_message(message, 8192)
 
@@ -1159,7 +1159,7 @@ class Sesman():
                     duration += 60*60*int(hres.group(1))
                 if duration == 0:
                     duration = 3600
-            except Exception, e:
+            except Exception as e:
                 duration = 3600
         else:
             duration = 3600
@@ -1856,13 +1856,13 @@ class Sesman():
                             close_box = True
                         Logger().debug(u"End Of Keep Alive")
 
-                    except AuthentifierSocketClosed, e:
+                    except AuthentifierSocketClosed as e:
                         if DEBUG:
                             import traceback
                             Logger().info(u"RDP/VNC connection terminated by client")
                             Logger().info("<<<<%s>>>>" % traceback.format_exc(e))
                         release_reason = u"RDP/VNC connection terminated by client"
-                    except Exception, e:
+                    except Exception as e:
                         if DEBUG:
                             import traceback
                             Logger().info(u"RDP/VNC connection terminated by client")
@@ -2063,7 +2063,7 @@ class Sesman():
             host_ip = socket.getaddrinfo(host, None)[0][4][0]
             Logger().info("Resolve DNS Hostname %s -> %s" % (host,
                                                              host_ip))
-        except Exception, e:
+        except Exception as e:
             return False
         return engine.is_device_in_subnet(host_ip, subnet)
 
