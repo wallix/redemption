@@ -14,9 +14,12 @@ BEGINFILE {
   if (/^Running [0-9]+ test cases\.\.\.$/)
   {
     getline
-    next
+    if (!$0) {
+      next
+    }
   }
-  else if (/^\*\*\* No errors detected$|^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
+
+  if (/^\*\*\* No errors detected$|^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
   {
     next
   }
