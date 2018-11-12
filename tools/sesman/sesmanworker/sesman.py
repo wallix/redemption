@@ -1437,11 +1437,6 @@ class Sesman():
                 close_box = False
                 kv[u'recording_started'] = "False"
 
-                physical_info = self.engine.get_physical_target_info(physical_target)
-                if not _status:
-                    physical_target = None
-                    break
-
                 cstatus, infos = self.engine.check_target(physical_target,
                                                           self.pid,
                                                           None)
@@ -1450,6 +1445,11 @@ class Sesman():
                                   % infos.get('message'))
                     _status = False
                     continue
+
+                physical_info = self.engine.get_physical_target_info(physical_target)
+                if not _status:
+                    physical_target = None
+                    break
 
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
                 application = self.engine.get_application(selected_target)
