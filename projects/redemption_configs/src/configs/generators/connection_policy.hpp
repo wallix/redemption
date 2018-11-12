@@ -216,14 +216,15 @@ template<class SpecWriter>
 int app_write_connection_policy(int ac, char const * const * av)
 {
     if (ac < 4) {
-        std::cerr << av[0] << " sesman-map.py rdp-out-spec.h vnc-out-spec.h\n";
+        std::cerr << av[0] << " sesman-map.py out-map.h rdp-out-spec.h vnc-out-spec.h\n";
         return 1;
     }
 
     SpecWriter writer(typename SpecWriter::filename_map_t{
-        std::pair{"rdp", av[2]},
-        std::pair{"vnc", av[3]}
+        std::pair{"rdp", av[3]},
+        std::pair{"vnc", av[4]}
     }, av[1]);
+    std::stringbuf buf;
     writer.evaluate();
 
     if (!writer.out_file_) {
@@ -234,6 +235,24 @@ int app_write_connection_policy(int ac, char const * const * av)
         std::cerr << av[0] << ": " << writer.errorstring << "\n";
         return 1;
     }
+
+    writer.out_file_.flush();
+
+    std::ofstream out(av[2]);
+    out << "R\"sesman_out(";
+    std::filebuf in;
+    if (!in.open(av[1], std::ios::in)) {
+        std::cerr << av[0] << ": " << av[2] << ": " << strerror(errno) << "\n";
+        return 2;
+    }
+    out << &in;
+    out << ")sesman_out\"\n";
+
+    if (!out) {
+        std::cerr << av[0] << ": " << av[2] << ": " << strerror(errno) << "\n";
+        return 2;
+    }
+
     return 0;
 }
 

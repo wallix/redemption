@@ -238,6 +238,7 @@ int main(int argc, char** argv)
     static constexpr char const * opt_print_ini = "print-default-ini";
     static constexpr char const * opt_print_rdp_connpolicy_spec = "print-rdp-connpolicy-spec";
     static constexpr char const * opt_print_vnc_connpolicy_spec = "print-vnc-connpolicy-spec";
+    static constexpr char const * opt_print_sesman_fetch_connpolicy = "print-sesman-fetch-connpolicy";
 
     program_options::options_description desc({
         {'h', "help", "produce help message"},
@@ -261,10 +262,11 @@ int main(int argc, char** argv)
 
         {"config-file", &config_filename, "use an another ini file"},
 
-        {opt_print_ini_spec, "Show file spec for rdpproxy.ini"},
+        {opt_print_ini_spec, "Show spec file for rdpproxy.ini"},
         {opt_print_ini, "Show default rdpproxy.ini"},
-        {opt_print_rdp_connpolicy_spec, "Show file spec for rdp connection policy"},
-        {opt_print_vnc_connpolicy_spec, "Show file spec for vnc connection policy"}
+        {opt_print_rdp_connpolicy_spec, "Show spec file for rdp connection policy"},
+        {opt_print_vnc_connpolicy_spec, "Show spec file for vnc connection policy"},
+        {opt_print_sesman_fetch_connpolicy, "Show sesman file for connection policy"}
 
         //{"test", "check Inifile syntax"}
     });
@@ -322,6 +324,12 @@ int main(int argc, char** argv)
     if (options.count(opt_print_vnc_connpolicy_spec)) {
         std::cout <<
             #include "configs/autogen/str_vnc_connection_policy.hpp"
+        ;
+        return 0;
+    }
+    if (options.count(opt_print_sesman_fetch_connpolicy)) {
+        std::cout <<
+            #include "configs/autogen/str_fetch_connection_policy.hpp"
         ;
         return 0;
     }
