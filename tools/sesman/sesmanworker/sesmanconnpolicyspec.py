@@ -13,6 +13,9 @@ cp_spec = {
     u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
     u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
   },
+  'session_log': {
+    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
+  },
   'server_cert': {
     u'server_cert_store': 'server_cert_store',
     u'server_cert_check': 'server_cert_check',

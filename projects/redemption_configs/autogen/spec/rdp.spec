@@ -51,6 +51,14 @@ remote_programs_disconnect_message_delay = integer(min=0, default=3000)
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
 
+[session_log]
+
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked
+#   3: keyboard input are fully masked
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
+
 [server_cert]
 
 # Keep known server certificates on WAB

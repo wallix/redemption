@@ -143,7 +143,7 @@
 "#   1: only passwords are masked\n"
 "#   2: passwords and unidentified texts are masked\n"
 "#   3: keyboard input are fully masked\n"
-"#_advanced\n"
+"#_hidden\n"
 "keyboard_input_masking_level = option(0, 1, 2, 3, default=2)\n\n"
 
 "#_advanced\n"
