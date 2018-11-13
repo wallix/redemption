@@ -210,7 +210,7 @@ Packaging
 Tag and Version
 ===============
 
-    ./public/tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
+    ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
 
 
 FAQ
