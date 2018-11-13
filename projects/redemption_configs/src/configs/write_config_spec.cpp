@@ -26,10 +26,17 @@
 #include "configs/specs/config_spec.hpp"
 #include "configs/specs/config_type.hpp"
 
+template<class... Fs>
+int thens(Fs... fs)
+{
+    int r = 0;
+    (void)(((void)(r = fs()), r) || ...);
+    return r;
+}
 
 int main()
 {
-    {
+    return thens([]{
         struct Writer : cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase<Writer>
         {
             using base_type::base_type;
@@ -49,9 +56,8 @@ int main()
             nullptr,
         };
         return cfg_generators::app_write_connection_policy<Writer>(std::size(av)-1, av);
-    }
-
-    {
+    },
+    []{
         struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer>
         {
             void do_init()
@@ -68,9 +74,8 @@ int main()
             nullptr,
         };
         return cfg_generators::app_write_cpp_config<Writer>(std::size(av)-1, av);
-    }
-
-    {
+    },
+    []{
         struct Writer : cfg_generators::ini_writer::IniWriterBase<Writer>
         {
             using base_type::base_type;
@@ -88,9 +93,8 @@ int main()
             nullptr,
         };
         return cfg_generators::app_write_ini<Writer>(std::size(av)-1, av);
-    }
-
-    {
+    },
+    []{
         struct Writer : cfg_generators::python_spec_writer::PythonSpecWriterBase<Writer>
         {
             using base_type::base_type;
@@ -108,5 +112,5 @@ int main()
             nullptr,
         };
         return cfg_generators::app_write_python_spec<Writer>(std::size(av)-1, av);
-    }
+    });
 }
