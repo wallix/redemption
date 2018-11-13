@@ -117,7 +117,7 @@ namespace cpp
     };
 
     struct expr { char const * value; };
-    #define CPP_EXPR(name) ::cfg_attributes::cpp::expr{#name}
+    #define CPP_EXPR(expression) ::cfg_attributes::cpp::expr{#expression}
 }
 
 
