@@ -26,11 +26,9 @@
 
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_from_file.hpp"
-#include "utils/difftimeval.hpp"
-#include "utils/rdtsc.hpp"
+// include "utils/difftimeval.hpp"
+// include "utils/rdtsc.hpp"
 #include "utils/stream.hpp"
-
-#include <cinttypes>
 
 
 inline Bitmap compress_perf(Bitmap & bigbmp)
@@ -39,16 +37,16 @@ inline Bitmap compress_perf(Bitmap & bigbmp)
     auto uptr = std::make_unique<uint8_t[]>(sz);
     OutStream out(uptr.get(), sz);
 
-    using std::chrono::microseconds;
-    microseconds usec = ustime();
-    microseconds cycles = rdtsc();
+    // using std::chrono::microseconds;
+    // microseconds usec = ustime();
+    // microseconds cycles = rdtsc();
     bigbmp.compress(BitsPerPixel{24}, out);
-    microseconds elapusec = ustime() - usec;
-    microseconds elapcyc = rdtsc() - cycles;
-    printf("initial_size = %zu, compressed size: %zu\n"
-        "elapsed time = %" PRIdLEAST64 " %" PRIdLEAST64 " %f\n",
-        bigbmp.bmp_size(), out.get_offset(),
-        elapusec.count(), elapcyc.count(), static_cast<double>(elapcyc.count()) / elapusec.count());
+    // microseconds elapusec = ustime() - usec;
+    // microseconds elapcyc = rdtsc() - cycles;
+    // printf("initial_size = %zu, compressed size: %zu\n"
+    //     "elapsed time = %" PRIdLEAST64 " %" PRIdLEAST64 " %f\n",
+    //     bigbmp.bmp_size(), out.get_offset(),
+    //     elapusec.count(), elapcyc.count(), static_cast<double>(elapcyc.count()) / elapusec.count());
 
     return Bitmap(BitsPerPixel{24}, BitsPerPixel{24}, nullptr, bigbmp.cx(), bigbmp.cy(), out.get_data(), out.get_offset(), true);
 }
