@@ -555,13 +555,16 @@
 "#_advanced\n"
 "experimental_fix_input_event_sync = boolean(default=True)\n\n"
 
-"[rdp_metrics]\n\n"
+"[metrics]\n\n"
 
 "#_advanced\n"
-"activate_log_metrics = boolean(default=False)\n\n"
+"enable_rdp_metrics = boolean(default=False)\n\n"
 
 "#_advanced\n"
-"log_dir_path = string(max=4096, default='" << app_path(AppPath::Record_Metrics) << "')\n\n"
+"enable_vnc_metrics = boolean(default=False)\n\n"
+
+"#_hidden\n"
+"log_dir_path = string(max=4096, default='" << app_path(AppPath::Metrics) << "')\n\n"
 
 "# (is in second)\n"
 "#_advanced\n"
@@ -573,7 +576,7 @@
 
 "# signature key to digest log metrics header info\n"
 "#_advanced\n"
-"sign_key = string(min=64, max=64, default='000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F')\n\n"
+"sign_key = string(default='')\n\n"
 
 "[mod_vnc]\n\n"
 
