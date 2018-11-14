@@ -27,6 +27,7 @@
 #include "core/report_message_api.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "mod/metrics_hmac.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "keyboard/keymap2.hpp"

@@ -20,8 +20,6 @@ Author(s): Jonathan Poelen
 
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "mod/vnc/vnc.hpp"
-#include "mod/vnc/vnc_metrics.hpp"
-
 
 
 std::unique_ptr<mod_api> new_mod_vnc(

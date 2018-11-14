@@ -19,6 +19,7 @@ Author(s): Jonathan Poelen
 */
 
 #include "core/session_reactor.hpp"
+#include "gdi/screen_functions.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 

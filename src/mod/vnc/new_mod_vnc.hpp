@@ -27,11 +27,9 @@ Author(s): Jonathan Poelen
 #include <memory>
 
 class ClientExecute;
-class ClientInfo;
 class FrontAPI;
 class ReportMessageApi;
 class SessionReactor;
-class TimeObj;
 class Transport;
 class VNCMetrics;
 

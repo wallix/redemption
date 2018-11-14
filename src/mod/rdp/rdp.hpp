@@ -64,7 +64,6 @@
 
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/fastpath.hpp"
-#include "core/RDP/lic.hpp"
 #include "core/RDP/mcs.hpp"
 #include "core/RDP/mppc.hpp"
 #include "core/RDP/protocol.hpp"
@@ -82,7 +81,6 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_metrics.hpp"
-#include "mod/metrics_hmac.hpp"
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"

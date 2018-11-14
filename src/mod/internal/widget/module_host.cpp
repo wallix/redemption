@@ -47,7 +47,6 @@ class RDPEllipseCB;
 class RDPEllipseSC;
 class RDPPolygonCB;
 class RDPPolygonSC;
-class RDPBitmapData;
 
 
 WidgetModuleHost::ModuleHolder::ModuleHolder(

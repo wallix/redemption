@@ -27,7 +27,6 @@
 #include "utils/image_data_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/rect.hpp"
-#include "gdi/image_frame_api.hpp"
 
 
 using std::size_t; /*NOLINT*/

@@ -23,6 +23,7 @@
 */
 
 #include "capture/cryptofile.hpp"
+#include "capture/ocr/locale/locale_id.hpp"
 #include "capture/rdp_ppocr/get_ocr_constants.hpp"
 
 #include "configs/config.hpp"

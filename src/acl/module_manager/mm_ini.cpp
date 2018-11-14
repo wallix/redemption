@@ -24,7 +24,6 @@
 
 #include "acl/module_manager/enums.hpp"
 #include "acl/module_manager/mm_ini.hpp"
-#include "acl/mm_api.hpp"
 #include "configs/config.hpp"
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/session_reactor.hpp"

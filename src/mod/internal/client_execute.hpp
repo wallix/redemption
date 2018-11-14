@@ -36,7 +36,6 @@ class Font;
 class InStream;
 class WindowListCaps;
 namespace CHANNELS { class ChannelDef; }
-namespace gdi { class GraphicApi; }
 
 enum { PTRFLAGS_EX_DOUBLE_CLICK = 0xFFFF };
 enum {BORDER_WIDTH_HEIGHT = 3 };

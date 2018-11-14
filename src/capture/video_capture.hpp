@@ -31,10 +31,7 @@
 #include <memory>
 #include <chrono>
 
-struct timeval;
-class video_recorder;
 class CaptureParams;
-class VideoParams;
 class FullVideoParams;
 class RDPDrawable;
 

@@ -22,69 +22,42 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
-
 #include "configs/config.hpp"
-
-#include "core/RDP/MonitorLayoutPDU.hpp"
-#include "core/RDP/bitmapupdate.hpp"
-#include "core/RDP/caches/brushcache.hpp"
-#include "core/RDP/caches/glyphcache.hpp"
-#include "core/RDP/capabilities/cap_glyphcache.hpp"
-#include "core/RDP/capabilities/colcache.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
-#include "core/RDP/clipboard.hpp"
-#include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryDestBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryEllipseSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiDstBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPatBlt.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonCB.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolygonSC.hpp"
-#include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryFrameMarker.hpp"
-#include "core/RDP/orders/RDPOrdersSecondaryGlyphCache.hpp"
-#include "core/RDP/rdp_pointer.hpp"
-
 #include "core/channel_list.hpp"
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
-
+#include "core/report_message_api.hpp"
+#include "core/session_reactor.hpp"
 #include "front/execute_events.hpp"
-
 #include "keyboard/keymap2.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
+#include "mod/mod_api.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
+#include "mod/rdp/channels/virtual_channel_data_sender.hpp"
+#include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
-#include "test_only/lcg_random.hpp"
 #include "transport/socket_transport.hpp"
-
-#include "utils/bitmap.hpp"
+#include "utils/difftimeval.hpp"
 #include "utils/netutils.hpp"
-#include "utils/select.hpp"
 
-#include <algorithm>
-#include <chrono>
-#include <cstdint>
-#include <cstdio>
+#include "test_only/lcg_random.hpp"
+
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <string>
 #include <vector>
 
 #include <openssl/ssl.h>
 
-#include <chrono>
+class ModRDPParams;
+
 
 struct RDPHeadlessFrontParams
 {

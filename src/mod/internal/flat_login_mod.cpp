@@ -23,8 +23,6 @@
 #include "mod/internal/flat_login_mod.hpp"
 #include "main/version.hpp"
 #include "configs/config.hpp"
-#include "configs/config_access.hpp"
-#include "core/client_info.hpp"
 #include "core/front_api.hpp"
 
 

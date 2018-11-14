@@ -48,4 +48,6 @@ inline const char * char_ptr_cast(const uint8_t * data) noexcept
 
 template<class E>
 constexpr std::underlying_type_t<E> underlying_cast(E e) noexcept
-{ return static_cast<std::underlying_type_t<E>>(e); }
+{
+    return static_cast<std::underlying_type_t<E>>(e);
+}

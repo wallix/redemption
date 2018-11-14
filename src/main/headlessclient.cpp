@@ -32,8 +32,6 @@
 
 #include "client_redemption/client_input_output_api/client_headless_socket.hpp"
 
-#include "client_redemption/client_channel_managers/fake_client_mod.hpp"
-
 #pragma GCC diagnostic pop
 
 #include <chrono>

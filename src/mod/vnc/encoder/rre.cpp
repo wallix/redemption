@@ -26,7 +26,6 @@ h
 #include "core/buf64k.hpp"
 #include "gdi/graphic_api.hpp"
 #include "utils/bitmap.hpp"
-#include "utils/rect.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"

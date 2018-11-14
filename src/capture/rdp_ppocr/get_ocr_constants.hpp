@@ -21,11 +21,15 @@
 #pragma once
 
 #include <string>
-#include "capture/ocr/locale/locale_id.hpp"
+
+namespace ocr { namespace locale {
+    class LocaleId;
+} }
 
 namespace rdp_ppocr {
 
 class OcrDatasConstant;
+
 OcrDatasConstant const & get_ocr_constants(std::string const & directory);
 
 OcrDatasConstant const & get_ocr_constants(std::string directory, ocr::locale::LocaleId const & locale);

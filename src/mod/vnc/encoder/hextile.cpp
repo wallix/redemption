@@ -28,12 +28,11 @@ h
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
-#include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "utils/verbose_flags.hpp"
+
 
 //    7.6.5   Hextile Encoding
 

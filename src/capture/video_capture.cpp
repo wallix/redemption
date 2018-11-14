@@ -28,8 +28,6 @@
 
 #include "gdi/capture_api.hpp"
 
-#include "transport/transport.hpp"
-
 #include "utils/png.hpp"
 #include "utils/bitmap_shrink.hpp"
 #include "utils/difftimeval.hpp"

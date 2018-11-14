@@ -26,7 +26,6 @@ h
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/encoder/encoder_api.hpp"
-#include "utils/log.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/update_lock.hpp"
 

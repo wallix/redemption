@@ -21,7 +21,6 @@
 
 #include "mod/internal/widget/flat_button.hpp"
 #include "mod/internal/widget/label.hpp"
-#include "core/font.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/slowpath.hpp"
 #include "gdi/graphic_api.hpp"

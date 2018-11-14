@@ -29,7 +29,7 @@
 #include "utils/sugar/unique_fd.hpp"
 
 #include "acl/module_manager.hpp"
-#include "mod/vnc/vnc_params.hpp"
+
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,

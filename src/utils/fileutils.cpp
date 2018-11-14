@@ -23,7 +23,6 @@
 #include "utils/fileutils.hpp"
 #include "utils/log.hpp"
 #include "utils/file.hpp"
-#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 
 #include <cstdio>

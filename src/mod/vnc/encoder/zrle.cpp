@@ -35,8 +35,6 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 #include "utils/sugar/update_lock.hpp"
-#include "utils/verbose_flags.hpp"
-#include "utils/zlib.hpp"
 
 
 namespace VNC

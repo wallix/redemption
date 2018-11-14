@@ -27,12 +27,12 @@
 #include "core/RDP/gcc/userdata/cs_monitor.hpp"
 #include "core/RDP/logon.hpp"
 #include "core/RDP/nego.hpp"
-#include "core/RDP/lic.hpp"
 #include "core/channel_names.hpp"
 #include "core/server_notifier_api.hpp"
 #include "gdi/screen_info.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
+#include "utils/crypto/ssl_lib.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 
 #include <functional> // std::reference_wrapper

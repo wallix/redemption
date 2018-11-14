@@ -18,6 +18,8 @@
 *   Author(s): Jonathan Poelen
 */
 
+#include "capture/ocr/locale/locale_id.hpp"
+
 #include "get_ocr_constants.hpp"
 #include "ocr_datas_constant.hpp"
 

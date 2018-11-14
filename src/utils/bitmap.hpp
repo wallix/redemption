@@ -37,7 +37,6 @@
 
 
 using std::size_t; /*NOLINT*/
-class Rect;
 class BGRPalette;
 class OutStream;
 
