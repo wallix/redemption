@@ -1299,32 +1299,27 @@ public:
                 if (!::strcasecmp(order_.c_str(), "KERBEROS_TICKET_CREATION") ||
                     !::strcasecmp(order_.c_str(), "KERBEROS_TICKET_DELETION")) {
                     if (parameters_.size() == 7) {
-                        auto info_parameters = key_qvalue_pairs({
-                            { "encryption_type", parameters_[0] },
-                            { "client_name",     parameters_[1] },
-                            { "server_name",     parameters_[2] },
-                            { "start_time",      parameters_[3] },
-                            { "end_time",        parameters_[4] },
-                            { "renew_time",      parameters_[5] },
-                            { "flags",           parameters_[6] },
-                        });
-
-                        auto info_order_with_parameters = key_qvalue_pairs({
-                            { "type",   order_.c_str() }
-                        });
-                        info_order_with_parameters += " ";
-                        info_order_with_parameters += info_parameters;
+                        auto info = key_qvalue_pairs({
+                                { "type",            order_         },
+                                { "encryption_type", parameters_[0] },
+                                { "client_name",     parameters_[1] },
+                                { "server_name",     parameters_[2] },
+                                { "start_time",      parameters_[3] },
+                                { "end_time",        parameters_[4] },
+                                { "renew_time",      parameters_[5] },
+                                { "flags",           parameters_[6] }
+                            });
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = order_.c_str();
-                        arc_info.WallixBastionStatus = info_parameters;
+                        arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-                        this->report_message.log6(info_order_with_parameters, arc_info, this->session_reactor.get_current_time());
+                        this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
                         if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                            LOG(LOG_INFO, "%s", info_order_with_parameters);
+                            LOG(LOG_INFO, "%s", info);
                         }
                     }
                     else {
