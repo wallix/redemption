@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cmd="$1"
-[ -z "$cmd"] && cmd="$(dirname "$0")"/cppcheck
+[ -z "$cmd" ] && cmd="$(dirname "$0")"/cppcheck
 [ $# -ge 1 ] && shift
 
 "$cmd" \

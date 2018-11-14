@@ -976,8 +976,8 @@ public:
         }(message_type));
         LOG(LOG_INFO, "ClipboardVirtualChannel::process_client_message: %s (%s:%s)",
             message_type_str,
-            flags&CHANNELS::CHANNEL_FLAG_FIRST?"FIRST":"",
-            flags&CHANNELS::CHANNEL_FLAG_LAST?"LAST":"");
+            (flags & CHANNELS::CHANNEL_FLAG_FIRST) ? "FIRST" : "",
+            (flags & CHANNELS::CHANNEL_FLAG_LAST) ? "LAST" : "");
     }
 
 

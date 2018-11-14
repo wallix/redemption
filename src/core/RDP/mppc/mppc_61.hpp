@@ -509,7 +509,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
         //  minimum LoM is RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH.
         if (historyOffset == 0) {
             counter = RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
-            for (offset_type i = 0; i < counter; i++) {
+            for (offset_type i = 0; i < counter; ++i) {
                 this->hash_tab_mgr.update_indirect(historyBuffer, i);
             }
         }

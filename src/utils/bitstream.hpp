@@ -76,11 +76,10 @@ public:
 	 * @return nbits of the stream
 	 */
 	uint32_t getBits(std::size_t nbits) {
-		std::size_t b;
 		uint32_t ret = 0;
 
 		while (p < end && nbits > 0) {
-			b = nbits;
+			std::size_t b = nbits;
 			if (b > bitsLeft)
 				b = bitsLeft;
 			if (ret)

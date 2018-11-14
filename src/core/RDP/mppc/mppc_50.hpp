@@ -640,7 +640,7 @@ private:
             if (this->historyOffset == 0) {
                 /* encode first two bytes as literals */
                 ctr = RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH - 1;
-                for (offset_type i = 0; i < ctr; i++) {
+                for (offset_type i = 0; i < ctr; ++i) {
                     ::encode_literal_40_50(this->historyBuffer[this->historyOffset + i],
                                            this->outputBuffer, bits_left, opb_index,
                                            this->outputBufferSize);
@@ -708,7 +708,7 @@ private:
             while (uncompressed_data_size - ctr > 0) {
                 ::encode_literal_40_50(uncompressed_data[ctr], this->outputBuffer,
                                        bits_left, opb_index, this->outputBufferSize);
-                ctr++;
+                ++ctr;
             }
         }
         catch (Error const &) {

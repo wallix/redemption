@@ -821,7 +821,7 @@ private:
         if (this->historyOffset == 0) {
             // encode first two bytes as literals
             ctr = MINIMUM_MATCH_LENGTH - 1;
-            for (offset_type i = 0; i < ctr; i++) {
+            for (offset_type i = 0; i < ctr; ++i) {
                 ::encode_literal_60(
                     this->historyBuffer[this->historyOffset + i],
                     this->outputBuffer, bits_left, opb_index, this->verbose);
@@ -956,7 +956,7 @@ private:
         // add remaining data if any to the output
         while (uncompressed_data_size - ctr > 0) {
             ::encode_literal_60(uncompressed_data[ctr], this->outputBuffer, bits_left, opb_index, this->verbose);
-            ctr++;
+            ++ctr;
         }
 
         // add End-of-Stream (EOS) marker

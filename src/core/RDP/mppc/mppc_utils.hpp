@@ -89,8 +89,8 @@ public:
 
 private:
     std::unique_ptr<uint8_t[]> undo_buffer_begin;
-    uint8_t * undo_buffer_end;
-    uint8_t * undo_buffer_current;
+    uint8_t * undo_buffer_end = nullptr;
+    uint8_t * undo_buffer_current = nullptr;
 
     const unsigned int length_of_data_to_sign;
 
@@ -100,16 +100,10 @@ public:
     using hash_type = uint16_t;
 
     rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
-        : hash_table(nullptr)
-        , undo_buffer_begin(nullptr)
-        , undo_buffer_end(nullptr)
-        , undo_buffer_current(nullptr)
+        : hash_table(new T[MAX_HASH_TABLE_ELEMENT]{})
         , length_of_data_to_sign(length_of_data_to_sign)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        this->hash_table = std::make_unique<T[]>(MAX_HASH_TABLE_ELEMENT);
-        std::fill(this->hash_table.get(), this->hash_table.get() + MAX_HASH_TABLE_ELEMENT, T{});
-
         auto const undo_buf_size = max_undo_element * this->undo_element_size;
 
         this->undo_buffer_begin = std::make_unique<uint8_t[]>(undo_buf_size);
