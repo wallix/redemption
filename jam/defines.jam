@@ -28,7 +28,8 @@ BIN_PREFIX_DEFAULT ?= $(PREFIX)/bin ;
 LIB_PREFIX_DEFAULT ?= $(PREFIX)/lib ;
 SHARE_PREFIX_DEFAULT ?= $(PREFIX)/share/rdpproxy ;
 RECORD_TMP_PATH_DEFAULT ?= /var/rdpproxy/tmp ;
-RECORD_PATH_DEFAULT ?= /var/rdpproxy/recorded ;
+RECORD_PATH_DEFAULT ?= /var/rdpproxy/recorded/rdp ;
+METRICS_PATH_DEFAULT ?= /var/rdpproxy/recorded/metrics ;
 ETC_PREFIX_DEFAULT ?= /etc/rdpproxy ;
 CERT_PREFIX_DEFAULT ?= /etc/rdpproxy/cert ;
 HASH_PATH_DEFAULT ?= /var/rdpproxy/hash ;
@@ -42,6 +43,7 @@ constant LIB_PREFIX : [ setvar LIB_PREFIX : $(LIB_PREFIX_DEFAULT) ] ;
 constant SHARE_PREFIX : [ setvar SHARE_PREFIX : $(SHARE_PREFIX_DEFAULT) ] ;
 constant RECORD_TMP_PATH : [ setvar RECORD_TMP_PATH : $(RECORD_TMP_PATH_DEFAULT) ] ;
 constant RECORD_PATH : [ setvar RECORD_PATH : $(RECORD_PATH_DEFAULT) ] ;
+constant METRICS_PATH : [ setvar METRICS_PATH : $(METRICS_PATH_DEFAULT) ] ;
 constant ETC_PREFIX : [ setvar ETC_PREFIX : $(ETC_PREFIX_DEFAULT) ] ;
 constant CERT_PREFIX : [ setvar CERT_PREFIX : $(CERT_PREFIX_DEFAULT) ] ;
 constant HASH_PATH : [ setvar HASH_PATH : $(HASH_PATH_DEFAULT) ] ;
@@ -55,6 +57,7 @@ rule defines ( properties * )
 {
     local defs ;
     defs += <define>RECORD_PATH='\"$(RECORD_PATH)\"' ;
+    defs += <define>METRICS_PATH='\"$(METRICS_PATH)\"' ;
     defs += <define>RECORD_TMP_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>VIDEO_PATH='\"$(RECORD_TMP_PATH)\"' ;
     defs += <define>OCR_PATH='\"$(RECORD_TMP_PATH)\"' ;
@@ -73,6 +76,7 @@ rule defines-for-test ( properties * )
 {
     local defs ;
     defs += <define>RECORD_PATH='\"/tmp/redemption_recorded\"' ;
+    defs += <define>METRICS_PATH='\"/tmp/redemption_recorded\"' ;
     defs += <define>RECORD_TMP_PATH='\"/tmp/redemption_tmp\"' ;
     defs += <define>VIDEO_PATH='\"/tmp\"' ;
     defs += <define>OCR_PATH='\"/tmp\"' ;

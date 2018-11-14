@@ -54,6 +54,7 @@
 #include "mod/internal/widget_test_mod.hpp"
 
 #include "gdi/protected_graphics.hpp"
+#include "mod/metrics_hmac.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1502,7 +1503,7 @@ public:
                                  ?(std::make_unique<Metrics>(
                                     ini.get<cfg::metrics::log_dir_path>().to_string()
                                   , ini.get<cfg::context::session_id>()
-                                  , hmac_user(ini.get<cfg::globals::auth_user>(),
+								  , hmac_user(ini.get<cfg::globals::auth_user>(),
                                               ini.get<cfg::metrics::sign_key>())
                                   , hmac_account({target_user, strlen(target_user)},
                                                  ini.get<cfg::metrics::sign_key>())
@@ -1554,9 +1555,6 @@ public:
                     new_mod->metrics = std::move(metrics);
                     new_mod->protocol_metrics = std::move(protocol_metrics);
 
-                    rdp_api*       rdpapi = new_mod;
-                    windowing_api* winapi = new_mod->get_windowing_api();
-
                     if (host_mod_in_widget) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
@@ -1585,6 +1583,8 @@ public:
                     }
                     else {
                         // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
+                        rdp_api*       rdpapi = new_mod.get();
+                        windowing_api* winapi = new_mod->get_windowing_api();
                         this->set_mod(new_mod.release(), rdpapi, winapi);
                     }
 

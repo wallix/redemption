@@ -66,28 +66,25 @@ public:
 };
 
 
-inline MetricsHmacSha256Encrypt hmac_user(
-    array_view_const_char user, std::array<uint8_t, 32> const& key)
+inline MetricsHmacSha256Encrypt hmac_user(array_view_const_char user, array_view_const_char key)
 {
     return MetricsHmacSha256Encrypt(user, key);
 }
 
-inline MetricsHmacSha256Encrypt hmac_account(
-    array_view_const_char account, std::array<uint8_t, 32> const& key)
+inline MetricsHmacSha256Encrypt hmac_account(array_view_const_char account, array_view_const_char key)
 {
     return MetricsHmacSha256Encrypt(account, key);
 }
 
-inline MetricsHmacSha256Encrypt hmac_device_service(
-    array_view_const_char device, std::string service, std::array<uint8_t, 32> const& key)
+inline MetricsHmacSha256Encrypt hmac_device_service(array_view_const_char device, array_view_const_char service, array_view_const_char key)
 {
-    service += " ";
-    service.append(device.data(), device.size());
+	std::string device_service(service.data(), service.size());
+    device_service += " ";
+    device_service.append(device.data(), device.size());
     return MetricsHmacSha256Encrypt(service, key);
 }
 
-inline MetricsHmacSha256Encrypt hmac_client_info(std::string client_host,
-    unsigned bpp, unsigned width, unsigned height, std::array<uint8_t, 32> const& key)
+inline MetricsHmacSha256Encrypt hmac_client_info(std::string client_host, unsigned bpp, unsigned width, unsigned height, array_view_const_char key)
 {
     char session_info[128];
     int session_info_size = ::snprintf(session_info, sizeof(session_info), "%u%u%u",

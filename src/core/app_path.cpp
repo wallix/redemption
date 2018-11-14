@@ -22,7 +22,7 @@
 #include <cassert>
 
 #ifdef IN_IDE_PARSER
-# define RECORD_PATH "/var/rdpproxy/recorded"
+# define RECORD_PATH "/var/rdpproxy/recorded/rdp"
 # define RECORD_TMP_PATH "/var/rdpproxy/tmp"
 # define VIDEO_PATH "/tmp"
 # define OCR_PATH "/tmp"
@@ -33,6 +33,7 @@
 # define LICENSE_PATH "/var/certs/redemption"
 // still used in sockettransport
 # define CERTIF_PATH "/etc/rdpproxy/certificate"
+# define METRICS_PATH "/etc/rdpproxy/recorded/metrics"
 # define PERSISTENT_PATH "/var/lib/redemption/cache"
 # define DRIVE_REDIRECTION_PATH "/var/rdpproxy/drive_redirection"
 # define PID_PATH "/var/run"
