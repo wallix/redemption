@@ -63,6 +63,7 @@ $(find src/ -name '*.cpp' \
     -a -not -path 'src/sashimi/*' \
     -a -not -path 'src/system/emscripten/*' \
     -a -not -path 'src/utils/crypto/*' \
+    -a -not -path 'src/main/*' \
     -a -not -name app_path.cpp \
     -a -not -name log_as_logemasm.cpp) \
 -- \
@@ -72,7 +73,7 @@ $(find src/ -name '*.cpp' \
 -I'modules/ppocr/includes/mln' \
 -I'modules/ppocr/src' \
 -I'projects/ocr1/include' \
--I'projects/redemption_configs/include/autogen' \
+-I'projects/redemption_configs/autogen/include' \
 -I'projects/redemption_configs/redemption_src' \
 -I'src' \
 -I'src/system/linux' \
