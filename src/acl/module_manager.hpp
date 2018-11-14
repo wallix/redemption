@@ -55,6 +55,8 @@
 
 #include "gdi/protected_graphics.hpp"
 #include "mod/metrics_hmac.hpp"
+#include "mod/vnc/vnc_metrics.hpp"
+#include "mod/rdp/rdp_metrics.hpp"
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -1621,7 +1623,43 @@ public:
                 try {
                     const char * const name = "VNC Target";
 
-                    std::unique_ptr<mod_api> managed_mod(new ModWithSocket<mod_vnc>(
+                    const char * target_user = ini.get<cfg::globals::target_user>().c_str();
+
+                    bool enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
+                        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+
+                    auto metrics = enable_metrics?std::make_unique<Metrics>(
+                        this->ini.get<cfg::metrics::log_dir_path>().to_string()
+                      , this->ini.get<cfg::context::session_id>()
+                      , hmac_user(this->ini.get<cfg::globals::auth_user>(),
+                                  this->ini.get<cfg::metrics::sign_key>())
+                      , hmac_account({target_user, strlen(target_user)},
+                                     this->ini.get<cfg::metrics::sign_key>())
+                      , hmac_device_service(this->ini.get<cfg::globals::target_device>(),
+                                            this->ini.get<cfg::context::target_service>(),
+                                            this->ini.get<cfg::metrics::sign_key>())
+                      , hmac_client_info(this->ini.get<cfg::globals::host>(),
+                                         this->front.client_info.bpp, this->front.client_info.width, this->front.client_info.height,
+                                         this->ini.get<cfg::metrics::sign_key>())
+                      , this->timeobj.get_time()
+                      , this->ini.get<cfg::metrics::log_file_turnover_interval>()
+                      , this->ini.get<cfg::metrics::log_interval>())
+                      : std::unique_ptr<Metrics>(nullptr);
+
+                    auto protocol_metrics = enable_metrics
+                                          ? std::make_unique<VNCMetrics>(metrics.get())
+                                          : std::unique_ptr<VNCMetrics>(nullptr);
+
+                    struct ModVNCWithMetrics : public mod_vnc
+                    {
+                        std::unique_ptr<Metrics> metrics = nullptr;
+                        std::unique_ptr<VNCMetrics> protocol_metrics = nullptr;
+
+                        using mod_vnc::mod_vnc;
+
+                    };
+
+                    auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
                         *this,
                         authentifier,
                         name,
@@ -1629,32 +1667,36 @@ public:
                         this->ini.get<cfg::debug::mod_vnc>(),
                         nullptr,
                         sock_mod_barrier(),
-                        this->ini.get<cfg::globals::target_user>().c_str(),
-                        this->ini.get<cfg::context::target_password>().c_str(),
-                        this->front,
+						this->ini.get<cfg::globals::target_user>().c_str(),
+						this->ini.get<cfg::context::target_password>().c_str(),
+                        front,
                         this->front.client_info.width,
                         this->front.client_info.height,
-                        this->ini.get<cfg::font>(),
-                        TR(trkeys::authentication_required, language(this->ini)),
-                        TR(trkeys::password, language(this->ini)),
-                        this->ini.get<cfg::theme>(),
+						this->ini.get<cfg::font>(),
+						TR(trkeys::authentication_required, language(this->ini)),
+						TR(trkeys::password, language(this->ini)),
+						this->ini.get<cfg::theme>(),
                         this->front.client_info.keylayout,
                         this->front.keymap.key_flags,
-                        this->ini.get<cfg::mod_vnc::clipboard_up>(),
-                        this->ini.get<cfg::mod_vnc::clipboard_down>(),
-                        this->ini.get<cfg::mod_vnc::encodings>().c_str(),
-                        this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
-                        true,
-                        this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
+						this->ini.get<cfg::mod_vnc::clipboard_up>(),
+						this->ini.get<cfg::mod_vnc::clipboard_down>(),
+						this->ini.get<cfg::mod_vnc::encodings>().c_str(),
+						this->ini.get<cfg::mod_vnc::allow_authentification_retries>(),
+						true,
+						this->ini.get<cfg::mod_vnc::server_clipboard_encoding_type>()
                             != ClipboardEncodingType::latin1
                             ? mod_vnc::ClipboardEncodingType::UTF8
                             : mod_vnc::ClipboardEncodingType::Latin1,
-                        this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+							  this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                         report_message,
-                        this->ini.get<cfg::mod_vnc::server_is_apple>(),
-                        (this->front.client_info.remote_program ? &this->client_execute : nullptr),
-                        to_verbose_flags(this->ini.get<cfg::debug::mod_vnc>())
-                    ));
+						this->ini.get<cfg::mod_vnc::server_is_apple>(),
+                        (this->front.client_info.remote_program ? &client_execute : nullptr),
+                        to_verbose_flags(ini.get<cfg::debug::mod_vnc>())
+//                        (enable_metrics)?protocol_metrics.get():nullptr
+                    );
+
+                    new_mod->metrics     = std::move(metrics);
+                    new_mod->protocol_metrics = std::move(protocol_metrics);
 
                     if (this->front.client_info.remote_program) {
                         LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
@@ -1672,21 +1714,24 @@ public:
 
                         this->client_execute.set_target_info(target_info.c_str());
 
-                        this->set_mod(new RailModuleHostMod(
-                                this->ini,
-                                this->front,
-                                this->front.client_info.width,
-                                this->front.client_info.height,
-                                adjusted_client_execute_rect,
-                                std::move(managed_mod),
-                                this->client_execute,
-                                this->front.client_info.cs_monitor,
-                                false
-                            ));
+                        this->set_mod(
+                        		new RailModuleHostMod(
+									this->ini,
+									this->front,
+									this->front.client_info.width,
+									this->front.client_info.height,
+									adjusted_client_execute_rect,
+									std::move(new_mod),
+									this->client_execute,
+									this->front.client_info.cs_monitor,
+									false
+									)
+
+                        );
                         LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
                     }
                     else {
-                        this->set_mod(managed_mod.release());
+                        this->set_mod(new_mod.release());
                     }
                 }
                 catch (...) {
