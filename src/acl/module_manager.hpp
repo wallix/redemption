@@ -1492,7 +1492,46 @@ public:
                         this->client_execute.reset(false);
                     }
 
-                    ModWithSocket<mod_rdp>* new_mod = new ModWithSocket<mod_rdp>(
+
+                    const char * target_user = ini.get<cfg::globals::target_user>().c_str();
+
+                    bool enable_metrics = (ini.get<cfg::metrics::enable_rdp_metrics>()
+                        && create_metrics_directory(ini.get<cfg::metrics::log_dir_path>().to_string()));
+
+                    auto metrics = (enable_metrics)
+                                 ?(std::make_unique<Metrics>(
+                                    ini.get<cfg::metrics::log_dir_path>().to_string()
+                                  , ini.get<cfg::context::session_id>()
+                                  , hmac_user(ini.get<cfg::globals::auth_user>(),
+                                              ini.get<cfg::metrics::sign_key>())
+                                  , hmac_account({target_user, strlen(target_user)},
+                                                 ini.get<cfg::metrics::sign_key>())
+                                  , hmac_device_service(ini.get<cfg::globals::target_device>(),
+                                                        ini.get<cfg::context::target_service>(),
+                                                        ini.get<cfg::metrics::sign_key>())
+                                  , hmac_client_info(ini.get<cfg::globals::host>(),
+                                                     client_info.bpp, client_info.width, client_info.height,
+                                                     ini.get<cfg::metrics::sign_key>())
+                                  , this->timeobj.get_time()
+                                  , ini.get<cfg::metrics::log_file_turnover_interval>()
+                                  , ini.get<cfg::metrics::log_interval>()))
+                                 : std::unique_ptr<Metrics>{nullptr};
+
+                    auto protocol_metrics = (enable_metrics)
+                                          ? std::make_unique<RDPMetrics>(metrics.get())
+                                          : std::unique_ptr<RDPMetrics>{nullptr};
+
+                    struct ModRDPWithMetrics : public mod_rdp
+                    {
+                        std::unique_ptr<Metrics> metrics = nullptr;
+                        std::unique_ptr<RDPMetrics> protocol_metrics = nullptr;
+                        // SessionReactor::TimerPtr metrics_timer;
+
+                        using mod_rdp::mod_rdp;
+
+                    };
+
+                    auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
                         *this,
                         authentifier,
                         name,
@@ -1508,9 +1547,12 @@ public:
                         mod_rdp_params,
                         authentifier,
                         report_message,
-                        this->ini
+                        this->ini,
+			            enable_metrics?protocol_metrics.get():nullptr
                     );
-                    std::unique_ptr<mod_api> managed_mod(new_mod);
+
+                    new_mod->metrics = std::move(metrics);
+                    new_mod->protocol_metrics = std::move(protocol_metrics);
 
                     rdp_api*       rdpapi = new_mod;
                     windowing_api* winapi = new_mod->get_windowing_api();
@@ -1531,7 +1573,7 @@ public:
                                         this->front.client_info.width,
                                         this->front.client_info.height,
                                         adjusted_client_execute_rect,
-                                        std::move(managed_mod),
+                                        std::move(new_mod),
                                         this->client_execute,
                                         this->front.client_info.cs_monitor,
                                         !this->ini.get<cfg::globals::is_rec>()
@@ -1543,7 +1585,7 @@ public:
                     }
                     else {
                         // TODO RZ: We need find a better way to give access of STRAUTHID_AUTH_ERROR_MESSAGE to SocketTransport
-                        this->set_mod(managed_mod.release(), rdpapi, winapi);
+                        this->set_mod(new_mod.release(), rdpapi, winapi);
                     }
 
                     /* If provided by connection policy, session timeout update */
