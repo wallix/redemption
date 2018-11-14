@@ -953,12 +953,12 @@ public:
         return SEC_I_COMPLETE_NEEDED;
     }
 
-    void ntlm_SetContextWorkstation(const uint8_t * workstation) {
+    void ntlm_SetContextWorkstation(array_view_const_char workstation) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
-        if (workstation) {
-            size_t host_len = UTF8Len(workstation);
+        if (!workstation.empty()) {
+            size_t host_len = UTF8Len(workstation.data());
             this->Workstation.init(host_len * 2);
-            UTF8toUTF16(std::string(char_ptr_cast(workstation)), this->Workstation.get_data(), host_len * 2);
+            UTF8toUTF16(workstation, this->Workstation.get_data(), host_len * 2);
             this->SendWorkstationName = true;
         }
         else {
@@ -967,13 +967,12 @@ public:
         }
     }
 
-    // TODO array_view_const_u8
-    void ntlm_SetContextServicePrincipalName(const uint8_t * pszTargetName) {
+    void ntlm_SetContextServicePrincipalName(array_view_const_char pszTargetName) {
         // CHECK UTF8 or UTF16 (should store in UTF16)
-        if (pszTargetName) {
-            size_t host_len = UTF8Len(pszTargetName);
+        if (!pszTargetName.empty()) {
+            size_t host_len = UTF8Len(pszTargetName.data());
             this->ServicePrincipalName.init(host_len * 2);
-            UTF8toUTF16(std::string(char_ptr_cast(pszTargetName)), this->ServicePrincipalName.get_data(), host_len * 2);
+            UTF8toUTF16(pszTargetName, this->ServicePrincipalName.get_data(), host_len * 2);
         }
         else {
             this->ServicePrincipalName.init(0);

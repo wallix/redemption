@@ -625,7 +625,7 @@ private:
                 }
 
                 ArcsightLogInfo arc_info;
-                arc_info.name = std::string(type);
+                arc_info.name = type;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -723,11 +723,11 @@ private:
             });
 
         ArcsightLogInfo arc_info;
-        arc_info.name = std::string(type);
+        arc_info.name = type;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.fileName = file_info.file_name;
         arc_info.fileSize = file_info.size;
-        arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+        arc_info.WallixBastionSHA256Digest = digest_s;
         arc_info.direction_flag = from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
 
         this->report_message.log6(info, arc_info, tvtime());
@@ -1446,7 +1446,7 @@ public:
                 }
 
                 ArcsightLogInfo arc_info;
-                arc_info.name = std::string(type);
+                arc_info.name = type;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.message = info;
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;

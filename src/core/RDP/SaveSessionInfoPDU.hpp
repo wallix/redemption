@@ -277,7 +277,9 @@ struct LogonInfoVersion1_Recv {
     }   // LogonInfoVersion1_Recv(InStream & stream)
 };  // struct LogonInfoVersion1_Recv
 
-struct LogonInfoVersion1_Send {
+struct LogonInfoVersion1_Send
+{
+    // TODO std::string_view / array_view_const_char / bytes_view
     LogonInfoVersion1_Send(OutStream & stream, const uint8_t * Domain,
         const uint8_t * UserName, uint32_t sessionId)
     {
@@ -285,12 +287,17 @@ struct LogonInfoVersion1_Send {
         uint8_t utf16_UserName[512];
 
         memset(utf16_Domain,   0, sizeof(utf16_Domain));
-        uint32_t cbDomain   = UTF8toUTF16(std::string(char_ptr_cast(Domain)), utf16_Domain,
-            sizeof(utf16_Domain)   - sizeof(uint16_t)) + 2;
+        uint32_t cbDomain   = UTF8toUTF16(
+            {Domain, strlen(char_ptr_cast(Domain))},
+            utf16_Domain, sizeof(utf16_Domain) - sizeof(uint16_t)
+        ) + 2;
 
         memset(utf16_UserName, 0, sizeof(utf16_UserName));
-        uint32_t cbUserName = UTF8toUTF16(std::string(char_ptr_cast(UserName)), utf16_UserName,
-            sizeof(utf16_UserName) - sizeof(uint16_t)) + 2;
+        uint32_t cbUserName = UTF8toUTF16(
+            {UserName, char_ptr_cast(UserName)},
+            utf16_UserName,
+            sizeof(utf16_UserName) - sizeof(uint16_t)
+        ) + 2;
 
         stream.out_uint32_le(cbDomain);
         stream.out_copy_bytes(utf16_Domain, sizeof(utf16_Domain));

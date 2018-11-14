@@ -154,16 +154,16 @@ RED_AUTO_TEST_CASE(TestNTOWFv2)
     NTLMContext context(false, rand, timeobj);
     uint8_t buff[16];
 
-    uint8_t password[] = "Password";
-    uint8_t user[] = "User";
-    uint8_t domain[] = "Domain";
+    constexpr auto password = "Password"_av;
+    constexpr auto user = "User"_av;
+    constexpr auto domain = "Domain"_av;
 
-    uint8_t upassword[(sizeof(password) - 1) * 2];
-    uint8_t uuser[(sizeof(user) - 1) * 2];
-    uint8_t udomain[(sizeof(domain) - 1) * 2];
-    UTF8toUTF16(std::string(char_ptr_cast(password)), upassword, sizeof(upassword));
-    UTF8toUTF16(std::string(char_ptr_cast(user)), uuser, sizeof(uuser));
-    UTF8toUTF16(std::string(char_ptr_cast(domain)), udomain, sizeof(udomain));
+    uint8_t upassword[password.size() * 2];
+    uint8_t uuser[user.size() * 2];
+    uint8_t udomain[domain.size() * 2];
+    UTF8toUTF16(password, upassword, sizeof(upassword));
+    UTF8toUTF16(user, uuser, sizeof(uuser));
+    UTF8toUTF16(domain, udomain, sizeof(udomain));
 
     context.NTOWFv2(make_array_view(upassword),
                     make_array_view(uuser),
@@ -180,19 +180,20 @@ RED_AUTO_TEST_CASE(TestSetters)
     NTLMContext context(false, rand, timeobj);
     // context.init();
 
-    uint8_t work[] = "Carpe Diem";
-
-    uint8_t spn[] = "Sustine et abstine";
+    auto work = "Carpe Diem"_av;
+    auto spn = "Sustine et abstine"_av;
 
     RED_CHECK_EQUAL(context.Workstation.size(), 0);
     context.ntlm_SetContextWorkstation(work);
-    RED_CHECK_EQUAL(context.Workstation.size(), (sizeof(work) - 1) * 2);
-    RED_CHECK(memcmp(work, context.Workstation.get_data(), sizeof(work)));
+    RED_CHECK_EQUAL(context.Workstation.size(), work.size() * 2);
+    // TODO TEST bad test
+    RED_CHECK(memcmp(work.data(), context.Workstation.get_data(), work.size()+1));
 
     RED_CHECK_EQUAL(context.ServicePrincipalName.size(), 0);
     context.ntlm_SetContextServicePrincipalName(spn);
-    RED_CHECK_EQUAL(context.ServicePrincipalName.size(), (sizeof(spn) - 1) * 2);
-    RED_CHECK(memcmp(spn, context.ServicePrincipalName.get_data(), sizeof(spn)));
+    RED_CHECK_EQUAL(context.ServicePrincipalName.size(), spn.size() * 2);
+    // TODO TEST bad test
+    RED_CHECK(memcmp(spn.data(), context.ServicePrincipalName.get_data(), spn.size()+1));
 
 }
 

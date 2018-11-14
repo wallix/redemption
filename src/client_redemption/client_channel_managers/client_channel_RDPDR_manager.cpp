@@ -592,7 +592,7 @@ void ClientChannelRDPDRManager::process_iorequest_create(InStream & chunk, rdpdr
 
     if (id == 0) {
 
-        std::string new_path(this->share_dir + request.Path());
+        std::string new_path(this->share_dir + request.Path().data());
 
         if (this->impl_io_disk->ifile_good(new_path.c_str())) {
             id = this->get_file_id();
@@ -854,7 +854,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                     tmp_path = tmp_path.substr(tmp_path_index+1, tmp_path.length());
                     tmp_path_index = tmp_path.find('/');
                 }
-                str_file_name = tmp_path;
+                str_file_name = std::move(tmp_path);
 
                 std::string str_file_path_slash(this->share_dir + path);
 
@@ -893,7 +893,8 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                     str_file_name = this->elem_in_path[0];
                     this->elem_in_path.erase(this->elem_in_path.begin());
 
-                    std::string str_file_path_slash(str_dir_path + "/" + str_file_name);
+                    std::string str_file_path_slash(str_dir_path + "/");
+                    str_file_path_slash += str_file_name;
                     struct stat buff_child;
                     if (stat(str_file_path_slash.c_str(), &buff_child)) {
                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
@@ -917,7 +918,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                                                         child.EndOfFile,
                                                         child.AllocationSize,
                                                         child.FileAttributes,
-                                                        str_file_name.c_str());
+                                                        str_file_name);
 
                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
                     cdqdr.emit(out_stream);
@@ -934,7 +935,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                                                             child.EndOfFile,
                                                             child.AllocationSize,
                                                             child.FileAttributes,
-                                                            str_file_name.c_str());
+                                                            str_file_name);
 
                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffdi.size());
                     cdqdr.emit(out_stream);
@@ -944,7 +945,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                     break;
                 case rdpdr::FileBothDirectoryInformation:
                 {
-                    fscc::FileBothDirectoryInformation fbdi(child.CreationTime,                                                                                 child.LastAccessTime, child.LastWriteTime, child.ChangeTime, child.EndOfFile, child.AllocationSize, child.FileAttributes, str_file_name.c_str());
+                    fscc::FileBothDirectoryInformation fbdi(child.CreationTime,                                                                                 child.LastAccessTime, child.LastWriteTime, child.ChangeTime, child.EndOfFile, child.AllocationSize, child.FileAttributes, str_file_name);
 
                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(fbdi.size());
                     cdqdr.emit(out_stream);
@@ -954,7 +955,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                     break;
                 case rdpdr::FileNamesInformation:
                 {
-                    fscc::FileNamesInformation ffi(str_file_name.c_str());
+                    fscc::FileNamesInformation ffi(str_file_name);
 
                     rdpdr::ClientDriveQueryDirectoryResponse cdqdr(ffi.size());
                     cdqdr.emit(out_stream);
@@ -1018,8 +1019,6 @@ void ClientChannelRDPDRManager::process_iorequest_query_volume_information(InStr
 
     uint32_t VolumeSerialNumber = 0;
 
-    ClientIODiskAPI::FileStatvfs fileStatvfs;
-
     std::string str_path;
 
     if (this->paths.end() != this->paths.find(id)) {
@@ -1045,6 +1044,8 @@ void ClientChannelRDPDRManager::process_iorequest_query_volume_information(InStr
     }
 
     deviceIOResponse.emit(out_stream);
+
+    ClientIODiskAPI::FileStatvfs fileStatvfs;
 
     if (deviceIOResponse.IoStatus() == erref::NTSTATUS::STATUS_SUCCESS) {
         switch (sdqvir.FsInformationClass()) {

@@ -165,7 +165,7 @@ private:
         if (data) {
             size_t user_len = UTF8Len(data);
             arr.init(user_len * 2);
-            UTF8toUTF16(std::string(char_ptr_cast(data)), arr.get_data(), user_len * 2);
+            UTF8toUTF16({data, strlen(char_ptr_cast(data))}, arr.get_data(), user_len * 2);
         }
         else {
             arr.init(0);
@@ -371,7 +371,7 @@ struct SecurityFunctionTable
 
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
-    virtual SEC_STATUS InitializeSecurityContext(char* pszTargetName,
+    virtual SEC_STATUS InitializeSecurityContext(array_view_const_char pszTargetName,
                                                  array_view_const_u8 input_buffer,
                                                  Array& output_buffer) = 0;
 
@@ -405,7 +405,7 @@ struct UnimplementedSecurityFunctionTable : SecurityFunctionTable
     }
 
     SEC_STATUS InitializeSecurityContext(
-        char* /*pszTargetName*/,
+        array_view_const_char /*pszTargetName*/,
         array_view_const_u8 /*input_buffer*/,
         Array& /*output_buffer*/
     ) override

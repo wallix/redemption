@@ -1027,18 +1027,19 @@ public:
             case CHANID_WABDIAG:
             {
                 int len = chunk.in_uint32_le();
+                // TODO std::string_view
                 std::string msg(char_ptr_cast(chunk.get_current()), len);
 
-                if        (msg == std::string("ConfirmationPixelColor=White")) {
+                if        (msg == "ConfirmationPixelColor=White") {
                     this->wab_diag_question = true;
                     this->answer_question(0xffffffff);
                     this->asked_color = 0xffffffff;
-                } else if (msg == std::string("ConfirmationPixelColor=Black")) {
+                } else if (msg == "ConfirmationPixelColor=Black") {
                     this->wab_diag_question = true;
                     this->answer_question(0xff000000);
                     this->asked_color = 0xff000000;
                 } else {
-                    LOG(LOG_INFO, "SERVER >> wabdiag %s", msg.c_str());
+                    LOG(LOG_INFO, "SERVER >> wabdiag %s", msg);
                 }
             }
                 break;

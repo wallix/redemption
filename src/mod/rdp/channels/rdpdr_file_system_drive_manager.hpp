@@ -854,8 +854,11 @@ public:
 
         out_drive_created = false;
 
-        this->full_path =  path;
-        this->full_path += device_create_request.Path();
+        {
+            this->full_path = path;
+            auto av = device_create_request.Path();
+            this->full_path.append(av.data(), av.size());
+        }
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
@@ -1246,8 +1249,11 @@ public:
 
         this->is_session_probe_image = is_session_probe_image;
 
-        this->full_path = path;
-        this->full_path += device_create_request.Path();
+        {
+            this->full_path = path;
+            auto av = device_create_request.Path();
+            this->full_path.append(av.data(), av.size());
+        }
 
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
@@ -1867,11 +1873,14 @@ private:
         }
 
         std::string full_path    = path;
-        auto const  request_path = device_create_request.Path();
-        if ((full_path.back() != '/') && (request_path[0] != '/')) {
-            full_path += '/';
+        {
+            auto const  request_path = device_create_request.Path();
+            if ((full_path.back() != '/') && (request_path.data()[0] != '/')) {
+                full_path += '/';
+            }
+            full_path.append(request_path.data(), request_path.size());
         }
-        full_path += request_path;
+
         if (bool(verbose & RDPVerbose::fsdrvmgr)) {
             LOG(LOG_INFO,
                 "FileSystemDriveManager::ProcessServerCreateDriveRequest: "
@@ -1902,7 +1911,7 @@ private:
         else {
             is_session_probe_image =
                 ((device_io_request.DeviceId() == this->session_probe_drive_id) &&
-                 !::strcmp(device_create_request.Path(), "/BIN"));
+                 !::strcmp(device_create_request.Path().data(), "/BIN"));
 
             managed_file_system_object = std::make_unique<ManagedFile>();
         }

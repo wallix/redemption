@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TraceWidgetEdit2)
     // drawable.save_to_png("editvalid4.png");
 
     RED_CHECK_SIG(drawable, "\x75\x64\xef\x93\xbf\x0c\xd7\x36\x48\x0b\xcb\x0e\x15\x92\xc1\x3b\x33\x81\x20\x2f");
-    RED_CHECK_EQUAL(std::string("Ylajali"), std::string(wedit.get_text()));
+    RED_CHECK_EQUAL("Ylajali", wedit.get_text());
 
 
     wedit.set_xy(192,242);

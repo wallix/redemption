@@ -932,9 +932,9 @@ public:
 
     void formatId(uint32_t formatId) { this->formatId_ = formatId; }
 
-    const char * format_name() const { return this->format_name_.c_str(); }
+    std::string const& format_name() const { return this->format_name_; }
 
-    void format_name(const char * format_name) { this->format_name_ = format_name; }
+    void format_name(std::string format_name) { this->format_name_ = std::move(format_name); }
 
     size_t format_name_length() const { return this->format_name_.length(); }
 
@@ -973,7 +973,7 @@ public:
                     formatName_unicode_data_size);
 
                 const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    std::string(format_name.format_name()),
+                    format_name.format_name(),
                     formatName_unicode_data.get(), formatName_unicode_data_size);
                 assert(size_of_formatName_unicode_data + 2 < formatName_unicode_data_size);
 
@@ -990,11 +990,11 @@ public:
             bool   all_format_names_are_ASCII_strings = true;
             size_t max_format_name_len_in_char        = 0;
             for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name()))) {
+                if (!::is_ASCII_string(format_name.format_name().c_str())) {
                     all_format_names_are_ASCII_strings = false;
                 }
 
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name()));
+                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
                 if (max_format_name_len_in_char < format_name_len_in_char) {
                     max_format_name_len_in_char = format_name_len_in_char;
                 }
@@ -1013,7 +1013,7 @@ public:
                     uint8_t formatName_unicode_data[formatName_unicode_data_size];
 
                     const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                        std::string(format_name.format_name()),
+                        format_name.format_name(),
                         formatName_unicode_data, formatName_unicode_data_size - sizeof(uint16_t));
                     assert(size_of_formatName_unicode_data + 2 <= formatName_unicode_data_size);
 
@@ -1036,7 +1036,7 @@ public:
                             format_name.format_name_length(),
                             32 /* formatName(32) */ - sizeof(uint8_t));
 
-                    stream.out_copy_bytes(format_name.format_name(),
+                    stream.out_copy_bytes(format_name.format_name().c_str(),
                         size_of_formatName_ASCII_data);
 
                     stream.out_clear_bytes(32 /* formatName(32) */ - size_of_formatName_ASCII_data);
@@ -1068,6 +1068,10 @@ public:
                     LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
                 }
+                else {
+                    format_name.resize(size_of_formatName_UTF8_data-1);
+                }
+
 
                 this->format_names.emplace_back(
                         formatId,
@@ -1111,6 +1115,10 @@ public:
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
                     }
 
+                    if (size_of_formatName_UTF8_data) {
+                        format_name.resize(size_of_formatName_UTF8_data-1);
+                    }
+
                     this->format_names.emplace_back(
                             formatId,
                             std::move(format_name)
@@ -1144,7 +1152,7 @@ public:
                     formatName_unicode_data_size);
 
                 const size_t size_of_formatName_unicode_data = ::UTF8toUTF16(
-                    std::string(format_name.format_name()),
+                    format_name.format_name(),
                     formatName_unicode_data.get(), formatName_unicode_data_size);
                 sz += (size_of_formatName_unicode_data + 2);    // wszFormatName (variable)
             }
@@ -1164,11 +1172,11 @@ public:
             bool   all_format_names_are_ASCII_strings = true;
             size_t max_format_name_len_in_char        = 0;
             for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name()))) {
+                if (!::is_ASCII_string(format_name.format_name().data())) {
                     all_format_names_are_ASCII_strings = false;
                 }
 
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name()));
+                const size_t format_name_len_in_char = ::UTF8StrLenInChar(format_name.format_name().data());
                 if (max_format_name_len_in_char < format_name_len_in_char) {
                     max_format_name_len_in_char = format_name_len_in_char;
                 }

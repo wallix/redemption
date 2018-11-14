@@ -152,16 +152,17 @@ public:
         return SEC_E_NO_CREDENTIALS;
     }
 
-    bool get_service_name(char * server, gss_name_t * name) {
+    bool get_service_name(array_view_const_char server, gss_name_t * name) {
         gss_buffer_desc output;
         OM_uint32 major_status, minor_status;
         const char service_name[] = "TERMSRV";
         gss_OID type = GSS_C_NT_HOSTBASED_SERVICE;
-        int size = (strlen(service_name) + 1 + strlen(server) + 1);
+        int size = (strlen(service_name) + 1 + server.size() + 1);
 
         auto output_value = std::make_unique<char[]>(size);
         output.value = output_value.get();
-        snprintf(static_cast<char*>(output.value), size, "%s@%s", service_name, server);
+        snprintf(static_cast<char*>(output.value), size, "%s@%.*s",
+            service_name, int(server.size()), server.data());
         output.length = strlen(static_cast<char*>(output.value)) + 1;
         LOG(LOG_INFO, "GSS IMPORT NAME : %s", static_cast<char*>(output.value));
         major_status = gss_import_name(&minor_status, &output, type, name);
@@ -176,7 +177,7 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     ) override
     {
         OM_uint32 major_status, minor_status;

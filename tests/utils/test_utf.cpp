@@ -270,7 +270,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16)
     const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
     uint8_t target[target_length];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16({std::data(source), std::size(source)-1}, target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);
@@ -295,7 +295,7 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_control_character)
     const size_t target_length = sizeof(expected_target)/sizeof(expected_target[0]);
     uint8_t target[target_length];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16({std::data(source), std::size(source)-1}, target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);
@@ -324,13 +324,13 @@ RED_AUTO_TEST_CASE(TestUTF8_UTF16_witch_CrLf)
     uint8_t targetCr[target_lengthCr];
     uint8_t targetCrLf[target_lengthCrLf];
 
-    size_t nbbytes_utf16 = UTF8toUTF16(std::string(char_ptr_cast(source)), targetCr, target_lengthCr);
+    size_t nbbytes_utf16 = UTF8toUTF16({std::data(source), std::size(source)-1}, targetCr, target_lengthCr);
 
     // Check result
     RED_CHECK_EQUAL(target_lengthCr, nbbytes_utf16);
     RED_CHECK_EQUAL_RANGES(targetCr, expected_targetCr);
 
-    nbbytes_utf16 = UTF8toUTF16_CrLf(std::string(char_ptr_cast(source)), targetCrLf, target_lengthCrLf);
+    nbbytes_utf16 = UTF8toUTF16_CrLf({std::data(source), std::size(source)-1}, targetCrLf, target_lengthCrLf);
 
     // Check result
     RED_CHECK_EQUAL(target_lengthCrLf, nbbytes_utf16);
@@ -452,7 +452,7 @@ RED_AUTO_TEST_CASE(TestUTF16ToLatin1) {
         UTF16toLatin1(utf16_src, number_of_characters * 2, latin1_dst, sizeof(latin1_dst)),
         number_of_characters);
 
-    RED_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "trap\xe9zo\xef" "dal");
+    RED_CHECK_EQ(char_ptr_cast(latin1_dst), "trap\xe9zo\xef" "dal");
 }
 
 RED_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
@@ -467,7 +467,7 @@ RED_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
 
     RED_CHECK_EQUAL(x, number_of_characters);
 
-    RED_CHECK_EQUAL(std::string(char_ptr_cast(latin1_dst)), "100 \x80");
+    RED_CHECK_EQ(char_ptr_cast(latin1_dst), "100 \x80");
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16) {
@@ -482,7 +482,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16) {
     uint8_t utf16_dst[32];
 
     RED_CHECK_EQUAL(
-        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
+        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
         number_of_characters * 2);
 
     RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
@@ -493,7 +493,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16) {
         UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
         number_of_characters + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
-    RED_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "trapézoïdal");
+    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "trapézoïdal");
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
@@ -507,7 +507,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
     uint8_t utf16_dst[32];
 
     RED_CHECK_EQUAL(
-        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
+        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
         number_of_characters * 2);
 
     RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
@@ -518,7 +518,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_1) {
         UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
         number_of_characters + 2 /* '€' => 0xE2 0x82 0xAC */ );
 
-    RED_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €");
+    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "100 €");
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
@@ -538,7 +538,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
     uint8_t utf16_dst[64];
 
     RED_CHECK_EQUAL(
-        Latin1toUTF16(latin1_src, number_of_characters, utf16_dst, sizeof(utf16_dst)),
+        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
         number_of_characters * 2 + 2 /* '\n' -> 0x0D 0x00 0x0A 0x00 */);
 
     RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected,
@@ -553,7 +553,7 @@ RED_AUTO_TEST_CASE(TestLatin1ToUTF16_2) {
                              + 1 /* '\n' => 0x0D 0x0A */
                              + 2 /* 'é'  => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
-    RED_CHECK_EQUAL(std::string(char_ptr_cast(utf8_dst)), "100 €\r\ntrapézoïdal");
+    RED_CHECK_EQ(char_ptr_cast(utf8_dst), "100 €\r\ntrapézoïdal");
 }
 
 RED_AUTO_TEST_CASE(TestLatin1ToUTF8) {
@@ -661,7 +661,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16Limit)
 
     memset(target, 0xfe, sizeof(target));
 
-    size_t nbbytes_utf16 = UTF8toUTF16(std::string("abcdef"), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16("abcdef"_av, target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(target_length, nbbytes_utf16);      // 8
@@ -677,7 +677,7 @@ RED_AUTO_TEST_CASE(TestUTF8ToUTF16)
 
     memset(target, 0xfe, sizeof(target));
 
-    size_t nbbytes_utf16 = UTF8toUTF16(std::string("abc"), target, target_length);
+    size_t nbbytes_utf16 = UTF8toUTF16("abc"_av, target, target_length);
 
     // Check result
     RED_CHECK_EQUAL(6, nbbytes_utf16);      // 6

@@ -22,10 +22,9 @@
 #pragma once
 
 #include "core/error.hpp"
-#include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/array_view.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <string>
 
@@ -56,13 +55,12 @@ inline void get_non_null_terminated_utf16_from_utf8(
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, uint8_t const * utf8_string,
+    OutStream & out, const_bytes_view utf8_string,
     const size_t maximum_length_in_bytes,
     const size_t offset_of_data_length
 ) {
     uint8_t * const unicode_data = out.get_current();
-    const size_t size_of_unicode_data = ::UTF8toUTF16(
-        std::string(char_ptr_cast(utf8_string)), unicode_data, maximum_length_in_bytes);
+    const size_t size_of_unicode_data = ::UTF8toUTF16(utf8_string, unicode_data, maximum_length_in_bytes);
     out.out_skip_bytes(size_of_unicode_data);
 
     out.set_out_uint16_le(size_of_unicode_data, offset_of_data_length);
@@ -72,7 +70,7 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
 
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, uint8_t const * utf8_string,
+    OutStream & out, const_bytes_view utf8_string,
     const size_t maximum_length_in_bytes
 ) {
     const size_t offset_of_data_length = out.get_offset();
@@ -80,23 +78,3 @@ inline size_t put_non_null_terminated_utf16_from_utf8(
     return put_non_null_terminated_utf16_from_utf8(
         out, utf8_string, maximum_length_in_bytes, offset_of_data_length);
 }
-
-/// \return size of unicode data
-inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, char const * utf8_string,
-    const size_t maximum_length_in_bytes,
-    const size_t offset_of_data_length
-) {
-    return put_non_null_terminated_utf16_from_utf8(
-        out, byte_ptr_cast(utf8_string), maximum_length_in_bytes, offset_of_data_length);
-}
-
-/// \return size of unicode data
-inline size_t put_non_null_terminated_utf16_from_utf8(
-    OutStream & out, char const * utf8_string,
-    const size_t maximum_length_in_bytes
-) {
-    return put_non_null_terminated_utf16_from_utf8(
-        out, byte_ptr_cast(utf8_string), maximum_length_in_bytes);
-}
-

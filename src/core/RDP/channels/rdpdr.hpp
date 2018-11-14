@@ -1358,13 +1358,11 @@ public:
         , CreateDisposition_(CreateDisposition)
         , CreateOptions_(CreateOptions)
        // , PathLength_UTF16(PathLength_UTF16)
-        , PathLength_UTF8(PathLength_UTF8)
+        // TODO if PathLength_UTF8 > sizeof(this->Path_) ?
+        , PathLength_UTF8(std::min(sizeof(this->Path_) - 1, PathLength_UTF8))
         {
-            if (PathLength_UTF8 > 65536) {
-                PathLength_UTF8 = 65536;
-            }
-
-            std::memcpy(this->Path_, Path_UTF8, PathLength_UTF8);
+            std::memcpy(this->Path_, Path_UTF8, this->PathLength_UTF8);
+            this->Path_[this->PathLength_UTF8] = 0;
         }
 
     void emit(OutStream & stream) const {
@@ -1377,7 +1375,7 @@ public:
 
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-        		std::string(char_ptr_cast(this->Path_)),
+        		this->Path(),
 				Path_unicode_data,
 				sizeof(Path_unicode_data));
 
@@ -1466,7 +1464,7 @@ public:
 
     uint32_t CreateOptions() const { return this->CreateOptions_; }
 
-    const char * Path() const { return char_ptr_cast(this->Path_); }
+    array_view_const_char Path() const { return {char_ptr_cast(this->Path_), this->PathLength_UTF8}; }
 
     size_t PathLength() const { return this->PathLength_UTF16; }
 
@@ -2853,7 +2851,7 @@ public:
             // The null-terminator is included.
             uint8_t ComputerName_unicode_data[65536];
             size_t size_of_ComputerName_unicode_data = ::UTF8toUTF16(
-                std::string(this->ComputerName),
+                {this->ComputerName, this->ComputerNameLen},
                 ComputerName_unicode_data, sizeof(ComputerName_unicode_data));
             // Writes null terminator.
             ComputerName_unicode_data[size_of_ComputerName_unicode_data    ] =
@@ -4063,7 +4061,7 @@ public:
 
         uint8_t FileName_unicode_data[1000];
         const size_t size_of_FileName_unicode_data = ::UTF8toUTF16(
-            std::string(this->FileName_),
+            {this->FileName_, this->FileNameLength},
             FileName_unicode_data, sizeof(FileName_unicode_data));
 
         uint8_t * temp_p = FileName_unicode_data;
@@ -4279,7 +4277,7 @@ public:
         // The null-terminator is included.
         uint8_t Path_unicode_data[65536];
         size_t size_of_Path_unicode_data = ::UTF8toUTF16(
-            std::string(this->Path_),
+            {this->Path_, this->PathLength},
             Path_unicode_data, sizeof(Path_unicode_data));
 
         assert(size_of_Path_unicode_data <= 65534);

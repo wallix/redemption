@@ -1338,7 +1338,7 @@ public:
 //         this->qtRDPKeymap.clearCustomKeyCode();
 //         this->keyCustomDefinitions.clear();
 //
-//         std::ifstream iFileKeyData(this->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
+//         std::ifstream iFileKeyData(this->MAIN_DIR + KEY_SETTING_PATH, std::ios::in);
 //         if(iFileKeyData) {
 //
 //             std::string ligne;

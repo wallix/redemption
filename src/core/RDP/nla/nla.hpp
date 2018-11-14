@@ -471,7 +471,7 @@ private:
         //  = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 
         SEC_STATUS status = this->table->InitializeSecurityContext(
-            char_ptr_cast(this->ServicePrincipalName.get_data()),
+            bytes_view(this->ServicePrincipalName.av()).as_chars(),
             this->client_auth_data.input_buffer.av(),
             /*output*/this->ts_request.negoTokens);
         if ((status != SEC_I_COMPLETE_AND_CONTINUE) &&

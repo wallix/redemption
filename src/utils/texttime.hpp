@@ -24,6 +24,8 @@
 #include <chrono>
 #include <ctime>
 
+// TODO std::string -> static_string
+
 inline std::string text_gmdate(const timeval tv)
 {                                                           // yyyy-MM-dd
     struct tm t;

@@ -227,11 +227,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
         arc_info.message = "X.509 server certificate internal error: " + std::string(str_error);
         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
-        this->log6_server_cert(
-            "SERVER_CERTIFICATE_ERROR",
-            "X.509 server certificate internal error: " + std::string(str_error),
-            arc_info
-        );
+        this->log6_server_cert("SERVER_CERTIFICATE_ERROR", arc_info.message, arc_info);
     }
 }
 

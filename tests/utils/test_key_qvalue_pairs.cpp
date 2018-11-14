@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(Test_KVPairs3)
 
 RED_AUTO_TEST_CASE(Test_KVPairs_noarray)
 {
-    RED_CHECK_EQUAL(std::string("type=\"INPUT\" data=\"xxxyyy\" field=\"data\""),
+    RED_CHECK_EQUAL("type=\"INPUT\" data=\"xxxyyy\" field=\"data\"",
                     key_qvalue_pairs({{"type", "INPUT"}, {"data", "xxxyyy"}, {"field", "data"}}));
 }
 

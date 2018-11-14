@@ -690,17 +690,17 @@ public:
 
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->exe_or_file.c_str(), maximum_length_of_ExeOrFile_in_bytes,
+            stream, this->exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
 
         const size_t maximum_length_of_WorkingDir_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->working_dir.c_str(), maximum_length_of_WorkingDir_in_bytes,
+            stream, this->working_dir, maximum_length_of_WorkingDir_in_bytes,
             offset_of_WorkingDir);
 
         const size_t maximum_length_of_Arguments_in_bytes = 16000;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->arguments.c_str(), maximum_length_of_Arguments_in_bytes,
+            stream, this->arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
     }
 
@@ -754,7 +754,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->exe_or_file.c_str(), this->exe_or_file.length() * 2);
+                out_stream, this->exe_or_file, this->exe_or_file.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -763,7 +763,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->working_dir.c_str(), this->working_dir.length() * 2);
+                out_stream, this->working_dir, this->working_dir.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -772,7 +772,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->arguments.c_str(), this->arguments.length() * 2);
+                out_stream, this->arguments, this->arguments.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -933,7 +933,7 @@ public:
 
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->exe_or_file.c_str(), maximum_length_of_ExeOrFile_in_bytes,
+            stream, this->exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
     }
 
@@ -984,7 +984,7 @@ public:
         StaticOutStream<65536> out_stream;
 
         auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            out_stream, this->exe_or_file.c_str(), this->exe_or_file.length() * 2);
+            out_stream, this->exe_or_file, this->exe_or_file.length() * 2);
 
         count += 2 /* CbString(2) */ + size_of_unicode_data;
 
@@ -1114,7 +1114,7 @@ public:
         StaticOutStream<65536> out_stream;
 
         auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-            out_stream, this->color_scheme.c_str(), this->color_scheme.length() * 2);
+            out_stream, this->color_scheme, this->color_scheme.length() * 2);
 
         count += 2 /* CbString(2) */ + size_of_unicode_data;
 

@@ -22,8 +22,6 @@
 #define RED_TEST_MODULE TestTranslation
 #include "system/redemption_unit_tests.hpp"
 
-
-
 #include "configs/config.hpp"
 #include "utils/translation.hpp"
 
@@ -31,31 +29,30 @@ RED_AUTO_TEST_CASE(TestTranslation)
 {
     Translation::language_t lang = Translation::EN;
 
-    RED_CHECK_EQUAL(TR(trkeys::login, lang),             std::string("Login"));
-    RED_CHECK_EQUAL(TR(trkeys::password, lang),          std::string("Password"));
-    RED_CHECK_EQUAL(TR(trkeys::diagnostic, lang),        std::string("Diagnostic"));
-    RED_CHECK_EQUAL(TR(trkeys::connection_closed, lang), std::string("Connection closed"));
-    RED_CHECK_EQUAL(TR(trkeys::OK, lang),                std::string("OK"));
-    RED_CHECK_EQUAL(TR(trkeys::cancel, lang),            std::string("Cancel"));
-    RED_CHECK_EQUAL(TR(trkeys::help, lang),              std::string("Help"));
-    RED_CHECK_EQUAL(TR(trkeys::close, lang),             std::string("Close"));
-    RED_CHECK_EQUAL(TR(trkeys::refused, lang),           std::string("Refused"));
-    RED_CHECK_EQUAL(TR(trkeys::username, lang),          std::string("Username"));
-    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),   std::string("Your Bastion password will expire soon. Please change it."));
-    RED_CHECK_EQUAL(TR(trkeys::protocol, lang),          std::string("Protocol"));
-    RED_CHECK_EQUAL(TR(trkeys::target, lang),            std::string("Target"));
-    RED_CHECK_EQUAL(TR(trkeys::close_time, lang),        std::string("Close Time"));
-    RED_CHECK_EQUAL(TR(trkeys::logout, lang),            std::string("Logout"));
-    RED_CHECK_EQUAL(TR(trkeys::apply, lang),             std::string("Apply"));
-    RED_CHECK_EQUAL(TR(trkeys::connect, lang),           std::string("Connect"));
-    RED_CHECK_EQUAL(TR(trkeys::timeleft, lang),          std::string("Time left"));
-    RED_CHECK_EQUAL(TR(trkeys::second, lang),            std::string("second"));
-    RED_CHECK_EQUAL(TR(trkeys::minute, lang),            std::string("minute"));
-    RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),    std::string("before closing"));
-    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang), std::string("Connection closed by manager."));
-    RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),    std::string("End of connection"));
+    RED_CHECK_EQUAL(TR(trkeys::login, lang),             "Login");
+    RED_CHECK_EQUAL(TR(trkeys::password, lang),          "Password");
+    RED_CHECK_EQUAL(TR(trkeys::diagnostic, lang),        "Diagnostic");
+    RED_CHECK_EQUAL(TR(trkeys::connection_closed, lang), "Connection closed");
+    RED_CHECK_EQUAL(TR(trkeys::OK, lang),                "OK");
+    RED_CHECK_EQUAL(TR(trkeys::cancel, lang),            "Cancel");
+    RED_CHECK_EQUAL(TR(trkeys::help, lang),              "Help");
+    RED_CHECK_EQUAL(TR(trkeys::close, lang),             "Close");
+    RED_CHECK_EQUAL(TR(trkeys::refused, lang),           "Refused");
+    RED_CHECK_EQUAL(TR(trkeys::username, lang),          "Username");
+    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),   "Your Bastion password will expire soon. Please change it.");
+    RED_CHECK_EQUAL(TR(trkeys::protocol, lang),          "Protocol");
+    RED_CHECK_EQUAL(TR(trkeys::target, lang),            "Target");
+    RED_CHECK_EQUAL(TR(trkeys::close_time, lang),        "Close Time");
+    RED_CHECK_EQUAL(TR(trkeys::logout, lang),            "Logout");
+    RED_CHECK_EQUAL(TR(trkeys::apply, lang),             "Apply");
+    RED_CHECK_EQUAL(TR(trkeys::connect, lang),           "Connect");
+    RED_CHECK_EQUAL(TR(trkeys::timeleft, lang),          "Time left");
+    RED_CHECK_EQUAL(TR(trkeys::second, lang),            "second");
+    RED_CHECK_EQUAL(TR(trkeys::minute, lang),            "minute");
+    RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),    "before closing");
+    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang), "Connection closed by manager.");
+    RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),    "End of connection");
     RED_CHECK_EQUAL(TR(trkeys::help_message, lang),
-                      std::string(
                                   "In login edit box, enter:<br>"
                                   "- target device and login with the Bastion login separated<br>"
                                   "  by a semi colon as login@target:service:Bastionlogin<br>"
@@ -68,40 +65,40 @@ RED_AUTO_TEST_CASE(TestTranslation)
                                   "<br>"
                                   "Contact your system administrator if you are<br>"
                                   "experiencing problems."
-                                  ));
-    RED_CHECK_EQUAL(TR(trkeys::selector, lang),           std::string("Selector"));
-    RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   std::string("Session is out of allowed timeframe"));
-    RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     std::string("Missed keepalive from ACL"));
-    RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   std::string("Connection closed on inactivity"));
-    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           std::string("Authentifier service failed"));
+                                  );
+    RED_CHECK_EQUAL(TR(trkeys::selector, lang),           "Selector");
+    RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   "Session is out of allowed timeframe");
+    RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     "Missed keepalive from ACL");
+    RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   "Connection closed on inactivity");
+    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           "Authentifier service failed");
 
     Translation::getInstance().set_lang(Translation::FR);
     lang = Translation::FR;
 
-    RED_CHECK_EQUAL(TR(trkeys::login, lang),              std::string("Login"));
-    RED_CHECK_EQUAL(TR(trkeys::password, lang),           std::string("Mot de passe"));
-    RED_CHECK_EQUAL(TR(trkeys::diagnostic, lang),         std::string("Diagnostic"));
-    RED_CHECK_EQUAL(TR(trkeys::connection_closed, lang),  std::string("Connexion fermée"));
-    RED_CHECK_EQUAL(TR(trkeys::OK, lang),                 std::string("OK"));
-    RED_CHECK_EQUAL(TR(trkeys::cancel, lang),             std::string("Annuler"));
-    RED_CHECK_EQUAL(TR(trkeys::help, lang),               std::string("Aide"));
-    RED_CHECK_EQUAL(TR(trkeys::close, lang),              std::string("Fermer"));
-    RED_CHECK_EQUAL(TR(trkeys::refused, lang),            std::string("Refuser"));
-    RED_CHECK_EQUAL(TR(trkeys::username, lang),           std::string("Nom d'utilisateur"));
-    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    std::string("Votre mot de passe Bastion va bientôt expirer. Veuillez le changer."));
-    RED_CHECK_EQUAL(TR(trkeys::protocol, lang),           std::string("Protocole"));
-    RED_CHECK_EQUAL(TR(trkeys::target, lang),             std::string("Cible"));
-    RED_CHECK_EQUAL(TR(trkeys::close_time, lang),         std::string("Date de clôture"));
-    RED_CHECK_EQUAL(TR(trkeys::logout, lang),             std::string("Déconnexion"));
-    RED_CHECK_EQUAL(TR(trkeys::apply, lang),              std::string("Appliquer"));
-    RED_CHECK_EQUAL(TR(trkeys::connect, lang),            std::string("Connecter"));
-    RED_CHECK_EQUAL(TR(trkeys::timeleft, lang),           std::string("Temps restant"));
-    RED_CHECK_EQUAL(TR(trkeys::second, lang),             std::string("seconde"));
-    RED_CHECK_EQUAL(TR(trkeys::minute, lang),             std::string("minute"));
-    RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),     std::string("avant fermeture"));
-    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang),  std::string("Le gestionnaire de session a coupé la connexion."));
-    RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),     std::string("Fin de connexion"));
-    RED_CHECK_EQUAL(TR(trkeys::help_message, lang),       std::string(
+    RED_CHECK_EQUAL(TR(trkeys::login, lang),              "Login");
+    RED_CHECK_EQUAL(TR(trkeys::password, lang),           "Mot de passe");
+    RED_CHECK_EQUAL(TR(trkeys::diagnostic, lang),         "Diagnostic");
+    RED_CHECK_EQUAL(TR(trkeys::connection_closed, lang),  "Connexion fermée");
+    RED_CHECK_EQUAL(TR(trkeys::OK, lang),                 "OK");
+    RED_CHECK_EQUAL(TR(trkeys::cancel, lang),             "Annuler");
+    RED_CHECK_EQUAL(TR(trkeys::help, lang),               "Aide");
+    RED_CHECK_EQUAL(TR(trkeys::close, lang),              "Fermer");
+    RED_CHECK_EQUAL(TR(trkeys::refused, lang),            "Refuser");
+    RED_CHECK_EQUAL(TR(trkeys::username, lang),           "Nom d'utilisateur");
+    RED_CHECK_EQUAL(TR(trkeys::password_expire, lang),    "Votre mot de passe Bastion va bientôt expirer. Veuillez le changer.");
+    RED_CHECK_EQUAL(TR(trkeys::protocol, lang),           "Protocole");
+    RED_CHECK_EQUAL(TR(trkeys::target, lang),             "Cible");
+    RED_CHECK_EQUAL(TR(trkeys::close_time, lang),         "Date de clôture");
+    RED_CHECK_EQUAL(TR(trkeys::logout, lang),             "Déconnexion");
+    RED_CHECK_EQUAL(TR(trkeys::apply, lang),              "Appliquer");
+    RED_CHECK_EQUAL(TR(trkeys::connect, lang),            "Connecter");
+    RED_CHECK_EQUAL(TR(trkeys::timeleft, lang),           "Temps restant");
+    RED_CHECK_EQUAL(TR(trkeys::second, lang),             "seconde");
+    RED_CHECK_EQUAL(TR(trkeys::minute, lang),             "minute");
+    RED_CHECK_EQUAL(TR(trkeys::before_closing, lang),     "avant fermeture");
+    RED_CHECK_EQUAL(TR(trkeys::manager_close_cnx, lang),  "Le gestionnaire de session a coupé la connexion.");
+    RED_CHECK_EQUAL(TR(trkeys::end_connection, lang),     "Fin de connexion");
+    RED_CHECK_EQUAL(TR(trkeys::help_message, lang),
                                   "Dans la zone de saisie login, entrez:<br>"
                                   "- le login sur la cible et le nom de la machine cible suivi<br>"
                                   "  du compte Bastion sous la forme login@serveur:service:Bastionlogin<br>"
@@ -114,24 +111,24 @@ RED_AUTO_TEST_CASE(TestTranslation)
                                   "<br>"
                                   "Contactez votre administrateur système en<br>"
                                   "cas de problème pour vous connecter."
-                                  ));
-    RED_CHECK_EQUAL(TR(trkeys::selector, lang),           std::string("Sélecteur"));
-    RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   std::string("L'autorisation de la session a expiré"));
-    RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     std::string("Absence de réponse de Keepalive de l'ACL"));
-    RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   std::string("Fermeture sur inactivité"));
-    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           std::string("Echec du service d'authentification"));
+                                  );
+    RED_CHECK_EQUAL(TR(trkeys::selector, lang),           "Sélecteur");
+    RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   "L'autorisation de la session a expiré");
+    RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     "Absence de réponse de Keepalive de l'ACL");
+    RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   "Fermeture sur inactivité");
+    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           "Echec du service d'authentification");
 
-    RED_CHECK_EQUAL(TR(trkeys::close, lang),      std::string("Fermer"));
-    RED_CHECK_EQUAL(TR(trkeys::password, lang),   std::string("Mot de passe"));
+    RED_CHECK_EQUAL(TR(trkeys::close, lang),      "Fermer");
+    RED_CHECK_EQUAL(TR(trkeys::password, lang),   "Mot de passe");
 
     Inifile ini;
     TRANSLATIONCONF.set_ini(&ini);
     ini.set<cfg::translation::password_en>("pouloup");
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), std::string("Mot de passe"));
+    RED_CHECK_EQUAL(TR(trkeys::password, lang), "Mot de passe");
     ini.set<cfg::translation::password_fr>("pompidou");
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), std::string("pompidou"));
+    RED_CHECK_EQUAL(TR(trkeys::password, lang), "pompidou");
     lang = Translation::EN;
-    RED_CHECK_EQUAL(TR(trkeys::password, lang), std::string("pouloup"));
+    RED_CHECK_EQUAL(TR(trkeys::password, lang), "pouloup");
 
     // inhibit scan-build warn
     TRANSLATIONCONF.set_ini(nullptr);

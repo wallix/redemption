@@ -93,17 +93,16 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     pdu_data = mod.stream();
     InStream stream_formatList(pdu_data->data, pdu_data->size);
     RED_CHECK_EQUAL(pdu_data->size, 96);
-    const char * expected_init_format_list_pdu =
+    auto expected_init_format_list_pdu =
     /* 0000 */ "\x02\x00\x00\x00\x58\x00\x00\x00\x99\xbb\x00\x00\x46\x00\x69\x00" // ....X.......F.i.
     /* 0010 */ "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" // l.e.G.r.o.u.p.D.
     /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
     /* 0030 */ "\x72\x00\x57\x00\x00\x00\x9a\xbb\x00\x00\x46\x00\x69\x00\x6c\x00" // r.W.......F.i.l.
     /* 0040 */ "\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00\x74\x00" // e.C.o.n.t.e.n.t.
     /* 0050 */ "\x73\x00\x00\x00\x01\x00\x00\x00\x00\x00\x03\x00\x00\x00\x00\x00" // s...............
+                ""_av
     ;
-    std::string expected_init_format_list_str(expected_init_format_list_pdu, 96);
-    std::string init_format_list_str(char_ptr_cast(stream_formatList.get_data()), 96);
-    RED_CHECK_EQUAL(expected_init_format_list_str, init_format_list_str);
+    RED_CHECK_MEM(expected_init_format_list_pdu, make_array_view(stream_formatList.get_data(), stream_formatList.get_capacity()));
 }
 
 
@@ -363,7 +362,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatListPDU.out_uint32_le(46);
     out_FormatListPDU.out_uint32_le(ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
     uint8_t file_groupe_descr_data[50] = {0};
-    size_t file_groupe_descr_size = ::UTF8toUTF16(std::string(RDPECLIP::FILEGROUPDESCRIPTORW.data()), file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
+    size_t file_groupe_descr_size = ::UTF8toUTF16(RDPECLIP::FILEGROUPDESCRIPTORW, file_groupe_descr_data, RDPECLIP::FILEGROUPDESCRIPTORW.size() *2);
     out_FormatListPDU.out_copy_bytes(file_groupe_descr_data, file_groupe_descr_size+2);
     //out_FormatListPDU.out_uint16_le(0);
     InStream chunk_FormatListPDU(out_FormatListPDU.get_data(), out_FormatListPDU.get_offset());
@@ -411,9 +410,9 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     out_FormatDataResponse.out_uint64_le(RDPECLIP::TIME64_FILE_LIST);
     out_FormatDataResponse.out_uint32_le(0);
     out_FormatDataResponse.out_uint32_le(sizeof(clip_data_total));
-    std::string file_name("file_name.name");
+    auto file_name = "file_name.name"_av;
     uint8_t utf16_file_name[520] = { 0 };
-    size_t utf16_len = ::UTF8toUTF16(file_name.data(), utf16_file_name, file_name.size() *2);
+    size_t utf16_len = ::UTF8toUTF16(file_name, utf16_file_name, file_name.size() *2);
     out_FormatDataResponse.out_copy_bytes(utf16_file_name, utf16_len);
     out_FormatDataResponse.out_clear_bytes(520-utf16_len);
     InStream chunk_FormatDataResponse(out_FormatDataResponse.get_data(), 608/*out_FormatDataResponse.get_offset()*/);

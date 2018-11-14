@@ -563,7 +563,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -601,7 +601,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword)
     // drawable.save_to_png("password-edit2-e5.png");
     RED_CHECK_SIG(drawable, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
-    RED_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurlie", wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword2)
@@ -641,7 +641,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -687,7 +687,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword2)
     // drawable.save_to_png("password-edit3-e6.png");
     RED_CHECK_SIG(drawable, "\x8f\x3c\xea\x45\x08\xd1\x31\x33\x7a\x74\x20\x30\xdf\xb7\xbd\xe6\x49\xc7\x53\xfd");
 
-    RED_CHECK_EQUAL(std::string("aurlie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurlie", wpassword.get_text());
 }
 
 RED_AUTO_TEST_CASE(DataWidgetPassword3)
@@ -727,7 +727,7 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL(std::string("aurélie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurélie", wpassword.get_text());
 
     Keymap2 keymap;
     keymap.init_layout(0x040C);
@@ -788,5 +788,5 @@ RED_AUTO_TEST_CASE(DataWidgetPassword3)
     notifier.sender = nullptr;
     notifier.event = 0;
 
-    RED_CHECK_EQUAL(std::string("aurézlie"), wpassword.get_text());
+    RED_CHECK_EQUAL("aurézlie", wpassword.get_text());
 }

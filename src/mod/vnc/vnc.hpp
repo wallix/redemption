@@ -3177,7 +3177,7 @@ private:
                     	auto av = this->clipboard_data_ctx.clipboard_data();
 
                         size_t utf16_data_length = UTF8toUTF16_CrLf(
-                            std::string(char_ptr_cast(av.data()), av.size()),
+                            av,
                             data_stream.get_data(),
                             data_stream.get_capacity()-2
                         );
@@ -3185,8 +3185,7 @@ private:
                     }
                     else {
                         size_t utf16_data_length = Latin1toUTF16(
-                            this->clipboard_data_ctx.clipboard_data().data(),
-                            this->clipboard_data_ctx.clipboard_data().size(),
+                            this->clipboard_data_ctx.clipboard_data(),
                             data_stream.get_data(),
                             data_stream.get_capacity()-2
                         );

@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
     RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
     RED_CHECK_EQUAL(device_create_request.CreateOptions(), 32);
     RED_CHECK_EQUAL(device_create_request.PathLength(), 14);
-    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path(), "/.cpan", (device_create_request.PathLength()/2)-1));
+    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path().data(), "/.cpan", (device_create_request.PathLength()/2)-1));
 
     //device_create_request.log();
 
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
     RED_CHECK_EQUAL(device_create_request.CreateDisposition(), 1);
     RED_CHECK_EQUAL(device_create_request.CreateOptions(), 0x00000060);
     RED_CHECK_EQUAL(device_create_request.PathLength(), 54);
-    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path(), "/Program Files/desktop.ini", (device_create_request.PathLength()/2)-1));
+    RED_CHECK_EQUAL(0, memcmp(device_create_request.Path().data(), "/Program Files/desktop.ini", (device_create_request.PathLength()/2)-1));
 
     //device_create_request.log();
 

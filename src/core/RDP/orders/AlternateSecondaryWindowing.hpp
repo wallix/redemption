@@ -1194,7 +1194,7 @@ public:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TITLE) {
             put_non_null_terminated_utf16_from_utf8(
-                stream, this->title_info.data(), 520);
+                stream, this->title_info, 520);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {
@@ -1263,7 +1263,7 @@ public:
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_OVERLAY_DESCRIPTION) {
             put_non_null_terminated_utf16_from_utf8(
-                stream, this->overlay_description.data(), this->overlay_description.size() * 2);
+                stream, this->overlay_description, this->overlay_description.size() * 2);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_TASKBAR_BUTTON) {
@@ -2648,9 +2648,9 @@ public:
         stream.out_uint32_le(this->InfoFlags);
 
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->info_tip_text.data(), this->info_tip_text.size() * 2);
+            stream, this->info_tip_text, this->info_tip_text.size() * 2);
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->title.data(), this->title.size() * 2);
+            stream, this->title, this->title.size() * 2);
     }   // emit
 
     void receive(InStream & stream) {
@@ -2950,7 +2950,7 @@ const auto save_stream_p = stream.get_current() + 1;
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_TIP) {
             put_non_null_terminated_utf16_from_utf8(
-                stream, this->tool_tip.data(), this->tool_tip.size() * 2);
+                stream, this->tool_tip, this->tool_tip.size() * 2);
         }
 
         if (this->header.FieldsPresentFlags() & WINDOW_ORDER_FIELD_NOTIFY_INFO_TIP) {

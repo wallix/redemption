@@ -102,7 +102,7 @@ public:
     // GSS_Init_sec_context
     // INITIALIZE_SECURITY_CONTEXT_FN InitializeSecurityContext;
     SEC_STATUS InitializeSecurityContext(
-        char* pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
+        array_view_const_char pszTargetName, array_view_const_u8 input_buffer, Array& output_buffer
     ) override
     {
         if (this->verbose) {
@@ -116,8 +116,8 @@ public:
             if (!this->identity) {
                 return SEC_E_WRONG_CREDENTIAL_HANDLE;
             }
-            this->context->ntlm_SetContextWorkstation(byte_ptr_cast(pszTargetName));
-            this->context->ntlm_SetContextServicePrincipalName(byte_ptr_cast(pszTargetName));
+            this->context->ntlm_SetContextWorkstation(pszTargetName);
+            this->context->ntlm_SetContextServicePrincipalName(pszTargetName);
 
             this->context->identity.CopyAuthIdentity(*this->identity);
         }

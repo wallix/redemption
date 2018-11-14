@@ -20,16 +20,18 @@
 
 #pragma once
 
-#include <string>
-#include <cinttypes>
-
 #include "core/error.hpp"
 
 #include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
+#include "utils/sugar/array_view.hpp"
 #include "utils/stream.hpp"
 #include "utils/hexdump.hpp"
 #include "core/ERREF/ntstatus.hpp"
+
+#include <string>
+#include <cinttypes>
+
 
 namespace fscc {
 
@@ -1198,7 +1200,7 @@ public:
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
                                  uint32_t FileAttributes,
-                                 const char * file_name)
+                                 array_view_const_char file_name)
     : CreationTime(CreationTime)
     , LastAccessTime(LastAccessTime)
     , LastWriteTime(LastWriteTime)
@@ -1208,7 +1210,7 @@ public:
     , FileAttributes(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -1491,7 +1493,7 @@ public:
     explicit FileDirectoryInformation(uint32_t NextEntryOffset, uint32_t FileIndex,
                              uint64_t CreationTime, uint64_t LastAccessTime,
                              uint64_t LastWriteTime, uint64_t ChangeTime,
-                             uint32_t FileAttributes, const char* file_name)
+                             uint32_t FileAttributes, array_view_const_char file_name)
     : NextEntryOffset(NextEntryOffset)
     , FileIndex(FileIndex)
     , CreationTime(CreationTime)
@@ -1501,7 +1503,7 @@ public:
     , FileAttributes_(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -1793,10 +1795,10 @@ struct FileFsLabelInformation {
 
     explicit FileFsLabelInformation() = default;
 
-    explicit FileFsLabelInformation(char * volume_label)
+    explicit FileFsLabelInformation(array_view_const_char volume_label)
     {
         this->VolumeLabelLength =
-            ::UTF8toUTF16(std::string(volume_label), this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+            ::UTF8toUTF16(volume_label, this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
         this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
         this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
         this->VolumeLabelLength += 2;
@@ -2001,7 +2003,7 @@ public:
                                  uint64_t LastWriteTime, uint64_t ChangeTime,
                                  int64_t EndOfFile, int64_t AllocationSize,
                                  uint32_t FileAttributes,
-                                 const char * file_name)
+                                 array_view_const_char file_name)
     : CreationTime(CreationTime)
     , LastAccessTime(LastAccessTime)
     , LastWriteTime(LastWriteTime)
@@ -2011,7 +2013,7 @@ public:
     , FileAttributes(FileAttributes)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2233,10 +2235,10 @@ class FileNamesInformation {
 public:
     explicit FileNamesInformation() = default;
 
-    explicit FileNamesInformation(const char * file_name)
+    explicit FileNamesInformation(array_view_const_char file_name)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2434,12 +2436,12 @@ struct FileRenameInformation {
 
     explicit FileRenameInformation( uint8_t ReplaceIfExists
                          , uint64_t RootDirectory
-                         , const char * file_name)
+                         , array_view_const_char file_name)
       : ReplaceIfExists(ReplaceIfExists)
       , RootDirectory(RootDirectory)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2840,12 +2842,12 @@ public:
 
     explicit FileFsAttributeInformation(uint32_t FileSystemAttributes,
                                uint32_t MaximumComponentNameLength,
-                               const char * file_system_name)
+                               array_view_const_char file_system_name)
     : FileSystemAttributes_(FileSystemAttributes)
     , MaximumComponentNameLength(MaximumComponentNameLength)
     {
         this->FileSystemNameLength =
-            ::UTF8toUTF16(std::string(file_system_name), this->file_system_name_UTF16, sizeof(this->file_system_name_UTF16));
+            ::UTF8toUTF16(file_system_name, this->file_system_name_UTF16, sizeof(this->file_system_name_UTF16));
     }
 
     void emit(OutStream & stream) const {
@@ -2929,36 +2931,39 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
-    static std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute) {
+    static std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute)
+    {
         std::string str;
-        (FileSystemAttribute & FILE_SUPPORTS_USN_JOURNAL) ? str+="FILE_SUPPORTS_USN_JOURNAL " :str;
-        (FileSystemAttribute & FILE_SUPPORTS_OPEN_BY_FILE_ID) ? str+="FILE_SUPPORTS_OPEN_BY_FILE_ID " :str;
-        (FileSystemAttribute & FILE_SUPPORTS_EXTENDED_ATTRIBUTES) ? str+="FILE_SUPPORTS_EXTENDED_ATTRIBUTES " :str;
 
-        (FileSystemAttribute & FILE_SUPPORTS_HARD_LINKS) ? str+="FILE_SUPPORTS_HARD_LINKS " : str;
-        (FileSystemAttribute & FILE_SUPPORTS_TRANSACTIONS) ? str+="FILE_SUPPORTS_TRANSACTIONS " : str;
-        (FileSystemAttribute & FILE_SEQUENTIAL_WRITE_ONCE) ? str+="FILE_SEQUENTIAL_WRITE_ONCE " : str;
+#define ADD_IF(f) if (bool(FileSystemAttribute & f)) str += #f " "
+        ADD_IF(FILE_SUPPORTS_USN_JOURNAL);
+        ADD_IF(FILE_SUPPORTS_OPEN_BY_FILE_ID);
+        ADD_IF(FILE_SUPPORTS_EXTENDED_ATTRIBUTES);
 
-        (FileSystemAttribute & FILE_READ_ONLY_VOLUME) ? str+="FILE_READ_ONLY_VOLUME " : str;
-        (FileSystemAttribute & FILE_NAMED_STREAMS) ? str+="FILE_NAMED_STREAMS " : str;
-        (FileSystemAttribute & FILE_SUPPORTS_ENCRYPTION) ? str+="FILE_SUPPORTS_ENCRYPTION " : str;
+        ADD_IF(FILE_SUPPORTS_HARD_LINKS);
+        ADD_IF(FILE_SUPPORTS_TRANSACTIONS);
+        ADD_IF(FILE_SEQUENTIAL_WRITE_ONCE);
 
-        (FileSystemAttribute & FILE_SUPPORTS_OBJECT_IDS) ? str+="FILE_SUPPORTS_OBJECT_IDS ":str;
-        (FileSystemAttribute & FILE_VOLUME_IS_COMPRESSED) ? str+="FILE_VOLUME_IS_COMPRESSED " : str;
-        (FileSystemAttribute & FILE_SUPPORTS_REMOTE_STORAGE) ? str+="FILE_SUPPORTS_REMOTE_STORAGE " : str;
+        ADD_IF(FILE_READ_ONLY_VOLUME);
+        ADD_IF(FILE_NAMED_STREAMS);
+        ADD_IF(FILE_SUPPORTS_ENCRYPTION);
 
-        (FileSystemAttribute & FILE_SUPPORTS_REPARSE_POINTS) ? str+="FILE_SUPPORTS_REPARSE_POINTS " : str;
-        (FileSystemAttribute & FILE_SUPPORTS_SPARSE_FILES) ? str+="FILE_SUPPORTS_SPARSE_FILES " : str;
-        (FileSystemAttribute & FILE_VOLUME_QUOTAS) ? str+="FILE_VOLUME_QUOTAS " : str;
+        ADD_IF(FILE_SUPPORTS_OBJECT_IDS);
+        ADD_IF(FILE_VOLUME_IS_COMPRESSED);
+        ADD_IF(FILE_SUPPORTS_REMOTE_STORAGE);
 
+        ADD_IF(FILE_SUPPORTS_REPARSE_POINTS);
+        ADD_IF(FILE_SUPPORTS_SPARSE_FILES);
+        ADD_IF(FILE_VOLUME_QUOTAS);
 
-        (FileSystemAttribute & FILE_FILE_COMPRESSION) ? str+="FILE_FILE_COMPRESSION " : str;
-        (FileSystemAttribute & FILE_PERSISTENT_ACLS) ? str+="FILE_PERSISTENT_ACLS " : str;
-        (FileSystemAttribute & FILE_UNICODE_ON_DISK) ? str+="FILE_UNICODE_ON_DISK " : str;
+        ADD_IF(FILE_FILE_COMPRESSION);
+        ADD_IF(FILE_PERSISTENT_ACLS);
+        ADD_IF(FILE_UNICODE_ON_DISK);
 
-        (FileSystemAttribute & FILE_CASE_PRESERVED_NAMES) ? str+="FILE_CASE_PRESERVED_NAMES " : str;
-        (FileSystemAttribute & FILE_CASE_SENSITIVE_SEARCH) ? str+="FILE_CASE_SENSITIVE_SEARCH " : str;
-        (FileSystemAttribute & FILE_SUPPORT_INTEGRITY_STREAMS) ? str+="FILE_SUPPORT_INTEGRITY_STREAMS " : str;
+        ADD_IF(FILE_CASE_PRESERVED_NAMES);
+        ADD_IF(FILE_CASE_SENSITIVE_SEARCH);
+        ADD_IF(FILE_SUPPORT_INTEGRITY_STREAMS);
+#undef ADD_IF
 
         return str;
     }
@@ -3360,13 +3365,13 @@ public:
     explicit FileFsVolumeInformation() = default;
 
     explicit FileFsVolumeInformation(uint64_t VolumeCreationTime, uint32_t VolumeSerialNumber,
-                         uint8_t SupportsObjects, const char * volume_label)
+                         uint8_t SupportsObjects, array_view_const_char volume_label)
     : VolumeCreationTime(VolumeCreationTime)
     , VolumeSerialNumber(VolumeSerialNumber)
     , SupportsObjects(SupportsObjects)
     {
         this->VolumeLabelLength =
-            ::UTF8toUTF16(std::string(volume_label), this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
+            ::UTF8toUTF16(volume_label, this->volume_label_UTF16, sizeof(this->volume_label_UTF16) - sizeof(uint16_t));
         this->volume_label_UTF16[this->VolumeLabelLength    ] = 0;
         this->volume_label_UTF16[this->VolumeLabelLength + 1] = 0;
         this->VolumeLabelLength += 2;
@@ -3833,12 +3838,12 @@ struct FileNotifyInformation {
 
     explicit FileNotifyInformation() = default;
 
-    explicit FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, const char * file_name)
+    explicit FileNotifyInformation(uint32_t NextEntryOffset, uint32_t Action, array_view_const_char file_name)
       : NextEntryOffset(NextEntryOffset)
       , Action(Action)
     {
         this->FileNameLength =
-            ::UTF8toUTF16(std::string(file_name), this->file_name_UTF16, sizeof(this->file_name_UTF16));
+            ::UTF8toUTF16(file_name, this->file_name_UTF16, sizeof(this->file_name_UTF16));
     }
 
     void emit(OutStream & stream) const {

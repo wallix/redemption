@@ -35,7 +35,7 @@
 using std::size_t;
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-size_t UTF8Len(const uint8_t * source)
+size_t UTF8Len(const_byte_ptr source)
 {
     size_t len = 0;
     uint8_t c = 0;
@@ -180,14 +180,14 @@ bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_c
     return UTF8InsertAtPos(source, len, to_insert, max_source);
 }
 
-size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len)
 {
-	const uint8_t * s = byte_ptr_cast(source.c_str());
+	const uint8_t * s = source.to_u8p();
 
 	size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
-    for (size_t i = 0; (i < source.length()) && (ucode = c = s[i]) != 0 ; i++){
+    for (size_t i = 0; (i < source.size()) && (ucode = c = s[i]) != 0 ; i++){
         switch (c >> 4){
             case 0:
                 // allows control characters
@@ -204,7 +204,7 @@ size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len)
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-            	if (i + 1 > source.length()){
+            	if (i + 1 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
@@ -212,14 +212,14 @@ size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len)
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-            	if (i + 2 > source.length()){
+            	if (i + 2 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
                 ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-            	if (i + 3 > source.length()){
+            	if (i + 3 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
 // TODO This is trouble: we may have to use extended UTF16 sequence because the ucode may be more than 16 bits long
@@ -242,14 +242,14 @@ UTF8toUTF16_exit:
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, size_t t_len)
 {
-	const uint8_t * s = byte_ptr_cast(source.c_str());
+	const uint8_t * s = source.to_u8p();
 
 	size_t i_t = 0;
     uint32_t ucode = 0;
     unsigned c = 0;
-    for (size_t i = 0; i < source.length() && (ucode = c = s[i]) != 0 ; i++){
+    for (size_t i = 0; i < source.size() && (ucode = c = s[i]) != 0 ; i++){
         switch (c >> 4){
             case 0:
                 // allows control characters
@@ -266,7 +266,7 @@ size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, size_t t_l
             break;
             /* handle U+0080..U+07FF inline : 2 bytes sequences */
             case 0xC: case 0xD:
-            	if (i + 1 > source.length()){
+            	if (i + 1 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
                 ucode = ((c & 0x1F) << 6)|(s[i+1] & 0x3F);
@@ -274,14 +274,14 @@ size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, size_t t_l
             break;
              /* handle U+8FFF..U+FFFF inline : 3 bytes sequences */
             case 0xE:
-            	if (i + 2 > source.length()){
+            	if (i + 2 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
             	ucode = ((c & 0x0F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
                 i+=2;
             break;
             case 0xF:
-            	if (i + 3 > source.length()){
+            	if (i + 3 > source.size()){
             		goto UTF8toUTF16_exit;
             	}
             	ucode = ((c & 0x07) << 18)|((s[i] & 0x3F) << 12)|((s[i+1] & 0x3F) << 6)|(s[i+2] & 0x3F);
@@ -292,7 +292,7 @@ size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, size_t t_l
                 goto UTF8toUTF16_exit;
         }
 
-        if ((ucode == 0x0D) && (i + 1 < source.length()) && (s[i+1] == 0x0A)){
+        if ((ucode == 0x0D) && (i + 1 < source.size()) && (s[i+1] == 0x0A)){
            continue;
         }
         if (ucode == 0x0A) {
@@ -633,18 +633,28 @@ bool is_utf8_string(uint8_t const * s, int length)
     return (stat == Stat::ASCII);
 }
 
-bool is_ASCII_string(uint8_t const * s, int length)
+bool is_ASCII_string(const_bytes_view source)
 {
-    for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
-         *s && (!s_end || (s < s_end)); s++) {
+    for (uint8_t c : source) {
+        if (c > 0x7F) { return false; }
+    }
+
+    return true;
+}
+
+bool is_ASCII_string(const_byte_ptr source)
+{
+    auto const* s = source.to_u8p();
+    for (; *s; ++s) {
         if (*s > 0x7F) { return false; }
     }
 
     return true;
 }
 
-size_t UTF8StrLenInChar(const uint8_t * s)
+size_t UTF8StrLenInChar(const_byte_ptr source)
 {
+    auto const* s = source.to_u8p();
     size_t length = 0;
 
     Stat stat = Stat::ASCII;
@@ -734,10 +744,8 @@ size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * 
     return current_latin1_target - latin1_target;
 }
 
-size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
-        uint8_t * utf16_target, size_t utf16_len)
+size_t Latin1toUTF16(const_bytes_view latin1_source, uint8_t * utf16_target, size_t utf16_len)
 {
-
     auto converter = [](uint8_t src, uint8_t * & dst, size_t & remaining_dst_len) -> bool {
         if ((src < 0x80) || (src > 0x9F)) {
             if (src == 0x0A) {
@@ -777,10 +785,10 @@ size_t Latin1toUTF16(const uint8_t * latin1_source, size_t latin1_len,
         return true;
     };
 
-    const uint8_t  * current_latin1_source = latin1_source;
+    const uint8_t * current_latin1_source = latin1_source.to_u8p();
           uint8_t * current_utf16_target  = utf16_target;
 
-    for (size_t remaining_latin1_len = latin1_len, remaining_utf16_len = utf16_len;
+    for (size_t remaining_latin1_len = latin1_source.size(), remaining_utf16_len = utf16_len;
          (remaining_latin1_len != 0) && (remaining_utf16_len > 1);
          current_latin1_source++, remaining_latin1_len--) {
         if (!converter(*current_latin1_source, current_utf16_target, remaining_utf16_len)) {

@@ -176,10 +176,10 @@ RED_AUTO_TEST_CASE(TestNlaserver)
 
     TestTransport logtrans(client, sizeof(client)-1, server, sizeof(server)-1);
     logtrans.set_public_key(byte_ptr_cast("1245789652325415"), 16);
-    uint8_t user[] = "Ulysse";
-    uint8_t domain[] = "Ithaque";
-    uint8_t pass[] = "Pénélope";
-    uint8_t host[] = "Télémaque";
+    auto user = "Ulysse"_av;
+    auto domain = "Ithaque"_av;
+    auto pass = "Pénélope"_av;
+    auto host = "Télémaque"_av;
     LCGRandom rand(0);
     LCGTime timeobj;
     std::string extra_message;
@@ -189,17 +189,21 @@ RED_AUTO_TEST_CASE(TestNlaserver)
         [&](SEC_WINNT_AUTH_IDENTITY& identity){
             auto arr2av = [&](Array& arr){ return make_array_view(arr.get_data(), arr.size()); };
             std::vector<uint8_t> vec;
-            vec.resize((std::size(user) - 1) * 2);
-            UTF8toUTF16(std::string(char_ptr_cast(user)), vec.data(), vec.size());
+            vec.resize(user.size() * 2);
+            UTF8toUTF16(user, vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.User), vec);
-            vec.resize((std::size(domain) - 1) * 2);
-            UTF8toUTF16(std::string(char_ptr_cast(domain)), vec.data(), vec.size());
+            vec.resize(domain.size() * 2);
+            UTF8toUTF16(domain, vec.data(), vec.size());
             RED_CHECK_MEM_AA(arr2av(identity.Domain), vec);
-            identity.SetPasswordFromUtf8(pass);
+            identity.SetPasswordFromUtf8(byte_ptr_cast(pass.data()));
             return Ntlm_SecurityFunctionTable::PasswordCallback::Ok;
         }
     );
-    credssp.set_credentials(user, domain, pass, host);
+    credssp.set_credentials(
+        byte_ptr_cast(user.data()),
+        byte_ptr_cast(domain.data()),
+        byte_ptr_cast(pass.data()),
+        byte_ptr_cast(host.data()));
     RED_CHECK(credssp.credssp_server_authenticate_init());
 
     rdpCredsspServer::State st = rdpCredsspServer::State::Cont;

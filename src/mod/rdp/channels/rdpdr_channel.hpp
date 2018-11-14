@@ -1798,7 +1798,7 @@ public:
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+                                    arc_info.WallixBastionSHA256Digest = digest_s;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
@@ -1872,7 +1872,7 @@ public:
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
-                                    arc_info.WallixBastionSHA256Digest = std::string(digest_s);
+                                    arc_info.WallixBastionSHA256Digest = digest_s;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
 
                                     this->report_message.log6(info, arc_info, tvtime());
@@ -2572,7 +2572,7 @@ public:
                                               /* strict_check = */false) &&
                 !(device_create_request.CreateOptions() &
                   smb2::FILE_DIRECTORY_FILE) &&
-                0 != ::strcmp(device_create_request.Path(), "/")) {
+                0 != ::strcmp(device_create_request.Path().data(), "/")) {
                 access_ok = false;
             }
             if (!this->param_file_system_write_authorized &&
@@ -2622,7 +2622,8 @@ public:
             return false;
         }
 
-        file_path = device_create_request.Path();
+        auto av = device_create_request.Path();
+        file_path.assign(av.begin(), av.end());
 
         return true;
     }   // process_server_create_drive_request

@@ -53,8 +53,8 @@ public:
     struct FileStatvfs
     {
         uint64_t VolumeCreationTime             = 0;
-        const char * VolumeLabel                = "";
-        const char * FileSystemName             = "ext4";
+        array_view_const_char VolumeLabel       = ""_av;
+        array_view_const_char FileSystemName    = "ext4"_av;
 
         uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
         uint32_t SectorsPerAllocationUnit       = 8;

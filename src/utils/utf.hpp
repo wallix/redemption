@@ -25,10 +25,9 @@
 
 #pragma once
 
-#include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <cstdint>
-#include <string>
 
 enum {
       maximum_length_of_utf8_character_in_bytes = 4
@@ -36,7 +35,7 @@ enum {
 
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-std::size_t UTF8Len(const uint8_t * source);
+std::size_t UTF8Len(const_byte_ptr source);
 
 void UTF16Upper(uint8_t * source, std::size_t max_len);
 
@@ -61,12 +60,12 @@ void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len);
 bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source);
 
 // UTF8toUTF16 never writes the trailing zero
-size_t UTF8toUTF16(const std::string & source, uint8_t * target, size_t t_len);
+std::size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len);
 //std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-std::size_t UTF8toUTF16_CrLf(const std::string & source, uint8_t * target, std::size_t t_len);
+std::size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, std::size_t t_len);
 
 
 class UTF8toUnicodeIterator
@@ -117,13 +116,14 @@ std::size_t get_utf8_char_size(uint8_t const * c);
 
 bool is_utf8_string(uint8_t const * s, int length = -1);
 
-bool is_ASCII_string(uint8_t const * s, int length = -1);
+bool is_ASCII_string(const_bytes_view source);
+bool is_ASCII_string(const_byte_ptr source);
 
-std::size_t UTF8StrLenInChar(const uint8_t * s);                 // UTF8StrLenInChar
+std::size_t UTF8StrLenInChar(const_byte_ptr source);
 
 std::size_t UTF16toLatin1(const uint8_t * utf16_source_, std::size_t utf16_len, uint8_t * latin1_target, std::size_t latin1_len);
 
-std::size_t Latin1toUTF16(const uint8_t * latin1_source, std::size_t latin1_len,
+std::size_t Latin1toUTF16(const_bytes_view latin1_source,
         uint8_t * utf16_target, std::size_t utf16_len);
 
 std::size_t Latin1toUTF8(
