@@ -51,6 +51,7 @@
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
+#include "client_redemption/client_config/client_redemption_path.hpp"
 
 #include <algorithm>
 
@@ -58,118 +59,100 @@
 #include <cstdint>
 #include <openssl/ssl.h>
 
-#define CLIENT_REDEMPTION_REPLAY_PATH "/DATA/replay"
-#define CLIENT_REDEMPTION_LOGINS_PATH "/DATA/config/login.config"
-#define CLIENT_REDEMPTION_WINODW_CONF_PATH "/DATA/config/windows_config.config"
-#define CLIENT_REDEMPTION_SHARE_PATH "/DATA/share"
-#define CLIENT_REDEMPTION_CB_FILE_TEMP_PATH "/DATA/clipboard_temp"
-#define CLIENT_REDEMPTION_KEY_SETTING_PATH "/DATA/config/keySetting.config"
-#define CLIENT_REDEMPTION_USER_CONF_PATH "/DATA/config/userConfig.config"
-#define CLIENT_REDEMPTION_SOUND_TEMP_PATH "/DATA/sound_temp"
-#define CLIENT_REDEMPTION_DATA_PATH "/DATA"
-#define CLIENT_REDEMPTION_DATA_CONF_PATH "/DATA/config"
+struct UserProfil {
+    int id;
+    std::string name;
 
+    UserProfil(int id, std::string name)
+        : id(id)
+        , name(std::move(name)) {}
+};
 
-#ifndef CLIENT_REDEMPTION_MAIN_PATH
-#define CLIENT_REDEMPTION_MAIN_PATH ""
-#endif
+struct KeyCustomDefinition {
+    int qtKeyID = 0;
+    int scanCode = 0;
+    std::string ASCII8;
+    int extended = 0;
+    std::string name;
 
+    KeyCustomDefinition() = default;
 
+    KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
+        : qtKeyID(qtKeyID)
+        , scanCode(scanCode)
+        , ASCII8(std::move(ASCII8))
+        , extended(extended ? 0x0100 : 0)
+        , name(std::move(name))
+    {}
+};
 
-    struct UserProfil {
-        int id;
-        std::string name;
+struct IconMovieData {
+    const std::string file_name;
+    const std::string file_path;
+    const std::string file_version;
+    const std::string file_resolution;
+    const std::string file_checksum;
+    const long int movie_len = 0;
 
-        UserProfil(int id, std::string name)
-          : id(id)
-          , name(std::move(name)) {}
-    };
-
-    struct KeyCustomDefinition {
-        int qtKeyID = 0;
-        int scanCode = 0;
-        std::string ASCII8;
-        int extended = 0;
-        std::string name;
-
-        KeyCustomDefinition() = default;
-
-        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
-          : qtKeyID(qtKeyID)
-          , scanCode(scanCode)
-          , ASCII8(std::move(ASCII8))
-          , extended(extended ? 0x0100 : 0)
-          , name(std::move(name))
+    IconMovieData(std::string file_name,
+                    std::string file_path,
+                    std::string file_version,
+                    std::string file_resolution,
+                    std::string file_checksum,
+                    long int movie_len)
+        : file_name(std::move(file_name))
+        , file_path(std::move(file_path))
+        , file_version(std::move(file_version))
+        , file_resolution(std::move(file_resolution))
+        , file_checksum(std::move(file_checksum))
+        , movie_len(movie_len)
         {}
-    };
+};
 
-    struct IconMovieData {
-        const std::string file_name;
-        const std::string file_path;
-        const std::string file_version;
-        const std::string file_resolution;
-        const std::string file_checksum;
-        const long int movie_len = 0;
+// VNC mod
+struct ModVNCParamsData {
+    bool is_apple;
+    Theme      theme;
+    WindowListCaps windowListCaps;
+    ClientExecute exe;
+    std::string vnc_encodings;
+    int keylayout = 0x040C;
+    int width = 800;
+    int height = 600;
 
-        IconMovieData(std::string file_name,
-                      std::string file_path,
-                      std::string file_version,
-                      std::string file_resolution,
-                      std::string file_checksum,
-                      long int movie_len)
-            : file_name(std::move(file_name))
-            , file_path(std::move(file_path))
-            , file_version(std::move(file_version))
-            , file_resolution(std::move(file_resolution))
-            , file_checksum(std::move(file_checksum))
-            , movie_len(movie_len)
-            {}
-    };
+    bool enable_tls = false;
+    bool enable_nla = false;
+    bool enable_sound = false;
+    bool enable_shared_clipboard = false;
 
-    // VNC mod
-    struct ModVNCParamsData {
-        bool is_apple;
-        Theme      theme;
-        WindowListCaps windowListCaps;
-        ClientExecute exe;
-        std::string vnc_encodings;
-        int keylayout = 0x040C;
-        int width = 800;
-        int height = 600;
+    std::vector<UserProfil> userProfils;
+    int current_user_profil = 0;
 
-        bool enable_tls = false;
-        bool enable_nla = false;
-        bool enable_sound = false;
-        bool enable_shared_clipboard = false;
+    ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
+        : is_apple(false)
+        , exe(session_reactor, client, this->windowListCaps, false)
+        , vnc_encodings("5,16,0,1,-239")
+    {}
+};
 
-        std::vector<UserProfil> userProfils;
-        int current_user_profil = 0;
+struct ModRDPParamsData
+{
+    int rdp_width = 0;
+    int rdp_height = 0;
+    bool enable_tls   = false;
+    bool enable_nla   = false;
+    bool enable_sound = false;
 
-        ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
-          : is_apple(false)
-          , exe(session_reactor, client, this->windowListCaps, false)
-          , vnc_encodings("5,16,0,1,-239")
-        {}
-    };
+    bool enable_shared_virtual_disk = true;
+    bool enable_shared_remoteapp = false;
+};
 
-    struct ModRDPParamsData
-    {
-        int rdp_width = 0;
-        int rdp_height = 0;
-        bool enable_tls   = false;
-        bool enable_nla   = false;
-        bool enable_sound = false;
-
-        bool enable_shared_virtual_disk = true;
-        bool enable_shared_remoteapp = false;
-    };
-
-    struct RDPRemoteAppConfig {
-        std::string source_of_ExeOrFile;
-        std::string source_of_WorkingDir;
-        std::string source_of_Arguments;
-        std::string full_cmd_line;
-    };
+struct RDPRemoteAppConfig {
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+    std::string full_cmd_line;
+};
 
 struct WindowsData {
 
