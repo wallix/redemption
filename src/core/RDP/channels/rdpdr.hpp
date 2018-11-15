@@ -1439,8 +1439,9 @@ public:
 
             this->PathLength_UTF8 = ::UTF16toUTF8(Path_unicode_data, this->PathLength_UTF16, this->Path_,
                 65536);
-
-            this->Path_[this->PathLength_UTF8] = '\0';
+            if (this->PathLength_UTF8) {
+                this->PathLength_UTF8--;
+            }
 
             for (size_t i = 0; i < this->PathLength_UTF8; i++) {
                 if ('\\' == this->Path_[i]) {
