@@ -24,13 +24,15 @@
 
 #pragma once
 
-#include <cstdint>
-
 #include "utils/sugar/cast.hpp"
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
 #include "utils/get_printable_password.hpp"
+
+#include <cstdint>
+#include <string>
+
 
 // 2.2.1.11.1.1 Info Packet (TS_INFO_PACKET)
 // =========================================
