@@ -44,7 +44,6 @@
 #include "mod/rdp/new_mod_rdp.hpp"
 #include "mod/vnc/new_mod_vnc.hpp"
 #include "transport/socket_transport.hpp"
-#include "utils/difftimeval.hpp"
 #include "utils/netutils.hpp"
 
 #include "test_only/lcg_random.hpp"
@@ -811,9 +810,8 @@ public:
         this->_callback->disconnect(tvtime().tv_sec);
 
         if (this->_callback != nullptr) {
-            TimeSystem timeobj;
             if (is_pipe_ok) {
-                this->_callback->disconnect(timeobj.get_time().tv_sec);
+                this->_callback->disconnect(tvtime().tv_sec);
             }
             this->_callback.reset();
         }

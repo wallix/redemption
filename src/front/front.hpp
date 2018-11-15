@@ -886,7 +886,6 @@ public:
         }
 
         LOG(LOG_INFO, "---<>  Front::can_be_start_capture  <>---");
-        struct timeval now = tvtime();
 
         if (bool(this->verbose & Verbose::basic_trace)) {
             LOG(LOG_INFO, "Front::can_be_start_capture: movie_path    = %s\n", ini.get<cfg::globals::movie_path>());
@@ -998,7 +997,7 @@ public:
         );
 
         CaptureParams capture_params{
-            now,
+            this->session_reactor.get_current_time(),
             basename,
             record_tmp_path,
             record_path.c_str(),
@@ -2687,8 +2686,7 @@ private:
 
     void session_update(array_view_const_char message) override {
         if (this->capture) {
-            timeval now = tvtime();
-            this->capture->session_update(now, message);
+            this->capture->session_update(this->session_reactor.get_current_time(), message);
         }
     }
 
@@ -4800,14 +4798,18 @@ private:
         //LOG(LOG_INFO, "Decoded keyboard input data:");
         //hexdump_d(decoded_data.get_data(), decoded_data.size());
 
-        bool const send_to_mod = this->capture
-        ? (  0 == decoded_keys.count
-         || (1 == decoded_keys.count
-            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0]))
-         || (2 == decoded_keys.count
-            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[0])
-            && this->capture->kbd_input(tvtime(), decoded_keys.uchars[1]))
-        ) : true;
+        bool const send_to_mod = [&]{
+            if (!this->capture || 0 == decoded_keys.count) {
+                return true;
+            }
+            auto const timeval = this->session_reactor.get_current_time();
+            return (1 == decoded_keys.count
+                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0]))
+                || (2 == decoded_keys.count
+                    && this->capture->kbd_input(timeval, decoded_keys.uchars[0])
+                    && this->capture->kbd_input(timeval, decoded_keys.uchars[1]));
+            ;
+        }();
 
         if (this->up_and_running) {
             if (tsk_switch_shortcuts && this->ini.get<cfg::client::disable_tsk_switch_shortcuts>()) {

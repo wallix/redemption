@@ -349,9 +349,10 @@ void ModuleManager::create_mod_rdp(
             new_mod->protocol_metrics = std::move(protocol_metrics);
             new_mod->metrics_timer = session_reactor.create_timer()
                 .set_delay(std::chrono::seconds(ini.get<cfg::metrics::log_interval>()))
-                .on_action(jln::always_ready([mod = new_mod.get()]{
-                    mod->metrics->log(tvtime());
-                }))
+                .on_action([mod = new_mod.get()](JLN_TIMER_CTX ctx){
+                    mod->metrics->log(ctx.get_current_time());
+                    return ctx.ready();
+                })
             ;
         }
 
