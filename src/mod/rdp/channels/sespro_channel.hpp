@@ -1311,7 +1311,7 @@ public:
                             });
 
                         ArcsightLogInfo arc_info;
-                        arc_info.name = order_.c_str();
+                        arc_info.name = order_;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;

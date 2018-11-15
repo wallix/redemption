@@ -30,18 +30,18 @@
 class Primitives {
 public:
 	/** @brief primitive size */
-	typedef struct {
+	struct prim_size_t {
 		uint32_t width;
 		uint32_t height;
-	} prim_size_t;
+	};
 
 	/** @brief result of a primitive execution */
-	typedef enum {
+	enum pstatus_t {
 		SUCCESS,
-	} pstatus_t;
+	};
 
 	/** @brief the format of a pixel */
-	typedef enum {
+	enum PixelFormat {
 		PIXEL_FORMAT_ARGB32,
 		PIXEL_FORMAT_XRGB32,
 		PIXEL_FORMAT_ABGR32,
@@ -50,11 +50,11 @@ public:
 		PIXEL_FORMAT_RGBX32,
 		PIXEL_FORMAT_BGRA32,
 		PIXEL_FORMAT_BGRX32
-	} PixelFormat;
+	};
 
-	typedef pstatus_t (*__lShiftC_16s_t)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len);
+	using _lShiftC_16s_t = pstatus_t (*)(const int16_t * pSrc, uint32_t val, int16_t * pSrcDst, uint32_t len);
 
-	typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const int16_t * pSrc[3], uint32_t srcStep,
+	using _yCbCrToRGB_16s8u_P3AC4R_t = pstatus_t (*)(const int16_t * pSrc[3], uint32_t srcStep,
 	    uint8_t * pDst, uint32_t dstStep, PixelFormat DstFormat,
 	    const prim_size_t* roi);
 
@@ -70,7 +70,7 @@ public:
 	static size_t pixelFormatSize(PixelFormat format);
 
 protected:
-	Primitives();
+	Primitives() noexcept;
 
 	/** @brief kind of acceleration */
 	enum {
@@ -79,8 +79,8 @@ protected:
 	} accel;
 
 public:
-	__lShiftC_16s_t lShiftC_16s;
-	__yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
+	_lShiftC_16s_t lShiftC_16s;
+	_yCbCrToRGB_16s8u_P3AC4R_t yCbCrToRGB_16s8u_P3AC4R;
 
 protected:
 	static Primitives s_instance;

@@ -180,8 +180,8 @@ struct ModRDPParams {
     const char * client_execute_working_dir = "";
     const char * client_execute_arguments = "";
 
-    bool         use_client_provided_remoteapp = false;
-    bool         should_ignore_first_client_execute = false;
+    bool use_client_provided_remoteapp = false;
+    bool should_ignore_first_client_execute = false;
 
     bool remote_program          = false;
     bool remote_program_enhanced = false;

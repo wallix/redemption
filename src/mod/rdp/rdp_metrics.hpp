@@ -238,11 +238,7 @@ public:
                         RDPECLIP::FormatName const & format_name_local = format_list_pdu.format_name(index);
                         format_name_local.log(LOG_INFO);
 
-                        uint32_t formatID = format_name_local.formatId();
-                        std::string formatName = format_name_local.format_name();
-
-                        switch (formatID) {
-
+                        switch (uint32_t formatID = format_name_local.formatId()) {
                             case RDPECLIP::CF_TEXT:
                             case RDPECLIP::CF_LOCALE:
                             case RDPECLIP::CF_UNICODETEXT:
@@ -256,7 +252,7 @@ public:
                                 break;
                             default:
                                 // TODO string_view
-                                if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
+                                if (format_name_local.format_name() == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                                     this->file_contents_format_ID = formatID;
                                     this->metrics->add_to_current_data(nb_copy_file_from_server, 1);
                                     known_format_not_found = false;
@@ -265,7 +261,7 @@ public:
                         }
                     }
                 }
-                    break;
+                break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                 {
@@ -368,11 +364,7 @@ public:
                             RDPECLIP::FormatName const & format_name_local = format_list_pdu.format_name(index);
                             format_name_local.log(LOG_INFO);
 
-                            uint32_t formatID = format_name_local.formatId();
-                            std::string formatName = format_name_local.format_name();
-
-                            switch (formatID) {
-
+                            switch (uint32_t formatID = format_name_local.formatId()) {
                                 case RDPECLIP::CF_TEXT:
                                 case RDPECLIP::CF_LOCALE:
                                 case RDPECLIP::CF_UNICODETEXT:
@@ -385,7 +377,7 @@ public:
                                     known_format_not_found = false;
                                     break;
                                 default:
-                                    if (formatName == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
+                                    if (format_name_local.format_name() == RDPECLIP::FILEGROUPDESCRIPTORW.data()) {
                                         this->file_contents_format_ID = formatID;
                                         this->metrics->add_to_current_data(nb_copy_file_from_client, 1);
                                         known_format_not_found = false;

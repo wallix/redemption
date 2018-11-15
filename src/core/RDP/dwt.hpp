@@ -22,7 +22,7 @@
 */
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief function to decode / encode using DWT

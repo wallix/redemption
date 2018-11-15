@@ -38,8 +38,7 @@ public:
 	 *	@param offset an offset to start at
 	 */
 	explicit InBitStream(const uint8_t *array, std::size_t size, std::size_t offset = 0)
-	: begin(array)
-	, end(array + size)
+	: end(array + size)
 	, p(array + offset)
 	, bitsLeft(8)
 	{
@@ -50,14 +49,12 @@ public:
 	 * @param nbits the size of the shift
 	 */
 	void shift(std::size_t nbits) {
-		if (!nbits)
+		if (!nbits) {
 			return;
+        }
 
 		while (p < end && nbits > 0) {
-			std::size_t b = nbits;
-			if (b > bitsLeft)
-				b = bitsLeft;
-
+			std::size_t const b = std::min(nbits, bitsLeft);
 			nbits -= b;
 			bitsLeft -= b;
 			if (bitsLeft == 0) {
@@ -79,11 +76,10 @@ public:
 		uint32_t ret = 0;
 
 		while (p < end && nbits > 0) {
-			std::size_t b = nbits;
-			if (b > bitsLeft)
-				b = bitsLeft;
-			if (ret)
+			std::size_t const b = std::min(nbits, bitsLeft);
+			if (ret) {
 				ret <<= b;
+            }
 			ret |= (*p >> (bitsLeft - b)) & ((1 << b) - 1);
 			bitsLeft -= b;
 			nbits -= b;
@@ -110,11 +106,10 @@ public:
 		std::size_t localBitsLeft = bitsLeft;
 
 		while (alias < end && nbits > 0) {
-            std::size_t b = nbits;
-			if (b > localBitsLeft)
-				b = localBitsLeft;
-			if (ret)
+			std::size_t const b = std::min(nbits, localBitsLeft);
+			if (ret) {
 				ret <<= b;
+            }
 			ret |= (*alias >> (localBitsLeft - b)) & ((1 << b) - 1);
 			localBitsLeft -= b;
 			nbits -= b;
@@ -146,7 +141,7 @@ public:
 		return (p == end);
 	}
 
-protected:
-	const uint8_t *begin, *end, *p;
+private:
+	const uint8_t *end, *p;
 	std::size_t bitsLeft;
 };

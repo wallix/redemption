@@ -623,12 +623,13 @@ struct RFXClntCaps : public CodecGenCaps {
 
 };
 
-typedef enum {
+// TODO enum class
+enum BitmapCodecType {
     CODEC_REMOTEFX,
     CODEC_NS,
     CODEC_IGNORE,
     CODEC_UNKNOWN
-} BitmapCodecType;
+};
 
 struct BitmapCodec {
 

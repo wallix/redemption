@@ -19,7 +19,7 @@
 
    Run-Length Golomb-Rice compression
 */
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief Run-Length Golomb-Rice compression implementation
@@ -27,10 +27,10 @@
 class Rlgr {
 public:
 	/** @brief RLGR mode */
-	typedef enum {
+	enum RlgrMode {
 		RLGR1,
 		RLGR3
-	} RlgrMode;
+	};
 
 public:
 
@@ -43,6 +43,4 @@ public:
 	 * @return if the operation was successful
 	 */
 	static bool decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize);
-
-protected:
 };

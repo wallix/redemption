@@ -1231,9 +1231,9 @@ inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx
 }
 
 
-constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW\0");
-constexpr auto FILECONTENTS         = cstr_array_view("FileContents\0");
-constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
+constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW");
+constexpr auto FILECONTENTS         = cstr_array_view("FileContents");
+// constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect");
 
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -1258,9 +1258,9 @@ constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 struct FormatListResponsePDU
 {
-    void emit(OutStream &) const {}
+    void emit(OutStream & /*out_stream*/) const {}
 
-    void recv(InStream &) {}
+    void recv(InStream & /*in_stream*/) {}
 
     static constexpr size_t size() {
         return 0;

@@ -70,7 +70,7 @@ static inline uint8_t* writePixelGeneric(uint8_t* dst, uint16_t formatSize, uint
     return dst + formatSize;
 }
 
-typedef uint8_t* (*fkt_writePixel)(uint8_t*, uint16_t, uint32_t, uint8_t, uint8_t, uint8_t, uint8_t);
+using fkt_writePixel = uint8_t* (*)(uint8_t*, uint16_t, uint32_t, uint8_t, uint8_t, uint8_t, uint8_t);
 
 static inline fkt_writePixel getPixelWriteFunction(uint16_t format)
 {
@@ -229,7 +229,7 @@ Primitives Primitives::s_genericInstance;
 
 
 
-Primitives::Primitives()
+Primitives::Primitives() noexcept
     : accel(Primitives::ACCEL_GENERIC)
     , lShiftC_16s(general_lShiftC_16s)
     , yCbCrToRGB_16s8u_P3AC4R(general_yCbCrToRGB_16s8u_P3AC4R)

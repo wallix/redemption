@@ -20,8 +20,8 @@
   Run-Length Golomb-Rice compression
 */
 #include "core/RDP/rlgr.hpp"
+#include "utils/bitstream.hpp"
 
-#include <utils/bitstream.hpp>
 #include <cstring>
 
 /* Constants used in RLGR1/RLGR3 algorithm */

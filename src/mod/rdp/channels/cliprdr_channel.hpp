@@ -592,8 +592,8 @@ private:
 
                 bool const log_current_activity = (
                         (!this->param_log_only_relevant_clipboard_activities) ||
-                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                        (0 != strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                         0 != strcasecmp("FileGroupDescriptorW", format_name.c_str()))
                     );
 
                 format_name += "(";
@@ -666,7 +666,7 @@ private:
                 this->requestedFormatId = 0;
             }
 
-            for (RDPECLIP::FileDescriptor fd : receiver.fds) {
+            for (RDPECLIP::FileDescriptor const& fd : receiver.fds) {
                 const bool from_remote_session = false;
                 this->update_file_contents_request_inventory(fd, from_remote_session);
             }
@@ -1417,8 +1417,8 @@ public:
 
                 bool const log_current_activity = (
                         (!this->param_log_only_relevant_clipboard_activities) ||
-                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                        (0 != strcasecmp("Preferred DropEffect", format_name.c_str()) &&
+                         0 != strcasecmp("FileGroupDescriptorW", format_name.c_str()))
                     );
 
                 format_name += "(";
