@@ -113,9 +113,8 @@ private:
             this->update_next_usable_dest_id();
         }
 
-        this->dest_to_src[dest_id].first  = src_id;
-        this->dest_to_src[dest_id].second = true;
-        this->src_to_dest[src_id]         = dest_id;
+        this->dest_to_src[dest_id] = {src_id, true};
+        this->src_to_dest[src_id]  = dest_id;
 
         if (this->verbose) {
             LOG(LOG_INFO,
@@ -132,8 +131,7 @@ public:
 
         this->update_next_usable_dest_id();
 
-        this->dest_to_src[dest_id].first  = 0;
-        this->dest_to_src[dest_id].second = false;
+        this->dest_to_src[dest_id] = {0, false};
 
         if (this->verbose) {
             LOG(LOG_INFO, "IDManager::reg_dest_only_id(...): dest_id=0x%X",
