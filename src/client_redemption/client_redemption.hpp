@@ -856,7 +856,7 @@ public:
                 this->impl_graphic->dropScreen();
             }
             const std::string errorMsg("Cannot read movie \""+this->config._movie_full_path+ "\".");
-            LOG(LOG_INFO, "%s", errorMsg.c_str());
+            LOG(LOG_ERR, "%s", errorMsg.c_str());
             std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
             this->disconnect(labelErrorMsg, false);
         }
@@ -1136,7 +1136,7 @@ public:
                     this->impl_graphic->dropScreen();
                 }
                 const std::string errorMsg("[" + this->config.target_IP +  "] lost: pipe broken");
-                LOG(LOG_INFO, "%s: %s", errorMsg, e.errmsg());
+                LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
                 std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
 
                 this->disconnect(labelErrorMsg, true);

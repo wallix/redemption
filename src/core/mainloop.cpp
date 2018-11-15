@@ -201,7 +201,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
 
     int sck = 0;
     if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
-        LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
+        LOG(LOG_ERR, "getsockname failed error=%s", strerror(errno));
         _exit(1);
     }
 

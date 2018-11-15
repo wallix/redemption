@@ -578,7 +578,7 @@ public:
     Server::Server_status start(int sck, bool forkable) override {
         unique_fd sck_in {accept(sck, nullptr, nullptr)};
         if (!sck_in) {
-            LOG(LOG_INFO, "Accept failed on socket %d (%s)", sck, strerror(errno));
+            LOG(LOG_ERR, "Accept failed on socket %d (%s)", sck, strerror(errno));
             _exit(1);
         }
 

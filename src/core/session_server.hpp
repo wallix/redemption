@@ -70,7 +70,7 @@ public:
 
         int sck = accept(incoming_sck, &u.s, &sin_size);
         if (-1 == sck) {
-            LOG(LOG_INFO, "Accept failed on socket %d (%s)", incoming_sck, strerror(errno));
+            LOG(LOG_ERR, "Accept failed on socket %d (%s)", incoming_sck, strerror(errno));
             _exit(1);
         }
 
@@ -112,7 +112,7 @@ public:
 
 
                 if (-1 == getsockname(sck, &localAddress.s, &addressLength)){
-                    LOG(LOG_INFO, "getsockname failed error=%s", strerror(errno));
+                    LOG(LOG_ERR, "getsockname failed error=%s", strerror(errno));
                     _exit(1);
                 }
 
