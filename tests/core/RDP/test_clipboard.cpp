@@ -593,12 +593,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("", format_name_it->format_name());
     }
 
     {
@@ -618,17 +618,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(RDPECLIP::CF_TEXT, format_name_1.formatId());
-        RED_CHECK_EQUAL("", format_name_1.format_name());
+        RED_CHECK_EQUAL(RDPECLIP::CF_TEXT, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(RDPECLIP::CF_UNICODETEXT, format_name_2.formatId());
-        RED_CHECK_EQUAL("", format_name_2.format_name());
+        RED_CHECK_EQUAL(RDPECLIP::CF_UNICODETEXT, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("", format_name_it[1].format_name());
     }
 
     {
@@ -645,12 +644,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("Test", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("Test", format_name_it->format_name());
     }
 
     {
@@ -670,17 +669,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_LongFormatName)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(1, format_name_1.formatId());
-        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(2, format_name_2.formatId());
-        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
     }
 }
 
@@ -837,12 +835,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("", format_name_it->format_name());
     }
 
     {
@@ -865,17 +863,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(1, format_name_1.formatId());
-        RED_CHECK_EQUAL("", format_name_1.format_name());
+        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(2, format_name_2.formatId());
-        RED_CHECK_EQUAL("", format_name_2.format_name());
+        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("", format_name_it[1].format_name());
     }
 
     {
@@ -896,12 +893,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
 
         RED_CHECK_EQUAL(36, format_list_pdu.size(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("Test", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("Test", format_name_it->format_name());
     }
 
     {
@@ -927,17 +924,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_ASCII)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(1, format_name_1.formatId());
-        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(2, format_name_2.formatId());
-        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
     }
 }
 
@@ -963,12 +959,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("", format_name_it->format_name());
     }
 
     {
@@ -991,17 +987,16 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(1, format_name_1.formatId());
-        RED_CHECK_EQUAL("", format_name_1.format_name());
+        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(2, format_name_2.formatId());
-        RED_CHECK_EQUAL("", format_name_2.format_name());
+        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("", format_name_it[1].format_name());
     }
 
     {
@@ -1022,12 +1017,12 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(1, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name = format_list_pdu.format_name(0);
-
-        RED_CHECK_EQUAL(1, format_name.formatId());
-        RED_CHECK_EQUAL("Test", format_name.format_name());
+        RED_CHECK_EQUAL(1, format_name_end - format_name_it);
+        RED_CHECK_EQUAL(1, format_name_it->formatId());
+        RED_CHECK_EQUAL("Test", format_name_it->format_name());
     }
 
     {
@@ -1053,16 +1048,15 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Recv_ShortFormatName_Unicode)
 
         RED_CHECK(!format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names));
 
-        RED_CHECK_EQUAL(2, format_list_pdu.num_format_names());
+        auto format_name_it = format_list_pdu.begin();
+        auto format_name_end = format_list_pdu.end();
 
-        RDPECLIP::FormatName const & format_name_1 = format_list_pdu.format_name(0);
+        RED_CHECK_EQUAL(2, format_name_end - format_name_it);
 
-        RED_CHECK_EQUAL(1, format_name_1.formatId());
-        RED_CHECK_EQUAL("Test1", format_name_1.format_name());
+        RED_CHECK_EQUAL(1, format_name_it[0].formatId());
+        RED_CHECK_EQUAL("Test1", format_name_it[0].format_name());
 
-        RDPECLIP::FormatName const & format_name_2 = format_list_pdu.format_name(1);
-
-        RED_CHECK_EQUAL(2, format_name_2.formatId());
-        RED_CHECK_EQUAL("Test2", format_name_2.format_name());
+        RED_CHECK_EQUAL(2, format_name_it[1].formatId());
+        RED_CHECK_EQUAL("Test2", format_name_it[1].format_name());
     }
 }

@@ -1579,7 +1579,7 @@ public:
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
 
             if (device_flags & MOUSE_FLAG_MOVE) {
-                IF_EXISTS(this->metrics, mouse_mouve(x, y));
+                IF_EXISTS(this->metrics, mouse_move(x, y));
             }
 
             if (device_flags & MOUSE_FLAG_DOWN) {

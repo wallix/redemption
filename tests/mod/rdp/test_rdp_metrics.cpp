@@ -95,7 +95,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
         m.log(epoch+5s);
-        RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);;
+        RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
     }
     {
         std::string expected_log_metrics("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 2 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
@@ -224,8 +224,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogBasicIncrement)
        epoch += 5s;
        std::string expected_log_metrics_next("2018-08-02 12:08:31 164d89c1a56957b752540093e178 3 2 1 1 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
        expected_log_metrics += expected_log_metrics_next;
-       metrics.mouse_mouve(0, 0);
-       metrics.mouse_mouve(2, 2);
+       metrics.mouse_move(0, 0);
+       metrics.mouse_move(2, 2);
        m.log(epoch);
        RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics);
    }

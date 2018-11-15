@@ -857,20 +857,23 @@
     void ClientChannelCLIPRDRManager::process_format_list(InStream & chunk, uint32_t msgFlags) {
         bool isSharedFormat = false;
         uint32_t formatID = 0;
-        std::string format_name;
 
         RDPECLIP::FormatListPDUEx format_list_pdu_local;
 
         format_list_pdu_local.recv(chunk, this->server_use_long_format_names, (msgFlags & RDPECLIP::CB_ASCII_NAMES));
 
-        for (size_t index = 0, count = format_list_pdu_local.num_format_names(); (index < count) && !isSharedFormat; ++index) {
-            RDPECLIP::FormatName const & format_name_local = format_list_pdu_local.format_name(index);
+        for (RDPECLIP::FormatName const & format_name_local : format_list_pdu_local) {
+            if (isSharedFormat) {
+                break;
+            }
 
             formatID = format_name_local.formatId();
-            format_name = format_name_local.format_name();
+            std::string const& format_name = format_name_local.format_name();
 
-            for (size_t j = 0; j < this->format_list_pdu.num_format_names() && !isSharedFormat; ++j) {
-                RDPECLIP::FormatName const & format_name_ = this->format_list_pdu.format_name(j);
+            for (RDPECLIP::FormatName const & format_name_ : this->format_list_pdu) {
+                if (isSharedFormat) {
+                    break;
+                }
 
                 if (format_name_.formatId() == formatID) {
                     this->_requestedFormatId = formatID;
@@ -879,9 +882,7 @@
                 }
             }
 
-            auto const filedescunicode = RDPECLIP::FILEGROUPDESCRIPTORW;
-
-            if ((format_name == filedescunicode.data()) && !isSharedFormat) {
+            if ((format_name == RDPECLIP::FILEGROUPDESCRIPTORW.data()) && !isSharedFormat) {
                 this->_requestedFormatId = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
                 isSharedFormat = true;
             }

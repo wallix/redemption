@@ -103,7 +103,7 @@ public:
         this->new_file(this->current_file_date);
     }
 
-    Metrics( std::string path
+    Metrics( std::string const& path
            , std::string session_id
            , array_view_const_char primary_user_sig         // hashed primary user account
            , array_view_const_char account_sig              // hashed secondary account
@@ -150,17 +150,11 @@ public:
 
     void log(timeval const& now)
     {
-//        LOG(LOG_INFO, " this->next_log_time=%ld:%ld > now=%ld:%ld",
-//            this->next_log_time.tv_sec, this->next_log_time.tv_usec, now.tv_sec, now.tv_usec);
-
         if (this->next_log_time > now) {
             return ;
         }
 
         this->next_log_time += this->log_delay;
-
-//        LOG(LOG_INFO, " new next_log_time=%ld:%ld",
-//            this->next_log_time.tv_sec, this->next_log_time.tv_usec);
 
         this->rotate(now);
         this->write_event_to_logmetrics(now);

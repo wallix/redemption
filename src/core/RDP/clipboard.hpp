@@ -1134,9 +1134,15 @@ public:
         this->format_names.emplace_back(formatId, format_name);
     }
 
-    size_t num_format_names() const { return this->format_names.size(); }
+    auto begin() const
+    {
+        return this->format_names.begin();
+    }
 
-    FormatName const & format_name(size_t idx_format_name) const { return this->format_names[idx_format_name]; }
+    auto end() const
+    {
+        return this->format_names.end();
+    }
 
     size_t size(bool use_long_format_names) const {
         size_t sz = 0;
@@ -1219,9 +1225,9 @@ public:
     }
 };  // FormatListPDUEx
 
-inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
-    for (size_t i = 0, c = format_list_pdu.num_format_names(); i < c; ++i) {
-        FormatName const & format_name = format_list_pdu.format_name(i);
+inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId)
+{
+    for (RDPECLIP::FormatName const & format_name : format_list_pdu) {
         if (format_name.formatId() == formatId) {
             return true;
         }
