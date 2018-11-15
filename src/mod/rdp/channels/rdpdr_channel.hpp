@@ -1601,9 +1601,7 @@ public:
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "in_remain(%" PRIu64 ") != remaining=(%u)",
                                 chunk.in_remain(), request_iter->remaining);
-#ifndef NDEBUG
                             assert(false);
-#endif  // #ifndef NDEBUG
                         }
 
                         target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
@@ -1615,9 +1613,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_client_drive_io_response: "
                             "Target not found! (1)");
-#ifndef NDEBUG
                     assert(false);
-#endif  // #ifndef NDEBUG
                 }
             }
 
@@ -1987,9 +1983,7 @@ public:
                         LOG(LOG_WARNING,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Target not found! (2)");
-#ifndef NDEBUG
                         assert(false);
-#endif  // #ifndef NDEBUG
                     }
                 }
             }
@@ -2010,9 +2004,7 @@ public:
                         LOG(LOG_WARNING,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Target not found! (3)");
-#ifndef NDEBUG
                         assert(false);
-#endif  // #ifndef NDEBUG
                     }
                 }
             break;
@@ -2062,9 +2054,7 @@ public:
                                 LOG(LOG_WARNING,
                                     "FileSystemVirtualChannel::process_client_drive_io_response: "
                                         "Target not found! (4)");
-#ifndef NDEBUG
                                 assert(false);
-#endif  // #ifndef NDEBUG
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
@@ -2102,9 +2092,7 @@ public:
                                 LOG(LOG_WARNING,
                                     "FileSystemVirtualChannel::process_client_drive_io_response: "
                                         "Target not found! (5)");
-#ifndef NDEBUG
                                 assert(false);
-#endif  // #ifndef NDEBUG
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
@@ -2678,9 +2666,7 @@ public:
                                     "FileSystemVirtualChannel::process_server_drive_io_request: "
                                         "in_remain(%" PRIu64 ") != remaining=(%u)",
                                     chunk.in_remain(), request_iter->remaining);
-#ifndef NDEBUG
                                 assert(false);
-#endif  // #ifndef NDEBUG
                             }
 
                             target_iter->sha256.update({ chunk.get_current(), effective_chunked_data_length });
@@ -2691,9 +2677,7 @@ public:
                             LOG(LOG_WARNING,
                                 "FileSystemVirtualChannel::process_server_drive_io_request: "
                                     "Request not found!");
-#ifndef NDEBUG
                             assert(false);
-#endif  // #ifndef NDEBUG
                         }
                     }
                 }
@@ -2701,9 +2685,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Target not found! (1)");
-#ifndef NDEBUG
                     assert(false);
-#endif  // #ifndef NDEBUG
                 }
             }
 
@@ -2890,9 +2872,7 @@ public:
                     LOG(LOG_WARNING,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
                             "Target not found! (2)");
-#ifndef NDEBUG
                     assert(false);
-#endif  // #ifndef NDEBUG
                 }
 
                 this->update_exchanged_data(length);
@@ -3030,9 +3010,7 @@ public:
                             LOG(LOG_WARNING,
                                 "FileSystemVirtualChannel::process_server_drive_io_request: "
                                     "Target not found! (3)");
-#ifndef NDEBUG
                             assert(false);
-#endif  // #ifndef NDEBUG
                         }
                     }
                     break;
