@@ -79,6 +79,10 @@ private:
 
 public:
 
+    Metrics * get_metrics() {
+        return this->metrics;
+    }
+
     VNCMetrics(Metrics * metrics) : metrics(metrics)
     {
         this->metrics->set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);

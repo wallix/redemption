@@ -212,6 +212,11 @@ private:
     VNCMetrics * metrics;
 
 public:
+
+    virtual Metrics * get_metrics() {
+        return (this->metrics)?this->metrics->get_metrics():nullptr;
+    }
+
     mod_vnc( Transport & t
            , const char * username
            , const char * password

@@ -931,6 +931,10 @@ public:
     GCC::UserData::SCSecurity sc_sec1;
     GCC::UserData::CSSecurity cs_security;
 
+    virtual Metrics * get_metrics() {
+        return (this->metrics)?this->metrics->get_metrics():nullptr;
+    }
+
     mod_rdp( Transport & trans
            , FrontAPI & front
            , const ClientInfo & info

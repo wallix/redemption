@@ -169,6 +169,10 @@ public:
 
     virtual int get_fd() const { return INVALID_SOCKET; }
 
+    virtual class Metrics * get_metrics() {
+            return nullptr;
+    }
+
     virtual void get_event_handlers(std::vector<EventHandler>& out_event_handlers) {
         if (AsynchronousGraphicTask::none != this->asynchronous_graphic_task) {
             out_event_handlers.emplace_back(

@@ -135,6 +135,11 @@ class RDPMetrics
 
 
 public:
+
+    Metrics * get_metrics() {
+        return this->metrics;
+    }
+
     RDPMetrics(Metrics * metrics) : metrics(metrics)
     {
         this->metrics->set_protocol("v1.0", this->rdp_protocol_name, COUNT_FIELD);
