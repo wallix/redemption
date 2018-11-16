@@ -754,6 +754,7 @@
 "#   0x0: none\n"
 "#   0x1: disable clipboard log in syslog\n"
 "#   0x2: disable clipboard log in recorded sessions\n"
+"#   0x4: disable clipboard log in recorded meta\n"
 "# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
 "#disable_clipboard_log = 1\n\n"
 
@@ -761,6 +762,7 @@
 "#   0x0: none\n"
 "#   0x1: disable (redirected) file system log in syslog\n"
 "#   0x2: disable (redirected) file system log in recorded sessions\n"
+"#   0x4: disable (redirected) file system log in recorded meta\n"
 "# (note: values can be added (everyone: 0x2 + 0x4 + 0x8 = 0xE, mute: 0))\n"
 "#disable_file_system_log = 1\n\n"
 

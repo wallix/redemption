@@ -24,5 +24,9 @@ struct MetaParams
 {
     enum class EnableSessionLog : bool { No, Yes } enable_session_log;
     enum class HideNonPrintable : bool { No, Yes } hide_non_printable;
+
+    enum class LogClipboardActivities : bool { No, Yes } log_clipboard_activities;
+    enum class LogFileSystemActivities : bool { No, Yes } log_file_system_activities;
+
     enum class LogOnlyRelevantClipboardActivities : bool { No, Yes } log_only_relevant_clipboard_activities;
 };
