@@ -40,183 +40,6 @@
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 
-struct ClientFormatDataRequestReceive
-{
-    uint32_t requestedFormatId = 0;
-
-    ClientFormatDataRequestReceive(const RDPVerbose verbose, InStream& chunk) {
-        {
-            const unsigned int expected = 4;   //     requestedFormatId(4)
-            if (!chunk.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu",
-                    expected, chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
-
-        this->requestedFormatId = chunk.in_uint32_le();
-
-        if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                    "requestedFormatId=%s(%u)",
-                RDPECLIP::get_FormatId_name(this->requestedFormatId),
-                this->requestedFormatId);
-        }
-    }
-};
-
-
-inline void assign_remaining(InStream& in_stream, OutStream& out_stream)
-{
-    if (in_stream.in_remain()) {
-        out_stream.rewind();
-
-        out_stream.out_copy_bytes(
-            in_stream.get_current(), in_stream.in_remain());
-
-        in_stream.in_skip_bytes(in_stream.in_remain());
-    }
-}
-
-inline void process_format_data_response_first(
-    const uint32_t requestedFormatId, InStream& chunk,
-    // TODO OutParam
-    std::string& data_to_dump)
-{
-    constexpr size_t const max_length_of_data_to_dump = 256;
-
-    switch (requestedFormatId) {
-        /*
-        case RDPECLIP::CF_TEXT:
-        {
-            const size_t length_of_data_to_dump = std::min(
-                chunk.in_remain(), max_length_of_data_to_dump);
-            const std::string data_to_dump(
-                ::char_ptr_cast(chunk.get_current()),
-                length_of_data_to_dump);
-            LOG(LOG_INFO, "%s", data_to_dump);
-        }
-        break;
-        */
-        case RDPECLIP::CF_UNICODETEXT:
-        {
-            assert(!(chunk.in_remain() & 1));
-
-            const size_t length_of_data_to_dump = std::min(
-                chunk.in_remain(), max_length_of_data_to_dump * 2);
-
-            constexpr size_t size_of_utf8_string =
-                max_length_of_data_to_dump *
-                    maximum_length_of_utf8_character_in_bytes;
-
-            uint8_t utf8_string[size_of_utf8_string + 1] {};
-            const size_t length_of_utf8_string = ::UTF16toUTF8(
-                chunk.get_current(), length_of_data_to_dump / 2,
-                utf8_string, size_of_utf8_string);
-            data_to_dump.assign(
-                ::char_ptr_cast(utf8_string),
-                ((length_of_utf8_string && !utf8_string[length_of_utf8_string]) ?
-                    length_of_utf8_string - 1 :
-                    length_of_utf8_string));
-        }
-        break;
-
-        case RDPECLIP::CF_LOCALE:
-        {
-            const uint32_t locale_identifier = chunk.in_uint32_le();
-
-            data_to_dump = std::to_string(locale_identifier);
-        }
-        break;
-    }
-}
-
-inline RDPECLIP::FileDescriptor file_descriptor_from_stream(
-    InStream& chunk, OutStream& file_descriptor_stream, RDPVerbose verbose)
-{
-    const uint32_t complementary_data_length =
-        RDPECLIP::FileDescriptor::size() -
-            file_descriptor_stream.get_offset();
-
-    assert(chunk.in_remain() >= complementary_data_length);
-
-    file_descriptor_stream.out_copy_bytes(chunk.get_current(),
-        complementary_data_length);
-
-    chunk.in_skip_bytes(complementary_data_length);
-
-    RDPECLIP::FileDescriptor fd;
-
-    InStream in_stream(
-        file_descriptor_stream.get_data(),
-        file_descriptor_stream.get_offset()
-    );
-    fd.receive(in_stream);
-    if (bool(verbose & RDPVerbose::cliprdr)) {
-        fd.log(LOG_INFO);
-    }
-
-    return fd;
-}
-
-struct ClientFormatDataResponseReceive
-{
-    std::string data_to_dump;
-
-    std::vector<RDPECLIP::FileDescriptor> fds;
-
-    ClientFormatDataResponseReceive(const uint32_t requestedFormatId, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t client_file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose) {
-
-        if (client_file_list_format_id && (requestedFormatId == client_file_list_format_id)) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
-                    const uint32_t cItems = chunk.in_uint32_le();
-
-                    if (!param_dont_log_data_into_syslog) {
-                        LOG(LOG_INFO,
-                            "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
-                                "cItems=%u",
-                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                                "" : "(chunked) "),
-                            client_file_list_format_id, cItems);
-                    }
-                }
-            }
-            else {
-                if (file_descriptor_stream.get_offset()) {
-                    this->fds.push_back(
-                        file_descriptor_from_stream(chunk, file_descriptor_stream, verbose));
-
-                    file_descriptor_stream.rewind();
-                }
-            }
-
-            while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
-                RDPECLIP::FileDescriptor fd;
-                fd.receive(chunk);
-
-                if (bool(verbose & RDPVerbose::cliprdr)) {
-                    fd.log(LOG_INFO);
-                }
-
-                this->fds.push_back(fd);
-            }
-
-            assign_remaining(chunk, file_descriptor_stream);
-        } else {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                process_format_data_response_first(requestedFormatId, chunk, this->data_to_dump);
-            }
-        }
-    }
-};
-
-
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
@@ -402,8 +225,26 @@ private:
         (void)total_length;
         (void)flags;
 
-        ClientFormatDataRequestReceive receiver(this->verbose, chunk);
-        this->requestedFormatId = receiver.requestedFormatId;
+        {
+            const unsigned int expected = 4;   //     requestedFormatId(4)
+            if (!chunk.in_check_rem(expected)) {
+                LOG(LOG_ERR,
+                    "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu",
+                    expected, chunk.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
+        }
+
+        this->requestedFormatId = chunk.in_uint32_le();
+
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
+                    "requestedFormatId=%s(%u)",
+                RDPECLIP::get_FormatId_name(this->requestedFormatId),
+                this->requestedFormatId);
+        }
 
         if (!this->param_clipboard_down_authorized) {
             this->process_format_data_request_send(this->to_client_sender_ptr(), "client");
@@ -419,59 +260,13 @@ private:
     {
         (void)total_length;
 
-        InStream chunk_serie = chunk.clone();
-
-        ClientFormatDataResponseReceive receiver(
-            this->requestedFormatId,
-            chunk_serie,
-            in_header,
-            this->param_dont_log_data_into_syslog,
-            this->client_data.file_list_format_id,
-            flags,
-            this->file_descriptor_stream,
-            this->verbose
-        );
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
-                this->process_format_data_response(in_header, receiver.data_to_dump);
-            }
-        }   // if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-
-        //LOG(LOG_INFO,
-        //    "ClipboardVirtualChannel::process_client_format_data_response_pdu: "
-        //    "requestedFormatId=%u client_file_list_format_id=%u",
-        //    this->requestedFormatId, this->client_data.file_list_format_id);
-
-        if (this->client_data.file_list_format_id
-        && (this->requestedFormatId == this->client_data.file_list_format_id)) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                this->requestedFormatId = 0;
-            }
-
-            for (RDPECLIP::FileDescriptor const& fd : receiver.fds) {
-                const bool from_remote_session = false;
-                this->update_file_contents_request_inventory(fd, from_remote_session);
-            }
-        }   // if (this->client_data.file_list_format_id &&
+        this->proccess_format_data_response_pdu(
+            flags, chunk.clone(), in_header, this->client_data);
 
         return true;
     }   // process_client_format_data_response_pdu
 
 private:
-    void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd, bool from_remote_session)
-    {
-        ClipboardData& data = (from_remote_session)
-            ? this->server_data
-            : this->client_data;
-
-        file_info_inventory_type& file_info_inventory =
-            data.file_stream_data_inventory[data.clip_data_id];
-
-        file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
-    }
-
     void log_file_info(file_info_type & file_info, bool from_remote_session)
     {
         const char* type = (
@@ -784,70 +579,8 @@ public:
     {
         (void)total_length;
 
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            const auto saved_chunk_p = chunk.get_current();
-
-            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
-                std::string data_to_dump;
-                process_format_data_response_first(this->requestedFormatId, chunk, data_to_dump);
-                this->process_format_data_response(in_header, data_to_dump);
-            }
-
-            chunk.rewind(saved_chunk_p - chunk.get_data());
-        }   // if ((flags & CHANNELS::CHANNEL_FLAG_FIRST) &&
-
-        //LOG(LOG_INFO,
-        //    "ClipboardVirtualChannel::process_server_format_data_response_pdu: "
-        //    "requestedFormatId=%u server_file_list_format_id=%u",
-        //    this->requestedFormatId, this->server_data.file_list_format_id);
-
-        if (this->server_data.file_list_format_id &&
-            (this->requestedFormatId == this->server_data.file_list_format_id)) {
-            const auto saved_chunk_p = chunk.get_current();
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-//                 chunk.in_skip_bytes(6 /* msgFlags(2) + dataLen(4) */);
-
-                const uint32_t cItems = chunk.in_uint32_le();
-
-                if (!this->param_dont_log_data_into_syslog) {
-                    LOG(LOG_INFO,
-                        "Sending %sFileGroupDescriptorW(%u) clipboard data to client. "
-                            "cItems=%u",
-                        ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
-                         "" : "(chunked) "),
-                        this->server_data.file_list_format_id, cItems);
-                }
-            }
-            else if (this->file_descriptor_stream.get_offset()) {
-                const bool from_remote_session = true;
-                this->update_file_contents_request_inventory(
-                    file_descriptor_from_stream(chunk, file_descriptor_stream, verbose),
-                    from_remote_session);
-
-                this->file_descriptor_stream.rewind();
-            }
-
-            while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
-                RDPECLIP::FileDescriptor fd;
-
-                fd.receive(chunk);
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    fd.log(LOG_INFO);
-                }
-
-                const bool from_remote_session = true;
-                this->update_file_contents_request_inventory(fd, from_remote_session);
-            }
-
-            assign_remaining(chunk, this->file_descriptor_stream);
-
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                this->requestedFormatId = 0;
-            }
-
-            chunk.rewind(saved_chunk_p - chunk.get_data());
-        }
+        this->proccess_format_data_response_pdu(
+            flags, chunk.clone(), in_header, this->server_data);
 
         return true;
     }   // process_server_format_data_response_pdu
@@ -1193,76 +926,6 @@ public:
     }
 
 private:
-    void process_format_data_response(
-        const RDPECLIP::CliprdrHeader& in_header, std::string const& data_to_dump)
-    {
-        std::string format_name = this->format_name_inventory[this->requestedFormatId];
-        if (format_name.empty()) {
-            format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId);
-        }
-
-        bool const log_current_activity = (
-            (!this->param_log_only_relevant_clipboard_activities) ||
-            (0 != strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                0 != strcasecmp("FileGroupDescriptorW", format_name.c_str()))
-        );
-
-        format_name += "(";
-        format_name += std::to_string(this->requestedFormatId);
-        format_name += ")";
-
-        char const* type = (data_to_dump.empty() ?
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
-            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
-
-        auto const size_str = std::to_string(in_header.dataLen());
-
-        std::string info;
-        ::key_qvalue_pairs(
-                info,
-                {
-                    { "type", type },
-                    { "format", format_name },
-                    { "size", size_str }
-                }
-            );
-        if (!data_to_dump.empty()) {
-            ::key_qvalue_pairs(
-                    info,
-                    {
-                        { "partial_data", data_to_dump }
-                    }
-                );
-        }
-
-        if (log_current_activity) {
-            ArcsightLogInfo arc_info;
-            arc_info.name = type;
-            arc_info.ApplicationProtocol = "rdp";
-            arc_info.message = info;
-            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
-            this->report_message.log6(info, arc_info, tvtime());
-        }
-
-        if (!this->param_dont_log_data_into_syslog && log_current_activity) {
-            LOG(LOG_INFO, "%s", info);
-        }
-
-        if (!this->param_dont_log_data_into_wrm) {
-            std::string message(type);
-            message += "=";
-            message += format_name;
-            message += "\x01";
-            message += size_str;
-            if (!data_to_dump.empty()) {
-                message += "\x01";
-                message += data_to_dump;
-            }
-
-            this->front.session_update(message);
-        }
-    }
-
     void process_format_list_response_disabled(VirtualChannelDataSender* sender)
     {
         RDPECLIP::FormatListResponsePDU pdu;
@@ -1624,5 +1287,233 @@ private:
 
         (*sender)(total_length, flags, chunk_data, chunk_data_length);
 
+    }
+
+    void proccess_format_data_response_pdu(
+        uint32_t flags, InStream chunk, const RDPECLIP::CliprdrHeader & in_header,
+        ClipboardData& clipboard_data)
+    {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
+                this->process_format_data_response_first(chunk, in_header);
+            }
+        }
+
+        if (this->client_data.file_list_format_id
+         && this->requestedFormatId == this->client_data.file_list_format_id
+        ) {
+            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
+                    const uint32_t cItems = chunk.in_uint32_le();
+
+                    if (!this->param_dont_log_data_into_syslog) {
+                        LOG(LOG_INFO,
+                            "Sending %sFileGroupDescriptorW(%u) clipboard data to server. "
+                                "cItems=%u",
+                            ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
+                                "" : "(chunked) "),
+                            this->client_data.file_list_format_id, cItems);
+                    }
+                }
+            }
+            else if (this->file_descriptor_stream.get_offset()) {
+                this->update_file_contents_request_inventory(
+                    this->file_descriptor_from_stream(chunk, this->file_descriptor_stream),
+                    clipboard_data);
+
+                this->file_descriptor_stream.rewind();
+            }
+
+            while (chunk.in_remain() >= RDPECLIP::FileDescriptor::size()) {
+                RDPECLIP::FileDescriptor fd;
+                fd.receive(chunk);
+
+                if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                    fd.log(LOG_INFO);
+                }
+
+                this->update_file_contents_request_inventory(std::move(fd), clipboard_data);
+            }
+
+            if (chunk.in_remain()) {
+                this->file_descriptor_stream.rewind();
+
+                this->file_descriptor_stream.out_copy_bytes(
+                    chunk.get_current(), chunk.in_remain());
+
+                chunk.in_skip_bytes(chunk.in_remain());
+            }
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                this->requestedFormatId = 0;
+            }
+        }
+    }
+
+    RDPECLIP::FileDescriptor file_descriptor_from_stream(
+        InStream& chunk, OutStream& file_descriptor_stream)
+    {
+        const uint32_t complementary_data_length =
+            RDPECLIP::FileDescriptor::size() -
+                file_descriptor_stream.get_offset();
+
+        assert(chunk.in_remain() >= complementary_data_length);
+
+        file_descriptor_stream.out_copy_bytes(chunk.get_current(),
+            complementary_data_length);
+
+        chunk.in_skip_bytes(complementary_data_length);
+
+        RDPECLIP::FileDescriptor fd;
+
+        InStream in_stream(
+            file_descriptor_stream.get_data(),
+            file_descriptor_stream.get_offset()
+        );
+        fd.receive(in_stream);
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            fd.log(LOG_INFO);
+        }
+
+        return fd;
+    }
+
+    std::string format_data_response_receive(InStream& chunk, bool returns_string)
+    {
+        switch (this->requestedFormatId) {
+            /*
+            case RDPECLIP::CF_TEXT:
+            {
+                const size_t length_of_data_to_dump = std::min(
+                    chunk.in_remain(), max_length_of_data_to_dump);
+                const std::string data_to_dump(
+                    ::char_ptr_cast(chunk.get_current()),
+                    length_of_data_to_dump);
+                LOG(LOG_INFO, "%s", data_to_dump);
+            }
+            break;
+            */
+            case RDPECLIP::CF_UNICODETEXT: {
+                assert(!(chunk.in_remain() & 1));
+
+                constexpr size_t const max_length_of_data_to_dump = 256;
+
+                const size_t length_of_data_to_dump = std::min(
+                    chunk.in_remain(), max_length_of_data_to_dump * 2);
+
+                constexpr size_t size_of_utf8_string =
+                    max_length_of_data_to_dump *
+                        maximum_length_of_utf8_character_in_bytes;
+
+                uint8_t utf8_string[size_of_utf8_string + 1] {};
+                const size_t length_of_utf8_string = ::UTF16toUTF8(
+                    chunk.get_current(), length_of_data_to_dump / 2,
+                    utf8_string, size_of_utf8_string);
+                return returns_string
+                    ? std::string(
+                        char_ptr_cast(utf8_string),
+                        ((length_of_utf8_string && !utf8_string[length_of_utf8_string]) ?
+                        length_of_utf8_string - 1 :
+                        length_of_utf8_string))
+                    : std::string();
+            }
+
+            case RDPECLIP::CF_LOCALE: {
+                const uint32_t locale_identifier = chunk.in_uint32_le();
+                return returns_string ? std::to_string(locale_identifier) : std::string();
+            }
+        }
+
+        return std::string{};
+    }
+
+    void process_format_data_response_first(
+        InStream& chunk, const RDPECLIP::CliprdrHeader& in_header)
+    {
+        std::string const& format_name_ = this->format_name_inventory[this->requestedFormatId];
+
+        bool const log_current_activity = (
+            (!this->param_log_only_relevant_clipboard_activities) ||
+            (0 != strcasecmp("Preferred DropEffect", format_name_.c_str()) &&
+                0 != strcasecmp("FileGroupDescriptorW", format_name_.c_str()))
+        );
+
+        bool const has_log = (log_current_activity || !this->param_dont_log_data_into_wrm);
+
+        std::string const data_to_dump = this->format_data_response_receive(chunk, has_log);
+
+        if (!has_log) {
+            return ;
+        }
+
+        auto format_name = format_name_.empty()
+          ? std::string(RDPECLIP::get_FormatId_name(this->requestedFormatId))
+          : std::string(format_name_);
+        format_name += "(";
+        format_name += std::to_string(this->requestedFormatId);
+        format_name += ")";
+
+        char const* type = (data_to_dump.empty() ?
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION" :
+            "CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX");
+
+        auto const size_str = std::to_string(in_header.dataLen());
+
+
+        if (log_current_activity) {
+            std::string info;
+            ::key_qvalue_pairs(
+                    info,
+                    {
+                        { "type", type },
+                        { "format", format_name },
+                        { "size", size_str }
+                    }
+                );
+            if (!data_to_dump.empty()) {
+                ::key_qvalue_pairs(
+                        info,
+                        {
+                            { "partial_data", data_to_dump }
+                        }
+                    );
+            }
+
+            ArcsightLogInfo arc_info;
+            arc_info.name = type;
+            arc_info.ApplicationProtocol = "rdp";
+            arc_info.message = info;
+            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
+            this->report_message.log6(info, arc_info, tvtime());
+
+            if (!this->param_dont_log_data_into_syslog) {
+                LOG(LOG_INFO, "%s", info);
+            }
+        }
+
+        if (!this->param_dont_log_data_into_wrm) {
+            std::string message(type);
+            message += "=";
+            message += format_name;
+            message += "\x01";
+            message += size_str;
+            if (!data_to_dump.empty()) {
+                message += "\x01";
+                message += data_to_dump;
+            }
+
+            this->front.session_update(message);
+        }
+    }
+
+    void update_file_contents_request_inventory(
+        RDPECLIP::FileDescriptor&& fd, ClipboardData& clipboard_data)
+    {
+        file_info_inventory_type& file_info_inventory =
+            clipboard_data.file_stream_data_inventory[clipboard_data.clip_data_id];
+
+        file_info_inventory.push_back({
+            std::move(fd.file_name), fd.file_size(), 0, SslSha256()
+        });
     }
 };  // class ClipboardVirtualChannel
