@@ -34,10 +34,21 @@ using data_size_type = int_fast32_t;
 
 class BaseVirtualChannel
 {
+private:
     VirtualChannelDataSender* to_client_sender;
     VirtualChannelDataSender* to_server_sender;
 
 protected:
+    VirtualChannelDataSender* to_client_sender_ptr() const noexcept
+    {
+        return this->to_client_sender;
+    }
+
+    VirtualChannelDataSender* to_server_sender_ptr() const noexcept
+    {
+        return this->to_server_sender;
+    }
+
     ReportMessageApi & report_message;
     const RDPVerbose verbose;
 

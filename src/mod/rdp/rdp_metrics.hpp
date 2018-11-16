@@ -236,7 +236,7 @@ public:
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                    this->format_data_request_process(
+                    this->process_format_data_request(
                         chunk,
                         nb_paste_text_on_server,
                         nb_paste_image_on_server,
@@ -244,15 +244,15 @@ public:
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    this->format_data_response_process(header, total_data_paste_on_client);
+                    this->process_format_data_response(header, total_data_paste_on_client);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                    this->filecontents_request_process(chunk);
+                    this->process_filecontents_request(chunk);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                    this->filecontents_response_process(chunk, total_data_paste_on_client);
+                    this->process_filecontents_response(chunk, total_data_paste_on_client);
                     break;
             }
         }
@@ -294,7 +294,7 @@ public:
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                    this->format_data_request_process(
+                    this->process_format_data_request(
                         chunk,
                         nb_paste_text_on_client,
                         nb_paste_image_on_client,
@@ -302,15 +302,15 @@ public:
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    this->format_data_response_process(header, total_data_paste_on_server);
+                    this->process_format_data_response(header, total_data_paste_on_server);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
-                    this->filecontents_request_process(chunk);
+                    this->process_filecontents_request(chunk);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                    this->filecontents_response_process(chunk, total_data_paste_on_server);
+                    this->process_filecontents_response(chunk, total_data_paste_on_server);
                     break;
             }
         }
@@ -385,7 +385,7 @@ private:
         }
     }
 
-    void format_data_request_process(
+    void process_format_data_request(
         InStream& chunk,
         FieldIndex nb_paste_text, FieldIndex nb_paste_image, FieldIndex nb_paste_file)
     {
@@ -411,7 +411,7 @@ private:
         }
     }
 
-    void format_data_response_process(
+    void process_format_data_response(
         RDPECLIP::CliprdrHeader const& header,
         FieldIndex total_data_paste)
     {
@@ -432,13 +432,13 @@ private:
         }
     }
 
-    void filecontents_request_process(InStream& chunk)
+    void process_filecontents_request(InStream& chunk)
     {
         chunk.in_skip_bytes(8); // streamId(4 bytes) + lindex(4 bytes)
         this->flag_filecontents = chunk.in_uint32_le();
     }
 
-    void filecontents_response_process(InStream& chunk, FieldIndex total_data_paste)
+    void process_filecontents_response(InStream& chunk, FieldIndex total_data_paste)
     {
         if (this->flag_filecontents == RDPECLIP::FILECONTENTS_SIZE) {
             chunk.in_skip_bytes(4);             // streamId(4 bytes)
