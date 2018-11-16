@@ -1687,12 +1687,12 @@ public:
                             != ClipboardEncodingType::latin1
                             ? mod_vnc::ClipboardEncodingType::UTF8
                             : mod_vnc::ClipboardEncodingType::Latin1,
-							  this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
+				   	    this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                         report_message,
 						this->ini.get<cfg::mod_vnc::server_is_apple>(),
                         (this->front.client_info.remote_program ? &client_execute : nullptr),
-                        to_verbose_flags(ini.get<cfg::debug::mod_vnc>())
-//                        (enable_metrics)?protocol_metrics.get():nullptr
+                        to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
+                        (enable_metrics)?protocol_metrics.get():nullptr
                     );
 
                     new_mod->metrics     = std::move(metrics);
