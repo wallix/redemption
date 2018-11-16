@@ -1666,8 +1666,9 @@ Capture::Capture(
 
         if (capture_wrm) {
             this->gds.emplace_back(*this->wrm_capture_obj);
-            // TODO kbd_log_params.wrm_keyboard_log
-            this->kbds.emplace_back(*this->wrm_capture_obj);
+            if (kbd_log_params.wrm_keyboard_log) {
+                this->kbds.emplace_back(*this->wrm_capture_obj);
+            }
             this->caps.emplace_back(*this->wrm_capture_obj);
             this->ext_caps.emplace_back(*this->wrm_capture_obj);
             this->probes.emplace_back(*this->wrm_capture_obj);
