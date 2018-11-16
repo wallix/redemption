@@ -707,6 +707,7 @@
 "#   0: none\n"
 "#   1: disable clipboard log in syslog\n"
 "#   2: disable clipboard log in recorded sessions\n"
+"#   4: disable clipboard log in recorded meta\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#disable_clipboard_log = 1\n\n"
 
@@ -714,6 +715,7 @@
 "#   0: none\n"
 "#   1: disable (redirected) file system log in syslog\n"
 "#   2: disable (redirected) file system log in recorded sessions\n"
+"#   4: disable (redirected) file system log in recorded meta\n"
 "# (note: values can be added (everyone: 1+2+4=7, mute: 0))\n"
 "#disable_file_system_log = 1\n\n"
 

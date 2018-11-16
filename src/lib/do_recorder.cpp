@@ -1553,6 +1553,10 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
                         MetaParams const meta_params{
                             MetaParams::EnableSessionLog::No,
                             MetaParams::HideNonPrintable::No,
+
+                            MetaParams::LogClipboardActivities((ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::meta) != ClipboardLogFlags::meta),
+                            MetaParams::LogFileSystemActivities((ini.get<cfg::video::disable_file_system_log>() & FileSystemLogFlags::meta) != FileSystemLogFlags::meta),
+
                             MetaParams::LogOnlyRelevantClipboardActivities(ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>())
                         };
 

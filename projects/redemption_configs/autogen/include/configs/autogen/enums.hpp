@@ -123,11 +123,13 @@ enum class ClipboardLogFlags {
     syslog = 1,
     // clipboard log in recorded sessions
     wrm = 2,
+    // clipboard log in recorded meta
+    meta = 4,
 };
 
 inline bool is_valid_enum_value(ClipboardLogFlags e)
 {
-    return static_cast<unsigned long>(e) <= 3;
+    return static_cast<unsigned long>(e) <= 7;
 }
 
 inline ClipboardLogFlags operator | (ClipboardLogFlags x, ClipboardLogFlags y)
@@ -135,7 +137,7 @@ inline ClipboardLogFlags operator | (ClipboardLogFlags x, ClipboardLogFlags y)
 inline ClipboardLogFlags operator & (ClipboardLogFlags x, ClipboardLogFlags y)
 { return static_cast<ClipboardLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline ClipboardLogFlags operator ~ (ClipboardLogFlags x)
-{ return static_cast<ClipboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(3)); }
+{ return static_cast<ClipboardLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
 inline ClipboardLogFlags operator + (ClipboardLogFlags & x, ClipboardLogFlags y) { return x | y; }
 inline ClipboardLogFlags operator - (ClipboardLogFlags & x, ClipboardLogFlags y) { return x & ~y; }
 inline ClipboardLogFlags & operator |= (ClipboardLogFlags & x, ClipboardLogFlags y) { return x = x | y; }
@@ -155,11 +157,13 @@ enum class FileSystemLogFlags {
     syslog = 1,
     // (redirected) file system log in recorded sessions
     wrm = 2,
+    // (redirected) file system log in recorded meta
+    meta = 4,
 };
 
 inline bool is_valid_enum_value(FileSystemLogFlags e)
 {
-    return static_cast<unsigned long>(e) <= 3;
+    return static_cast<unsigned long>(e) <= 7;
 }
 
 inline FileSystemLogFlags operator | (FileSystemLogFlags x, FileSystemLogFlags y)
@@ -167,7 +171,7 @@ inline FileSystemLogFlags operator | (FileSystemLogFlags x, FileSystemLogFlags y
 inline FileSystemLogFlags operator & (FileSystemLogFlags x, FileSystemLogFlags y)
 { return static_cast<FileSystemLogFlags>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
 inline FileSystemLogFlags operator ~ (FileSystemLogFlags x)
-{ return static_cast<FileSystemLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(3)); }
+{ return static_cast<FileSystemLogFlags>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(7)); }
 inline FileSystemLogFlags operator + (FileSystemLogFlags & x, FileSystemLogFlags y) { return x | y; }
 inline FileSystemLogFlags operator - (FileSystemLogFlags & x, FileSystemLogFlags y) { return x & ~y; }
 inline FileSystemLogFlags & operator |= (FileSystemLogFlags & x, FileSystemLogFlags y) { return x = x | y; }

@@ -66,12 +66,14 @@ inline void config_type_definition(type_enumerations & e)
       .value("none")
       .value("syslog", "clipboard log in syslog")
       .value("wrm", "clipboard log in recorded sessions")
+      .value("meta", "clipboard log in recorded meta")
     ;
 
     e.enumeration_flags("FileSystemLogFlags")
       .value("none")
       .value("syslog", "(redirected) file system log in syslog")
       .value("wrm", "(redirected) file system log in recorded sessions")
+      .value("meta", "(redirected) file system log in recorded meta")
     ;
 
     e.enumeration_set("ColorDepth", "Specifies the maximum color resolution (color depth) for client session:")

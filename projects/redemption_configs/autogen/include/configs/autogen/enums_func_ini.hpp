@@ -132,7 +132,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(ClipboardLogFlags & x, spec_type<ClipboardLogFlags> /*type*/, array_view_const_char value)
 {
-    return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
 template<> struct zstr_buffer_traits<FileSystemLogFlags> : zstr_buffer_traits<unsigned long> {};
@@ -148,7 +148,7 @@ inline array_view_const_char assign_zbuf_from_cfg(
 
 inline parse_error parse(FileSystemLogFlags & x, spec_type<FileSystemLogFlags> /*type*/, array_view_const_char value)
 {
-    return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
 template<> struct zstr_buffer_traits<ServerNotification> : zstr_buffer_traits<unsigned long> {};

@@ -148,6 +148,8 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
             MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
@@ -352,6 +354,8 @@ RED_AUTO_TEST_CASE(TestBppToOtherBppCapture)
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No,
+        MetaParams::LogClipboardActivities::Yes,
+        MetaParams::LogFileSystemActivities::Yes,
         MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
@@ -453,10 +457,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -505,10 +517,18 @@ RED_AUTO_TEST_CASE(TestSessionMetaQuoted)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -544,10 +564,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta2)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -583,10 +611,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta3)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -628,10 +664,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta4)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         auto send_kbd = [&]{
             meta.kbd_input(now, 'A');
@@ -677,10 +721,18 @@ RED_AUTO_TEST_CASE(TestSessionMeta5)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
+        SessionMeta meta(now, trans, false, meta_params);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -774,11 +826,19 @@ RED_AUTO_TEST_CASE(TestSessionSessionLog)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, false, true);
-        SessionLogAgent log_agent(meta, true);
+        SessionMeta meta(now, trans, false, meta_params);
+        SessionLogAgent log_agent(meta, meta_params);
 
         log_agent.session_update(now, cstr_array_view("NEW_PROCESS=abc")); now.tv_sec += 1;
         log_agent.session_update(now, cstr_array_view("BUTTON_CLICKED=de\01fg")); now.tv_sec += 1;
@@ -797,10 +857,18 @@ RED_AUTO_TEST_CASE(TestSessionMetaHiddenKey)
     BufTransport trans;
 
     {
+        MetaParams meta_params{
+            MetaParams::EnableSessionLog::No,
+            MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
+            MetaParams::LogOnlyRelevantClipboardActivities::Yes
+        };
+
         timeval now;
         now.tv_sec  = 1000;
         now.tv_usec = 0;
-        SessionMeta meta(now, trans, true, true);
+        SessionMeta meta(now, trans, true, meta_params);
 
         meta.kbd_input(now, 'A'); now.tv_sec += 1;
 
@@ -2666,6 +2734,8 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
     MetaParams meta_params{
         MetaParams::EnableSessionLog::No,
         MetaParams::HideNonPrintable::No,
+        MetaParams::LogClipboardActivities::Yes,
+        MetaParams::LogFileSystemActivities::Yes,
         MetaParams::LogOnlyRelevantClipboardActivities::Yes
     };
 
@@ -2931,6 +3001,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
             MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
@@ -3179,6 +3251,8 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         MetaParams meta_params{
             MetaParams::EnableSessionLog::No,
             MetaParams::HideNonPrintable::No,
+            MetaParams::LogClipboardActivities::Yes,
+            MetaParams::LogFileSystemActivities::Yes,
             MetaParams::LogOnlyRelevantClipboardActivities::Yes
         };
 
