@@ -139,3 +139,76 @@ append_escaped_delimiters(char * escaped_subject, std::size_t size_max, char con
         algostring::is_ascii_double_quote_escapable_fn{}, '\\'
     );
 }
+
+namespace detail
+{
+    template<class String>
+    array_view_const_char to_string_view_or_char(String const& s)
+    {
+        return {s};
+    }
+
+    inline array_view_const_char to_string_view_or_char(char const* s) noexcept
+    {
+        return {s, ::strlen(s)};
+    }
+
+    inline char to_string_view_or_char(char c) noexcept
+    {
+        return c;
+    }
+
+
+    inline std::size_t len_from_av_or_char(array_view_const_char av) noexcept
+    {
+        return av.size();
+    }
+
+    inline std::size_t len_from_av_or_char(char) noexcept
+    {
+        return 1;
+    }
+
+
+    inline void append_from_av_or_char(std::string& s, array_view_const_char av)
+    {
+        s.append(av.data(), av.size());
+    }
+
+    inline void append_from_av_or_char(std::string& s, char c)
+    {
+        s += c;
+    }
+
+
+    template<class... StringsOrChars>
+    void str_concat_view(std::string& str, StringsOrChars&&... strs)
+    {
+        str.reserve(str.size() + (len_from_av_or_char(strs) + ...));
+        (append_from_av_or_char(str, strs), ...);
+    }
+}
+
+
+template<class String, class... Strings>
+std::string str_concat(String&& str, Strings const&... strs)
+{
+    std::string s;
+    detail::str_concat_view(s, detail::to_string_view_or_char(str),
+                               detail::to_string_view_or_char(strs)...);
+    return s;
+}
+
+template<class... Strings>
+std::string str_concat(std::string&& str, Strings const&... strs)
+{
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+    return std::move(str);
+}
+
+
+template<class... Strings>
+void str_append(std::string& str, Strings const&... strs)
+{
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+}

@@ -93,3 +93,27 @@ RED_AUTO_TEST_CASE(Test_escape_delimiters)
     RED_CHECK_EQUAL(2, p.second - long_astr2);
     RED_CHECK_EQUAL("\\\\0", as);
 }
+
+RED_AUTO_TEST_CASE(Test_str_concat)
+{
+    char const* cstr = "abc";
+    std::string s = "a";
+    RED_CHECK_EQ(str_concat("a", "b", "c", "d"), "abcd");
+    RED_CHECK_EQ(str_concat("a", "b", "c\0xxx", "d"), "abcd");
+    RED_CHECK_EQ(str_concat('a', "b", 'c', "d"), "abcd");
+    RED_CHECK_EQ(str_concat("abc", "d"), "abcd");
+    RED_CHECK_EQ(str_concat('a', "bc", "d"), "abcd");
+    RED_CHECK_EQ(str_concat('a', "bc"_av, std::string("d")), "abcd");
+    RED_CHECK_EQ(str_concat(s, "bc"_av, std::string("d")), "abcd");
+    RED_CHECK_EQ(str_concat(std::as_const(s), "bc"_av, std::string("d")), "abcd");
+    RED_CHECK_EQ(str_concat(std::move(s), "bc"_av, std::string("d")), "abcd");
+    RED_CHECK_EQ(str_concat(cstr, "d"), "abcd");
+}
+
+RED_AUTO_TEST_CASE(Test_str_append)
+{
+    char const* cstr = "fg";
+    std::string s = "a";
+    str_append(s, "b\0xxx", "cd"_av, "e", cstr, std::string("h"), 'i');
+    RED_CHECK_EQ(s, "abcdefghi");
+}
