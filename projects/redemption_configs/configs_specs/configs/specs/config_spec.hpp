@@ -569,7 +569,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "widget");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "input");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "password");
+        W.member(hidden_in_gui, no_sesman, type_<types::u32>(), "password");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "compression");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "cache");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "performance");
