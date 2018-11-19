@@ -975,7 +975,7 @@ private:
             const size_t length_of_utf8_string = ::UTF16toUTF8(
                 chunk.get_current(), format_name_length, utf8_string,
                 size_of_utf8_string);
-            //utf8_string[length_of_utf8_string] = '\0';
+            utf8_string[length_of_utf8_string] = '\0';
 
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 LOG(LOG_INFO,
@@ -1409,6 +1409,8 @@ private:
                 const size_t length_of_utf8_string = ::UTF16toUTF8(
                     chunk.get_current(), length_of_data_to_dump / 2,
                     utf8_string, size_of_utf8_string);
+                utf8_string[length_of_utf8_string] = '\0';
+
                 return returns_string
                     ? std::string(
                         char_ptr_cast(utf8_string),
