@@ -272,7 +272,7 @@ private:
             return false;
         }
 
-        FieldReferenceBase(FieldReferenceBase &&) = default;
+        FieldReferenceBase(FieldReferenceBase &&) noexcept = default;
 
         FieldReferenceBase() = default;
 

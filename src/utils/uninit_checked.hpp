@@ -28,8 +28,8 @@ struct uninit_checked
     T value;
 
     uninit_checked() = default;
-    uninit_checked(uninit_checked &&) = default;
-    uninit_checked(uninit_checked const&) = default;
+    uninit_checked(uninit_checked &&) = default; /*NOLINT*/
+    uninit_checked(uninit_checked const&) = default; /*NOLINT*/
 
     uninit_checked& operator=(uninit_checked &&) = default;
     uninit_checked& operator=(uninit_checked const&) = default;
@@ -59,7 +59,7 @@ struct uninit_checked
 
 #ifndef NDEBUG
     template<class U>
-    uninit_checked(U&& x) noexcept(noexcept(T(static_cast<U&&>(x))))
+    uninit_checked(U&& x) noexcept(noexcept(T(static_cast<U&&>(x)))) /*NOLINT*/
     : value(static_cast<U&&>(x))
     {}
 private:

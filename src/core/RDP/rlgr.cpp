@@ -439,8 +439,8 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
     offset = static_cast<int>(pOutput - pDstData);
 
     if (offset != dstSize) {
-        return -1;
+        return false;
     }
 
-    return 1;
+    return true;
 }

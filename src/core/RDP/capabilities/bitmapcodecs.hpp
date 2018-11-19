@@ -341,7 +341,7 @@ struct RFXSrvrCaps : public CodecGenCaps {
         memset(this->reserved.get(), 0xff, len);
     }
 
-    void emit(OutStream & ) const override {
+    void emit(OutStream & /*out_stream*/) const override {
     }
 
     void recv(InStream & stream, uint16_t len) override {
