@@ -24,6 +24,8 @@
 #include <algorithm>
 #include <string>
 
+#include <cstring>
+
 #include "utils/sugar/range.hpp"
 #include "utils/sugar/array_view.hpp"
 
