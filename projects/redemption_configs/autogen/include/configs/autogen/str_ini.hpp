@@ -885,8 +885,7 @@
 "#_hex\n"
 "#input = 0\n\n"
 
-"#_advanced\n"
-"#_hex\n"
+"#_hidden\n"
 "#password = 0\n\n"
 
 "#_advanced\n"
