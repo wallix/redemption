@@ -837,8 +837,7 @@
 "#_hex\n"
 "#capture = 0\n\n"
 
-"#_advanced\n"
-"#_hex\n"
+"#_hidden\n"
 "#auth = 0\n\n"
 
 "#_advanced\n"

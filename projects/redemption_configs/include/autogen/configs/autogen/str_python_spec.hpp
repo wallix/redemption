@@ -837,8 +837,7 @@
 "#_hex\n"
 "capture = integer(min=0, default=0)\n\n"
 
-"#_advanced\n"
-"#_hex\n"
+"#_hidden\n"
 "auth = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"

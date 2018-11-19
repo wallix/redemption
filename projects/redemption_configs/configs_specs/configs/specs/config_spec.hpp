@@ -575,7 +575,7 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "bitmap");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "capture");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "auth");
+        W.member(hidden_in_gui, no_sesman, type_<types::u32>(), "auth");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "session");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, type_<types::u32>(), "front");
 
