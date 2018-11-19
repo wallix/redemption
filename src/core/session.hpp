@@ -158,6 +158,18 @@ public:
 
                 io_fd_zero(rfds);
                 timeval timeout = time_mark;
+                timeval metrics_now = tvtime();
+                if ((mm.mod->get_metrics() != nullptr) and (metrics_now + ini.get<cfg::metrics::log_interval>() >= next_metrics_time)){
+                    timeval next_timeout = (metrics_now.tv_usec >= next_metrics_time.tv_usec)
+                        ?timeval{metrics_now.tv_sec + ini.get<cfg::metrics::log_interval>().count() - next_metrics_time.tv_sec
+                            , metrics_now.tv_usec - next_metrics_time.tv_usec}
+                        :timeval{metrics_now.tv_sec + ini.get<cfg::metrics::log_interval>().count() - next_metrics_time.tv_sec - 1
+                            , 1000000 + metrics_now.tv_usec - next_metrics_time.tv_usec};
+                    if ((next_timeout.tv_sec < timeout.tv_sec)
+                    || ((next_timeout.tv_sec == timeout.tv_sec) && (next_timeout.tv_usec < timeout.tv_usec))){
+                        timeout = next_timeout;
+                    }
+                }
 
                 if (mm.mod->is_up_and_running() || !front.up_and_running) {
                     front.get_event().wait_on_fd(front_trans.sck, rfds, max, timeout);
@@ -179,14 +191,14 @@ public:
                     event_handler.get_event().wait_on_fd(fd, rfds, max, timeout);
                 }
 
-                timeval metrics_now = tvtime();
                 if (front_trans.has_pending_data()
                  || mm.has_pending_data()
-                 || ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time + ini.get<cfg::metrics::log_interval>()))
+                 || ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time))
                  || (acl && acl->auth_trans.has_pending_data())) {
                     timeout = {0, 0};
                 }
 
+                
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
                 if ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time + ini.get<cfg::metrics::log_interval>())){
