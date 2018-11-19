@@ -136,12 +136,12 @@ public:
 
                 timeval default_timeout = session_reactor.get_current_time();
                 default_timeout.tv_sec += this->select_timeout_tv_sec;
-            
+
                 struct Select {
                     unsigned max;
                     fd_set rfds;
                     timeval timeout;
-                                        
+
                     Select(timeval timeout)
                      : max(0)
                      , timeout{timeout}
@@ -159,7 +159,7 @@ public:
                         }
                         return ::select(this->max + 1, &this->rfds, nullptr/*&wfds*/, nullptr, &timeoutastv);
                     }
-                    
+
                     void set_timeout(timeval next_timeout){
                         this->timeout = next_timeout;
                     }
@@ -175,7 +175,7 @@ public:
                         }
                         return 0ms;
                     }
-                    
+
                     void set_read_sck(int sck) {
                         this->max = prepare_rfds(sck, this->max, this->rfds);
                     }
@@ -183,7 +183,7 @@ public:
                         this->timeout = now;
                     }
                 } ioswitch(default_timeout);
-                
+
 
                 if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
                     ioswitch.set_read_sck(front_trans.sck);
@@ -221,7 +221,7 @@ public:
 //                                      - session_reactor.get_current_time());
                 // LOG(LOG_DEBUG, "tv_now: %ld %ld", tv_now.tv_sec, tv_now.tv_usec);
                 // session_reactor.timer_events_.info(tv_now);
-                
+
                 int num = ioswitch.select(session_reactor.get_current_time());
 
                 // for (unsigned i = 0; i <= max; ++i) {
@@ -366,7 +366,23 @@ public:
                     if (front.up_and_running) {
                         // new value incoming from authentifier
                         if (this->ini.check_from_acl()) {
-                            front.update_config(ini.get<cfg::video::rt_display>());
+                            auto const rt_status
+                              = front.set_rt_display(ini.get<cfg::video::rt_display>());
+
+                            if (this->ini.get<cfg::client::enable_osd_4_eyes>()) {
+                                Translator tr(language(this->ini));
+                                switch (rt_status) {
+                                    case Capture::RTDisplayResult::Enabled:
+                                        mm.osd_message(tr(trkeys::enable_rt_display), true);
+                                        break;
+                                    case Capture::RTDisplayResult::Disabled:
+                                        mm.osd_message(tr(trkeys::disable_rt_display), true);
+                                        break;
+                                    case Capture::RTDisplayResult::Unchanged:
+                                        break;
+                                }
+                            }
+
                             mm.check_module();
                         }
 

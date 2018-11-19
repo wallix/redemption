@@ -763,18 +763,22 @@ public:
         this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
     }
 
-    void update_config(bool enable_rt_display) {
+    Capture::RTDisplayResult set_rt_display(bool enable_rt_display) {
         if (enable_rt_display != this->enable_rt_display){
             LOG(LOG_INFO, "PngCaptureRT::enable_rt_display=%d", enable_rt_display);
             this->enable_rt_display = enable_rt_display;
             // clear files if we go from RT to non-RT
             if (!this->enable_rt_display) {
                 this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
+                return Capture::RTDisplayResult::Disabled;
             }
+            return Capture::RTDisplayResult::Enabled;
         }
+
+        return Capture::RTDisplayResult::Unchanged;
     }
 
-     void clear_old() override {
+    void clear_old() override {
         if (this->trans.get_seqno() < this->png_limit) {
             return;
         }
@@ -1827,11 +1831,11 @@ void Capture::resize(uint16_t width, uint16_t height) {
 }
 
 // TODO: this could be done directly in external png_capture_real_time_obj object
-void Capture::update_config(bool enable_rt_display)
+Capture::RTDisplayResult Capture::set_rt_display(bool enable_rt_display)
 {
-    if (this->png_capture_real_time_obj) {
-        this->png_capture_real_time_obj->update_config(enable_rt_display);
-    }
+    return this->png_capture_real_time_obj
+        ? this->png_capture_real_time_obj->set_rt_display(enable_rt_display)
+        : Capture::RTDisplayResult::Unchanged;
 }
 
 void Capture::set_row(size_t rownum, const uint8_t * data, size_t data_length)

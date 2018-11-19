@@ -260,6 +260,8 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, L, type_<types::range<std::chrono::milliseconds, 100, 10000>>{}, "recv_timeout", set(1000));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>{}, "enable_osd_4_eyes", set(false));
     });
 
     W.section(W.names("mod_rdp", connpolicy::name{"rdp"}), [&]

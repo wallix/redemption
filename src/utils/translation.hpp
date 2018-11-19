@@ -63,6 +63,10 @@ namespace trkeys
     TR_KV(minute, "minute", "minute");
     TR_KV(hour, "hour", "heure");
     TR_KV(before_closing, "before closing", "avant fermeture");
+
+    TR_KV(enable_rt_display, "Your session is observed by an administrator", "Votre session est observée par un administrateur.");
+    TR_KV(disable_rt_display, "Your session is no longer observed by an administrator.", "Votre session n'est plus observée par un administrateur.");
+
     TR_KV(manager_close_cnx,
         "Connection closed by manager.",
         "Le gestionnaire de session a coupé la connexion.");

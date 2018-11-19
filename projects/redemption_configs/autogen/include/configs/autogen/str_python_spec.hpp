@@ -256,6 +256,9 @@
 "#_advanced\n"
 "recv_timeout = integer(min=100, max=10000, default=1000)\n\n"
 
+"#_advanced\n"
+"enable_osd_4_eyes = boolean(default=False)\n\n"
+
 "[mod_rdp]\n\n"
 
 "# Specifies the highest compression package support available on the front side\n"

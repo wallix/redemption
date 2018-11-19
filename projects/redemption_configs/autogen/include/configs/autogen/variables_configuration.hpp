@@ -1067,6 +1067,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1000};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct client::enable_osd_4_eyes {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "enable_osd_4_eyes";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: RdpCompression <br/>
     /// value = static_cast<type>(4) <br/>
@@ -4547,6 +4559,7 @@ struct client
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
 , cfg::client::recv_timeout
+, cfg::client::enable_osd_4_eyes
 { static constexpr bool is_section = true; };
 
 struct mod_rdp

@@ -1076,10 +1076,11 @@ public:
         return false;
     }
 
-    void update_config(bool enable_rt_display) {
-        if (this->capture) {
-            this->capture->update_config(enable_rt_display);
-        }
+    Capture::RTDisplayResult set_rt_display(bool enable_rt_display)
+    {
+        return this->capture
+            ? this->capture->set_rt_display(enable_rt_display)
+            : Capture::RTDisplayResult::Unchanged;
     }
 
     static int get_appropriate_compression_type(int client_supported_type, int front_supported_type)

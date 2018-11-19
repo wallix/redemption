@@ -93,6 +93,7 @@ namespace cfg {
         struct transform_glyph_to_bitmap;
         struct bogus_number_of_fastpath_input_event;
         struct recv_timeout;
+        struct enable_osd_4_eyes;
     };
 
     struct mod_rdp {
