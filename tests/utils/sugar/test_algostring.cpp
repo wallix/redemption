@@ -96,7 +96,7 @@ RED_AUTO_TEST_CASE(Test_escape_delimiters)
 
 RED_AUTO_TEST_CASE(Test_str_concat)
 {
-    char const* cstr = "abc";
+    char const* cstr = "abc\0yyy";
     std::string s = "a";
     RED_CHECK_EQ(str_concat("a", "b", "c", "d"), "abcd");
     RED_CHECK_EQ(str_concat("a", "b", "c\0xxx", "d"), "abcd");

@@ -144,10 +144,9 @@ append_escaped_delimiters(char * escaped_subject, std::size_t size_max, char con
 
 namespace detail
 {
-    template<class String>
-    array_view_const_char to_string_view_or_char(String const& s)
+    inline array_view_const_char to_string_view_or_char(array_view_const_char av) noexcept
     {
-        return {s};
+        return av;
     }
 
     inline array_view_const_char to_string_view_or_char(char const* s) noexcept
