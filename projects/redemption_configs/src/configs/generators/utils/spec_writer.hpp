@@ -375,13 +375,12 @@ public:
 
         std::string const& varname = get_elem<cfg_attributes::name_>(u->infos).name;
         auto it = this->section_->members.find(varname);
-        if (it == this->section_->members.end()) {
-            this->section_->members_ordered.push_back(varname);
-            this->section_->members.emplace(varname, std::move(u));
+        if (it != this->section_->members.end()) {
+            throw std::runtime_error("duplicates member '" + varname +
+                "' in section '" + this->section_->names.names[0] + "'");
         }
-        else {
-            it->second = std::move(u);
-        }
+        this->section_->members_ordered.push_back(varname);
+        this->section_->members.emplace(varname, std::move(u));
     }
 
     void evaluate()
