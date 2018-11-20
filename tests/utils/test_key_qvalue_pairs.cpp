@@ -64,8 +64,8 @@ RED_AUTO_TEST_CASE(Test_KVPairs3)
 
 RED_AUTO_TEST_CASE(Test_KVPairs4)
 {
-    kv_pair pairs[] = {{"type", "a\\b\"c \n"}};
-    RED_CHECK_EQUAL("type=\"a\\\\b\\\"c \\n\"", key_qvalue_pairs(pairs));
+    kv_pair pairs[] = {{"type", "a\\b\"c \r\n"}};
+    RED_CHECK_EQUAL("type=\"a\\\\b\\\"c \\r\\n\"", key_qvalue_pairs(pairs));
 }
 
 RED_AUTO_TEST_CASE(Test_KVPairs5)
