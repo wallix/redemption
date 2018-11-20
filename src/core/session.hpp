@@ -201,7 +201,7 @@ public:
                 
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
-                if ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time + ini.get<cfg::metrics::log_interval>())){
+                if ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time)){
                     next_metrics_time = metrics_now + ini.get<cfg::metrics::log_interval>();
                     mm.mod->get_metrics()->log(metrics_now);
                 }
