@@ -21,13 +21,12 @@
 #pragma once
 
 #include "utils/sugar/array_view.hpp"
-#include "utils/sugar/algostring.hpp"
+
+#include <string>
 
 #include <cstring>
-#include <numeric>
-#include <utility>
 
-//typedef std::tuple<const char * const, const char * const> const kv_pair;
+
 struct charp_or_string
 {
     const array_view_const_char data;
@@ -40,19 +39,50 @@ struct charp_or_string
         : data(data) {}
 };
 
-class kv_pair_ {
-public:
+struct kv_pair_
+{
     array_view_const_char key;
     array_view_const_char value;
+
     template<class T, class U> kv_pair_(T const & key, U const & value)
         : key{charp_or_string(key).data}
         , value{charp_or_string(value).data}
-    {
-    }
+    {}
 };
 
-typedef const kv_pair_ kv_pair;
-//using kv_pair = const kv_pair_;
+using kv_pair = const kv_pair_;
+
+
+inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_char subject)
+{
+    constexpr auto escaped_table = [] {
+        std::array<char, 256> t{};
+        t[int('\\')] = '\\';
+        t[int('"')] = '"';
+        t[int('\n')] = 'n';
+        return t;
+    }();
+
+    // char -> uchar because char(128) must be negative
+    using uchar = unsigned char;
+
+    auto pred = [&](uchar c){
+        return bool(escaped_table[unsigned(c)]);
+    };
+
+    auto first = subject.begin();
+    auto last = subject.end();
+
+    auto p = first;
+    while ((p = std::find_if(first, last, pred)) != last) {
+        escaped_subject.append(first, p);
+        escaped_subject += '\\';
+        escaped_subject += escaped_table[unsigned(uchar(*p))];
+        first = p + 1;
+    }
+
+    escaped_subject.append(first, last);
+}
 
 // Precondition: input array view should never be empty
 // internal pointers should never be nullptr
@@ -61,7 +91,7 @@ inline std::string key_qvalue_pairs(std::string & buffer, array_view<kv_pair> pa
     for (auto p: pairs){
         buffer.append(p.key.data(), p.key.size());
         buffer += "=\"";
-        append_escaped_delimiters(buffer, p.value);
+        escaped_key_qvalue(buffer, p.value);
         buffer += "\" ";
     }
     buffer.pop_back();
@@ -77,8 +107,10 @@ inline std::string key_qvalue_pairs(array_view<kv_pair> pairs)
 {
     std::string buffer;
     // Ensure string is large enough for our use, to avoid useless internal resize
-    size_t maj = std::accumulate(pairs.begin(), pairs.end(), size_t{0},
-        [](size_t acc, kv_pair p){return acc + p.key.size()+p.value.size()+8;});
+    size_t maj = 0;
+    for (auto const& p : pairs) {
+        maj += p.key.size() + p.value.size() + 8;
+    }
     // reserve some space for 8 quoted chars inside value
     // if there is more string is on it's own and will spend slightly more time
     buffer.reserve(maj+8);
@@ -102,7 +134,7 @@ struct KeyQvalueFormatter
             this->buf += ' ';
             this->buf.append(kv.key.data(), kv.key.size());
             this->buf += "=\"";
-            append_escaped_delimiters(this->buf, kv.value);
+            escaped_key_qvalue(this->buf, kv.value);
             this->buf += '"';
         }
         return this->av();
