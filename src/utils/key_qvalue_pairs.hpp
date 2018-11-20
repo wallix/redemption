@@ -63,6 +63,7 @@ inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_c
             t[int('\\')] = '\\';
             t[int('"')] = '"';
             t[int('\n')] = 'n';
+            t[int('\r')] = 'r';
             return t;
         }
     };
