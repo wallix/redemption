@@ -963,6 +963,9 @@ class FormatListPDUEx {
     std::vector<FormatName> format_names;
 
 public:
+    auto begin() const { return this->format_names.begin(); }
+    auto end() const { return this->format_names.end(); }
+
     void emit(OutStream & stream, bool use_long_format_names) const {
         if (use_long_format_names) {
             for (auto & format_name : this->format_names) {
@@ -1069,6 +1072,8 @@ public:
                 if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
                     LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
+                } else {
+                    format_name.resize(size_of_formatName_UTF8_data-1);
                 }
 
                 this->format_names.emplace_back(
@@ -1111,6 +1116,10 @@ public:
                     if (not (size_of_formatName_UTF8_data + 1 < formatName_UTF8_data_size)){
                         LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
+                    }
+
+                    if (size_of_formatName_UTF8_data) {
+                        format_name.resize(size_of_formatName_UTF8_data-1);
                     }
 
                     this->format_names.emplace_back(
@@ -1595,16 +1604,16 @@ public:
     // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
     // field contains a byte-stream of data extracted from the file.
 
-struct FileContentsResponseToFileContentsSize
+struct FileContentsResponseSize
 {
    uint32_t streamID{0};
    uint64_t _size{0};
 
 
-   FileContentsResponseToFileContentsSize() = default;
+   FileContentsResponseSize() = default;
 
    // SIZE (16 bytes)
-   explicit FileContentsResponseToFileContentsSize(const uint32_t streamID, const uint64_t size)
+   explicit FileContentsResponseSize(const uint32_t streamID, const uint64_t size)
    : streamID(streamID)
    , _size(size)
    {}
@@ -1630,14 +1639,14 @@ struct FileContentsResponseToFileContentsSize
 };
 
 
-struct FileContentsResponseToFileContentsRange
+struct FileContentsResponseRange
 {
    uint32_t streamID{0};
 
-   FileContentsResponseToFileContentsRange() = default;
+   FileContentsResponseRange() = default;
 
    // RANGE (4 + Data_Len Bytes)
-   explicit FileContentsResponseToFileContentsRange(const uint32_t streamID)
+   explicit FileContentsResponseRange(const uint32_t streamID)
        : streamID(streamID)
    {}
 
@@ -2597,7 +2606,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_SIZE:
                     {
-                        FileContentsResponseToFileContentsSize pdu;
+                        FileContentsResponseSize pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }
@@ -2605,7 +2614,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_RANGE:
                     {
-                        FileContentsResponseToFileContentsRange pdu;
+                        FileContentsResponseRange pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }

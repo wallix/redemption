@@ -1036,6 +1036,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -1066,6 +1067,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -1096,6 +1098,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -1128,6 +1131,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
@@ -1158,9 +1162,11 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
+  <library>src/utils/netutils.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>tests/includes/test_only/working_directory.o
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl

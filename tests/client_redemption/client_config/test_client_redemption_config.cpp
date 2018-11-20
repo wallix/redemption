@@ -29,6 +29,13 @@
 
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 
+#include "utils/fileutils.hpp"
+#include "test_only/get_file_contents.hpp"
+#include "test_only/working_directory.hpp"
+
+#include <sys/ioctl.h>
+#include <sys/statvfs.h>
+#include <linux/hdreg.h>
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 {
@@ -203,13 +210,12 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
                            "--enable-cursor-shadow",
                            "--enable-cursorsettings",
                            "--enable-font-smoothing",
-                           "--enable-desktop-composition"
-//                            "--vnc",
-//                            "--remote-app",
-//                            "--remote-exe", "cmd to launch"
+                           "--enable-desktop-composition",
+                           "--width", "1600",
+                           "--height", "900"
     };
 
-    int argc = 35;
+    int argc = 39;
 
     ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
 
@@ -222,8 +228,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.keep_alive_freq, 100);
     RED_CHECK_EQUAL(config.is_recording, false);
     RED_CHECK_EQUAL(config.is_spanning, false);
-    RED_CHECK_EQUAL(config.rdp_width, 800);
-    RED_CHECK_EQUAL(config.rdp_height, 600);
+    RED_CHECK_EQUAL(config.rdp_width, 1600);
+    RED_CHECK_EQUAL(config.rdp_height, 900);
     RED_CHECK_EQUAL(config.is_full_capturing, false);
     RED_CHECK_EQUAL(config.is_full_replaying, false);
     RED_CHECK_EQUAL(config.full_capture_file_name, "");
@@ -429,19 +435,563 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     }
 }
 
-
-RED_AUTO_TEST_CASE(TestClientRedemptionConfigRead)
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 {
+    WorkingDirectory wd("TestClientRedemptionConfigCreateDir");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
 
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigCreateDir");
 
+    struct stat buff_dir;
+    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/config", &buff_dir)), true);
+    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/clipboard_temp", &buff_dir)), true);
+    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/replay", &buff_dir)), true);
+    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/sound_temp", &buff_dir)), true);
 
-
+    RED_CHECK_WORKSPACE(wd);
 }
 
-RED_AUTO_TEST_CASE(TestClientRedemptionConfigWrite)
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
+
+    WorkingDirectory wd("TestClientRedemptionConfigReadLine");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    wd.add_file("test_file.txt");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadLine");
+
+    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadLine/test_file.txt", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    std::string text("hello\nworld");
+    ::write(fd.fd(), text.c_str(), text.length());
+    fd.close();
+
+    unique_fd fd_read = unique_fd("/tmp/TestClientRedemptionConfigReadLine/test_file.txt", O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    std::string line1;
+    bool res1 = config.read_line(fd_read.fd(), line1);
+    std::string line2;
+    bool res2 = config.read_line(fd_read.fd(), line2);
+
+    fd_read.close();
+
+    RED_CHECK_EQUAL(line1, "hello");
+    RED_CHECK_EQUAL(res1, true);
+    RED_CHECK_EQUAL(line2, "world");
+    RED_CHECK_EQUAL(res2, false);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 {
+    WorkingDirectory wd("TestClientRedemptionConfigReadClientInfo");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
 
+    wd.add_file("DATA/config/userConfig.config");
 
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
 
+    mkdir("/tmp/TestClientRedemptionConfigReadClientInfo/DATA", 0775);
+    mkdir("/tmp/TestClientRedemptionConfigReadClientInfo/DATA/config", 0775);
 
+    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadClientInfo/DATA/config/userConfig.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    const char * toReadData =
+                        "current_user_profil_id 1"
+                        "\n"
+                        "\nid 1"
+                        "\nname Custom"
+                        "\nkeylayout 1037"
+                        "\nbrush_cache_code 2"
+                        "\nbpp 16"
+                        "\nwidth 1600"
+                        "\nheight 900"
+                        "\nrdp5_performanceflags 4"
+                        "\nmonitorCount 1"
+                        "\nspan 1"
+                        "\nrecord 1"
+                        "\ntls 0"
+                        "\nnla 0"
+                        "\nsound 0"
+                        "\nconsole_mode 1"
+                        "\nenable_shared_clipboard 0"
+                        "\nenable_shared_virtual_disk 0"
+                        "\nenable_shared_remoteapp 1"
+                        "\nshare-dir /home/test"
+                        "\nremote-exe C:\\Windows\\system32\\eclipse.exe -h"
+                        "\nremote-dir C:\\Users\\user2"
+                        "\nvnc-applekeyboard 1"
+                        "\nmod 2"
+                        "\n"
+                        "\nid 0"
+                        "\nname Default"
+                        "\nkeylayout 1036"
+                        "\nbrush_cache_code 0"
+                        "\nbpp 24"
+                        "\nwidth 800"
+                        "\nheight 600"
+                        "\nrdp5_performanceflags 1"
+                        "\nmonitorCount 1"
+                        "\nspan 0"
+                        "\nrecord 0"
+                        "\ntls 1"
+                        "\nnla 1"
+                        "\nsound 0"
+                        "\nconsole_mode 0"
+                        "\nenable_shared_clipboard 1"
+                        "\nenable_shared_virtual_disk 1"
+                        "\nenable_shared_remoteapp 0"
+                        "\nshare-dir /home"
+                        "\nremote-exe C:\\Windows\\system32\\eclipse.exe -h"
+                        "\nremote-dir C:\\Users\\user1"
+                        "\nvnc-applekeyboard 0"
+                        "\nmod 2"
+                        "\n";
+
+    std::string string_to_read(toReadData);
+    ::write(fd.fd(), toReadData, string_to_read.length());
+    fd.close();
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadClientInfo");
+
+    RED_CHECK_EQUAL(config.rdp_width, 1600);
+    RED_CHECK_EQUAL(config.rdp_height, 900);
+    RED_CHECK_EQUAL(config.info.keylayout, 0x040D);
+    RED_CHECK_EQUAL(config.info.console_session, true);
+    RED_CHECK_EQUAL(config.info.brush_cache_code , 2);
+    RED_CHECK_EQUAL(config.info.screen_info.bpp, BitsPerPixel{16});
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_ExeOrFile, "C:\\Windows\\system32\\eclipse.exe");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_WorkingDir, "C:\\Users\\user2");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.source_of_Arguments, "-h");
+    RED_CHECK_EQUAL(config.rDPRemoteAppConfig.full_cmd_line, "C:\\Windows\\system32\\eclipse.exe -h");
+    RED_CHECK_EQUAL(config.is_recording, true);
+    RED_CHECK_EQUAL(config.is_spanning, true);
+    RED_CHECK_EQUAL(config.enable_shared_clipboard, false);
+    RED_CHECK_EQUAL(config.modRDPParamsData.enable_tls, false);
+    RED_CHECK_EQUAL(config.modRDPParamsData.enable_nla, false);
+    RED_CHECK_EQUAL(config.modRDPParamsData.enable_sound, false);
+    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_virtual_disk, false);
+    RED_CHECK_EQUAL(config.modRDPParamsData.enable_shared_remoteapp, true);
+    RED_CHECK_EQUAL(config.info.rdp5_performanceflags, 4);
+    RED_CHECK_EQUAL(config.SHARE_DIR, "/home/test");
+    RED_CHECK_EQUAL(config.mod_state, 2);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigReadMovieData");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    wd.add_file("DATA/replay/movie1.mwrm");
+    wd.add_file("DATA/replay/movie2.mwrm");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    mkdir("/tmp/TestClientRedemptionConfigReadMovieData/DATA", 0775);
+    mkdir("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay", 0775);
+
+    unique_fd fd_1 = unique_fd("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    const char * toReadData1 = "v2\n"
+                               "1600 900\n"
+                               "nochecksum\n"
+                               "\n"
+                               "\n"
+                               "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.wrm 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190439 1511190456\n";
+    std::string string_to_read1(toReadData1);
+    ::write(fd_1.fd(), toReadData1, string_to_read1.length());
+    fd_1.close();
+
+    unique_fd fd_2 = unique_fd("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    const char * toReadData2 = "v2\n"
+                               "640 480\n"
+                               "nochecksum\n"
+                               "\n"
+                               "\n"
+                               "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.wrm 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190139 1511190456\n";
+    std::string string_to_read2(toReadData2);
+    ::write(fd_2.fd(), toReadData2, string_to_read2.length());
+    fd_2.close();
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadMovieData");
+
+    config.set_icon_movie_data();
+
+    RED_CHECK_EQUAL(config.icons_movie_data.size(), 2);
+    if (config.icons_movie_data.size() == 2) {
+        RED_CHECK_EQUAL(config.icons_movie_data[0].file_name, "movie1");
+        RED_CHECK_EQUAL(config.icons_movie_data[0].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm");
+        RED_CHECK_EQUAL(config.icons_movie_data[0].file_version, "v2");
+        RED_CHECK_EQUAL(config.icons_movie_data[0].file_resolution, "1600 900");
+        RED_CHECK_EQUAL(config.icons_movie_data[0].file_checksum, "nochecksum");
+        RED_CHECK_EQUAL(config.icons_movie_data[0].movie_len, 17);
+
+        RED_CHECK_EQUAL(config.icons_movie_data[1].file_name, "movie2");
+        RED_CHECK_EQUAL(config.icons_movie_data[1].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm");
+        RED_CHECK_EQUAL(config.icons_movie_data[1].file_version, "v2");
+        RED_CHECK_EQUAL(config.icons_movie_data[1].file_resolution, "640 480");
+        RED_CHECK_EQUAL(config.icons_movie_data[1].file_checksum, "nochecksum");
+        RED_CHECK_EQUAL(config.icons_movie_data[1].movie_len, 317);
+    }
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigReadWindowsData");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    wd.add_file("DATA/config/windows_config.config");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    mkdir("/tmp/TestClientRedemptionConfigReadWindowsData/DATA", 0775);
+    mkdir("/tmp/TestClientRedemptionConfigReadWindowsData/DATA/config", 0775);
+
+    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadWindowsData/DATA/config/windows_config.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    const char * toReadData =
+                        "form_x 1920\n"
+                        "form_y 351\n"
+                        "screen_x 465\n"
+                        "screen_y 259\n";
+
+    std::string string_to_read(toReadData);
+    ::write(fd.fd(), toReadData, string_to_read.length());
+    fd.close();
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadWindowsData");
+
+    RED_CHECK_EQUAL(config.windowsData.no_data, false);
+    RED_CHECK_EQUAL(config.windowsData.form_x, 1920);
+    RED_CHECK_EQUAL(config.windowsData.form_y, 351);
+    RED_CHECK_EQUAL(config.windowsData.screen_x, 465);
+    RED_CHECK_EQUAL(config.windowsData.screen_y, 259);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigReadCustomKeyConfig");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    wd.add_file("DATA/config/keySetting.config");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    mkdir("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA", 0775);
+    mkdir("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA/config", 0775);
+
+    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA/config/keySetting.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    const char * toReadData =
+                        "Key Setting\n"
+                        "- 1 2 x 1 key1\n"
+                        "- 5 6 y 0 key2\n";
+
+    std::string string_to_read(toReadData);
+    ::write(fd.fd(), toReadData, string_to_read.length());
+    fd.close();
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadCustomKeyConfig");
+
+    RED_CHECK_EQUAL(config.keyCustomDefinitions.size(), 2);
+    if (config.keyCustomDefinitions.size() == 2) {
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].qtKeyID, 1);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].scanCode, 2);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].ASCII8, "x");
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].extended, 0x0100);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].name, "key1");
+
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].qtKeyID, 5);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].scanCode, 6);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].ASCII8, "y");
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].extended, 0);
+        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].name, "key2");
+    }
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigReadAccountData");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    wd.add_file("DATA/config/login.config");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    mkdir("/tmp/TestClientRedemptionConfigReadAccountData/DATA", 0775);
+    mkdir("/tmp/TestClientRedemptionConfigReadAccountData/DATA/config", 0775);
+
+    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadAccountData/DATA/config/login.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+
+    const char * toReadData =
+                        "save_pwd true\n"
+                        "last_target 1\n"
+                        "\n"
+                        "title 10.10.45.55 - user1\n"
+                        "IP 10.10.45.55\n"
+                        "name user1\n"
+                        "protocol 1\n"
+                        "pwd mdp\n"
+                        "port 3389\n"
+                        "options_profil 0\n"
+                        "\n"
+                        "title 10.10.45.87 - measure\n"
+                        "IP 10.10.45.87\n"
+                        "name measure\n"
+                        "protocol 1\n"
+                        "pwd mdp_\n"
+                        "port 3389\n"
+                        "options_profil 0\n";
+
+    std::string string_to_read(toReadData);
+    ::write(fd.fd(), toReadData, string_to_read.length());
+    fd.close();
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadAccountData");
+
+    RED_CHECK_EQUAL(config._last_target_index, 1);
+    RED_CHECK_EQUAL(config._save_password_account, true);
+    RED_CHECK_EQUAL(config._accountData.size(), 2);
+    if (config._accountData.size() == 2) {
+        RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1");
+        RED_CHECK_EQUAL(config._accountData[0].IP, "10.10.45.55");
+        RED_CHECK_EQUAL(config._accountData[0].name, "user1");
+        RED_CHECK_EQUAL(config._accountData[0].pwd, "mdp");
+        RED_CHECK_EQUAL(config._accountData[0].port, 3389);
+        RED_CHECK_EQUAL(config._accountData[0].options_profil, 0);
+        RED_CHECK_EQUAL(config._accountData[0].index, 0);
+        RED_CHECK_EQUAL(config._accountData[0].protocol, 1);
+
+        RED_CHECK_EQUAL(config._accountData[1].title, "10.10.45.87 - measure");
+        RED_CHECK_EQUAL(config._accountData[1].IP, "10.10.45.87");
+        RED_CHECK_EQUAL(config._accountData[1].name, "measure");
+        RED_CHECK_EQUAL(config._accountData[1].pwd, "mdp_");
+        RED_CHECK_EQUAL(config._accountData[1].port, 3389);
+        RED_CHECK_EQUAL(config._accountData[1].options_profil, 0);
+        RED_CHECK_EQUAL(config._accountData[1].index, 1);
+        RED_CHECK_EQUAL(config._accountData[1].protocol, 1);
+    }
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigWriteClientInfo");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteClientInfo");
+
+    config.writeClientInfo();
+
+    const char * expected_data =
+                           "current_user_profil_id 0"
+                           "\n"
+                           "\nid 0"
+                           "\nname Default"
+                           "\nkeylayout 1036"
+                           "\nbrush_cache_code 0"
+                           "\nbpp 24"
+                           "\nwidth 800"
+                           "\nheight 600"
+                           "\nrdp5_performanceflags 1"
+                           "\nmonitorCount 1"
+                           "\nspan 0"
+                           "\nrecord 0"
+                           "\ntls 1"
+                           "\nnla 1"
+                           "\nsound 0"
+                           "\nconsole_mode 0"
+                           "\nenable_shared_clipboard 1"
+                           "\nenable_shared_virtual_disk 1"
+                           "\nenable_shared_remoteapp 0"
+                           "\nshare-dir /home"
+                           "\nremote-exe C:\\Windows\\system32\\notepad.exe "
+                           "\nremote-dir C:\\Users\\user1"
+                           "\nvnc-applekeyboard 0"
+                           "\nmod 1"
+                           "\n";
+
+    RED_CHECK_EQUAL(get_file_contents("/tmp/TestClientRedemptionConfigWriteClientInfo/DATA/config/userConfig.config"), expected_data);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigWriteCustomKey");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    auto key_setting = wd.add_file("DATA/config/keySetting.config");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteCustomKey");
+
+    config.add_key_custom_definition(1, 2, "x", 0x100, "key_x");
+    config.add_key_custom_definition(3, 4, "y", 0, "key_y");
+
+    config.writeCustomKeyConfig();
+
+    const char * expected_data =
+                           "Key Setting\n\n"
+                           "- 1 2 x 256 key_x\n"
+                           "- 3 4 y 0 key_y\n";
+
+    RED_CHECK_EQUAL(get_file_contents(wd[key_setting]), expected_data);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigWriteAccountData");
+    wd.add_file("DATA");
+    wd.add_file("DATA/config");
+    wd.add_file("DATA/clipboard_temp");
+    wd.add_file("DATA/replay");
+    wd.add_file("DATA/sound_temp");
+
+    auto login = wd.add_file("DATA/config/login.config");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteAccountData");
+
+    config.connected = true;
+    config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
+    config.writeAccoundData("10.10.13.12", "account_name2", "mdp_", 5900);
+
+    const char * expected_data =
+                           "save_pwd false\n"
+                           "last_target 2\n"
+                           "\n"
+                           "title 10.10.12.13 - account_name\n"
+                           "IP 10.10.12.13\n"
+                           "name account_name\n"
+                           "protocol 1\n"
+                           "pwd \n"
+                           "port 3389\n"
+                           "options_profil 0\n"
+                           "\n"
+                           "title 10.10.13.12 - account_name2\n"
+                           "IP 10.10.13.12\n"
+                           "name account_name2\n"
+                           "protocol 1\n"
+                           "pwd \n"
+                           "port 5900\n"
+                           "options_profil 0\n\n";
+
+    RED_CHECK_EQUAL(get_file_contents(wd[login]), expected_data);
+
+    RED_CHECK_WORKSPACE(wd);
+}
+
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
+{
+//     WorkingDirectory wd("TestClientRedemptionConfigWriteWindowsData");
+//     wd.add_file("DATA");
+//     wd.add_file("DATA/config");
+//     wd.add_file("DATA/clipboard_temp");
+//     wd.add_file("DATA/replay");
+//     wd.add_file("DATA/sound_temp");
+//
+//     auto win_data = wd.add_file("DATA/config/windows_config.config");
+//
+//     SessionReactor session_reactor;
+//     FakeClient client;
+//     char const * argv[] = {"cmd"};
+//     const int argc = 1;
+//
+//     ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteWindowsData");
+//
+//     config.connected = true;
+//     config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
+//     config.writeAccoundData("10.10.13.12", "account_name2", "mdp_", 5900);
+//
+//     const char * expected_data =
+//                            "save_pwd false\n"
+//
+//                            "options_profil 0\n\n";
+//
+//     RED_CHECK_EQUAL(get_file_contents(wd[login]), expected_data);
+//
+//     RED_CHECK_WORKSPACE(wd);
 }

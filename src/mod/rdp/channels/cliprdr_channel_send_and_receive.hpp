@@ -129,7 +129,7 @@ struct FilecontentsRequestSendBack {
             switch (dwFlags) {
                 case RDPECLIP::FILECONTENTS_RANGE:
                     {
-                        RDPECLIP::FileContentsResponseToFileContentsRange pdu(streamID);
+                        RDPECLIP::FileContentsResponseRange pdu(streamID);
                         RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                         RDPECLIP::CB_RESPONSE_FAIL,
                                                         pdu.size());
@@ -140,7 +140,7 @@ struct FilecontentsRequestSendBack {
 
                 case RDPECLIP::FILECONTENTS_SIZE:
                     {
-                        RDPECLIP::FileContentsResponseToFileContentsSize pdu(streamID, 0);
+                        RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
                         RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                         RDPECLIP::CB_RESPONSE_FAIL,
                                                         pdu.size());

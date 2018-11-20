@@ -162,6 +162,28 @@ protected:
     }
 
 public:
+    void empty_client_clipboard() {
+        if (bool(this->verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::empty_client_clipboard");
+        }
+
+        RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,
+            RDPECLIP::CB_RESPONSE__NONE_, 0);
+
+        StaticOutStream<256> out_s;
+
+        clipboard_header.emit(out_s);
+
+        const size_t totalLength = out_s.get_offset();
+
+        this->send_message_to_server(
+            totalLength,
+            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+            out_s.get_data(),
+            totalLength);
+    }
+
     bool use_long_format_names() const {
         return (this->client_use_long_format_names &&
             this->server_use_long_format_names);

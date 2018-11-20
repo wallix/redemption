@@ -23,6 +23,7 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cassert>
 #include <memory>

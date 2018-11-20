@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
-    RDPECLIP::FileContentsResponseToFileContentsSize pdu;
+    RDPECLIP::FileContentsResponseSize pdu;
     pdu.receive(stream);
 
     RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FILECONTENTS_RESPONSE);
