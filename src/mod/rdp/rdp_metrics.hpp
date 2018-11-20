@@ -351,10 +351,10 @@ public:
                 {
                     RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
                     clipboard_caps_pdu.recv(chunk);
-                    assert(1 == clipboard_caps_pdu.cCapabilitiesSets());
+                    assert(1 == clipboard_caps_pdu.cCapabilitiesSets);
 
                     RDPECLIP::CapabilitySetRecvFactory cliboard_cap_set_recv_factory(chunk);
-                    assert(RDPECLIP::CB_CAPSTYPE_GENERAL == cliboard_cap_set_recv_factory.capabilitySetType());
+                    assert(RDPECLIP::CB_CAPSTYPE_GENERAL == cliboard_cap_set_recv_factory.capabilitySetType);
 
                     RDPECLIP::GeneralCapabilitySet general_cap_set;
                     general_cap_set.recv(chunk, cliboard_cap_set_recv_factory);
