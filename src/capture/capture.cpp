@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <chrono>
 #include <string>
+#include <iterator>
 #include <type_traits>
 
 #include <ctime> // localtime_r
@@ -76,7 +77,9 @@ class SequencedVideoCaptureImpl {};
 
 #include "utils/recording_progress.hpp"
 
-//#include "configs/config_access.hpp"
+using std::begin;
+using std::end;
+
 
 class PatternSearcher
 {
