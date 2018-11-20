@@ -55,13 +55,20 @@ using kv_pair = const kv_pair_;
 
 inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_char subject)
 {
-    constexpr auto escaped_table = [] {
-        std::array<char, 256> t{};
-        t[int('\\')] = '\\';
-        t[int('"')] = '"';
-        t[int('\n')] = 'n';
-        return t;
-    }();
+    struct MakeTable
+    {
+        constexpr static auto make_table()
+        {
+            std::array<char, 256> t{};
+            t[int('\\')] = '\\';
+            t[int('"')] = '"';
+            t[int('\n')] = 'n';
+            t[int('\r')] = 'r';
+            return t;
+        }
+    };
+
+    constexpr auto escaped_table = MakeTable::make_table();
 
     // char -> uchar because char(128) must be negative
     using uchar = unsigned char;
