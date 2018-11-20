@@ -4264,6 +4264,20 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
+test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel_send_and_receive.cpp
+:
+  <covfile>src/mod/rdp/channels/cliprdr_channel_send_and_receive.hpp
+  <library>boost_stacktrace
+  <library>crypto
+  <library>src/core/RDP/mppc.o
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 test-run tests/mod/rdp/channels/test_rail_window_id_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rail_window_id_manager.cpp
 :
@@ -6137,6 +6151,8 @@ alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
+alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
+alias test_cliprdr_channel_send_and_receive.coverage : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive.coverage ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
 alias test_rail_window_id_manager.coverage : tests/mod/rdp/channels/test_rail_window_id_manager.coverage ;
 alias test_rdpdr_asynchronous_task : tests/mod/rdp/channels/test_rdpdr_asynchronous_task ;
@@ -6655,6 +6671,7 @@ alias tests/mod/null.norec :
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
   tests/mod/rdp/channels/test_cliprdr_channel
+  tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
   tests/mod/rdp/channels/test_rdpdr_asynchronous_task
   tests/mod/rdp/channels/test_rdpdr_channel

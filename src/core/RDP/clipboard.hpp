@@ -647,7 +647,7 @@ static inline const std::string generalFlags_to_string(uint32_t generalFlags) {
 //  field, that is the generalFlags field is set to 0x00000000.
 
 class GeneralCapabilitySet {
-    uint16_t capabilitySetType = CB_CAPSTYPE_GENERAL;
+    uint16_t capabilitySetType_ = CB_CAPSTYPE_GENERAL;
     uint16_t lengthCapability  = GeneralCapabilitySet::size();
     uint32_t version_          = CB_CAPS_VERSION_1;
     uint32_t generalFlags_     = 0;
@@ -661,15 +661,15 @@ public:
     }
 
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->capabilitySetType);
+        stream.out_uint16_le(this->capabilitySetType_);
         stream.out_uint16_le(this->lengthCapability);
         stream.out_uint32_le(this->version_);
         stream.out_uint32_le(this->generalFlags_);
     }
 
     void recv(InStream & stream, const CapabilitySetRecvFactory & recv_factory) {
-        this->capabilitySetType = recv_factory.capabilitySetType();
-        assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
+        this->capabilitySetType_ = recv_factory.capabilitySetType();
+        assert(this->capabilitySetType_ == CB_CAPSTYPE_GENERAL);
 
         const unsigned expected = this->size() -
                                   2;    // capabilitySetType(2)
@@ -698,7 +698,7 @@ public:
             throw Error(ERR_RDP_DATA_TRUNCATED);
         }
 
-        this->capabilitySetType = stream.in_uint16_le();
+        this->capabilitySetType_ = stream.in_uint16_le();
 //         assert(this->capabilitySetType == CB_CAPSTYPE_GENERAL);
 
         this->lengthCapability  = stream.in_uint16_le();
@@ -711,6 +711,8 @@ public:
     uint32_t version() const { return this->version_; }
 
     uint32_t generalFlags() const { return this->generalFlags_; }
+
+    uint32_t capabilitySetType() const { return this->capabilitySetType_;}
 
     static constexpr size_t size() {
         return 12;  // capabilitySetType(2) + lengthCapability(2) + version(4) +
@@ -732,8 +734,8 @@ private:
         size_t length = ::snprintf(buffer, size,
             "RDPECLIP::GeneralCapabilitySet: "
                 "capabilitySetType=%s(%d) lengthCapability=%u version=%s(0x%08X) generalFlags=<%s>",
-            CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType),
-            this->capabilitySetType,
+            CapabilitySetRecvFactory::get_capabilitySetType_name(this->capabilitySetType_),
+            this->capabilitySetType_,
             unsigned(this->lengthCapability),
             this->get_version_name(this->version_),
             this->version_,
@@ -751,7 +753,7 @@ public:
     }
 
     void log() const {
-        LOG(LOG_INFO, "GeneralCapabilitySet: capabilitySetType=0x%04x(2 bytes):CB_CAPSTYPE_GENERAL lengthCapability=0x%04x(2 bytes) version=0x%08x(4 bytes) generalFlags=0x%08x(4 bytes):%s", this->capabilitySetType, this->lengthCapability, this->version_, this->generalFlags_, generalFlags_to_string(this->generalFlags_));
+        LOG(LOG_INFO, "GeneralCapabilitySet: capabilitySetType=0x%04x(2 bytes):CB_CAPSTYPE_GENERAL lengthCapability=0x%04x(2 bytes) version=0x%08x(4 bytes) generalFlags=0x%08x(4 bytes):%s", this->capabilitySetType_, this->lengthCapability, this->version_, this->generalFlags_, generalFlags_to_string(this->generalFlags_));
     }
 };  // GeneralCapabilitySet
 
@@ -934,7 +936,7 @@ public:
 
     std::string const& format_name() const { return this->format_name_; }
 
-    void format_name(std::string format_name) { this->format_name_ = std::move(format_name); }
+    void format_name(const char * format_name) { this->format_name_ = format_name; }
 
     size_t format_name_length() const { return this->format_name_.length(); }
 
@@ -990,7 +992,7 @@ public:
             bool   all_format_names_are_ASCII_strings = true;
             size_t max_format_name_len_in_char        = 0;
             for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(format_name.format_name().c_str())) {
+                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
                     all_format_names_are_ASCII_strings = false;
                 }
 
@@ -1068,10 +1070,6 @@ public:
                     LOG(LOG_WARNING, "utf16 to utf8 conversion failed in FormatListPDUEx::recv %lu %lu",
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
                 }
-                else {
-                    format_name.resize(size_of_formatName_UTF8_data-1);
-                }
-
 
                 this->format_names.emplace_back(
                         formatId,
@@ -1115,10 +1113,6 @@ public:
                         size_of_formatName_UTF8_data + 1, formatName_UTF8_data_size);
                     }
 
-                    if (size_of_formatName_UTF8_data) {
-                        format_name.resize(size_of_formatName_UTF8_data-1);
-                    }
-
                     this->format_names.emplace_back(
                             formatId,
                             std::move(format_name)
@@ -1134,15 +1128,9 @@ public:
         this->format_names.emplace_back(formatId, format_name);
     }
 
-    auto begin() const
-    {
-        return this->format_names.begin();
-    }
+    size_t num_format_names() const { return this->format_names.size(); }
 
-    auto end() const
-    {
-        return this->format_names.end();
-    }
+    FormatName const & format_name(size_t idx_format_name) const { return this->format_names[idx_format_name]; }
 
     size_t size(bool use_long_format_names) const {
         size_t sz = 0;
@@ -1178,11 +1166,11 @@ public:
             bool   all_format_names_are_ASCII_strings = true;
             size_t max_format_name_len_in_char        = 0;
             for (auto & format_name : this->format_names) {
-                if (!::is_ASCII_string(format_name.format_name().data())) {
+                if (!::is_ASCII_string(byte_ptr_cast(format_name.format_name().c_str()))) {
                     all_format_names_are_ASCII_strings = false;
                 }
 
-                const size_t format_name_len_in_char = ::UTF8StrLenInChar(format_name.format_name().data());
+                const size_t format_name_len_in_char = ::UTF8StrLenInChar(byte_ptr_cast(format_name.format_name().c_str()));
                 if (max_format_name_len_in_char < format_name_len_in_char) {
                     max_format_name_len_in_char = format_name_len_in_char;
                 }
@@ -1225,9 +1213,9 @@ public:
     }
 };  // FormatListPDUEx
 
-inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId)
-{
-    for (RDPECLIP::FormatName const & format_name : format_list_pdu) {
+inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx & format_list_pdu, uint32_t formatId) {
+    for (size_t i = 0, c = format_list_pdu.num_format_names(); i < c; ++i) {
+        FormatName const & format_name = format_list_pdu.format_name(i);
         if (format_name.formatId() == formatId) {
             return true;
         }
@@ -1237,9 +1225,9 @@ inline static bool FormatListPDUEx_contains_data_in_format(const FormatListPDUEx
 }
 
 
-constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW");
-constexpr auto FILECONTENTS         = cstr_array_view("FileContents");
-// constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect");
+constexpr auto FILEGROUPDESCRIPTORW = cstr_array_view("FileGroupDescriptorW\0");
+constexpr auto FILECONTENTS         = cstr_array_view("FileContents\0");
+constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 
 // [MS-RDPECLIP] 2.2.3.2 Format List Response PDU (FORMAT_LIST_RESPONSE)
@@ -1264,9 +1252,9 @@ constexpr auto FILECONTENTS         = cstr_array_view("FileContents");
 
 struct FormatListResponsePDU
 {
-    void emit(OutStream & /*out_stream*/) const {}
+    void emit(OutStream &) const {}
 
-    void recv(InStream & /*in_stream*/) {}
+    void recv(InStream &) {}
 
     static constexpr size_t size() {
         return 0;
@@ -1607,160 +1595,68 @@ public:
     // FILECONTENTS_RANGE (0x00000002) operation, the requestedFileContentsData
     // field contains a byte-stream of data extracted from the file.
 
-struct FileContentsResponseSize
+struct FileContentsResponseToFileContentsSize
 {
-    uint32_t streamID{0};
-    uint64_t dataSize{0};
+   uint32_t streamID{0};
+   uint64_t _size{0};
 
-    FileContentsResponseSize() = default;
 
-    // SIZE (16 bytes)
-    explicit FileContentsResponseSize(const uint32_t streamID, const uint64_t size)
-    : streamID(streamID)
-    , dataSize(size)
-    {}
+   FileContentsResponseToFileContentsSize() = default;
 
-    void receive(InStream & stream) {
-        this->streamID = stream.in_uint32_le();
-        this->dataSize = stream.in_uint64_le();
-    }
+   // SIZE (16 bytes)
+   explicit FileContentsResponseToFileContentsSize(const uint32_t streamID, const uint64_t size)
+   : streamID(streamID)
+   , _size(size)
+   {}
 
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->streamID);
-        stream.out_uint64_le(this->dataSize);
-        stream.out_uint32_le(0);
-    }
+   void receive(InStream & stream) {
+       this->streamID = stream.in_uint32_le();
+        this->_size = stream.in_uint64_le();
+   }
 
-    void log() const {
-        LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID, this->dataSize);
-    }
+   void emit(OutStream & stream) const {
+       stream.out_uint32_le(this->streamID);
+       stream.out_uint64_le(this->_size);
+       stream.out_uint32_le(0);
+   }
 
-    static size_t size() {
-        return 16;
-    }
-};
+   void log() const {
+       LOG(LOG_INFO, "     File Contents Response Size: streamID = 0X%08x(4 bytes) size=%" PRIu64 "(8 bytes) Padding - (4 byte) NOT USED", this->streamID, this->_size);
+   }
 
-struct FileContentsResponseRange
-{
-    uint32_t streamID{0};
-
-    FileContentsResponseRange() = default;
-
-    // RANGE (4 + Data_Len Bytes)
-    explicit FileContentsResponseRange(const uint32_t streamID)
-    : streamID(streamID)
-    {}
-
-    void receive(InStream & stream) {
-        this->streamID = stream.in_uint32_le();
-    }
-
-    void emit(OutStream & stream) const {
-        stream.out_uint32_le(this->streamID);
-    }
-
-    void log() const {
-        LOG(LOG_INFO, "     File Contents Response Range: streamID=0X%08x(4 bytes)" PRIu64 "(8 bytes) Padding-(4 byte):NOT USED", this->streamID);
-    }
-
-    static size_t size() {
-        return 4;
-    }
+    size_t size() {
+        return 16;                                          // streamID(4) + size(8)
+   }
 };
 
 
-//struct FileContentsResponseToFileContentsSize
-//{
-//    uint32_t streamID{0};
-//    uint64_t size{0};
+struct FileContentsResponseToFileContentsRange
+{
+   uint32_t streamID{0};
 
-//    bool is_size;
+   FileContentsResponseToFileContentsRange() = default;
 
-//    FileContentsResponseToFileContentsSize() = default;
+   // RANGE (4 + Data_Len Bytes)
+   explicit FileContentsResponseToFileContentsRange(const uint32_t streamID)
+       : streamID(streamID)
+   {}
 
-//    // SIZE (16 bytes)
-//    explicit FileContentsResponseToFileContentsSize(const uint32_t streamID, const uint64_t size)
-//    : streamID(streamID)
-//    , size(size)
-//    , is_size(true)
-//    {}
+   void receive(InStream & stream) {
+       this->streamID = stream.in_uint32_le();
+   }
 
-//    // RANGE (4 + Data_Len Bytes)
-//    explicit FileContentsResponseToFileContentsSize(const uint32_t streamID)
-//        : streamID(streamID)
-//        , is_size(false)
-//    {}
+   void emit(OutStream & stream) const {
+       stream.out_uint32_le(this->streamID);
+   }
 
-//    void receive(InStream & stream) {
-//        this->streamID = stream.in_uint32_le();
-//        if (this->is_size) {
-//            this->size = stream.in_uint64_le();
-//        }
-//    }
+   void log() const {
+       LOG(LOG_INFO, "     File Contents Response Size: streamID=0X%08x(4 bytes)", this->streamID);
+   }
 
-//    void emit(OutStream & stream) const {
-//        stream.out_uint32_le(this->streamID);
-
-//        if (this->is_size) {                                // SIZE
-//            stream.out_uint64_le(this->size);
-//            stream.out_uint32_le(0);
-//        }
-//    }
-
-//    void log() const {
-//        LOG(LOG_INFO, "     File Contents Response Size:");
-//        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
-//        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
-//        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
-//    }
-//};
-
-
-//struct FileContentsResponseToFileContentsRange
-//{
-//    uint32_t streamID{0};
-//    uint64_t size{0};
-
-//    bool is_size;
-
-//    FileContentsResponseToFileContentsRange() = default;
-
-//    // SIZE (16 bytes)
-//    explicit FileContentsResponseToFileContentsRange(const uint32_t streamID, const uint64_t size)
-//    : streamID(streamID)
-//    , size(size)
-//    , is_size(true)
-//    {}
-
-//    // RANGE (4 + Data_Len Bytes)
-//    explicit FileContentsResponseToFileContentsRange(const uint32_t streamID)
-//        : streamID(streamID)
-//        , is_size(false)
-//    {}
-
-//    void receive(InStream & stream) {
-//        this->streamID = stream.in_uint32_le();
-//        if (this->is_size) {
-//            this->size = stream.in_uint64_le();
-//        }
-//    }
-
-//    void emit(OutStream & stream) const {
-//        stream.out_uint32_le(this->streamID);
-
-//        if (this->is_size) {                                // SIZE
-//            stream.out_uint64_le(this->size);
-//            stream.out_uint32_le(0);
-//        }
-//    }
-
-//    void log() const {
-//        LOG(LOG_INFO, "     File Contents Response Size:");
-//        LOG(LOG_INFO, "          * streamID = 0X%08x (4 bytes)", this->streamID);
-//        LOG(LOG_INFO, "          * size     = %" PRIu64 " (8 bytes)", this->size);
-//        LOG(LOG_INFO, "          * Padding - (4 byte) NOT USED");
-//    }
-//};
+   size_t size() {
+        return 4;                                          // streamID(4)
+   }
+};
 
 
 struct PacketFileList {
@@ -1898,13 +1794,13 @@ public:
 
     FileDescriptor() = default;
 
-    explicit FileDescriptor(std::string name, const uint64_t size, const uint32_t attribute)
+    explicit FileDescriptor(const std::string & name, const size_t size, const uint32_t attribute)
       : flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
       , fileAttributes(attribute)
       , lastWriteTime(TIME64_FILE_LIST)
       , fileSizeHigh(size >> 32)
       , fileSizeLow(size)
-      , file_name(std::move(name))
+      , file_name(name)
     {}
 
     void emit(OutStream & stream) const {
@@ -2701,7 +2597,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_SIZE:
                     {
-                        FileContentsResponseSize pdu;
+                        FileContentsResponseToFileContentsSize pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }
@@ -2709,7 +2605,7 @@ static inline void streamLogCliprdr(InStream & chunk, int flags, CliprdrLogState
 
                     case FILECONTENTS_RANGE:
                     {
-                        FileContentsResponseRange pdu;
+                        FileContentsResponseToFileContentsRange pdu;
                         pdu.receive(chunk);
                         pdu.log();
                     }
