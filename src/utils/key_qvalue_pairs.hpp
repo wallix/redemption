@@ -55,26 +55,32 @@ using kv_pair = const kv_pair_;
 
 inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_char subject)
 {
-    struct MakeTable
+    struct EscapedTable
     {
-        constexpr static auto make_table()
+        constexpr EscapedTable() noexcept
+          : t{}
         {
-            std::array<char, 256> t{};
             t[int('\\')] = '\\';
             t[int('"')] = '"';
             t[int('\n')] = 'n';
             t[int('\r')] = 'r';
-            return t;
         }
+
+        char operator[](char c) const
+        {
+            // char -> uchar because char(128) must be negative
+            using uchar = unsigned char;
+            return this->t[unsigned(uchar(c))];
+        }
+
+    private:
+        char t[256];
     };
 
-    constexpr auto escaped_table = MakeTable::make_table();
+    constexpr EscapedTable escaped_table;
 
-    // char -> uchar because char(128) must be negative
-    using uchar = unsigned char;
-
-    auto pred = [&](uchar c){
-        return bool(escaped_table[unsigned(c)]);
+    auto pred = [&](char c){
+        return bool(escaped_table[c]);
     };
 
     auto first = subject.begin();
@@ -84,7 +90,7 @@ inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_c
     while ((p = std::find_if(first, last, pred)) != last) {
         escaped_subject.append(first, p);
         escaped_subject += '\\';
-        escaped_subject += escaped_table[unsigned(uchar(*p))];
+        escaped_subject += escaped_table[*p];
         first = p + 1;
     }
 
