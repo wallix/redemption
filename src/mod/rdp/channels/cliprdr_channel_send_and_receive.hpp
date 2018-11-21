@@ -34,39 +34,92 @@
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 
-struct ClipboardData {
+
+struct ClipboardSideData {
+
+     struct file_contents_request_info
+    {
+        uint32_t lindex;
+
+        uint64_t position;
+
+        uint32_t cbRequested;
+
+        uint32_t clipDataId;
+
+        uint32_t offset;
+    };
+    using file_contents_request_info_inventory_type = std::map<uint32_t /*streamId*/, file_contents_request_info>;
+
+    struct file_info_type
+    {
+        std::string file_name;
+
+        uint64_t size;
+
+        uint64_t sequential_access_offset;
+
+        SslSha256 sha256;
+    };
+    using file_info_inventory_type = std::vector<file_info_type>;
+
+    using file_stream_data_inventory_type = std::map<uint32_t /*clipDataId*/, file_info_inventory_type>;
+
     uint16_t message_type = 0;
     bool use_long_format_names = false;
-    uint32_t                        clipDataId = 0;
+    uint32_t clipDataId = 0;
     uint32_t file_list_format_id = 0;
     uint32_t dataLen = 0;
     uint32_t streamId = 0;
+    StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
+
+    file_contents_request_info_inventory_type file_contents_request_info_inventory;
+    file_stream_data_inventory_type file_stream_data_inventory;
 
     std::string provider_name;
 
-    ClipboardData(std::string & provider_name)
+    ClipboardSideData(std::string provider_name)
       : provider_name(provider_name) {}
 
-    virtual void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
-        (void) lindex;
-        (void) position;
-        (void) cbRequested;
-        (void) clipDataId;
-        (void) offset;
-        (void) streamID;
+     void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
+        this->file_contents_request_info_inventory[streamID] =
+        {
+            lindex,
+            position,
+            cbRequested,
+            clipDataId,
+            offset
+        };
     }
 
-    virtual void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
-        (void) fd;
-    }
+     void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
+        file_info_inventory_type & file_info_inventory =
+                this->file_stream_data_inventory[this->clipDataId];
 
-    virtual ~ClipboardData() {}
+            file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
+    }
 };
+
+struct ClipboardData {
+    using format_name_inventory_type = std::map<uint32_t, std::string>;
+
+    ClipboardSideData server_data;
+    ClipboardSideData client_data;
+
+    uint32_t requestedFormatId = 0;
+
+    format_name_inventory_type format_name_inventory;
+
+    ClipboardData()
+      : server_data("server")
+      , client_data("client") {}
+};
+
 
 
 struct ClipboardCapabilitiesReceive {
 
-    ClipboardCapabilitiesReceive(ClipboardData & clip_data, InStream& chunk, const RDPVerbose verbose) {
+    ClipboardCapabilitiesReceive(ClipboardSideData & clip_data, InStream& chunk, const RDPVerbose verbose) {
         {
             const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
                                                 //     pad1(2)
@@ -77,6 +130,12 @@ struct ClipboardCapabilitiesReceive {
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
+        }
+
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_%s_message: "
+                    "Clipboard Capabilities PDU", clip_data.provider_name);
         }
 
         const uint16_t cCapabilitiesSets = chunk.in_uint16_le();
@@ -94,8 +153,8 @@ struct ClipboardCapabilitiesReceive {
 
                 if (bool(verbose & RDPVerbose::cliprdr)) {
                     LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_client_clipboard_capabilities_pdu: "
-                            "General Capability Set");
+                        "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
+                            "General Capability Set", clip_data.provider_name);
                     general_caps.log(LOG_INFO);
                 }
 
@@ -112,7 +171,7 @@ struct FilecontentsRequestReceive {
     uint32_t dwFlags = 0;
     uint32_t streamID = 0;
 
-    FilecontentsRequestReceive(ClipboardData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
+    FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
         if (dataLen >= RDPECLIP::FileContentsRequestPDU::minimum_size()) {
             RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -134,7 +193,6 @@ struct FilecontentsRequestReceive {
                     file_contents_request_pdu.clipDataId(), 0, this->streamID);
             }
         }
-
     }
 };
 
@@ -144,38 +202,37 @@ struct FilecontentsRequestSendBack {
     uint32_t total_length = 0;
     const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
 
-    FilecontentsRequestSendBack(const std::string & origin_name, const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID) {
-            if (bool(verbose & RDPVerbose::cliprdr)) {
-                LOG(LOG_INFO,
-                    "ClipboardVirtualChannel::process_%s_filecontents_request: "
-                        "Requesting the contents of server file is denied.", origin_name);
-            }
+    FilecontentsRequestSendBack(ClipboardSideData & clip_data, const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID) {
+        if (bool(verbose & RDPVerbose::cliprdr)) {
+            LOG(LOG_INFO,
+                "ClipboardVirtualChannel::process_%s_filecontents_request: "
+                    "Requesting the contents of server file is denied.", clip_data.provider_name);
+        }
 
-            switch (dwFlags) {
-                case RDPECLIP::FILECONTENTS_RANGE:
-                    {
-                        RDPECLIP::FileContentsResponseRange pdu(streamID);
-                        RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                        RDPECLIP::CB_RESPONSE_FAIL,
-                                                        pdu.size());
-                        header.emit(this->out_stream);
-                        pdu.emit(this->out_stream);
-                    }
-                    break;
+        switch (dwFlags) {
+            case RDPECLIP::FILECONTENTS_RANGE:
+                {
+                    RDPECLIP::FileContentsResponseRange pdu(streamID);
+                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                                                    RDPECLIP::CB_RESPONSE_FAIL,
+                                                    pdu.size());
+                    header.emit(this->out_stream);
+                    pdu.emit(this->out_stream);
+                }
+                break;
 
-                case RDPECLIP::FILECONTENTS_SIZE:
-                    {
-                        RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
-                        RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
-                                                        RDPECLIP::CB_RESPONSE_FAIL,
-                                                        pdu.size());
-                        header.emit(this->out_stream);
-                        pdu.emit(this->out_stream);
-                    }
-                    break;
-
-            }
-            this->total_length      = out_stream.get_offset();
+            case RDPECLIP::FILECONTENTS_SIZE:
+                {
+                    RDPECLIP::FileContentsResponseSize pdu(streamID, 0);
+                    RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
+                                                    RDPECLIP::CB_RESPONSE_FAIL,
+                                                    pdu.size());
+                    header.emit(this->out_stream);
+                    pdu.emit(this->out_stream);
+                }
+                break;
+        }
+        this->total_length      = out_stream.get_offset();
     }
 };
 
@@ -269,12 +326,11 @@ struct ClientFormatDataResponseReceive {
 
     std::string  data_to_dump;
 
-    std::vector<RDPECLIP::FileDescriptor> fds;
+    ClientFormatDataResponseReceive(ClipboardSideData & clip_side_data, ClipboardData & clip_data, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t flags, const RDPVerbose verbose) {
 
-    ClientFormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t client_file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose) {
+        std::vector<RDPECLIP::FileDescriptor> fds;
 
-        if (client_file_list_format_id && (requestedFormatId == client_file_list_format_id)) {
-
+        if (clip_side_data.file_list_format_id && (clip_data.requestedFormatId == clip_side_data.file_list_format_id)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (!(in_header.msgFlags() & RDPECLIP::CB_RESPONSE_FAIL) && (in_header.dataLen() >= 4 /* cItems(4) */)) {
                     const uint32_t cItems = chunk.in_uint32_le();
@@ -285,19 +341,19 @@ struct ClientFormatDataResponseReceive {
                                 "cItems=%u",
                             ((flags & CHANNELS::CHANNEL_FLAG_LAST) ?
                                 "" : "(chunked) "),
-                            client_file_list_format_id, cItems);
+                            clip_side_data.file_list_format_id, cItems);
                     }
                 }
             } else {
 
-                if (file_descriptor_stream.get_offset()) {
+                if (clip_side_data.file_descriptor_stream.get_offset()) {
                     const uint32_t complementary_data_length =
                         RDPECLIP::FileDescriptor::size() -
-                            file_descriptor_stream.get_offset();
+                            clip_side_data.file_descriptor_stream.get_offset();
 
                     assert(chunk.in_remain() >= complementary_data_length);
 
-                    file_descriptor_stream.out_copy_bytes(chunk.get_current(),
+                    clip_side_data.file_descriptor_stream.out_copy_bytes(chunk.get_current(),
                         complementary_data_length);
 
                     chunk.in_skip_bytes(complementary_data_length);
@@ -305,17 +361,17 @@ struct ClientFormatDataResponseReceive {
                     RDPECLIP::FileDescriptor fd;
 
                     InStream in_stream(
-                        file_descriptor_stream.get_data(),
-                        file_descriptor_stream.get_offset()
+                        clip_side_data.file_descriptor_stream.get_data(),
+                        clip_side_data.file_descriptor_stream.get_offset()
                     );
                     fd.receive(in_stream);
                     if (bool(verbose & RDPVerbose::cliprdr)) {
                         fd.log(LOG_INFO);
                     }
 
-                    this->fds.push_back(fd);
+                    fds.push_back(fd);
 
-                    file_descriptor_stream.rewind();
+                    clip_side_data.file_descriptor_stream.rewind();
                 }
             }
 
@@ -328,16 +384,25 @@ struct ClientFormatDataResponseReceive {
                     fd.log(LOG_INFO);
                 }
 
-                this->fds.push_back(fd);
+                fds.push_back(fd);
             }
 
             if (chunk.in_remain()) {
-                file_descriptor_stream.rewind();
+                clip_side_data.file_descriptor_stream.rewind();
 
-                file_descriptor_stream.out_copy_bytes(
+                clip_side_data.file_descriptor_stream.out_copy_bytes(
                     chunk.get_current(), chunk.in_remain());
 
                 chunk.in_skip_bytes(chunk.in_remain());
+            }
+
+            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
+                clip_data.requestedFormatId  = 0;
+            }
+
+            for (RDPECLIP::FileDescriptor fd : fds) {
+//                 const bool from_remote_session = false;
+                clip_data.client_data.update_file_contents_request_inventory(fd);
             }
 
         } else {
@@ -347,7 +412,7 @@ struct ClientFormatDataResponseReceive {
 
                 constexpr size_t const max_length_of_data_to_dump = 256;
 
-                switch (requestedFormatId) {
+                switch (clip_data.requestedFormatId) {
         /*
                     case RDPECLIP::CF_TEXT:
                     {
@@ -391,6 +456,8 @@ struct ClientFormatDataResponseReceive {
                     }
                     break;
                 }
+
+
             }
         }
     }
@@ -891,4 +958,53 @@ struct ClientUnlockClipDataReceive {
     }
 };
 
+struct FileContentsResponseReceive {
 
+    bool must_log_file_info_type = false;
+    ClipboardSideData::file_info_type file_info;
+
+    FileContentsResponseReceive(ClipboardSideData & clip_side_data, const RDPECLIP::CliprdrHeader & header, const uint32_t flags, InStream & chunk) {
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+
+            clip_side_data.dataLen = header.dataLen();
+
+            if (clip_side_data.dataLen >= 4) {
+                clip_side_data.streamId = chunk.in_uint32_le();
+            }
+        }
+
+        if (clip_side_data.file_contents_request_info_inventory.end() !=
+            clip_side_data.file_contents_request_info_inventory.find(clip_side_data.streamId))
+        {
+            ClipboardSideData::file_contents_request_info& file_contents_request =
+                clip_side_data.file_contents_request_info_inventory[clip_side_data.streamId];
+
+            {
+                ClipboardSideData::file_info_inventory_type& file_info_inventory =
+                    clip_side_data.file_stream_data_inventory[
+                        file_contents_request.clipDataId];
+
+                this->file_info = file_info_inventory[file_contents_request.lindex];
+
+                uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+
+                if (chunk.in_remain()) {
+                    if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
+                        uint32_t const length_ = std::min({
+                                static_cast<uint32_t>(chunk.in_remain()),
+                                static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
+                                file_contents_request.cbRequested - file_contents_request.offset
+                            });
+
+                        file_info.sha256.update({ chunk.get_current(), length_ });
+
+                        file_contents_request.offset       += length_;
+                        file_info.sequential_access_offset += length_;
+
+                        this->must_log_file_info_type = file_info.sequential_access_offset == file_info.size;
+                    }
+                }
+            }
+        }
+    }
+};

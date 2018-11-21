@@ -23,6 +23,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
+#include "mod/rdp/channels/fake_clipboard_data.hpp"
 
 
 
@@ -38,33 +39,36 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
 
     InStream chunk(stream.get_data(), stream.get_offset());
 
-    ClipboardState state;
+    FakeClipboardState state("client");
 
-    ClipboardCapabilitiesReceive receiver(state, std::string("client"), chunk, RDPVerbose::none);
+    ClipboardCapabilitiesReceive receiver(state, chunk, RDPVerbose::none);
 
-    RED_CHECK_EQUAL(state.client_data.use_long_format_names, true);
+    RED_CHECK_EQUAL(state.use_long_format_names, true);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 {
     StaticOutStream<64> stream;
 
-    RDPECLIP::FileContentsRequestPDU file_contents_request_pdu(1, 2, 3, 4, 0, 6, 7, true);
+    RDPECLIP::FileContentsRequestPDU file_contents_request_pdu(1, 2, RDPECLIP::FILECONTENTS_RANGE, 4, 0, 6, 7, true);
 
     file_contents_request_pdu.emit(stream);
 
+    FakeClipboardState state("client");
+
     InStream chunk(stream.get_data(), 28);
 
-    FilecontentsRequestReceive receiver(chunk, RDPVerbose::cliprdr, 28);
+    FilecontentsRequestReceive receiver(state, chunk, RDPVerbose::cliprdr, 28);
 
-    RED_CHECK_EQUAL(receiver.dwFlags, 3);
-    RED_CHECK_EQUAL(receiver.has_optional_clipDataId, true);
-    RED_CHECK_EQUAL(receiver.streamID, 1);
-    RED_CHECK_EQUAL(receiver.lindex, 2);
+    RED_CHECK_EQUAL(receiver.dwFlags, RDPECLIP::FILECONTENTS_RANGE);
+    RED_REQUIRE_EQUAL(receiver.streamID, 1 );
 
-    RED_CHECK_EQUAL(receiver.position, 4);
-    RED_CHECK_EQUAL(receiver.cbRequested, 6);
-    RED_CHECK_EQUAL(receiver.clipDataId, 7);
+    FakeClipboardState::file_contents_request_info & fcri = state.file_contents_request_info_inventory[receiver.streamID];
+
+    RED_CHECK_EQUAL(fcri.lindex, 2);
+    RED_CHECK_EQUAL(fcri.position, 4);
+    RED_CHECK_EQUAL(fcri.cbRequested, 6);
+    RED_CHECK_EQUAL(fcri.clipDataId, 7);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)

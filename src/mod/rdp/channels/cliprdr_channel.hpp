@@ -45,76 +45,7 @@
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
-    using format_name_inventory_type = std::map<uint32_t, std::string>;
-    format_name_inventory_type format_name_inventory;
-
-    struct file_contents_request_info
-    {
-        uint32_t lindex;
-
-        uint64_t position;
-
-        uint32_t cbRequested;
-
-        uint32_t clipDataId;
-
-        uint32_t offset;
-    };
-    using file_contents_request_info_inventory_type = std::map<uint32_t /*streamId*/, file_contents_request_info>;
-
-    struct file_info_type
-    {
-        std::string file_name;
-
-        uint64_t size;
-
-        uint64_t sequential_access_offset;
-
-        SslSha256 sha256;
-    };
-    using file_info_inventory_type = std::vector<file_info_type>;
-
-    using file_stream_data_inventory_type = std::map<uint32_t /*clipDataId*/, file_info_inventory_type>;
-
-
-
-    struct ClipboardState : public ClipboardData {
-
-        ClipboardState(std::string provider_name) : ClipboardData(provider_name) {}
-
-        file_contents_request_info_inventory_type file_contents_request_info_inventory;
-        file_stream_data_inventory_type file_stream_data_inventory;
-
-        StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
-
-        void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) override {
-            this->file_contents_request_info_inventory[streamID] =
-            {
-                lindex,
-                position,
-                cbRequested,
-                clipDataId,
-                offset
-            };
-        }
-
-        void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) override {
-
-            file_info_inventory_type & file_info_inventory =
-                this->file_stream_data_inventory[this->clipDataId];
-
-            file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
-        }
-    };
-
-
-
-    ClipboardState server_data;
-    ClipboardState client_data;
-
-    uint32_t requestedFormatId = 0;
-
-
+    ClipboardData clip_data;
 
     const bool param_clipboard_down_authorized;
     const bool param_clipboard_up_authorized;
@@ -124,8 +55,6 @@ private:
     const bool param_dont_log_data_into_wrm;
 
     const bool param_log_only_relevant_clipboard_activities = false;
-
-//     StaticOutStream<RDPECLIP::FileDescriptor::size()> file_descriptor_stream;
 
     FrontAPI& front;
 
@@ -161,8 +90,6 @@ public:
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          params)
-    , server_data("server")
-    , client_data("client")
     , param_clipboard_down_authorized(params.clipboard_down_authorized)
     , param_clipboard_up_authorized(params.clipboard_up_authorized)
     , param_clipboard_file_authorized(params.clipboard_file_authorized)
@@ -170,8 +97,7 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
     , front(front)
-    , proxy_managed(to_client_sender_ == nullptr) {
-    }
+    , proxy_managed(to_client_sender_ == nullptr) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -204,19 +130,19 @@ public:
     }
 
     bool use_long_format_names() const {
-        return (this->client_data.use_long_format_names &&
-            this->server_data.use_long_format_names);
+        return (this->clip_data.client_data.use_long_format_names &&
+            this->clip_data.server_data.use_long_format_names);
     }
 
 private:
 
     bool process_client_filecontents_request(InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
-        FilecontentsRequestReceive receiver(this->client_data, chunk, this->verbose, in_header.dataLen());
+        FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, in_header.dataLen());
 
         if (!this->param_clipboard_file_authorized) {
 
-            FilecontentsRequestSendBack sender(std::string("client"), this->verbose, receiver.dwFlags, receiver.streamID);
+            FilecontentsRequestSendBack sender(this->clip_data.client_data, this->verbose, receiver.dwFlags, receiver.streamID);
 
             this->send_message_to_client(
                 sender.total_length,
@@ -237,7 +163,7 @@ private:
         (void)flags;
 
         ClientFormatDataRequestReceive receiver(this->verbose, chunk);
-        this->requestedFormatId  = receiver.requestedFormatId;
+        this->clip_data.requestedFormatId  = receiver.requestedFormatId;
 
         if (!this->param_clipboard_down_authorized) {
 
@@ -261,36 +187,23 @@ private:
         (void)total_length;
 
         ClientFormatDataResponseReceive receiver(
-            this->requestedFormatId ,
+            this->clip_data.client_data,
+            this->clip_data,
             chunk,
             in_header,
             this->param_dont_log_data_into_syslog,
-            this->client_data.file_list_format_id,
             flags,
-            this->client_data.file_descriptor_stream,
             this->verbose
         );
 
-        if (this->client_data.file_list_format_id
-        && (this->requestedFormatId  == this->client_data.file_list_format_id)) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-                this->requestedFormatId  = 0;
-            }
-
-            for (RDPECLIP::FileDescriptor fd : receiver.fds) {
-//                 const bool from_remote_session = false;
-                this->client_data.update_file_contents_request_inventory(fd);
-            }
-        }   // if (this->client_file_list_format_id &&
-
-        else {
+        if (!this->clip_data.client_data.file_list_format_id
+            || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
 
                 if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
 
-                    std::string format_name = this->format_name_inventory[this->requestedFormatId ];
+                    std::string format_name = this->clip_data.format_name_inventory[this->clip_data.requestedFormatId ];
 
                     bool const log_current_activity = (
                         (!this->param_log_only_relevant_clipboard_activities) ||
@@ -299,7 +212,7 @@ private:
                     );
 
                     format_name += "(";
-                    format_name += std::to_string(this->requestedFormatId );
+                    format_name += std::to_string(this->clip_data.requestedFormatId );
                     format_name += ")";
 
 //                     if (format_name.empty()) {
@@ -365,7 +278,7 @@ private:
     }   // process_client_format_data_response_pdu
 
 private:
-    void log_file_info(file_info_type & file_info, bool from_remote_session)
+    void log_file_info(ClipboardSideData::file_info_type & file_info, bool from_remote_session)
     {
         const char* type = (
                   from_remote_session
@@ -461,17 +374,17 @@ public:
             return false;
         }
 
-        this->format_name_inventory.clear();
+        this->clip_data.format_name_inventory.clear();
 
-        ClientFormatListReceive receiver(this->client_data.use_long_format_names,
-                                         this->server_data.use_long_format_names,
+        ClientFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
+                                         this->clip_data.server_data.use_long_format_names,
                                          in_header,
                                          chunk,
-                                         format_name_inventory,
+                                         this->clip_data.format_name_inventory,
                                          verbose);
 
         if (receiver.client_file_list_format_id) {
-            this->client_data.file_list_format_id = receiver.client_file_list_format_id;
+            this->clip_data.client_data.file_list_format_id = receiver.client_file_list_format_id;
         }
 
         return true;
@@ -542,20 +455,20 @@ public:
             header.recv(chunk);
 
             //
-            this->client_data.message_type = header.msgType();
+            this->clip_data.client_data.message_type = header.msgType();
         }
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            log_client_message_type(this->client_data.message_type, flags);
+            log_client_message_type(this->clip_data.client_data.message_type, flags);
         }
 
         bool send_message_to_server = true;
 
-        switch (this->client_data.message_type)
+        switch (this->clip_data.client_data.message_type)
         {
             case RDPECLIP::CB_CLIP_CAPS:
             {
-                ClipboardCapabilitiesReceive receiver(this->client_data, chunk, this->verbose);
+                ClipboardCapabilitiesReceive receiver(this->clip_data.client_data, chunk, this->verbose);
                 send_message_to_server = true;
             }
             break;
@@ -590,50 +503,59 @@ public:
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
-
-                    this->client_data.dataLen = header.dataLen();
-
-                    if (this->client_data.dataLen >= 4) {
-                        this->client_data.streamId = chunk.in_uint32_le();
-                    }
                 }
 
-                if (this->client_data.file_contents_request_info_inventory.end() !=
-                    this->client_data.file_contents_request_info_inventory.find(this->client_data.streamId))
-                {
-                    file_contents_request_info& file_contents_request =
-                        this->client_data.file_contents_request_info_inventory[this->client_data.streamId];
+                FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
-                    {
-                        file_info_inventory_type& file_info_inventory =
-                            this->client_data.file_stream_data_inventory[
-                                file_contents_request.clipDataId];
-
-                        file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
-
-                        uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
-
-                        if (chunk.in_remain()) {
-                            if (file_info.sequential_access_offset == file_contents_request_position_current) {
-                                uint32_t const length_ = std::min({
-                                        static_cast<uint32_t>(chunk.in_remain()),
-                                        static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
-                                        file_contents_request.cbRequested - file_contents_request.offset
-                                    });
-
-                                file_info.sha256.update({ chunk.get_current(), length_ });
-
-                                file_contents_request.offset       += length_;
-                                file_info.sequential_access_offset += length_;
-
-                                if (file_info.sequential_access_offset == file_info.size) {
-                                    const bool from_remote_session = false;
-                                    this->log_file_info(file_info, from_remote_session);
-                                }
-                            }
-                        }
-                    }
+                if (receive.must_log_file_info_type) {
+                    const bool from_remote_session = false;
+                    this->log_file_info(receive.file_info, from_remote_session);
                 }
+
+//                 {
+//                     this->clip_data.client_data.dataLen = header.dataLen();
+//
+//                     if (this->clip_data.client_data.dataLen >= 4) {
+//                         this->clip_data.client_data.streamId = chunk.in_uint32_le();
+//                     }
+//                 }
+//
+//                 if (this->clip_data.client_data.file_contents_request_info_inventory.end() !=
+//                     this->clip_data.client_data.file_contents_request_info_inventory.find(this->clip_data.client_data.streamId))
+//                 {
+//                     ClipboardSideData::file_contents_request_info& file_contents_request =
+//                         this->clip_data.client_data.file_contents_request_info_inventory[this->clip_data.client_data.streamId];
+//
+//                     {
+//                         ClipboardSideData::file_info_inventory_type& file_info_inventory =
+//                             this->clip_data.client_data.file_stream_data_inventory[
+//                                 file_contents_request.clipDataId];
+//
+//                         ClipboardSideData::file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
+//
+//                         uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+//
+//                         if (chunk.in_remain()) {
+//                             if (file_info.sequential_access_offset == file_contents_request_position_current) {
+//                                 uint32_t const length_ = std::min({
+//                                         static_cast<uint32_t>(chunk.in_remain()),
+//                                         static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
+//                                         file_contents_request.cbRequested - file_contents_request.offset
+//                                     });
+//
+//                                 file_info.sha256.update({ chunk.get_current(), length_ });
+//
+//                                 file_contents_request.offset       += length_;
+//                                 file_info.sequential_access_offset += length_;
+//
+//                                 if (file_info.sequential_access_offset == file_info.size) {
+//                                     const bool from_remote_session = false;
+//                                     this->log_file_info(file_info, from_remote_session);
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
             }
             break;
 
@@ -660,8 +582,8 @@ public:
                                 "clipDataId=%u", clipDataId);
                     }
 
-                    this->server_data.clipDataId                             = clipDataId;
-                    this->server_data.file_stream_data_inventory[clipDataId] = file_info_inventory_type();
+                    this->clip_data.server_data.clipDataId                             = clipDataId;
+                    this->clip_data.server_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
                 }
             }
             break;
@@ -670,7 +592,7 @@ public:
 
                 if (header.dataLen() >= 4 /* clipDataId(4) */) {
                     ClientUnlockClipDataReceive receive(chunk, this->verbose);
-                    this->server_data.file_stream_data_inventory.erase(receive.clipDataId);
+                    this->clip_data.server_data.file_stream_data_inventory.erase(receive.clipDataId);
                 }
             }
             break;
@@ -680,8 +602,8 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_client_message: "
                             "Delivering unprocessed messages %s(%u) to server.",
-                        RDPECLIP::get_msgType_name(this->client_data.message_type),
-                        static_cast<unsigned>(this->client_data.message_type));
+                        RDPECLIP::get_msgType_name(this->clip_data.client_data.message_type),
+                        static_cast<unsigned>(this->clip_data.client_data.message_type));
                 }
             break;
         }   // switch (this->client_message_type)
@@ -692,30 +614,17 @@ public:
         }
     }   // process_client_message
 
-    bool process_server_clipboard_capabilities_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & /*in_header*/)
-    {
-        (void)total_length;
-        (void)flags;
-
-        ClipboardCapabilitiesReceive receiver(this->server_data, chunk, this->verbose);
-
-//         this->server_data.use_long_format_names = receiver.client_use_long_format_names;
-
-        return !this->proxy_managed;
-    }
-
     bool process_server_file_contents_request_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
         (void)flags;
 
-         FilecontentsRequestReceive receiver(this->server_data, chunk, this->verbose, in_header.dataLen());
+         FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, in_header.dataLen());
 
         if (!this->param_clipboard_file_authorized) {
 
-            FilecontentsRequestSendBack sender(std::string("server"), this->verbose, receiver.dwFlags, receiver.streamID);
+            FilecontentsRequestSendBack sender(this->clip_data.server_data, this->verbose, receiver.dwFlags, receiver.streamID);
 
             this->send_message_to_server(
                 sender.total_length,
@@ -735,10 +644,10 @@ public:
         (void)total_length;
         (void)flags;
         ServerFormatDataRequestReceive receiver(chunk);
-        this->requestedFormatId  = receiver.requestedFormatId;
+        this->clip_data.requestedFormatId  = receiver.requestedFormatId;
 
         if (this->format_data_request_notifier &&
-            (this->requestedFormatId  == RDPECLIP::CF_TEXT)) {
+            (this->clip_data.requestedFormatId  == RDPECLIP::CF_TEXT)) {
             if (!this->format_data_request_notifier->on_server_format_data_request()) {
                 this->format_data_request_notifier = nullptr;
             }
@@ -768,8 +677,8 @@ public:
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
                     "requestedFormatId=%s(%u)",
-                RDPECLIP::get_FormatId_name(this->requestedFormatId ),
-                this->requestedFormatId );
+                RDPECLIP::get_FormatId_name(this->clip_data.requestedFormatId ),
+                this->clip_data.requestedFormatId );
         }
 
         return true;
@@ -781,13 +690,13 @@ public:
         (void)total_length;
 
         ServerFormatDataResponseReceive receiver(
-            this->requestedFormatId ,
+            this->clip_data.requestedFormatId ,
             chunk,
             in_header,
             this->param_dont_log_data_into_syslog,
-            this->server_data.file_list_format_id,
+            this->clip_data.server_data.file_list_format_id,
             flags,
-            this->server_data.file_descriptor_stream,
+            this->clip_data.server_data.file_descriptor_stream,
             this->verbose
         );
 
@@ -800,9 +709,9 @@ public:
                     "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :
                     "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX");
 
-                std::string format_name = this->format_name_inventory[this->requestedFormatId ];
+                std::string format_name = this->clip_data.format_name_inventory[this->clip_data.requestedFormatId ];
                 if (format_name.empty()) {
-                    format_name = RDPECLIP::get_FormatId_name(this->requestedFormatId );
+                    format_name = RDPECLIP::get_FormatId_name(this->clip_data.requestedFormatId );
                 }
 
                 bool const log_current_activity = (
@@ -812,7 +721,7 @@ public:
                     );
 
                 format_name += "(";
-                format_name += std::to_string(this->requestedFormatId );
+                format_name += std::to_string(this->clip_data.requestedFormatId );
                 format_name += ")";
 
                 auto const size_str = std::to_string(in_header.dataLen());
@@ -891,17 +800,17 @@ public:
             return false;
         }
 
-        this->format_name_inventory.clear();
+        this->clip_data.format_name_inventory.clear();
 
-        ServerFormatListReceive receiver(this->client_data.use_long_format_names,
-                                    this->server_data.use_long_format_names,
+        ServerFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
+                                    this->clip_data.server_data.use_long_format_names,
                                     in_header,
                                     chunk,
-                                    format_name_inventory,
+                                    this->clip_data.format_name_inventory,
                                     verbose);
 
         if (receiver.server_file_list_format_id) {
-            this->server_data.file_list_format_id = receiver.server_file_list_format_id;
+            this->clip_data.server_data.file_list_format_id = receiver.server_file_list_format_id;
         }
 
         return true;
@@ -917,6 +826,8 @@ public:
         if (this->proxy_managed) {
             // Client Clipboard Capabilities PDU.
 
+            this->clip_data.client_data.use_long_format_names = true;
+
             ServerMonitorReadySendBack sender(this->verbose, this->use_long_format_names());
 
             this->send_message_to_server(
@@ -925,7 +836,7 @@ public:
                 sender.caps_stream.get_data(),
                 sender.caps_stream.get_offset());
 
-            this->client_data.use_long_format_names = true;
+
 
             this->send_message_to_server(
                 sender.list_total_Length,
@@ -982,23 +893,18 @@ public:
 
             header.recv(chunk);
 
-            this->server_data.message_type = header.msgType();
+            this->clip_data.server_data.message_type = header.msgType();
         }
 
         bool send_message_to_client = true;
 
-        switch (this->server_data.message_type)
+        switch (this->clip_data.server_data.message_type)
         {
             case RDPECLIP::CB_CLIP_CAPS:
-                if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                    LOG(LOG_INFO,
-                        "ClipboardVirtualChannel::process_server_message: "
-                            "Clipboard Capabilities PDU");
-                }
-
-                send_message_to_client =
-                    this->process_server_clipboard_capabilities_pdu(
-                        total_length, flags, chunk, header);
+            {
+                ClipboardCapabilitiesReceive receiver(this->clip_data.server_data, chunk, this->verbose);
+                send_message_to_client = !this->proxy_managed;
+            }
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST:
@@ -1023,49 +929,56 @@ public:
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                     this->update_exchanged_data(total_length);
 
-                    this->server_data.dataLen = header.dataLen();
-
-                    if (this->server_data.dataLen >= 4 /* streamId(4) */) {
-                        this->server_data.streamId = chunk.in_uint32_le();
-                    }
+//                     this->clip_data.server_data.dataLen = header.dataLen();
+//
+//                     if (this->clip_data.server_data.dataLen >= 4 /* streamId(4) */) {
+//                         this->clip_data.server_data.streamId = chunk.in_uint32_le();
+//                     }
                 }
 
-                if (this->client_data.file_contents_request_info_inventory.end() !=
-                    this->client_data.file_contents_request_info_inventory.find(this->server_data.streamId))
-                {
-                    file_contents_request_info& file_contents_request =
-                        this->client_data.file_contents_request_info_inventory[this->server_data.streamId];
+                FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
-                    {
-                        file_info_inventory_type& file_info_inventory =
-                            this->server_data.file_stream_data_inventory[
-                                file_contents_request.clipDataId];
-
-                        file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
-
-                        uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
-
-                        if (chunk.in_remain()) {
-                            if (file_info.sequential_access_offset == file_contents_request_position_current) {
-                                uint32_t const length_ = std::min({
-                                        static_cast<uint32_t>(chunk.in_remain()),
-                                        static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
-                                        file_contents_request.cbRequested - file_contents_request.offset
-                                    });
-
-                                file_info.sha256.update({ chunk.get_current(), length_ });
-
-                                file_contents_request.offset       += length_;
-                                file_info.sequential_access_offset += length_;
-
-                                if (file_info.sequential_access_offset == file_info.size) {
-                                    const bool from_remote_session = true;
-                                    this->log_file_info(file_info, from_remote_session);
-                                }
-                            }
-                        }
-                    }
+                if (receive.must_log_file_info_type) {
+                    const bool from_remote_session = true;
+                    this->log_file_info(receive.file_info, from_remote_session);
                 }
+
+//                 if (this->clip_data.client_data.file_contents_request_info_inventory.end() !=
+//                     this->clip_data.client_data.file_contents_request_info_inventory.find(this->clip_data.server_data.streamId))
+//                 {
+//                     ClipboardSideData::file_contents_request_info& file_contents_request =
+//                         this->clip_data.client_data.file_contents_request_info_inventory[this->clip_data.server_data.streamId];
+//
+//                     {
+//                         ClipboardSideData::file_info_inventory_type& file_info_inventory =
+//                             this->clip_data.server_data.file_stream_data_inventory[
+//                                 file_contents_request.clipDataId];
+//
+//                         ClipboardSideData::file_info_type& file_info = file_info_inventory[file_contents_request.lindex];
+//
+//                         uint64_t const file_contents_request_position_current = file_contents_request.position + file_contents_request.offset;
+//
+//                         if (chunk.in_remain()) {
+//                             if (file_info.sequential_access_offset == file_contents_request_position_current) {
+//                                 uint32_t const length_ = std::min({
+//                                         static_cast<uint32_t>(chunk.in_remain()),
+//                                         static_cast<uint32_t>(file_info.size - file_info.sequential_access_offset),
+//                                         file_contents_request.cbRequested - file_contents_request.offset
+//                                     });
+//
+//                                 file_info.sha256.update({ chunk.get_current(), length_ });
+//
+//                                 file_contents_request.offset       += length_;
+//                                 file_info.sequential_access_offset += length_;
+//
+//                                 if (file_info.sequential_access_offset == file_info.size) {
+//                                     const bool from_remote_session = true;
+//                                     this->log_file_info(file_info, from_remote_session);
+//                                 }
+//                             }
+//                         }
+//                     }
+//                 }
             }
             break;
 
@@ -1163,8 +1076,8 @@ public:
                                 "clipDataId=%u", clipDataId);
                     }
 
-                    this->client_data.clipDataId                             = clipDataId;
-                    this->client_data.file_stream_data_inventory[clipDataId] = file_info_inventory_type();
+                    this->clip_data.client_data.clipDataId                             = clipDataId;
+                    this->clip_data.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
                 }
             }
             break;
@@ -1209,7 +1122,7 @@ public:
                                 "clipDataId=%u", clipDataId);
                     }
 
-                    this->client_data.file_stream_data_inventory.erase(clipDataId);
+                    this->clip_data.client_data.file_stream_data_inventory.erase(clipDataId);
                 }
             }
             break;
@@ -1219,8 +1132,8 @@ public:
                     LOG(LOG_INFO,
                         "ClipboardVirtualChannel::process_server_message: "
                             "Delivering unprocessed messages %s(%u) to client.",
-                        RDPECLIP::get_msgType_name(this->server_data.message_type),
-                        static_cast<unsigned>(this->server_data.message_type));
+                        RDPECLIP::get_msgType_name(this->clip_data.server_data.message_type),
+                        static_cast<unsigned>(this->clip_data.server_data.message_type));
                 }
             break;
         }   // switch (this->server_message_type)
