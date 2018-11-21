@@ -19,12 +19,6 @@
 */
 
 #pragma once
-/*
-#include <fstream>*/
-#include <iostream>
-// #include <sstream>
-#include <cstdio>
-#include <dirent.h>
 
 #include "utils/log.hpp"
 #include "utils/netutils.hpp"
@@ -54,10 +48,14 @@
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 #include "client_redemption/client_input_output_api/rdp_sound_config.hpp"
 
+#include <iostream>
 #include <algorithm>
 
+#include <cstdio>
 #include <climits>
 #include <cstdint>
+
+#include <dirent.h>
 #include <openssl/ssl.h>
 
 #define CLIENT_REDEMPTION_REPLAY_PATH "/DATA/replay"
@@ -77,105 +75,100 @@
 #endif
 
 
+struct UserProfil {
+    int id;
+    std::string name;
 
-    struct UserProfil {
-        int id;
-        std::string name;
+    UserProfil(int id, std::string name)
+        : id(id)
+        , name(std::move(name)) {}
+};
 
-        UserProfil(int id, std::string name)
-          : id(id)
-          , name(std::move(name)) {}
-    };
+struct KeyCustomDefinition {
+    int qtKeyID = 0;
+    int scanCode = 0;
+    std::string ASCII8;
+    int extended = 0;
+    std::string name;
 
-    struct OptionProfil {
+    KeyCustomDefinition() = default;
 
-    };
+    KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
+        : qtKeyID(qtKeyID)
+        , scanCode(scanCode)
+        , ASCII8(std::move(ASCII8))
+        , extended(extended ? 0x0100 : 0)
+        , name(std::move(name))
+    {}
+};
 
-    struct KeyCustomDefinition {
-        int qtKeyID = 0;
-        int scanCode = 0;
-        std::string ASCII8;
-        int extended = 0;
-        std::string name;
+struct IconMovieData {
+    std::string file_name;
+    std::string file_path;
+    std::string file_version;
+    std::string file_resolution;
+    std::string file_checksum;
+    long int movie_len = 0;
 
-        KeyCustomDefinition() = default;
+    IconMovieData(std::string file_name,
+                  std::string file_path,
+                  std::string file_version,
+                  std::string file_resolution,
+                  std::string file_checksum,
+                  long int movie_len)
+        : file_name(std::move(file_name))
+        , file_path(std::move(file_path))
+        , file_version(std::move(file_version))
+        , file_resolution(std::move(file_resolution))
+        , file_checksum(std::move(file_checksum))
+        , movie_len(movie_len)
+    {}
+};
 
-        KeyCustomDefinition(int qtKeyID, int scanCode, std::string ASCII8, int extended, std::string name)
-          : qtKeyID(qtKeyID)
-          , scanCode(scanCode)
-          , ASCII8(std::move(ASCII8))
-          , extended(extended ? 0x0100 : 0)
-          , name(std::move(name))
-        {}
-    };
+// VNC mod
+struct ModVNCParamsData {
+    bool is_apple;
+    Theme      theme;
+    WindowListCaps windowListCaps;
+    ClientExecute exe;
+    std::string vnc_encodings;
+    int keylayout = 0x040C;
+    int width = 800;
+    int height = 600;
 
-    struct IconMovieData {
-        const std::string file_name;
-        const std::string file_path;
-        const std::string file_version;
-        const std::string file_resolution;
-        const std::string file_checksum;
-        const long int movie_len = 0;
+    bool enable_tls = false;
+    bool enable_nla = false;
+    bool enable_sound = false;
+    bool enable_shared_clipboard = false;
 
-        IconMovieData(std::string file_name,
-                      std::string file_path,
-                      std::string file_version,
-                      std::string file_resolution,
-                      std::string file_checksum,
-                      long int movie_len)
-            : file_name(std::move(file_name))
-            , file_path(std::move(file_path))
-            , file_version(std::move(file_version))
-            , file_resolution(std::move(file_resolution))
-            , file_checksum(std::move(file_checksum))
-            , movie_len(movie_len)
-            {}
-    };
+    std::vector<UserProfil> userProfils;
+    int current_user_profil = 0;
 
-    // VNC mod
-    struct ModVNCParamsData {
-        bool is_apple;
-        Theme      theme;
-        WindowListCaps windowListCaps;
-        ClientExecute exe;
-        std::string vnc_encodings;
-        int keylayout = 0x040C;
-        int width = 800;
-        int height = 600;
+    ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
+        : is_apple(false)
+        , exe(session_reactor, client, this->windowListCaps, false)
+        , vnc_encodings("5,16,0,1,-239")
+    {}
+};
 
-        bool enable_tls = false;
-        bool enable_nla = false;
-        bool enable_sound = false;
-        bool enable_shared_clipboard = false;
+struct ModRDPParamsData
+{
+    int rdp_width = 0;
+    int rdp_height = 0;
+    bool enable_tls   = false;
+    bool enable_nla   = false;
+    bool enable_sound = false;
 
-        std::vector<UserProfil> userProfils;
-        int current_user_profil = 0;
+    bool enable_shared_virtual_disk = true;
+    bool enable_shared_remoteapp = false;
+};
 
-        ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
-          : is_apple(false)
-          , exe(session_reactor, client, this->windowListCaps, false)
-          , vnc_encodings("5,16,0,1,-239")
-        {}
-    };
-
-    struct ModRDPParamsData
-    {
-        int rdp_width = 0;
-        int rdp_height = 0;
-        bool enable_tls   = false;
-        bool enable_nla   = false;
-        bool enable_sound = false;
-
-        bool enable_shared_virtual_disk = true;
-        bool enable_shared_remoteapp = false;
-    };
-
-    struct RDPRemoteAppConfig {
-        std::string source_of_ExeOrFile;
-        std::string source_of_WorkingDir;
-        std::string source_of_Arguments;
-        std::string full_cmd_line;
-    };
+struct RDPRemoteAppConfig {
+    std::string source_of_ExeOrFile;
+    std::string source_of_WorkingDir;
+    std::string source_of_Arguments;
+    std::string full_cmd_line;
+};
 
 struct WindowsData {
 
@@ -326,7 +319,11 @@ public:
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front, const std::string &MAIN_DIR )
-    : MAIN_DIR(MAIN_DIR)
+    : MAIN_DIR((MAIN_DIR.empty() || MAIN_DIR == "/")
+        ? MAIN_DIR
+        : (MAIN_DIR.back() == '/')
+        ? MAIN_DIR.substr(0, MAIN_DIR.size() - 1)
+        : MAIN_DIR)
     , verbose(verbose)
     //, _recv_disconnect_ultimatum(false)
     , wab_diag_question(false)
@@ -654,32 +651,29 @@ public:
 
     ~ClientRedemptionConfig() = default;
 
-    void set_icon_movie_data() {
-
+    void set_icon_movie_data()
+    {
         this->icons_movie_data.clear();
 
-        DIR *dir;
-        struct dirent *ent;
-        std::string extension(".mwrm");
+        auto extension_av = ".mwrm"_av;
 
-        if ((dir = opendir (this->REPLAY_DIR.c_str())) != nullptr) {
-//
+        if (DIR * dir = opendir(this->REPLAY_DIR.c_str())) {
             try {
-                while ((ent = readdir (dir)) != nullptr) {
+                while (struct dirent * ent = readdir (dir)) {
+                    std::string current_name = ent->d_name;
 
-                    std::string current_name = std::string (ent->d_name);
-                    if (current_name.length() > 5) {
+                    if (current_name.length() > extension_av.size()) {
 
-                        std::string end_string(current_name.substr(current_name.length()-5, current_name.length()));
-                        if (end_string == extension) {
+                        std::string end_string(current_name.substr(
+                            current_name.length()-extension_av.size(), current_name.length()));
 
+                        if (end_string == extension_av.data()) {
                             std::string file_path = this->REPLAY_DIR + "/" + current_name;
 
-                            unique_fd fd = unique_fd(file_path.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+                            unique_fd fd(file_path, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
                             if(fd.is_open()){
-
-                                std::string file_name(current_name.substr(0, current_name.length()-5));
+                                std::string file_name(current_name.substr(0, current_name.length()-extension_av.size()));
                                 std::string file_version;
                                 std::string file_resolution;
                                 std::string file_checksum;
@@ -689,7 +683,13 @@ public:
                                 this->read_line(fd.fd(), file_resolution);
                                 this->read_line(fd.fd(), file_checksum);
 
-                                this->icons_movie_data.emplace_back(file_name, file_path, file_version, file_resolution, file_checksum, movie_len);
+                                this->icons_movie_data.emplace_back(
+                                    std::move(file_name),
+                                    std::move(file_path),
+                                    std::move(file_version),
+                                    std::move(file_resolution),
+                                    std::move(file_checksum),
+                                    movie_len);
 
                             } else {
                                 LOG(LOG_WARNING, "Can't open file \"%s\"", file_path);
@@ -733,7 +733,7 @@ public:
         return stop_time - start_time;
     }
 
-    std::vector<IconMovieData> get_icon_movie_data() {
+    std::vector<IconMovieData> const& get_icon_movie_data() {
 
         this->set_icon_movie_data();
 
@@ -967,14 +967,6 @@ public:
                 break;
         }
     }
-
-
-//     std::vector<IconMovieData> get_icon_movie_data() {
-//         std::vector<IconMovieData> vec;
-//         return vec;
-//     }
-
-
 
     void openWindowsData()  {
         unique_fd file = unique_fd(this->WINDOWS_CONF.c_str(), O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -1576,9 +1568,4 @@ public:
             ::write(file.fd(), to_write.c_str(), to_write.length());
         }
     }
-
-
 };
-
-
-

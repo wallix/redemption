@@ -20,6 +20,8 @@ Author(s): Jonathan Poelen
 
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/algostring.hpp"
+#include "utils/sugar/scope_exit.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -37,91 +39,130 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    static inline constexpr std::string_view dirbase = "/tmp/";
-
-    void normalize_directory(std::string& directory)
+    struct TempBase
     {
-        directory.insert(0, dirbase);
-        if (directory[directory.size()-1] != '/') {
-            directory += '/';
+        TempBase()
+        {
+            char const* s = std::getenv("TMPDIR");
+            if (s) {
+                if (*s) {
+                    this->dirname = s;
+                    if (this->dirname.back() != '/') {
+                        this->dirname += '/';
+                    }
+                }
+            }
+            else {
+                this->dirname = "/tmp/";
+            }
         }
-    }
 
-    std::string concat(std::string s, std::string_view sv)
+        std::string dirname;
+    };
+
+    std::string const& tempbase()
     {
-        s.append(sv.begin(), sv.end());
-        return s;
+        static const TempBase tempbase;
+        return tempbase.dirname;
     }
 }
 
 
-WorkingDirectory::WorkingDirectory(std::string dirname)
-    : directory(std::move(dirname))
+WorkingDirectory::Path::Path() noexcept = default;
+
+WorkingDirectory::Path::Path(std::string name, int counter_id) noexcept
+: name(std::move(name))
+, type(this->name.back() == '/' ? Type::Directory : Type::File)
+, counter_id(counter_id)
+{}
+
+WorkingDirectory::Path::Path(std::unique_ptr<WorkingDirectory>&& child, int counter_id) noexcept
+: name(child->dirname())
+, child(std::move(child))
+, type(Type::Directory)
+, counter_id(counter_id)
+{}
+
+bool WorkingDirectory::Path::operator == (Path const& other) const
 {
-    auto is_invalid_char = [](char c) { return c == '.' || c == '/'; };
-    if (directory.empty()
-     || directory.end() != std::find_if(directory.begin(), directory.end(), is_invalid_char)
-    ) {
+    return this->name == other.name;
+}
+
+
+std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
+{
+    return std::hash<std::string>()(path.name);
+}
+
+
+WorkingDirectory::WorkingDirectory(std::string_view dirname)
+  : WorkingDirectory(dirname, tempbase())
+{}
+
+WorkingDirectory::WorkingDirectory(std::string_view dirname, std::string_view dirbase)
+{
+    if (dirname.empty() || dirname.find_first_of("/.") != std::string::npos) {
         throw std::runtime_error("invalid dirname");
     }
-    normalize_directory(this->directory);
+
+    this->directory = str_concat(dirbase, dirname, '/');
+
     recursive_delete_directory(this->directory.c_str());
     if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {
         throw std::runtime_error(strerror(errno));
     }
 }
 
-
-WorkingDirectory::WorkingDirectory(
-    std::string dirname, std::initializer_list<std::string_view> files)
-    : WorkingDirectory(std::move(dirname))
+WorkingDirectory& WorkingDirectory::create_subdirectory(std::string_view directory)
 {
-    this->paths.resize(files.size());
-    for (std::size_t i = 0; i < files.size(); ++i) {
-        auto sv = files.begin()[i];
-        this->paths[i].is_checked = false;
-        this->paths[i].name = concat(this->directory, sv);
+    auto [it, inserted] = this->paths.emplace(
+        std::unique_ptr<WorkingDirectory>(new WorkingDirectory(directory, this->directory)),
+        this->counter_id);
+    if (!inserted) {
+        this->has_error = true;
+        throw std::runtime_error(str_concat(directory, " exists"));
     }
+    return *it->child;
+}
 
-    for (auto& path : this->paths) {
-        unlink(path.name.c_str());
+std::string WorkingDirectory::add_file(std::string file)
+{
+    auto [it, b] = this->paths.emplace(std::move(file), this->counter_id);
+    if (!b) {
+        this->has_error = true;
+        throw std::runtime_error(str_concat("WorkingDirectory: ", it->name, " already exists"));
     }
+    this->is_checked = false;
+    return this->path_of(it->name);
 }
 
-WorkingDirectory::FileIndex WorkingDirectory::add_file(std::string_view filename)
+WorkingDirectory& WorkingDirectory::add_files(std::initializer_list<std::string> files)
 {
-    this->paths.push_back({concat(this->directory, filename), false});
-    unlink(this->paths.back().name.c_str());
-    return {this->paths.size() - 1u};
-}
-
-WorkingDirectory WorkingDirectory::neested(
-    std::string directory, std::initializer_list<std::string_view> files)
-{
-    directory.insert(0, this->directory.c_str() + dirbase.size());
-    return WorkingDirectory(std::move(directory), std::move(files));
-}
-
-std::string const& WorkingDirectory::operator[](std::size_t i) noexcept
-{
-    this->paths[i].is_checked = true;
-    return this->paths[i].name;
-}
-
-std::string const& WorkingDirectory::operator[](FileIndex file_index) noexcept
-{
-    return operator[](file_index.index);
-}
-
-std::string const& WorkingDirectory::operator[](std::string filename)
-{
-    filename.insert(0, this->directory);
-    for (std::size_t i = 0; i < this->paths.size(); ++i) {
-        if (filename == this->paths[i].name) {
-            return operator[](i);
+    for (auto const& sv : files) {
+        if (!this->paths.emplace(sv, this->counter_id).second) {
+            this->has_error = true;
+            throw std::runtime_error(str_concat("WorkingDirectory: ", sv, " already exists"));
         }
     }
-    throw std::logic_error("unknown file");
+    this->is_checked = false;
+    return *this;
+}
+
+WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::string> files)
+{
+    for (auto const& sv : files) {
+        if (this->paths.erase(Path(sv, 0))) {
+            this->has_error = true;
+            throw std::runtime_error(str_concat("WorkingDirectory: ", sv, " unknown"));
+        }
+    }
+    this->is_checked = false;
+    return *this;
+}
+
+std::string WorkingDirectory::path_of(std::string_view path) const
+{
+    return str_concat(this->directory, path);
 }
 
 std::string const& WorkingDirectory::dirname() const noexcept
@@ -129,117 +170,104 @@ std::string const& WorkingDirectory::dirname() const noexcept
     return this->directory;
 }
 
-
-std::string WorkingDirectory::check_final_state()
+std::string WorkingDirectory::unmached_files()
 {
-    assert(!this->is_checked);
-
     this->is_checked = true;
+    ++this->counter_id;
 
-    std::string message;
+    Path path(this->dirname(), 0);
+    Path filename;
+    std::string err;
 
-    if (DIR* dir = opendir(this->directory.c_str())) {
-        while (auto ent = readdir(dir)) {
-            if (0 == strcmp(ent->d_name, ".") 
-            ||  0 == strcmp(ent->d_name, "..")) {
+    auto check_not_found = [&err](WorkingDirectory const& wd){
+        for (auto const& p : wd.paths) {
+            if (p.counter_id != wd.counter_id) {
+                str_append(err, p.name, ' ', wd.path_of(p.name), " not found\n");
+            }
+        }
+    };
+
+    auto unmached_files_impl = [&](auto recursive, WorkingDirectory const& wd) -> bool
+    {
+        DIR * dir = opendir(path.name.c_str());
+        if (!dir) {
+            str_append(err, "opendir ", path.name, " error: ", strerror(errno), '\n');
+            return false;
+        }
+        SCOPE_EXIT(closedir(dir));
+
+        auto const original_path_len = path.name.size();
+        auto const original_filename_len = filename.name.size();
+
+        bool has_entry = false;
+
+        while (struct dirent* ent = readdir(dir)) {
+            if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
                 continue;
             }
-            std::size_t i = 0;
-            for (; i < this->paths.size(); ++i) {
-                auto& path = this->paths[i];
-                std::string entry(directory);
-                entry += ent->d_name;
-                if (0 == strcmp(path.name.c_str(), entry.c_str())){
-                    break;
+
+            has_entry = true;
+
+            path.name += ent->d_name;
+            filename.name += ent->d_name;
+
+            struct stat statbuf;
+            auto const type = (!stat(path.name.c_str(), &statbuf) && S_ISDIR(statbuf.st_mode))
+              ? Type::Directory : Type::File;
+
+            if (type == Type::Directory) {
+                path.name += '/';
+                filename.name += '/';
+            }
+
+            auto it = wd.paths.find(filename);
+            if (it == wd.paths.end()) {
+                if (type == Type::Directory) {
+                    if(!recursive(recursive, wd)) {
+                        str_append(err, path.name, " unknown\n");
+                    }
+                }
+                else {
+                    str_append(err, path.name, " unknown\n");
                 }
             }
-            if (i == this->paths.size()){
-                if (message.size() == 0){
-                    message = "Unexpected Files: \n";
+            else {
+                it->counter_id = wd.counter_id;
+                if (it->type != type) {
+                    str_append(err, path.name, " unmatching file type\n");
                 }
-                message += '\"';
-                message += directory;
-                message += ent->d_name;
-                message += "\"";
-                message += "\n";
-            }
-        }
-        closedir(dir);
-    }
-    else {
-        message = "Can't access directory ";
-        message += '\"';
-        message += directory;
-        message += "\" ";
-    }
-
-    return message;
-}
-
-
-std::string WorkingDirectory::clean_and_get()
-{
-    assert(!this->is_checked);
-
-    this->is_checked = true;
-
-    std::string message;
-
-    for (std::size_t i = 0; i < this->paths.size(); ++i) {
-        auto& path = this->paths[i];
-        if (path.is_checked) {
-            unlink(path.name.c_str());
-        }
-        else {
-            if (message.empty()) {
-                message = "not checked: ";
-            }
-            char buf[42];
-            std::snprintf(buf, sizeof(buf), "[%zu]\"", i);
-            message += buf;
-            message += path.name;
-            message += "\", ";
-        }
-    }
-
-    if (!message.empty()) {
-        message.resize(message.size() - 2);
-    }
-
-    auto const len = message.size();
-
-    if (-1 == rmdir(this->directory.c_str()) && errno == ENOTEMPTY) {
-        if (DIR* dir = opendir(this->directory.c_str())) {
-            while (auto ent = readdir(dir)) {
-                if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
-                    continue;
+                else if (it->child) {
+                    std::string tmp = std::move(filename.name);
+                    auto& sub_wd = *it->child;
+                    ++sub_wd.counter_id;
+                    recursive(recursive, sub_wd);
+                    check_not_found(sub_wd);
+                    filename.name = std::move(tmp);
                 }
-                if (len == message.size()) {
-                    message += "   files exists: ";
-
+                else if (type == Type::Directory){
+                    recursive(recursive, wd);
                 }
-                message += '\"';
-                message += directory;
-                message += ent->d_name;
-                message += "\" ";
             }
-            closedir(dir);
+
+            path.name.resize(original_path_len);
+            filename.name.resize(original_filename_len);
         }
-    }
 
-    if (len != message.size()) {
-        message.resize(message.size() - 2);
-    }
+        return has_entry;
+    };
 
-    return message;
+    unmached_files_impl(unmached_files_impl, *this);
+    check_not_found(*this);
+    this->has_error = this->has_error || !err.empty();
+    return err;
 }
 
 WorkingDirectory::~WorkingDirectory() noexcept(false)
 {
-    if (!this->is_checked) {
-        auto s = this->clean_and_get();
-        if (!s.empty()) {
-            throw std::runtime_error(s);
+    if (!this->has_error) {
+        recursive_delete_directory(this->dirname().c_str());
+        if (!this->is_checked) {
+            throw std::runtime_error("WorkingDirectory: unchecked entries");
         }
     }
 }

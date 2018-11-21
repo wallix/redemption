@@ -38,10 +38,6 @@ constexpr const char * protocol_name = "rdp";
 RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
 {
     WorkingDirectory wd("metrics_ctor");
-    auto logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
-    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
-    auto logmetrics2 = wd.add_file("rdp_metrics-v1.0-2018-08-03.logmetrics");
-    auto logindex2   = wd.add_file("rdp_metrics-v1.0-2018-08-03.logindex");
 
     std::chrono::seconds epoch = 1533211681s; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
 
@@ -57,8 +53,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
                       , 5
                       );
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
-    RED_CHECK_FILE_EXISTS(wd[logindex1]);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "rdp_metrics-v1.0-2018-08-02.logmetrics",
+        "rdp_metrics-v1.0-2018-08-02.logindex"}));
 
     metrics_log(metrics, std::chrono::milliseconds(epoch + 1h).count());
     metrics_log(metrics, std::chrono::milliseconds(epoch + 2h).count());
@@ -67,28 +64,20 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructor)
     metrics_log(metrics, std::chrono::milliseconds(epoch + 5h).count());
     metrics_log(metrics, std::chrono::milliseconds(epoch + 6h).count());
 
-    RED_CHECK_FILE_NOT_EXISTS(wd[logmetrics2]);
-    RED_CHECK_FILE_NOT_EXISTS(wd[logindex2]);
+    RED_CHECK_WORKSPACE(wd);
 
     metrics_log(metrics, std::chrono::milliseconds(epoch + 26h).count());
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics2]);
-    RED_CHECK_FILE_EXISTS(wd[logindex2]);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "rdp_metrics-v1.0-2018-08-03.logmetrics",
+        "rdp_metrics-v1.0-2018-08-03.logindex"}));
 
     metrics_delete(metrics);
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
 {
     WorkingDirectory wd("metrics_hours_rotation");
-    auto logmetrics1 = wd.add_file("rdp_metrics-v1.0-1970-01-01.logmetrics");
-    auto logindex1   = wd.add_file("rdp_metrics-v1.0-1970-01-01.logindex");
-    auto logmetrics2 = wd.add_file("rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics");
-    auto logindex2   = wd.add_file("rdp_metrics-v1.0-1970-01-01_07-00-00.logindex");
-    auto logmetrics3 = wd.add_file("rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics");
-    auto logindex3   = wd.add_file("rdp_metrics-v1.0-1970-01-03_22-00-00.logindex");
 
     // Should create rdp_metrics files if they do not exist
     time_t epoch = 0; // 2018-08-02 12:08:01 = 1533168000 + 12*3600 + 8*60 + 1
@@ -106,8 +95,9 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
                       , 5
                       );
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
-    RED_CHECK_FILE_EXISTS(wd[logindex1]);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "rdp_metrics-v1.0-1970-01-01.logmetrics",
+        "rdp_metrics-v1.0-1970-01-01.logindex"}));
 
     metrics_log(metrics, (epoch + (3600*1)) * 1000);
     metrics_log(metrics, (epoch + (3600*2)) * 1000);
@@ -117,30 +107,27 @@ RED_AUTO_TEST_CASE(TestRDPMetricsConstructorHoursRotation)
     metrics_log(metrics, (epoch + (3600*6)) * 1000);
     metrics_log(metrics, (epoch + (3600*6)+3599) * 1000);
 
-    RED_CHECK_FILE_NOT_EXISTS(wd[logmetrics2]);
-    RED_CHECK_FILE_NOT_EXISTS(wd[logindex2]);
+    RED_CHECK_WORKSPACE(wd);
 
     metrics_log(metrics, (epoch + (3600*7))*1000);
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics2]);
-    RED_CHECK_FILE_EXISTS(wd[logindex2]);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "rdp_metrics-v1.0-1970-01-01_07-00-00.logmetrics",
+        "rdp_metrics-v1.0-1970-01-01_07-00-00.logindex"}));
 
     metrics_log(metrics, (epoch + (24*3600*3))*1000);
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics3]);
-    RED_CHECK_FILE_EXISTS(wd[logindex3]);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "rdp_metrics-v1.0-1970-01-03_22-00-00.logmetrics",
+        "rdp_metrics-v1.0-1970-01-03_22-00-00.logindex"}));
 
     metrics_delete(metrics);
-
-    RED_CHECK_WORKSPACE(wd);
 }
 
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 {
     WorkingDirectory wd("metrics_log_cycle1");
-    auto logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
-    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
     Metrics * metrics = metrics_new(fields_rdp_metrics_version, protocol_name, 34
@@ -155,32 +142,31 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
                     , 5
                     );
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
-    RED_CHECK_FILE_EXISTS(wd[logindex1]);
+    auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
+    auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
+    RED_CHECK_WORKSPACE(wd);
 
     std::string expected_log_index("2018-08-02 12:08:01 connection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
-    RED_CHECK_EQUAL(get_file_contents(wd[logindex1]), expected_log_index);
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
+    RED_CHECK_EQUAL(get_file_contents(logindex1), expected_log_index);
 
     metrics_delete(metrics);
+
+    RED_CHECK_WORKSPACE(wd);
 
     std::string expected_disconnected_index("2018-08-02 12:08:06 disconnection 164d89c1a56957b752540093e178 user=51614130003BD5522C94E637866E4D749DDA13706AC2610C6F77BBFE111F3A58 account=1C57BA616EEDA5C9D8FF2E0202BB087D0B5D865AC830F336CDB9804331095B31 target_service_device=EAF28B142E03FFC03A35676722BB99DBC21908F3CEA96A8DA6E3C2321056AC48 client_info=B079C9845904075BAC3DBE0A26CB7364CE0CC0A5F47DC082F44D221EBC6722B7\n");
 
     std::string expected_log_metrics1("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0\n");
 
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics1);
-    RED_CHECK_EQUAL(get_file_contents(wd[logindex1]), expected_log_index+expected_disconnected_index);
-
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
+    RED_CHECK_EQUAL(get_file_contents(logindex1), expected_log_index+expected_disconnected_index);
 }
 
 
 RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
 
     WorkingDirectory wd("metrics_log_and_incrementatins");
-    auto logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
-    auto logindex1   = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
 
     time_t epoch = 1533211681;
     const unsigned int index_len = 10;
@@ -197,16 +183,17 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
                     , 5
                     );
 
-    RED_CHECK_FILE_EXISTS(wd[logmetrics1]);
-    RED_CHECK_FILE_EXISTS(wd[logindex1]);
+    auto const logmetrics1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logmetrics");
+    auto const logindex1 = wd.add_file("rdp_metrics-v1.0-2018-08-02.logindex");
+    RED_CHECK_WORKSPACE(wd);
 
     std::string expected_log_metrics1("2018-08-02 12:08:06 164d89c1a56957b752540093e178 0 0 0 0 0 0 0 0 0 0\n");
 
     metrics_log(metrics, (epoch + 4) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), "");
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), "");
 
     metrics_log(metrics, (epoch + 5) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics1);
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
 
     std::string expected_log_metrics2("2018-08-02 12:08:11 164d89c1a56957b752540093e178 1 2 3 4 5 6 7 8 9 10\n");
 
@@ -215,10 +202,10 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
         metrics_add_to_current_data(metrics, index, val);
     }
     metrics_log(metrics, (epoch + 7) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics1);
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1);
 
     metrics_log(metrics, (epoch + 10) * 1000);
-    RED_CHECK_EQUAL(get_file_contents(wd[logmetrics1]), expected_log_metrics1+expected_log_metrics2);
+    RED_CHECK_EQUAL(get_file_contents(logmetrics1), expected_log_metrics1+expected_log_metrics2);
 
     metrics_delete(metrics);
 

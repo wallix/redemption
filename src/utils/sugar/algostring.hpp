@@ -110,7 +110,7 @@ namespace detail
 
 
 template<class String, class... Strings>
-std::string str_concat(String&& str, Strings const&... strs)
+[[nodiscard]] std::string str_concat(String&& str, Strings const&... strs)
 {
     std::string s;
     detail::str_concat_view(s, detail::to_string_view_or_char(str),
@@ -119,7 +119,7 @@ std::string str_concat(String&& str, Strings const&... strs)
 }
 
 template<class... Strings>
-std::string str_concat(std::string&& str, Strings const&... strs)
+[[nodiscard]] std::string str_concat(std::string&& str, Strings const&... strs)
 {
     detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
     return std::move(str);

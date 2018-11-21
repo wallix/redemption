@@ -20,48 +20,71 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include <vector>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 
-#define RED_CHECK_WORKSPACE(wd) do {           \
-    auto const mess__ = wd.check_final_state();    \
-    RED_CHECK_MESSAGE(mess__.empty(), mess__); \
-} while (0)
+#define RED_CHECK_WORKSPACE(wd) RED_CHECK_EQUAL(wd.unmached_files(), "")
 
-struct WorkingDirectory
+struct [[nodiscard]] WorkingDirectory
 {
-    WorkingDirectory(std::string dirname, std::initializer_list<std::string_view> files);
-    WorkingDirectory(std::string dirname);
+    WorkingDirectory(WorkingDirectory const&) = delete;
 
-    WorkingDirectory neested(std::string directory, std::initializer_list<std::string_view> files);
+    WorkingDirectory(std::string_view dirname);
 
-    struct FileIndex
-    {
-        const std::size_t index;
-    };
+    [[nodiscard]] WorkingDirectory& create_subdirectory(std::string_view directory);
 
-    FileIndex add_file(std::string_view filename);
+    /*
+     * filename with '/' at back is a directory
+     */
+    /// @{
+    [[nodiscard]] std::string add_file(std::string file);
+    [[nodiscard]] WorkingDirectory& add_files(std::initializer_list<std::string> files);
+    [[nodiscard]] WorkingDirectory& remove_files(std::initializer_list<std::string> files);
+    /// @}
 
-    std::string const& operator[](FileIndex file_index) noexcept;
-    std::string const& operator[](std::size_t i) noexcept;
-    std::string const& operator[](std::string filename);
+    std::string path_of(std::string_view path) const;
 
     std::string const& dirname() const noexcept;
 
-    std::string clean_and_get();
-    std::string check_final_state();
+    [[nodiscard]] std::string unmached_files();
 
     ~WorkingDirectory() noexcept(false);
 
 private:
+    WorkingDirectory(std::string_view dirname, std::string_view base);
+
+    enum class Type : bool
+    {
+        File, Directory
+    };
+
     struct Path
     {
         std::string name;
-        bool is_checked;
+        std::unique_ptr<WorkingDirectory> child;
+        Type type;
+        mutable int counter_id;
+
+        Path() noexcept;
+
+        Path(std::string name, int counter_id) noexcept;
+
+        Path(std::unique_ptr<WorkingDirectory>&& child, int counter_id) noexcept;
+
+        bool operator == (Path const& other) const;
     };
-    std::vector<Path> paths;
+
+    struct HashPath
+    {
+        std::size_t operator()(Path const& path) const;
+    };
+
+    std::unordered_set<Path, HashPath> paths;
     std::string directory;
-    bool is_checked = false;
+    bool has_error = false;
+    bool is_checked = true;
+    int counter_id = 0;
 };

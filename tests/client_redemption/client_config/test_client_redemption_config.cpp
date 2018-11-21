@@ -30,6 +30,7 @@
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 
 #include "utils/fileutils.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "test_only/get_file_contents.hpp"
 #include "test_only/working_directory.hpp"
 
@@ -438,91 +439,75 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 {
     WorkingDirectory wd("TestClientRedemptionConfigCreateDir");
-//     std::initializer_list<std::string_view> files;
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigCreateDir");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
-    struct stat buff_dir;
-    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/config", &buff_dir)), true);
-    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/clipboard_temp", &buff_dir)), true);
-    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/replay", &buff_dir)), true);
-    RED_CHECK_EQUAL(!bool(stat("/tmp/TestClientRedemptionConfigCreateDir/DATA/sound_temp", &buff_dir)), true);
-
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 }
 
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 
     WorkingDirectory wd("TestClientRedemptionConfigReadLine");
-//     std::initializer_list<std::string_view> files;
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("test_file.txt");
+    auto const test_file = wd.add_file("test_file.txt");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadLine");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
-    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadLine/test_file.txt", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    {
+        unique_fd fd(test_file, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        auto text = "hello\nworld"_av;
+        ::write(fd.fd(), text.data(), text.size());
+    }
 
-    std::string text("hello\nworld");
-    ::write(fd.fd(), text.c_str(), text.length());
-    fd.close();
+    {
+        unique_fd fd_read = unique_fd(test_file, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
-    unique_fd fd_read = unique_fd("/tmp/TestClientRedemptionConfigReadLine/test_file.txt", O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+        std::string line;
 
-    std::string line1;
-    bool res1 = config.read_line(fd_read.fd(), line1);
-    std::string line2;
-    bool res2 = config.read_line(fd_read.fd(), line2);
+        RED_CHECK_EQUAL(config.read_line(fd_read.fd(), line), true);
+        RED_CHECK_EQUAL(line, "hello");
 
-    fd_read.close();
+        RED_CHECK_EQUAL(config.read_line(fd_read.fd(), line), false);
+        RED_CHECK_EQUAL(line, "world");
+    }
 
-    RED_CHECK_EQUAL(line1, "hello");
-    RED_CHECK_EQUAL(res1, true);
-    RED_CHECK_EQUAL(line2, "world");
-    RED_CHECK_EQUAL(res2, false);
-
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadClientInfo");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("DATA/config/userConfig.config");
+    auto const DATA = wd.add_file("DATA/");
+    auto const DATA_config = wd.add_file("DATA/config/");
+    auto const userConfig = wd.add_file("DATA/config/userConfig.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    mkdir("/tmp/TestClientRedemptionConfigReadClientInfo/DATA", 0775);
-    mkdir("/tmp/TestClientRedemptionConfigReadClientInfo/DATA/config", 0775);
+    mkdir(DATA.c_str(), 0775);
+    mkdir(DATA_config.c_str(), 0775);
 
-    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadClientInfo/DATA/config/userConfig.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    unique_fd fd(userConfig, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
     const char * toReadData =
                         "current_user_profil_id 1"
@@ -580,7 +565,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     ::write(fd.fd(), toReadData, string_to_read.length());
     fd.close();
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadClientInfo");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
@@ -604,108 +589,118 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     RED_CHECK_EQUAL(config.SHARE_DIR, "/home/test");
     RED_CHECK_EQUAL(config.mod_state, 2);
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadMovieData");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("DATA/replay/movie1.mwrm");
-    wd.add_file("DATA/replay/movie2.mwrm");
+    auto const DATA = wd.add_file("DATA/");
+    auto const DATA_replay = wd.add_file("DATA/replay/");
+    auto const movie1 = wd.add_file("DATA/replay/movie1.mwrm");
+    auto const movie2 = wd.add_file("DATA/replay/movie2.mwrm");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    mkdir("/tmp/TestClientRedemptionConfigReadMovieData/DATA", 0775);
-    mkdir("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay", 0775);
+    mkdir(DATA.c_str(), 0775);
+    mkdir(DATA_replay.c_str(), 0775);
 
-    unique_fd fd_1 = unique_fd("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-    const char * toReadData1 = "v2\n"
-                               "1600 900\n"
-                               "nochecksum\n"
-                               "\n"
-                               "\n"
-                               "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.wrm 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190439 1511190456\n";
-    std::string string_to_read1(toReadData1);
-    ::write(fd_1.fd(), toReadData1, string_to_read1.length());
-    fd_1.close();
+    {
+        unique_fd fd_1(movie1, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        std::string string_to_read1 = str_concat(
+            "v2\n"
+            "1600 900\n"
+            "nochecksum\n"
+            "\n"
+            "\n",
+            movie1, " 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190439 1511190456\n");
+        ::write(fd_1.fd(), string_to_read1.data(), string_to_read1.size());
+    }
 
-    unique_fd fd_2 = unique_fd("/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-    const char * toReadData2 = "v2\n"
-                               "640 480\n"
-                               "nochecksum\n"
-                               "\n"
-                               "\n"
-                               "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.wrm 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190139 1511190456\n";
-    std::string string_to_read2(toReadData2);
-    ::write(fd_2.fd(), toReadData2, string_to_read2.length());
-    fd_2.close();
+    {
+        unique_fd fd_2(movie2, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        std::string string_to_read1 = str_concat(
+            "v2\n"
+            "640 480\n"
+            "nochecksum\n"
+            "\n"
+            "\n",
+            movie2, " 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190139 1511190456\n");
+        ::write(fd_2.fd(), string_to_read1.data(), string_to_read1.size());
+    }
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadMovieData");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     config.set_icon_movie_data();
 
     RED_REQUIRE_EQUAL(config.icons_movie_data.size(), 2);
 
-    RED_CHECK_EQUAL(config.icons_movie_data[0].file_name, "movie1");
-    RED_CHECK_EQUAL(config.icons_movie_data[0].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm");
-    RED_CHECK_EQUAL(config.icons_movie_data[0].file_version, "v2");
-    RED_CHECK_EQUAL(config.icons_movie_data[0].file_resolution, "1600 900");
-    RED_CHECK_EQUAL(config.icons_movie_data[0].file_checksum, "nochecksum");
-    RED_CHECK_EQUAL(config.icons_movie_data[0].movie_len, 17);
+    auto test_movie1 = [&](int i){
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_name, "movie1");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_path, movie1);
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_version, "v2");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_resolution, "1600 900");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_checksum, "nochecksum");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].movie_len, 17);
+    };
+    auto test_movie2 = [&](int i){
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_name, "movie2");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_path, movie2);
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_version, "v2");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_resolution, "640 480");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].file_checksum, "nochecksum");
+        RED_CHECK_EQUAL(config.icons_movie_data[i].movie_len, 317);
+    };
 
-    RED_CHECK_EQUAL(config.icons_movie_data[1].file_name, "movie2");
-    RED_CHECK_EQUAL(config.icons_movie_data[1].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm");
-    RED_CHECK_EQUAL(config.icons_movie_data[1].file_version, "v2");
-    RED_CHECK_EQUAL(config.icons_movie_data[1].file_resolution, "640 480");
-    RED_CHECK_EQUAL(config.icons_movie_data[1].file_checksum, "nochecksum");
-    RED_CHECK_EQUAL(config.icons_movie_data[1].movie_len, 317);
+    if (config.icons_movie_data[0].movie_len == 17) {
+        test_movie1(0);
+        test_movie2(1);
+    }
+    else {
+        test_movie1(1);
+        test_movie2(0);
+    }
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadWindowsData");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("DATA/config/windows_config.config");
+    auto const DATA = wd.add_file("DATA/");
+    auto const DATA_config = wd.add_file("DATA/config/");
+    auto const windows_config = wd.add_file("DATA/config/windows_config.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    mkdir("/tmp/TestClientRedemptionConfigReadWindowsData/DATA", 0775);
-    mkdir("/tmp/TestClientRedemptionConfigReadWindowsData/DATA/config", 0775);
+    mkdir(DATA.c_str(), 0775);
+    mkdir(DATA_config.c_str(), 0775);
 
-    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadWindowsData/DATA/config/windows_config.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    {
+        unique_fd fd(windows_config, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        auto toReadData =
+            "form_x 1920\n"
+            "form_y 351\n"
+            "screen_x 465\n"
+            "screen_y 259\n"_av;
+        ::write(fd.fd(), toReadData.data(), toReadData.size());
+    }
 
-    const char * toReadData =
-                        "form_x 1920\n"
-                        "form_y 351\n"
-                        "screen_x 465\n"
-                        "screen_y 259\n";
-
-    std::string string_to_read(toReadData);
-    ::write(fd.fd(), toReadData, string_to_read.length());
-    fd.close();
-
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadWindowsData");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     RED_CHECK_EQUAL(config.windowsData.no_data, false);
     RED_CHECK_EQUAL(config.windowsData.form_x, 1920);
@@ -713,41 +708,38 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
     RED_CHECK_EQUAL(config.windowsData.screen_x, 465);
     RED_CHECK_EQUAL(config.windowsData.screen_y, 259);
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/replay/",
+        "DATA/clipboard_temp/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadCustomKeyConfig");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("DATA/config/keySetting.config");
+    auto const DATA = wd.add_file("DATA/");
+    auto const DATA_config = wd.add_file("DATA/config/");
+    auto const keySetting = wd.add_file("DATA/config/keySetting.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    mkdir("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA", 0775);
-    mkdir("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA/config", 0775);
+    mkdir(DATA.c_str(), 0775);
+    mkdir(DATA_config.c_str(), 0775);
 
-    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadCustomKeyConfig/DATA/config/keySetting.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    {
+        unique_fd fd(keySetting, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        auto toReadData =
+            "Key Setting\n"
+            "- 1 2 x 1 key1\n"
+            "- 5 6 y 0 key2\n"_av;
+        ::write(fd.fd(), toReadData.data(), toReadData.size());
+    }
 
-    const char * toReadData =
-                        "Key Setting\n"
-                        "- 1 2 x 1 key1\n"
-                        "- 5 6 y 0 key2\n";
-
-    std::string string_to_read(toReadData);
-    ::write(fd.fd(), toReadData, string_to_read.length());
-    fd.close();
-
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadCustomKeyConfig");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     RED_REQUIRE_EQUAL(config.keyCustomDefinitions.size(), 2);
 
@@ -763,56 +755,53 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
     RED_CHECK_EQUAL(config.keyCustomDefinitions[1].extended, 0);
     RED_CHECK_EQUAL(config.keyCustomDefinitions[1].name, "key2");
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/replay/",
+        "DATA/clipboard_temp/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadAccountData");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
-    wd.add_file("DATA/config/login.config");
+    auto const DATA = wd.add_file("DATA/");
+    auto const DATA_config = wd.add_file("DATA/config/");
+    auto const login = wd.add_file("DATA/config/login.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    mkdir("/tmp/TestClientRedemptionConfigReadAccountData/DATA", 0775);
-    mkdir("/tmp/TestClientRedemptionConfigReadAccountData/DATA/config", 0775);
+    mkdir(DATA.c_str(), 0775);
+    mkdir(DATA_config.c_str(), 0775);
 
-    unique_fd fd = unique_fd("/tmp/TestClientRedemptionConfigReadAccountData/DATA/config/login.config", O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    {
+        unique_fd fd(login, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        auto toReadData =
+            "save_pwd true\n"
+            "last_target 1\n"
+            "\n"
+            "title 10.10.45.55 - user1\n"
+            "IP 10.10.45.55\n"
+            "name user1\n"
+            "protocol 1\n"
+            "pwd mdp\n"
+            "port 3389\n"
+            "options_profil 0\n"
+            "\n"
+            "title 10.10.45.87 - measure\n"
+            "IP 10.10.45.87\n"
+            "name measure\n"
+            "protocol 1\n"
+            "pwd mdp_\n"
+            "port 3389\n"
+            "options_profil 0\n"_av;
+        ::write(fd.fd(), toReadData.data(), toReadData.size());
+    }
 
-    const char * toReadData =
-                        "save_pwd true\n"
-                        "last_target 1\n"
-                        "\n"
-                        "title 10.10.45.55 - user1\n"
-                        "IP 10.10.45.55\n"
-                        "name user1\n"
-                        "protocol 1\n"
-                        "pwd mdp\n"
-                        "port 3389\n"
-                        "options_profil 0\n"
-                        "\n"
-                        "title 10.10.45.87 - measure\n"
-                        "IP 10.10.45.87\n"
-                        "name measure\n"
-                        "protocol 1\n"
-                        "pwd mdp_\n"
-                        "port 3389\n"
-                        "options_profil 0\n";
-
-    std::string string_to_read(toReadData);
-    ::write(fd.fd(), toReadData, string_to_read.length());
-    fd.close();
-
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadAccountData");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     RED_CHECK_EQUAL(config._last_target_index, 1);
     RED_CHECK_EQUAL(config._save_password_account, true);
@@ -836,25 +825,22 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
     RED_CHECK_EQUAL(config._accountData[1].index, 1);
     RED_CHECK_EQUAL(config._accountData[1].protocol, 1);
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/replay/",
+        "DATA/clipboard_temp/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteClientInfo");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteClientInfo");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     config.writeClientInfo();
 
@@ -886,29 +872,27 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
                            "\nmod 1"
                            "\n";
 
-    RED_CHECK_EQUAL(get_file_contents("/tmp/TestClientRedemptionConfigWriteClientInfo/DATA/config/userConfig.config"), expected_data);
+    auto const userConfig = wd.add_file("DATA/config/userConfig.config");
+    RED_CHECK_EQUAL(get_file_contents(userConfig), expected_data);
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/",
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteCustomKey");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
-
-    auto key_setting = wd.add_file("DATA/config/keySetting.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteCustomKey");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     config.add_key_custom_definition(1, 2, "x", 0x100, "key_x");
     config.add_key_custom_definition(3, 4, "y", 0, "key_y");
@@ -920,29 +904,27 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
                            "- 1 2 x 256 key_x\n"
                            "- 3 4 y 0 key_y\n";
 
-    RED_CHECK_EQUAL(get_file_contents(wd[key_setting]), expected_data);
+    auto key_setting = wd.add_file("DATA/config/keySetting.config");
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/",
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_EQUAL(get_file_contents(key_setting), expected_data);
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteAccountData");
-//     std::initializer_list<std::string_view> files = {};
-    wd.add_file("DATA");
-    wd.add_file("DATA/config");
-    wd.add_file("DATA/clipboard_temp");
-    wd.add_file("DATA/replay");
-    wd.add_file("DATA/sound_temp");
-
-    auto login = wd.add_file("DATA/config/login.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteAccountData");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     config.connected = true;
     config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
@@ -968,13 +950,19 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
                            "port 5900\n"
                            "options_profil 0\n\n";
 
-    RED_CHECK_EQUAL(get_file_contents(wd[login]), expected_data);
+    auto login = wd.add_file("DATA/config/login.config");
+    RED_CHECK_EQUAL(get_file_contents(login), expected_data);
 
-    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/",
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
 }
 
-RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
-{
+// RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
+// {
 //     WorkingDirectory wd("TestClientRedemptionConfigWriteWindowsData");
 //     wd.add_file("DATA");
 //     wd.add_file("DATA/config");
@@ -1003,4 +991,4 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
 //     RED_CHECK_EQUAL(get_file_contents(wd[login]), expected_data);
 //
 //     RED_CHECK_WORKSPACE(wd);
-}
+// }
