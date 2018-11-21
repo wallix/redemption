@@ -766,7 +766,7 @@ public:
     }
 
     void draw( const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (bmp.has_data_compressed()) {
+        if (bmp.has_data_compressed() && (bitmap_data.flags & BITMAP_COMPRESSION)) {
             auto data_compressed = bmp.data_compressed();
             this->reserve_bitmap(bitmap_data.struct_size() + data_compressed.size());
 
@@ -774,9 +774,22 @@ public:
             this->stream_bitmaps.out_copy_bytes(data_compressed.data(), data_compressed.size());
         }
         else {
-            this->reserve_bitmap(bitmap_data.struct_size() + bmp.bmp_size());
+            if (bitmap_data.flags & BITMAP_COMPRESSION) {
+                RDPBitmapData bitmap_data_new = bitmap_data;
 
-            bitmap_data.emit(this->stream_bitmaps);
+                bitmap_data_new.flags         &= ~(BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR);
+                bitmap_data_new.bitmap_length  = bmp.bmp_size();
+
+                this->reserve_bitmap(bitmap_data_new.struct_size() + bmp.bmp_size());
+
+                bitmap_data_new.emit(this->stream_bitmaps);
+            }
+            else {
+                this->reserve_bitmap(bitmap_data.struct_size() + bmp.bmp_size());
+
+                bitmap_data.emit(this->stream_bitmaps);
+            }
+
             this->stream_bitmaps.out_copy_bytes(bmp.data(), bmp.bmp_size());
         }
         if (bool(this->verbose & Verbose::bitmap_update)) {
