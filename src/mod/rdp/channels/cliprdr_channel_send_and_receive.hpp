@@ -26,6 +26,7 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/stream.hpp"
+#include "system/linux/system/ssl_sha256.hpp"
 
 #include <map>
 #include <vector>
@@ -33,20 +34,46 @@
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
 
+struct ClipboardData {
+    uint16_t message_type = 0;
+    bool use_long_format_names = false;
+    uint32_t                        clipDataId = 0;
+    uint32_t file_list_format_id = 0;
+    uint32_t dataLen = 0;
+    uint32_t streamId = 0;
+
+    std::string provider_name;
+
+    ClipboardData(std::string & provider_name)
+      : provider_name(provider_name) {}
+
+    virtual void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
+        (void) lindex;
+        (void) position;
+        (void) cbRequested;
+        (void) clipDataId;
+        (void) offset;
+        (void) streamID;
+    }
+
+    virtual void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
+        (void) fd;
+    }
+
+    virtual ~ClipboardData() {}
+};
 
 
 struct ClipboardCapabilitiesReceive {
 
-    uint32_t client_use_long_format_names = 0;
-
-    ClipboardCapabilitiesReceive(const std::string & origin_name, InStream& chunk, const RDPVerbose verbose) {
+    ClipboardCapabilitiesReceive(ClipboardData & clip_data, InStream& chunk, const RDPVerbose verbose) {
         {
             const unsigned int expected = 4;   //     cCapabilitiesSets(2) +
                                                 //     pad1(2)
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
                     "ClipboardVirtualChannel::process_%s_clipboard_capabilities_pdu: "
-                        "Truncated CLIPRDR_CAPS, need=%u remains=%zu", origin_name,
+                        "Truncated CLIPRDR_CAPS, need=%u remains=%zu", clip_data.provider_name,
                     expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
@@ -72,7 +99,7 @@ struct ClipboardCapabilitiesReceive {
                     general_caps.log(LOG_INFO);
                 }
 
-                this->client_use_long_format_names =
+                clip_data.use_long_format_names =
                     bool(general_caps.generalFlags() &
                      RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
@@ -83,15 +110,9 @@ struct ClipboardCapabilitiesReceive {
 struct FilecontentsRequestReceive {
 
     uint32_t dwFlags = 0;
-    bool has_optional_clipDataId = false;
     uint32_t streamID = 0;
-    uint32_t lindex = 0;
-    uint64_t position = 0;
-    uint32_t cbRequested = 0;
-    uint32_t clipDataId = 0;
 
-
-    FilecontentsRequestReceive(InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
+    FilecontentsRequestReceive(ClipboardData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
         if (dataLen >= RDPECLIP::FileContentsRequestPDU::minimum_size()) {
             RDPECLIP::FileContentsRequestPDU file_contents_request_pdu;
@@ -101,15 +122,19 @@ struct FilecontentsRequestReceive {
                 file_contents_request_pdu.log(LOG_INFO);
             }
 
-            this->has_optional_clipDataId = file_contents_request_pdu.has_optional_clipDataId();
             this->dwFlags = file_contents_request_pdu.dwFlags();
             this->streamID = file_contents_request_pdu.streamId();
-            this->lindex = file_contents_request_pdu.lindex();
 
-            this->position = file_contents_request_pdu.position();
-            this->cbRequested = file_contents_request_pdu.cbRequested();
-            this->clipDataId = file_contents_request_pdu.clipDataId();
+            if ((RDPECLIP::FILECONTENTS_RANGE == this->dwFlags) && file_contents_request_pdu.clipDataId()) {
+
+                clip_state.set_file_contents_request_info_inventory(
+                    file_contents_request_pdu.lindex(),
+                    file_contents_request_pdu.position(),
+                    file_contents_request_pdu.cbRequested(),
+                    file_contents_request_pdu.clipDataId(), 0, this->streamID);
+            }
         }
+
     }
 };
 
@@ -580,6 +605,10 @@ struct ServerFormatListReceive {
 
             for (uint32_t remaining_data_length = in_header.dataLen();
                  remaining_data_length; ) {
+
+                LOG(LOG_INFO, "remaining_data_length=%u chunk.in_remain=%zu", remaining_data_length, chunk.in_remain());
+
+
                 const     uint32_t formatId           = chunk.in_uint32_le();
                 constexpr size_t   format_name_length =
                         32      // formatName(32)
@@ -614,6 +643,8 @@ struct ServerFormatListReceive {
                     !memcmp(FILE_LIST_FORMAT_NAME, utf8_string, length_of_utf8_string)) {
                     this->server_file_list_format_id = formatId;
                 }
+
+
 
                 chunk.in_skip_bytes(
                         32  // formatName(32)

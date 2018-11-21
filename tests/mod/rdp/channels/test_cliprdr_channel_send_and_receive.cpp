@@ -15,7 +15,7 @@
 
     Product name: redemption, a FLOSS RDP proxy
     Copyright (C) Wallix 2015
-    Author(s): Christophe Grosjean, Raphael Zhou
+    Author(s): Clément Moroldo
 */
 
 
@@ -38,9 +38,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
 
     InStream chunk(stream.get_data(), stream.get_offset());
 
-    ClipboardCapabilitiesReceive receiver(std::string("server"), chunk, RDPVerbose::none);
+    ClipboardState state;
 
-    RED_CHECK_EQUAL(receiver.client_use_long_format_names, true);
+    ClipboardCapabilitiesReceive receiver(state, std::string("client"), chunk, RDPVerbose::none);
+
+    RED_CHECK_EQUAL(state.client_data.use_long_format_names, true);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)

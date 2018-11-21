@@ -438,6 +438,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 {
     WorkingDirectory wd("TestClientRedemptionConfigCreateDir");
+//     std::initializer_list<std::string_view> files;
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -463,6 +464,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 
     WorkingDirectory wd("TestClientRedemptionConfigReadLine");
+//     std::initializer_list<std::string_view> files;
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -503,6 +505,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadClientInfo");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -607,6 +610,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadMovieData");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -650,22 +654,21 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 
     config.set_icon_movie_data();
 
-    RED_CHECK_EQUAL(config.icons_movie_data.size(), 2);
-    if (config.icons_movie_data.size() == 2) {
-        RED_CHECK_EQUAL(config.icons_movie_data[0].file_name, "movie1");
-        RED_CHECK_EQUAL(config.icons_movie_data[0].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm");
-        RED_CHECK_EQUAL(config.icons_movie_data[0].file_version, "v2");
-        RED_CHECK_EQUAL(config.icons_movie_data[0].file_resolution, "1600 900");
-        RED_CHECK_EQUAL(config.icons_movie_data[0].file_checksum, "nochecksum");
-        RED_CHECK_EQUAL(config.icons_movie_data[0].movie_len, 17);
+    RED_REQUIRE_EQUAL(config.icons_movie_data.size(), 2);
 
-        RED_CHECK_EQUAL(config.icons_movie_data[1].file_name, "movie2");
-        RED_CHECK_EQUAL(config.icons_movie_data[1].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm");
-        RED_CHECK_EQUAL(config.icons_movie_data[1].file_version, "v2");
-        RED_CHECK_EQUAL(config.icons_movie_data[1].file_resolution, "640 480");
-        RED_CHECK_EQUAL(config.icons_movie_data[1].file_checksum, "nochecksum");
-        RED_CHECK_EQUAL(config.icons_movie_data[1].movie_len, 317);
-    }
+    RED_CHECK_EQUAL(config.icons_movie_data[0].file_name, "movie1");
+    RED_CHECK_EQUAL(config.icons_movie_data[0].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie1.mwrm");
+    RED_CHECK_EQUAL(config.icons_movie_data[0].file_version, "v2");
+    RED_CHECK_EQUAL(config.icons_movie_data[0].file_resolution, "1600 900");
+    RED_CHECK_EQUAL(config.icons_movie_data[0].file_checksum, "nochecksum");
+    RED_CHECK_EQUAL(config.icons_movie_data[0].movie_len, 17);
+
+    RED_CHECK_EQUAL(config.icons_movie_data[1].file_name, "movie2");
+    RED_CHECK_EQUAL(config.icons_movie_data[1].file_path, "/tmp/TestClientRedemptionConfigReadMovieData/DATA/replay/movie2.mwrm");
+    RED_CHECK_EQUAL(config.icons_movie_data[1].file_version, "v2");
+    RED_CHECK_EQUAL(config.icons_movie_data[1].file_resolution, "640 480");
+    RED_CHECK_EQUAL(config.icons_movie_data[1].file_checksum, "nochecksum");
+    RED_CHECK_EQUAL(config.icons_movie_data[1].movie_len, 317);
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -673,6 +676,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadWindowsData");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -715,6 +719,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadCustomKeyConfig");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -744,26 +749,27 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
 
     ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigReadCustomKeyConfig");
 
-    RED_CHECK_EQUAL(config.keyCustomDefinitions.size(), 2);
-    if (config.keyCustomDefinitions.size() == 2) {
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].qtKeyID, 1);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].scanCode, 2);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].ASCII8, "x");
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].extended, 0x0100);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[0].name, "key1");
+    RED_REQUIRE_EQUAL(config.keyCustomDefinitions.size(), 2);
 
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].qtKeyID, 5);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].scanCode, 6);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].ASCII8, "y");
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].extended, 0);
-        RED_CHECK_EQUAL(config.keyCustomDefinitions[1].name, "key2");
-    }
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].qtKeyID, 1);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].scanCode, 2);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].ASCII8, "x");
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].extended, 0x0100);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[0].name, "key1");
+
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].qtKeyID, 5);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].scanCode, 6);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].ASCII8, "y");
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].extended, 0);
+    RED_CHECK_EQUAL(config.keyCustomDefinitions[1].name, "key2");
+
     RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadAccountData");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -810,32 +816,33 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 
     RED_CHECK_EQUAL(config._last_target_index, 1);
     RED_CHECK_EQUAL(config._save_password_account, true);
-    RED_CHECK_EQUAL(config._accountData.size(), 2);
-    if (config._accountData.size() == 2) {
-        RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1");
-        RED_CHECK_EQUAL(config._accountData[0].IP, "10.10.45.55");
-        RED_CHECK_EQUAL(config._accountData[0].name, "user1");
-        RED_CHECK_EQUAL(config._accountData[0].pwd, "mdp");
-        RED_CHECK_EQUAL(config._accountData[0].port, 3389);
-        RED_CHECK_EQUAL(config._accountData[0].options_profil, 0);
-        RED_CHECK_EQUAL(config._accountData[0].index, 0);
-        RED_CHECK_EQUAL(config._accountData[0].protocol, 1);
+    RED_REQUIRE_EQUAL(config._accountData.size(), 2);
 
-        RED_CHECK_EQUAL(config._accountData[1].title, "10.10.45.87 - measure");
-        RED_CHECK_EQUAL(config._accountData[1].IP, "10.10.45.87");
-        RED_CHECK_EQUAL(config._accountData[1].name, "measure");
-        RED_CHECK_EQUAL(config._accountData[1].pwd, "mdp_");
-        RED_CHECK_EQUAL(config._accountData[1].port, 3389);
-        RED_CHECK_EQUAL(config._accountData[1].options_profil, 0);
-        RED_CHECK_EQUAL(config._accountData[1].index, 1);
-        RED_CHECK_EQUAL(config._accountData[1].protocol, 1);
-    }
+    RED_CHECK_EQUAL(config._accountData[0].title, "10.10.45.55 - user1");
+    RED_CHECK_EQUAL(config._accountData[0].IP, "10.10.45.55");
+    RED_CHECK_EQUAL(config._accountData[0].name, "user1");
+    RED_CHECK_EQUAL(config._accountData[0].pwd, "mdp");
+    RED_CHECK_EQUAL(config._accountData[0].port, 3389);
+    RED_CHECK_EQUAL(config._accountData[0].options_profil, 0);
+    RED_CHECK_EQUAL(config._accountData[0].index, 0);
+    RED_CHECK_EQUAL(config._accountData[0].protocol, 1);
+
+    RED_CHECK_EQUAL(config._accountData[1].title, "10.10.45.87 - measure");
+    RED_CHECK_EQUAL(config._accountData[1].IP, "10.10.45.87");
+    RED_CHECK_EQUAL(config._accountData[1].name, "measure");
+    RED_CHECK_EQUAL(config._accountData[1].pwd, "mdp_");
+    RED_CHECK_EQUAL(config._accountData[1].port, 3389);
+    RED_CHECK_EQUAL(config._accountData[1].options_profil, 0);
+    RED_CHECK_EQUAL(config._accountData[1].index, 1);
+    RED_CHECK_EQUAL(config._accountData[1].protocol, 1);
+
     RED_CHECK_WORKSPACE(wd);
 }
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteClientInfo");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -887,6 +894,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteCustomKey");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
@@ -920,6 +928,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigWriteAccountData");
+//     std::initializer_list<std::string_view> files = {};
     wd.add_file("DATA");
     wd.add_file("DATA/config");
     wd.add_file("DATA/clipboard_temp");
