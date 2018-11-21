@@ -30,11 +30,35 @@ Author(s): Jonathan Poelen
 
 struct [[nodiscard]] WorkingDirectory
 {
+    struct SubDirectory
+    {
+        [[nodiscard]] std::string add_file(std::string_view file);
+        [[nodiscard]] SubDirectory& add_files(std::initializer_list<std::string_view> files);
+        [[nodiscard]] SubDirectory& remove_files(std::initializer_list<std::string_view> files);
+
+        std::string path_of(std::string_view path) const;
+        std::string_view dirname() const;
+
+        WorkingDirectory& wd() const noexcept
+        {
+            return this->wd_;
+        }
+
+    private:
+        WorkingDirectory& wd_;
+        std::string fullpath;
+        std::size_t dirname_pos;
+
+        friend class WorkingDirectory;
+
+        SubDirectory(WorkingDirectory& wd, std::string fullpath, std::size_t dirname_pos);
+    };
+
     WorkingDirectory(WorkingDirectory const&) = delete;
 
     WorkingDirectory(std::string_view dirname);
 
-    [[nodiscard]] WorkingDirectory& create_subdirectory(std::string_view directory);
+    SubDirectory create_subdirectory(std::string_view dirname);
 
     /*
      * filename with '/' at back is a directory
@@ -54,7 +78,7 @@ struct [[nodiscard]] WorkingDirectory
     ~WorkingDirectory() noexcept(false);
 
 private:
-    WorkingDirectory(std::string_view dirname, std::string_view base);
+    std::string const& add_file_(std::string file);
 
     enum class Type : bool
     {
@@ -64,7 +88,6 @@ private:
     struct Path
     {
         std::string name;
-        std::unique_ptr<WorkingDirectory> child;
         Type type;
         mutable int counter_id;
 

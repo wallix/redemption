@@ -495,17 +495,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadClientInfo");
 
-    auto const DATA = wd.add_file("DATA/");
-    auto const DATA_config = wd.add_file("DATA/config/");
-    auto const userConfig = wd.add_file("DATA/config/userConfig.config");
+    auto const userConfig = wd.create_subdirectory("DATA/config/")
+      .add_file("userConfig.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-
-    mkdir(DATA.c_str(), 0775);
-    mkdir(DATA_config.c_str(), 0775);
 
     unique_fd fd(userConfig, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
@@ -599,18 +595,14 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadMovieData");
 
-    auto const DATA = wd.add_file("DATA/");
-    auto const DATA_replay = wd.add_file("DATA/replay/");
-    auto const movie1 = wd.add_file("DATA/replay/movie1.mwrm");
-    auto const movie2 = wd.add_file("DATA/replay/movie2.mwrm");
+    auto subwd = wd.create_subdirectory("DATA/replay/");
+    auto const movie1 = subwd.add_file("movie1.mwrm");
+    auto const movie2 = subwd.add_file("movie2.mwrm");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-
-    mkdir(DATA.c_str(), 0775);
-    mkdir(DATA_replay.c_str(), 0775);
 
     {
         unique_fd fd_1(movie1, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -678,17 +670,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadWindowsData");
 
-    auto const DATA = wd.add_file("DATA/");
-    auto const DATA_config = wd.add_file("DATA/config/");
-    auto const windows_config = wd.add_file("DATA/config/windows_config.config");
+    auto const windows_config = wd.create_subdirectory("DATA/config")
+      .add_file("windows_config.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-
-    mkdir(DATA.c_str(), 0775);
-    mkdir(DATA_config.c_str(), 0775);
 
     {
         unique_fd fd(windows_config, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -718,17 +706,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadCustomKeyConfig");
 
-    auto const DATA = wd.add_file("DATA/");
-    auto const DATA_config = wd.add_file("DATA/config/");
-    auto const keySetting = wd.add_file("DATA/config/keySetting.config");
+    auto const keySetting = wd.create_subdirectory("DATA/config")
+      .add_file("keySetting.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-
-    mkdir(DATA.c_str(), 0775);
-    mkdir(DATA_config.c_str(), 0775);
 
     {
         unique_fd fd(keySetting, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -765,17 +749,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 {
     WorkingDirectory wd("TestClientRedemptionConfigReadAccountData");
 
-    auto const DATA = wd.add_file("DATA/");
-    auto const DATA_config = wd.add_file("DATA/config/");
-    auto const login = wd.add_file("DATA/config/login.config");
+    auto const login = wd.create_subdirectory("DATA/config")
+      .add_file("login.config");
 
     SessionReactor session_reactor;
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-
-    mkdir(DATA.c_str(), 0775);
-    mkdir(DATA_config.c_str(), 0775);
 
     {
         unique_fd fd(login, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
