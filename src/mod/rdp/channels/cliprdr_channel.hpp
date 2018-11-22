@@ -943,9 +943,9 @@ private:
                 }
 
                 bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipboard_activities) ||
-                        (strcasecmp("Preferred DropEffect", format_name.c_str()) &&
-                         strcasecmp("FileGroupDescriptorW", format_name.c_str()))
+                        (!this->param_log_only_relevant_clipboard_activities)
+                         ||    (strcasecmp("Preferred DropEffect", format_name.c_str()) != 0
+                             && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
                     );
 
                 format_name += "(";

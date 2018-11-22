@@ -69,7 +69,8 @@ struct Rect {
         }
     }
 
-    bool contains_pt(int x, int y) const {
+    bool contains_pt(int16_t x, int16_t y) const {
+        // return this->contains(Rect(x,y,1,1));
         return x  >= this->x
             && y  >= this->y
             && x   < this->x + this->cx
@@ -170,24 +171,7 @@ struct Rect {
         );
     }
 
-    //Rect upper_side() const {
-    //    return Rect(this->x, this->y, this->cx, 1);
-    //}
-
-    //Rect left_side() const {
-    //    return Rect(this->x, this->y, 1, this->cy);
-    //}
-
-    //Rect lower_side() const {
-    //    return Rect(this->x, this->y + this->cy - 1, this->cx, 1);
-    //}
-
-    //Rect right_side() const {
-    //    return Rect(this->x + this->cx - 1, this->y, 1, this->cy);
-    //}
-
-    Rect intersect(uint16_t width, uint16_t height) const
-    {
+    Rect intersect(uint16_t width, uint16_t height) const {
         return this->intersect(Rect(0, 0, width, height));
     }
 
