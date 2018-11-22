@@ -1523,7 +1523,7 @@ public:
                     int(trimmed_range.size()), trimmed_range.begin());
             }
 
-            this->file_system_drive_manager.EnableDrive(
+            this->file_system_drive_manager.enable_drive(
                 FileSystemDriveManager::DriveName(
                     array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
                 proxy_managed_drive_prefix, this->verbose);
@@ -1682,7 +1682,7 @@ private:
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (!this->enable_rdpdr_data_analysis &&
             this->authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.HasManagedDrive()) {
+            !this->file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
@@ -5538,7 +5538,7 @@ private:
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
             this->authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.HasManagedDrive()) {
+            !this->file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {

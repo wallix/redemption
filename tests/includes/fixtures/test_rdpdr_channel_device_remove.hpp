@@ -337,10 +337,10 @@ const char outdata[] =
 // /* 0000 */ "\x72\x44\x4c\x55"                                                 //rDLU |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: Server User Logged On |
-// FileSystemDriveManager::AnnounceDrive |
+// FileSystemDriveManager::announce_drive |
 // DeviceAnnounceHeader: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=32767 PreferredDosName="EXPORT" |
 // 0000 45 58 50 4f 52 54 00                            EXPORT. |
-// FileSystemDriveManager::AnnounceDrive |
+// FileSystemDriveManager::announce_drive |
 // DeviceAnnounceHeader: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=32768 PreferredDosName="SHARE" |
 // 0000 53 48 41 52 45 00                               SHARE. |
 // Sending on channel (-1) n bytes |
@@ -765,10 +765,10 @@ const char indata[] =
 /* 0000 */ "\x72\x44\x4c\x55"                                                 //rDLU |
 // Dump done on rdpdr (-1) n bytes |
 // FileSystemVirtualChannel::process_server_message: Server User Logged On |
-// FileSystemDriveManager::AnnounceDrive |
+// FileSystemDriveManager::announce_drive |
 // DeviceAnnounceHeader: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=32767 PreferredDosName="EXPORT" |
 // 0000 45 58 50 4f 52 54 00                            EXPORT. |
-// FileSystemDriveManager::AnnounceDrive |
+// FileSystemDriveManager::announce_drive |
 // DeviceAnnounceHeader: DeviceType=RDPDR_DTYP_FILESYSTEM(8) DeviceId=32768 PreferredDosName="SHARE" |
 // 0000 53 48 41 52 45 00                               SHARE. |
 // Sending on channel (-1) n bytes |

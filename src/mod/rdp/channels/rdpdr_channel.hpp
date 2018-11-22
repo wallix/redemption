@@ -271,7 +271,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     public:
         void DisableSessionProbeDrive() {
             if (!this->user_logged_on) {
-                this->file_system_drive_manager.RemoveSessionProbeDrive(
+                this->file_system_drive_manager.remove_session_probe_drive(
                     this->verbose);
 
                 return;
@@ -279,15 +279,15 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
             this->session_probe_drive_should_be_disable = true;
 
-            this->EffectiveDisableSessionProbeDrive();
+            this->effective_disable_session_probe_drive();
         }
 
-        void EffectiveDisableSessionProbeDrive() {
+        void effective_disable_session_probe_drive() {
             if (this->user_logged_on &&
                 !this->waiting_for_server_device_announce_response &&
                 this->device_announces.empty() &&
                 this->session_probe_drive_should_be_disable) {
-                this->file_system_drive_manager.DisableSessionProbeDrive(
+                this->file_system_drive_manager.disable_session_probe_drive(
                     (*this->to_server_sender), this->verbose);
 
                 this->session_probe_drive_should_be_disable = false;
@@ -426,7 +426,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             }   // while (!this->waiting_for_server_device_announce_response &&
                 //        this->device_announces.size())
 
-            this->EffectiveDisableSessionProbeDrive();
+            this->effective_disable_session_probe_drive();
         }   // void announce_device()
 
     public:
@@ -878,7 +878,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             }
             else {
                 if (server_device_announce_response.DeviceId() ==
-                    this->file_system_drive_manager.GetSessionProbeDriveId()) {
+                    this->file_system_drive_manager.get_session_probe_drive_id()) {
                     if (this->file_system_virtual_channel.session_probe_device_announce_responded_notifier) {
                         if (!this->file_system_virtual_channel.session_probe_device_announce_responded_notifier->on_device_announce_responded()) {
                             this->file_system_virtual_channel.session_probe_device_announce_responded_notifier = nullptr;
@@ -1046,7 +1046,7 @@ public:
         LOG(LOG_INFO, "FileSystemVirtualChannel::enable_session_probe_drive: count=%u", this->enable_session_probe_drive_count);
 
         if (1 == this->enable_session_probe_drive_count) {
-            this->file_system_drive_manager.EnableSessionProbeDrive(
+            this->file_system_drive_manager.enable_session_probe_drive(
                 this->param_proxy_managed_drive_prefix, this->verbose);
         }
     }
@@ -2629,10 +2629,10 @@ public:
             }
         }
 
-        if (this->file_system_drive_manager.IsManagedDrive(
+        if (this->file_system_drive_manager.is_managed_drive(
                 this->server_device_io_request.DeviceId()))
         {
-            this->file_system_drive_manager.ProcessDeviceIORequest(
+            this->file_system_drive_manager.process_device_IO_request(
                 this->server_device_io_request,
                 (flags & CHANNELS::CHANNEL_FLAG_FIRST),
                 chunk,
@@ -3203,7 +3203,7 @@ public:
                 }
 
                 if (!this->user_logged_on) {
-                    this->file_system_drive_manager.AnnounceDrive(
+                    this->file_system_drive_manager.announce_drive(
                         this->device_capability_version_02_supported,
                         this->device_redirection_manager.to_device_announce_collection_sender,
                         this->verbose);

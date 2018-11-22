@@ -1911,7 +1911,7 @@ public:
         buffer[sizeof(buffer) - 1] = 0;
         LOG(level, "%s", buffer);
     }
-};  // class FileDescriptor
+};  // class file_descriptor
 
 
 

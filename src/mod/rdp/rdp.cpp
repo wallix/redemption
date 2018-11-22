@@ -99,7 +99,7 @@ void mod_rdp::init_negociate_event_(
         this->enable_auth_channel,
         this->trans, this->front, info, this->redir_info,
         this->gen, timeobj, mod_rdp_params, this->report_message,
-        (this->file_system_drive_manager.HasManagedDrive() || this->enable_session_probe)
+        (this->file_system_drive_manager.has_managed_drive() || this->enable_session_probe)
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
