@@ -1667,7 +1667,9 @@ public:
                             this->device_redirection_manager.get_device_type(
                                 this->client_device_io_response.DeviceId());
                         if (rdpdr::RDPDR_DTYP_FILESYSTEM != device_type) {
-                            std::string device_name = (p_device_name) ? *p_device_name : "";
+                            auto device_name = (p_device_name)
+                              ? make_array_view(*p_device_name)
+                              : array_view_const_char();
 
                             auto device_type_name = rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(device_type);
                             auto info = key_qvalue_pairs({
@@ -1689,12 +1691,12 @@ public:
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
-                                std::string message("DRIVE_REDIRECTION_USE=");
-                                message += device_name;
-                                message += "\x01";
-                                message += rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
-                                    device_type);
-
+                                std::string message = str_concat(
+                                    "DRIVE_REDIRECTION_USE=",
+                                    device_name,
+                                    '\x01', rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
+                                    device_type)
+                                );
                                 this->front.session_update(message);
                             }
                         }
@@ -1804,13 +1806,13 @@ public:
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("DRIVE_REDIRECTION_READ_EX=");
-                                        message += file_path;
-                                        message += "\x01";
-                                        message += file_size_str;
-                                        message += "\x01";
-                                        message += digest_s;
-
+                                        std::string message = str_concat(
+                                            "DRIVE_REDIRECTION_READ_EX=",
+                                            file_path,
+                                            '\x01',
+                                            file_size_str,
+                                            '\x01',
+                                            digest_s);
                                         this->front.session_update(message);
                                     }
                                 }
@@ -1833,9 +1835,9 @@ public:
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("DRIVE_REDIRECTION_READ=");
-                                        message += file_path;
-
+                                        std::string message = str_concat(
+                                            "DRIVE_REDIRECTION_READ=",
+                                            file_path);
                                         this->front.session_update(message);
                                     }
                                 }
@@ -1878,13 +1880,13 @@ public:
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("DRIVE_REDIRECTION_WRITE_EX=");
-                                        message += file_path;
-                                        message += "\x01";
-                                        message += file_size_str;
-                                        message += "\x01";
-                                        message += digest_s;
-
+                                        std::string message = str_concat(
+                                            "DRIVE_REDIRECTION_WRITE_EX=",
+                                            file_path,
+                                            '\x01',
+                                            file_size_str,
+                                            '\x01',
+                                            digest_s);
                                         this->front.session_update(message);
                                     }
                                 }
@@ -1907,9 +1909,9 @@ public:
                                     }
 
                                     if (!this->param_dont_log_data_into_wrm) {
-                                        std::string message("DRIVE_REDIRECTION_WRITE=");
-                                        message += file_path;
-
+                                        std::string message = str_concat(
+                                            "DRIVE_REDIRECTION_WRITE=",
+                                            file_path);
                                         this->front.session_update(message);
                                     }
                                 }
@@ -2058,9 +2060,9 @@ public:
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
-                                std::string message("DRIVE_REDIRECTION_DELETE=");
-                                message += file_path;
-
+                                std::string message = str_concat(
+                                    "DRIVE_REDIRECTION_DELETE=",
+                                    file_path);
                                 this->front.session_update(message);
                             }
                         }
@@ -2096,11 +2098,11 @@ public:
                             }
 
                             if (!this->param_dont_log_data_into_wrm) {
-                                std::string message("DRIVE_REDIRECTION_RENAME=");
-                                message += target_iter->file_path;
-                                message += "\x01";
-                                message += file_path;
-
+                                std::string message = str_concat(
+                                    "DRIVE_REDIRECTION_RENAME=",
+                                    target_iter->file_path,
+                                    '\x01',
+                                    file_path);
                                 this->front.session_update(message);
                             }
                         }

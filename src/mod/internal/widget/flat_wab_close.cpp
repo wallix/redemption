@@ -22,6 +22,7 @@
 #include "mod/internal/widget/flat_wab_close.hpp"
 #include "keyboard/keymap2.hpp"
 #include "utils/theme.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "core/app_path.hpp"
 #include "gdi/graphic_api.hpp"
 
@@ -115,8 +116,7 @@ FlatWabClose::FlatWabClose(
         (this->diagnostic_text.find("<br>") != std::string::npos);
 
     if (!this->fixed_format_diagnostic_text && extra_message && *extra_message) {
-        this->diagnostic_text += " ";
-        this->diagnostic_text += extra_message;
+        str_append(this->diagnostic_text, ' ', extra_message);
     }
 
     this->move_size_widget(left, top, width, height);

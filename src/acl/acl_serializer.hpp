@@ -46,6 +46,7 @@
 #include "utils/translation.hpp"
 #include "utils/verbose_flags.hpp"
 #include "utils/hexdump.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <string>
 #include <utility>
@@ -421,19 +422,24 @@ public:
                 // auto const& device = this->ini.get<cfg::globals::target_device>();
 
                 std::string extension;
+                extension.reserve(256);
 
                 switch (asl_info.direction_flag) {
 
                     case ArcsightLogInfo::NONE: break;
 
                     case ArcsightLogInfo::SERVER_DST:
-                        extension += " suser=" + user + " duser=" + account;
-                        extension += " src=" + host + " dst=" + target_ip;
+                        str_append(
+                            extension,
+                            " suser=", user, " duser=", account,
+                            " src=", host, " dst=", target_ip);
                         break;
 
                     case ArcsightLogInfo::SERVER_SRC:
-                        extension += " suser=" + account + " duser=" + user;
-                        extension += " src=" + target_ip + " dst=" + host;
+                        str_append(
+                            extension,
+                            " suser=", account, " duser=", user,
+                            " src=", target_ip, " dst=", host);
                         break;
                 }
                 if (!asl_info.ApplicationProtocol.empty()) {

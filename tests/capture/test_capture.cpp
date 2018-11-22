@@ -2275,10 +2275,7 @@ RED_AUTO_TEST_CASE(TestKbdCapturePatternNotify)
 
         void report(const char* reason, const char* message) override
         {
-            s += reason;
-            s += " -- ";
-            s += message;
-            s += "\n";
+            str_append(s, reason, " -- ", message, "\n");
         }
     } report_message;
 

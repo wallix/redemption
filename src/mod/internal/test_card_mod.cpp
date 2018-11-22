@@ -30,6 +30,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryLineTo.hpp"
 #include "utils/bitmap_from_file.hpp"
 #include "utils/sugar/update_lock.hpp"
+#include "utils/sugar/algostring.hpp"
 
 
 TestCardMod::TestCardMod(
@@ -142,7 +143,7 @@ void TestCardMod::draw_event(time_t /*now*/, gdi::GraphicApi & gd)
             32, 32, 0), clip, bloc64x64);
 
     //Bitmap_PNG logo(app_path_s(AppPath::Share) + "/ad8b.bmp");
-    Bitmap logo = bitmap_from_file((app_path_s(AppPath::Share) + "/ad8b.png").c_str());
+    Bitmap logo = bitmap_from_file(str_concat(app_path(AppPath::Share), "/ad8b.png").c_str());
     gd.draw(RDPMemBlt(0,
         Rect(100, 100, 26, 32),
         0xCC,

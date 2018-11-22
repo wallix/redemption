@@ -27,6 +27,7 @@
 #include "utils/genrandom.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/netutils.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "acl/auth_api.hpp"
 
@@ -482,11 +483,11 @@ public:
                 );
 
                 if (is_remote_app) {
-                    std::string target_info = this->ini.get<cfg::context::target_str>();
-                    target_info += ":";
-                    target_info += this->ini.get<cfg::globals::primary_user_id>();
-
-                    this->client_execute.set_target_info(target_info.c_str());
+                    std::string target_info = str_concat(
+                        this->ini.get<cfg::context::target_str>(),
+                        ':',
+                        this->ini.get<cfg::globals::primary_user_id>());
+                    this->client_execute.set_target_info(target_info);
                 }
 
                 break;
@@ -581,12 +582,10 @@ public:
         }
 
         if (has_error) {
-            std::string errorMsg = "Cannot connect to [";
-            errorMsg += this->config.target_IP;
-            errorMsg += "]. Socket error: ";
-            errorMsg += has_error_string;
+            std::string errorMsg = str_concat(
+                "Cannot connect to [", this->config.target_IP, "]. Socket error: ", has_error_string);
             LOG(LOG_WARNING, "%s", errorMsg);
-            this->disconnect("<font color='Red'>"+errorMsg+"</font>", true);
+            this->disconnect(str_concat("<font color='Red'>", errorMsg, "</font>"), true);
         }
 
         return !has_error;
@@ -855,9 +854,9 @@ public:
             if (this->impl_graphic) {
                 this->impl_graphic->dropScreen();
             }
-            const std::string errorMsg("Cannot read movie \""+this->config._movie_full_path+ "\".");
-            LOG(LOG_ERR, "%s", errorMsg.c_str());
-            std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
+            const std::string errorMsg = str_concat("Cannot read movie \"", this->config._movie_full_path, "\".");
+            LOG(LOG_ERR, "%s", errorMsg);
+            std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
             this->disconnect(labelErrorMsg, false);
         }
         return false;
@@ -1135,10 +1134,9 @@ public:
                 if (this->impl_graphic) {
                     this->impl_graphic->dropScreen();
                 }
-                const std::string errorMsg("[" + this->config.target_IP +  "] lost: pipe broken");
+                const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
                 LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
-                std::string labelErrorMsg("<font color='Red'>"+errorMsg+"</font>");
-
+                std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
                 this->disconnect(labelErrorMsg, true);
             }
 //         }

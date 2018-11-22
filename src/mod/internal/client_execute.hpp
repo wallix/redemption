@@ -206,7 +206,7 @@ public:
 
     void destroy_auxiliary_window() override;
 
-    void set_target_info(const char* ti);
+    void set_target_info(array_view_const_char ti);
 
     bool is_rail_enabled() const;
 

@@ -35,6 +35,7 @@
 #include "utils/bitmap_from_file.hpp"
 #include "utils/stream.hpp"
 #include "utils/region.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "mod/rdp/channels/virtual_channel_data_sender.hpp" // msgdump_c
 
 #define INTERNAL_MODULE_WINDOW_ID    40000
@@ -3088,13 +3089,9 @@ void ClientExecute::destroy_auxiliary_window()
     this->auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 }
 
-void ClientExecute::set_target_info(const char* ti)
+void ClientExecute::set_target_info(array_view_const_char ti)
 {
-    this->window_title = (ti ? ti : "");
-    if (!this->window_title.empty()) {
-        this->window_title += " - ";
-    }
-    this->window_title += INTERNAL_MODULE_WINDOW_TITLE;
+    str_append(this->window_title, ti, (ti.empty() ? "" : " - "), INTERNAL_MODULE_WINDOW_TITLE);
 }
 
 void ClientExecute::update_widget()

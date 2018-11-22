@@ -66,3 +66,11 @@ RED_AUTO_TEST_CASE(Test_str_append)
     str_append(s, "b\0xxx", "cd"_av, "e", cstr, std::string("h"), 'i');
     RED_CHECK_EQ(s, "abcdefghi");
 }
+
+RED_AUTO_TEST_CASE(Test_str_assign)
+{
+    char const* cstr = "fg";
+    std::string s = "a";
+    str_assign(s, "b\0xxx", "cd"_av, "e", cstr, std::string("h"), 'i');
+    RED_CHECK_EQ(s, "bcdefghi");
+}

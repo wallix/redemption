@@ -37,6 +37,7 @@
 
 #include "utils/log.hpp"
 
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
@@ -1353,10 +1354,10 @@ public:
 
     explicit MetaCaptureImpl(CaptureParams const& capture_params, MetaParams const & meta_params)
     : meta_trans(unique_fd{[&](){
-        std::string record_path;
-        record_path += capture_params.record_tmp_path;
-        record_path += capture_params.basename;
-        record_path += ".meta";
+        std::string record_path = str_concat(
+            capture_params.record_tmp_path,
+            capture_params.basename,
+            ".meta");
         const char * filename = record_path.c_str();
         int const file_mode = capture_params.groupid ? (S_IRUSR|S_IRGRP) : S_IRUSR;
         int fd = ::open(filename, O_CREAT | O_TRUNC | O_WRONLY, file_mode);

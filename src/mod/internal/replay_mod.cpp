@@ -30,6 +30,7 @@
 #include "mod/internal/replay_mod.hpp"
 #include "transport/in_meta_sequence_transport.hpp"
 #include "transport/mwrm_reader.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/genfstat.hpp"
 
 struct ReplayMod::Reader
@@ -333,6 +334,5 @@ void ReplayMod::draw_event(time_t /*now*/, gdi::GraphicApi & /*gd*/)
 
 std::string ReplayMod::get_mwrm_path() const
 {
-    using namespace std::string_literals;
-    return this->internal_reader->movie_path.prefix + ".mwrm"s;
+    return str_concat(this->internal_reader->movie_path.prefix, ".mwrm");
 }

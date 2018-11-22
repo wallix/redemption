@@ -10,6 +10,7 @@
 #include "core/error.hpp"
 #include "cxx/compiler_version.hpp"
 #include "cxx/diagnostic.hpp"
+#include "utils/sugar/algostring.hpp"
 
 namespace
 {
@@ -29,8 +30,9 @@ namespace redemption_unit_test__
             #endif
             boost::unit_test::unit_test_monitor.register_exception_translator<Error>(+[](Error const & e){
                 if (e.errnum) {
-                    throw std::runtime_error{prefix_msg_error + e.errmsg() +
-                        ", errno=" + std::to_string(e.errnum)};
+                    throw std::runtime_error{str_concat(
+                        prefix_msg_error, e.errmsg(), ", errno=", std::to_string(e.errnum)
+                    )};
                 }
                 throw std::runtime_error{prefix_msg_error + e.errmsg()};
             });

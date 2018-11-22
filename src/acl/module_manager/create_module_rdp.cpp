@@ -359,12 +359,12 @@ void ModuleManager::create_mod_rdp(
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
-            std::string target_info
-              = ini.get<cfg::context::target_str>()
-              + ":"
-              + ini.get<cfg::globals::primary_user_id>();
+            std::string target_info = str_concat(
+                ini.get<cfg::context::target_str>(),
+                ':',
+                ini.get<cfg::globals::primary_user_id>());
 
-            client_execute.set_target_info(target_info.c_str());
+            client_execute.set_target_info(target_info);
 
             auto* host_mod = new RailModuleHostMod(
                 ini,

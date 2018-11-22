@@ -884,13 +884,10 @@ inline void remove_file(
 ) {
     std::vector<std::string> files;
 
-    char infile_fullpath[2048];
     if (is_encrypted) {
-        std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", hash_path, input_filename, infile_extension);
-        files.emplace_back(infile_fullpath);
+        files.emplace_back(str_concat(hash_path, input_filename, infile_extension));
     }
-    std::snprintf(infile_fullpath, sizeof(infile_fullpath), "%s%s%s", infile_path, input_filename, infile_extension);
-    files.emplace_back(infile_fullpath);
+    files.emplace_back(str_concat(infile_path, input_filename, infile_extension));
 
     try {
         do {
@@ -2098,7 +2095,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
 
     if (is_encrypted_file(recorder.full_path.c_str(), recorder.infile_is_encrypted) == -1) {
         int const errnum = errno;
-        auto const mes = std::string("Input file error: ") + strerror(errnum);
+        auto const mes = str_concat("Input file error: ", strerror(errnum));
         return cl_error(mes.c_str(), -errnum);
     }
 
@@ -2122,7 +2119,7 @@ ClRes parse_command_line_options(int argc, char const ** argv, RecorderParams & 
     recorder.show_statistics    = (options.count("statistics"       ) > 0);
 
     if (!recorder.output_filename.empty()) {
-        std::string directory = app_path(AppPath::Wrm); directory += "/";
+        std::string directory = str_concat(app_path(AppPath::Wrm), '/');
         std::string filename                ;
         std::string extension = ".mwrm"     ;
 

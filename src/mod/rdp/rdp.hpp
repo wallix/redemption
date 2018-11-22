@@ -866,8 +866,7 @@ public:
             }
 
             // Target informations
-            this->session_probe_target_informations  = mod_rdp_params.target_application;
-            this->session_probe_target_informations += ":";
+            str_assign(this->session_probe_target_informations, mod_rdp_params.target_application, ':');
             if (!this->session_probe_public_session) {
                 this->session_probe_target_informations += mod_rdp_params.primary_user_id;
             }
@@ -884,9 +883,7 @@ public:
                       r & 0x000000FF
                     );
 
-                std::string title_param = "TITLE ";
-                title_param += session_probe_window_title;
-                title_param += "&";
+                std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
                 session_probe_arguments = get_session_probe_arguments(
                     std::move(session_probe_arguments),
@@ -953,8 +950,7 @@ public:
                     alternate_shell.erase(0, 2);
                 }
 
-                alternate_shell += " ";
-                alternate_shell += session_probe_arguments;
+                str_append(alternate_shell, ' ', session_probe_arguments);
 
                 strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
                 program[sizeof(program) - 1] = 0;
@@ -989,8 +985,7 @@ public:
                         std::string alternate_shell(mod_rdp_params.alternate_shell);
 
                         if (!shell_arguments.empty()) {
-                            alternate_shell += " ";
-                            alternate_shell += shell_arguments;
+                            str_append(alternate_shell, ' ', shell_arguments);
                         }
 
                         this->real_alternate_shell = std::move(alternate_shell);
@@ -1025,8 +1020,7 @@ public:
                 std::string alternate_shell(mod_rdp_params.alternate_shell);
 
                 if (!shell_arguments.empty()) {
-                    alternate_shell += " ";
-                    alternate_shell += shell_arguments;
+                    str_append(alternate_shell, ' ', shell_arguments);
                 }
 
                 set_alternate_shell_program_and_directory(
@@ -1077,8 +1071,7 @@ public:
                     alternate_shell.erase(0, 2);
                 }
 
-                alternate_shell += " ";
-                alternate_shell += session_probe_arguments;
+                str_append(alternate_shell, ' ', session_probe_arguments);
 
                 if (this->session_probe_use_clipboard_based_launcher) {
                     this->session_probe_launcher =
@@ -2282,8 +2275,10 @@ public:
                                 uint32_t error_info = this->get_error_info_from_pdu(sdata.payload);
                                 this->process_error_info(error_info);
                                 if (error_info == ERRINFO_SERVER_DENIED_CONNECTION) {
-                                    this->close_box_extra_message_ref += " ";
-                                    this->close_box_extra_message_ref += TR(trkeys::err_server_denied_connection, this->lang);
+                                    str_append(
+                                        this->close_box_extra_message_ref, ' ',
+                                        TR(trkeys::err_server_denied_connection, this->lang)
+                                    );
                                 }
                             }
 
@@ -2757,9 +2752,11 @@ public:
                 if (UP_AND_RUNNING != this->connection_finalization_state &&
                     !this->already_upped_and_running) {
                     const char * statedescr = TR(trkeys::err_mod_rdp_connected, this->lang);
-                    this->close_box_extra_message_ref += " ";
-                    this->close_box_extra_message_ref += statedescr;
-                    this->close_box_extra_message_ref += " (CONNECTED)";
+                    str_append(
+                        this->close_box_extra_message_ref,
+                        ' ',
+                        statedescr,
+                        " (CONNECTED)");
                     LOG(LOG_ERR, "Creation of new mod 'RDP' failed at CONNECTED state. %s",
                         statedescr);
                     throw Error(ERR_SESSION_UNKNOWN_BACKEND);
@@ -4148,9 +4145,7 @@ public:
         LOG(LOG_INFO, "process error info pdu: code=0x%08X error=%s", errorInfo, errorInfo_name);
 
         if (errorInfo) {
-            this->close_box_extra_message_ref += " (";
-            this->close_box_extra_message_ref += errorInfo_name;
-            this->close_box_extra_message_ref += ")";
+            str_append(this->close_box_extra_message_ref, " (", errorInfo_name, ')');
         }
 
         switch (errorInfo){

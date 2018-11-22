@@ -27,6 +27,7 @@
 #include "core/RDP/x224.hpp"
 
 #include "utils/sugar/multisz.hpp"
+#include "utils/sugar/algostring.hpp"
 
 
 // Protocol Security Negotiation Protocols
@@ -306,8 +307,7 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
             LOG(LOG_INFO, "Enable NLA is probably required");
 
             if (!this->nla_tried) {
-                this->extra_message += " ";
-                this->extra_message += TR(trkeys::err_nla_required, this->lang);
+                str_append(this->extra_message, " ", TR(trkeys::err_nla_required, this->lang));
             }
             trans.disconnect();
 
@@ -320,8 +320,7 @@ RdpNego::State RdpNego::recv_connection_confirm(OutTransport trans, InStream x22
             LOG(LOG_INFO, "Enable TLS is probably required");
 
             if (!this->tls) {
-                this->extra_message += " ";
-                this->extra_message += TR(trkeys::err_tls_required, this->lang);
+                str_append(this->extra_message, " ", TR(trkeys::err_tls_required, this->lang));
             }
             trans.disconnect();
 

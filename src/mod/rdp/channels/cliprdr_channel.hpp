@@ -159,7 +159,6 @@ private:
     }   // process_client_format_data_response_pdu
 
 
-
 public:
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
         InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
@@ -729,7 +728,7 @@ private:
             });
 
         ArcsightLogInfo arc_info;
-        arc_info.name = std::string(type);
+        arc_info.name = type;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.fileName = file_info.file_name;
         arc_info.fileSize = file_info.size;
@@ -743,14 +742,8 @@ private:
         }
 
         if (!this->param_dont_log_data_into_wrm) {
-            std::string message(type);
-            message += "=";
-            message += file_info.file_name;
-            message += "\x01";
-            message += file_size_str;
-            message += "\x01";
-            message += digest_s;
-
+            std::string message = str_concat(
+                type, '=', file_info.file_name, '\x01', file_size_str, '\x01', digest_s);
             this->front.session_update(message);
         }
     }
@@ -782,9 +775,7 @@ private:
                              && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
                     );
 
-                format_name += "(";
-                format_name += std::to_string(requestedFormatId );
-                format_name += ")";
+                str_append(format_name, '(', std::to_string(requestedFormatId), ')');
 
                 auto const size_str = std::to_string(in_header.dataLen());
 
@@ -821,14 +812,9 @@ private:
                 }
 
                 if (!this->param_dont_log_data_into_wrm) {
-                    std::string message(type);
-                    message += "=";
-                    message += format_name;
-                    message += "\x01";
-                    message += size_str;
+                    std::string message = str_concat(type, '=', format_name, '\x01', size_str);
                     if (!data_to_dump.empty()) {
-                        message += "\x01";
-                        message += data_to_dump;
+                        str_append(message, '\x01', data_to_dump);
                     }
 
                     this->front.session_update(message);
@@ -838,4 +824,3 @@ private:
     }
 
 };  // class ClipboardVirtualChannel
-

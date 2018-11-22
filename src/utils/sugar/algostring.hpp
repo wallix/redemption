@@ -131,3 +131,11 @@ void str_append(std::string& str, Strings const&... strs)
 {
     detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
 }
+
+
+template<class... Strings>
+void str_assign(std::string& str, Strings const&... strs)
+{
+    str.clear();
+    detail::str_concat_view(str, detail::to_string_view_or_char(strs)...);
+}

@@ -685,7 +685,7 @@ OutCryptoTransport::~OutCryptoTransport()
         if (this->cctx.get_with_checksum()){
             char mes[MD_HASH::DIGEST_LENGTH*4+1+128]{};
             char * p = mes;
-            p+= sprintf(mes, "Encrypted transport implicitly closed, hash checksums dropped :");
+            p += sprintf(mes, "Encrypted transport implicitly closed, hash checksums dropped :");
             auto hexdump = [&p](uint8_t (&hash)[MD_HASH::DIGEST_LENGTH]) {
                 *p++ = ' ';                // 1 octet
                 for (unsigned c : hash) {

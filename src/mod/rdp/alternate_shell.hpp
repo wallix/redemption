@@ -20,7 +20,7 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include "utils/sugar/cast.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <string>
 #include <cstring>
@@ -83,12 +83,9 @@ struct get_session_probe_arguments
             }
         };
 
-        std::string cookie_param;
-        if (cookie.s && *cookie.s) {
-            cookie_param = "/#";
-            cookie_param += cookie.s;
-            cookie_param += ' ';
-        }
+        std::string cookie_param = (cookie.s && *cookie.s)
+          ? str_concat("/#", cookie.s, ' ')
+          : std::string();
 
         replace("${EXE_VAR}", exe.s);
         replace("${TITLE_VAR} ", title.s);

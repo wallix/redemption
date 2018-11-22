@@ -30,6 +30,7 @@
 #include "utils/fileutils.hpp"
 #include "utils/file.hpp"
 #include "utils/log.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "transport/transport.hpp" // Transport::TlsResult
 
@@ -266,9 +267,7 @@ public:
         if (recursive_create_directory(certif_path, S_IRWXU|S_IRWXG, -1) != 0) {
             LOG(LOG_WARNING, "Failed to create certificate directory: %s ", certif_path);
             if (error_message) {
-                *error_message = "Failed to create certificate directory: \"";
-                *error_message += certif_path;
-                *error_message += "\"\n";
+                str_assign(*error_message, "Failed to create certificate directory: \"", certif_path, "\"\n");
             }
             bad_certificate_path = true;
 
@@ -294,9 +293,7 @@ public:
                     // failed to open stored certificate file
                     LOG(LOG_WARNING, "Failed to open stored certificate: \"%s\"", filename);
                     if (error_message) {
-                        *error_message = "Failed to open stored certificate: \"";
-                        *error_message += filename;
-                        *error_message += "\"\n";
+                        str_assign(*error_message, "Failed to open stored certificate: \"", filename, "\"\n");
                     }
                     server_notifier.server_cert_error(strerror(errno));
                     checking_exception = ERR_TRANSPORT_TLS_CERTIFICATE_INACCESSIBLE;
@@ -306,9 +303,7 @@ public:
                 {
                     LOG(LOG_WARNING, "There's no stored certificate: \"%s\"", filename);
                     if (error_message) {
-                        *error_message = "There's no stored certificate: \"";
-                        *error_message += filename;
-                        *error_message += "\"\n";
+                        str_assign(*error_message, "There's no stored certificate: \"", filename, "\"\n");
                     }
 
                     if (ensure_server_certificate_exists) {
@@ -327,9 +322,7 @@ public:
                     // failed to read stored certificate file
                     LOG(LOG_WARNING, "Failed to read stored certificate: \"%s\"", filename);
                     if (error_message) {
-                        *error_message = "Failed to read stored certificate: \"";
-                        *error_message += filename;
-                        *error_message += "\"\n";
+                        str_assign(*error_message, "Failed to read stored certificate: \"", filename, "\"\n");
                     }
                     certificate_matches = false;
 
@@ -385,9 +378,7 @@ public:
                             fingerprint_existing.get(), issuer.get(),
                             subject.get(), fingerprint.get());
                         if (error_message) {
-                            *error_message = "The certificate has changed: \"";
-                            *error_message += filename;
-                            *error_message += "\"\n";
+                            str_assign(*error_message, "The certificate has changed: \"", filename, "\"\n");
                         }
                         certificate_exists  = true;
                         certificate_matches = false;

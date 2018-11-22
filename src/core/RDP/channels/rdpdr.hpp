@@ -821,19 +821,6 @@ enum : uint32_t {
   , RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT      = 0x00000010
 };
 
-static std::string get_rdpdr_printer_flags_name(uint32_t flags)
-{
-    std::string str;
-    #define ASTR(f) if (flags & f) str += #f " "
-    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII);
-    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER);
-    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER);
-    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER);
-    ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT);
-    #undef ASTR
-    return str;
-}
-
 
 // CodePage (4 bytes): A 32-bit unsigned integer. Reserved for future use. This field MUST be set to 0.
 //
@@ -980,7 +967,15 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 //         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId);
 //         LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName);
 //         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->DeviceDataLength));
-        LOG(LOG_INFO, "          * Flags           = 0x%08x (4 bytes): %s", this->Flags, get_rdpdr_printer_flags_name(this->Flags).c_str());
+#define ASTR(f) (this->Flags & f) ? " " #f : ""
+        LOG(LOG_INFO, "          * Flags           = 0x%08x (4 bytes):%s%s%s%s%s", this->Flags,
+            ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII),
+            ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER),
+            ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_NETWORKPRINTER),
+            ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_TSPRINTER),
+            ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_XPSFORMAT)
+        );
+#undef ASTR
         LOG(LOG_INFO, "          * CodePage        = 0x%08x (4 bytes)", this->CodePage);
         LOG(LOG_INFO, "          * PnPNameLen      = %zu (4 bytes)", this->PnPNameLen);
         LOG(LOG_INFO, "          * DriverNameLen   = %zu (4 bytes)", this->DriverNameLen);
@@ -1487,7 +1482,7 @@ public:
             LOG(LOG_INFO, "          * DesiredAccess     = 0x%08x (4 bytes): %s", this->DesiredAccess_, smb2::get_File_Pipe_Printer_Access_Mask_name(this->DesiredAccess_));
         }
         LOG(LOG_INFO, "          * AllocationSize    = 0x%" PRIu64 " (8 bytes)", this->AllocationSize_);
-        LOG(LOG_INFO, "          * FileAttributes    = 0x%08x (4 bytes): %s", this->FileAttributes_, fscc::get_FileAttributes_name(this->FileAttributes_));
+        fscc::log_file_attributes(this->FileAttributes_);
         LOG(LOG_INFO, "          * SharedAccess      = 0x%08x (4 bytes): %s", this->SharedAccess_,  smb2::get_ShareAccess_name(this->SharedAccess_));
         LOG(LOG_INFO, "          * CreateDisposition = 0x%08x (4 bytes): %s", this->CreateDisposition_, smb2::get_CreateDisposition_name(this->CreateDisposition_));
         LOG(LOG_INFO, "          * CreateOptions     = 0x%08x (4 bytes): %s", this->CreateOptions_, smb2::get_CreateOptions_name(this->CreateOptions_));

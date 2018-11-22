@@ -78,11 +78,7 @@ void mod_rdp::init_negociate_event_(
             #undef CASE
         }
 
-        this->close_box_extra_message_ref += " ";
-        this->close_box_extra_message_ref += statedescr;
-        this->close_box_extra_message_ref += " (";
-        this->close_box_extra_message_ref += statestr;
-        this->close_box_extra_message_ref += ")";
+        str_append(this->close_box_extra_message_ref, ' ', statedescr, " (", statestr, ')');
 
         LOG(LOG_ERR, "Creation of new mod 'RDP' failed at %s state. %s",
             statestr, statedescr);

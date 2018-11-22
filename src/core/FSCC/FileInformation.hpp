@@ -334,25 +334,29 @@ enum : uint32_t {
 };
 
 static inline
-std::string get_FileAttributes_name(uint32_t fileAttribute) {
-    std::string str;
-    (fileAttribute & FILE_ATTRIBUTE_READONLY) ? str+="FILE_ATTRIBUTE_READONLY " :str;
-    (fileAttribute & FILE_ATTRIBUTE_HIDDEN) ? str+="FILE_ATTRIBUTE_HIDDEN " :str;
-    (fileAttribute & FILE_ATTRIBUTE_SYSTEM) ? str+="FILE_ATTRIBUTE_SYSTEM " :str;
-    (fileAttribute & FILE_ATTRIBUTE_DIRECTORY) ? str+="FILE_ATTRIBUTE_DIRECTORY " : str;
-    (fileAttribute & FILE_ATTRIBUTE_ARCHIVE) ? str+="FILE_ATTRIBUTE_ARCHIVE " : str;
-    (fileAttribute & FILE_ATTRIBUTE_NORMAL) ? str+="FILE_ATTRIBUTE_NORMAL " : str;
-    (fileAttribute & FILE_ATTRIBUTE_TEMPORARY) ? str+="FILE_ATTRIBUTE_TEMPORARY " :str;
-    (fileAttribute & FILE_ATTRIBUTE_SPARSE_FILE) ? str+="FILE_ATTRIBUTE_SPARSE_FILE " : str;
-    (fileAttribute & FILE_ATTRIBUTE_REPARSE_POINT) ? str+="FILE_ATTRIBUTE_REPARSE_POINT " : str;
-    (fileAttribute & FILE_ATTRIBUTE_OFFLINE) ? str+="FILE_ATTRIBUTE_OFFLINE " : str;
-    (fileAttribute & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) ? str+="FILE_ATTRIBUTE_NOT_CONTENT_INDEXED ":str;
-    (fileAttribute & FILE_ATTRIBUTE_ENCRYPTED) ? str+="FILE_ATTRIBUTE_ENCRYPTED " : str;
-    (fileAttribute & FILE_ATTRIBUTE_COMPRESSED) ? str+="FILE_ATTRIBUTE_COMPRESSED " : str;
-    (fileAttribute & FILE_ATTRIBUTE_INTEGRITY_STREAM) ? str+="FILE_ATTRIBUTE_INTEGRITY_STREAM " : str;
-    (fileAttribute & FILE_ATTRIBUTE_NO_SCRUB_DATA) ? str+="FILE_ATTRIBUTE_NO_SCRUB_DATA " : str;
-
-    return str;
+void log_file_attributes(uint32_t fileAttributes)
+{
+#define ASTR(f) (fileAttributes & f) ? " " #f : ""
+    LOG(LOG_INFO, "          * FileAttributes = 0x%08x "
+        "(4 bytes):%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+        fileAttributes,
+        ASTR(FILE_ATTRIBUTE_READONLY),
+        ASTR(FILE_ATTRIBUTE_HIDDEN),
+        ASTR(FILE_ATTRIBUTE_SYSTEM),
+        ASTR(FILE_ATTRIBUTE_DIRECTORY),
+        ASTR(FILE_ATTRIBUTE_ARCHIVE),
+        ASTR(FILE_ATTRIBUTE_NORMAL),
+        ASTR(FILE_ATTRIBUTE_TEMPORARY),
+        ASTR(FILE_ATTRIBUTE_SPARSE_FILE),
+        ASTR(FILE_ATTRIBUTE_REPARSE_POINT),
+        ASTR(FILE_ATTRIBUTE_OFFLINE),
+        ASTR(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED),
+        ASTR(FILE_ATTRIBUTE_ENCRYPTED),
+        ASTR(FILE_ATTRIBUTE_COMPRESSED),
+        ASTR(FILE_ATTRIBUTE_INTEGRITY_STREAM),
+        ASTR(FILE_ATTRIBUTE_NO_SCRUB_DATA)
+      );
+#undef ASTR
 }
 
 
@@ -828,7 +832,7 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Attribute Tag Information:");
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        log_file_attributes(this->FileAttributes);
         LOG(LOG_INFO, "          * ReparseTag     = 0x%08x (4 bytes)", this->ReparseTag);
     }
 };
@@ -1013,7 +1017,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime  = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime     = 0x%" PRIx64 " (8 bytes)", this->ChangeTime_);
-        LOG(LOG_INFO, "          * FileAttributes = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
+        log_file_attributes(this->FileAttributes_);
     }
 };  // FileBasicInformation
 
@@ -1378,7 +1382,7 @@ public:
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * EndOfFile       = 0x%ld (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * AllocationSize  = 0x%ld (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        log_file_attributes(this->FileAttributes);
         LOG(LOG_INFO, "          * FileNameLength  = %u (4 bytes)", this->FileNameLength);
         LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
         LOG(LOG_INFO, "          * ShortNameLength = %u (1 byte)", this->ShortNameLength);
@@ -1605,7 +1609,7 @@ public:
         LOG(LOG_INFO, "          * LastAccessTime  = 0x%" PRIx64 " (8 bytes)", this->LastAccessTime_);
         LOG(LOG_INFO, "          * LastWriteTime   = 0x%" PRIx64 " (8 bytes)", this->LastWriteTime_);
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes_, get_FileAttributes_name(this->FileAttributes_));
+        log_file_attributes(this->FileAttributes_);
         LOG(LOG_INFO, "          * FileNameLength  = %u (4 bytes)", this->FileNameLength);
         LOG(LOG_INFO, "          * FileName        = \"%s\" (%u byte(s))", file_name_UTF8, this->FileNameLength);
     }
@@ -2147,7 +2151,7 @@ public:
         LOG(LOG_INFO, "          * ChangeTime      = 0x%" PRIx64 " (8 bytes)", this->ChangeTime);
         LOG(LOG_INFO, "          * EndOfFile       = 0x%ld (8 bytes)", this->EndOfFile);
         LOG(LOG_INFO, "          * AllocationSize  = 0x%ld (8 bytes)", this->AllocationSize);
-        LOG(LOG_INFO, "          * FileAttributes  = 0x%08x (4 bytes): %s", this->FileAttributes, get_FileAttributes_name(this->FileAttributes));
+        log_file_attributes(this->FileAttributes);
         LOG(LOG_INFO, "          * FileNameLength  = %u (4 bytes)", this->FileNameLength);
         LOG(LOG_INFO, "          * EaSize          = %u (4 bytes)", this->EaSize);
         LOG(LOG_INFO, "          * FileName        = \"%s\"", file_name_UTF8);
@@ -2931,41 +2935,41 @@ private:
         return ((length < size) ? length : size - 1);
     }
 
-    static std::string get_FileSystemAttributes_name(uint32_t FileSystemAttribute)
+    void log_file_system_attributes() const
     {
-        std::string str;
+#define ASTR(f) bool(this->FileSystemAttributes_ & f) ? " " #f : ""
+        LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x "
+            "(4 bytes): %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+            this->FileSystemAttributes_,
+            ASTR(FILE_SUPPORTS_USN_JOURNAL),
+            ASTR(FILE_SUPPORTS_OPEN_BY_FILE_ID),
+            ASTR(FILE_SUPPORTS_EXTENDED_ATTRIBUTES),
 
-#define ADD_IF(f) if (bool(FileSystemAttribute & f)) str += #f " "
-        ADD_IF(FILE_SUPPORTS_USN_JOURNAL);
-        ADD_IF(FILE_SUPPORTS_OPEN_BY_FILE_ID);
-        ADD_IF(FILE_SUPPORTS_EXTENDED_ATTRIBUTES);
+            ASTR(FILE_SUPPORTS_HARD_LINKS),
+            ASTR(FILE_SUPPORTS_TRANSACTIONS),
+            ASTR(FILE_SEQUENTIAL_WRITE_ONCE),
 
-        ADD_IF(FILE_SUPPORTS_HARD_LINKS);
-        ADD_IF(FILE_SUPPORTS_TRANSACTIONS);
-        ADD_IF(FILE_SEQUENTIAL_WRITE_ONCE);
+            ASTR(FILE_READ_ONLY_VOLUME),
+            ASTR(FILE_NAMED_STREAMS),
+            ASTR(FILE_SUPPORTS_ENCRYPTION),
 
-        ADD_IF(FILE_READ_ONLY_VOLUME);
-        ADD_IF(FILE_NAMED_STREAMS);
-        ADD_IF(FILE_SUPPORTS_ENCRYPTION);
+            ASTR(FILE_SUPPORTS_OBJECT_IDS),
+            ASTR(FILE_VOLUME_IS_COMPRESSED),
+            ASTR(FILE_SUPPORTS_REMOTE_STORAGE),
 
-        ADD_IF(FILE_SUPPORTS_OBJECT_IDS);
-        ADD_IF(FILE_VOLUME_IS_COMPRESSED);
-        ADD_IF(FILE_SUPPORTS_REMOTE_STORAGE);
+            ASTR(FILE_SUPPORTS_REPARSE_POINTS),
+            ASTR(FILE_SUPPORTS_SPARSE_FILES),
+            ASTR(FILE_VOLUME_QUOTAS),
 
-        ADD_IF(FILE_SUPPORTS_REPARSE_POINTS);
-        ADD_IF(FILE_SUPPORTS_SPARSE_FILES);
-        ADD_IF(FILE_VOLUME_QUOTAS);
+            ASTR(FILE_FILE_COMPRESSION),
+            ASTR(FILE_PERSISTENT_ACLS),
+            ASTR(FILE_UNICODE_ON_DISK),
 
-        ADD_IF(FILE_FILE_COMPRESSION);
-        ADD_IF(FILE_PERSISTENT_ACLS);
-        ADD_IF(FILE_UNICODE_ON_DISK);
-
-        ADD_IF(FILE_CASE_PRESERVED_NAMES);
-        ADD_IF(FILE_CASE_SENSITIVE_SEARCH);
-        ADD_IF(FILE_SUPPORT_INTEGRITY_STREAMS);
-#undef ADD_IF
-
-        return str;
+            ASTR(FILE_CASE_PRESERVED_NAMES),
+            ASTR(FILE_CASE_SENSITIVE_SEARCH),
+            ASTR(FILE_SUPPORT_INTEGRITY_STREAMS)
+        );
+#undef ASTR
     }
 
 public:
@@ -2986,7 +2990,7 @@ public:
         file_system_name_UTF8[file_system_name_UTF8_length] = 0;
 
         LOG(LOG_INFO, "     File Fs Attribute Information:");
-        LOG(LOG_INFO, "          * FileSystemAttributes       = 0x%08x (4 bytes): %s", this->FileSystemAttributes_, get_FileSystemAttributes_name(this->FileSystemAttributes_));
+        this->log_file_system_attributes();
         LOG(LOG_INFO, "          * MaximumComponentNameLength = %d (4 bytes)", int(this->MaximumComponentNameLength));
         LOG(LOG_INFO, "          * FileSystemNameLength       = %u (4 bytes)", this->FileSystemNameLength);
         LOG(LOG_INFO, "          * FileSystemName             = \"%s\" (%u byte(s))", file_system_name_UTF8, this->FileSystemNameLength);

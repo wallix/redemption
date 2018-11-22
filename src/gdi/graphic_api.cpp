@@ -22,6 +22,7 @@
 #include "core/RDP/orders/RDPOrdersCommon.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/splitter.hpp"
 
 namespace
@@ -90,9 +91,10 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
         }();
 
         if (cumulative_width) {
+            auto to_av = [](range<char const*> r) { return make_array_view(r.begin(), r.end()); };
+
             if (cumulative_width + white_space_width + part_width > max_width) {
-                out_multiline_string_ref += "<br>";
-                out_multiline_string_ref += parameter;
+                str_append(out_multiline_string_ref, "<br>", to_av(parameter));
 
                 cumulative_width = part_width;
 
@@ -101,8 +103,7 @@ MultiLineTextMetrics::MultiLineTextMetrics(const Font& font, const char* unicode
                 number_of_lines++;
             }
             else {
-                out_multiline_string_ref += ' ';
-                out_multiline_string_ref += parameter;
+                str_append(out_multiline_string_ref, ' ', to_av(parameter));
 
                 cumulative_width += (white_space_width + part_width);
 

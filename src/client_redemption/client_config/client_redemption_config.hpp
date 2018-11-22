@@ -24,6 +24,7 @@
 #include "utils/netutils.hpp"
 #include "utils/genfstat.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include "main/version.hpp"
 #include "utils/cli.hpp"
@@ -668,7 +669,7 @@ public:
                             current_name.length()-extension_av.size(), current_name.length()));
 
                         if (end_string == extension_av.data()) {
-                            std::string file_path = this->REPLAY_DIR + "/" + current_name;
+                            std::string file_path = str_concat(this->REPLAY_DIR, '/', current_name);
 
                             unique_fd fd(file_path, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 
@@ -1005,11 +1006,11 @@ public:
         unique_fd fd = unique_fd(this->windowsData.config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 //         std::ofstream ofile(this->config_file_path, std::ios::trunc);
         if (fd.is_open()) {
-            std::string info;
-            info += "form_x " + std::to_string(this->windowsData.form_x) + "\n";
-            info += "form_y " + std::to_string(this->windowsData.form_y) + "\n";
-            info += "screen_x " + std::to_string(this->windowsData.screen_x) + "\n";
-            info += "screen_y " + std::to_string(this->windowsData.screen_y) +"\n";
+            std::string info = str_concat(
+                "form_x ", std::to_string(this->windowsData.form_x), "\n"
+                "form_y ", std::to_string(this->windowsData.form_y), "\n"
+                "screen_x ", std::to_string(this->windowsData.screen_x), "\n"
+                "screen_y ", std::to_string(this->windowsData.screen_y), '\n');
 
             ::write(fd.fd(), info.c_str(), info.length());
         }
@@ -1084,17 +1085,19 @@ public:
         unique_fd fd = unique_fd(KEY_SETTING_PATH.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
         if(fd.is_open()) {
-            std::string to_write;
-            to_write +="Key Setting\n\n";
+            std::string to_write = "Key Setting\n\n";
 
             for (KeyCustomDefinition & key : this->keyCustomDefinitions) {
                 if (key.qtKeyID != 0) {
-                    to_write += "- ";
-                    to_write += std::to_string(key.qtKeyID) + " ";
-                    to_write += std::to_string(key.scanCode) + " ";
-                    to_write += key.ASCII8 + " ";
-                    to_write += std::to_string(key.extended) + " ";
-                    to_write +=  key.name + "\n";
+                    str_append(
+                        to_write,
+                        "- ",
+                        std::to_string(key.qtKeyID), ' ',
+                        std::to_string(key.scanCode), ' ',
+                        key.ASCII8, ' ',
+                        std::to_string(key.extended), ' ',
+                        key.name, '\n'
+                    );
                 }
             }
 
@@ -1353,27 +1356,31 @@ public:
             unique_fd file = unique_fd(this->USER_CONF_LOG.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
             if(file.is_open()) {
 
-                std::string to_write;
-                if (this->_save_password_account) {
-                    to_write += "save_pwd true\n";
-                } else {
-                    to_write += "save_pwd false\n";
-                }
-                to_write += "last_target " + std::to_string(this->_last_target_index) + "\n\n";
+                std::string to_write = str_concat(
+                    (this->_save_password_account ? "save_pwd true\n" : "save_pwd false\n"),
+                    "last_target ",
+                    std::to_string(this->_last_target_index),
+                    "\n\n");
 
                 for (int i = 0; i < this->_accountNB; i++) {
-                    to_write += "title " + this->_accountData[i].title + "\n";
-                    to_write += "IP "    + this->_accountData[i].IP    + "\n";
-                    to_write += "name "  + this->_accountData[i].name  + "\n";
-                    to_write += "protocol " + std::to_string(this->_accountData[i].protocol) + "\n";
+                    str_append(
+                        to_write,
+                        "title ", this->_accountData[i].title, "\n"
+                        "IP "   , this->_accountData[i].IP   , "\n"
+                        "name " , this->_accountData[i].name , "\n"
+                        "protocol ", std::to_string(this->_accountData[i].protocol), '\n');
+
                     if (this->_save_password_account) {
-                        to_write += "pwd " + this->_accountData[i].pwd + "\n";
+                        str_append(to_write, "pwd ", this->_accountData[i].pwd, "\n");
                     } else {
                         to_write += "pwd \n";
                     }
-                    to_write += "port " + std::to_string(this->_accountData[i].port) + "\n";
-                    to_write += "options_profil " + std::to_string(this->_accountData[i].options_profil) + "\n";
-                    to_write += "\n";
+
+                    str_append(
+                        to_write,
+                        "port ", std::to_string(this->_accountData[i].port), "\n"
+                        "options_profil ", std::to_string(this->_accountData[i].options_profil), "\n"
+                        "\n");
                 }
 
                 ::write(file.fd(), to_write.c_str(), to_write.length());
@@ -1447,7 +1454,7 @@ public:
 //         std::ifstream ifichier(this->USER_CONF_PATH);
 //         if(ifichier) {
 
-            std::string new_file_content;
+            std::string new_file_content = "current_user_profil_id 0\n";
             int ligne_to_jump = 0;
 
             std::string line;
@@ -1462,7 +1469,7 @@ public:
                     if (line.compare(0, pos, "id") == 0 && std::stoi(info) == this->current_user_profil) {
                         ligne_to_jump = 18;
                     } else {
-                        new_file_content += line + "\n";
+                        str_append(new_file_content, line, '\n');
                     }
                 } else {
                     ligne_to_jump--;
@@ -1470,8 +1477,6 @@ public:
             }
 
             file_to_read.close();
-
-            new_file_content = "current_user_profil_id 0\n" + new_file_content;
 
             unique_fd file_to_read = unique_fd(this->USER_CONF_PATH.c_str(), O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
               ::write(file_to_read.fd(), new_file_content.c_str(), new_file_content.length());
@@ -1509,61 +1514,55 @@ public:
 
         if(file.is_open()) {
 
-            std::string to_write;
-            to_write += "current_user_profil_id "+ std::to_string(this->current_user_profil) + "\n";
+            std::string to_write = str_concat(
+                "current_user_profil_id ", std::to_string(this->current_user_profil), '\n');
 
             bool not_reading_current_profil = true;
             std::string ligne;
             while(this->read_line(file.fd(), ligne)) {
-
-                std::string tag;
-                std::string info;
-                int pos = 0;
-
                 if (!ligne.empty()) {
+                    std::size_t pos = ligne.find(' ');
 
-                    pos = ligne.find(' ');
-                    std::string tag  = ligne.substr(0, pos);
-                    info = ligne.substr(pos + 1);
-
-                    if (info ==  "id") {
-                        to_write +=  "\n";
-                        int read_id = std::stoi(tag);
+                    if (ligne.compare(pos+1, std::string::npos, "id") == 0) {
+                        to_write += '\n';
+                        int read_id = std::stoi(ligne);
                         not_reading_current_profil = !(read_id == this->current_user_profil);
                     }
 
-                   if (not_reading_current_profil) {
-                        to_write += "\n" + ligne;
-                   }
-                }
+                    if (not_reading_current_profil) {
+                        str_append(to_write, '\n', ligne);
+                    }
 
-                ligne = "";
+                    ligne.clear();
+                }
             }
 
-            to_write += "\nid " + std::to_string(this->userProfils[this->current_user_profil].id) + "\n";
-            to_write += "name " + this->userProfils[this->current_user_profil].name + "\n";
-            to_write += "keylayout " + std::to_string(this->info.keylayout) + "\n";
-            to_write += "brush_cache_code "      + std::to_string(this->info.brush_cache_code) + "\n";
-            to_write += "bpp "                   + std::to_string(static_cast<int>(this->info.screen_info.bpp)) + "\n";
-            to_write += "width "                 + std::to_string(this->rdp_width) + "\n";
-            to_write += "height "                + std::to_string(this->rdp_height)                  + "\n";
-            to_write += "rdp5_performanceflags " + std::to_string(static_cast<int>(this->info.rdp5_performanceflags)) + "\n";
-            to_write += "monitorCount "          + std::to_string(this->info.cs_monitor.monitorCount) + "\n";
-            to_write += "span "                  + std::to_string(this->is_spanning)                  + "\n";
-            to_write += "record "                + std::to_string(this->is_recording)                 +"\n";
-            to_write += "tls "                   + std::to_string(this->modRDPParamsData.enable_tls)  + "\n";
-            to_write += "nla "                   + std::to_string(this->modRDPParamsData.enable_nla) + "\n";
-            to_write += "sound "                 + std::to_string(this->modRDPParamsData.enable_sound) + "\n";
-            to_write += "console_mode "          + std::to_string(this->info.console_session) + "\n";
-            to_write += "enable_shared_clipboard "    + std::to_string(this->enable_shared_clipboard) + "\n";
-            to_write += "enable_shared_virtual_disk " + std::to_string(this->modRDPParamsData.enable_shared_virtual_disk) + "\n";
-            to_write += "enable_shared_remoteapp " + std::to_string(this->modRDPParamsData.enable_shared_remoteapp) + "\n";
-            to_write += "share-dir "               + this->SHARE_DIR + "\n";
-            to_write += "remote-exe "              + this->rDPRemoteAppConfig.full_cmd_line + "\n";
-            to_write += "remote-dir "              + this->rDPRemoteAppConfig.source_of_WorkingDir + "\n";
-            to_write += "vnc-applekeyboard "       + std::to_string(this->vnc_conf.is_apple) + "\n";
-            to_write += "mod "                     + std::to_string(static_cast<int>(this->mod_state)) + "\n";
-
+            str_append(
+                to_write,
+                "\nid ", std::to_string(this->userProfils[this->current_user_profil].id), "\n"
+                "name ", this->userProfils[this->current_user_profil].name, "\n"
+                "keylayout ", std::to_string(this->info.keylayout), "\n"
+                "brush_cache_code ", std::to_string(this->info.brush_cache_code), "\n"
+                "bpp ", std::to_string(static_cast<int>(this->info.screen_info.bpp)), "\n"
+                "width ", std::to_string(this->rdp_width), "\n"
+                "height ", std::to_string(this->rdp_height), "\n"
+                "rdp5_performanceflags ", std::to_string(static_cast<int>(this->info.rdp5_performanceflags)), "\n"
+                "monitorCount ", std::to_string(this->info.cs_monitor.monitorCount), "\n"
+                "span ", std::to_string(this->is_spanning), "\n"
+                "record ", std::to_string(this->is_recording),"\n"
+                "tls ", std::to_string(this->modRDPParamsData.enable_tls), "\n"
+                "nla ", std::to_string(this->modRDPParamsData.enable_nla), "\n"
+                "sound ", std::to_string(this->modRDPParamsData.enable_sound), "\n"
+                "console_mode ", std::to_string(this->info.console_session), "\n"
+                "enable_shared_clipboard ", std::to_string(this->enable_shared_clipboard), "\n"
+                "enable_shared_virtual_disk ", std::to_string(this->modRDPParamsData.enable_shared_virtual_disk), "\n"
+                "enable_shared_remoteapp ", std::to_string(this->modRDPParamsData.enable_shared_remoteapp), "\n"
+                "share-dir ", this->SHARE_DIR, "\n"
+                "remote-exe ", this->rDPRemoteAppConfig.full_cmd_line, "\n"
+                "remote-dir ", this->rDPRemoteAppConfig.source_of_WorkingDir, "\n"
+                "vnc-applekeyboard ", std::to_string(this->vnc_conf.is_apple), "\n"
+                "mod ", std::to_string(static_cast<int>(this->mod_state)) , "\n"
+            );
 
             ::write(file.fd(), to_write.c_str(), to_write.length());
         }

@@ -55,6 +55,7 @@
 
 #include "utils/load_theme.hpp"
 #include "utils/netutils.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/translation.hpp"
@@ -70,23 +71,35 @@ inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Tr
     const auto hours = elapsed_time / (60*60);
     const auto minutes = elapsed_time / 60 - hours * 60;
     const auto seconds = elapsed_time - hours * (60*60) - minutes * 60;
+
     if (hours) {
-        msg += std::to_string(hours);
-        msg += ' ';
-        msg += tr(trkeys::hour);
-        msg += (hours > 1) ? "s, " : ", ";
+        str_append(
+            msg,
+            std::to_string(hours),
+            ' ',
+            tr(trkeys::hour),
+            (hours > 1) ? "s, " : ", "
+        );
     }
+
     if (minutes || hours) {
-        msg += std::to_string(minutes);
-        msg += ' ';
-        msg += tr(trkeys::minute);
-        msg += (minutes > 1) ? "s, " : ", ";
+        str_append(
+            msg,
+            std::to_string(minutes),
+            ' ',
+            tr(trkeys::minute),
+            (minutes > 1) ? "s, " : ", "
+        );
     }
-    msg += std::to_string(seconds);
-    msg += ' ';
-    msg += tr(trkeys::second);
-    msg += (seconds > 1) ? "s " : " ";
-    msg += tr(trkeys::before_closing);
+
+    str_append(
+        msg,
+        std::to_string(seconds),
+        ' ',
+        tr(trkeys::second),
+        (seconds > 1) ? "s " : " ",
+        tr(trkeys::before_closing)
+    );
 }
 
 class ModuleManager : public MMIni
@@ -155,8 +168,7 @@ private:
              && (this->mm.front.client_info.cs_monitor.monitorCount > 1));
 
             if (is_disable_by_input) {
-                this->osd_message += "  ";
-                this->osd_message += TR(trkeys::disable_osd, language(this->mm.ini));
+                str_append(this->osd_message, "  ", TR(trkeys::disable_osd, language(this->mm.ini)));
             }
 
             gdi::TextMetrics tm(this->mm.load_font(), this->osd_message.c_str());

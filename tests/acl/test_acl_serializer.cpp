@@ -153,11 +153,12 @@ RED_AUTO_TEST_CASE(TestAclSerializerIncoming)
     Inifile ini;
     ini.clear_send_index();
 
-    std::string s("----");
-    s += string_from_authid(cfg::context::password::index).data();
-    s += "\nASK\n";
-    s += string_from_authid(cfg::globals::auth_user::index).data();
-    s += "\n!didier\n";
+    std::string s = str_concat(
+        "----",
+        string_from_authid(cfg::context::password::index),
+        "\nASK\n",
+        string_from_authid(cfg::globals::auth_user::index),
+        "\n!didier\n");
     OutStream(&s[0], 4).out_uint32_be(s.size() - 4u);
 
     LCGRandom rnd(0);

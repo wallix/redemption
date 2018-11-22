@@ -444,14 +444,14 @@ public:
                                 }
                                 else if (osd_state < OSD_STATE_INVALID
                                      && enddate - now <= timers[osd_state]) {
-                                    std::string mes;
-                                    mes.reserve(128);
                                     const unsigned minutes = (enddate - now + 30) / 60;
-                                    mes += std::to_string(minutes);
-                                    mes += ' ';
-                                    mes += TR(trkeys::minute, language(this->ini));
-                                    mes += (minutes > 1) ? "s " : " ";
-                                    mes += TR(trkeys::before_closing, language(this->ini));
+                                    std::string mes = str_concat(
+                                        std::to_string(minutes),
+                                        ' ',
+                                        TR(trkeys::minute, language(this->ini)),
+                                        (minutes > 1) ? "s " : " ",
+                                        TR(trkeys::before_closing, language(this->ini))
+                                    );
                                     mm.osd_message(std::move(mes), true);
                                     ++osd_state;
                                 }

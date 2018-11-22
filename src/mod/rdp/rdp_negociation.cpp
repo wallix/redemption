@@ -37,6 +37,7 @@
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/multisz.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 
 #include "utils/difftimeval.hpp"
@@ -224,7 +225,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
         arc_info.name = "SERVER_CERTIFICATE";
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "ERROR";
-        arc_info.message = "X.509 server certificate internal error: " + std::string(str_error);
+        arc_info.message = str_concat("X.509 server certificate internal error: ", str_error);
         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
         this->log6_server_cert("SERVER_CERTIFICATE_ERROR", arc_info.message, arc_info);
@@ -241,13 +242,8 @@ void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, c
         LOG(LOG_INFO, "%s", this->message.str());
     }
 
-    {
-        std::string message(type.data.data(), type.data.size());
-        message += "=";
-        message.append(description.data.data(), description.data.size());
-
-        this->front.session_update(message);
-    }
+    std::string message = str_concat(type.data, '=', description.data);
+    this->front.session_update(message);
 }
 
 

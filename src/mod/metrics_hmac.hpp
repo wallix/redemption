@@ -22,6 +22,7 @@
 
 #include "system/linux/system/ssl_sha256.hpp"
 #include "gdi/screen_info.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"
 
 #include <array>
@@ -82,8 +83,7 @@ inline MetricsHmacSha256Encrypt hmac_account(
 inline MetricsHmacSha256Encrypt hmac_device_service(
     array_view_const_char device, std::string service, array_view_const_char key)
 {
-    service += " ";
-    service.append(device.data(), device.size());
+    str_append(service, ' ', device);
     return MetricsHmacSha256Encrypt(service, key);
 }
 
