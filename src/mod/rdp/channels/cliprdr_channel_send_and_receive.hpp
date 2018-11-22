@@ -92,10 +92,9 @@ struct ClipboardSideData {
         };
     }
 
-     void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
+    void update_file_contents_request_inventory(RDPECLIP::FileDescriptor const& fd) {
         file_info_inventory_type & file_info_inventory =
                 this->file_stream_data_inventory[this->clipDataId];
-
             file_info_inventory.push_back({ fd.fileName(), fd.file_size(), 0, SslSha256() });
     }
 };
@@ -198,26 +197,25 @@ struct FilecontentsRequestReceive {
 
 struct FilecontentsRequestSendBack {
 
-    StaticOutStream<256> out_stream;
-    uint32_t total_length = 0;
-    const uint32_t flags = CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST;
-
-    FilecontentsRequestSendBack(ClipboardSideData & clip_data, const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID) {
+    FilecontentsRequestSendBack(ClipboardSideData & clip_side_data, const RDPVerbose verbose, uint32_t dwFlags, uint32_t streamID, BaseVirtualChannel * base_channel) {
         if (bool(verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_%s_filecontents_request: "
-                    "Requesting the contents of server file is denied.", clip_data.provider_name);
+                    "Requesting the contents of server file is denied.", clip_side_data.provider_name);
         }
 
+        StaticOutStream<256> out_stream;
+
         switch (dwFlags) {
+
             case RDPECLIP::FILECONTENTS_RANGE:
                 {
                     RDPECLIP::FileContentsResponseRange pdu(streamID);
                     RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                     RDPECLIP::CB_RESPONSE_FAIL,
                                                     pdu.size());
-                    header.emit(this->out_stream);
-                    pdu.emit(this->out_stream);
+                    header.emit(out_stream);
+                    pdu.emit(out_stream);
                 }
                 break;
 
@@ -227,49 +225,43 @@ struct FilecontentsRequestSendBack {
                     RDPECLIP::CliprdrHeader header( RDPECLIP::CB_FILECONTENTS_RESPONSE,
                                                     RDPECLIP::CB_RESPONSE_FAIL,
                                                     pdu.size());
-                    header.emit(this->out_stream);
-                    pdu.emit(this->out_stream);
+                    header.emit(out_stream);
+                    pdu.emit(out_stream);
                 }
                 break;
         }
-        this->total_length      = out_stream.get_offset();
+
+        base_channel->send_message_to_server(
+                        out_stream.get_offset(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                        out_stream.get_data(),
+                        out_stream.get_offset());
     }
 };
 
-struct ClientFormatDataRequestReceive {
+struct FormatDataRequestReceive {
 
-    uint32_t requestedFormatId = 0;
-
-    ClientFormatDataRequestReceive(const RDPVerbose verbose, InStream& chunk) {
+    FormatDataRequestReceive(ClipboardData & clip_data, ClipboardSideData & clip_side_data, const RDPVerbose verbose, InStream& chunk) {
         {
             const unsigned int expected = 4;   //     requestedFormatId(4)
             if (!chunk.in_check_rem(expected)) {
                 LOG(LOG_ERR,
-                    "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu",
-                    expected, chunk.in_remain());
+                    "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
+                        "Truncated CLIPRDR_FORMAT_DATA_REQUEST, need=%u remains=%zu"
+                    , clip_side_data.provider_name, expected, chunk.in_remain());
                 throw Error(ERR_RDP_DATA_TRUNCATED);
             }
         }
 
-        this->requestedFormatId = chunk.in_uint32_le();
+        clip_data.requestedFormatId = chunk.in_uint32_le();
 
         if (bool(verbose & RDPVerbose::cliprdr)) {
             LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_format_data_request_pdu: "
-                    "requestedFormatId=%s(%u)",
-                RDPECLIP::get_FormatId_name(this->requestedFormatId),
-                this->requestedFormatId);
+                "ClipboardVirtualChannel::process_%s_format_data_request_pdu: "
+                    "requestedFormatId=%s(%u)", clip_side_data.provider_name,
+                RDPECLIP::get_FormatId_name(clip_data.requestedFormatId),
+                clip_data.requestedFormatId);
         }
-    }
-};
-
-struct ServerFormatDataRequestReceive {
-
-    uint32_t requestedFormatId = 0;
-
-    ServerFormatDataRequestReceive(InStream& chunk) {
-        this->requestedFormatId = chunk.in_uint32_le();
     }
 };
 
@@ -402,7 +394,7 @@ struct ClientFormatDataResponseReceive {
 
             for (RDPECLIP::FileDescriptor fd : fds) {
 //                 const bool from_remote_session = false;
-                clip_data.client_data.update_file_contents_request_inventory(fd);
+                clip_side_data.update_file_contents_request_inventory(fd);
             }
 
         } else {
