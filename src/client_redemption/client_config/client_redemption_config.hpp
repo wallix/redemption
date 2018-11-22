@@ -164,15 +164,16 @@ struct ModRDPParamsData
     bool enable_shared_remoteapp = false;
 };
 
-struct RDPRemoteAppConfig {
+struct RDPRemoteAppConfig
+{
     std::string source_of_ExeOrFile;
     std::string source_of_WorkingDir;
     std::string source_of_Arguments;
     std::string full_cmd_line;
 };
 
-struct WindowsData {
-
+struct WindowsData
+{
     const std::string config_file_path;
 
     int form_x = 0;
@@ -182,35 +183,36 @@ struct WindowsData {
 
     bool no_data = true;
 
-    WindowsData(const std::string & config_file_path)
-      : config_file_path(config_file_path)
+    WindowsData(std::string config_file_path)
+      : config_file_path(std::move(config_file_path))
     {}
 
-//     void writeWindowsData()  {
-//         unique_fd fd = unique_fd(this->config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-// //         std::ofstream ofile(this->config_file_path, std::ios::trunc);
-//         if (fd.is_open()) {
-//             std::string info;
-//             info += "form_x " + std::to_string(this->form_x) + "\n";
-//             info += "form_y " + std::to_string(this->form_y) + "\n";
-//             info += "screen_x " + std::to_string(this->screen_x) + "\n";
-//             info += "screen_y " + std::to_string(this->screen_y) +"\n";
-//
-//             ::write(fd.fd(), info.c_str(), info.length());
-//         }
-//     }
+    void writeWindowsData()
+    {
+        unique_fd fd(this->config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        if (fd.is_open()) {
+            std::string info = str_concat(
+                "form_x ", std::to_string(this->form_x), "\n"
+                "form_y ", std::to_string(this->form_y), "\n"
+                "screen_x ", std::to_string(this->screen_x), "\n"
+                "screen_y ", std::to_string(this->screen_y), '\n');
+
+            ::write(fd.fd(), info.c_str(), info.length());
+        }
+    }
 };
 
-    struct AccountData {
-        std::string title;
-        std::string IP;
-        std::string name;
-        std::string pwd;
-        int port = 0;
-        int options_profil = 0;
-        int index = -1;
-        int protocol = 0;
-    };
+struct AccountData
+{
+    std::string title;
+    std::string IP;
+    std::string name;
+    std::string pwd;
+    int port = 0;
+    int options_profil = 0;
+    int index = -1;
+    int protocol = 0;
+};
 
 
 class ClientRedemptionConfig
@@ -1000,20 +1002,9 @@ public:
         }
     }
 
-    void writeWindowsData()  {
-//         this->windowsData.writeWindowsData();
-
-        unique_fd fd = unique_fd(this->windowsData.config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-//         std::ofstream ofile(this->config_file_path, std::ios::trunc);
-        if (fd.is_open()) {
-            std::string info = str_concat(
-                "form_x ", std::to_string(this->windowsData.form_x), "\n"
-                "form_y ", std::to_string(this->windowsData.form_y), "\n"
-                "screen_x ", std::to_string(this->windowsData.screen_x), "\n"
-                "screen_y ", std::to_string(this->windowsData.screen_y), '\n');
-
-            ::write(fd.fd(), info.c_str(), info.length());
-        }
+    void writeWindowsData()
+    {
+        this->windowsData.writeWindowsData();
     }
 
     void setUserProfil()  {
