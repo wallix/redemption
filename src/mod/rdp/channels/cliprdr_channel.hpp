@@ -138,22 +138,7 @@ private:
         (void)total_length;
         (void)flags;
 
-        FormatDataRequestReceive receiver(this->clip_data, this->clip_data.client_data, this->verbose, chunk);
 
-        if (!this->param_clipboard_down_authorized) {
-
-            ClientFormatDataRequestSendBack sender(this->verbose);
-
-            this->send_message_to_client(
-                sender.total_length,
-                sender.flags,
-                sender.out_stream.get_data(),
-                sender.out_stream.get_offset());
-
-            return false;
-        }
-
-        return true;
     }
 
     bool process_client_format_data_response_pdu(uint32_t total_length,
@@ -305,15 +290,18 @@ public:
                         total_length, flags, chunk, header);
             break;
 
-            case RDPECLIP::CB_FORMAT_DATA_REQUEST:
-                send_message_to_server =
-                    this->process_client_format_data_request_pdu(
-                        total_length, flags, chunk, header);
+            case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
+                FormatDataRequestReceive receiver(this->clip_data, this->clip_data.client_data, this->verbose, chunk);
+                if (!this->param_clipboard_down_authorized) {
+
+                    ClientFormatDataRequestSendBack sender(this->verbose, this);
+                }
+                send_message_to_server = this->param_clipboard_down_authorized;
+            }
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST: {
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
-
                 if (!this->param_clipboard_file_authorized) {
                     FilecontentsRequestSendBack sender(this->clip_data.client_data, this->verbose, receiver.dwFlags, receiver.streamID, this);
                 }
@@ -448,13 +436,7 @@ public:
                         "Client to server Clipboard operation is not allowed.");
             }
 
-            ServerFormatDataRequestSendBack sender(this->verbose);
-
-            this->send_message_to_server(
-                sender.total_length,
-                sender.flags,
-                sender.out_stream.get_data(),
-                sender.out_stream.get_offset());
+            ServerFormatDataRequestSendBack sender(this->verbose, this);
 
             return false;
         }
@@ -469,8 +451,6 @@ public:
 
         return true;
     }   // process_server_format_data_request_pdu
-
-
 
 
 

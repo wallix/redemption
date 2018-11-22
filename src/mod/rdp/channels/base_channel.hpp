@@ -113,7 +113,7 @@ public:
         uint32_t chunk_data_length,
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
-protected:
+public:
     inline void send_message_to_client(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
@@ -124,7 +124,6 @@ protected:
         }
     }
 
-public:
     inline void send_message_to_server(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
