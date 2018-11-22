@@ -106,7 +106,7 @@ namespace detail
         str.reserve(str.size() + (len_from_av_or_char(strs) + ...));
         (append_from_av_or_char(str, strs), ...);
     }
-}
+} // namespace detail
 
 
 template<class String, class... Strings>
