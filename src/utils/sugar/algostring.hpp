@@ -83,9 +83,9 @@ namespace detail
         return av.size();
     }
 
-    inline std::size_t len_from_av_or_char(char) noexcept
+    inline std::size_t len_from_av_or_char(char c) noexcept
     {
-        return 1;
+        return sizeof(c);
     }
 
 
