@@ -291,8 +291,10 @@ namespace
         return len;
     }
 
-    ssize_t socket_recv_all(int sck, char const* name, uint8_t* data, size_t const len,
-            std::chrono::milliseconds recv_timeout) {
+    ssize_t socket_recv_all(
+        int sck, char const* name, uint8_t* data, size_t const len,
+        std::chrono::milliseconds recv_timeout)
+    {
         size_t remaining_len = len;
 
         while (remaining_len > 0) {
@@ -338,7 +340,8 @@ namespace
         return len;
     }
 
-    ssize_t socket_recv_partial(int sck, uint8_t* data, size_t const len) {
+    ssize_t socket_recv_partial(int sck, uint8_t* data, size_t const len)
+    {
         ssize_t const res = ::recv(sck, data, len, 0);
         switch (res) {
             case -1: /* error, maybe EAGAIN */ {
@@ -357,7 +360,8 @@ namespace
         }
     }
 
-    ssize_t socket_send_all(int sck, const uint8_t* data, size_t len) {
+    ssize_t socket_send_all(int sck, const uint8_t* data, size_t len)
+    {
         size_t total = 0;
         while (total < len) {
             ssize_t sent = ::send(sck, data + total, len - total, 0);

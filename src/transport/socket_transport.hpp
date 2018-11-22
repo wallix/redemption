@@ -44,8 +44,11 @@ class SocketTransport
 
 public:
     int sck;
+
+protected:
     const char * name;
 
+private:
     char ip_address[128];
     int  port;
 
@@ -55,6 +58,7 @@ public:
 
     std::chrono::milliseconds recv_timeout;
 
+public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
         none,
