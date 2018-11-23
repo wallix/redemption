@@ -381,7 +381,7 @@ private:
         void refresh_context() override
         { this->mm.mod->refresh_context(); }
 
-        bool is_up_and_running() override
+        bool is_up_and_running() const override
         { return this->mm.mod->is_up_and_running(); }
 
         void disconnect(time_t now) override
@@ -481,7 +481,13 @@ public:
         return this->socket_transport && this->socket_transport->has_pending_data();
     }
 
-    void remove_mod() override {
+    SocketTransport* get_socket() const noexcept
+    {
+        return this->socket_transport;
+    }
+
+    void remove_mod() override
+    {
         if (this->mod != &this->no_mod) {
             this->clear_osd_message();
 
@@ -493,7 +499,8 @@ public:
         }
     }
 
-    ~ModuleManager() override {
+    ~ModuleManager() override
+    {
         this->remove_mod();
     }
 

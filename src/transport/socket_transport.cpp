@@ -27,6 +27,10 @@
 #include "utils/difftimeval.hpp"
 #include "system/tls_context.hpp"
 
+#include <vector>
+#include <cstring>
+#include <memory>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -37,7 +41,8 @@ namespace
     ssize_t socket_recv_all(int sck, char const * name, uint8_t * data, size_t const len,
         std::chrono::milliseconds recv_timeout);
     ssize_t socket_recv_partial(int sck, uint8_t * data, size_t const len);
-    ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
+    // ssize_t socket_send_all(int sck, const uint8_t * data, size_t len);
+    ssize_t socket_send_partial(int sck, const uint8_t * data, size_t len);
 }
 
 SocketTransport::SocketTransport(
@@ -79,6 +84,12 @@ SocketTransport::~SocketTransport()
 bool SocketTransport::has_pending_data() const
 {
     return this->tls && this->tls->pending_data();
+}
+
+
+bool SocketTransport::has_waiting_data() const
+{
+    return !this->async_buffers.empty();
 }
 
 array_view_const_u8 SocketTransport::get_public_key() const
@@ -240,9 +251,20 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
     return Read::Ok;
 }
 
-void SocketTransport::do_send(const uint8_t * const buffer, size_t len)
+SocketTransport::AsyncBuf::AsyncBuf(const uint8_t* data, std::size_t len)
+: data(static_cast<uint8_t*>(memcpy(new uint8_t[len], data, len)))
+, p(this->data.get())
+, e(this->p + len)
+{}
+
+void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
 {
     if (len == 0) { return; }
+
+    if (!this->async_buffers.empty()) {
+        this->async_buffers.emplace_back(buffer, len);
+        return;
+    }
 
     if (bool(this->verbose & Verbose::dump)) {
         LOG(LOG_INFO, "Sending on %s (%d) %zu bytes", this->name, this->sck, len);
@@ -250,18 +272,51 @@ void SocketTransport::do_send(const uint8_t * const buffer, size_t len)
         LOG(LOG_INFO, "Sent dumped on %s (%d) %zu bytes", this->name, this->sck, len);
     }
 
-    ssize_t res = (this->tls) ? this->tls->privsend_tls(buffer, len) : socket_send_all(this->sck, buffer, len);
-    if (res < 0) {
+    ssize_t res = (this->tls)
+        ? this->tls->privpartial_send_tls(buffer, len)
+        : socket_send_partial(this->sck, buffer, len);
+
+    if (res <= 0) {
         LOG(LOG_WARNING,
             "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
             this->name, this->sck, errno, strerror(errno));
         throw Error(ERR_TRANSPORT_WRITE_FAILED);
     }
+
     if (res < static_cast<ssize_t>(len)) {
-        throw Error(ERR_TRANSPORT_NO_MORE_DATA);
+        this->async_buffers.emplace_back(buffer + res, len - res);
     }
 
-    this->total_sent += len;
+    this->total_sent += res;
+}
+
+void SocketTransport::send_waiting_data()
+{
+    auto first = begin(this->async_buffers);
+    auto last = end(this->async_buffers);
+
+    for (; first != last; ++first) {
+        size_t const len = first->e - first->p;
+        ssize_t res = (this->tls)
+            ? this->tls->privpartial_send_tls(first->p, len)
+            : socket_send_partial(this->sck, first->p, len);
+
+        if (res <= 0) {
+            LOG(LOG_WARNING,
+                "SocketTransport::Send failed on %s (%d) errno=%d [%s]",
+                this->name, this->sck, errno, strerror(errno));
+            throw Error(ERR_TRANSPORT_WRITE_FAILED);
+        }
+
+        this->total_sent += res;
+
+        if (res != static_cast<ssize_t>(len)) {
+            first->p += res;
+            break;
+        }
+    }
+
+    this->async_buffers.erase(begin(this->async_buffers), first);
 }
 
 namespace
@@ -344,44 +399,50 @@ namespace
     {
         ssize_t const res = ::recv(sck, data, len, 0);
         switch (res) {
-            case -1: /* error, maybe EAGAIN */ {
-                int err = errno;
-                if (try_again(err)) {
-                    return 0;
-                }
-                return -1;
-            }
+            case -1: /* error, maybe EAGAIN */
+                return try_again(errno) ? 0 : -1;
             case 0: /* no data received, socket closed */
-                // if we were not able to receive the amount of data required, this is an error
-                // not need to process the received data as it will end badly
                 return -1;
             default: /* some data received */
                 return res;
         }
     }
 
-    ssize_t socket_send_all(int sck, const uint8_t* data, size_t len)
+    // ssize_t socket_send_all(int sck, const uint8_t* data, size_t len)
+    // {
+    //     size_t total = 0;
+    //     while (total < len) {
+    //         ssize_t sent = ::send(sck, data + total, len - total, 0);
+    //         switch (sent) {
+    //             case -1:
+    //                 if (try_again(errno)) {
+    //                     fd_set wfds;
+    //                     struct timeval time = { 0, 10000 };
+    //                     io_fd_zero(wfds);
+    //                     io_fd_set(sck, wfds);
+    //                     select(sck + 1, nullptr, &wfds, nullptr, &time);
+    //                     continue;
+    //                 }
+    //                 return -1;
+    //             case 0:
+    //                 return -1;
+    //             default:
+    //                 total += sent;
+    //         }
+    //     }
+    //     return len;
+    // }
+
+    ssize_t socket_send_partial(int sck, const uint8_t* data, size_t len)
     {
-        size_t total = 0;
-        while (total < len) {
-            ssize_t sent = ::send(sck, data + total, len - total, 0);
-            switch (sent) {
-                case -1:
-                    if (try_again(errno)) {
-                        fd_set wfds;
-                        struct timeval time = { 0, 10000 };
-                        io_fd_zero(wfds);
-                        io_fd_set(sck, wfds);
-                        select(sck + 1, nullptr, &wfds, nullptr, &time);
-                        continue;
-                    }
-                    return -1;
-                case 0:
-                    return -1;
-                default:
-                    total = total + sent;
-            }
+        ssize_t const sent = ::send(sck, data, len, 0);
+        switch (sent) {
+            case -1:
+                return try_again(errno) ? sent : -1;
+            case 0:
+                return 0;
+            default:
+                return sent;
         }
-        return len;
     }
 } // anonymous namespace

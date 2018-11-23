@@ -48,7 +48,6 @@
 #include <cstring>
 
 #include <arpa/inet.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
@@ -137,77 +136,14 @@ public:
                 timeval default_timeout = session_reactor.get_current_time();
                 default_timeout.tv_sec += this->select_timeout_tv_sec;
 
-                struct Select {
-                    unsigned max;
-                    fd_set rfds;
-                    timeval timeout;
-
-                    Select(timeval timeout)
-                     : max(0)
-                     , timeout{timeout}
-                    {
-                        io_fd_zero(this->rfds);
-                    }
-                    int select(timeval now)
-                    {
-                        timeval timeoutastv = {0,0};
-                        const timeval & ultimatum = this->timeout;
-                        const timeval & starttime = now;
-                        if (ultimatum > starttime) {
-                            timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                             - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
-                        }
-                        return ::select(this->max + 1, &this->rfds, nullptr/*&wfds*/, nullptr, &timeoutastv);
-                    }
-
-                    void set_timeout(timeval next_timeout){
-                        this->timeout = next_timeout;
-                    }
-
-                    std::chrono::milliseconds get_timeout(timeval now)
-                    {
-                        const timeval & ultimatum = this->timeout;
-                        const timeval & starttime = now;
-                        if (ultimatum > starttime) {
-                            return std::chrono::duration_cast<std::chrono::milliseconds>(
-                                std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
-                                 - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
-                        }
-                        return 0ms;
-                    }
-
-                    void set_read_sck(int sck) {
-                        this->max = prepare_rfds(sck, this->max, this->rfds);
-                    }
-                    void immediate_wakeup(timeval now){
-                        this->timeout = now;
-                    }
-                } ioswitch(default_timeout);
-
-
-                if ((mm.get_mod()->is_up_and_running() || !front.up_and_running)) {
-                    ioswitch.set_read_sck(front_trans.sck);
-                }
-
-                if (acl) {
-                    ioswitch.set_read_sck(acl->auth_trans.sck);
-                }
-
-                if (front_trans.has_pending_data()
-                || mm.has_pending_data()
-                || (acl && acl->auth_trans.has_pending_data())){
-                    ioswitch.immediate_wakeup(session_reactor.get_current_time());
-                }
+                Select ioswitch(default_timeout);
 
                 SessionReactor::EnableGraphics enable_graphics{front.up_and_running};
                 // LOG(LOG_DEBUG, "front.up_and_running = %d", front.up_and_running);
 
-                session_reactor.for_each_fd(
-                    enable_graphics,
-                    [&](int fd){
-                        ioswitch.set_read_sck(fd);
-                    }
-                );
+                auto const sck_no_read = this->set_fds(
+                    ioswitch, session_reactor, enable_graphics,
+                    front_trans, mm, acl);
 
                 // LOG(LOG_DEBUG, "timeout = %ld %ld", timeout.tv_sec, timeout.tv_usec);
                 session_reactor.set_current_time(tvtime());
@@ -241,6 +177,8 @@ public:
                     run_session = false;
                     continue;
                 }
+
+                this->send_waiting_data(ioswitch, sck_no_read, front_trans, mm, acl);
 
                 session_reactor.set_current_time(tvtime());
                 now = session_reactor.get_current_time().tv_sec;
@@ -409,6 +347,8 @@ public:
                                     acl = std::make_unique<Acl>(
                                         ini, Session::acl_connect(this->ini.get<cfg::globals::authfile>()), now, cctx, rnd, fstat
                                     );
+                                    const auto sck = acl->auth_trans.sck;
+                                    fcntl(sck, F_SETFL, fcntl(sck, F_GETFL) & ~O_NONBLOCK);
                                     authentifier.set_acl_serial(&acl->acl_serial);
                                     session_reactor.set_next_event(BACK_EVENT_NEXT);
                                 }
@@ -639,5 +579,167 @@ private:
         }
 
         return client_sck;
+    }
+
+
+    struct Select
+    {
+        unsigned max = 0;
+        fd_set rfds;
+        fd_set wfds;
+        timeval timeout;
+        bool want_write = false;
+
+        Select(timeval timeout)
+        : timeout{timeout}
+        {
+            io_fd_zero(this->rfds);
+        }
+
+        int select(timeval now)
+        {
+            timeval timeoutastv = {0,0};
+            const timeval & ultimatum = this->timeout;
+            const timeval & starttime = now;
+            if (ultimatum > starttime) {
+                timeoutastv = to_timeval(std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                    - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+            }
+
+            return ::select(
+                this->max + 1, &this->rfds,
+                this->want_write ? &this->wfds : nullptr,
+                nullptr, &timeoutastv);
+        }
+
+        void set_timeout(timeval next_timeout)
+        {
+            this->timeout = next_timeout;
+        }
+
+        std::chrono::milliseconds get_timeout(timeval now)
+        {
+            const timeval & ultimatum = this->timeout;
+            const timeval & starttime = now;
+            if (ultimatum > starttime) {
+                return std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::seconds(ultimatum.tv_sec) + std::chrono::microseconds(ultimatum.tv_usec)
+                        - std::chrono::seconds(starttime.tv_sec) - std::chrono::microseconds(starttime.tv_usec));
+            }
+            return 0ms;
+        }
+
+        void set_read_sck(int sck)
+        {
+            this->max = prepare_fds(sck, this->max, this->rfds);
+        }
+
+        void set_write_sck(int sck)
+        {
+            if (!this->want_write) {
+                this->want_write = true;
+                io_fd_zero(this->wfds);
+            }
+            this->max = prepare_fds(sck, this->max, this->wfds);
+        }
+
+        void immediate_wakeup(timeval now)
+        {
+            this->timeout = now;
+        }
+    };
+
+    struct [[nodiscard]] SckNoRead
+    {
+        int sck_front = INVALID_SOCKET;
+        int sck_mod = INVALID_SOCKET;
+        // int sck_acl = INVALID_SOCKET;
+
+        bool contains(int fd) const noexcept
+        {
+            return sck_front == fd
+                || sck_mod == fd
+                // || sck_acl == fd
+            ;
+        }
+    };
+
+    static void send_waiting_data(
+        Select& ioswitch,
+        SckNoRead const& sck_no_read,
+        SocketTransport& front_trans,
+        ModuleManager& mm,
+        std::unique_ptr<Acl>& /*acl*/)
+    {
+        auto is_set = [&ioswitch](int fd){
+            return fd != INVALID_SOCKET && io_fd_isset(fd, ioswitch.wfds);
+        };
+
+        if (is_set(sck_no_read.sck_mod)) {
+            mm.get_socket()->send_waiting_data();
+        }
+
+        if (is_set(sck_no_read.sck_front)) {
+            front_trans.send_waiting_data();
+        }
+
+        // if (is_set(sck_no_read.sck_acl)) {
+        //     acl->auth_trans.send_waiting_data();
+        // }
+    }
+
+    static SckNoRead set_fds(
+        Select& ioswitch,
+        SessionReactor& session_reactor, SessionReactor::EnableGraphics enable_graphics,
+        SocketTransport const& front_trans,
+        ModuleManager const& mm,
+        std::unique_ptr<Acl> const& acl)
+    {
+        SckNoRead sck_no_read;
+
+        if (front_trans.has_waiting_data()) {
+            ioswitch.set_write_sck(front_trans.sck);
+            sck_no_read.sck_front = front_trans.sck;
+        }
+        else if (mm.get_mod()->is_up_and_running() || !bool(enable_graphics)) {
+            ioswitch.set_read_sck(front_trans.sck);
+        }
+
+        if (mm.get_socket() && !mm.has_pending_data()) {
+            if (mm.get_socket()->has_waiting_data()) {
+                sck_no_read.sck_mod = mm.get_socket()->sck;
+                ioswitch.set_write_sck(sck_no_read.sck_mod);
+            }
+            else if (sck_no_read.sck_front != INVALID_SOCKET) {
+                sck_no_read.sck_mod = mm.get_socket()->sck;
+            }
+        }
+
+        if (acl) {
+        //     if (acl->auth_trans.has_waiting_data()) {
+        //         sck_no_read.sck_acl = acl->auth_trans.sck;
+        //         ioswitch.set_write_sck(sck_no_read.sck_acl);
+        //     }
+        //     else {
+                ioswitch.set_read_sck(acl->auth_trans.sck);
+        //     }
+        }
+
+        if (front_trans.has_pending_data()
+        || mm.has_pending_data()
+        || (acl && acl->auth_trans.has_pending_data())){
+            ioswitch.immediate_wakeup(session_reactor.get_current_time());
+        }
+
+        session_reactor.for_each_fd(
+            enable_graphics,
+            [&](int fd){
+                if (!sck_no_read.contains(fd)) {
+                    ioswitch.set_read_sck(fd);
+                }
+            }
+        );
+
+        return sck_no_read;
     }
 };

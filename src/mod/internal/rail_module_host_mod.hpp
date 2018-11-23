@@ -81,7 +81,7 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi& gapi) override;
 
-    bool is_up_and_running() override;
+    bool is_up_and_running() const override;
 
     void move_size_widget(int16_t left, int16_t top, uint16_t width,
                           uint16_t height) override;

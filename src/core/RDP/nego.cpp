@@ -233,12 +233,10 @@ bool RdpNego::recv_next_data(TpduBuffer& buf, Transport& trans, ServerCert const
             return (this->state != State::Final);
 
         case State::SslHybrid:
-            assert(0 == buf.remaining());
             this->state = this->activate_ssl_hybrid(trans, cert);
             return (this->state != State::Final);
 
         case State::Tls:
-            assert(0 == buf.remaining());
             this->state = this->activate_ssl_tls(trans, cert);
             return (this->state != State::Final);
 

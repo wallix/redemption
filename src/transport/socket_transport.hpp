@@ -31,6 +31,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 
 class TLSContext;
@@ -58,6 +59,16 @@ private:
 
     std::chrono::milliseconds recv_timeout;
 
+    struct AsyncBuf
+    {
+        std::unique_ptr<uint8_t const> data;
+        uint8_t const * p;
+        uint8_t const * e;
+
+        AsyncBuf(uint8_t const* data, size_t len);
+    };
+    std::vector<AsyncBuf> async_buffers;
+
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -71,6 +82,9 @@ public:
                    , Verbose verbose, std::string * error_message = nullptr);
 
     ~SocketTransport() override;
+
+    bool has_waiting_data() const;
+    void send_waiting_data();
 
     bool has_pending_data() const;
 

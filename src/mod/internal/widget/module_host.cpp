@@ -93,7 +93,7 @@ void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& gd)
     this->host.drawable_ptr = &this->host.drawable_ref;
 }
 
-bool WidgetModuleHost::ModuleHolder::is_up_and_running()
+bool WidgetModuleHost::ModuleHolder::is_up_and_running() const
 {
     return this->managed_mod->is_up_and_running();
 }

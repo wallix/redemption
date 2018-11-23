@@ -3395,7 +3395,7 @@ public:
     }
 
 private:
-    bool is_up_and_running() override {
+    bool is_up_and_running() const override {
         return (UP_AND_RUNNING == this->state);
     }
 

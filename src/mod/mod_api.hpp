@@ -54,7 +54,7 @@ public:
     // henceforth it should often be called by constructors
     virtual void refresh_context() {}
 
-    virtual bool is_up_and_running() { return false; }
+    virtual bool is_up_and_running() const { return false; }
 
     // support auto-reconnection
     virtual bool is_auto_reconnectable() { return false; }

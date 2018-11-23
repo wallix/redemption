@@ -140,6 +140,6 @@ public:
     // non 0 if it wants to stop (to run another module)
     void draw_event(time_t now, gdi::GraphicApi & gd) override;
 
-    bool is_up_and_running() override
+    bool is_up_and_running() const override
     { return true; }
 };

@@ -38,6 +38,11 @@ public:
         return this->mod;
     }
 
+    mod_api const* get_mod() const
+    {
+        return this->mod;
+    }
+
 public:
     bool last_module{false};
     bool connected{false};

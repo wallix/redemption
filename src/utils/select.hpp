@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <algorithm>
+
 #include <sys/select.h>
 #include "cxx/diagnostic.hpp"
 
@@ -51,8 +53,7 @@ inline int io_fd_isset(int const fd, fd_set const & rfds)
 }
 REDEMPTION_DIAGNOSTIC_POP
 
-unsigned prepare_rfds(int const fd, unsigned max, fd_set & rfds);
-inline unsigned prepare_rfds(int const fd, unsigned max, fd_set & rfds)
+inline unsigned prepare_fds(int const fd, unsigned max, fd_set & rfds)
 {
     if (fd > INVALID_SOCKET) {
         io_fd_set(fd, rfds);
@@ -60,4 +61,3 @@ inline unsigned prepare_rfds(int const fd, unsigned max, fd_set & rfds)
     }
     return max;
 }
-

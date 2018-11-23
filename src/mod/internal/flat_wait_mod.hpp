@@ -69,7 +69,7 @@ public:
 
     void draw_event(time_t now, gdi::GraphicApi & gapi) override;
 
-    bool is_up_and_running() override
+    bool is_up_and_running() const override
     { return true; }
 
     void send_to_mod_channel(CHANNELS::ChannelNameId front_channel_name, InStream& chunk, size_t length, uint32_t flags) override;

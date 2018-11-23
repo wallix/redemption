@@ -111,11 +111,9 @@ void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
     return mod.draw_event(now, gapi);
 }
 
-bool RailModuleHostMod::is_up_and_running()
+bool RailModuleHostMod::is_up_and_running() const
 {
-    mod_api& mod = this->rail_module_host.get_managed_mod();
-
-    return mod.is_up_and_running();
+    return this->rail_module_host.get_managed_mod().is_up_and_running();
 }
 
 void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t width,

@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include "fcntl.h"
 #include "core/server_notifier_api.hpp"
 #include "core/app_path.hpp"
 #include "core/error.hpp"
@@ -38,6 +37,8 @@
 
 #include <memory>
 #include <cstring>
+
+#include <fcntl.h>
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -169,11 +170,6 @@ public:
         }
 
         this->allocated_ssl = ssl;
-
-        // TODO I should probably not be doing that here ? Is it really necessary
-        // TODO: Socket should be passed by caller
-        int flags = fcntl(sck, F_GETFL);
-        fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
 
         if (0 == SSL_set_fd(ssl, sck)) {
             return tls_ctx_print_error("SSL_set_fd failed", error_message);
@@ -855,10 +851,6 @@ public:
             EVP_PKEY_free(pkey);
         }
 
-        // TODO I should probably not be doing that here ? Is it really necessary
-        int flags = fcntl(sck, F_GETFL);
-        fcntl(sck, F_SETFL, flags & ~(O_NONBLOCK));
-
         SSL_set_bio(ssl, sbio, sbio);
 
         int r = SSL_accept(ssl);
@@ -879,7 +871,7 @@ public:
     ssize_t privpartial_recv_tls(uint8_t * data, size_t len)
     {
         for (;;) {
-            ssize_t rcvd = ::SSL_read(this->io, data, len);
+            int rcvd = ::SSL_read(this->io, data, len);
             if (rcvd > 0) {
                 return rcvd;
             }
@@ -926,6 +918,41 @@ public:
         }
     }
 
+    ssize_t privpartial_send_tls(const uint8_t * data, size_t len)
+    {
+        const uint8_t * const buffer = data;
+        size_t remaining_len = len;
+        for (;;){
+            int ret = SSL_write(this->io, buffer, remaining_len);
+            if (ret > 0) {
+                return ret;
+            }
+            unsigned long error = SSL_get_error(this->io, ret);
+            switch (error)
+            {
+                case SSL_ERROR_NONE:
+                    return ret;
+
+                case SSL_ERROR_WANT_READ:
+                    LOG(LOG_INFO, "send_tls WANT READ");
+                    continue;
+
+                case SSL_ERROR_WANT_WRITE:
+                    LOG(LOG_INFO, "send_tls WANT WRITE");
+                    continue;
+
+                default:
+                {
+                    LOG(LOG_INFO, "Failure in SSL library, error=%lu, %s [%d]", error, strerror(errno), errno);
+                    do {
+                        LOG(LOG_INFO, "partial_send_tls %s", ERR_error_string(error, nullptr));
+                    } while ((error = ERR_get_error()) != 0);
+                    return -1;
+                }
+            }
+        }
+    }
+
     ssize_t privsend_tls(const uint8_t * data, size_t len)
     {
         const uint8_t * const buffer = data;
@@ -953,13 +980,9 @@ public:
                 default:
                 {
                     LOG(LOG_INFO, "Failure in SSL library, error=%lu, %s [%d]", error, strerror(errno), errno);
-                    uint32_t errcount = 0;
-                    errcount++;
-                    LOG(LOG_INFO, "send_tls %s", ERR_error_string(error, nullptr));
-                    while ((error = ERR_get_error()) != 0){
-                        errcount++;
-                        LOG(LOG_INFO, "send_tls (2) %s", ERR_error_string(error, nullptr));
-                    }
+                    do {
+                        LOG(LOG_INFO, "send_tls %s", ERR_error_string(error, nullptr));
+                    } while ((error = ERR_get_error()) != 0);
                     return -1;
                 }
             }

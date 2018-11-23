@@ -42,7 +42,7 @@ public:
 
     void draw_event(time_t /*now*/, gdi::GraphicApi & gd) override;
 
-    bool is_up_and_running() override
+    bool is_up_and_running() const override
     {
         return true;
     }

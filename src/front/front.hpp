@@ -4461,17 +4461,14 @@ protected:
 
             BitsPerPixel image_bpp = (bool(this->capture_bpp) ? this->capture_bpp : this->client_info.screen_info.bpp);
 
-            size_t const serializer_max_data_block_size = [this]{
-                Graphics::PrivateGraphicsUpdatePDU& graphics_update_pdu_ = this->orders.graphics_update_pdu();
-                return graphics_update_pdu_.get_max_data_block_size();
-            }();
+            size_t const serializer_max_data_block_size
+              = this->orders.graphics_update_pdu().get_max_data_block_size();
 
-
-            const uint16_t max_image_width =
-                std::min<uint16_t>(
-                        ((serializer_max_data_block_size / nb_bytes_per_pixel(image_bpp)) & ~3),
-                        image_rect.cx
-                    );
+            const uint16_t max_image_width
+              = std::min<uint16_t>(
+                    ((serializer_max_data_block_size / nb_bytes_per_pixel(image_bpp)) & ~3),
+                    image_rect.cx
+                );
             const uint16_t max_image_height = serializer_max_data_block_size / (max_image_width * nb_bytes_per_pixel(image_bpp));
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
