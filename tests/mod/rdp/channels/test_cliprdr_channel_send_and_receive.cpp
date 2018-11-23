@@ -477,21 +477,21 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
     RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
 }
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
-{
-    ClipboardData state;
-    const uint32_t clipDataId = 1;
-    state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
-
-    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
-    StaticOutStream<64> stream;
-    pdu.emit(stream);
-
-    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
-
-    InStream chunk(stream.get_data(), stream.get_offset());
-
-    FileContentsResponseReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
-
-    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
-}
+// RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
+// {
+//     ClipboardData state;
+//     const uint32_t clipDataId = 1;
+//     state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
+//
+//     RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
+//     StaticOutStream<64> stream;
+//     pdu.emit(stream);
+//
+//     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+//
+//     InStream chunk(stream.get_data(), stream.get_offset());
+//
+//     FileContentsResponseReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
+//
+//     RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
+// }
