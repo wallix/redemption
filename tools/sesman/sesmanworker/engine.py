@@ -1103,6 +1103,21 @@ class Engine(object):
                            " %s" % (traceback.format_exc()))
         return None
 
+    def get_account_infos_by_type(self, account_name, domain_name,
+                                  device_name, account_type=None):
+        try:
+            return self.checkout.check_account_by_type(
+                account_name=account_name,
+                domain_name=domain_name,
+                device_name=device_name,
+                account_type=account_type
+            )
+        except Exception:
+            import traceback
+            Logger().debug("Engine get_account_infos_by_type failed:"
+                           " %s" % (traceback.format_exc()))
+        return None
+
     def get_target_passwords(self, target_device):
         Logger().debug("Engine get_target_passwords ...")
         try:
@@ -1144,6 +1159,19 @@ class Engine(object):
         except Exception:
             import traceback
             Logger().debug("Engine checkin_scenario_account failed: (%s)"
+                           % (traceback.format_exc()))
+        return True
+
+    def release_account_by_type(self, acc_name, dom_name, dev_name,
+                                account_type=None):
+        try:
+            self.checkout.release_account_by_type(
+                acc_name, dom_name, dev_name,
+                account_type=account_type
+            )
+        except Exception:
+            import traceback
+            Logger().debug("Engine checkin_account_by_type failed: (%s)"
                            % (traceback.format_exc()))
         return True
 
