@@ -23,6 +23,8 @@
 
 #include "system/redemption_unit_tests.hpp"
 
+#include "utils/rdtsc.hpp"
+//#include "iostream"
 #include "utils/bitstream.hpp"
 
 RED_AUTO_TEST_CASE(TestBitStream) {
@@ -59,6 +61,7 @@ RED_AUTO_TEST_CASE(TestBitStream) {
     bs2.shift(3);
     RED_CHECK_EQ(bs2.peekBits(8), 0xff);
 
+
     // test the sequence involved in rlgr algorithm
     uint8_t rlgr_data[] = { 0x9f, 0x7f, 0xff, 0xff, 0xff, 0xf5, 0x69, 0xa8, 0xa8, 0xc3, 0xc0, 0x07, 0x44, 0x52, 0x02, 0x83 };
     //     0x9f      0x7f     0xff      0xff      0xff      0xf5      0x69     0xa8
@@ -66,10 +69,20 @@ RED_AUTO_TEST_CASE(TestBitStream) {
 
     InBitStream bs3(rlgr_data, sizeof(rlgr_data));
 
-    RED_CHECK_EQ(bs3.peekBits(32), 0x9f7fffff);
+    auto t0 = rdtsc();
+    uint32_t v1 = bs3.peekBits(32);
     bs3.shift(0);
     //  001 1111|0111 1111|1111 1111|1111 1111|1111 1111|1111 0101|0110 1001|1010 1000
     //  0011 1110 1111 1111 1111 1111 1111 1111
     bs3.shift(1);
-    RED_CHECK_EQ(bs3.peekBits(32), 0x3effffff);
+    uint32_t v2 = bs3.peekBits(32);
+    auto t1 = rdtsc();
+
+    // std::cout << t1.count() - t0.count() << std::endl;
+
+    RED_CHECK_EQ(v1, 0x9f7fffff);
+    RED_CHECK_EQ(v1, 0b10011111011111111111111111111111);
+    RED_CHECK_EQ(v2, 0x3effffff);
+    RED_CHECK_EQ(v2, 0b00111110111111111111111111111111);
+
 }
