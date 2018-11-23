@@ -23,7 +23,7 @@
 #include "system/redemption_unit_tests.hpp"
 
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-// #include "mod/rdp/channels/fake_clipboard_data.hpp"
+#include "mod/rdp/channels/fake_base_virtual_channel.hpp"
 
 
 
@@ -73,23 +73,29 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilecontentsRequestSend)
 {
-//     ClipboardSideData server_state("server");
-//
-//     FilecontentsRequestSendBack sender(server_state, RDPVerbose::none, RDPECLIP::FILECONTENTS_SIZE, 1);
-//
-//     InStream stream(sender.out_stream.get_data(), sender.out_stream.get_offset());
-//
-//     RDPECLIP::CliprdrHeader header;
-//     header.recv(stream);
-//     RDPECLIP::FileContentsResponseSize pdu;
-//     pdu.receive(stream);
-//
-//     RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FILECONTENTS_RESPONSE);
-//     RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
-//     RED_CHECK_EQUAL(header.dataLen(), 16);
-//
-//     RED_CHECK_EQUAL(pdu.streamID, 1);
-//     RED_CHECK_EQUAL(pdu._size, 0);
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    params.exchanged_data_limit = 10;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
+    const uint32_t streamID = 1;
+
+    ClientFilecontentsRequestSendBack sender(RDPVerbose::none, RDPECLIP::FILECONTENTS_SIZE, streamID, &channel);
+
+    RED_REQUIRE_EQUAL(channel.index_client, 1);
+
+    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
+    RDPECLIP::CliprdrHeader header;
+    header.recv(stream);
+    RDPECLIP::FileContentsResponseSize pdu;
+    pdu.receive(stream);
+
+    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FILECONTENTS_RESPONSE);
+    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
+    RED_CHECK_EQUAL(header.dataLen(), 16);
+
+    RED_CHECK_EQUAL(pdu.streamID, 1);
+    RED_CHECK_EQUAL(pdu._size, 0);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
@@ -111,9 +117,18 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestReceive)
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
 {
-    ClientFormatDataRequestSendBack sender(RDPVerbose::none);
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    data_size_type max_clipboard_data = 0;
+    params.exchanged_data_limit = max_clipboard_data;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
 
-    InStream stream(sender.out_stream.get_data(), sender.out_stream.get_offset());
+    ClientFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
+
+    RED_REQUIRE_EQUAL(channel.index_client, 1);
+
+    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
@@ -121,9 +136,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataRequestSend)
     RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
     RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
     RED_CHECK_EQUAL(header.dataLen(), 0);
-
-    RED_CHECK_EQUAL(sender.total_length, 8);
-    RED_CHECK_EQUAL(sender.flags, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
 }
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
@@ -136,7 +148,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
 
     StaticOutStream<1600> out_stream;
     out_stream.out_copy_bytes(utf16text, utf16size+2);
-
 
     InStream stream(out_stream.get_data(), out_stream.get_offset());
 
@@ -307,9 +318,18 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
 
-    FormatListSendBack sender;
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    data_size_type max_clipboard_data = 0;
+    params.exchanged_data_limit = max_clipboard_data;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
 
-    InStream stream(sender.out_stream.get_data(), sender.out_stream.get_offset());
+    ClientFormatListSendBack sender(&channel);
+
+    RED_REQUIRE_EQUAL(channel.index_client, 1);
+
+    InStream stream(channel.to_client_stream[0].data, channel.to_client_stream[0].size);
 
     RDPECLIP::CliprdrHeader header;
     header.recv(stream);
@@ -319,3 +339,159 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListSend) {
     RED_CHECK_EQUAL(header.dataLen(), 0);
 }
 
+RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatDataRequestSendBack) {
+
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    data_size_type max_clipboard_data = 0;
+    params.exchanged_data_limit = max_clipboard_data;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
+
+    ServerFormatDataRequestSendBack sender(RDPVerbose::none, &channel);
+
+    RED_REQUIRE_EQUAL(channel.index_server, 1);
+
+    InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
+
+    RDPECLIP::CliprdrHeader header;
+    header.recv(stream);
+
+    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
+    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_FAIL);
+    RED_CHECK_EQUAL(header.dataLen(), 0);
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelServerMonitorReadySendBack) {
+
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    data_size_type max_clipboard_data = 0;
+    params.exchanged_data_limit = max_clipboard_data;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
+    const bool use_long_format_name = true;
+    const int cCapabilitiesSets = 1;
+
+    ServerMonitorReadySendBack sender(RDPVerbose::none, use_long_format_name, &channel);
+
+    RED_REQUIRE_EQUAL(channel.index_server, 2);
+
+    {
+        InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
+
+        RDPECLIP::CliprdrHeader header;
+        header.recv(stream);
+        RDPECLIP::ClipboardCapabilitiesPDU clipboard_caps_pdu;
+        clipboard_caps_pdu.recv(stream);
+        RDPECLIP::GeneralCapabilitySet general_cap_set;
+        general_cap_set.recv(stream);
+
+        RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_CLIP_CAPS);
+        RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE__NONE_);
+        RED_CHECK_EQUAL(header.dataLen(), clipboard_caps_pdu.size() + general_cap_set.size());
+
+        RED_CHECK_EQUAL(general_cap_set.capabilitySetType(), RDPECLIP::CB_CAPSTYPE_GENERAL);
+        RED_CHECK_EQUAL(general_cap_set.generalFlags(), RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+        RED_CHECK_EQUAL(general_cap_set.version(), RDPECLIP::CB_CAPS_VERSION_1);
+
+        RED_CHECK_EQUAL(clipboard_caps_pdu.cCapabilitiesSets(), cCapabilitiesSets);
+    }
+
+    {
+        InStream stream(channel.to_server_stream[1].data, channel.to_server_stream[1].size);
+
+        RDPECLIP::CliprdrHeader header;
+        header.recv(stream);
+        RDPECLIP::FormatListPDUEx format_list_pdu;
+        format_list_pdu.recv(stream, true, true);
+
+        RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST);
+        RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE__NONE_);
+        RED_CHECK_EQUAL(header.dataLen(), 6);
+
+        RED_CHECK_EQUAL(format_list_pdu.num_format_names(), 1);
+        RED_CHECK_EQUAL(format_list_pdu.format_name(0).format_name(), "");
+        RED_CHECK_EQUAL(format_list_pdu.format_name(0).formatId(), RDPECLIP::CF_TEXT);
+        RED_CHECK_EQUAL(format_list_pdu.will_be_sent_in_ASCII_8(true), false);
+    }
+
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelServerFormatListSendBack) {
+
+    NullReportMessage report;
+    BaseVirtualChannel::Params params(report);
+    data_size_type max_clipboard_data = 0;
+    params.exchanged_data_limit = max_clipboard_data;
+    params.verbose = RDPVerbose::none;
+    FakeBaseVirtualChannel channel(params);
+
+    ServerFormatListSendBack sender(&channel);
+
+    RED_REQUIRE_EQUAL(channel.index_server, 1);
+
+    InStream stream(channel.to_server_stream[0].data, channel.to_server_stream[0].size);
+
+    RDPECLIP::CliprdrHeader header;
+    header.recv(stream);
+
+    RED_CHECK_EQUAL(header.msgType(), RDPECLIP::CB_FORMAT_LIST_RESPONSE);
+    RED_CHECK_EQUAL(header.msgFlags(), RDPECLIP::CB_RESPONSE_OK);
+    RED_CHECK_EQUAL(header.dataLen(), 0);
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)
+{
+    ClipboardData state;
+    const uint32_t clipDataId = 1;
+    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
+    StaticOutStream<64> stream;
+    pdu.emit(stream);
+
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+
+    InStream chunk(stream.get_data(), stream.get_offset());
+
+    LockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
+
+    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.count(1), 1);
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
+{
+    ClipboardData state;
+    const uint32_t clipDataId = 1;
+    state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
+
+    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
+    StaticOutStream<64> stream;
+    pdu.emit(stream);
+
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+
+    InStream chunk(stream.get_data(), stream.get_offset());
+
+    UnlockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
+
+    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
+}
+
+RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
+{
+    ClipboardData state;
+    const uint32_t clipDataId = 1;
+    state.client_data.file_stream_data_inventory[clipDataId] = ClipboardSideData::file_info_inventory_type();
+
+    RDPECLIP::LockClipboardDataPDU pdu(clipDataId);
+    StaticOutStream<64> stream;
+    pdu.emit(stream);
+
+    RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
+
+    InStream chunk(stream.get_data(), stream.get_offset());
+
+    FileContentsResponseReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
+
+    RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
+}

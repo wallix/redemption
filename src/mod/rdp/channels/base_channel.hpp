@@ -114,7 +114,7 @@ public:
         std::unique_ptr<AsynchronousTask> & out_asynchronous_task) = 0;
 
 public:
-    inline void send_message_to_client(uint32_t total_length,
+    virtual inline void send_message_to_client(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_client_sender)
@@ -124,7 +124,7 @@ public:
         }
     }
 
-    inline void send_message_to_server(uint32_t total_length,
+    virtual inline void send_message_to_server(uint32_t total_length,
         uint32_t flags, const uint8_t* chunk_data, uint32_t chunk_data_length)
     {
         if (this->to_server_sender)
