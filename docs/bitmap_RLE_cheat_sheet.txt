@@ -9,18 +9,18 @@ Two consecutive FILL on the same line inject a magic background colored pixel
 | 1-: FILL          -+16               | F2: FOM               SISI            |
 | 20: MIX           SI+32              | F3: COLOR             SISI   CCC      |
 | 2-: MIX           -                  | F4: COPY              SISI   X ...    |
-| 3-: MIX           -+16               | F6: MIX SET           SISI   CCC      |
-| 40: FOM           SI +1  M ...       | F7: FOM SET           SISI   CCC M ...|
-| 4-: FOM           - * 8  M ...       | F8: BICOLOR           SISI   CC1 CC2  |
-| 5-: FOM           (-+16) * 8  M ...  | F9: SPECIAL_FGBG_1    (8) (M=7)       |
-| 60: COLOR         SI+32  CCC         | FA: SPECIAL_FGBG_2    (8) (M=3)       |
-| 6-: COLOR         -      CCC         | FD: WHITE             (1)             |
-| 7-: COLOR         - +16  CCC         | FE: BLACK             (1)             |
-| 80: COPY          SI+32  X ...       | FF: UNDEFINED                         |
-| 8-: COPY          -      X ...       |                                       |
-| 9-: COPY          - +16  X ...       |                                       |
-| A0: UNDEFINED                        |                                       |
-| B0: UNDEFINED                        |                                       |
+| 3-: MIX           -+16               | F5: UNDEFINED                         |
+| 40: FOM           SI +1  M ...       | F6: MIX SET           SISI   CCC      |
+| 4-: FOM           - * 8  M ...       | F7: FOM SET           SISI   CCC M ...|
+| 5-: FOM           (-+16) * 8  M ...  | F8: BICOLOR           SISI   CC1 CC2  |
+| 60: COLOR         SI+32  CCC         | F9: SPECIAL_FGBG_1    (8) (M=3)       |
+| 6-: COLOR         -      CCC         | FA: SPECIAL_FGBG_2    (8) (M=5)       |
+| 7-: COLOR         - +16  CCC         | FB: UNDEFINED                         |
+| 80: COPY          SI+32  X ...       | FC: UNDEFINED                         |
+| 8-: COPY          -      X ...       | FD: WHITE             (1)             |
+| 9-: COPY          - +16  X ...       | FE: BLACK             (1)             |
+| A-: UNDEFINED                        | FF: UNDEFINED                         |
+| B-: UNDEFINED                        |                                       |
 | C0: MIX SET       SI+16  CCC         |                                       |
 | C-: MIX SET       -      CCC         |                                       |
 | D0: FOM SET       SI +1  CCC M ...   |                                       |
