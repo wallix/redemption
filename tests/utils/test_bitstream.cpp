@@ -23,8 +23,6 @@
 
 #include "system/redemption_unit_tests.hpp"
 
-#include "utils/rdtsc.hpp"
-//#include "iostream"
 #include "utils/bitstream.hpp"
 
 RED_AUTO_TEST_CASE(TestBitStream) {
@@ -69,16 +67,12 @@ RED_AUTO_TEST_CASE(TestBitStream) {
 
     InBitStream bs3(rlgr_data, sizeof(rlgr_data));
 
-    auto t0 = rdtsc();
     uint32_t v1 = bs3.peekBits(32);
     bs3.shift(0);
     //  001 1111|0111 1111|1111 1111|1111 1111|1111 1111|1111 0101|0110 1001|1010 1000
     //  0011 1110 1111 1111 1111 1111 1111 1111
     bs3.shift(1);
     uint32_t v2 = bs3.peekBits(32);
-    auto t1 = rdtsc();
-
-    // std::cout << t1.count() - t0.count() << std::endl;
 
     RED_CHECK_EQ(v1, 0x9f7fffff);
     RED_CHECK_EQ(v1, 0b10011111011111111111111111111111);
