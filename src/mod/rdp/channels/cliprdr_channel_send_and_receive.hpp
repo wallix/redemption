@@ -1068,18 +1068,19 @@ struct FileContentsResponseReceive {
 
                 if (chunk.in_remain()) {
                     if (this->file_info.sequential_access_offset == file_contents_request_position_current) {
+
                         uint32_t const length_ = std::min({
                                 static_cast<uint32_t>(chunk.in_remain()),
                                 static_cast<uint32_t>(this->file_info.size - this->file_info.sequential_access_offset),
                                 file_contents_request.cbRequested - file_contents_request.offset
                             });
 
-                        file_info.sha256.update({ chunk.get_current(), length_ });
+                        this->file_info.sha256.update({ chunk.get_current(), length_ });
 
                         file_contents_request.offset       += length_;
-                        file_info.sequential_access_offset += length_;
+                        this->file_info.sequential_access_offset += length_;
 
-                        this->must_log_file_info_type = file_info.sequential_access_offset == file_info.size;
+                        this->must_log_file_info_type = this->file_info.sequential_access_offset == this->file_info.size;
                     }
                 }
             }

@@ -131,33 +131,6 @@ public:
             this->clip_data.server_data.use_long_format_names);
     }
 
-private:
-
-    bool process_client_format_data_response_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
-    {
-        (void)total_length;
-
-        ClientFormatDataResponseReceive receiver(
-            this->clip_data.client_data,
-            this->clip_data,
-            chunk,
-            in_header,
-            this->param_dont_log_data_into_syslog,
-            flags,
-            this->verbose
-        );
-
-        if (!this->clip_data.client_data.file_list_format_id
-            || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
-
-            const bool is_from_remote_session = false;
-            this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
-        }
-
-        return true;
-    }   // process_client_format_data_response_pdu
-
 
 public:
     bool process_client_format_list_pdu(uint32_t total_length, uint32_t flags,
@@ -179,7 +152,6 @@ public:
             LOG(LOG_WARNING,"ClipboardVirtualChannel::process_client_format_list_pdu: Clipboard is fully disabled.");
 
             ClientFormatListSendBack sender(this);
-
             return false;
         }
 
@@ -187,9 +159,7 @@ public:
             LOG(LOG_ERR,
                 "ClipboardVirtualChannel::process_client_format_list_pdu: "
                     "!!!CHUNKED!!! Format List PDU is not yet supported!");
-
             ClientFormatListSendBack sender(this);
-
             return false;
         }
 
@@ -197,7 +167,6 @@ public:
         if (receiver.client_file_list_format_id) {
             this->clip_data.client_data.file_list_format_id = receiver.client_file_list_format_id;
         }
-
         return true;
     }
 
@@ -252,7 +221,7 @@ public:
             LOG(LOG_INFO,
                 "ClipboardVirtualChannel::process_client_message: "
                     "Clipboard Capabilities PDU");
-        }
+            }
                 ClipboardCapabilitiesReceive receiver(this->clip_data.client_data, chunk, this->verbose);
                 send_message_to_server = true;
             }
@@ -283,10 +252,25 @@ public:
             }
             break;
 
-            case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                send_message_to_server =
-                    this->process_client_format_data_response_pdu(
-                        total_length, flags, chunk, header);
+            case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
+                    ClientFormatDataResponseReceive receiver(
+                        this->clip_data.client_data,
+                        this->clip_data,
+                        chunk,
+                        header,
+                        this->param_dont_log_data_into_syslog,
+                        flags,
+                        this->verbose);
+
+                    if (!this->clip_data.client_data.file_list_format_id
+                        || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
+
+                        const bool is_from_remote_session = false;
+                        this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+                    }
+
+                    send_message_to_server = true;
+                }
 
                 if (send_message_to_server &&
                     bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
