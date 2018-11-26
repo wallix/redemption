@@ -197,10 +197,9 @@ public:
     }
 
 public:
-    void chunk(uint16_t chunk_type, uint16_t chunk_count, InStream stream) /*override*/
+    void chunk(WrmChunkType chunk_type, uint16_t chunk_count, InStream stream) /*override*/
     {
-        auto wrm_chunk_type = safe_cast<WrmChunkType>(chunk_type);
-        switch (wrm_chunk_type)
+        switch (chunk_type)
         {
         case WrmChunkType::META_FILE:
             {
@@ -246,7 +245,7 @@ public:
             REDEMPTION_CXX_FALLTHROUGH;
         default:
             {
-                send_wrm_chunk(this->trans, wrm_chunk_type, stream.get_capacity(), chunk_count);
+                send_wrm_chunk(this->trans, chunk_type, stream.get_capacity(), chunk_count);
                 this->trans.send(stream.get_data(), stream.get_capacity());
             }
             break;
@@ -267,7 +266,7 @@ class FileToChunk
 
     // variables used to read batch of orders "chunks"
     uint32_t chunk_size = 0;
-    uint16_t chunk_type = 0;
+    WrmChunkType chunk_type = WrmChunkType::RDP_UPDATE_ORDERS;
     uint16_t chunk_count = 0;
 
     ChunkToFile * consumer = nullptr;
@@ -322,7 +321,7 @@ private:
                 unsigned char buf[buf_sz];
                 this->trans->recv_boom(buf, buf_sz);
                 InStream header(buf);
-                this->chunk_type  = header.in_uint16_le();
+                this->chunk_type  = safe_cast<WrmChunkType>(header.in_uint16_le());
                 this->chunk_size  = header.in_uint32_le();
                 this->chunk_count = header.in_uint16_le();
             }

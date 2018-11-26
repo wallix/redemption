@@ -22,13 +22,10 @@
 
 #include <cstdint>
 
-#include "core/RDP/share.hpp"
-
-
 enum class WrmChunkType : uint16_t
 {
-    RDP_UPDATE_ORDERS   = ::RDP_UPDATE_ORDERS,  // 0
-    RDP_UPDATE_BITMAP   = ::RDP_UPDATE_BITMAP,  // 1
+    RDP_UPDATE_ORDERS   = 0,        // ::RDP_UPDATE_ORDERS
+    RDP_UPDATE_BITMAP   = 1,        // ::RDP_UPDATE_BITMAP
 
     META_FILE           = 0x3EE,    // 1006
     TIMESTAMP           = 0x3F0,    // 1008
