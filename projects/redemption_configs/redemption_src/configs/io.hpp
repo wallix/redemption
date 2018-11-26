@@ -712,14 +712,17 @@ namespace detail
         { std::copy(begin(arr), end(arr), begin(x)); }
 
         static void impl(T & x, char const (&arr)[N+1])
-        { std::copy(begin(arr), end(arr), begin(x)); }
-
-        template<class U>
-        static void impl(T & x, U const * arr, std::size_t n)
         {
-            assert(N >= n);
-            std::copy(arr, arr + n, begin(x));
+            assert(arr[N] == '\0');
+            std::copy(begin(arr), end(arr)-1, begin(x));
         }
+
+        // template<class U>
+        // static void impl(T & x, U const * arr, std::size_t n)
+        // {
+        //     assert(N >= n);
+        //     std::copy(arr, arr + n, begin(x));
+        // }
     };
 
     template<std::size_t N>

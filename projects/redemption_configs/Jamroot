@@ -9,6 +9,7 @@ SYSTEM_SRC_PATH ?= $(REDEMPTION_SRC_PATH)/system/$(SYSTEM_TYPE) ;
 include ../../jam/redemption-config.jam ;
 include ../../jam/cxxflags.jam ;
 include ../../jam/defines.jam ;
+include ../../jam/sanitizer.jam ;
 
 project configs
     : requirements
