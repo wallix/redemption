@@ -28,12 +28,14 @@
 
 
 #include "configs/generators/python_spec.hpp"
+#include "utils/sugar/algostring.hpp"
 
 #include <array>
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <cerrno>
 #include <cstring>
@@ -92,13 +94,15 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
             this->inherit().write_type(type, get_default(type, infos));
             this->out() << "\n\n";
 
-            auto&& sections = file_map[connpolicy.file];
+            auto&& sections = this->file_map[connpolicy.file];
             auto const& section = value_or<connpolicy::section>(
                 infos, connpolicy::section{section_name.c_str()});
 
-            Section& sec = (section_name == section.name)
-             ? sections.section_map[section.name]
-             : sections.delayed_section_map[section.name];
+            if (this->section_names.emplace(section.name).second) {
+                this->ordered_section.emplace_back(section.name);
+            }
+
+            Section& sec = sections[section.name];
 
             auto& sesman_name = get_name<sesman::name>(infos);
 
@@ -121,13 +125,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
         std::string const connpolicy_name,
         char const* extra = "")
     {
-        s += "    u'";
-        s += sesman_name;
-        s += "': '";
-        s += connpolicy_name;
-        s += "',";
-        s += extra;
-        s += '\n';
+        str_append(s, "    u'", sesman_name, "': '", connpolicy_name, "',", extra, '\n');
     }
 
     void do_init()
@@ -144,7 +142,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
           "cp_spec = {\n"
         ;
 
-        for (auto const& [cat, filename] : filename_map) {
+        for (auto const& [cat, filename] : this->filename_map) {
             auto file_it = file_map.find(cat);
             if (file_it == file_map.end()) {
                 this->errorstring += "Config: unknown ";
@@ -176,25 +174,14 @@ vault_transformation_rule = string(default='')
 
 
 )g";
-
-            auto& section_map = file_it->second.section_map;
-            auto& delayed_section_map = file_it->second.delayed_section_map;
-
-            for (auto const& [section_name, section] : section_map) {
-                out_spec << "[" << section_name << "]\n\n" << section.contains;
-                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains;
-                auto it = delayed_section_map.find(section_name);
-                if (it != delayed_section_map.end()) {
-                    out_spec << it->second.contains;
-                    out_sesman << it->second.sesman_contains;
-                    delayed_section_map.erase(it);
+            auto& section_map = file_it->second;
+            for (auto& section_name : this->ordered_section) {
+                auto section_it = section_map.find(section_name);
+                if (section_it != section_map.end()) {
+                    out_spec << "[" << section_name << "]\n\n" << section_it->second.contains;
+                    out_sesman << "  '" << section_name << "': {\n" << section_it->second.sesman_contains;
+                    out_sesman << "  },\n";
                 }
-                out_sesman << "  },\n";
-            }
-
-            for (auto const& [section_name, section] : delayed_section_map) {
-                out_spec << "[" << section_name << "]\n\n" << section.contains;
-                out_sesman << "  '" << section_name << "': {\n" << section.sesman_contains << "},\n";
             }
 
             if (!out_spec) {
@@ -214,12 +201,9 @@ private:
         std::string sesman_contains;
     };
     using data_by_section_t = std::unordered_map<std::string, Section>;
-    struct File
-    {
-        data_by_section_t section_map;
-        data_by_section_t delayed_section_map;
-    };
-    std::unordered_map<std::string, File> file_map;
+    std::unordered_map<std::string, data_by_section_t> file_map;
+    std::vector<std::string> ordered_section;
+    std::unordered_set<std::string> section_names;
     filename_map_t filename_map;
 
 public:

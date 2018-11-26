@@ -19,6 +19,21 @@ transformation_rule = string(default='')
 vault_transformation_rule = string(default='')
 
 
+[session]
+
+# No traffic auto disconnection.
+# If value is 0, global value (session_timeout) is used.
+# (is in second)
+inactivity_timeout = integer(min=0, default=0)
+
+[session_log]
+
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked
+#   3: keyboard input are fully masked
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
+
 [rdp]
 
 # NLA authentication in secondary target.
@@ -50,70 +65,6 @@ remote_programs_disconnect_message_delay = integer(min=0, default=3000)
 
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
-
-[session_log]
-
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
-#   3: keyboard input are fully masked
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
-
-[server_cert]
-
-# Keep known server certificates on WAB
-server_cert_store = boolean(default=True)
-
-# Behavior of certificates check.
-#   0: fails if certificates doesn't match or miss.
-#   1: fails if certificate doesn't match, succeed if no known certificate.
-#   2: succeed if certificates exists (not checked), fails if missing.
-#   3: always succeed.
-# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-server_cert_check = option(0, 1, 2, 3, default=1)
-
-# Warn if check allow connexion to server.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
-#_advanced
-server_access_allowed_message = integer(min=0, max=7, default=1)
-
-# Warn that new server certificate file was created.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
-#_advanced
-server_cert_create_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file was successfully checked.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
-#_advanced
-server_cert_success_message = integer(min=0, max=7, default=1)
-
-# Warn that server certificate file checking failed.
-#   0: nobody
-#   1: message sent to syslog
-#   2: User notified (through proxy interface)
-#   4: admin notified (wab notification)
-# (note: values can be added (everyone: 1+2+4=7, mute: 0))
-#_advanced
-server_cert_failure_message = integer(min=0, max=7, default=1)
-
-[session]
-
-# No traffic auto disconnection.
-# If value is 0, global value (session_timeout) is used.
-# (is in second)
-inactivity_timeout = integer(min=0, default=0)
 
 [session_probe]
 
@@ -224,4 +175,53 @@ process_monitoring_rules = string(default='')
 
 # Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
 extra_system_processes = string(default='')
+
+[server_cert]
+
+# Keep known server certificates on WAB
+server_cert_store = boolean(default=True)
+
+# Behavior of certificates check.
+#   0: fails if certificates doesn't match or miss.
+#   1: fails if certificate doesn't match, succeed if no known certificate.
+#   2: succeed if certificates exists (not checked), fails if missing.
+#   3: always succeed.
+# System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
+server_cert_check = option(0, 1, 2, 3, default=1)
+
+# Warn if check allow connexion to server.
+#   0: nobody
+#   1: message sent to syslog
+#   2: User notified (through proxy interface)
+#   4: admin notified (wab notification)
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#_advanced
+server_access_allowed_message = integer(min=0, max=7, default=1)
+
+# Warn that new server certificate file was created.
+#   0: nobody
+#   1: message sent to syslog
+#   2: User notified (through proxy interface)
+#   4: admin notified (wab notification)
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#_advanced
+server_cert_create_message = integer(min=0, max=7, default=1)
+
+# Warn that server certificate file was successfully checked.
+#   0: nobody
+#   1: message sent to syslog
+#   2: User notified (through proxy interface)
+#   4: admin notified (wab notification)
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#_advanced
+server_cert_success_message = integer(min=0, max=7, default=1)
+
+# Warn that server certificate file checking failed.
+#   0: nobody
+#   1: message sent to syslog
+#   2: User notified (through proxy interface)
+#   4: admin notified (wab notification)
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+#_advanced
+server_cert_failure_message = integer(min=0, max=7, default=1)
 
