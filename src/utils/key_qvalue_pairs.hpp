@@ -86,8 +86,11 @@ inline void escaped_key_qvalue(std::string & escaped_subject, array_view_const_c
     auto first = subject.begin();
     auto last = subject.end();
 
-    auto p = first;
-    while ((p = std::find_if(first, last, pred)) != last) {
+    for (;;) {
+        auto p = std::find_if(first, last, pred);
+        if (p == last) { 
+            break; 
+        }
         escaped_subject.append(first, p);
         escaped_subject += '\\';
         escaped_subject += escaped_table[*p];
