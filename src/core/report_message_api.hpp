@@ -34,7 +34,6 @@ struct ArcsightLogInfo {
             SERVER_CERTIFICATE_NEW,
             SERVER_CERTIFICATE_MATCH,
             SERVER_CERTIFICATE,
-            SESSION_DISCONNECTION,
             SESSION_ESTABLISHED,
             SESSION_DISCONNECTION,
             DRIVE_REDIRECTION_USE,
