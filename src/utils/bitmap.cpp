@@ -114,10 +114,11 @@ void Bitmap::swap(Bitmap & other) noexcept
     swap(this->data_bitmap, other.data_bitmap);
 }
 
+// Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 Bitmap::Bitmap(
     uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
     uint16_t cx, uint16_t cy, const uint8_t * data, const size_t size,
-    bool compressed)
+    bool compressed, size_t* RM18446_adjusted_size)
 : data_bitmap(DataBitmap::construct(bpp, cx, cy))
 {
     if (cx <= 0 || cy <= 0){
@@ -148,7 +149,8 @@ Bitmap::Bitmap(
             rle_decompress60(image_view, cx, cy, data, size);
         }
         else {
-            rle_decompress(image_view, data, cx, cy, size);
+            // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+            rle_decompress(image_view, data, cx, cy, size, RM18446_adjusted_size);
         }
     } else {
         uint8_t * dest = this->data_bitmap->get();

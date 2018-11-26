@@ -1056,6 +1056,7 @@ test-run tests/client_mods/test_vnc_client_simple :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3371,6 +3372,7 @@ test-run tests/mod/vnc/encoder/test_hextile :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3406,6 +3408,7 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
@@ -3441,6 +3444,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
   <library>src/utils/d3des.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/png.o
   <library>src/utils/rle.o
