@@ -4494,14 +4494,13 @@ struct globals
 , cfg::globals::movie_path
 , cfg::globals::codec_id
 , cfg::globals::port
-, cfg::globals::encryptionLevel
-, cfg::globals::trace_type
-, cfg::globals::video_quality
 , cfg::globals::capture_chunk
 , cfg::globals::bitmap_cache
 , cfg::globals::glyph_cache
 , cfg::globals::nomouse
 , cfg::globals::notimestamp
+, cfg::globals::encryptionLevel
+, cfg::globals::trace_type
 , cfg::globals::listen_address
 , cfg::globals::enable_transparent_mode
 , cfg::globals::certificate_password
@@ -4516,6 +4515,7 @@ struct globals
 , cfg::globals::enable_wab_integration
 , cfg::globals::allow_using_multiple_monitors
 , cfg::globals::bogus_refresh_rect
+, cfg::globals::video_quality
 , cfg::globals::large_pointer_support
 , cfg::globals::unicode_keyboard_event_support
 , cfg::globals::mod_recv_timeout
@@ -4526,17 +4526,14 @@ struct globals
 
 struct session_log
 : cfg::session_log::log_path
-, cfg::session_log::keyboard_input_masking_level
 , cfg::session_log::enable_session_log
+, cfg::session_log::keyboard_input_masking_level
 , cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
 
 struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
-, cfg::client::rdp_compression
-, cfg::client::max_color_depth
-, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -4548,6 +4545,8 @@ struct client
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts
+, cfg::client::rdp_compression
+, cfg::client::max_color_depth
 , cfg::client::persistent_disk_bitmap_cache
 , cfg::client::cache_waiting_list
 , cfg::client::persist_bitmap_cache_on_disk
@@ -4558,6 +4557,7 @@ struct client
 , cfg::client::enable_new_pointer_update
 , cfg::client::bogus_ios_glyph_support_level
 , cfg::client::transform_glyph_to_bitmap
+, cfg::client::bogus_number_of_fastpath_input_event
 , cfg::client::recv_timeout
 , cfg::client::enable_osd_4_eyes
 { static constexpr bool is_section = true; };
@@ -4575,14 +4575,6 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::rdp_compression
-, cfg::mod_rdp::session_probe_on_launch_failure
-, cfg::mod_rdp::session_probe_on_keepalive_timeout
-, cfg::mod_rdp::server_cert_check
-, cfg::mod_rdp::server_access_allowed_message
-, cfg::mod_rdp::server_cert_create_message
-, cfg::mod_rdp::server_cert_success_message
-, cfg::mod_rdp::server_cert_failure_message
-, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::disconnect_on_logon_user_change
 , cfg::mod_rdp::extra_orders
 , cfg::mod_rdp::enable_nla
@@ -4606,10 +4598,12 @@ struct mod_rdp
 , cfg::mod_rdp::enable_session_probe
 , cfg::mod_rdp::session_probe_use_clipboard_based_launcher
 , cfg::mod_rdp::session_probe_enable_launch_mask
+, cfg::mod_rdp::session_probe_on_launch_failure
 , cfg::mod_rdp::session_probe_launch_timeout
 , cfg::mod_rdp::session_probe_launch_fallback_timeout
 , cfg::mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon
 , cfg::mod_rdp::session_probe_keepalive_timeout
+, cfg::mod_rdp::session_probe_on_keepalive_timeout
 , cfg::mod_rdp::session_probe_end_disconnected_session
 , cfg::mod_rdp::session_probe_customize_executable_name
 , cfg::mod_rdp::session_probe_enable_log
@@ -4625,6 +4619,12 @@ struct mod_rdp
 , cfg::mod_rdp::session_probe_memory_usage_limit
 , cfg::mod_rdp::session_probe_public_session
 , cfg::mod_rdp::server_cert_store
+, cfg::mod_rdp::server_cert_check
+, cfg::mod_rdp::server_access_allowed_message
+, cfg::mod_rdp::server_cert_create_message
+, cfg::mod_rdp::server_cert_success_message
+, cfg::mod_rdp::server_cert_failure_message
+, cfg::mod_rdp::server_cert_error_message
 , cfg::mod_rdp::hide_client_name
 , cfg::mod_rdp::clean_up_32_bpp_cursor
 , cfg::mod_rdp::bogus_ios_rdpdr_virtual_channel
@@ -4644,11 +4644,11 @@ struct metrics
 { static constexpr bool is_section = true; };
 
 struct mod_vnc
-: cfg::mod_vnc::server_clipboard_encoding_type
-, cfg::mod_vnc::bogus_clipboard_infinite_loop
-, cfg::mod_vnc::clipboard_up
+: cfg::mod_vnc::clipboard_up
 , cfg::mod_vnc::clipboard_down
 , cfg::mod_vnc::encodings
+, cfg::mod_vnc::server_clipboard_encoding_type
+, cfg::mod_vnc::bogus_clipboard_infinite_loop
 , cfg::mod_vnc::server_is_apple
 { static constexpr bool is_section = true; };
 
@@ -4658,9 +4658,9 @@ struct mod_replay
 { static constexpr bool is_section = true; };
 
 struct ocr
-: cfg::ocr::version
+: cfg::ocr::interval
+, cfg::ocr::version
 , cfg::ocr::locale
-, cfg::ocr::interval
 , cfg::ocr::on_title_bar_only
 , cfg::ocr::max_unrecog_char_rate
 { static constexpr bool is_section = true; };
@@ -4668,15 +4668,9 @@ struct ocr
 struct video
 : cfg::video::break_interval
 , cfg::video::capture_groupid
-, cfg::video::capture_flags
 , cfg::video::png_interval
 , cfg::video::frame_interval
 , cfg::video::png_limit
-, cfg::video::disable_keyboard_log
-, cfg::video::disable_clipboard_log
-, cfg::video::disable_file_system_log
-, cfg::video::wrm_color_depth_selection_strategy
-, cfg::video::wrm_compression_algorithm
 , cfg::video::l_bitrate
 , cfg::video::l_framerate
 , cfg::video::l_height
@@ -4692,13 +4686,19 @@ struct video
 , cfg::video::h_height
 , cfg::video::h_width
 , cfg::video::h_qscale
-, cfg::video::smart_video_cropping
+, cfg::video::capture_flags
 , cfg::video::replay_path
 , cfg::video::hash_path
 , cfg::video::record_tmp_path
 , cfg::video::record_path
+, cfg::video::disable_keyboard_log
+, cfg::video::disable_clipboard_log
+, cfg::video::disable_file_system_log
 , cfg::video::rt_display
+, cfg::video::wrm_color_depth_selection_strategy
+, cfg::video::wrm_compression_algorithm
 , cfg::video::bogus_vlc_frame_rate
+, cfg::video::smart_video_cropping
 { static constexpr bool is_section = true; };
 
 struct crypto
@@ -4799,19 +4799,18 @@ struct context
 , cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
-, cfg::context::opt_bpp
 , cfg::context::selector_current_page
 , cfg::context::selector_lines_per_page
 , cfg::context::selector_number_of_pages
 , cfg::context::target_port
 , cfg::context::end_date_cnx
-, cfg::context::mode_console
 , cfg::context::timezone
 , cfg::context::duration_max
 , cfg::context::formflag
 , cfg::context::auth_notify_rail_exec_flags
 , cfg::context::auth_command_rail_exec_exec_result
 , cfg::context::auth_command_rail_exec_flags
+, cfg::context::opt_bpp
 , cfg::context::opt_height
 , cfg::context::opt_width
 , cfg::context::selector
@@ -4819,6 +4818,7 @@ struct context
 , cfg::context::display_message
 , cfg::context::authenticated
 , cfg::context::keepalive
+, cfg::context::mode_console
 , cfg::context::authentication_challenge
 , cfg::context::showform
 , cfg::context::forcemodule

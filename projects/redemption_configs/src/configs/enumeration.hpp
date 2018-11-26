@@ -97,6 +97,11 @@ struct type_enumeration : type_enumeration_base<type_enumeration>
         return this->values.size();
     }
 
+    unsigned long min() const
+    {
+        return 0;
+    }
+
     unsigned long max() const
     {
         return this->flag == autoincrement
@@ -131,9 +136,18 @@ struct type_enumeration_set : type_enumeration_base<type_enumeration_set>
         return *this;
     }
 
-    unsigned long max() const
+    long long min() const
     {
-        return this->values.size()-1u;
+        return std::min_element(this->values.begin(), this->values.end(), [](auto& a, auto& b){
+            return a.val < b.val;
+        })->val;
+    }
+
+    long long max() const
+    {
+        return std::max_element(this->values.begin(), this->values.end(), [](auto& a, auto& b){
+            return a.val > b.val;
+        })->val;
     }
 
     struct Value

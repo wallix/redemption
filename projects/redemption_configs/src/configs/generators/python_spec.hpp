@@ -344,8 +344,9 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     write_type(type_<T>, E const & x)
     {
         static_assert(std::is_same<T, E>::value, "");
+        using ll = long long;
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
-            this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
+            this->write_enum_value(e, ll{static_cast<std::underlying_type_t<E>>(x)});
         });
     }
 

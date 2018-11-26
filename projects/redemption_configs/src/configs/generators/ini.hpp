@@ -218,9 +218,10 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     std::enable_if_t<std::is_enum_v<T>>
     write_type(type_<T>, E const & x)
     {
+        using ll = long long;
         static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
-            this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
+            this->write_enum_value(e, ll{static_cast<std::underlying_type_t<E>>(x)});
         });
     }
 

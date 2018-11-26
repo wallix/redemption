@@ -8,7 +8,8 @@
 
 
 // Specifies the type of data to be captured:
-enum class CaptureFlags {
+enum class CaptureFlags : unsigned char
+{
     none = 0,
     png = 1,
     wrm = 2,
@@ -40,7 +41,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, CaptureFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class Level {
+enum class Level : unsigned char
+{
     low = 0,
     medium = 1,
     high = 2,
@@ -55,7 +57,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, Level e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class Language {
+enum class Language : unsigned char
+{
     en = 0,
     fr = 1,
 };
@@ -69,7 +72,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, Language e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class ClipboardEncodingType {
+enum class ClipboardEncodingType : unsigned char
+{
     utf8 = 0,
     latin1 = 1,
 };
@@ -83,7 +87,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClipboardEncodingType e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class KeyboardLogFlags {
+enum class KeyboardLogFlags : unsigned char
+{
     none = 0,
     // keyboard log in syslog
     syslog = 1,
@@ -117,7 +122,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class ClipboardLogFlags {
+enum class ClipboardLogFlags : unsigned char
+{
     none = 0,
     // clipboard log in syslog
     syslog = 1,
@@ -151,7 +157,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClipboardLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class FileSystemLogFlags {
+enum class FileSystemLogFlags : unsigned char
+{
     none = 0,
     // (redirected) file system log in syslog
     syslog = 1,
@@ -185,7 +192,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, FileSystemLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class ServerNotification {
+enum class ServerNotification : unsigned char
+{
     nobody = 0,
     // message sent to syslog
     syslog = 1,
@@ -221,7 +229,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ServerNotification e)
 
 // Behavior of certificates check.
 // System errors like FS access rights issues or certificate decode are always check errors leading to connection rejection.
-enum class ServerCertCheck {
+enum class ServerCertCheck : unsigned char
+{
     // fails if certificates doesn't match or miss.
     fails_if_no_match_or_missing = 0,
     // fails if certificate doesn't match, succeed if no known certificate.
@@ -243,7 +252,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ServerCertCheck e)
 
 // Session record options.
 // When session records are encrypted, they can be read only by the WAB where they have been generated.
-enum class TraceType {
+enum class TraceType : unsigned char
+{
     // No encryption (faster).
     localfile = 0,
     // No encryption, with checksum.
@@ -261,7 +271,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, TraceType e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class KeyboardInputMaskingLevel {
+enum class KeyboardInputMaskingLevel : unsigned char
+{
     // keyboard input are not masked
     unmasked = 0,
     // only passwords are masked
@@ -282,7 +293,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, KeyboardInputMaskingLevel e)
 
 
 // Behavior on failure to launch Session Probe.
-enum class SessionProbeOnLaunchFailure {
+enum class SessionProbeOnLaunchFailure : unsigned char
+{
     // ignore failure and continue.
     ignore_and_continue = 0,
     // disconnect user.
@@ -300,7 +312,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnLaunchFailure e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class VncBogusClipboardInfiniteLoop {
+enum class VncBogusClipboardInfiniteLoop : unsigned char
+{
     delayed = 0,
     duplicated = 1,
     continued = 2,
@@ -316,7 +329,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, VncBogusClipboardInfiniteLoop e)
 
 
 // The method by which the proxy RDP establishes criteria on which to chosse a color depth for native video capture:
-enum class ColorDepthSelectionStrategy {
+enum class ColorDepthSelectionStrategy : unsigned char
+{
     // 24-bit
     depth24 = 0,
     // 16-bit
@@ -333,7 +347,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ColorDepthSelectionStrategy e)
 
 
 // The compression method of native video capture:
-enum class WrmCompressionAlgorithm {
+enum class WrmCompressionAlgorithm : unsigned char
+{
     no_compression = 0,
     gzip = 1,
     snappy = 2,
@@ -349,7 +364,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, WrmCompressionAlgorithm e)
 
 
 // Specifies the highest compression package support available on the front side
-enum class RdpCompression {
+enum class RdpCompression : unsigned char
+{
     // The RDP bulk compression is disabled
     none = 0,
     // RDP 4.0 bulk compression
@@ -372,7 +388,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpCompression e)
 
 
 // Needed to get the old behavior of cursor rendering.
-enum class BogusLinuxCursor {
+enum class BogusLinuxCursor : unsigned char
+{
     // More compatible with MSTSC.
     disable = 0,
     // The old behavior of cursor rendering.
@@ -390,7 +407,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, BogusLinuxCursor e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class OcrLocale {
+enum class OcrLocale : unsigned char
+{
     latin = 0,
     cyrillic = 1,
 };
@@ -404,7 +422,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, OcrLocale e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class BogusNumberOfFastpathInputEvent {
+enum class BogusNumberOfFastpathInputEvent : unsigned char
+{
     disabled = 0,
     pause_key_only = 1,
     all_input_events = 2,
@@ -419,7 +438,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, BogusNumberOfFastpathInputEvent e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class SessionProbeOnKeepaliveTimeout {
+enum class SessionProbeOnKeepaliveTimeout : unsigned char
+{
     ignore_and_continue = 0,
     disconnect_user = 1,
     freeze_connection_and_wait = 2,
@@ -434,7 +454,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, SessionProbeOnKeepaliveTimeout e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class SmartVideoCropping {
+enum class SmartVideoCropping : unsigned char
+{
     // Disabled. When replaying the session video, the content of the RDP viewer matches the size of the client's desktop
     disable = 0,
     // When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session
@@ -452,7 +473,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, SmartVideoCropping e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class RdpModeConsole {
+enum class RdpModeConsole : unsigned char
+{
     allow = 0,
     force = 1,
     forbid = 2,
@@ -468,7 +490,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, RdpModeConsole e)
 
 
 // Specifies the maximum color resolution (color depth) for client session:
-enum class ColorDepth {
+enum class ColorDepth : unsigned char
+{
     // 8-bit
     depth8 = 8,
     // 15-bit 555 RGB mask (5 bits for red, 5 bits for green, and 5 bits for blue)
@@ -496,7 +519,8 @@ operator << (std::basic_ostream<Ch, Tr> & os, ColorDepth e)
 { return os << static_cast<unsigned long>(e); }
 
 
-enum class OcrVersion {
+enum class OcrVersion : unsigned char
+{
     v1 = 1,
     v2 = 2,
 };

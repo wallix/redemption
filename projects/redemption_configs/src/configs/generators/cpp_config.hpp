@@ -208,7 +208,8 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
     void write_value(T const & x)
     {
         if constexpr (std::is_enum_v<T>) {
-            this->out() << " = static_cast<type>(" << static_cast<std::underlying_type_t<T>>(x) << ")";
+            using ll = long long;
+            this->out() << " = static_cast<type>(" << ll{static_cast<std::underlying_type_t<T>>(x)} << ")";
         }
         else if constexpr (std::is_same_v<T, bool>) {
             this->out() << '{' << (x ? "true" : "false") << '}';

@@ -155,8 +155,14 @@ namespace cpp_enumeration_writer
             write(e,
                 "%d"
                 "%i"
-                "enum class %e {\n"
+                "enum class %e : "
             );
+            auto min = e.min();
+            auto max = e.max();
+            out << ((0 <= min && min <= 255 && 0 <= max && max <= 255) ? "unsigned char"
+                  : (0 <= min && min <= ((1 << 16)-1) && 0 <= max && max <= ((1 << 16)-1)) ? "unsigned short"
+                  : "int")
+                << "\n{\n";
             for (auto & v : e.values) {
                 write_template(
                     out, map(
