@@ -5380,10 +5380,15 @@ test-run tests/utils/test_drawable :
   <covfile>src/utils/drawable.hpp
   <library>boost_stacktrace
   <library>crypto
+  <library>png
+  <library>src/core/RDP/mppc.o
   <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
+  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <variant>coverage:<library>dl

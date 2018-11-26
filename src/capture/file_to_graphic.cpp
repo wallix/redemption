@@ -637,6 +637,40 @@ void FileToGraphic::interpret_order()
         auto bitmap_data = receive_order.read<RDPBitmapData>(
             this->statistics.BitmapUpdate, Verbose::rdp_orders);
 
+        // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+        if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+            InStream RM18446_stream2(this->stream.get_current(), this->stream.in_remain());
+            const uint8_t * RM18446_test_data = RM18446_stream2.in_uint8p(std::min<size_t>(RM18446_stream2.in_remain(), bitmap_data.bitmap_size()));
+
+            size_t RM18446_adjusted_size = 0;
+
+            Bitmap RM18446_test_bitmap( this->info.bpp
+                              , checked_int(bitmap_data.bits_per_pixel)
+                              , /*0*/&palette
+                              , bitmap_data.width
+                              , bitmap_data.height
+                              , RM18446_test_data
+                              , this->stream.in_remain()
+                              , true
+                              , &RM18446_adjusted_size
+                              );
+
+            if (RM18446_adjusted_size) {
+                RDPBitmapData RM18446_test_bitmap_data = bitmap_data;
+
+                RM18446_test_bitmap_data.flags         = BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR;
+                RM18446_test_bitmap_data.bitmap_length = RM18446_adjusted_size;
+
+                this->stream.in_skip_bytes(RM18446_adjusted_size);
+
+                for (gdi::GraphicApi * gd : this->graphic_consumers){
+                    gd->draw(RM18446_test_bitmap_data, RM18446_test_bitmap);
+                }
+
+                break;
+            }
+        }
+
         const uint8_t * data = this->stream.in_uint8p(bitmap_data.bitmap_size());
 
         Bitmap bitmap( this->info.bpp
