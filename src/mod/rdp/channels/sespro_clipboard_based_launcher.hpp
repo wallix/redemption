@@ -643,9 +643,8 @@ public:
         return ret;
     }
 
-    void set_clipboard_virtual_channel(
-            BaseVirtualChannel* channel) override {
-        this->cliprdr_channel = reinterpret_cast<ClipboardVirtualChannel*>(channel);
+    void set_clipboard_virtual_channel(ClipboardVirtualChannel* channel) override {
+        this->cliprdr_channel = channel;
     }
 
     void set_remote_programs_virtual_channel(BaseVirtualChannel* /*channel*/) override {}

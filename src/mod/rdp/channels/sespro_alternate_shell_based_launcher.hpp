@@ -128,7 +128,7 @@ public:
         return true;
     }
 
-    void set_clipboard_virtual_channel(BaseVirtualChannel* /*channel*/) override {}
+    void set_clipboard_virtual_channel(class ClipboardVirtualChannel* /*channel*/) override {}
 
     void set_remote_programs_virtual_channel(BaseVirtualChannel* channel) override {
         this->rail_channel = reinterpret_cast<RemoteProgramsVirtualChannel*>(channel);

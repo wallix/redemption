@@ -5668,8 +5668,7 @@ private:
             }
 
             if (this->session_probe_launcher) {
-                this->session_probe_launcher->set_clipboard_virtual_channel(
-                    &cvc);
+                this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
 
                 this->session_probe_launcher->set_session_probe_virtual_channel(
                     this->session_probe_virtual_channel_p);

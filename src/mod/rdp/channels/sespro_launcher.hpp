@@ -54,8 +54,7 @@ public:
     virtual bool process_client_cliprdr_message(InStream & chunk,
         uint32_t length, uint32_t flags) = 0;
 
-    virtual void set_clipboard_virtual_channel(
-        BaseVirtualChannel* channel) = 0;
+    virtual void set_clipboard_virtual_channel(class ClipboardVirtualChannel* channel) = 0;
 
     virtual void set_remote_programs_virtual_channel(
         BaseVirtualChannel* channel) = 0;
