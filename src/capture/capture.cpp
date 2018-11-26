@@ -764,7 +764,8 @@ public:
     , smart_video_cropping(capture_params.smart_video_cropping)
     {}
 
-    ~PngCaptureRT(){
+    ~PngCaptureRT() /*NOLINT*/
+    {
         this->clear_png_interval(this->num_start, this->trans.get_seqno() + 1);
     }
 

@@ -1261,9 +1261,9 @@ constexpr auto PREFERRED_DROPEFFECT = cstr_array_view("Preferred DropEffect\0");
 
 struct FormatListResponsePDU
 {
-    void emit(OutStream &) const {}
+    void emit(OutStream & /*out_stream*/) const {}
 
-    void recv(InStream &) {}
+    void recv(InStream & /*in_stream*/) {}
 
     static constexpr size_t size() {
         return 0;
@@ -1803,13 +1803,13 @@ public:
 
     FileDescriptor() = default;
 
-    explicit FileDescriptor(const std::string & name, const size_t size, const uint32_t attribute)
+    explicit FileDescriptor(std::string name, const size_t size, const uint32_t attribute)
       : flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
       , fileAttributes(attribute)
       , lastWriteTime(TIME64_FILE_LIST)
       , fileSizeHigh(size >> 32)
       , fileSizeLow(size)
-      , file_name(name)
+      , file_name(std::move(name))
     {}
 
     void emit(OutStream & stream) const {

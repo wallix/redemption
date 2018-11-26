@@ -327,7 +327,8 @@ class Inifile;
 
 struct Translation
 {
-    enum language_t {
+    enum language_t : unsigned char
+    {
         EN,
         FR,
         MAX_LANG

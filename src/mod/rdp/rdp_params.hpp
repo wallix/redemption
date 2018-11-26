@@ -52,7 +52,8 @@ using ModRdpVariables = vcfg::variables<
     vcfg::var<cfg::metrics::log_interval,                  vcfg::accessmode::get>
 >;
 
-struct ModRDPParams {
+struct ModRDPParams
+{
     const char * target_user;
     const char * target_password;
     const char * target_host;

@@ -777,7 +777,7 @@ public:
             if (bitmap_data.flags & BITMAP_COMPRESSION) {
                 RDPBitmapData bitmap_data_new = bitmap_data;
 
-                bitmap_data_new.flags         &= ~(BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR);
+                bitmap_data_new.flags         &= ~(BITMAP_COMPRESSION | NO_BITMAP_COMPRESSION_HDR); /*NOLINT*/
                 bitmap_data_new.bitmap_length  = bmp.bmp_size();
 
                 this->reserve_bitmap(bitmap_data_new.struct_size() + bmp.bmp_size());

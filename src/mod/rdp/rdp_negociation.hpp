@@ -143,11 +143,11 @@ private:
     RdpNego nego;
 
     Transport& trans;
+    const uint32_t password_printing_mode;
     const bool enable_session_probe;
     const RdpCompression rdp_compression;
     const bool session_probe_use_clipboard_based_launcher;
     const bool remote_program;
-    const uint32_t password_printing_mode;
     const bool bogus_sc_net_size;
 
     const bool allow_using_multiple_monitors;

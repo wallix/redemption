@@ -330,6 +330,7 @@ RdpNegociation::RdpNegociation(
         static_cast<RdpNego::Verbose>(mod_rdp_params.verbose)
         )
     , trans(trans)
+    , password_printing_mode(mod_rdp_params.password_printing_mode)
     , enable_session_probe(mod_rdp_params.enable_session_probe)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
@@ -339,7 +340,6 @@ RdpNegociation::RdpNegociation(
         || !info.alternate_shell[0] || info.remote_program)
         )
     , remote_program(mod_rdp_params.remote_program)
-    , password_printing_mode(mod_rdp_params.password_printing_mode)
     , bogus_sc_net_size(mod_rdp_params.bogus_sc_net_size)
     , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
     , cs_monitor(info.cs_monitor)

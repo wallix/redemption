@@ -31,8 +31,8 @@ struct uninit_checked
     uninit_checked(uninit_checked &&) = default; /*NOLINT*/
     uninit_checked(uninit_checked const&) = default; /*NOLINT*/
 
-    uninit_checked& operator=(uninit_checked &&) noexcept = default;
-    uninit_checked& operator=(uninit_checked const&) = default;
+    uninit_checked& operator=(uninit_checked &&) = default; /*NOLINT*/
+    uninit_checked& operator=(uninit_checked const&) = default; /*NOLINT*/
 
     template<class U>
     uninit_checked& operator=(U&& x)

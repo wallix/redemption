@@ -86,11 +86,11 @@ void video_recorder::default_sws_free_context::operator()(SwsContext * sws_ctx)
     sws_freeContext(sws_ctx);
 }
 
-video_recorder::AVFramePtr::AVFramePtr() 
-    : frame(av_frame_alloc()) 
+video_recorder::AVFramePtr::AVFramePtr() /*NOLINT*/
+    : frame(av_frame_alloc())
 {}
 
-video_recorder::AVFramePtr::~AVFramePtr()
+video_recorder::AVFramePtr::~AVFramePtr() /*NOLINT*/
 {
     av_frame_free(&this->frame);
 }
@@ -237,7 +237,7 @@ video_recorder::video_recorder(
                     LOG(LOG_ERR, "av_dict_set error on '%s' with '%s'", k, v);
                 }
             }
-            ~AVDict() { av_dict_free(&this->d); }
+            ~AVDict() { av_dict_free(&this->d); } /*NOLINT*/
             AVDictionary *d = nullptr;
         } av_dict;
 
@@ -353,7 +353,7 @@ video_recorder::video_recorder(
     av_log_set_level(log_level);
 }
 
-video_recorder::~video_recorder()
+video_recorder::~video_recorder() /*NOLINT*/
 {
     // write last frame : we must ensure writing at least one frame to avoid empty movies
     // encoding_video_frame();

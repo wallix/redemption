@@ -79,7 +79,8 @@ struct ClipboardSideData {
     std::string provider_name;
 
     ClipboardSideData(std::string provider_name)
-      : provider_name(provider_name) {}
+      : provider_name(std::move(provider_name))
+    {}
 
      void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
         this->file_contents_request_info_inventory[streamID] =
@@ -432,7 +433,7 @@ struct ClientFormatDataResponseReceive {
                 clip_data.requestedFormatId  = 0;
             }
 
-            for (RDPECLIP::FileDescriptor fd : fds) {
+            for (RDPECLIP::FileDescriptor const& fd : fds) {
 //                 const bool from_remote_session = false;
                 clip_side_data.update_file_contents_request_inventory(fd);
             }
