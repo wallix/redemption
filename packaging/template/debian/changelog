@@ -1,3 +1,9 @@
+redemption (1.2.95%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix error when sending compressed bitmap to recorder.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Mon, 26 Nov 2018 12:12:41 +0200
+
 redemption (1.2.93%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix disabling keyboard log in recorded session.
