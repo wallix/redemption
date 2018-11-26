@@ -705,6 +705,10 @@ public:
             }
             closedir (dir);
         }
+
+        std::sort(this->icons_movie_data.begin(), this->icons_movie_data.end(), [](const IconMovieData& first, const IconMovieData& second) {
+                return first.file_name < second.file_name;
+            });
     }
 
     time_t get_movie_time_length(const char * mwrm_filename) {
