@@ -407,11 +407,20 @@ unsigned get_fom_count_set(std::size_t line_size, const uint8_t * pmin, const ui
     return 0;
 }
 
+// Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 void decompress_(
   MutableImageDataView const & image,
-  const uint8_t* input, uint16_t src_cx, size_t size)
+  const uint8_t* input, uint16_t src_cx, size_t size, size_t* RM18446_adjusted_size)
 {
-  const uint16_t dst_cx = image.width();
+    // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+    if (RM18446_adjusted_size) {
+        *RM18446_adjusted_size = 0;
+    }
+
+    // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+    const uint8_t * const RM18446_input_saved = input;
+
+    const uint16_t dst_cx = image.width();
     uint8_t* pmin = image.mutable_data();
     uint8_t* pmax = pmin + image.pix_len();
     const size_t line_size = image.line_size();
@@ -443,6 +452,9 @@ void decompress_(
     uint8_t opcode;
     uint8_t lastopcode = 0xFF;
     while (input < end) {
+        // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+        const uint8_t* RM18446_input_good = input;
+
         // Read RLE operators, handle short and long forms
         uint8_t code = input[0]; input++;
         switch (code >> 4) {
@@ -580,11 +592,26 @@ void decompress_(
         lastopcode = opcode;
         //LOG(LOG_INFO, "%s %u", this->get_opcode(opcode), count);
         /* Output body */
+
+        // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+        bool RM18446_processing_in_progress = false;
+
         while (count > 0) {
             if(out >= pmax) {
                 LOG(LOG_WARNING, "Decompressed bitmap too large. Dying.");
+
+                // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+                if (RM18446_adjusted_size && !RM18446_processing_in_progress && (out == pmax)) {
+                    *RM18446_adjusted_size = RM18446_input_good - RM18446_input_saved;
+                    return;
+                }
+
                 throw Error(ERR_BITMAP_DECOMPRESSED_DATA_TOO_LARGE);
             }
+
+            // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+            RM18446_processing_in_progress = true;
+
             yprev = (out - line_size < pmin) ? 0 : this->get_pixel(out - line_size);
             switch (opcode) {
             case FILL:
@@ -646,6 +673,20 @@ void decompress_(
                 out_x_count = 0;
             }
         }
+
+        if(out == pmax) {
+            // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+            if(RM18446_adjusted_size) {
+                *RM18446_adjusted_size = input - RM18446_input_saved;
+            }
+
+            return;
+        }
+    }
+
+    // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+    if (RM18446_adjusted_size && (out == pmax)) {
+        *RM18446_adjusted_size = size;
     }
     return;
 }
@@ -1396,16 +1437,18 @@ void rle_decompress60(
     //LOG(LOG_INFO, "bmp decompress60: done");
 }
 
+// Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
 void rle_decompress(
     MutableImageDataView const & image,
-    const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size)
+    const uint8_t* input, uint16_t src_cx, uint16_t src_cy, size_t size, size_t* RM18446_adjusted_size)
 {
     (void)src_cy;
     switch (image.bits_per_pixel()) {
-        case 8 : return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size);
-        case 15: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size);
-        case 16: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size);
-        default: return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size);
+        // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+        case 8 : return RLEDecompressorImpl< 8>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
+        case 15: return RLEDecompressorImpl<15>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
+        case 16: return RLEDecompressorImpl<16>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
+        default: return RLEDecompressorImpl<24>{}.decompress_(image, input, src_cx, size, RM18446_adjusted_size);
     }
 }
 

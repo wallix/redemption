@@ -59,9 +59,10 @@ public:
     Bitmap(Bitmap && bmp) noexcept;
     Bitmap(const Bitmap & other) noexcept;
 
+    // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
     Bitmap(uint8_t session_color_depth, uint8_t bpp, const BGRPalette * palette,
            uint16_t cx, uint16_t cy, const uint8_t * data, size_t size,
-           bool compressed = false);
+           bool compressed = false, size_t* RM18446_adjusted_size = nullptr);
 
     Bitmap(const Bitmap & src_bmp, Rect r);
 
