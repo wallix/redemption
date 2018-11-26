@@ -1680,6 +1680,7 @@ public:
 
                             ArcsightLogInfo arc_info;
                             arc_info.name = "DRIVE_REDIRECTION_USE";
+                            arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_USE;
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.message = info;
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -1793,6 +1794,7 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_READ_EX";
+                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_READ_EX;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
@@ -1824,6 +1826,7 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_READ";
+                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_READ;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -1867,6 +1870,7 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_WRITE_EX";
+                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_WRITE_EX;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.fileSize = target_iter->end_of_file;
@@ -1898,6 +1902,7 @@ public:
 
                                     ArcsightLogInfo arc_info;
                                     arc_info.name = "DRIVE_REDIRECTION_WRITE";
+                                    arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_WRITE;
                                     arc_info.ApplicationProtocol = "rdp";
                                     arc_info.filePath = file_path;
                                     arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -2042,6 +2047,7 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "DRIVE_REDIRECTION_DELETE";
+                                arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_DELETE;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.filePath = file_path;
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -2079,6 +2085,7 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "DRIVE_REDIRECTION_RENAME";
+                                arc_info.signatureID = ArcsightLogInfo::DRIVE_REDIRECTION_RENAME;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.filePath = file_path;
                                 arc_info.oldFilePath = target_iter->file_path;

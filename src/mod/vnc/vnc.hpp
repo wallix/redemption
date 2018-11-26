@@ -803,6 +803,7 @@ public:
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ESTABLISHED";
+        arc_info.signatureID = ArcsightLogInfo::SESSION_ESTABLISHED;
         arc_info.ApplicationProtocol = "vnc";
         arc_info.WallixBastionStatus = "SUCCESS";
 
@@ -3438,6 +3439,7 @@ public:
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_DISCONNECTION";
+        arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
         arc_info.ApplicationProtocol = "vnc";
         arc_info.endTime = long(seconds);
 

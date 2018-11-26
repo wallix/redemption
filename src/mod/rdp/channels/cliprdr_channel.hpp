@@ -738,6 +738,7 @@ private:
             if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
 
                 std::string type;
+                uint32_t id_type = 0;
                 if (is_from_remote_session) {
                     type = (data_to_dump.empty() ?
                         "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :
@@ -782,10 +783,11 @@ private:
                 }
 
                 ArcsightLogInfo arc_info;
-                arc_info.name = type;
+                arc_info.name = data_to_dump.empty() ? "CB_COPYING_PASTING_DATA" : "CB_COPYING_PASTING_DATA_EX";
+                arc_info.signatureID = data_to_dump.empty() ? ArcsightLogInfo::CB_COPYING_PASTING_DATA : ArcsightLogInfo::CB_COPYING_PASTING_DATA_EX;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.message = info;
-                arc_info.direction_flag = is_from_remote_session ?  ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
+                arc_info.direction_flag = is_from_remote_session ? ArcsightLogInfo::SERVER_SRC : ArcsightLogInfo::SERVER_DST;
 
                 if (log_current_activity) {
                     this->report_message.log6(info, arc_info, tvtime());

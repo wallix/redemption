@@ -215,6 +215,7 @@ void MatchFinder::report(
 
     ArcsightLogInfo arc_info;
     arc_info.name = pattern_detection_type;
+    arc_info.signatureID = ArcsightLogInfo::MATCH_FINDER;
     arc_info.message = info;
 
     report_message.log6(info, arc_info, tvtime());

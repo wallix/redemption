@@ -1278,6 +1278,7 @@ public:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "SESSION_ENDING_IN_PROGRESS";
+            arc_info.signatureID = ArcsightLogInfo::SESSION_ENDING_IN_PROGRESS;
             arc_info.ApplicationProtocol = "rdp";
             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
 
@@ -1312,6 +1313,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = order_;
+                        arc_info.signatureID = ArcsightLogInfo::KERBEROS_TICKET;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1334,6 +1336,7 @@ public:
 
                     ArcsightLogInfo arc_info;
                     arc_info.name = "PASSWORD_TEXT_BOX_GET_FOCUS";
+                    arc_info.signatureID = ArcsightLogInfo::PASSWORD_TEXT_BOX_GET_FOCUS;
                     arc_info.WallixBastionStatus = parameters_[0];
                     arc_info.ApplicationProtocol = "rdp";
                     arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1361,6 +1364,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "UAC_PROMPT_BECOME_VISIBLE";
+                        arc_info.signatureID = ArcsightLogInfo::UAC_PROMPT_BECOME_VISIBLE;
                         arc_info.WallixBastionStatus = parameters_[0];
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1387,6 +1391,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "INPUT_LANGUAGE";
+                        arc_info.signatureID = ArcsightLogInfo::INPUT_LANGUAGE;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1414,6 +1419,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = order_;
+                        arc_info.signatureID = ArcsightLogInfo::PROCESS;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1438,6 +1444,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "STARTUP_APPLICATION";
+                        arc_info.signatureID = ArcsightLogInfo::STARTUP_APPLICATION;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.WallixBastionStatus = "FAIL_TO_RUN";
@@ -1470,6 +1477,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "STARTUP_APPLICATION";
+                        arc_info.signatureID = ArcsightLogInfo::STARTUP_APPLICATION;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.WallixBastionStatus = "FAIL_TO_RUN";
@@ -1501,6 +1509,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "OUTBOUND_CONNECTION_BLOCKED";
+                        arc_info.signatureID = ArcsightLogInfo::OUTBOUND_CONNECTION;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1525,6 +1534,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "OUTBOUND_CONNECTION_DETECTED";
+                        arc_info.signatureID = ArcsightLogInfo::OUTBOUND_CONNECTION;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1581,6 +1591,7 @@ public:
 
                             ArcsightLogInfo arc_info;
                             arc_info.name = order_;
+                            arc_info.signatureID = ArcsightLogInfo::OUTBOUND_CONNECTION;
                             arc_info.message = info;
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1656,6 +1667,7 @@ public:
 
                             ArcsightLogInfo arc_info;
                             arc_info.name = order_;
+                            arc_info.signatureID = ArcsightLogInfo::PROCESS;
                             arc_info.message = info;
                             arc_info.ApplicationProtocol = "rdp";
                             arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1715,6 +1727,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = order_;
+                        arc_info.signatureID = ArcsightLogInfo::FOREGROUND_WINDOW_CHANGED;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1739,6 +1752,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = order_;
+                        arc_info.signatureID = ArcsightLogInfo::BUTTON_CLICKED;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1763,6 +1777,7 @@ public:
 
                         ArcsightLogInfo arc_info;
                         arc_info.name = "EDIT_CHANGED";
+                        arc_info.signatureID = ArcsightLogInfo::EDIT_CHANGED;
                         arc_info.message = info;
                         arc_info.ApplicationProtocol = "rdp";
                         arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;

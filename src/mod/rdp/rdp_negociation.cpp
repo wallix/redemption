@@ -151,6 +151,7 @@ void RdpNegociation::RDPServerNotifier::server_access_allowed()
     if (is_syslog_notification_enabled(this->server_access_allowed_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "CERTIFICATE_CHECK";
+        arc_info.signatureID = ArcsightLogInfo::CERTIFICATE_CHECK;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "Connexion to server allowed";
@@ -169,6 +170,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_create()
     if (is_syslog_notification_enabled(this->server_cert_create_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_NEW";
+        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_NEW;
         arc_info.ApplicationProtocol = "rdp";
         //arc_info.WallixBastionStatus = "";
         arc_info.message = "New X.509 certificate created";
@@ -187,6 +189,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_success()
     if (is_syslog_notification_enabled(this->server_cert_success_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
+        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_MATCH;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "SUCCESS";
         arc_info.message = "X.509 server certificate match";
@@ -205,6 +208,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_failure()
     if (is_syslog_notification_enabled(this->server_cert_failure_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE_MATCH";
+        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE_MATCH;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "FAILURE";
         arc_info.message = "X.509 server certificate match failure";
@@ -223,6 +227,7 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
     if (is_syslog_notification_enabled(this->server_cert_error_message)) {
         ArcsightLogInfo arc_info;
         arc_info.name = "SERVER_CERTIFICATE";
+        arc_info.signatureID = ArcsightLogInfo::SERVER_CERTIFICATE;
         arc_info.ApplicationProtocol = "rdp";
         arc_info.WallixBastionStatus = "ERROR";
         arc_info.message = str_concat("X.509 server certificate internal error: ", str_error);

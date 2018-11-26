@@ -968,6 +968,7 @@ public:
 
                 ArcsightLogInfo arc_info;
                 arc_info.name = "CLIENT_EXECUTE_REMOTEAPP";
+                arc_info.signatureID = ArcsightLogInfo::CLIENT_EXECUTE_REMOTEAPP;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.filePath = serpdu.ExeOrFile();
                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;

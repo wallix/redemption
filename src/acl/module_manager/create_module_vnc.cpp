@@ -174,6 +174,7 @@ void ModuleManager::create_mod_vnc(
         arc_info.name = "SESSION_CREATION";
         arc_info.ApplicationProtocol = "vnc";
         arc_info.WallixBastionStatus = "FAIL";
+        arc_info.signatureID = ArcsightLogInfo::SESSION_CREATION;
         report_message.log6("type=\"SESSION_CREATION_FAILED\"", arc_info, this->session_reactor.get_current_time());
 
         throw;

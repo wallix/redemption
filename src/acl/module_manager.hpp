@@ -966,6 +966,7 @@ private:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
+            arc_info.signatureID = ArcsightLogInfo::CONNECTION;
             arc_info.ApplicationProtocol = "xup";
             arc_info.WallixBastionStatus = "FAIL";
             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
@@ -985,6 +986,7 @@ private:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
+            arc_info.signatureID = ArcsightLogInfo::CONNECTION;
             arc_info.ApplicationProtocol = "xup";
             arc_info.WallixBastionStatus = "FAIL";
             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;

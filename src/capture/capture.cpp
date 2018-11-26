@@ -550,6 +550,7 @@ public:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "KBD_INPUT";
+            arc_info.signatureID = ArcsightLogInfo::KBD_INPUT;
             arc_info.message = this->formatted_message.str();
 
             LOG(LOG_INFO, "capture::flush this->formatted_message.str()=%s", this->formatted_message.str());
@@ -1451,6 +1452,7 @@ public:
 
                     ArcsightLogInfo arc_info;
                     arc_info.name = "TITLE_BAR";
+                    arc_info.signatureID = ArcsightLogInfo::TITLE_BAR;
                     arc_info.message = this->formatted_message.str();
 
                     this->report_message->log6(this->formatted_message.str(), arc_info, tvtime());

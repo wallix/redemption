@@ -2144,6 +2144,7 @@ public:
 
                 ArcsightLogInfo arc_info;
                 arc_info.name = "SESSION_DISCONNECTION";
+                arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
                 arc_info.ApplicationProtocol = "rdp";
                 arc_info.endTime = long(seconds);
 
@@ -2356,6 +2357,7 @@ public:
 
                                 ArcsightLogInfo arc_info;
                                 arc_info.name = "SESSION_ESTABLISHED";
+                                arc_info.signatureID = ArcsightLogInfo::SESSION_ESTABLISHED;
                                 arc_info.ApplicationProtocol = "rdp";
                                 arc_info.WallixBastionStatus = "SUCCESS";
                                 arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -5338,6 +5340,7 @@ public:
 
             ArcsightLogInfo arc_info;
             arc_info.name = "SESSION_DISCONNECTION";
+            arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
             arc_info.ApplicationProtocol = "rdp";
             arc_info.endTime = long(seconds);
 

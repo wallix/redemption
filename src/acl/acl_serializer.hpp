@@ -426,7 +426,6 @@ public:
             extension.reserve(256);
 //             std::string extension;
 
-
             switch (asl_info.direction_flag) {
 
                 case ArcsightLogInfo::NONE: break;
