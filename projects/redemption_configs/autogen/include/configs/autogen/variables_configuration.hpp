@@ -2814,6 +2814,20 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// Needed to play a video with corrupted Bitmap Update. <br/>
+    /// Note: Useless with mpv and mplayer. <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct video::play_video_with_corrupted_bitmap {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "video";
+        static constexpr char const * name = "play_video_with_corrupted_bitmap";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
@@ -4686,6 +4700,7 @@ struct video
 , cfg::video::record_path
 , cfg::video::rt_display
 , cfg::video::bogus_vlc_frame_rate
+, cfg::video::play_video_with_corrupted_bitmap
 { static constexpr bool is_section = true; };
 
 struct crypto
