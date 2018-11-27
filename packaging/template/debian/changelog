@@ -1,3 +1,9 @@
+redemption (1.2.97%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Fix reading compressed bitmap from recorded session.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 27 Nov 2018 17:26:33 +0200
+
 redemption (1.2.95%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix error when sending compressed bitmap to recorder.
