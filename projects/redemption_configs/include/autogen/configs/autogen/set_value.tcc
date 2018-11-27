@@ -2259,6 +2259,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::video::h_qscale&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "play_video_with_corrupted_bitmap")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::play_video_with_corrupted_bitmap&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::video::play_video_with_corrupted_bitmap&>(this->variables)
+            );
+        }
 
         else if (static_cast<cfg::debug::config>(this->variables).value) {
             LOG(LOG_ERR, "unknown parameter %s in section [%s]", key, context);

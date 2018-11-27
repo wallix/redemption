@@ -939,6 +939,7 @@ public:
                 this->ini.get<cfg::font>(),
                 !this->ini.get<cfg::mod_replay::on_end_of_data>(),
                 this->ini.get<cfg::mod_replay::replay_on_loop>(),
+                this->ini.get<cfg::video::play_video_with_corrupted_bitmap>(),
                 to_verbose_flags(this->ini.get<cfg::debug::capture>())
             ));
             if (bool(this->verbose & Verbose::new_mod)) {

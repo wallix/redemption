@@ -40,7 +40,7 @@
 #include "utils/png.hpp"
 
 
-FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, Verbose verbose)
+FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, bool play_video_with_corrupted_bitmap, Verbose verbose)
     : stream(stream_buf)
     , compression_builder(trans, WrmCompressionAlgorithm::no_compression)
     , trans_source(&trans)
@@ -87,6 +87,7 @@ FileToGraphic::FileToGraphic(Transport & trans, const timeval begin_capture, con
     , statistics()
     , break_privplay_client(false)
     , movie_elapsed_client{}
+    , play_video_with_corrupted_bitmap(play_video_with_corrupted_bitmap)
     , verbose(verbose)
 {
     while (this->next_order()){
@@ -708,7 +709,7 @@ void FileToGraphic::interpret_order()
             this->statistics.BitmapUpdate, Verbose::rdp_orders);
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
-        if (!(bitmap_data.flags & BITMAP_COMPRESSION)) {
+        if (this->play_video_with_corrupted_bitmap && !(bitmap_data.flags & BITMAP_COMPRESSION)) {
             InStream RM18446_stream2(this->stream.get_current(), this->stream.in_remain());
             const uint8_t * RM18446_test_data = RM18446_stream2.in_uint8p(std::min<size_t>(RM18446_stream2.in_remain(), bitmap_data.bitmap_size()));
 

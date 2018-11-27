@@ -70,6 +70,7 @@ ReplayMod::ReplayMod(
   , timeval const & end_read
   , time_t balise_time_frame
   , bool replay_on_loop
+  , bool play_video_with_corrupted_bitmap
   , Verbose debug_capture)
 : InternalMod(front, width, height, font, Theme{}, true)
 , auth_error_message(auth_error_message)
@@ -86,6 +87,7 @@ ReplayMod::ReplayMod(
     begin_read,
     end_read,
     true,
+    play_video_with_corrupted_bitmap,
     debug_capture))
 , end_of_data(false)
 , wait_for_escape(wait_for_escape)
@@ -264,6 +266,7 @@ void ReplayMod::draw_event(time_t now, gdi::GraphicApi & drawable)
                                             *this->in_trans,
                                             begin_read, {0, 0},
                                             true,
+                                            this->play_video_with_corrupted_bitmap,
                                             to_verbose_flags(0)));
 
 

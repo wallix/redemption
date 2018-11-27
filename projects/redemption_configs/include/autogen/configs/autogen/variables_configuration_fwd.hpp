@@ -231,6 +231,7 @@ namespace cfg {
         struct h_height;
         struct h_width;
         struct h_qscale;
+        struct play_video_with_corrupted_bitmap;
     };
 
     struct crypto {

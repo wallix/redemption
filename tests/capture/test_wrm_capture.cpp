@@ -682,7 +682,7 @@ RED_AUTO_TEST_CASE(TestWrmCaptureKbdInput)
     RED_REQUIRE_NE(fd, -1);
     InFileTransport in_wrm_trans(unique_fd{fd});
 
-    FileToGraphic player(in_wrm_trans, {}, {}, false, to_verbose_flags(0));
+    FileToGraphic player(in_wrm_trans, {}, {}, false, false, to_verbose_flags(0));
 
     std::string output;
     KbdInput kbd_input(output);

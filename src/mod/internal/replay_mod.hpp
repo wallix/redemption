@@ -60,6 +60,7 @@ class ReplayMod : public InternalMod
     bool sync_setted;
 
     bool replay_on_loop;
+    bool play_video_with_corrupted_bitmap;
 
 public:
     using Verbose = FileToGraphic::Verbose;
@@ -73,10 +74,11 @@ public:
              , Font const & font
              , bool wait_for_escape
              , bool replay_on_loop
+             , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture)
     : ReplayMod(
         front, replay_path, movie, width, height, auth_error_message,
-        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
+        font, wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, play_video_with_corrupted_bitmap, debug_capture)
     {
     }
 
@@ -92,6 +94,7 @@ public:
              , timeval const & end_read
              , time_t balise_time_frame
              , bool replay_on_loop
+             , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);
 
     ~ReplayMod() override;

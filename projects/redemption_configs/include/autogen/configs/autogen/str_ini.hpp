@@ -791,6 +791,10 @@
 "#_advanced\n"
 "#h_qscale = 7\n\n"
 
+"# Needed to play a video with corrupted Bitmap Update.\n"
+"#_advanced\n"
+"#play_video_with_corrupted_bitmap = 0\n\n"
+
 "[crypto]\n\n"
 
 "#_hidden\n"

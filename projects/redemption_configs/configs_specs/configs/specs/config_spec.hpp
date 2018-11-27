@@ -541,6 +541,10 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
+
+        // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
+        W.sep();
+        W.member(advanced_in_gui, no_sesman, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update."}, set(false));
     });
 
     W.section("crypto", [&]
