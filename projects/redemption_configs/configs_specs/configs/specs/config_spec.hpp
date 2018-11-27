@@ -535,7 +535,7 @@ void config_spec_definition(Writer && W)
 
         // Detect TS_BITMAP_DATA(Uncompressed bitmap data) + (Compressed)bitmapDataStream
         W.sep();
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update.\nNote: Useless with mpv and mplayer."}, set(false));
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "play_video_with_corrupted_bitmap", desc{"Needed to play a video with corrupted Bitmap Update."}, set(false));
     });
 
     W.section("crypto", [&]

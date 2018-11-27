@@ -2815,7 +2815,6 @@ namespace cfg {
         type value = static_cast<type>(0);
     };
     /// Needed to play a video with corrupted Bitmap Update. <br/>
-    /// Note: Useless with mpv and mplayer. <br/>
     /// type: bool <br/>
     /// value{false} <br/>
     struct video::play_video_with_corrupted_bitmap {
