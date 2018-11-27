@@ -1463,7 +1463,7 @@ inline int get_joint_visibility_rect(
         in_wrm_trans.next();
     }
 
-    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+    FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, ini.get<cfg::video::play_video_with_corrupted_bitmap>(), to_verbose_flags(verbose));
 
     int return_code = 0;
 
@@ -1648,7 +1648,7 @@ inline int replay(std::string & infile_path, std::string & input_basename, std::
             }
 
             LOG(LOG_INFO, "player begin_capture = %ld", begin_capture.tv_sec);
-            FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, to_verbose_flags(verbose));
+            FileToGraphic player(in_wrm_trans, begin_capture, end_capture, false, ini.get<cfg::video::play_video_with_corrupted_bitmap>(), to_verbose_flags(verbose));
 
             if (show_file_metadata) {
                 show_metadata(player);

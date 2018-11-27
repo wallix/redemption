@@ -2872,6 +2872,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// Needed to play a video with corrupted Bitmap Update. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct video::play_video_with_corrupted_bitmap {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "video"; }
+        static constexpr char const * name() { return "play_video_with_corrupted_bitmap"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
 
     /// AUTHID_CRYPTO_KEY0 <br/>
     /// type: std::array<unsigned char, 32> <br/>
@@ -4846,6 +4859,7 @@ struct video
 , cfg::video::h_width
 , cfg::video::h_qscale
 , cfg::video::smart_video_cropping
+, cfg::video::play_video_with_corrupted_bitmap
 { static constexpr bool is_section = true; };
 
 struct crypto

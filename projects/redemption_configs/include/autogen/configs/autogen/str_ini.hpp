@@ -796,6 +796,10 @@
 "#   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session\n"
 "#smart_video_cropping = 0\n\n"
 
+"# Needed to play a video with corrupted Bitmap Update.\n"
+"#_advanced\n"
+"#play_video_with_corrupted_bitmap = 0\n\n"
+
 "[crypto]\n\n"
 
 "#_hidden\n"

@@ -233,6 +233,8 @@ public:
 
     std::chrono::microseconds movie_elapsed_client;
 
+    bool play_video_with_corrupted_bitmap;
+
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
     {
@@ -244,7 +246,7 @@ public:
         frame_marker    = 128
     };
 
-    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, Verbose verbose);
+    FileToGraphic(Transport & trans, const timeval begin_capture, const timeval end_capture, bool real_time, bool play_video_with_corrupted_bitmap, Verbose verbose);
 
     ~FileToGraphic();
 
