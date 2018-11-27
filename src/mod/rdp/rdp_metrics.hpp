@@ -34,45 +34,45 @@ class RDPMetrics
 {
     enum FieldIndex : int {
 
-        main_channel_data_from_client,              // number of byte sent from client to main channel.
-        right_click,                                // number of right click.
-        left_click,                                 // number of left click.
-        keys_pressed,                               // number of keys pressed.
-        mouse_displacement,                         // total mouse move cumulated on x and y axis.
-        main_channel_data_from_server,              // number of byte sent from server to main channel.
+        CLIENT_MAIN_CHANNEL_DATA,        // number of byte sent from client to main channel.
+        RIGHT_CLICK,                     // number of right click.
+        LEFT_CLICK,                      // number of left click.
+        KEYS_PRESSED,                    // number of keys pressed.
+        MOUSE_DISPLACEMENT,              // total mouse move cumulated on x and y axis.
+        SERVER_MAIN_CHANNEL_DATA,        // number of byte sent from server to main channel.
 
-        clipboard_channel_data_from_server,         // number of byte sent from server to clipboard channel.
-        nb_paste_text_on_server,                    // number of times a text is pasted on server from client clipboard data.
-        nb_paste_image_on_server,                   // number of times a image is pasted on server from client clipboard data.
-        nb_paste_file_on_server,                    // number of times a file is pasted on server from client clipboard data.
-        total_data_paste_on_server,                 // number of byte sent from server to clipboard channel.
-        nb_copy_text_from_server,                   // number of copy text local copy from server data.
-        nb_copy_image_from_server,                  // number of copy image local copy from server data.
-        nb_copy_file_from_server,                   // number of copy file local copy from server data.
+        SERVER_CLIPBOARD_CHANNEL_DATA,   // number of byte sent from server to clipboard channel.
+        ON_SERVER_TEXT_PASTE_COUNT,      // number of times a text is pasted on server from client clipboard data.
+        ON_SERVER_IMAGE_PASTE_COUNT,     // number of times a image is pasted on server from client clipboard data.
+        ON_SERVER_FILE_PASTE_COUNT,      // number of times a file is pasted on server from client clipboard data.
+        ON_SERVER_TOTAL_DATA_PASTE,      // number of byte sent from server to clipboard channel.
+        SERVER_TEXT_COPY_COUNT,          // number of copy text local copy from server data.
+        SERVER_IMAGE_COPY_COUNT,         // number of copy image local copy from server data.
+        SERVER_FILE_COPY_COUNT,          // number of copy file local copy from server data.
 
-        clipboard_channel_data_from_client,         // number of byte sent from client, to clipboard channel.
-        nb_paste_text_on_client,                    // number of times a text is pasted on client, from server clipboard data.
-        nb_paste_image_on_client,                   // number of times a image is pasted on client, from server clipboard data.
-        nb_paste_file_on_client,                    // number of times a file is pasted on client, from server clipboard data.
-        total_data_paste_on_client,                 // number of byte sent from client to clipboard channel.
-        nb_copy_text_from_client,                   // number of copy text local copy from client data.
-        nb_copy_image_from_client,                  // number of copy image local copy from client data.
-        nb_copy_file_from_client,                   // number of copy file local copy from client data.
+        CLIENT_CLIPBOARD_CHANNEL_DATA,   // number of byte sent from client, to clipboard channel.
+        ON_CLIENT_TEXT_PASTE_COUNT,      // number of times a text is pasted on client, from server clipboard data.
+        ON_CLIENT_IMAGE_PASTE_COUNT,     // number of times a image is pasted on client, from server clipboard data.
+        ON_CLIENT_FILE_PASTE_COUNT,      // number of times a file is pasted on client, from server clipboard data.
+        ON_CLIENT_TOTAL_DATA_PASTE,      // number of byte sent from client to clipboard channel.
+        CLIENT_TEXT_COPY_COUNT,          // number of copy text local copy from client data.
+        CLIENT_IMAGE_COPY_COUNT,         // number of copy image local copy from client data.
+        CLIENT_FILE_COPY_COUNT,          // number of copy file local copy from client data.
 
-        disk_redirection_channel_data_from_client,  // number of byte sent from client to shared disk channel.
-        disk_redirection_channel_data_from_server,  // number of byte sent from server to shared disk channel.
-        nb_files_read,                              // number of files read on shared disk channel.
-        nb_files_or_folders_deleted,                // number of files or folders delete on shared disk channel.
-        nb_files_write,                             // number of files write on shared disk channel.
-        nb_files_rename,                            // number of files rename on shared disk channel.
-        total_files_data_read,                      // number bytes read from files on shared disk channel.
-        total_files_data_write,                     // number of bytes written from files on shared disk channel.
+        CLIENT_DISK_REDIR_CHANNEL_DATA,  // number of byte sent from client to shared disk channel.
+        SERVER_DISK_REDIR_CHANNEL_DATA,  // number of byte sent from server to shared disk channel.
+        FILES_READ_COUNT,                // number of files read on shared disk channel.
+        FILES_OR_FOLDERS_DELEDTE_COUNT,  // number of files or folders delete on shared disk channel.
+        FILES_WRITE_COUNT,               // number of files write on shared disk channel.
+        FILES_RENAME_COUNT,              // number of files rename on shared disk channel.
+        TOTAL_READ_DATA,                 // number bytes read from files on shared disk channel.
+        TOTAL_FILES_WRITTEN_DATA,        // number of bytes written from files on shared disk channel.
 
-        total_rail_amount_data_rcv_from_client,     // number of byte sent from client to remote app channel.
-        total_rail_amount_data_rcv_from_server,     // number of byte sent from server to remote app channel.
+        CLIENT_TOTAL_RAIL_CHANNEL_DATA,  // number of byte sent from client to remote app channel.
+        SERVER_TOTAL_RAIL_CHANNEL_DATA,  // number of byte sent from server to remote app channel.
 
-        total_other_amount_data_rcv_from_client,    // number of byte sent from client to others channels.
-        total_other_amount_data_rcv_from_server,    // number of byte sent from server to others channels.
+        CLIENT_TOTAL_OTHERS_CHANNEL_DATA,// number of byte sent from client to others channels.
+        SERVER_TOTAL_OTHERS_CHANNEL_DATA,// number of byte sent from server to others channels.
 
         COUNT_FIELD
     };
@@ -80,40 +80,40 @@ class RDPMetrics
     const char * rdp_metrics_name(int index) noexcept
     {
         switch (index) {
-            case main_channel_data_from_client:             return "main_channel_data_from_client";
-            case right_click:                               return "right_click";
-            case left_click:                                return "left_click";
-            case keys_pressed:                              return "keys_pressed";
-            case mouse_displacement:                        return "mouse_displacement";
-            case main_channel_data_from_server:             return "main_channel_data_from_server";
-            case clipboard_channel_data_from_server:        return "clipboard_channel_data_from_server";
-            case nb_paste_text_on_server:                   return "nb_paste_text_on_server";
-            case nb_paste_image_on_server:                  return "nb_paste_image_on_server";
-            case nb_paste_file_on_server:                   return "nb_paste_file_on_server";
-            case total_data_paste_on_server:                return "total_data_paste_on_server";
-            case nb_copy_text_from_server:                  return "nb_copy_text_on_server";
-            case nb_copy_image_from_server:                 return "nb_copy_image_on_server";
-            case nb_copy_file_from_server:                  return "nb_copy_file_on_server";
-            case clipboard_channel_data_from_client:        return "clipboard_channel_data_from_client";
-            case nb_paste_text_on_client:                   return "nb_paste_text_on_client";
-            case nb_paste_image_on_client:                  return "nb_paste_image_on_client";
-            case nb_paste_file_on_client:                   return "nb_paste_file_on_client";
-            case total_data_paste_on_client:                return "total_data_paste_on_client";
-            case nb_copy_text_from_client:                  return "nb_copy_text_on_client";
-            case nb_copy_image_from_client:                 return "nb_copy_image_on_client";
-            case nb_copy_file_from_client:                  return "nb_copy_file_on_client";
-            case disk_redirection_channel_data_from_client: return "disk_redirection_channel_data_from_client";
-            case disk_redirection_channel_data_from_server: return "disk_redirection_channel_data_from_server";
-            case nb_files_read:                             return "nb_files_read";
-            case nb_files_or_folders_deleted:               return "nb_files_or_folders_deleted";
-            case nb_files_write:                            return "nb_files_write";
-            case nb_files_rename:                           return "nb_files_rename";
-            case total_files_data_write:                    return "total_files_data_write";
-            case total_files_data_read:                     return "total_files_data_read";
-            case total_rail_amount_data_rcv_from_client:    return "rail_channel_data_from_client";
-            case total_rail_amount_data_rcv_from_server:    return "rail_channel_data_from_server";
-            case total_other_amount_data_rcv_from_client:   return "other_channel_data_from_client";
-            case total_other_amount_data_rcv_from_server:   return "other_channel_data_from_server";
+            case CLIENT_MAIN_CHANNEL_DATA:         return "CLIENT_MAIN_CHANNEL_DATA";
+            case RIGHT_CLICK:                      return "RIGHT_CLICK";
+            case LEFT_CLICK:                       return "LEFT_CLICK";
+            case KEYS_PRESSED:                     return "KEYS_PRESSED";
+            case MOUSE_DISPLACEMENT:               return "MOUSE_DISPLACEMENT";
+            case SERVER_MAIN_CHANNEL_DATA:         return "SERVER_MAIN_CHANNEL_DATA";
+            case SERVER_CLIPBOARD_CHANNEL_DATA:    return "SERVER_CLIPBOARD_CHANNEL_DATA";
+            case ON_SERVER_TEXT_PASTE_COUNT:       return "ON_SERVER_TEXT_PASTE_COUNT";
+            case ON_SERVER_IMAGE_PASTE_COUNT:      return "ON_SERVER_IMAGE_PASTE_COUNT";
+            case ON_SERVER_FILE_PASTE_COUNT:       return "ON_SERVER_FILE_PASTE_COUNT";
+            case ON_SERVER_TOTAL_DATA_PASTE:       return "ON_SERVER_TOTAL_DATA_PASTE";
+            case SERVER_TEXT_COPY_COUNT:           return "nb_copy_text_on_server";
+            case SERVER_IMAGE_COPY_COUNT:          return "nb_copy_image_on_server";
+            case SERVER_FILE_COPY_COUNT:           return "nb_copy_file_on_server";
+            case CLIENT_CLIPBOARD_CHANNEL_DATA:    return "CLIENT_CLIPBOARD_CHANNEL_DATA";
+            case ON_CLIENT_TEXT_PASTE_COUNT:       return "ON_CLIENT_TEXT_PASTE_COUNT";
+            case ON_CLIENT_IMAGE_PASTE_COUNT:      return "ON_CLIENT_IMAGE_PASTE_COUNT";
+            case ON_CLIENT_FILE_PASTE_COUNT:       return "ON_CLIENT_FILE_PASTE_COUNT";
+            case ON_CLIENT_TOTAL_DATA_PASTE:       return "ON_CLIENT_TOTAL_DATA_PASTE";
+            case CLIENT_TEXT_COPY_COUNT:           return "nb_copy_text_on_client";
+            case CLIENT_IMAGE_COPY_COUNT:          return "nb_copy_image_on_client";
+            case CLIENT_FILE_COPY_COUNT:           return "nb_copy_file_on_client";
+            case CLIENT_DISK_REDIR_CHANNEL_DATA:   return "CLIENT_DISK_REDIR_CHANNEL_DATA";
+            case SERVER_DISK_REDIR_CHANNEL_DATA:   return "SERVER_DISK_REDIR_CHANNEL_DATA";
+            case FILES_READ_COUNT:                 return "FILES_READ_COUNT";
+            case FILES_OR_FOLDERS_DELEDTE_COUNT:   return "FILES_OR_FOLDERS_DELEDTE_COUNT";
+            case FILES_WRITE_COUNT:                return "FILES_WRITE_COUNT";
+            case FILES_RENAME_COUNT:               return "FILES_RENAME_COUNT";
+            case TOTAL_FILES_WRITTEN_DATA:         return "TOTAL_FILES_WRITTEN_DATA";
+            case TOTAL_READ_DATA:                  return "TOTAL_READ_DATA";
+            case CLIENT_TOTAL_RAIL_CHANNEL_DATA:   return "rail_channel_data_from_client";
+            case SERVER_TOTAL_RAIL_CHANNEL_DATA:   return "rail_channel_data_from_server";
+            case CLIENT_TOTAL_OTHERS_CHANNEL_DATA: return "other_channel_data_from_client";
+            case SERVER_TOTAL_OTHERS_CHANNEL_DATA: return "other_channel_data_from_server";
             case COUNT_FIELD: break;
         }
 
@@ -144,24 +144,24 @@ public:
     }
 
     void server_other_channel_data(long int len) {
-        this->metrics->add_to_current_data(total_other_amount_data_rcv_from_server, len);
+        this->metrics->add_to_current_data(SERVER_TOTAL_OTHERS_CHANNEL_DATA, len);
     }
 
     void client_other_channel_data(long int len) {
-        this->metrics->add_to_current_data(total_other_amount_data_rcv_from_client, len);
+        this->metrics->add_to_current_data(CLIENT_TOTAL_OTHERS_CHANNEL_DATA, len);
     }
 
     void server_rail_channel_data(long int len) {
-        this->metrics->add_to_current_data(total_rail_amount_data_rcv_from_server, len);
+        this->metrics->add_to_current_data(SERVER_TOTAL_RAIL_CHANNEL_DATA, len);
     }
 
     void client_rail_channel_data(long int len) {
-        this->metrics->add_to_current_data(total_rail_amount_data_rcv_from_client, len);
+        this->metrics->add_to_current_data(CLIENT_TOTAL_RAIL_CHANNEL_DATA, len);
     }
 
     void set_server_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(disk_redirection_channel_data_from_server, length);
+            this->metrics->add_to_current_data(SERVER_DISK_REDIR_CHANNEL_DATA, length);
 
             rdpdr::SharedHeader header;
             header.receive(chunk);
@@ -177,9 +177,9 @@ public:
                         rdpdr::DeviceReadRequest drr;
                         drr.receive(chunk);
                         if (drr.Offset() == 0) {
-                            this->metrics->add_to_current_data(nb_files_read, 1);
+                            this->metrics->add_to_current_data(FILES_READ_COUNT, 1);
                         }
-                        this->metrics->add_to_current_data(total_files_data_read, drr.Length());
+                        this->metrics->add_to_current_data(TOTAL_READ_DATA, drr.Length());
                         break;
                     }
 
@@ -188,9 +188,9 @@ public:
                         rdpdr::DeviceWriteRequest dwr;
                         dwr.receive(chunk);
                         if (dwr.Offset == 0) {
-                            this->metrics->add_to_current_data(nb_files_write, 1);
+                            this->metrics->add_to_current_data(FILES_WRITE_COUNT, 1);
                         }
-                        this->metrics->add_to_current_data(total_files_data_write, dwr.Length);
+                        this->metrics->add_to_current_data(TOTAL_FILES_WRITTEN_DATA, dwr.Length);
                         break;
                     }
 
@@ -201,10 +201,10 @@ public:
 
                         switch (sdsir.FsInformationClass()) {
                             case rdpdr::FileRenameInformation:
-                                this->metrics->add_to_current_data(nb_files_rename, 1);
+                                this->metrics->add_to_current_data(FILES_RENAME_COUNT, 1);
                                 break;
                             case rdpdr::FileDispositionInformation:
-                                this->metrics->add_to_current_data(nb_files_or_folders_deleted, 1);
+                                this->metrics->add_to_current_data(FILES_OR_FOLDERS_DELEDTE_COUNT, 1);
                                 break;
                         }
                         break;
@@ -216,13 +216,13 @@ public:
 
     void set_client_rdpdr_metrics(InStream & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(disk_redirection_channel_data_from_client, length);
+            this->metrics->add_to_current_data(CLIENT_DISK_REDIR_CHANNEL_DATA, length);
         }
     }
 
     void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(clipboard_channel_data_from_server, length);
+            this->metrics->add_to_current_data(SERVER_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -230,21 +230,21 @@ public:
                 case RDPECLIP::CB_FORMAT_LIST:
                     this->format_list_process(
                         chunk, header,
-                        nb_copy_text_from_server,
-                        nb_copy_image_from_server,
-                        nb_copy_file_from_server);
+                        SERVER_TEXT_COPY_COUNT,
+                        SERVER_IMAGE_COPY_COUNT,
+                        SERVER_FILE_COPY_COUNT);
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                     this->process_format_data_request(
                         chunk,
-                        nb_paste_text_on_server,
-                        nb_paste_image_on_server,
-                        nb_paste_file_on_server);
+                        ON_SERVER_TEXT_PASTE_COUNT,
+                        ON_SERVER_IMAGE_PASTE_COUNT,
+                        ON_SERVER_FILE_PASTE_COUNT);
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    this->process_format_data_response(header, total_data_paste_on_client);
+                    this->process_format_data_response(header, ON_CLIENT_TOTAL_DATA_PASTE);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
@@ -252,7 +252,7 @@ public:
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                    this->process_filecontents_response(chunk, total_data_paste_on_client);
+                    this->process_filecontents_response(chunk, ON_CLIENT_TOTAL_DATA_PASTE);
                     break;
             }
         }
@@ -260,7 +260,7 @@ public:
 
     void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-            this->metrics->add_to_current_data(clipboard_channel_data_from_client, length);
+            this->metrics->add_to_current_data(CLIENT_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
             header.recv(chunk);
 
@@ -285,9 +285,9 @@ public:
                     if (this->cliprdr_init_format_list_done) {
                         this->format_list_process(
                             chunk, header,
-                            nb_copy_text_from_client,
-                            nb_copy_image_from_client,
-                            nb_copy_file_from_client);
+                            CLIENT_TEXT_COPY_COUNT,
+                            CLIENT_IMAGE_COPY_COUNT,
+                            CLIENT_FILE_COPY_COUNT);
                     } else {
                         this->cliprdr_init_format_list_done = true;
                     }
@@ -296,13 +296,13 @@ public:
                 case RDPECLIP::CB_FORMAT_DATA_REQUEST:
                     this->process_format_data_request(
                         chunk,
-                        nb_paste_text_on_client,
-                        nb_paste_image_on_client,
-                        nb_paste_file_on_client);
+                        ON_CLIENT_TEXT_PASTE_COUNT,
+                        ON_CLIENT_IMAGE_PASTE_COUNT,
+                        ON_CLIENT_FILE_PASTE_COUNT);
                     break;
 
                 case RDPECLIP::CB_FORMAT_DATA_RESPONSE:
-                    this->process_format_data_response(header, total_data_paste_on_server);
+                    this->process_format_data_response(header, ON_SERVER_TOTAL_DATA_PASTE);
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_REQUEST:
@@ -310,14 +310,14 @@ public:
                     break;
 
                 case RDPECLIP::CB_FILECONTENTS_RESPONSE:
-                    this->process_filecontents_response(chunk, total_data_paste_on_server);
+                    this->process_filecontents_response(chunk, ON_SERVER_TOTAL_DATA_PASTE);
                     break;
             }
         }
     }
 
     void server_main_channel_data(long int len) {
-        this->metrics->add_to_current_data(main_channel_data_from_server, len);
+        this->metrics->add_to_current_data(SERVER_MAIN_CHANNEL_DATA, len);
     }
 
     void mouse_move(const int x, const int y) {
@@ -330,26 +330,26 @@ public:
             if (y_shift < 0) {
                 y_shift *= -1;
             }
-            this->metrics->add_to_current_data(mouse_displacement, x_shift + y_shift);
+            this->metrics->add_to_current_data(MOUSE_DISPLACEMENT, x_shift + y_shift);
         }
         this->last_x = x;
         this->last_y = y;
     }
 
     void key_pressed() {
-        this->metrics->add_to_current_data(keys_pressed, 1);
+        this->metrics->add_to_current_data(KEYS_PRESSED, 1);
     }
 
-    void right_click_pressed() {
-        this->metrics->add_to_current_data(right_click, 1);
+    void RIGHT_CLICK_pressed() {
+        this->metrics->add_to_current_data(RIGHT_CLICK, 1);
     }
 
-    void left_click_pressed() {
-        this->metrics->add_to_current_data(left_click, 1);
+    void LEFT_CLICK_pressed() {
+        this->metrics->add_to_current_data(LEFT_CLICK, 1);
     }
 
     void client_main_channel_data(long int len) {
-        this->metrics->add_to_current_data(main_channel_data_from_client, len);
+        this->metrics->add_to_current_data(CLIENT_MAIN_CHANNEL_DATA, len);
     }
 
 private:

@@ -738,7 +738,6 @@ private:
             if (in_header.msgFlags() & RDPECLIP::CB_RESPONSE_OK) {
 
                 std::string type;
-                uint32_t id_type = 0;
                 if (is_from_remote_session) {
                     type = (data_to_dump.empty() ?
                         "CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION" :

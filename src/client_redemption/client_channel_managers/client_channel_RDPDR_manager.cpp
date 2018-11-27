@@ -59,7 +59,7 @@
 //       |                                                             |
 //       | <------------Client Core Capability Response----------------+
 //       |                                                             |
-//       | <---------Client Dev ice List Announce Request--------------+
+//       | <----------Client Device List Announce Request--------------+
 //       |                                                             |
 //       +--------Server Device Announce Response (device #1)--------> |
 //       |                                                             |
@@ -83,7 +83,7 @@
 // +-----+-----+                                                 +-----+-----+
 //       |                                                             |
 //       |                                                             |
-//       | <------------Client Drive Divece List Announce--------------+
+//       | <------------Client Drive Device List Announce--------------+
 //       |                                                             |
 //       +---------------Server Device Announce Response-------------> |
 //       |                                                             |
