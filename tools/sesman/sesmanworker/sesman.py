@@ -18,7 +18,7 @@ import traceback
 import json
 from logger import Logger
 
-from cutmessage import cut_message
+from .cutmessage import cut_message
 from struct     import unpack
 from struct     import pack
 from select     import select
@@ -31,16 +31,15 @@ from datetime   import datetime
 import socket
 from socket     import gethostname
 
-from sesmanconf import TR, SESMANCONF
-import sesmanconnpolicyspec
-import engine
+from .sesmanconf import TR, SESMANCONF
+from . import engine, sesmanconnpolicyspec
 
-from engine import LOCAL_TRACE_PATH_RDP
-from engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
+from .engine import LOCAL_TRACE_PATH_RDP
+from .engine import APPROVAL_ACCEPTED, APPROVAL_REJECTED, \
     APPROVAL_PENDING, APPROVAL_NONE
-from engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
-from engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
-from engine import TargetContext
+from .engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
+from .engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
+from .engine import TargetContext
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
@@ -337,8 +336,7 @@ class Sesman():
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
         if DEBUG:
-            import pprint
-            Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
+            Logger().info(u'=> send_data (update) = %s' % data.keys())
 
 
         #if current language changed, send translations
@@ -362,8 +360,8 @@ class Sesman():
             _list.append(_pair)
 
         if DEBUG:
-           import pprint
-           Logger().info(u'send_data (on the wire)=%s' % (pprint.pformat(_list)))
+           Logger().info(u'send_data (on the wire) length = %s' %
+                         len(_list))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -421,12 +419,15 @@ class Sesman():
             except Exception as e:
                 if DEBUG:
                     import traceback
-                    Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
+                    Logger().info(
+                        u"Error while parsing received data %s" %
+                        traceback.format_exc(e)
+                    )
                 _status = False
 
             if DEBUG:
-                import pprint
-                Logger().info("received_data (on the wire) = %s" % (pprint.pformat(_data)))
+                Logger().info("received_data (on the wire) (%s) = %s" %
+                              (len(_data), _data.keys()))
 
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
