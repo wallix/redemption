@@ -60,6 +60,7 @@ namespace cfg {
 
     struct session_log {
         struct enable_session_log;
+        struct enable_arcsight_log;
         struct log_path;
         struct keyboard_input_masking_level;
         struct hide_non_printable_kbd_input;
@@ -233,6 +234,7 @@ namespace cfg {
         struct h_width;
         struct h_qscale;
         struct smart_video_cropping;
+        struct play_video_with_corrupted_bitmap;
     };
 
     struct crypto {

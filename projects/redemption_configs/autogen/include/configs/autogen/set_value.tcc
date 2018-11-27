@@ -310,6 +310,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "enable_arcsight_log")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::session_log::enable_arcsight_log&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "log_path")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1548,6 +1556,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::video::smart_video_cropping&>(this->variables).value,
                 ::configs::spec_type<SmartVideoCropping>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "play_video_with_corrupted_bitmap")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::video::play_video_with_corrupted_bitmap&>(this->variables).value,
+                ::configs::spec_type<bool>{},
                 av
             );
         }

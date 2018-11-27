@@ -49,6 +49,7 @@ class ReplayMod : public mod_api
     bool sync_setted;
 
     bool replay_on_loop;
+    bool play_video_with_corrupted_bitmap;
     SessionReactor& session_reactor;
     SessionReactor::GraphicTimerPtr timer;
 
@@ -63,10 +64,12 @@ public:
              , std::string & auth_error_message
              , bool wait_for_escape
              , bool replay_on_loop
+             , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture)
     : ReplayMod(
         session_reactor, front, replay_path, width, height, auth_error_message,
-        wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop, debug_capture)
+        wait_for_escape, timeval{0, 0}, timeval{0, 0}, 0, replay_on_loop,
+        play_video_with_corrupted_bitmap, debug_capture)
     {
     }
 
@@ -81,6 +84,7 @@ public:
              , timeval const & end_read
              , time_t balise_time_frame
              , bool replay_on_loop
+             , bool play_video_with_corrupted_bitmap
              , Verbose debug_capture);
 
     ~ReplayMod() override;

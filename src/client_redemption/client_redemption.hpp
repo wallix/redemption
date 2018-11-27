@@ -838,6 +838,7 @@ public:
               , end_read
               , ClientRedemptionConfig::BALISED_FRAME
               , false
+              , false
               //, FileToGraphic::Verbose::rdp_orders
               , to_verbose_flags(0)
             );

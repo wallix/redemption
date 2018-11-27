@@ -136,6 +136,8 @@
 
 "enable_session_log = boolean(default=True)\n\n"
 
+"enable_arcsight_log = boolean(default=False)\n\n"
+
 "#_advanced\n"
 "log_path = string(default='')\n\n"
 
@@ -804,6 +806,11 @@
 "#   1: When replaying the session video, the content of the RDP viewer is restricted to the greatest area covered by the application during session\n"
 "#   2: When replaying the session video, the content of the RDP viewer is fully covered by the size of the greatest application window during session\n"
 "smart_video_cropping = option(0, 1, 2, default=0)\n\n"
+
+"# Needed to play a video with corrupted Bitmap Update.\n"
+"# Note: Useless with mpv and mplayer.\n"
+"#_advanced\n"
+"play_video_with_corrupted_bitmap = boolean(default=False)\n\n"
 
 "[crypto]\n\n"
 

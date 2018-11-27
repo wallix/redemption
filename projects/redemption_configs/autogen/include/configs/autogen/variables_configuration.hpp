@@ -673,6 +673,18 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{true};
     };
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct session_log::enable_arcsight_log {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "session_log";
+        static constexpr char const * name = "enable_arcsight_log";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
     /// value{} <br/>
@@ -2826,6 +2838,20 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = static_cast<type>(0);
     };
+    /// Needed to play a video with corrupted Bitmap Update. <br/>
+    /// Note: Useless with mpv and mplayer. <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct video::play_video_with_corrupted_bitmap {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "video";
+        static constexpr char const * name = "play_video_with_corrupted_bitmap";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
+    };
 
     /// type: std::array<unsigned char, 32> <br/>
     /// sesman -> proxy <br/>
@@ -4527,6 +4553,7 @@ struct globals
 struct session_log
 : cfg::session_log::log_path
 , cfg::session_log::enable_session_log
+, cfg::session_log::enable_arcsight_log
 , cfg::session_log::keyboard_input_masking_level
 , cfg::session_log::hide_non_printable_kbd_input
 { static constexpr bool is_section = true; };
@@ -4699,6 +4726,7 @@ struct video
 , cfg::video::wrm_compression_algorithm
 , cfg::video::bogus_vlc_frame_rate
 , cfg::video::smart_video_cropping
+, cfg::video::play_video_with_corrupted_bitmap
 { static constexpr bool is_section = true; };
 
 struct crypto
