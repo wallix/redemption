@@ -340,11 +340,11 @@ public:
         this->metrics->add_to_current_data(KEYS_PRESSED, 1);
     }
 
-    void RIGHT_CLICK_pressed() {
+    void right_click_pressed() {
         this->metrics->add_to_current_data(RIGHT_CLICK, 1);
     }
 
-    void LEFT_CLICK_pressed() {
+    void left_click_pressed() {
         this->metrics->add_to_current_data(LEFT_CLICK, 1);
     }
 

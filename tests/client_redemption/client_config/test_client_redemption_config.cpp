@@ -115,20 +115,20 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.server_use_long_format_names, true);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
-    if (config.rDPClipboardConfig.formats.size() ==  4) {
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].name, RDPECLIP::FILEGROUPDESCRIPTORW.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].name, RDPECLIP::FILECONTENTS.data());
+    RED_REQUIRE_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].name, RDPECLIP::FILEGROUPDESCRIPTORW.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].ID, RDPECLIP::CF_TEXT);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].name, "");
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].name, RDPECLIP::FILECONTENTS.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].ID, RDPECLIP::CF_METAFILEPICT);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].name, "");
-    }
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].ID, RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].name, "");
+
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].ID, RDPECLIP::CF_METAFILEPICT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].name, "");
+
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
 
     // RED_CHECK_EQUAL(config.
@@ -288,20 +288,20 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.rDPClipboardConfig.server_use_long_format_names, true);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.cCapabilitiesSets, 1);
     RED_CHECK_EQUAL(config.rDPClipboardConfig.generalFlags, RDPECLIP::CB_STREAM_FILECLIP_ENABLED | RDPECLIP::CB_FILECLIP_NO_FILE_PATHS);
-    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
-    if (config.rDPClipboardConfig.formats.size() ==  4) {
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].name, RDPECLIP::FILEGROUPDESCRIPTORW.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].name, RDPECLIP::FILECONTENTS.data());
+    RED_REQUIRE_EQUAL(config.rDPClipboardConfig.formats.size(), 4);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[0].name, RDPECLIP::FILEGROUPDESCRIPTORW.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].ID, RDPECLIP::CF_TEXT);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].name, "");
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].ID, ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[1].name, RDPECLIP::FILECONTENTS.data());
 
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].ID, RDPECLIP::CF_METAFILEPICT);
-        RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].name, "");
-    }
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].ID, RDPECLIP::CF_TEXT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[2].name, "");
+
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].ID, RDPECLIP::CF_METAFILEPICT);
+    RED_CHECK_EQUAL(config.rDPClipboardConfig.formats[3].name, "");
+
     RED_CHECK_EQUAL(config.rDPClipboardConfig.path, "/DATA/clipboard_temp");
 
     // RED_CHECK_EQUAL(config.
