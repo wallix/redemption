@@ -83,8 +83,6 @@ private:
     NullAuthentifier  authentifier;
     NullReportMessage reportMessage;
 
-
-
 public:
     ClientCallback _callback;
     ClientChannelMod channel_mod;
@@ -156,59 +154,70 @@ public:
 
     struct WRMGraphicStat {
 
-        int amount_RDPDestBlt = 0;
-        long pixels_RDPDestBlt = 0;
+        enum : uint8_t {
+            RDPDestBlt,
+            RDPMultiDstBlt,
+            RDPScrBlt,
+            RDPMultiScrBlt,
+            RDPMemBlt,
+            RDPBitmapData,
+            RDPPatBlt,
+            RDPMultiPatBlt,
+            RDPOpaqueRect,
+            RDPMultiOpaqueRect,
+            RDPLineTo,
+            RDPPolygonSC,
+            RDPPolygonCB,
+            RDPPolyline,
+            RDPEllipseSC,
+            RDPEllipseCB,
+            RDPMem3Blt,
+            RDPGlyphIndex,
+            COUNT_FIELD
+        };
 
-        int amount_RDPMultiDstBlt = 0;
-        long pixels_RDPMultiDstBlt = 0;
+        std::string get_field_name(uint8_t index) {
 
-        int amount_RDPScrBlt = 0;
-        long pixels_RDPScrBlt = 0;
+            switch (index) {
+                case RDPDestBlt:         return "RDPDestBlt         ";
+                case RDPMultiDstBlt:     return "RDPMultiDstBlt     ";
+                case RDPScrBlt:          return "RDPScrBlt          ";
+                case RDPMultiScrBlt:     return "RDPMultiScrBlt     ";
+                case RDPMemBlt:          return "RDPMemBlt          ";
+                case RDPBitmapData:      return "RDPBitmapData      ";
+                case RDPPatBlt:          return "RDPPatBlt          ";
+                case RDPMultiPatBlt:     return "RDPMultiPatBlt     ";
+                case RDPOpaqueRect:      return "RDPOpaqueRect      ";
+                case RDPMultiOpaqueRect: return "RDPMultiOpaqueRect ";
+                case RDPLineTo:          return "RDPLineTo          ";
+                case RDPPolygonSC:       return "RDPPolygonSC       ";
+                case RDPPolygonCB:       return "RDPPolygonCB       ";
+                case RDPPolyline:        return "RDPPolyline        ";
+                case RDPEllipseSC:       return "RDPEllipseSC       ";
+                case RDPEllipseCB:       return "RDPEllipseCB       ";
+                case RDPMem3Blt:         return "RDPMem3Blt         ";
+                case RDPGlyphIndex:      return "RDPGlyphIndex      ";
+                default: return "unknow wrm order index";
+            }
+        }
 
-        int amount_RDPMultiScrBlt = 0;
-        long pixels_RDPMultiScrBlt = 0;
+        struct WRMOrderStat {
+            unsigned int count = 0;
+            unsigned long pixels = 0;
+        } wrmOrderStat[COUNT_FIELD];
 
-        int amount_RDPMemBlt = 0;
-        long pixels_RDPMemBlt = 0;
+        void add_wrm_order_stat(uint8_t index, unsigned long pixels) {
+            this->wrmOrderStat[index].count++;
+            this->wrmOrderStat[index].pixels += pixels;
+        }
 
-        int amount_RDPBitmapData = 0;
-        long pixels_RDPBitmapData = 0;
+        unsigned int get_count(uint8_t index) {
+            return this->wrmOrderStat[index].count;
+        }
 
-        int amount_RDPPatBlt= 0;
-        long pixels_RDPPatBlt= 0;
-
-        int amount_RDPMultiPatBlt = 0;
-        long pixels_RDPMultiPatBlt = 0;
-
-        int amount_RDPOpaqueRect = 0;
-        long pixels_RDPOpaqueRect = 0;
-
-        int amount_RDPMultiOpaqueRect = 0;
-        long pixels_RDPMultiOpaqueRect = 0;
-
-        int amount_RDPLineTo = 0;
-        long pixels_RDPLineTo = 0;
-
-        int amount_RDPPolygonSC = 0;
-        long pixels_RDPPolygonSC = 0;
-
-        int amount_RDPPolygonCB = 0;
-        long pixels_RDPPolygonCB = 0;
-
-        int amount_RDPPolyline = 0;
-        long pixels_RDPPolyline = 0;
-
-        int amount_RDPEllipseSC = 0;
-        long pixels_RDPEllipseSC = 0;
-
-        int amount_RDPEllipseCB = 0;
-        long pixels_RDPEllipseCB = 0;
-
-        int amount_RDPMem3Blt= 0;
-        long pixels_RDPMem3Blt= 0;
-
-        int amount_RDPGlyphIndex = 0;
-        long pixels_RDPGlyphIndex = 0;
+        unsigned long get_pixels(uint8_t index) {
+            return this->wrmOrderStat[index].pixels;
+        }
 
     } wrmGraphicStat;
 
@@ -393,14 +402,15 @@ public:
         strftime (buffer,80,"%F_%r",timeinfo);
         std::string date(buffer);
 
-        std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
-
-        LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
-
         if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
             if (this->impl_graphic) {
                 this->impl_graphic->set_ErrorMsg(error);
             }
+            std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
+            LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
+        } else {
+            LOG(LOG_INFO, "Replay closed.", this->config.target_IP.c_str());
+
         }
         this->config.set_icon_movie_data();
         if (this->impl_graphic) {
@@ -646,10 +656,10 @@ public:
 
                 if (this->config.modRDPParamsData.enable_shared_virtual_disk && this->impl_io_disk) {
                     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
-                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                                    , CHANID_RDPDR
-                                                    };
+                                                      , CHANID_RDPDR
+                                                      };
                     this->cl.push_back(channel_rdpdr);
 
                     this->clientChannelRDPDRManager.set_share_dir(this->config.SHARE_DIR);
@@ -658,11 +668,11 @@ public:
 
             if (this->config.enable_shared_clipboard && this->impl_clipboard) {
                 CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
-                                                    , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                    , CHANID_CLIPDRD
-                                                    };
+                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                       GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                       GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                     , CHANID_CLIPDRD
+                                                     };
 //                 this->_to_client_sender._channel = channel_cliprdr;
                 this->cl.push_back(channel_cliprdr);
             }
@@ -884,7 +894,6 @@ public:
         this->config.is_replaying = true;
         this->config.is_loading_replay_mod = true;
 
-        //this->setScreenDimension();
         if (this->load_replay_mod({0, 0}, {0, 0})) {
 
             this->config.is_loading_replay_mod = false;
@@ -893,46 +902,17 @@ public:
                 this->impl_graphic->create_replay_screen();
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
                     this->impl_graphic->pre_load_movie(movie_path);
-                    LOG(LOG_INFO, "amount_RDPDestBlt = %d pixels_RDPDestBlt = %ld", this->wrmGraphicStat.amount_RDPDestBlt, this->wrmGraphicStat.pixels_RDPDestBlt);
-                        /*amount_RDPMultiDstBlt = %d pixels_RDPMultiDstBlt = %ld\n*/
-                    LOG(LOG_INFO, "amount_RDPScrBlt = %d pixels_RDPScrBlt = %ld", this->wrmGraphicStat.amount_RDPScrBlt, this->wrmGraphicStat.pixels_RDPScrBlt);/* amount_RDPMultiScrBlt = %d pixels_RDPMultiScrBlt = %ld\n*/
-                    LOG(LOG_INFO, "amount_RDPMemBlt = %d pixels_RDPMemBlt = %ld", this->wrmGraphicStat.amount_RDPMemBlt, this->wrmGraphicStat.pixels_RDPMemBlt);
-                    LOG(LOG_INFO, "amount_RDPBitmapData = %d pixels_RDPBitmapData = %ld ", this->wrmGraphicStat.amount_RDPBitmapData, this->wrmGraphicStat.pixels_RDPBitmapData);
-                    LOG(LOG_INFO, "amount_RDPPatBlt= %d pixels_RDPPatBlt= %ld", this->wrmGraphicStat.amount_RDPPatBlt, this->wrmGraphicStat.pixels_RDPPatBlt);
-                    //LOG(LOG_INFO, "amount_RDPMultiPatBlt = %d pixels_RDPMultiPatBlt = %ld");
-                    LOG(LOG_INFO, "amount_RDPOpaqueRect = %d pixels_RDPOpaqueRect = %ld", this->wrmGraphicStat.amount_RDPOpaqueRect, this->wrmGraphicStat.pixels_RDPOpaqueRect);
-                    /*\n amount_RDPMultiOpaqueRect = %d pixels_RDPMultiOpaqueRect = %ld*/
-                    LOG(LOG_INFO, "amount_RDPLineTo = %d pixels_RDPLineTo = %ld ", this->wrmGraphicStat.amount_RDPLineTo, this->wrmGraphicStat.pixels_RDPLineTo);
-                    /*amount_RDPPolygonSC = %d pixels_RDPPolygonSC = %ld\n amount_RDPPolygonCB = %d pixels_RDPPolygonCB = %ld\n amount_RDPPolyline = %d pixels_RDPPolyline = %ld\n amount_RDPEllipseSC = %d pixels_RDPEllipseSC = %ld\n amount_RDPEllipseCB = %d pixels_RDPEllipseCB = %ld\n*/
-                    LOG(LOG_INFO, "amount_RDPMem3Blt= %d pixels_RDPMem3Blt= %ld", this->wrmGraphicStat.amount_RDPMem3Blt, this->wrmGraphicStat.pixels_RDPMem3Blt);
-                    LOG(LOG_INFO, "amount_RDPGlyphIndex = %d pixels_RDPGlyphIndex = %ld", this->wrmGraphicStat.amount_RDPGlyphIndex, this->wrmGraphicStat.pixels_RDPGlyphIndex);
+                    for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
+                        unsigned int to_count = this->wrmGraphicStat.get_count(i);
+                        std::string spacer("       ");
 
-//              this->wrmGraphicStat.amount_RDPMultiDstBlt,
-//              this->wrmGraphicStat.pixels_RDPMultiDstBlt,
+                        while (to_count >=  10) {
+                            to_count /=  10;
+                            spacer = spacer.substr(0, spacer.length()-1);
+                        }
 
-//              this->wrmGraphicStat.amount_RDPMultiScrBlt,
-//              this->wrmGraphicStat.pixels_RDPMultiScrBlt,
-
-//              this->wrmGraphicStat.amount_RDPMultiPatBlt,
-//              this->wrmGraphicStat.pixels_RDPMultiPatBlt,
-
-//              this->wrmGraphicStat.amount_RDPMultiOpaqueRect,
-//              this->wrmGraphicStat.pixels_RDPMultiOpaqueRect,
-
-//              this->wrmGraphicStat.amount_RDPPolygonSC,
-//              this->wrmGraphicStat.pixels_RDPPolygonSC,
-//
-//              this->wrmGraphicStat.amount_RDPPolygonCB,
-//              this->wrmGraphicStat.pixels_RDPPolygonCB,
-//
-//              this->wrmGraphicStat.amount_RDPPolyline,
-//              this->wrmGraphicStat.pixels_RDPPolyline,
-//
-//              this->wrmGraphicStat.amount_RDPEllipseSC,
-//              this->wrmGraphicStat.pixels_RDPEllipseSC,
-//
-//              this->wrmGraphicStat.amount_RDPEllipseCB,
-//              this->wrmGraphicStat.pixels_RDPEllipseCB,
+                        LOG(LOG_INFO, "%s= %d %spixels = %ld", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
+                    }
                 }
                 this->impl_graphic->show_screen();
             }
@@ -1119,28 +1099,26 @@ public:
 
     void callback(bool is_timeout) override {
 
-//         if (this->mod != nullptr) {
-            try {
-                auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
-                if (is_timeout) {
-                    this->session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
-                } else {
-                    auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
-                        return true /*this->socket->get_fd() == fd*/;
-                    };
-                    this->session_reactor.execute_events(is_mod_fd);
-                    this->session_reactor.execute_graphics(is_mod_fd, get_gd());
-                }
-            } catch (const Error & e) {
-                if (this->impl_graphic) {
-                    this->impl_graphic->dropScreen();
-                }
-                const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
-                LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
-                std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
-                this->disconnect(labelErrorMsg, true);
+        try {
+            auto get_gd = [this]() -> gdi::GraphicApi& { return *this; };
+            if (is_timeout) {
+                this->session_reactor.execute_timers(SessionReactor::EnableGraphics{true}, get_gd);
+            } else {
+                auto is_mod_fd = [/*this*/](int /*fd*/, auto& /*e*/){
+                    return true /*this->socket->get_fd() == fd*/;
+                };
+                this->session_reactor.execute_events(is_mod_fd);
+                this->session_reactor.execute_graphics(is_mod_fd, get_gd());
             }
-//         }
+        } catch (const Error & e) {
+            if (this->impl_graphic) {
+                this->impl_graphic->dropScreen();
+            }
+            const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
+            LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
+            std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
+            this->disconnect(labelErrorMsg, true);
+        }
     }
 
 
@@ -1155,36 +1133,31 @@ public:
     void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPPatBlt++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.pixels_RDPPatBlt+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPatBlt, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
     }
-
 
     void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPOpaqueRect++;
                 const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-                this->wrmGraphicStat.pixels_RDPOpaqueRect+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
     }
 
-
     void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPBitmapData++;
                 Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
-                                    (bitmap_data.dest_right - bitmap_data.dest_left + 1),
-                                    (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
+                             (bitmap_data.dest_right - bitmap_data.dest_left + 1),
+                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
                 const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.pixels_RDPBitmapData+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
             }
             this->draw_impl(no_log{}, bitmap_data, bmp);
         }
@@ -1192,50 +1165,42 @@ public:
         this->record_connection_nego_times();
     }
 
-
     void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPLineTo++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.pixels_RDPLineTo+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPLineTo, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, color_ctx);
         }
     }
 
-
     void draw(const RDPScrBlt & cmd, Rect clip) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPScrBlt++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.pixels_RDPScrBlt+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPScrBlt, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip);
         }
     }
 
-
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPMemBlt++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.pixels_RDPMemBlt+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMemBlt, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, bitmap);
         }
         this->record_connection_nego_times();
     }
 
-
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPMem3Blt++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.pixels_RDPMem3Blt+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMem3Blt, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
         }
@@ -1247,9 +1212,8 @@ public:
     void draw(const RDPDestBlt & cmd, Rect clip) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPDestBlt++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.pixels_RDPDestBlt += rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPDestBlt, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip);
         }
@@ -1257,36 +1221,36 @@ public:
 
     void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPMultiDstBlt++;
+//             this->wrmGraphicStat.RDPMultiDstBlt++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPMultiDstBlt+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPMultiDstBlt+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip);
     }
 
     void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPMultiOpaqueRect++;
+//             this->wrmGraphicStat.RDPMultiOpaqueRect++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPMultiOpaqueRect+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPMultiOpaqueRect+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPMultiPatBlt++;
+//             this->wrmGraphicStat.RDPMultiPatBlt++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPMultiPatBlt+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPMultiPatBlt+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPMultiScrBlt++;
+//             this->wrmGraphicStat.RDPMultiScrBlt++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPMultiScrBlt+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPMultiScrBlt+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip);
     }
@@ -1294,9 +1258,8 @@ public:
     void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         if (this->impl_graphic) {
             if (this->impl_graphic->is_pre_loading) {
-                this->wrmGraphicStat.amount_RDPGlyphIndex++;
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.pixels_RDPGlyphIndex+= rect.cx * rect.cy;
+                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPGlyphIndex, rect.cx * rect.cy);
             }
             this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
         }
@@ -1304,45 +1267,45 @@ public:
 
     void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPPolygonSC++;
+//             this->wrmGraphicStat.RDPPolygonSC++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPPolygonSC+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPPolygonSC+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPPolygonCB++;
+//             this->wrmGraphicStat.RDPPolygonCB++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPPolygonCB+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPPolygonCB+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPPolyline++;
+//             this->wrmGraphicStat.RDPPolyline++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPPolyline+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPPolyline+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPEllipseSC++;
+//             this->wrmGraphicStat.RDPEllipseSC++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPEllipseSC+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPEllipseSC+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
     void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
 //         if (this->impl_graphic->is_pre_loading) {
-//             this->wrmGraphicStat.amount_RDPEllipseCB++;
+//             this->wrmGraphicStat.RDPEllipseCB++;
 //             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.pixels_RDPEllipseCB+= rect.cx * rect.cy;
+//             this->wrmGraphicStat.RDPEllipseCB+= rect.cx * rect.cy;
 //         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
@@ -1430,9 +1393,9 @@ private:
     void draw_impl(no_log /*unused*/, RDP::FrameMarker const& order)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
-            //order.log(LOG_INFO);
-            LOG(LOG_INFO, "========================================\n");
+//             if constexpr (with_log) { /*NOLINT*/
+                order.log(LOG_INFO);
+//             }
         }
 
         if (this->config.is_recording && !this->config.is_replaying) {
@@ -1446,11 +1409,9 @@ private:
     void draw_impl(WithLog with_log, Order& order, T& clip_or_bmp, Ts&... others)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip_or_bmp);
             }
-            LOG(LOG_INFO, "========================================\n");
         }
 
         if (this->impl_graphic) {
@@ -1468,11 +1429,9 @@ private:
     void draw_impl(WithLog with_log, Order& order, Rect clip, gdi::ColorCtx color_ctx, Ts&... others)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
             }
-            LOG(LOG_INFO, "========================================\n");
         }
 
         if (this->impl_graphic) {
@@ -1490,13 +1449,11 @@ private:
     void draw_unimplemented(WithLog with_log, Order& order, Rect clip, Ts&... /*others*/)
     {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {
-            LOG(LOG_INFO, "--------- FRONT ------------------------");
             (void)clip;
             (void)order;
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
             }
-            LOG(LOG_INFO, "========================================\n");
         }
     }
 };

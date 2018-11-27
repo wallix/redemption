@@ -47,8 +47,6 @@ int main(int argc, char** argv)
     QtInputSocket socket_api_obj(reactor, qwidget_parent);
     QtClientRDPKeyLayout keylayout_obj;
 
-
-
     ClientOutputGraphicAPI * graphic_qt    = &graphic_control_qt_obj;
     ClientIOClipboardAPI   * clipboard_api = &clipboard_api_obj;
     ClientOutputSoundAPI   * sound_api     = &sound_api_obj;
@@ -56,16 +54,6 @@ int main(int argc, char** argv)
     ClientKeyLayoutAPI     * keylayout_api = &keylayout_obj;
     ClientIODiskAPI        * ioDisk_api    = &ioDisk_api_obj;
 
-    //RDPVerbose::rdpdr_dump;           //to_verbose_flags(0x0);
-    //;           //RDPVerbose::graphics;
-    //        to_verbose_flags(0x0);
-    //RDPVerbose::graphics;
-    //(RDPVerbose::rdpdr_dump | RDPVerbose::rdpdr);
-    //
-    //RDPVerbose::remoteapp | RDPVerbose::rdpdr;
-    //to_verbose_flags(0xffffffff);
-    //to_verbose_flags(0x0);
-    // | RDPVerbose::rdpdr_dump;
     RDPVerbose verbose = to_verbose_flags(0x0);             //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClientRedemption client_qt( reactor, const_cast<char const**>(argv), argc, verbose
