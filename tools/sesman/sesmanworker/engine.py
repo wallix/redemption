@@ -339,10 +339,7 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(
-                e.challenge,
-                self.challenge.token if self.challenge else None
-            )
+            self.challenge = wchallenge_to_challenge(e.challenge)
         except MultiFactorAuthentication as mfa:
             self.challenge = mfa_to_challenge(mfa)
             if self.challenge and self.challenge.recall:
@@ -377,10 +374,7 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(
-                e.challenge,
-                token
-            )
+            self.challenge = wchallenge_to_challenge(e.challenge)
         except MultiFactorAuthentication as mfa:
             self.challenge = mfa_to_challenge(mfa)
             if self.challenge and self.challenge.recall:
@@ -432,10 +426,7 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(
-                e.challenge,
-                self.challenge.token if self.challenge else None
-            )
+            self.challenge = wchallenge_to_challenge(e.challenge)
         except MultiFactorAuthentication as mfa:
             self.challenge = mfa_to_challenge(mfa)
             if self.challenge and self.challenge.recall:
@@ -467,10 +458,7 @@ class Engine(object):
                 self._post_authentication()
                 return True
         except AuthenticationChallenged as e:
-            self.challenge = wchallenge_to_challenge(
-                e.challenge,
-                self.challenge.token if self.challenge else None
-            )
+            self.challenge = wchallenge_to_challenge(e.challenge)
         except MultiFactorAuthentication as mfa:
             self.challenge = mfa_to_challenge(mfa)
             if self.challenge and self.challenge.recall:
@@ -1178,24 +1166,12 @@ class Engine(object):
     def release_all_target(self):
         self.checkout.release_all()
 
-    def get_pidhandler(self, pid):
-        if not self.pidhandler:
-            try:
-                from wabengine.common.interface import IPBSessionHandler
-                from wabengine.common.utils import ProcessSessionHandler
-                self.pidhandler = IPBSessionHandler(
-                    ProcessSessionHandler(int(pid))
-                )
-            except Exception as e:
-                self.pidhandler = None
-        return self.pidhandler
-
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 auth,
-                self.get_pidhandler(pid),
+                pid=pid,
                 effective_login=effective_login,
                 **kwargs
             )
@@ -1732,26 +1708,37 @@ class Challenge(object):
 
 
 def wchallenge_to_challenge(challenge, previous_token=None):
-    title = "= Challenge = "
-    message = ""
-    fields = [challenge.message]
-    echos = [challenge.promptEcho]
-    token = challenge.mfa_token if hasattr(
-        challenge, "mfa_token"
-    ) else previous_token
-    return Challenge("CHALLENGE", title, message, fields, echos,
-                     username=challenge.username, challenge=challenge,
-                     token=token)
+    """ Convert Challenge from bastion to internal Challenge
+
+    param challenge: Challenge from bastion
+    param previous_token: token from previous MFA if needed
+    :rtype: Challenge
+    :return: a converted Challenge
+    """
+    return Challenge(
+        challenge_type="CHALLENGE",
+        title="= Challenge =",
+        message="",
+        fields=[challenge.message],
+        echos=[challenge.promptEcho],
+        username=challenge.username,
+        challenge=challenge,
+        token=getattr(challenge, "mfa_token", previous_token)
+    )
 
 
 def mfa_to_challenge(mfa):
+    """ Convert MFA from bastion to internal Challenge
+
+    param mfa: MFA from bastion
+    :rtype: Challenge
+    :return: a converted Challenge
+    """
     if not mfa.fields:
         return None
-    title = "= MultiFactor Authentication ="
     message_list = []
     echos = [False for x in mfa.fields]
     fields = mfa.fields
-    recall = False
     if hasattr(mfa, "auth_type"):
         message_list.append("Authentication type: %s" % mfa.auth_type)
     if mfa.fields[0] == "username":
@@ -1759,10 +1746,17 @@ def mfa_to_challenge(mfa):
         echos = echos[1:]
         message_list.append("Username: %s" % mfa.username)
     message = "\n".join(message_list)
-    if len(fields) == 0:
-        recall = True
-    return Challenge("MFA", title, message, fields, echos,
-                     username=mfa.username, token=mfa.token, recall=recall)
+    recall = (len(fields) == 0)
+    return Challenge(
+        challenge_type="MFA",
+        title="= MultiFactor Authentication =",
+        message=message,
+        fields=fields,
+        echos=echos,
+        username=mfa.username,
+        token=mfa.token,
+        recall=recall
+    )
 
 
 class TargetContext(object):
