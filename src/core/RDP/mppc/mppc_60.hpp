@@ -242,10 +242,10 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec
         this->_dump(16);
     }
 
-    void dump() override
-    {
-        this->_dump(RDP_60_HIST_BUF_LEN);
-    }
+//    void dump() override
+//    {
+//        this->_dump(RDP_60_HIST_BUF_LEN);
+//    }
 
 private:
     void _dump(size_t histo_buf_max)
@@ -725,22 +725,22 @@ struct rdp_mppc_60_enc : public rdp_mppc_enc
         , hash_tab_mgr(MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
     {}
 
-    void dump(bool mini_dump) const override
-    {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
-        LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
-        LOG(LOG_INFO, "outputBuffer");
-        hexdump_d(this->outputBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
-        LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
-        LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
-        LOG(LOG_INFO, "offsetCache");
-        hexdump_d(reinterpret_cast<const char *>(this->offsetCache), sizeof(this->offsetCache)); /*NOLINT*/
-        LOG(LOG_INFO, "flags=0x%02X", this->flags);
-        LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
+//    void dump(bool mini_dump) const override
+//    {
+//        LOG(LOG_INFO, "Type=RDP 6.0 bulk compressor");
+//        LOG(LOG_INFO, "historyBuffer");
+//        hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
+//        LOG(LOG_INFO, "outputBuffer");
+//        hexdump_d(this->outputBuffer, (mini_dump ? 16 : RDP_60_HIST_BUF_LEN));
+//        LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
+//        LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
+//        LOG(LOG_INFO, "offsetCache");
+//        hexdump_d(reinterpret_cast<const char *>(this->offsetCache), sizeof(this->offsetCache)); /*NOLINT*/
+//        LOG(LOG_INFO, "flags=0x%02X", this->flags);
+//        LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
 
-        this->hash_tab_mgr.dump(mini_dump);
-    }
+//        this->hash_tab_mgr.dump(mini_dump);
+//    }
 
     static inline int cache_find(uint16_t const * offset_cache, uint16_t copy_offset)
     {

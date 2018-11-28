@@ -81,12 +81,12 @@ void rdp_mppc_unified_dec::mini_dump()
     }
 }
 
-void rdp_mppc_unified_dec::dump()
-{
-    if (this->mppc_dec) {
-        this->mppc_dec->dump();
-    }
-}
+//void rdp_mppc_unified_dec::dump()
+//{
+//    if (this->mppc_dec) {
+//        this->mppc_dec->dump();
+//    }
+//}
 
 int rdp_mppc_unified_dec::decompress(
     uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen)

@@ -30,6 +30,7 @@
 #include "utils/hexdump.hpp"
 #include "core/error.hpp"
 #include "utils/sugar/byte_ptr.hpp"
+#include "utils/sugar/cast.hpp"
 
 #include <memory>
 #include <cstring>
@@ -84,8 +85,7 @@ class rdp_mppc_enc_hash_table_manager
 {
     static const uint32_t MAX_HASH_TABLE_ELEMENT = 65536;
 
-public:
-    std::unique_ptr<T[]> hash_table;
+    T hash_table[MAX_HASH_TABLE_ELEMENT];
 
 private:
     std::unique_ptr<uint8_t[]> undo_buffer_begin;
@@ -100,8 +100,7 @@ public:
     using hash_type = uint16_t;
 
     rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
-        : hash_table(new T[MAX_HASH_TABLE_ELEMENT]{})
-        , length_of_data_to_sign(length_of_data_to_sign)
+        : length_of_data_to_sign(length_of_data_to_sign)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
         auto const undo_buf_size = max_undo_element * this->undo_element_size;
@@ -113,16 +112,21 @@ public:
         this->undo_buffer_current = this->undo_buffer_begin.get();
     }
 
+    inline void initialize_hash_table(const uint8_t * hash_table_byte_data)
+    {
+        ::memcpy(this->hash_table, hash_table_byte_data, this->get_table_size());
+    }
+
     inline void clear_undo_history() {
         this->undo_buffer_current = this->undo_buffer_begin.get();
     }
 
-    void dump(bool mini_dump) const
-    {
-        LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
-        LOG(LOG_INFO, "hashTable");
-        hexdump_d(reinterpret_cast<uint8_t const *>(&this->hash_table.get()[0]), (mini_dump ? 16 : get_table_size())); /*NOLINT*/
-    }
+//    void dump(bool mini_dump) const
+//    {
+//        LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
+//        LOG(LOG_INFO, "hashTable");
+//        hexdump_d(byte_ptr_cast(this->hash_table.get()), (mini_dump ? 16 : get_table_size())); /*NOLINT*/
+//    }
 
     inline T get_offset(hash_type hash) const
     {
@@ -184,6 +188,8 @@ public:
         if (this->undo_buffer_current != this->undo_buffer_end) {
             *(reinterpret_cast<hash_type *>(this->undo_buffer_current                   )) = hash;
             *(reinterpret_cast<T *>       (this->undo_buffer_current + sizeof(hash_type))) = hash_table[hash];
+            //*this->undo_buffer_current = hash;
+            //*(this->undo_buffer_current + sizeof(hash_type)) = this->get_offset(hash);
 
             this->undo_buffer_current += this->undo_element_size;
         }
@@ -197,7 +203,7 @@ public:
 
     inline void reset()
     {
-        ::memset(this->hash_table.get(), 0, get_table_size());
+        ::memset(this->hash_table, 0, this->get_table_size());
 
         this->undo_buffer_current = this->undo_buffer_begin.get();
     }

@@ -45,7 +45,7 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression2)
     mppc_enc.flags         = 33;
     mppc_enc.flagsHold     = 0;
     mppc_enc.first_pkt     = false;
-    memcpy(mppc_enc.hash_tab_mgr.hash_table.get(), hash_table,       rdp_mppc_50_enc::hash_table_manager::get_table_size());
+    mppc_enc.hash_tab_mgr.initialize_hash_table(hash_table);
 
     uint8_t  compressionFlags;
     uint16_t datalen;
@@ -82,7 +82,7 @@ RED_AUTO_TEST_CASE(TestRDP50BlukCompression3)
     mppc_enc.flags         = 0;
     mppc_enc.flagsHold     = 0;
     mppc_enc.first_pkt     = 1;
-    memcpy(mppc_enc.hash_tab_mgr.hash_table.get(), hash_table,       rdp_mppc_50_enc::hash_table_manager::get_table_size());
+    mppc_enc.hash_tab_mgr.initialize_hash_table(hash_table);
 
     uint8_t  compressionFlags;
     uint16_t datalen;

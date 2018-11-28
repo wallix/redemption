@@ -437,7 +437,7 @@ public:
 
     virtual void mini_dump() = 0;
 
-    virtual void dump() = 0;
+//    virtual void dump() = 0;
 };
 
 
@@ -463,7 +463,7 @@ public:
         uint8_t & compressedType, uint16_t & compressed_data_size,
         uint16_t max_compressed_data_size = MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-    virtual void dump(bool mini_dump) const = 0;
+//    virtual void dump(bool mini_dump) const = 0;
 
     virtual void get_compressed_data(OutStream & stream) const = 0;
 
@@ -487,7 +487,7 @@ public:
 
     void mini_dump() override;
 
-    void dump() override;
+//    void dump() override;
 
     int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override;
 };
