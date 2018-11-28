@@ -40,16 +40,16 @@ ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, 
 {
     this->setDefaultConfig();
 
-    this->info.screen_info.width  = 800;
-    this->info.screen_info.height = 600;
-    this->info.keylayout = 0x040C;// 0x40C FR, 0x409 USA
-    this->info.console_session = false;
-    this->info.brush_cache_code = 0;
-    this->info.screen_info.bpp = BitsPerPixel{24};
-    this->info.rdp5_performanceflags = PERF_DISABLE_WALLPAPER;
+    this->info.screen_info.width       = 800;
+    this->info.screen_info.height      = 600;
+    this->info.keylayout               = 0x040C;            // 0x40C FR, 0x409 USA
+    this->info.console_session         = false;
+    this->info.brush_cache_code        = 0;
+    this->info.screen_info.bpp         = BitsPerPixel{24};
+    this->info.rdp5_performanceflags   = PERF_DISABLE_WALLPAPER;
     this->info.cs_monitor.monitorCount = 1;
 
-    this->rDPRemoteAppConfig.source_of_ExeOrFile = "C:\\Windows\\system32\\notepad.exe";
+    this->rDPRemoteAppConfig.source_of_ExeOrFile  = "C:\\Windows\\system32\\notepad.exe";
     this->rDPRemoteAppConfig.source_of_WorkingDir = "C:\\Users\\user1";
 
     this->rDPRemoteAppConfig.full_cmd_line = this->rDPRemoteAppConfig.source_of_ExeOrFile + " " + this->rDPRemoteAppConfig.source_of_Arguments;

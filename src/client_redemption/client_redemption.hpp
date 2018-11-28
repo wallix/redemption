@@ -430,8 +430,6 @@ public:
                   , this->server_auto_reconnect_packet_ref
                   , this->close_box_extra_message_ref
                   , this->config.verbose
-                  //, RDPVerbose::security | RDPVerbose::cache_persister | RDPVerbose::capabilities  | RDPVerbose::channels | RDPVerbose::connection
-                  //, RDPVerbose::basic_trace | RDPVerbose::connection
                 );
 
                 mod_rdp_params.device_id                       = "device_id";
@@ -902,7 +900,7 @@ public:
                                 spacer = spacer.substr(0, spacer.length()-1);
                             }
 
-                            LOG(LOG_INFO, "%s= %d %spixels = %ld", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
+                            LOG(LOG_INFO, "%s= %u %spixels = %lu", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
                         }
                     }
                 }
