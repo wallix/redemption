@@ -23,6 +23,7 @@ exe headlessclient :
   <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
   <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -1021,6 +1022,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1052,6 +1054,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1083,6 +1086,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1114,6 +1118,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -1140,6 +1145,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
 :
+  <covfile>src/client_redemption/client_config/client_redemption_config.cpp
   <covfile>src/client_redemption/client_config/client_redemption_config.hpp
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -1147,6 +1153,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   <library>openssl
   <library>png
   <library>snappy
+  <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -5605,6 +5612,7 @@ obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder
 obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
 obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
 obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
+obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;

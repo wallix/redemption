@@ -401,7 +401,7 @@ public:
             std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
             LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
         } else {
-            LOG(LOG_INFO, "Replay closed.", this->config.target_IP.c_str());
+            LOG(LOG_INFO, "Replay closed.");
 
         }
         this->config.set_icon_movie_data();

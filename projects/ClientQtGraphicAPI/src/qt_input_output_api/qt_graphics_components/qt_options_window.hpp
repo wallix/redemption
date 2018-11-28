@@ -684,7 +684,6 @@ public:
         this->setConfigValues();
     }
 
-
     void setConfigValues() override {
         QtOptions::setConfigValues();
 
@@ -740,7 +739,6 @@ public:
             this->desktopCompositionCheckBox.setCheckState(Qt::Checked);
         }
     }
-
 
     void getConfigValues() override {
         QtOptions::getConfigValues();
@@ -873,7 +871,6 @@ public:
         this->keyboard_apple_compatibility_CB.setCheckState(Qt::Unchecked);
         this->_layoutConnection->addRow(&(this->keyboard_apple_compatibility_label), &(this->keyboard_apple_compatibility_CB));
     }
-
 
     void getConfigValues() override {
         QtOptions::getConfigValues();
