@@ -1171,7 +1171,6 @@ class Engine(object):
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 auth,
-                pbcontroller=pid,  # TODO REMOVE
                 pid=pid,
                 effective_login=effective_login,
                 **kwargs
@@ -1203,7 +1202,6 @@ class Engine(object):
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 target,
-                pbcontroller=self.get_pidhandler(pid),  # TODO REMOVE
                 pid=pid,
                 subprotocol=subproto,
                 effective_login=tounicode(effective_login),
