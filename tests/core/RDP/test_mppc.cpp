@@ -109,12 +109,13 @@ RED_AUTO_TEST_CASE(TestHashTableManager)
     const unsigned int length_of_data_to_sign = 3;
     const unsigned int max_undo_element       = 8;
 
-    typedef uint16_t                                     offset_type;
-    typedef rdp_mppc_enc_hash_table_manager<offset_type> hash_table_manager;
-    typedef hash_table_manager::hash_type                hash_type;
+    typedef uint16_t offset_type;
+    typedef rdp_mppc_enc_hash_table_manager<offset_type,
+                                            length_of_data_to_sign,
+                                            max_undo_element> hash_table_manager;
+    typedef hash_table_manager::hash_type   hash_type;
 
-    hash_table_manager hash_tab_mgr(
-        length_of_data_to_sign, max_undo_element);
+    hash_table_manager hash_tab_mgr;
 
     uint8_t data[] = "0123456789ABCDEF";
 

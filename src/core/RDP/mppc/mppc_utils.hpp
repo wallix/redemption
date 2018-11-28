@@ -80,7 +80,7 @@ static inline void encode_literal_40_50(
         outputBuffer, bits_left, opb_index, outputBufferSize);
 }
 
-template<typename T>
+template<typename T, unsigned LENGTH_OF_DATA_TO_SIGN, unsigned MAX_UNDO_ELEMENT>
 class rdp_mppc_enc_hash_table_manager
 {
     static const uint32_t MAX_HASH_TABLE_ELEMENT = 65536;
@@ -99,11 +99,11 @@ private:
 public:
     using hash_type = uint16_t;
 
-    rdp_mppc_enc_hash_table_manager(unsigned int length_of_data_to_sign, unsigned int max_undo_element)
-        : length_of_data_to_sign(length_of_data_to_sign)
+    rdp_mppc_enc_hash_table_manager()
+        : length_of_data_to_sign(LENGTH_OF_DATA_TO_SIGN)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        auto const undo_buf_size = max_undo_element * this->undo_element_size;
+        auto const undo_buf_size = MAX_UNDO_ELEMENT * this->undo_element_size;
 
         this->undo_buffer_begin = std::make_unique<uint8_t[]>(undo_buf_size);
         std::fill(this->undo_buffer_begin.get(), this->undo_buffer_begin.get() + undo_buf_size, uint8_t{});

@@ -442,7 +442,9 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
     using offset_type = uint16_t;
-    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type,
+                                                               RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+                                                               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT>;
     using hash_type = hash_table_manager::hash_type;
 
     // TODO making it static and large enough should be good for both RDP4 and RDP5
@@ -464,7 +466,7 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc
         , outputBuffer(this->outputBufferPlus + 64)
         , outputBufferPlus{0}
         , outputBufferSize(RDP_40_HIST_BUF_LEN + 8)
-        ,           hash_tab_mgr(RDP_40_50_COMPRESSOR_MINIMUM_MATCH_LENGTH, MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
+        ,           hash_tab_mgr()
     {}
 
 //    void dump(bool mini_dump) const override

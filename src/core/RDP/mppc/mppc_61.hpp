@@ -476,14 +476,15 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
     static const size_t MAXIMUM_HASH_BUFFER_UNDO_ELEMENT = 256;
 
     using offset_type = uint32_t;
-    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type>;
+    using hash_table_manager = rdp_mppc_enc_hash_table_manager<offset_type,
+                                                               RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
+                                                               MAXIMUM_HASH_BUFFER_UNDO_ELEMENT>;
     using hash_type = hash_table_manager::hash_type;
 
     hash_table_manager hash_tab_mgr;
 
     rdp_mppc_61_enc_hash_based_match_finder()
-        : hash_tab_mgr(RDP_61_COMPRESSOR_MINIMUM_MATCH_LENGTH,
-              MAXIMUM_HASH_BUFFER_UNDO_ELEMENT)
+        : hash_tab_mgr()
     {}
 
 //    void dump(bool mini_dump) const  override
