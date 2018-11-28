@@ -941,34 +941,38 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
         "DATA/sound_temp/"}));
 }
 
-// RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
-// {
-//     WorkingDirectory wd("TestClientRedemptionConfigWriteWindowsData");
-//     wd.add_file("DATA");
-//     wd.add_file("DATA/config");
-//     wd.add_file("DATA/clipboard_temp");
-//     wd.add_file("DATA/replay");
-//     wd.add_file("DATA/sound_temp");
+RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
+{
+    WorkingDirectory wd("TestClientRedemptionConfigWriteWindowsData");
+
+    SessionReactor session_reactor;
+    FakeClient client;
+    char const * argv[] = {"cmd"};
+    const int argc = 1;
 //
-//     auto win_data = wd.add_file("DATA/config/windows_config.config");
-//
-//     SessionReactor session_reactor;
-//     FakeClient client;
-//     char const * argv[] = {"cmd"};
-//     const int argc = 1;
-//
-//     ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteWindowsData");
-//
-//     config.connected = true;
-//     config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
-//     config.writeAccoundData("10.10.13.12", "account_name2", "mdp_", 5900);
-//
-//     const char * expected_data =
-//                            "save_pwd false\n"
-//
-//                            "options_profil 0\n\n";
-//
-//     RED_CHECK_EQUAL(get_file_contents(wd[login]), expected_data);
-//
-//     RED_CHECK_WORKSPACE(wd);
-// }
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteWindowsData");
+
+    config.windowsData.form_x   = 1;
+    config.windowsData.form_y   = 2;
+    config.windowsData.screen_x = 3;
+    config.windowsData.screen_y = 4;
+
+    config.writeWindowsData();
+
+    auto win_data = wd.add_file("DATA/config/windows_config.config");
+
+    const char * expected_data =
+        "form_x 1\n"
+        "form_y 2\n"
+        "screen_x 3\n"
+        "screen_y 4\n";
+
+    RED_CHECK_EQUAL(get_file_contents("/tmp/TestClientRedemptionConfigWriteWindowsData/DATA/config/windows_config.config"), expected_data);
+
+    RED_CHECK_WORKSPACE(wd.add_files({
+        "DATA/",
+        "DATA/config/",
+        "DATA/clipboard_temp/",
+        "DATA/replay/",
+        "DATA/sound_temp/"}));
+}

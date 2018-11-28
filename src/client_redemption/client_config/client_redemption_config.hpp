@@ -221,7 +221,6 @@ class ClientRedemptionConfig
 public:
     std::vector<IconMovieData> icons_movie_data;
 
-
     const std::string    MAIN_DIR/* = CLIENT_REDEMPTION_MAIN_PATH*/;
     const std::string    REPLAY_DIR = MAIN_DIR + CLIENT_REDEMPTION_REPLAY_PATH;
     const std::string    USER_CONF_LOG = MAIN_DIR + CLIENT_REDEMPTION_LOGINS_PATH;
@@ -905,7 +904,6 @@ public:
 
             cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
             .action(cli::on_off_location(this->vnc_conf.is_apple)),
-
 
             cli::helper("========= Client ========="),
 

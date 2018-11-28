@@ -488,18 +488,21 @@ private:
     }
 
 
-    void pre_load_movie(const std::string & movie_path) override {
+    bool pre_load_movie(const std::string & movie_path) override {
 
         this->balises.clear();
 
         long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
         this->form->hide();
-        this->bar = new ProgressBarWindow(movie_length);
+
         long int endin_frame = 0;
 
         this->is_pre_loading = true;
 
+        bool res = false;
+
         if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {
+            this->bar = new ProgressBarWindow(movie_length);
 
             while (endin_frame < movie_length) {
 
@@ -515,6 +518,8 @@ private:
             if (this->bar) {
                 this->bar->close();
             }
+
+            res = true;
         }
 
         this->is_pre_loading = false;
@@ -522,6 +527,8 @@ private:
         if (this->screen) {
             this->screen->stopRelease();
         }
+
+        return res;
     }
 
 //     void answer_question(int color) {
@@ -1481,8 +1488,6 @@ private:
 
 //         this->config->is_replaying = false;
 //         this->config->connected = false;
-
-
 
         this->controller->disconnexionReleased();
 

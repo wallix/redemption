@@ -115,5 +115,5 @@ public:
 
     virtual void open_options() {}
 
-    virtual void pre_load_movie(const std::string & /*movie_path*/) {}
+    virtual bool pre_load_movie(const std::string & /*movie_path*/) { return false; }
 };

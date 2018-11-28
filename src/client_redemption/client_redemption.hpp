@@ -784,10 +784,6 @@ public:
         }
     }
 
-
-    // Replay
-
-
     void disconnexionReleased() override{
         this->config.is_replaying = false;
         this->config.connected = false;
@@ -900,18 +896,22 @@ public:
 
             if (impl_graphic) {
                 this->impl_graphic->create_replay_screen();
+
                 if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-                    this->impl_graphic->pre_load_movie(movie_path);
-                    for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
-                        unsigned int to_count = this->wrmGraphicStat.get_count(i);
-                        std::string spacer("       ");
 
-                        while (to_count >=  10) {
-                            to_count /=  10;
-                            spacer = spacer.substr(0, spacer.length()-1);
+                    if (this->impl_graphic->pre_load_movie(movie_path)) {
+
+                        for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
+                            unsigned int to_count = this->wrmGraphicStat.get_count(i);
+                            std::string spacer("       ");
+
+                            while (to_count >=  10) {
+                                to_count /=  10;
+                                spacer = spacer.substr(0, spacer.length()-1);
+                            }
+
+                            LOG(LOG_INFO, "%s= %d %spixels = %ld", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
                         }
-
-                        LOG(LOG_INFO, "%s= %d %spixels = %ld", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
                     }
                 }
                 this->impl_graphic->show_screen();
