@@ -87,29 +87,30 @@ class rdp_mppc_enc_hash_table_manager
 
     T hash_table[MAX_HASH_TABLE_ELEMENT];
 
+public:    
+    using hash_type = uint16_t;
+
 private:
-    std::unique_ptr<uint8_t[]> undo_buffer_begin;
-    uint8_t * undo_buffer_end = nullptr;
-    uint8_t * undo_buffer_current = nullptr;
+    struct UndoCell {
+        hash_type hash;
+        T         hash_hash;
+    } undo_buffer_begin[MAX_UNDO_ELEMENT];
+    
+    UndoCell * undo_buffer_end = nullptr;
+    UndoCell * undo_buffer_current = nullptr;
 
     const unsigned int length_of_data_to_sign;
 
     const unsigned int undo_element_size;
 
 public:
-    using hash_type = uint16_t;
 
     rdp_mppc_enc_hash_table_manager()
         : length_of_data_to_sign(LENGTH_OF_DATA_TO_SIGN)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        auto const undo_buf_size = MAX_UNDO_ELEMENT * this->undo_element_size;
-
-        this->undo_buffer_begin = std::make_unique<uint8_t[]>(undo_buf_size);
-        std::fill(this->undo_buffer_begin.get(), this->undo_buffer_begin.get() + undo_buf_size, uint8_t{});
-
-        this->undo_buffer_end     = this->undo_buffer_begin.get() + undo_buf_size;
-        this->undo_buffer_current = this->undo_buffer_begin.get();
+        this->undo_buffer_end     = &this->undo_buffer_begin[MAX_UNDO_ELEMENT];
+        this->undo_buffer_current = &this->undo_buffer_begin[0];
     }
 
     inline void initialize_hash_table(const uint8_t * hash_table_byte_data)
@@ -118,7 +119,7 @@ public:
     }
 
     inline void clear_undo_history() {
-        this->undo_buffer_current = this->undo_buffer_begin.get();
+        this->undo_buffer_current = &this->undo_buffer_begin[0];
     }
 
 //    void dump(bool mini_dump) const
@@ -186,12 +187,11 @@ public:
     inline void update(hash_type hash, T offset)
     {
         if (this->undo_buffer_current != this->undo_buffer_end) {
-            *(reinterpret_cast<hash_type *>(this->undo_buffer_current                   )) = hash;
-            *(reinterpret_cast<T *>       (this->undo_buffer_current + sizeof(hash_type))) = hash_table[hash];
+            this->undo_buffer_current->hash = hash;
+            this->undo_buffer_current->hash_hash =  hash_table[hash];
             //*this->undo_buffer_current = hash;
             //*(this->undo_buffer_current + sizeof(hash_type)) = this->get_offset(hash);
-
-            this->undo_buffer_current += this->undo_element_size;
+            this->undo_buffer_current++;
         }
         this->hash_table[hash] = offset;
     }
@@ -205,7 +205,7 @@ public:
     {
         ::memset(this->hash_table, 0, this->get_table_size());
 
-        this->undo_buffer_current = this->undo_buffer_begin.get();
+        this->undo_buffer_current = &this->undo_buffer_begin[0];
     }
 
     inline bool undo_last_changes()
@@ -214,11 +214,9 @@ public:
             return false;
         }
 
-        while (this->undo_buffer_current != this->undo_buffer_begin.get()) {
-            this->undo_buffer_current -= this->undo_element_size;
-
-            this->hash_table[*(reinterpret_cast<hash_type *>(this->undo_buffer_current))] =
-                *(reinterpret_cast<T *>(this->undo_buffer_current + sizeof(hash_type)));
+        while (this->undo_buffer_current != this->undo_buffer_begin) {
+            this->undo_buffer_current--;
+            this->hash_table[this->undo_buffer_current->hash] = this->undo_buffer_current->hash_hash;
         }
 
         return true;
