@@ -100,6 +100,73 @@ def parse_auth(username):
     return username, None
 
 
+# PM Function
+def parse_param(param, current_device=None):
+    """
+    Extract account representation
+
+    string format is <account_name>@<domain_name>[@<device_name>]
+
+    If @<device_name> is absent, <domain_name> is a global domain name
+    Else <domain_name> is a local domain name of the current_device
+
+    if 'current_device' is not None
+    <device_name> should be empty or equal to current_device
+    Else <device_name> can be another device
+
+    """
+    parsed = param.rsplit("@", 2)
+    if len(parsed) > 1:
+        account_name = parsed[0]
+        domain_name = parsed[1]
+        if (len(parsed) == 3
+            and parsed[2]
+            and current_device
+            and (parsed[2] != current_device)):
+            return None
+        device_name = (current_device or parsed[2]) if len(parsed) == 3 \
+            else None
+        return account_name, domain_name, device_name
+    else:
+        return None
+
+
+# PM Function
+def pm_request(engine, request):
+    Logger().debug("pm_request: '%s'" % request)
+    if request and request[0] == '/':
+        request = request[1:]
+    reql = request.split('/', 2)
+    if len(reql) < 3:
+        Logger().debug("pm_request: invalid request")
+        return None
+    req_name, req_cmd, req_param = reql
+    if req_name != u'targetpasswords':
+        Logger().debug("pm_request: invalid request name")
+        return None
+    res_param = parse_param(req_param)
+    if res_param is None:
+        Logger().debug("pm_request: invalid params")
+        return None
+    acc_n, domain_n, dev_n = res_param
+    if req_name == u'checkout':
+        res = engine.get_account_infos_by_type(
+            account_name=acc_n,
+            domain_name=domain_n,
+            device_name=dev_n,
+            account_type='pm'
+        )
+        return res
+    if req_name == u'checkin':
+        engine.release_account_by_type(
+            account_name=acc_n,
+            domain_name=domain_n,
+            device_name=dev_n,
+            account_type='pm'
+        )
+    return None
+
+
 class AuthentifierSocketClosed(Exception):
     pass
 
@@ -1721,6 +1788,9 @@ class Sesman():
                                         Logger().info(u"Failed accessing recording path (%s)" % self.full_path)
                                         self.send_data({u'rejected': TR(u'error_getting_record_path')})
 
+                                if self.shared.get("pm_request"):
+                                    self._manage_pm()
+
                                 if self.shared.get(u'reporting'):
                                     _reporting      = self.shared.get(u'reporting')
                                     _reporting_reason, _, _remains = \
@@ -2155,6 +2225,11 @@ class Sesman():
                     or self.engine.get_primary_password(app_right) \
                     or ''
         return kv
+
+    def _manage_pm(self):
+        response = pm_request(self.engine, self.shared.get("pm_request"))
+        self.shared["pm_request"] = u""
+        self.send_data({'pm_response': json.dumps(response)})
 
 
 # END CLASS - Sesman
