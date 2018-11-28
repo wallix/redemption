@@ -112,7 +112,7 @@ std::size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, std::size_t 
 
 std::size_t UTF8ToUTF8LCopy(uint8_t * dest, std::size_t dest_size, const uint8_t * source);
 
-std::size_t get_utf8_char_size(uint8_t const * c);
+size_t UTF8CharNbBytes(const uint8_t * source);
 
 bool is_utf8_string(uint8_t const * s, int length = -1);
 
