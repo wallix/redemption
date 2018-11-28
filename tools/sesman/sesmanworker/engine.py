@@ -1150,11 +1150,11 @@ class Engine(object):
                            % (traceback.format_exc()))
         return True
 
-    def release_account_by_type(self, acc_name, dom_name, dev_name,
-                                account_type=None):
+    def release_account_by_type(self, account_name, domain_name,
+                                device_name, account_type=None):
         try:
             self.checkout.release_account_by_type(
-                acc_name, dom_name, dev_name,
+                account_name, domain_name, device_name,
                 account_type=account_type
             )
         except Exception:
