@@ -135,7 +135,7 @@ class PatternSearcher
             if (static_cast<size_t>(this->data_end() - this->beg) < char_len + 1u) {
                 std::size_t pchar_len = 0;
                 do {
-                    size_t const len = get_utf8_char_size(this->beg);
+                    size_t const len = UTF8CharNbBytes(this->beg);
                     size_t const tailroom = this->data_end() - this->beg;
                     if (tailroom < len) {
                         this->beg = this->data_begin() + (len - tailroom);
@@ -1074,10 +1074,30 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
                     if ((!log_only_relevant_clipboard_activities) ||
                         (strncasecmp(Format_PreferredDropEffect, format.data(), std::min<>(format.size(), sizeof(Format_PreferredDropEffect) - 1)) &&
                          strncasecmp(Format_FileGroupDescriptorW, format.data(), std::min<>(format.size(), sizeof(Format_FileGroupDescriptorW) - 1)))) {
+
+                        Av partial_data = right(remaining, subitem_separator2);
+
+                        {
+                            char const * tmp_d = partial_data.data();
+                            size_t tmp_l       = partial_data.size();
+
+                            while (tmp_l) {
+                                size_t nbb = ::UTF8CharNbBytes(::byte_ptr_cast(tmp_d));
+                                if (nbb > tmp_l) {
+                                    partial_data = partial_data.first(partial_data.size() - tmp_l);
+
+                                    break;
+                                }
+
+                                tmp_l -= nbb;
+                                tmp_d += nbb;
+                            }
+                        }
+
                         message.assign(order, {
                             {zstr(var1), format},
                             {zstr(var2), left(remaining, subitem_separator2)},
-                            {zstr(var3), right(remaining, subitem_separator2)},
+                            {zstr(var3), partial_data},
                         });
                     }
                 }

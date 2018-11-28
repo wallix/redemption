@@ -103,19 +103,16 @@ bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, si
     return true;
 }
 
-namespace
+// UTF8CharNbBytes:
+// ----------------
+// input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
+//        (valid means "that has been checked before". It means we are in a secure context).
+// output: number of bytes for 'one' char
+size_t UTF8CharNbBytes(const uint8_t * source)
 {
-    // UTF8CharNbBytes:
-    // ----------------
-    // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
-    //        (valid means "that has been checked before". It means we are in a secure context).
-    // output: number of bytes for 'one' char
-    size_t UTF8CharNbBytes(const uint8_t * source)
-    {
-        uint8_t c = *source;
-        return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
-    }
-} // namespace
+    uint8_t c = *source;
+    return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
+}
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
 size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
@@ -577,21 +574,6 @@ size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
     memcpy(dest, source, source_len);
     dest[source_len] = 0;
     return UTF8Len(dest); // number of char
-}
-
-size_t get_utf8_char_size(uint8_t const * c)
-{
-    if ((*c >> 3) == 0x1E) {
-        return 4;
-    }
-    if ((*c >> 4) == 0x0E) {
-        return 3;
-    }
-    if ((*c >> 5) == 0x06) {
-        return 2;
-    }
-
-    return 1;
 }
 
 enum class Stat : uint8_t {

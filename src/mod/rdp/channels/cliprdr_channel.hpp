@@ -344,7 +344,7 @@ struct ClientFormatDataResponseReceive {
                             utf8_string, size_of_utf8_string);
                         data_to_dump.assign(
                             ::char_ptr_cast(utf8_string),
-                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string]) ?
+                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
                                 length_of_utf8_string - 1 :
                                 length_of_utf8_string));
                     }
@@ -1389,7 +1389,7 @@ public:
                             utf8_string, size_of_utf8_string);
                         data_to_dump.assign(
                             ::char_ptr_cast(utf8_string),
-                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string]) ?
+                            ((length_of_utf8_string && !utf8_string[length_of_utf8_string - 1]) ?
                              length_of_utf8_string - 1 :
                              length_of_utf8_string));
                     }
