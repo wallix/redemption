@@ -131,7 +131,7 @@ class PatternSearcher
             if (static_cast<size_t>(this->data_end() - this->beg) < char_len + 1u) {
                 std::size_t pchar_len = 0;
                 do {
-                    size_t const len = get_utf8_char_size(this->beg);
+                    size_t const len = UTF8CharNbBytes(this->beg);
                     size_t const tailroom = this->data_end() - this->beg;
                     if (tailroom < len) {
                         this->beg = this->data_begin() + (len - tailroom);
@@ -981,6 +981,39 @@ inline void agent_data_extractor(KeyQvalueFormatter & message, array_view_const_
         else if (cstr_equal("CB_COPYING_PASTING_DATA_TO_REMOTE_SESSION_EX", order)
               || cstr_equal("CB_COPYING_PASTING_DATA_FROM_REMOTE_SESSION_EX", order)) {
             line_with_3_var("format", "size", "partial_data");
+            Av var1{"format"};
+            Av var2{"size"};
+            Av var3{"partial_data"};
+            if (auto const subitem_separator = find(parameters, '\x01')) {
+                auto const format = left(parameters, subitem_separator);
+                auto const remaining = right(parameters, subitem_separator);
+                if (auto const subitem_separator2 = find(remaining, '\x01')) {
+                    Av partial_data = right(remaining, subitem_separator2);
+
+                    {
+                        char const * tmp_d = partial_data.data();
+                        size_t tmp_l       = partial_data.size();
+
+                        while (tmp_l) {
+                            size_t nbb = ::UTF8CharNbBytes(::byte_ptr_cast(tmp_d));
+                            if (nbb > tmp_l) {
+                                partial_data = partial_data.first(partial_data.size() - tmp_l);
+
+                                break;
+                            }
+
+                            tmp_l -= nbb;
+                            tmp_d += nbb;
+                        }
+                    }
+
+                    message.assign(order, {
+                        {zstr(var1), format},
+                        {zstr(var2), left(remaining, subitem_separator2)},
+                        {zstr(var3), partial_data},
+                    });
+                }
+            }
         }
 
         else {

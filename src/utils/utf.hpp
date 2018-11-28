@@ -725,20 +725,6 @@ static inline size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uin
     return UTF8Len(dest); // number of char
 }
 
-static inline size_t get_utf8_char_size(uint8_t const * c) {
-    if ((*c >> 3) == 0x1E) {
-        return 4;
-    }
-    if ((*c >> 4) == 0x0E) {
-        return 3;
-    }
-    if ((*c >> 5) == 0x06) {
-        return 2;
-    }
-
-    return 1;
-}
-
 static inline bool is_ASCII_string(uint8_t const * s, int length = -1)
 {
     for (uint8_t const * const s_end = ((length >= 0) ? s + length : nullptr);
