@@ -52,8 +52,6 @@ int main(int argc, char const** argv)
 
     RDPVerbose verbose = to_verbose_flags(0x0);      //to_verbose_flags(0x0);
 
-    LOG(LOG_INFO, "ClientRedemption init");
-
     ClientHeadlessSocket headless_socket(session_reactor);
     ClientInputSocketAPI * headless_socket_api_obj = &headless_socket;
 

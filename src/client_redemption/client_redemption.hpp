@@ -18,9 +18,7 @@
    Author(s): Clément Moroldo, David Fort
 */
 
-
 #pragma once
-
 
 #include "utils/log.hpp"
 #include "utils/fixed_random.hpp"
@@ -63,8 +61,6 @@
 
 #include "configs/config.hpp"
 #include "front/execute_events.hpp"
-
-
 
 
 
@@ -367,10 +363,6 @@ public:
     void delete_replay_mod() override {
         this->replay_mod.reset();
     }
-
-//     void writeWindowsConf() override {
-//         this->windowsData.write();
-//     }
 
     void closeFromGUI() override {
         if (this->impl_graphic) {
