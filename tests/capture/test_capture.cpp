@@ -2567,34 +2567,6 @@ RED_AUTO_TEST_CASE(TestOutFilenameSequenceTransport)
     unlink(fnt.seqgen()->get(1));
 }
 
-struct CoutBuf
-{
-    CoutBuf()
-    : oldbuf(std::cout.rdbuf(&sbuf))
-    , oldbuf_cerr(LOG__REDEMPTION__AS__LOGPRINT() ? std::cerr.rdbuf(nullptr) : nullptr)
-    {
-    }
-
-    ~CoutBuf()
-    {
-        std::cout.rdbuf(oldbuf);
-        if (oldbuf_cerr) {
-            std::cerr.rdbuf(oldbuf_cerr);
-        }
-    }
-
-    std::string str() const
-    {
-        std::cout.rdbuf(oldbuf);
-        return sbuf.str();
-    }
-
-private:
-    std::stringbuf sbuf;
-    std::streambuf * oldbuf;
-    std::streambuf * oldbuf_cerr;
-};
-
 extern "C" {
     inline int hmac_fn(uint8_t * buffer)
     {
@@ -2835,7 +2807,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         };
         int argc = sizeof(argv)/sizeof(char*);
 
-        CoutBuf cout_buf;
+        LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");
@@ -2870,7 +2842,7 @@ RED_AUTO_TEST_CASE(TestMetaCapture)
         };
         int argc = sizeof(argv)/sizeof(char*);
 
-        CoutBuf cout_buf;
+        LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
         int res = do_main(argc, argv, hmac_fn, trace_fn);
         EVP_cleanup();
         RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/test_capture.mwrm\".\n\n");

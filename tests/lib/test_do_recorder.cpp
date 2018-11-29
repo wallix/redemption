@@ -69,34 +69,6 @@ extern "C" {
 
 // python tools/decrypter.py -i tests/fixtures/verifier/recorded/toto@10.10.43.13,Administrateur@QA@cible,20160218-183009,wab-5-0-0.yourdomain,7335.mwrm -o decrypted.out
 
-struct CoutBuf
-{
-    CoutBuf()
-    : oldbuf(std::cout.rdbuf(&sbuf))
-    , oldbuf_cerr(LOG__REDEMPTION__AS__LOGPRINT() ? std::cerr.rdbuf(nullptr) : nullptr)
-    {
-    }
-
-    ~CoutBuf()
-    {
-        std::cout.rdbuf(oldbuf);
-        if (oldbuf_cerr) {
-            std::cerr.rdbuf(oldbuf_cerr);
-        }
-    }
-
-    std::string str() const
-    {
-        std::cout.rdbuf(oldbuf);
-        return sbuf.str();
-    }
-
-private:
-    std::stringbuf sbuf;
-    std::streambuf * oldbuf;
-    std::streambuf * oldbuf_cerr;
-};
-
 using EncryptionMode = InCryptoTransport::EncryptionMode;
 
 RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
@@ -116,7 +88,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"./decrypted.out\".\ndecrypt ok\n");
@@ -141,7 +113,7 @@ RED_AUTO_TEST_CASE(TestDecrypterClearData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/decrypted.2.out\".\nInput file is not encrypted.\n");
@@ -167,7 +139,7 @@ RED_AUTO_TEST_CASE(TestVerifierFileNotFound)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "");
@@ -192,7 +164,7 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedDataFailure)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nverify failed\n");
@@ -217,7 +189,7 @@ RED_AUTO_TEST_CASE(TestVerifierEncryptedData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
@@ -245,7 +217,7 @@ RED_AUTO_TEST_CASE(TestVerifierClearData)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
@@ -320,7 +292,7 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
     int argc = sizeof(argv)/sizeof(char*);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
@@ -362,7 +334,7 @@ RED_AUTO_TEST_CASE(TestVerifierClearDataStatFailed)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_fn, trace_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
@@ -473,7 +445,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out0.txt\".\ndecrypt ok\n");
@@ -494,7 +466,7 @@ RED_AUTO_TEST_CASE(TestDecrypterEncrypted1)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out8.txt\".\ndecrypt ok\n");
@@ -520,7 +492,7 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out.txt\".\ndecrypt ok\n");
@@ -546,7 +518,7 @@ RED_AUTO_TEST_CASE(TestDecrypterMigratedEncrypted2)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nOutput file is \"/tmp/out2.txt\".\ndecrypt ok\n");
@@ -571,7 +543,7 @@ RED_AUTO_TEST_CASE(TestVerifierMigratedEncrypted)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Input file is encrypted.\nNo error detected during the data verification.\n\nverify ok\n");
@@ -595,7 +567,7 @@ RED_AUTO_TEST_CASE(TestVerifier4714)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "");
@@ -622,7 +594,7 @@ RED_AUTO_TEST_CASE(TestVerifier7192)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
@@ -649,7 +621,7 @@ RED_AUTO_TEST_CASE(TestVerifier2510)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
@@ -913,7 +885,7 @@ RED_AUTO_TEST_CASE(TestVerifier1914MigratedNocryptHasChecksum)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "No error detected during the data verification.\n\nverify ok\n");
@@ -947,7 +919,7 @@ RED_AUTO_TEST_CASE(TestVerifier9904NocryptNochecksumV2Statinfo)
     RED_CHECK_EQUAL(true, true);
 
     int res = -1;
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     RED_CHECK_NO_THROW(res = do_main(argc, argv, hmac_2016_fn, trace_20161025_fn));
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "verify failed\n");
@@ -975,7 +947,7 @@ RED_AUTO_TEST_CASE(TestAppRecorder)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
@@ -1008,7 +980,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderVlc)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder.1.flva\".\n\n");
@@ -1039,7 +1011,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunk)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk.mwrm\".\n\n");
@@ -1257,7 +1229,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderChunkMeta)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-chunk-meta.mwrm\".\n\n");
@@ -1307,7 +1279,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-0.mwrm\".\n\n");
@@ -1352,7 +1324,7 @@ RED_AUTO_TEST_CASE(TestAppRecorderResize1)
     };
     int argc = sizeof(argv)/sizeof(char*);
 
-    CoutBuf cout_buf;
+    LOG__REDEMPTION__OSTREAM__BUFFERED cout_buf;
     int res = do_main(argc, argv, hmac_fn, trace_fn);
     EVP_cleanup();
     RED_CHECK_EQUAL(cout_buf.str(), "Output file is \"/tmp/recorder-resize-1.mwrm\".\n\n");

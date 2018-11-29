@@ -225,7 +225,17 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
 
 #ifdef REDEMPTION_DECL_LOG_TEST
 # include <string>
-bool & LOG__REDEMPTION__AS__LOGPRINT();
+struct LOG__REDEMPTION__OSTREAM__BUFFERED
+{
+    LOG__REDEMPTION__OSTREAM__BUFFERED();
+    ~LOG__REDEMPTION__OSTREAM__BUFFERED();
+    std::string str() const;
+
+private:
+    class D;
+    D * d;
+};
+
 struct LOG__REDEMPTION__BUFFERED
 {
     LOG__REDEMPTION__BUFFERED();
