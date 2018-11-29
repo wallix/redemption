@@ -964,37 +964,40 @@ public:
 
     void keyMapSym_event(int device_flags, long param1, uint8_t downflag) {
         this->keymapSym.event(device_flags, param1);
-        int key = this->keymapSym.get_sym();
+        uint32_t const key {this->keymapSym.get_sym()};
 
         if (key > 0) {
-            // #
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() && (key == 0x23
-                        || key == 0x7b                     // {
-                         || key == 0x5b                    // [
-                          || key == 0x7c                   // |
-                           || key == 0x60                  // `
-                            || key == 0x5c                 // \
-                             || key == 0x5e                // ^
-                              || key == 0x40               // @
-                               || key == 0x5d              // ]
-                                || key == 0x7d             // }
-                      )) {
-
-                          this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
-                          this->send_keyevent(downflag, key);
-                          this->send_keyevent(KeymapSym::KBDFLAGS_DOWN, 0xffe9);
+            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed()
+             && (key == '#'
+              || key == '{'
+              || key == '['
+              || key == '|'
+              || key == '`'
+              || key == '\\'
+              || key == '^'
+              || key == '@'
+              || key == ']'
+              || key == '}'
+            )) {
+                // TODO magic number
+                this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
+                this->send_keyevent(downflag, key);
+                this->send_keyevent(KeymapSym::KBDFLAGS_DOWN, 0xffe9);
             } else
             if (this->left_ctrl_pressed) {
+                // TODO magic number
                 if (key == 0xfe03) {
                     // alt gr => left ctrl is ignored
                     this->send_keyevent(downflag, key);
                 }
                 else {
+                    // TODO magic number
                     this->send_keyevent(1, 0xffe3);
                     this->send_keyevent(downflag, key);
                 }
                 this->left_ctrl_pressed = false;
             }
+            // TODO magic number
             else if (!((key == 0xffe3) && downflag)) {
                 this->send_keyevent(downflag, key);
             }
