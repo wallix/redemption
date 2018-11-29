@@ -75,15 +75,12 @@ static inline uint32_t lzcnt_s(uint32_t x)
 
 bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int16_t *pDstData, uint32_t dstSize)
 {
-    int vk;
     int run;
     int cnt;
     int size;
     int nbits;
     unsigned int offset;
     int16_t mag;
-    int k, kp;
-    int kr, krp;
     uint16_t code;
     uint32_t sign;
     uint32_t nIdx;
@@ -91,11 +88,11 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
     uint32_t val2;
     int16_t* pOutput;
 
-    k = 1;
-    kp = k << LSGR;
+    int k = 1;
+    int kp = k << LSGR;
 
-    kr = 1;
-    krp = kr << LSGR;
+    int kr = 1;
+    int krp = kr << LSGR;
 
     if ((mode != RLGR1) && (mode != RLGR3)) {
         mode = RLGR1;
@@ -125,7 +122,7 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
                 cnt = nbits;
             }
 
-            vk = cnt;
+            int vk = cnt;
 
             while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
                 bs.shift(32);
@@ -280,7 +277,7 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
                 cnt = nbits;
             }
 
-            vk = cnt;
+            int vk = cnt;
 
             while ((cnt == 32) && (bs.getRemainingLength() >= 32)) {
                 bs.shift(32);
@@ -437,10 +434,5 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
     }
 
     offset = static_cast<int>(pOutput - pDstData);
-
-    if (offset != dstSize) {
-        return false;
-    }
-
-    return true;
+    return offset == dstSize;
 }
