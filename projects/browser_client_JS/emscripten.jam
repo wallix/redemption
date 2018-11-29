@@ -5,9 +5,6 @@
 # This is a generic 'emscripten' toolset. Depending on the current system, it
 # forwards either to 'emscripten-unix' or 'emscripten-darwin' modules.
 
-import feature ;
-import os ;
-import toolset ;
 import generators ;
 import type ;
 import toolset : flags ;
@@ -23,23 +20,44 @@ generators.register-standard emscripten.objjs : CPP : OBJJS ;
 flags emscripten.objjs INCLUDES <include> ;
 flags emscripten.objjs CXXFLAGS <cxxflags> ;
 flags emscripten.objjs CFLAGS <cflags> ;
+flags emscripten.objjs DEFINE <define> ;
 
 rule objjs ( name : extra-sources * : requirements * )
 {
-  #  echo "rule objjs\n" $(name) $(extra-sources) $(requirements) ;
+    # echo "rule objjs\n" $(name) $(extra-sources) $(requirements) ;
 }
 
 
 actions objjs
 {
-    em++ -c $(CXXFLAGS) -I$(INCLUDES) $(2) -o $(1)
+    em++ -c $(CXXFLAGS) -I$(INCLUDES) -D$(DEFINE) $(2) -o $(1)
 }
 
 
-type.register exejs : js ;
-generators.register-composing emscripten.exejs : CPP OBJJS : exejs ;
+type.register EXEHTML : js ;
+generators.register-composing emscripten.exehtml : CPP OBJJS : EXEHTML ;
+flags emscripten.exehtml INCLUDES <include> ;
+flags emscripten.exehtml CXXFLAGS <cxxflags> ;
+flags emscripten.exehtml CFLAGS <cxxflags> ;
+flags emscripten.exehtml DEFINE <define> ;
+
+rule exehtml ( name : extra-sources * : requirements * )
+{
+   # echo "rule exehtml\n" $(name) $(extra-sources) $(requirements) ;
+}
+
+actions exehtml
+{
+    em++ $(CXXFLAGS) -I$(INCLUDES) -D$(DEFINE) $(2) -o $(1:S=.html)
+}
+
+
+type.register EXEJS : node ;
+generators.register-composing emscripten.exejs : CPP OBJJS : EXEJS ;
 flags emscripten.exejs INCLUDES <include> ;
 flags emscripten.exejs CXXFLAGS <cxxflags> ;
+flags emscripten.exejs CFLAGS <cxxflags> ;
+flags emscripten.exejs DEFINE <define> ;
 
 rule exejs ( name : extra-sources * : requirements * )
 {
@@ -48,7 +66,6 @@ rule exejs ( name : extra-sources * : requirements * )
 
 actions exejs
 {
-    em++ $(CXXFLAGS) -I$(INCLUDES) $(2) -o `perl -e '$f = @ARGV[0]; $f =~ s/js$/html/; print $f;' $(1)` 
+    em++ $(CXXFLAGS) -I$(INCLUDES) -D$(DEFINE) $(2) -o $(1:S=.js) && :>$(1)
 }
-
 

@@ -19,7 +19,7 @@ BEGINFILE {
     }
   }
 
-  if (/^\*\*\* No errors detected$|^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|\.o\.\.\.$|^In|^  "scan-build/)
+  if (/^\*\*\* No errors detected$|^\.\.\.skip|^Jamfile|^  *"ccache|^  *"clang|^ *"g\+\+d|^ *em\+\+|\.o\.\.\.$|^In|^  "scan-build/)
   {
     next
   }

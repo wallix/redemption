@@ -20,124 +20,153 @@
 
 #pragma once
 
+#include "utils/pp.hpp"
+
+#include <ostream>
+#include <string>
+
 #include <cstdio>
-#include <iostream>
-#include <vector>
 #include <cstring>
+
+#ifndef RED_TEST_MODULE
+# ifndef REDEMPTION_UNIT_TEST_CPP
+#   error Missing RED_TEST_MODULE
+# endif
+#endif
+
 
 #define REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()
 
-#define BOOST_AUTO_TEST_CASE(name) void name(); \
-struct TEST_ ## name {                          \
-    TEST_ ## name() {                           \
-        REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()  \
-        TESTS.add({"" #name, &name});           \
-    }                                           \
-} TEST_ ## name;                                \
-                                                \
-void name()
+#define RED_AUTO_TEST_CASE(name)                           \
+    namespace redemption_unit_test__ {                     \
+        void test_##name##__();                            \
+        struct TEST_##name##__ {                           \
+            TEST_##name##__() {                            \
+                REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()     \
+                ::redemption_unit_test__::                 \
+                    add_test_case(#name, test_##name##__); \
+            }                                              \
+        } TEST_##name##__;                                 \
+    }                                                      \
+    void redemption_unit_test__::test_##name##__()
 
-template<class T, class U>
-bool cmp(T const & x, U const & y) {
-	return x != y;
+
+
+namespace redemption_unit_test__
+{
+    template<class T>
+    T const& to_const(T& x) noexcept
+    {
+        return x;
+    }
+
+    template<class T>
+    T const* to_const(T* x) noexcept
+    {
+        return x;
+    }
+
+    template<class T1, class U1, class T2, class U2>
+    T1& select(T1& x, U1&, T2&, U2&)
+    {
+        return x;
+    }
+
+    inline std::string select(char const*, char const*, char const* x, char const*)
+    {
+        return x;
+    }
+
+    template<class T, class U>
+    decltype(auto) get_a(T& a, U& b)
+    {
+        return select(a, b, to_const(a), to_const(b));
+    }
 }
 
-inline bool cmp(char const * s1, char const * s2) {
-	return strcmp(s1, s2) != 0;
-}
-
-inline bool cmp(char * s1, char const * s2) {
-    return strcmp(s1, s2) != 0;
-}
-
-inline bool cmp(char const * s1, char * s2) {
-	return strcmp(s1, s2) != 0;
-}
-
-#define REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(m, cond, s) do { \
-    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                   \
-    if (cond) TESTS.success++;                               \
-    else {                                                   \
-        TESTS.failure++;                                     \
-        std::cerr                                            \
-          << "Test Failed at " STRINGIFY(__LINE__)           \
-          " in " << TESTS.current_name << ": " << s          \
-          << std::endl                                       \
-        ;                                                    \
-    }                                                        \
+#define REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(cond, s) do { \
+    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                \
+    if (!(cond)) {                                        \
+        ::redemption_unit_test__::failure();              \
+        ::redemption_unit_test__::get_output()            \
+            << __FILE__ "(" PP_STRINGIFY(__LINE__)        \
+               "): error: in \""                          \
+            << ::redemption_unit_test__::current_name()   \
+            << "\": " << s << std::endl                   \
+        ;                                                 \
+    }                                                     \
 } while (0)
 
 #define REDEMPTION_EMSCRIPTEN_CHECK(m, cond) \
-    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(m, cond, "check " STRINGIZE(#cond) " failed")
+    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(cond, "check " PP_STRINGIFY(#cond) " has failed")
 
-#define REDEMPTION_EMSCRIPTEN_CHECK_OP(m, op, x, y) do { \
-    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()               \
-    auto && TEST_x = (x);                                \
-    auto && TEST_y = (y);                                \
-    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                 \
-        m, TEST_x op TEST_y, "check " STRINGIZE(x) " "   \
-        #op " " STRINGIZE(y) " failed [" << TEST_x <<    \
-        " " #op " " << TEST_y << "]"                     \
-    );                                                   \
+#define REDEMPTION_EMSCRIPTEN_CHECK_OP(m, op, x, y) do {     \
+    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                   \
+    auto && x__ = (x);                                       \
+    auto && y__ = (y);                                       \
+    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                     \
+        ::redemption_unit_test__::get_a(x__, y__) op y__,    \
+        "check " PP_STRINGIFY(x) " " #op " " PP_STRINGIFY(y) \
+        " has failed [" << x__ << " " #op " " << y__ << "]"  \
+    );                                                       \
 } while (0)
 
 
-#define BOOST_CHECK(cond) REDEMPTION_EMSCRIPTEN_CHECK(CHECK, cond)
-#define BOOST_CHECK_MESSAGE(x, s) REDEMPTION_EMSCRIPTEN_CHECK(CHECK, x, s)
-#define BOOST_CHECK_EQUAL(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, ==, x, y)
-#define BOOST_CHECK_NE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, !=, x, y)
-#define BOOST_CHECK_LT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, <, x, y)
-#define BOOST_CHECK_LE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, <=, x, y)
-#define BOOST_CHECK_GT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, >, x, y)
-#define BOOST_CHECK_GE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, >=, x, y)
+#define RED_CHECK(cond) REDEMPTION_EMSCRIPTEN_CHECK(CHECK, cond)
+#define RED_CHECK_MESSAGE(x, s) REDEMPTION_EMSCRIPTEN_CHECK(CHECK, x, s)
+#define RED_CHECK_EQUAL(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, ==, x, y)
+#define RED_CHECK_EQ RED_CHECK_EQUAL
+#define RED_CHECK_NE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, !=, x, y)
+#define RED_CHECK_LT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, <, x, y)
+#define RED_CHECK_LE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, <=, x, y)
+#define RED_CHECK_GT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, >, x, y)
+#define RED_CHECK_GE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(CHECK, >=, x, y)
 
-#define BOOST_REQUIRE(cond) REDEMPTION_EMSCRIPTEN_CHECK(REQUIRE, cond)
-#define BOOST_REQUIRE_MESSAGE(x, s) REDEMPTION_EMSCRIPTEN_CHECK(REQUIRE, x, s)
-#define BOOST_REQUIRE_EQUAL(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, ==, x, y)
-#define BOOST_REQUIRE_NE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, !=, x, y)
-#define BOOST_REQUIRE_LT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, <, x, y)
-#define BOOST_REQUIRE_LE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, <=, x, y)
-#define BOOST_REQUIRE_GT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, >, x, y)
-#define BOOST_REQUIRE_GE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, >=, x, y)
+#define RED_REQUIRE(cond) REDEMPTION_EMSCRIPTEN_CHECK(REQUIRE, cond)
+#define RED_REQUIRE_MESSAGE(x, s) REDEMPTION_EMSCRIPTEN_CHECK(REQUIRE, x, s)
+#define RED_REQUIRE_EQUAL(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, ==, x, y)
+#define RED_REQUIRE_NE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, !=, x, y)
+#define RED_REQUIRE_LT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, <, x, y)
+#define RED_REQUIRE_LE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, <=, x, y)
+#define RED_REQUIRE_GT(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, >, x, y)
+#define RED_REQUIRE_GE(x, y) REDEMPTION_EMSCRIPTEN_CHECK_OP(REQUIRE, >=, x, y)
 
 
 #define REDEMPTION_EMSCRIPTEN_CHECK_EXCEPTION(m, statement, exception, predicate) do { \
-    try {                                                              \
-        statement;                                                     \
-        REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                           \
-            m, false,                                                  \
-            "exception " STRINGIZE(exception) " is expected"           \
-        );                                                             \
-    }                                                                  \
-    catch (exception & e__) {                                          \
-        BOOST_CHECK(predicate(e__));                                   \
-    }                                                                  \
-    catch (...) {                                                      \
-        TESTS.failure++;                                               \
-        REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                           \
-            m, false,                                                  \
-            "incorrect exception " STRINGIZE(exception) " is caught"   \
-        );                                                             \
-    }                                                                  \
+    try {                                                                              \
+        statement;                                                                     \
+        REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                                           \
+            false, "exception " PP_STRINGIFY(exception) " is expected"                 \
+        );                                                                             \
+    }                                                                                  \
+    catch (exception & e__) {                                                          \
+        RED_CHECK(predicate(e__));                                                     \
+    }                                                                                  \
+    catch (...) {                                                                      \
+        TESTS.failure++;                                                               \
+        REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                                           \
+            false, "incorrect exception " PP_STRINGIFY(exception) " is caught"         \
+        );                                                                             \
+    }                                                                                  \
 } while (0)
 
-#define BOOST_CHECK_EXCEPTION(statement, exception, predicate) \
+#define RED_CHECK_EXCEPTION(statement, exception, predicate) \
     REDEMPTION_EMSCRIPTEN_CHECK_EXCEPTION(CHECK, statement, exception, predicate)
-#define BOOST_CHECK_THROW(statement, exception) \
+#define RED_CHECK_THROW(statement, exception) \
     REDEMPTION_EMSCRIPTEN_CHECK_EXCEPTION(CHECK, statement, exception, [](exception const &){ return true; })
 
-#define BOOST_REQUIRE_EXCEPTION(statement, exception, predicate) \
+#define RED_REQUIRE_EXCEPTION(statement, exception, predicate) \
     REDEMPTION_EMSCRIPTEN_CHECK_EXCEPTION(REQUIRE, statement, exception, predicate)
 
-#define BOOST_REQUIRE_THROW(statement, exception) \
+#define RED_REQUIRE_THROW(statement, exception) \
     REDEMPTION_EMSCRIPTEN_CHECK_EXCEPTION(REQUIRE, statement, exception, [](exception const &){ return true; })
 
 #define CHECK_EXCEPTION_ERROR_ID(stmt, ErrId)   \
-    BOOST_CHECK_EXCEPTION(                      \
+    RED_CHECK_EXCEPTION(                        \
         stmt, Error,                            \
         [&](Error const & e) {                  \
             if (e.id == ErrId) {                \
-                BOOST_CHECK_EQUAL(e.id, ErrId); \
+                RED_CHECK_EQUAL(e.id, ErrId);   \
                 return true;                    \
             }                                   \
             LOG(LOG_ERR, "Exception=%d", e.id); \
@@ -161,65 +190,46 @@ inline bool cmp(char const * s1, char * s2) {
     REDEMPTION_EMSCRIPTEN_CHECK_OP(m, ==, *TEST_first2, *TEST_last2);                 \
 } while (0)
 
-#define BOOST_CHECK_EQUAL_COLLECTIONS(beg1, end1, beg2, end2) \
+#define RED_CHECK_EQUAL_COLLECTIONS(beg1, end1, beg2, end2) \
     REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_COLLECTIONS(CHECK, beg1, end1, beg2, end2)
 
-#define BOOST_REQUIRE_EQUAL_COLLECTIONS(beg1, end1, beg2, end2) \
+#define RED_REQUIRE_EQUAL_COLLECTIONS(beg1, end1, beg2, end2) \
     REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_COLLECTIONS(REQUIRE, beg1, end1, beg2, end2)
 
 
 #define REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_RANGES(m, a, b) \
-    do {                                                   \
-        auto const & A__CHECK_RANGES = a;                  \
-        auto const & B__CHECK_RANGES = b;                  \
-        using std::begin;                                  \
-        using std::end;                                    \
-        REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_COLLECTIONS(     \
-            m,                                             \
-            begin(A__CHECK_RANGES), end(A__CHECK_RANGES),  \
-            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)   \
-        );                                                 \
+    do {                                                  \
+        auto const & A__CHECK_RANGES = a;                 \
+        auto const & B__CHECK_RANGES = b;                 \
+        using std::begin;                                 \
+        using std::end;                                   \
+        REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_COLLECTIONS(    \
+            m,                                            \
+            begin(A__CHECK_RANGES), end(A__CHECK_RANGES), \
+            begin(B__CHECK_RANGES), end(B__CHECK_RANGES)  \
+        );                                                \
     } while (0)
 
-#define BOOST_CHECK_EQUAL_RANGES(a, b) \
+#define RED_CHECK_EQUAL_RANGES(a, b) \
     REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_RANGES(CHECK, a, b)
 
-#define BOOST_REQUIRE_EQUAL_RANGES(a_, b_) \
+#define RED_REQUIRE_EQUAL_RANGES(a_, b_) \
     REDEMPTION_EMSCRIPTEN_CHECK_EQUAL_RANGES(REQUIRE, a, b)
 
 
-#ifdef BOOST_AUTO_TEST_MAIN
-struct TESTS {
-    struct item {
-        const char * name;
-        void (*fn)();
-    };
-    std::vector<item> tests;
-    int success = 0;
-    int failure = 0;
-    const char * current_name;
+namespace redemption_unit_test__
+{
+    void add_test_case(char const* name, void(*fn)());
+    int execute_tests(char const* module_name);
 
-    void add(item item){
-        this->tests.push_back(item);
-    }
-} TESTS;
+    char const* current_name() noexcept;
+    void failure() noexcept;
+    std::ostream& get_output() noexcept;
+}
 
-#define STRINGIFY_I(x) #x
-#define STRINGIFY(x) STRINGIFY_I(x)
-#define MODULE_NAME(x) printf("Running test suite " STRINGIFY(x) "\n");
-
-int main(){
-    MODULE_NAME(BOOST_TEST_MODULE);
-    for (auto& item: TESTS.tests){
-        printf("Running test %s\n", item.name);
-        TESTS.current_name = item.name;
-        item.fn();
-    }
-    printf("%d tests succeeded, %d tests failed\n",
-        TESTS.success, TESTS.failure);
-    if (TESTS.failure > 0) {
-        return -1;
-    }
-    return 0;
+#ifndef REDEMPTION_UNIT_TEST_CPP
+int main()
+{
+    return ::redemption_unit_test__::execute_tests(PP_STRINGIFY(RED_TEST_MODULE));
 }
 #endif

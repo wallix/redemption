@@ -18,39 +18,205 @@
 *   Author(s): Jonathan Poelen
 */
 
-#include "utils/log.hpp"
-
-#include <cstdarg>
-
-#ifndef __EMSCRIPTEN__
-# define EM_ASM_(...)
+#ifndef REDEMPTION_DECL_LOG_TEST
+# define REDEMPTION_DECL_LOG_TEST
 #endif
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int /*priority*/, char const * format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    char buffer[4096];
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-    int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
-    REDEMPTION_DIAGNOSTIC_POP
-    va_end(ap);
+#include "cxx/diagnostic.hpp"
+#include "cxx/compiler_version.hpp"
+REDEMPTION_DIAGNOSTIC_PUSH
+#if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
+#endif
+#include "utils/log.hpp"
+REDEMPTION_DIAGNOSTIC_POP
 
-    buffer[len] = '\n';
-    buffer[len+1] = 0;
-    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
+#include <iostream>
+#include <sstream>
+
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+
+#include <emscripten.h>
+
+
+namespace
+{
+    std::string log_buf = {};
+    bool enable_buf_log = false;
+# ifndef NDEBUG
+    bool previous_is_line_marker = false;
+
+    bool is_log_filename(int priority) noexcept
+    {
+        // see LOG_FILENAME
+        if (priority != LOG_INFO && priority != LOG_DEBUG) {
+            if (!previous_is_line_marker) {
+                previous_is_line_marker = true;
+                return true;
+            }
+            previous_is_line_marker = false;
+        }
+        return false;
+    }
+# else
+    constexpr bool is_log_filename(int /*priority*/) noexcept
+    {
+        return false;
+    }
+# endif
+
+    bool is_enabled_log_print()
+    {
+        static bool logprint = []{
+            auto s = std::getenv("REDEMPTION_LOG_PRINT");
+            return s && s[0] == '1';
+        }();
+        return logprint;
+    }
+} // namespace
+
+
+struct LOG__REDEMPTION__OSTREAM__BUFFERED::D
+{
+    D()
+    : oldbuf(std::cout.rdbuf(&sbuf))
+    , oldbuf_cerr(is_enabled_log_print() ? std::cerr.rdbuf(nullptr) : nullptr)
+    {
+    }
+
+    ~D()
+    {
+        std::cout.rdbuf(oldbuf);
+        if (oldbuf_cerr) {
+            std::cerr.rdbuf(oldbuf_cerr);
+        }
+    }
+
+    std::string str() const
+    {
+        std::cout.rdbuf(oldbuf);
+        return sbuf.str();
+    }
+
+private:
+    std::stringbuf sbuf;
+    std::streambuf * oldbuf;
+    std::streambuf * oldbuf_cerr;
+};
+
+
+LOG__REDEMPTION__OSTREAM__BUFFERED::LOG__REDEMPTION__OSTREAM__BUFFERED()
+  : d(new D)
+{}
+
+LOG__REDEMPTION__OSTREAM__BUFFERED::~LOG__REDEMPTION__OSTREAM__BUFFERED()
+{
+    delete d;
 }
 
-void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...)
+std::string LOG__REDEMPTION__OSTREAM__BUFFERED::str() const
 {
-    (void)priority;
-    va_list ap;
-    char buffer[4096];
-    va_start(ap, format);
-    int len = snprintf(buffer, sizeof(buffer)-2, format, args...);
-    va_end(ap);
-    buffer[len] = '\n';
-    buffer[len+1] = 0;
-    EM_ASM_({console.log(Pointer_stringify($0));}, buffer);
+    return d->str();
+}
+
+
+LOG__REDEMPTION__BUFFERED::LOG__REDEMPTION__BUFFERED()
+{
+    log_buf.clear();
+    enable_buf_log = true;
+}
+
+LOG__REDEMPTION__BUFFERED::~LOG__REDEMPTION__BUFFERED()
+{
+    enable_buf_log = false;
+}
+
+std::string const& LOG__REDEMPTION__BUFFERED::buf() const
+{
+    return log_buf;
+}
+
+void LOG__REDEMPTION__BUFFERED::clear()
+{
+    log_buf.clear();
+}
+
+
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
+{
+    if (enable_buf_log) {
+        if (is_log_filename(priority)) {
+            return ;
+        }
+        va_list ap;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        va_start(ap, format);
+        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
+        va_end(ap);
+        log_buf.resize(log_buf.size() + sz);
+        va_start(ap, format);
+        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
+        va_end(ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        log_buf.back() = '\n';
+
+        // replace "priority (31905/31905) -- message" by "priority - message"
+        auto p = log_buf.find('(', log_buf.size() - sz + 5);
+        auto e = log_buf.find('-', p);
+        log_buf.replace(p, e-p+2, "-");
+    }
+    else if (is_enabled_log_print())
+    {
+        va_list ap;
+        va_start(ap, format);
+        char buffer[4096];
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        va_end(ap);
+
+        buffer[len] = '\n';
+        buffer[len+1] = 0;
+        EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+    }
+}
+
+void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
+{
+    if (enable_buf_log) {
+        if (is_log_filename(priority)) {
+            return ;
+        }
+        va_list ap;
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        va_start(ap, format);
+        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
+        va_end(ap);
+        log_buf.resize(log_buf.size() + sz);
+        va_start(ap, format);
+        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
+        va_end(ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        log_buf.back() = '\n';
+    }
+    else if (is_enabled_log_print())
+    {
+        va_list ap;
+        va_start(ap, format);
+        char buffer[4096];
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+        int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
+        REDEMPTION_DIAGNOSTIC_POP
+        va_end(ap);
+
+        buffer[len] = '\n';
+        buffer[len+1] = 0;
+        EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+    }
 }

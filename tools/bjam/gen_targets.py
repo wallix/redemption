@@ -529,7 +529,8 @@ def generate(type, files, requirements, get_target_cb = get_target):
 
         print(type, ' ', mark_target(target), ' :\n  ', src, '\n:', sep='')
 
-        deps = sorted(set(deps))
+        # <library> following by <...other...>
+        deps = sorted(set(deps), key=lambda s: s if s.startswith('<library>') else 'Z'+s)
 
         if f.path in remove_requirements:
             l = remove_requirements[f.path]
