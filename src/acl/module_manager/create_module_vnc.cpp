@@ -112,6 +112,7 @@ void ModuleManager::create_mod_vnc(
             ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
             report_message,
             ini.get<cfg::mod_vnc::server_is_apple>(),
+            true,
             (client_info.remote_program ? &client_execute : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),

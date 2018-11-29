@@ -410,7 +410,7 @@ public:
               , info.c_str());
         }
 
-        if (bool(this->verbose & Verbose::arcsight)) {
+        if (this->ini.get<cfg::session_log::enable_arcsight_log>()) {
 
             auto const& target_ip    = (isdigit(this->ini.get<cfg::context::target_host>()[0])
                 ? this->ini.get<cfg::context::target_host>()

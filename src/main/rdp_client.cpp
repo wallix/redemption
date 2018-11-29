@@ -201,6 +201,7 @@ int main(int argc, char** argv)
               , "16, 2, 0, 1,-239"    /* encodings: Raw,CopyRect,Cursor pseudo-encoding */
               , report_message
               , false
+              , false          /*remove_server_alt_state_for_char*/
               , nullptr
               , ini
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace

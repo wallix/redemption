@@ -48,6 +48,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     const char * encodings,
     ReportMessageApi& report_message,
     bool server_is_apple,
+    bool send_alt_ksym, 
     ClientExecute* client_execute,
     ModVncVariables vars,
     VNCVerbose verbose,

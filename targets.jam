@@ -189,61 +189,6 @@ exe rdpproxy :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-exe rdpheadless :
-  src/main/rdpheadless.o
-:
-  $(EXE_DEPENDENCIES)
-  <include>$(REDEMPTION_TEST_PATH)/includes
-  <library>app_path_exe.o
-  <library>boost_stacktrace
-  <library>crypto
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/rdp/new_mod_rdp.o
-  <library>src/mod/rdp/rdp.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/mod/vnc/new_mod_vnc.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/d3des.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/netutils.o
-  <library>src/utils/rle.o
-  <library>src/utils/set_exception_handler_pretty_message.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
-;
 exe rdpinichecker :
   src/main/ini_checker.o
 :
@@ -5638,7 +5583,6 @@ obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-obj src/main/rdpheadless.o : $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;

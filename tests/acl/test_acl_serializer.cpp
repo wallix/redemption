@@ -316,6 +316,7 @@ RED_AUTO_TEST_CASE(TestAclSerializeLog)
     ini.set_acl<cfg::globals::auth_user>("admin");
     ini.set_acl<cfg::globals::target_user>("user1");
     ini.set_acl<cfg::globals::host>("10.10.13.12");
+    ini.set<cfg::session_log::enable_arcsight_log>(true);
 //     ini.set_acl<cfg::globals::target_host>("13.12.10.10");
 //     ini.set_acl<cfg::globals::ip_target>("13.12.10.10");
 //     ini.set_acl<cfg::globals::session_id>("0x520");
