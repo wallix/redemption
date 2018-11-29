@@ -53,8 +53,8 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
     // Load decompressed_rd5_data
     #include "fixtures/test_mppc_TestMPPC_enc.hpp"
 
-    const uint8_t * rdata;
-    uint32_t        rlen;
+    const uint8_t * rdata = nullptr;
+    uint32_t        rlen = 0;
 
     /* setup decoder */
     rdp_mppc_unified_dec rmppc_d;
@@ -65,8 +65,8 @@ RED_AUTO_TEST_CASE(TestMPPC_enc)
 
     int data_len = sizeof(decompressed_rd5_data);
 
-    uint8_t  compressionFlags;
-    uint16_t datalen;
+    uint8_t  compressionFlags = 0;
+    uint16_t datalen          = 0;
 
     enc.compress(decompressed_rd5_data, data_len, compressionFlags, datalen,
         rdp_mppc_enc::MAX_COMPRESSED_DATA_SIZE_UNUSED);

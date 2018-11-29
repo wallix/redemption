@@ -745,16 +745,9 @@ private:
         uint8_t & compressedType , uint16_t & compressed_data_size, uint16_t /*reserved*/) override
     {
         this->compress_61(uncompressed_data, uncompressed_data_size);
-
-        if (this->bytes_in_output_buffer) {
-            compressedType       = (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61);
-            compressed_data_size = 2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
-                                   this->bytes_in_output_buffer;
-        }
-        else {
-            compressedType       = 0;
-            compressed_data_size = 0;
-        }
+        compressedType       = (this->bytes_in_output_buffer) ? (PACKET_COMPRESSED | PACKET_COMPR_TYPE_RDP61) : 0;
+        compressed_data_size = (this->bytes_in_output_buffer) ? 2 + // Level1ComprFlags(1) + Level2ComprFlags(1)
+                                                              this->bytes_in_output_buffer                    : 0;
     }
 
 public:

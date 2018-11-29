@@ -979,14 +979,8 @@ private:
         uint8_t & compressedType, uint16_t & compressed_data_size, uint16_t /*reserved*/) override
     {
         this->compress_60(uncompressed_data, uncompressed_data_size);
-        if (this->flags & PACKET_COMPRESSED) {
-            compressedType       = this->flags;
-            compressed_data_size = this->bytes_in_opb;
-        }
-        else {
-            compressedType       = 0;
-            compressed_data_size = 0;
-        }
+        compressedType       = (this->flags & PACKET_COMPRESSED) ? this->flags        : 0;
+        compressed_data_size = (this->flags & PACKET_COMPRESSED) ? this->bytes_in_opb : 0;
     }
 
 public:

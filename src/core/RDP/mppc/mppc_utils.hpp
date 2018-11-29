@@ -85,7 +85,7 @@ class rdp_mppc_enc_hash_table_manager
 {
     static const uint32_t MAX_HASH_TABLE_ELEMENT = 65536;
 
-    T hash_table[MAX_HASH_TABLE_ELEMENT];
+    T hash_table[MAX_HASH_TABLE_ELEMENT]= {};
 
 public:    
     using hash_type = uint16_t;
@@ -94,25 +94,20 @@ private:
     struct UndoCell {
         hash_type hash;
         T         hash_offset;
-    } undo_buffer[MAX_UNDO_ELEMENT];
+    } undo_buffer[MAX_UNDO_ELEMENT] = {};
     
     size_t undo_index = 0;
-
-    const unsigned int length_of_data_to_sign;
-
-    const unsigned int undo_element_size;
 
 public:
 
     rdp_mppc_enc_hash_table_manager()
-        : length_of_data_to_sign(LENGTH_OF_DATA_TO_SIGN)
-        , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
         this->undo_index = 0;
     }
 
     inline void initialize_hash_table(const uint8_t * hash_table_byte_data)
     {
+        this->undo_index = 0;
         ::memcpy(this->hash_table, hash_table_byte_data, this->get_table_size());
     }
 
@@ -127,7 +122,7 @@ public:
 
     constexpr static size_t get_table_size()
     {
-        return MAX_HASH_TABLE_ELEMENT * sizeof(T);
+        return sizeof(rdp_mppc_enc_hash_table_manager::hash_table);
     }
 
     inline hash_type sign(const uint8_t * data)
@@ -169,7 +164,7 @@ public:
         };
 
         hash_type crc = 0xFFFF;
-        for (unsigned int index = 0; index < length_of_data_to_sign; index++) {
+        for (unsigned int index = 0; index < LENGTH_OF_DATA_TO_SIGN; index++) {
             crc = (crc >> 8) ^ crc_table[(crc ^ data[index]) & 0xff];
         }
         return crc;
@@ -193,7 +188,6 @@ public:
     inline void reset()
     {
         ::memset(this->hash_table, 0, this->get_table_size());
-
         this->undo_index = 0;
     }
 
