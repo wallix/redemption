@@ -8,7 +8,7 @@
 
 enum authid_t : unsigned;
 
-inline authid_t MAX_AUTHID = authid_t(149);
+inline authid_t MAX_AUTHID = authid_t(150);
 
 constexpr array_view_const_char const authstr[] = {
     "capture_chunk"_av,
@@ -80,6 +80,7 @@ constexpr array_view_const_char const authstr[] = {
     "vnc_server_clipboard_encoding_type"_av,
     "vnc_bogus_clipboard_infinite_loop"_av,
     "server_is_apple"_av,
+    "server_unix_alt"_av,
     "replay_on_loop"_av,
     "rt_display"_av,
     "encryption_key"_av,

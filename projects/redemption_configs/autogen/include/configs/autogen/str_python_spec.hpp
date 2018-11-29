@@ -620,6 +620,9 @@
 "#_hidden\n"
 "server_is_apple = boolean(default=False)\n\n"
 
+"#_hidden\n"
+"server_unix_alt = boolean(default=False)\n\n"
+
 "[mod_replay]\n\n"
 
 "# 0 - Wait for Escape, 1 - End session\n"
