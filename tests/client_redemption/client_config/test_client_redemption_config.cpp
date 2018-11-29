@@ -949,8 +949,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-//
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "/tmp/TestClientRedemptionConfigWriteWindowsData");
+
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
 
     config.windowsData.form_x   = 1;
     config.windowsData.form_y   = 2;
@@ -967,7 +967,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
         "screen_x 3\n"
         "screen_y 4\n";
 
-    RED_CHECK_EQUAL(get_file_contents("/tmp/TestClientRedemptionConfigWriteWindowsData/DATA/config/windows_config.config"), expected_data);
+    RED_CHECK_EQUAL(get_file_contents(wd.path_of("DATA/config/windows_config.config")), expected_data);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/",
