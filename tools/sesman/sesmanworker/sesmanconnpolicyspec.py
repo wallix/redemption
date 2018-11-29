@@ -58,5 +58,6 @@ cp_spec = {
 },
   'vnc': {
     u'server_is_apple': 'server_is_apple',
+    u'server_unix_alt': 'server_unix_alt',
   },
 }

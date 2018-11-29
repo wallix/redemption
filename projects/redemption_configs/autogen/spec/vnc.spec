@@ -23,3 +23,5 @@ vault_transformation_rule = string(default='')
 
 server_is_apple = boolean(default=False)
 
+server_unix_alt = boolean(default=False)
+
