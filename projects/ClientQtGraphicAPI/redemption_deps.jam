@@ -112,3 +112,4 @@ add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/wi
 add_obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 add_obj src/utils/netutils.o : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 add_obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
+
