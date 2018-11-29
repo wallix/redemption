@@ -24,7 +24,6 @@
 #include "core/RDP/mppc/mppc_utils.hpp"
 #include "core/RDP/mppc/mppc_50.hpp"
 #include "utils/stream.hpp"
-#include "utils/sugar/cast.hpp"
 
 #include <type_traits> // std::is_base_of
 
