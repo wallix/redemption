@@ -35,6 +35,10 @@ void hexdump_av(const_bytes_view data, unsigned line_length = 16);
 void hexdump_d(const_byte_ptr data, size_t size, unsigned line_length = 16);
 void hexdump_av_d(const_bytes_view data, unsigned line_length = 16);
 
+// also available for 16 bits items arrays, size in bytes and must be even
+void hexdump16_d(const uint16_t * data, size_t size);
+
+
 /**
  *  hexdump for c++ raw string.
  *  "\\x23\\x53"
