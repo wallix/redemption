@@ -24,7 +24,7 @@ JAM_INCLUDE_PATH ?= jam ;
 #
 # $ `bjam install`
 #
-# Binaries are located in `/usr/local/bin`.
+# Binaries are located by default in `/usr/local/bin`.
 #
 # ## Tests
 #

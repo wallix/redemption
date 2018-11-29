@@ -27,12 +27,15 @@ To compile ReDemPtion you need the following packages:
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
-Extra packet:
-- libboost-stacktrace-dev (only if -sBOOST_STACKTRACE=1)
-
-
 ```sh
 apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng12-dev
+```
+
+Extra packet:
+- libboost-stacktrace-dev (only with `-sBOOST_STACKTRACE=1`)
+
+```sh
+apt install libboost-stacktrace-dev
 ```
 
 Submodule ($ `git submodule update --init`):
@@ -70,7 +73,7 @@ And set environment variable (optionally)
 
 ### Note:
 
-Disable ffmpeg with `NO_FFMPEG=1`.
+Disable ffmpeg with `-sNO_FFMPEG=1`.
 
 
 ## Environment variable setting
@@ -122,7 +125,10 @@ and install (as administrator):
 
 \# `bjam install`
 
-Binaries are located in `/usr/local/bin`.
+Binaries are located by default in `/usr/local/bin`.
+
+
+Use `bjam --help` for more information.
 
 
 ## Modes and options
