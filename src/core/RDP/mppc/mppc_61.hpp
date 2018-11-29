@@ -351,11 +351,6 @@ public:
         return true;
     }
 
-//    void dump() override
-//    {
-//        LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
-//    }
-
     void mini_dump() override
     {
         LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
@@ -368,8 +363,6 @@ struct rdp_mppc_enc_match_finder
     StaticOutStream<65536> match_details_stream;
 
     virtual ~rdp_mppc_enc_match_finder() = default;
-
-//    virtual void dump(bool mini_dump) const = 0;
 
     /**
      * @param historyOffset HistoryOffset before data compression.
@@ -384,12 +377,6 @@ struct rdp_mppc_enc_match_finder
 
 struct rdp_mppc_61_enc_sequential_search_match_finder : public rdp_mppc_enc_match_finder
 {
-//    void dump(bool mini_dump) const override
-//    {
-//        (void)mini_dump;
-//        LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder sequential search match finder");
-//    }
-
     inline void get_match_length(const uint8_t * output_data, uint16_t output_data_size,
         const uint8_t * history_data, uint32_t history_data_size, uint16_t & MatchLength,
         uint32_t & MatchHistoryOffset)
@@ -484,14 +471,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
     hash_table_manager hash_tab_mgr;
 
     rdp_mppc_61_enc_hash_based_match_finder()
-        : hash_tab_mgr()
     {}
-
-//    void dump(bool mini_dump) const  override
-//    {
-//        LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor encoder hash-based match finder");
-//        this->hash_tab_mgr.dump(mini_dump);
-//    }
 
     void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
         uint16_t uncompressed_data_size) override
@@ -779,23 +759,6 @@ private:
     }
 
 public:
-//    void dump(bool mini_dump) const override
-//    {
-//        LOG(LOG_INFO, "Type=RDP 6.1 bulk compressor");
-//        LOG(LOG_INFO, "historyBuffer");
-//        hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_61_HISTORY_BUFFER_LENGTH));
-//        LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
-//        LOG(LOG_INFO, "level1OutputBuffer");
-//        hexdump_d(this->level_1_output_buffer, (mini_dump ? 16 : RDP_61_COMPRESSOR_OUTPUT_BUFFER_SIZE));
-//        LOG(LOG_INFO, "level_1_compressed_data_size=%u", this->level_1_compressed_data_size);
-//        LOG(LOG_INFO, "level_1_compr_flags_hold=0x%02X", this->level_1_compr_flags_hold);
-//        LOG(LOG_INFO, "Level1ComprFlags=0x%02X", this->Level1ComprFlags);
-//        LOG(LOG_INFO, "Level2ComprFlags=0x%02X", this->Level2ComprFlags);
-
-//        this->level_2_compressor.dump(mini_dump);
-
-//        this->match_finder.dump(mini_dump);
-//    }
 
     void get_compressed_data(OutStream & stream) const override
     {

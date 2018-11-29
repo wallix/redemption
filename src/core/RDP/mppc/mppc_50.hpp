@@ -52,15 +52,6 @@ struct rdp_mppc_50_dec : public rdp_mppc_dec
         LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
     }
 
-//    void dump() override
-//    {
-//        LOG(LOG_INFO, "Type=RDP 5.0 bulk decompressor");
-//        LOG(LOG_INFO, "historyBuffer");
-//        hexdump_d(this->history_buf,               RDP_50_HIST_BUF_LEN);
-//        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
-//        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
-//    }
-
     /**
      * decompress RDP 5 data
      *
@@ -501,28 +492,7 @@ struct rdp_mppc_50_enc : public rdp_mppc_enc
         , outputBuffer(this->outputBufferPlus + 64)  /* contains compressed data */
         , outputBufferPlus{0}
         , outputBufferSize(RDP_50_HIST_BUF_LEN - 1)
-        ,           hash_tab_mgr()
     {}
-
-//    void dump(bool mini_dump) const override
-//    {
-//        LOG(LOG_INFO, "Type=RDP 5.0 bulk compressor");
-//        LOG(LOG_INFO, "historyBuffer");
-//        hexdump_d(this->historyBuffer, (mini_dump ? 16 : RDP_50_HIST_BUF_LEN));
-//        if (mini_dump) {
-//            LOG(LOG_INFO, "outputBuffer");
-//            hexdump_d(this->outputBuffer, 16);
-//        }
-//        LOG(LOG_INFO, "outputBufferPlus");
-//        hexdump_d(this->outputBufferPlus, (mini_dump ? 16 : RDP_50_HIST_BUF_LEN + 64 + 8));
-//        LOG(LOG_INFO, "historyOffset=%u", this->historyOffset);
-//        LOG(LOG_INFO, "bytes_in_opb=%u", this->bytes_in_opb);
-//        LOG(LOG_INFO, "flags=0x%02X", this->flags);
-//        LOG(LOG_INFO, "flagsHold=0x%02X", this->flagsHold);
-//        LOG(LOG_INFO, "first_pkt=%s", (this->first_pkt ? "true" : "false"));
-
-//        this->hash_tab_mgr.dump(mini_dump);
-//    }
 
 // 3.1.8.4.2 RDP 5.0
 // =================

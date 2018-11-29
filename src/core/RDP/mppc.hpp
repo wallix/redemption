@@ -437,7 +437,6 @@ public:
 
     virtual void mini_dump() = 0;
 
-//    virtual void dump() = 0;
 };
 
 

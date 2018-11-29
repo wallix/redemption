@@ -93,11 +93,10 @@ public:
 private:
     struct UndoCell {
         hash_type hash;
-        T         hash_hash;
-    } undo_buffer_begin[MAX_UNDO_ELEMENT];
+        T         hash_offset;
+    } undo_buffer[MAX_UNDO_ELEMENT];
     
-    UndoCell * undo_buffer_end = nullptr;
-    UndoCell * undo_buffer_current = nullptr;
+    size_t undo_index = 0;
 
     const unsigned int length_of_data_to_sign;
 
@@ -109,8 +108,7 @@ public:
         : length_of_data_to_sign(LENGTH_OF_DATA_TO_SIGN)
         , undo_element_size(sizeof(hash_type) + sizeof(T))
     {
-        this->undo_buffer_end     = &this->undo_buffer_begin[MAX_UNDO_ELEMENT];
-        this->undo_buffer_current = &this->undo_buffer_begin[0];
+        this->undo_index = 0;
     }
 
     inline void initialize_hash_table(const uint8_t * hash_table_byte_data)
@@ -119,15 +117,8 @@ public:
     }
 
     inline void clear_undo_history() {
-        this->undo_buffer_current = &this->undo_buffer_begin[0];
+        this->undo_index = 0;
     }
-
-//    void dump(bool mini_dump) const
-//    {
-//        LOG(LOG_INFO, "Type=RDP X.X bulk compressor hash table manager");
-//        LOG(LOG_INFO, "hashTable");
-//        hexdump_d(byte_ptr_cast(this->hash_table.get()), (mini_dump ? 16 : get_table_size())); /*NOLINT*/
-//    }
 
     inline T get_offset(hash_type hash) const
     {
@@ -186,12 +177,10 @@ public:
 
     inline void update(hash_type hash, T offset)
     {
-        if (this->undo_buffer_current != this->undo_buffer_end) {
-            this->undo_buffer_current->hash = hash;
-            this->undo_buffer_current->hash_hash =  hash_table[hash];
-            //*this->undo_buffer_current = hash;
-            //*(this->undo_buffer_current + sizeof(hash_type)) = this->get_offset(hash);
-            this->undo_buffer_current++;
+        if (this->undo_index < MAX_UNDO_ELEMENT) {
+            this->undo_buffer[this->undo_index].hash      = hash;
+            this->undo_buffer[this->undo_index].hash_offset = this->get_offset(hash);
+            this->undo_index++;
         }
         this->hash_table[hash] = offset;
     }
@@ -205,18 +194,18 @@ public:
     {
         ::memset(this->hash_table, 0, this->get_table_size());
 
-        this->undo_buffer_current = &this->undo_buffer_begin[0];
+        this->undo_index = 0;
     }
 
     inline bool undo_last_changes()
     {
-        if (this->undo_buffer_current == this->undo_buffer_end) {
+        if (this->undo_index == MAX_UNDO_ELEMENT) {
             return false;
         }
 
-        while (this->undo_buffer_current != this->undo_buffer_begin) {
-            this->undo_buffer_current--;
-            this->hash_table[this->undo_buffer_current->hash] = this->undo_buffer_current->hash_hash;
+        while (this->undo_index != 0) {
+            this->undo_index--;
+            this->hash_table[this->undo_buffer[this->undo_index].hash] = this->undo_buffer[this->undo_index].hash_offset;
         }
 
         return true;
