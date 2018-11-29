@@ -26,7 +26,7 @@
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
 #include "utils/stream.hpp"
-#include "system/linux/system/ssl_sha256.hpp"
+#include "system/ssl_sha256.hpp"
 
 #include <map>
 #include <vector>

@@ -49,7 +49,11 @@ public:
 
     void final(uint8_t (&out_data)[DIGEST_LENGTH])
     {
-        //assert(MD5_DIGEST_LENGTH == out_data_size);
+        this->md5_sum(out_data);
+    }
+
+    void unchecked_final(uint8_t * out_data)
+    {
         this->md5_sum(out_data);
     }
 

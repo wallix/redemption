@@ -20,8 +20,10 @@
 
 #pragma once
 
-#include <string>
 #include "utils/sugar/noncopyable.hpp"
+#include <string>
+
+#include <sys/time.h> // timeval
 
 
 struct ArcsightLogInfo {

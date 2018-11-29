@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include "system/linux/system/ssl_sha256.hpp"
+#include "system/ssl_sha256.hpp"
 #include "gdi/screen_info.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/cast.hpp"

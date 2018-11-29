@@ -20,6 +20,7 @@
    Unit test to RDP OffScreenCache object
    Using lib boost functions for testing
 */
+#define RED_TEST_MODULE CapabilityOffScreenCacheEmit
 
 #include "system/redemption_unit_tests.hpp"
 

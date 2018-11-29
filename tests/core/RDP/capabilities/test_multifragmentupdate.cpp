@@ -20,6 +20,7 @@
    Unit test to RDP MultiFragmentUpdate object
    Using lib boost functions for testing
 */
+#define RED_TEST_MODULE CapabilityMultiFragmentUpdateEmit
 
 #include "system/redemption_unit_tests.hpp"
 

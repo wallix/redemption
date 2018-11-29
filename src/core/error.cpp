@@ -223,9 +223,9 @@ const char * Error::errmsg(bool with_id) const noexcept
         return "The computer that you are trying to connect to is redirecting you to another computer.";
 
     default:
-        #define MAKE_CASE_V(e, x) case e:                 \
-            return with_id                                \
-                ? "Exception " #e " no: " PP_STRINGIFY(x) \
+        #define MAKE_CASE_V(e, x) case e:                     \
+            return with_id                                    \
+                ? "Exception " #e " no: " RED_PP_STRINGIFY(x) \
                 : "Exception " #e;
 #if __cplusplus >= REDEMPTION_CXX_STD_17
         using namespace jln::literals;

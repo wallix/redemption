@@ -33,17 +33,17 @@ inline char const* redemption_info_version() noexcept
     return "ReDemPtion " VERSION
     #ifdef __clang__
         " (clang "
-        PP_STRINGIFY(__clang_major__) "."
-        PP_STRINGIFY(__clang_minor__) "."
-        PP_STRINGIFY(__clang_patchlevel__)
+        RED_PP_STRINGIFY(__clang_major__) "."
+        RED_PP_STRINGIFY(__clang_minor__) "."
+        RED_PP_STRINGIFY(__clang_patchlevel__)
         ")"
     #elif defined __GNUC__
         " (gcc "
-        PP_STRINGIFY(__GNUC__) "."
-        PP_STRINGIFY(__GNUC_MINOR__)
+        RED_PP_STRINGIFY(__GNUC__) "."
+        RED_PP_STRINGIFY(__GNUC_MINOR__)
         # ifdef __GNUC_PATCHLEVEL__
         "."
-        PP_STRINGIFY(__GNUC_PATCHLEVEL__)
+        RED_PP_STRINGIFY(__GNUC_PATCHLEVEL__)
         # endif
         ")"
     #endif

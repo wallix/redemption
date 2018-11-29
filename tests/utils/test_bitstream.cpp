@@ -20,6 +20,7 @@
    Unit test for bistream
    Using lib boost functions for testing
 */
+#define RED_TEST_MODULE BitStream
 
 #include "system/redemption_unit_tests.hpp"
 

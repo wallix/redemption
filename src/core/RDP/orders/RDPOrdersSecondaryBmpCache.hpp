@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/colors.hpp"
 #include "utils/bitmap.hpp"

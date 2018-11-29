@@ -1,5 +1,11 @@
 #pragma once
 
+#ifndef REDEMPTION_UNIT_TEST_CPP
+# ifndef RED_TEST_MODULE
+#   error Missing RED_TEST_MODULE
+# endif
+#endif
+
 #define BOOST_TEST_MODULE RED_TEST_MODULE
 
 #include <boost/test/auto_unit_test.hpp>

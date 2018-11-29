@@ -20,15 +20,13 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#include "utils/pp.hpp"
 #include "utils/sugar/finally.hpp"
 
-#define REDEMPTION_PP_CONCAT_I(a, b) a##b
-#define REDEMPTION_PP_CONCAT(a, b) REDEMPTION_PP_CONCAT_I(a, b)
-
-#define SCOPE_EXIT(...)                          \
-    auto REDEMPTION_PP_CONCAT(scope_exit__,      \
-        REDEMPTION_PP_CONCAT(__COUNTER__,        \
-            REDEMPTION_PP_CONCAT(__, __LINE__))) \
+#define SCOPE_EXIT(...)                \
+    auto RED_PP_CAT(scope_exit__,      \
+        RED_PP_CAT(__COUNTER__,        \
+            RED_PP_CAT(__, __LINE__))) \
     = ::finally([&]{ __VA_ARGS__; })
 
 // namespace ReDemPtion

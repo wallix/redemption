@@ -37,6 +37,8 @@
 #include <cassert>
 #include <cstring> // for memcpy, memset
 
+#include <sys/time.h> // timeval
+
 
 // using a template for default size of stream would make sense instead of always using the large buffer below
 enum {

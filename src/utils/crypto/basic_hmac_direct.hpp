@@ -27,7 +27,8 @@
 #include "utils/sugar/bytes_view.hpp"
 
 
-namespace detail_ {
+namespace detail_
+{
 
 /**
  * the HMAC_direct transform looks like:
@@ -45,26 +46,21 @@ class basic_HMAC_direct
 
 public:
     basic_HMAC_direct(const_bytes_view key)
-      : basic_HMAC_direct(key.to_u8p(), key.size())
-    {}
-
-    basic_HMAC_direct(const uint8_t * const key, size_t key_len)
     {
-        const uint8_t * k = key;
         uint8_t digest[Ssl::DIGEST_LENGTH];
-        if (key_len > pad_length) {
+        if (key.size() > pad_length) {
             Ssl ssl;
-            ssl.update({key, key_len});
+            ssl.update(key);
             ssl.final(digest);
-            key_len = Ssl::DIGEST_LENGTH;
-            k = digest;
+            key = make_array_view(digest);
         }
+
         uint8_t k_ipad[pad_length];
-        for (size_t i = 0; i < key_len; i++) {
-            k_ipad[i] = 0x36 ^ k[i];
-            k_opad[i] = 0x5C ^ k[i];
+        for (size_t i = 0; i < key.size(); i++) {
+            k_ipad[i] = 0x36 ^ key[i];
+            k_opad[i] = 0x5C ^ key[i];
         }
-        for (size_t i = key_len; i < pad_length; i++) {
+        for (size_t i = key.size(); i < pad_length; i++) {
             k_ipad[i] = 0x36;
             k_opad[i] = 0x5C;
         }

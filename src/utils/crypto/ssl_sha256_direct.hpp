@@ -47,6 +47,11 @@ public:
         this->sha256_final(out_data);
     }
 
+    void unchecked_final(uint8_t * out_data)
+    {
+        this->sha256_final(out_data);
+    }
+
 private:
     /* public domain sha256 implementation based on rfc1321 and libtomcrypt */
 

@@ -20,6 +20,7 @@
    Unit test to RDP BitmapCacheHostSupport object
    Using lib boost functions for testing
 */
+#define RED_TEST_MODULE BitmapCacheHostSupport
 
 #include "system/redemption_unit_tests.hpp"
 

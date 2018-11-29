@@ -79,6 +79,11 @@ public:
 
     void final(uint8_t digest[DIGEST_LENGTH]) noexcept
     {
+        this->unchecked_final(digest);
+    }
+
+    void unchecked_final(uint8_t * digest)
+    {
         /* Add padding and return the message digest. */
         uint8_t finalcount[8];
 

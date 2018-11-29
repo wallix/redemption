@@ -20,6 +20,7 @@
    Unit test to RDP LargePointer object
    Using lib boost functions for testing
 */
+#define RED_TEST_MODULE CapabilityLargePointerEmit
 
 #include "system/redemption_unit_tests.hpp"
 

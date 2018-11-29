@@ -20,6 +20,12 @@
 
 #pragma once
 
+#ifndef RED_TEST_MODULE
+# ifndef REDEMPTION_UNIT_TEST_CPP
+#   error Missing RED_TEST_MODULE
+# endif
+#endif
+
 #include "utils/pp.hpp"
 
 #include <ostream>
@@ -27,12 +33,6 @@
 
 #include <cstdio>
 #include <cstring>
-
-#ifndef RED_TEST_MODULE
-# ifndef REDEMPTION_UNIT_TEST_CPP
-#   error Missing RED_TEST_MODULE
-# endif
-#endif
 
 
 #define REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()
@@ -67,7 +67,7 @@ namespace redemption_unit_test__
     }
 
     template<class T1, class U1, class T2, class U2>
-    T1& select(T1& x, U1&, T2&, U2&)
+    T1&& select(T1&& x, U1&&, T2&&, U2&&)
     {
         return x;
     }
@@ -89,7 +89,7 @@ namespace redemption_unit_test__
     if (!(cond)) {                                        \
         ::redemption_unit_test__::failure();              \
         ::redemption_unit_test__::get_output()            \
-            << __FILE__ "(" PP_STRINGIFY(__LINE__)        \
+            << __FILE__ "(" RED_PP_STRINGIFY(__LINE__)    \
                "): error: in \""                          \
             << ::redemption_unit_test__::current_name()   \
             << "\": " << s << std::endl                   \
@@ -98,17 +98,17 @@ namespace redemption_unit_test__
 } while (0)
 
 #define REDEMPTION_EMSCRIPTEN_CHECK(m, cond) \
-    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(cond, "check " PP_STRINGIFY(#cond) " has failed")
+    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(cond, "check " RED_PP_STRINGIFY(#cond) " has failed")
 
-#define REDEMPTION_EMSCRIPTEN_CHECK_OP(m, op, x, y) do {     \
-    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                   \
-    auto && x__ = (x);                                       \
-    auto && y__ = (y);                                       \
-    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                     \
-        ::redemption_unit_test__::get_a(x__, y__) op y__,    \
-        "check " PP_STRINGIFY(x) " " #op " " PP_STRINGIFY(y) \
-        " has failed [" << x__ << " " #op " " << y__ << "]"  \
-    );                                                       \
+#define REDEMPTION_EMSCRIPTEN_CHECK_OP(m, op, x, y) do {           \
+    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                         \
+    auto && x__ = (x);                                             \
+    auto && y__ = (y);                                             \
+    REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                           \
+        ::redemption_unit_test__::get_a(x__, y__) op y__, "check " \
+        RED_PP_STRINGIFY(x) " " #op " " RED_PP_STRINGIFY(y)        \
+        " has failed [" << x__ << " " #op " " << y__ << "]"        \
+    );                                                             \
 } while (0)
 
 
@@ -136,7 +136,7 @@ namespace redemption_unit_test__
     try {                                                                              \
         statement;                                                                     \
         REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                                           \
-            false, "exception " PP_STRINGIFY(exception) " is expected"                 \
+            false, "exception " RED_PP_STRINGIFY(exception) " is expected"             \
         );                                                                             \
     }                                                                                  \
     catch (exception & e__) {                                                          \
@@ -145,7 +145,7 @@ namespace redemption_unit_test__
     catch (...) {                                                                      \
         TESTS.failure++;                                                               \
         REDEMPTION_EMSCRIPTEN_CHECK_MESSAGE(                                           \
-            false, "incorrect exception " PP_STRINGIFY(exception) " is caught"         \
+            false, "incorrect exception " RED_PP_STRINGIFY(exception) " is caught"     \
         );                                                                             \
     }                                                                                  \
 } while (0)
@@ -230,6 +230,6 @@ namespace redemption_unit_test__
 #ifndef REDEMPTION_UNIT_TEST_CPP
 int main()
 {
-    return ::redemption_unit_test__::execute_tests(PP_STRINGIFY(RED_TEST_MODULE));
+    return ::redemption_unit_test__::execute_tests(RED_PP_STRINGIFY(RED_TEST_MODULE));
 }
 #endif

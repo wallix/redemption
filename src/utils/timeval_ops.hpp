@@ -90,19 +90,28 @@ inline std::chrono::microseconds operator-(timeval const & ultimatum, timeval co
 
 inline timeval to_timeval(std::chrono::seconds const& seconds)
 {
-    return {seconds.count(), 0};
+    timeval tv;
+    tv.tv_sec = seconds.count();
+    tv.tv_usec = 0;
+    return tv;
 }
 
 inline timeval to_timeval(std::chrono::microseconds const& usec)
 {
-    return {usec.count()/1000000, usec.count()%1000000};
+    timeval tv;
+    tv.tv_sec = usec.count()/1000000;
+    tv.tv_usec = usec.count()%1000000;
+    return tv;
 }
 
 // Returns the beginning of the timeslice of width seconds containing timeval
 // origin of intervals is midnight 1 jan 1970
 inline timeval timeslice(timeval const & a, std::chrono::seconds const& seconds)
 {
-    return timeval{a.tv_sec - a.tv_sec % seconds.count(), 0};
+    timeval tv;
+    tv.tv_sec = a.tv_sec - a.tv_sec % seconds.count();
+    tv.tv_usec = 0;
+    return tv;
 }
 
 inline bool is_midnight(timeval const & a)

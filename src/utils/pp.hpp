@@ -20,5 +20,10 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#define PP_STRINGIFY_I(x) #x
-#define PP_STRINGIFY(x) PP_STRINGIFY_I(x)
+#define RED_PP_STRINGIFY_I(x) #x
+#define RED_PP_STRINGIFY(x) RED_PP_STRINGIFY_I(x)
+
+#define RED_PP_CAT_I(a, b) a##b
+#define RED_PP_CAT(a, b) RED_PP_CAT_I(a, b)
+
+#define RED_PP_IS_EMPTY(name) (name+0 != -14) && (7-name-7 == 14)

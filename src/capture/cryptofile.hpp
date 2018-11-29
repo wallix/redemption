@@ -21,6 +21,7 @@
 #pragma once
 
 #include "configs/autogen/enums.hpp"
+#include "core/error.hpp"
 #include "utils/log.hpp"
 #include "utils/sugar/byte_ptr.hpp"
 #include "utils/sugar/cast.hpp"
