@@ -470,8 +470,7 @@ struct rdp_mppc_61_enc_hash_based_match_finder : public rdp_mppc_enc_match_finde
 
     hash_table_manager hash_tab_mgr;
 
-    rdp_mppc_61_enc_hash_based_match_finder()
-    {}
+    rdp_mppc_61_enc_hash_based_match_finder() = default;
 
     void find_match(const uint8_t * historyBuffer, offset_type historyOffset,
         uint16_t uncompressed_data_size) override

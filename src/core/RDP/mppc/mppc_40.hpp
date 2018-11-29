@@ -457,7 +457,6 @@ struct rdp_mppc_40_enc : public rdp_mppc_enc
         , outputBuffer(this->outputBufferPlus + 64)
         , outputBufferPlus{0}
         , outputBufferSize(RDP_40_HIST_BUF_LEN + 8)
-        ,           hash_tab_mgr()
     {}
 
 // 3.1.8.4.1 RDP 4.0
