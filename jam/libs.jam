@@ -5,7 +5,6 @@ lib gssapi_krb5 ;
 lib krb5 ;
 lib libpng : : <name>png ;
 lib openssl : : <name>ssl ;
-lib rt ;
 lib snappy ;
 lib z ;
 alias png : libpng z ;
