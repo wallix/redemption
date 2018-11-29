@@ -48,10 +48,10 @@ public:
         const char * const filename,
         const char * const extension)
     {
-        if (!strbcpy(this->path, prefix)
-         || !strbcpy(this->hash_path, hash_prefix)
-         || !strbcpy(this->filename, filename)
-         || !strbcpy(this->extension, extension)) {
+        if (!utils::strbcpy(this->path, prefix)
+         || !utils::strbcpy(this->hash_path, hash_prefix)
+         || !utils::strbcpy(this->filename, filename)
+         || !utils::strbcpy(this->extension, extension)) {
             LOG(LOG_ERR, "Filename too long");
             throw Error(ERR_TRANSPORT);
         }

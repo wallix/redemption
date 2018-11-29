@@ -480,9 +480,9 @@ SequencedVideoCaptureImpl::SequenceTransport::SequenceTransport(
     ReportMessageApi * report_message)
 : VideoTransportBase(groupid, report_message)
 {
-    if (!strbcpy(this->filegen.path, prefix)
-     || !strbcpy(this->filegen.base, filename)
-     || !strbcpy(this->filegen.ext, extension)) {
+    if (!utils::strbcpy(this->filegen.path, prefix)
+     || !utils::strbcpy(this->filegen.base, filename)
+     || !utils::strbcpy(this->filegen.ext, extension)) {
         LOG(LOG_ERR, "Filename too long");
         throw Error(ERR_TRANSPORT);
     }

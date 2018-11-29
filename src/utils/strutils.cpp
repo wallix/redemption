@@ -23,6 +23,9 @@
 #include <cstring>
 
 
+namespace utils
+{
+
 bool ends_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len)
 {
     return ((str_len >= suffix_len) && (strcmp(str + str_len - suffix_len, suffix) == 0));
@@ -59,4 +62,6 @@ bool strbcpy(char* dest, array_view_const_char src, std::size_t n) noexcept
 bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
 {
     return strlcpy(dest, src, n) < n;
+}
+
 }

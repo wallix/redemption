@@ -946,12 +946,12 @@ public:
         char extension[128];
 
         // default value, actual one should come from movie_path
-        auto const wrm_path_len = strlcpy(path, app_path(AppPath::Wrm));
+        auto const wrm_path_len = utils::strlcpy(path, app_path(AppPath::Wrm));
         if (wrm_path_len + 2 < std::size(path)) {
             path[wrm_path_len] = '/';
             path[wrm_path_len+1] = 0;
         }
-        strlcpy(basename, movie_path);
+        utils::strlcpy(basename, movie_path);
         extension[0] = 0; // extension is currently ignored
 
         if (!canonical_path(movie_path, path, sizeof(path), basename, sizeof(basename), extension, sizeof(extension))

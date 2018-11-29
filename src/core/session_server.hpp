@@ -75,7 +75,7 @@ public:
         }
 
         char source_ip[256];
-        strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+        utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
         const int source_port = ntohs(u.s4.sin_port);
@@ -121,9 +121,9 @@ public:
                 const int target_port = ntohs(localAddress.s4.sin_port);
                 REDEMPTION_DIAGNOSTIC_POP
                 char target_ip[256];
-                strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+                utils::strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
                 if (!ini.get<cfg::debug::fake_target_ip>().empty()){
-                    strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
+                    utils::strlcpy(target_ip, ini.get<cfg::debug::fake_target_ip>().c_str());
                     LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
                 }
 

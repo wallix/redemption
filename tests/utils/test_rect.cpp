@@ -31,7 +31,6 @@
 
 RED_AUTO_TEST_CASE(TestRect)
 {
-
     // A rect is defined by it's top left corner, width and height
     Rect r(10, 110, 10, 10);
 

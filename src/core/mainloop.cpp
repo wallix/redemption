@@ -188,7 +188,7 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     snprintf(text, 255, "redemption_%8.8x_main_term", unsigned(getpid()));
 
     getpeername(0, &u.s, &sock_len);
-    strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+    utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
 
     union
     {
@@ -206,12 +206,12 @@ void redemption_new_session(CryptoContext & cctx, Random & rnd, Fstat & fstat, c
     }
 
     target_port = localAddress.s4.sin_port;
-    strlcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
+    utils::strlcpy(real_target_ip, inet_ntoa(localAddress.s4.sin_addr));
 
     if (ini.get<cfg::globals::enable_transparent_mode>()) {
         const int source_port = 0;
         char target_ip[256];
-        strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
+        utils::strlcpy(target_ip, inet_ntoa(localAddress.s4.sin_addr));
         int fd = open("/proc/net/ip_conntrack", O_RDONLY);
         // source and dest are inverted because we get the information we want from reply path rule
         int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip));

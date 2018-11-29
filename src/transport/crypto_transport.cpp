@@ -750,7 +750,7 @@ void OutCryptoTransport::open(const char * const finalname, const char * const h
         throw Error(ERR_TRANSPORT_OPEN_FAILED, err);
     }
 
-    if (!strbcpy(this->finalname, finalname)) {
+    if (!utils::strbcpy(this->finalname, finalname)) {
         LOG(LOG_ERR, "OutCryptoTransport::open finalname too long");
         throw Error(ERR_TRANSPORT_OPEN_FAILED);
     }

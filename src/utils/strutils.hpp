@@ -22,6 +22,8 @@
 
 #include "utils/sugar/array_view.hpp"
 
+namespace utils
+{
 
 bool ends_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len);
 bool ends_case_with(const char * str, size_t str_len, const char * suffix, size_t suffix_len);
@@ -72,3 +74,5 @@ template<std::size_t N>
 /**
  * @}
  */
+
+}

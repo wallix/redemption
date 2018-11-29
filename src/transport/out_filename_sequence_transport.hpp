@@ -60,9 +60,9 @@ public:
     , last_filename(nullptr)
     , last_num(-1u)
     {
-        if (!strbcpy(this->path, prefix)
-         || !strbcpy(this->filename, filename)
-         || !strbcpy(this->extension, extension)) {
+        if (!utils::strbcpy(this->path, prefix)
+         || !utils::strbcpy(this->filename, filename)
+         || !utils::strbcpy(this->extension, extension)) {
             LOG(LOG_ERR, "Filename too long");
             throw Error(ERR_TRANSPORT);
         }

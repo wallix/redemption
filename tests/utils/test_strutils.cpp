@@ -26,11 +26,11 @@
 
 
 inline bool ends_with(char const * s1, char const * s2) {
-    return ends_with(s1, strlen(s1), s2, strlen(s2));
+    return utils::ends_with(s1, strlen(s1), s2, strlen(s2));
 }
 
 inline bool ends_case_with(char const * s1, char const * s2) {
-    return ends_case_with(s1, strlen(s1), s2, strlen(s2));
+    return utils::ends_case_with(s1, strlen(s1), s2, strlen(s2));
 }
 
 RED_AUTO_TEST_CASE(TestEndsWith)
@@ -73,6 +73,7 @@ RED_AUTO_TEST_CASE(TestEndsCaseWith)
 
 RED_AUTO_TEST_CASE(Teststrlcpy)
 {
+    using utils::strlcpy;
     char dest[10]{};
     RED_CHECK_EQ(0, strlcpy(dest, "", 0));
     RED_CHECK_EQ(0, strlcpy(dest, "", 1));
@@ -86,6 +87,7 @@ RED_AUTO_TEST_CASE(Teststrlcpy)
 
 RED_AUTO_TEST_CASE(Teststrbcpy)
 {
+    using utils::strbcpy;
     char dest[10]{};
     RED_CHECK(!strbcpy(dest, "", 0));
     RED_CHECK(strbcpy(dest, "", 1));

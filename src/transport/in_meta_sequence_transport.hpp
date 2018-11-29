@@ -160,7 +160,7 @@ private:
             std::snprintf(filename, sizeof(filename), "%s%s%s", this->meta_path, basename, extension);
 
             if (file_exist(filename)) {
-                strlcpy(this->meta_line.filename, filename);
+                utils::strlcpy(this->meta_line.filename, filename);
             }
         }
 

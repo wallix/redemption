@@ -1756,7 +1756,7 @@ public:
                         (target_iter->for_reading != target_iter->for_writing)) {
                         auto const DESKTOP_INI_FILENAME = "/desktop.ini"_av;
                         if (target_iter->sequential_access_offset &&
-                            !::ends_case_with(
+                            !::utils::ends_case_with(
                                     file_path.data(),
                                     file_path.size(),
                                     DESKTOP_INI_FILENAME.data(),
