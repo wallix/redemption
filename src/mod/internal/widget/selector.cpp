@@ -64,11 +64,6 @@ WidgetSelector::WidgetSelector(
         drawable, *this, nullptr, selector_params.label[2], -10,
         theme.selector_label.fgcolor,
         theme.selector_label.bgcolor, font, 5
-    },
-    WidgetLabel{
-        drawable, *this, nullptr, selector_params.label[3], -10,
-        theme.selector_label.fgcolor,
-        theme.selector_label.bgcolor, font, 5
     }
 }
 , edit_filters{
@@ -89,13 +84,7 @@ WidgetSelector::WidgetSelector(
         nullptr, -12,
         theme.edit.fgcolor, theme.edit.bgcolor,
         theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
-    WidgetEdit{
-        drawable, *this, this,
-        nullptr, -12,
-        theme.edit.fgcolor, theme.edit.bgcolor,
-        theme.edit.focus_color, font, std::size_t(-1), 1, 1
-    },
+    }
 }
 , selector_lines(drawable,
                  *this, this, 0, this->nb_columns,

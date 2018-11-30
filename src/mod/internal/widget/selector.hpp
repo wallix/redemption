@@ -34,7 +34,7 @@ class Theme;
 
 struct WidgetSelectorParams
 {
-    static constexpr uint16_t nb_max_columns = 4;
+    static constexpr uint16_t nb_max_columns = 3;
 
     uint16_t nb_columns = 0;
     const char * label[nb_max_columns] = {nullptr};

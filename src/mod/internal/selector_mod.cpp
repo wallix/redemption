@@ -66,18 +66,16 @@ SelectorMod::SelectorMod(
     , selector_params([&]() {
         WidgetSelectorParams params;
 
-        params.nb_columns = 4;
+        params.nb_columns = 3;
 
         params.base_len[0] = 200;
         params.base_len[1] = 64000;
         params.base_len[2] = 80;
-        params.base_len[3] = 100;
 
         Translator tr(language(vars.get<cfg::translation::language>()));
         params.label[0] = tr(trkeys::authorization);
         params.label[1] = tr(trkeys::target);
         params.label[2] = tr(trkeys::protocol);
-        params.label[3] = tr(trkeys::description);
 
         return params;
     }())
