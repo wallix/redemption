@@ -190,9 +190,10 @@ namespace FastPath {
         uint16_t  length;
         uint32_t  fipsInformation;
         uint8_t   dataSignature[8];
+        std::unique_ptr<uint8_t[]> decrypted_payload;
         InStream payload;
 
-        ClientInputEventPDU_Recv(InStream & stream, CryptContext & decrypt, uint8_t * out_decrypt_stream)
+        ClientInputEventPDU_Recv(InStream & stream, CryptContext & decrypt)
         : fpInputHeader(stream.in_uint8())
         , action([this](){
             uint8_t action = this->fpInputHeader & 0x03;
@@ -213,37 +214,43 @@ namespace FastPath {
         }())
         , fipsInformation(0)
         , dataSignature{}
-        , payload([&stream, &decrypt, out_decrypt_stream, this](){
+        , decrypted_payload([&stream, &decrypt, this](){
             // TODO RZ: Should we treat fipsInformation ?
-
-            InStream istream(stream.get_current(), stream.in_remain());
-
+            
+            std::unique_ptr<uint8_t[]> clear_payload = nullptr;
             if ( 0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED)) {
+                size_t remaining_len = stream.in_remain();
                 const unsigned expected =
                       8                                // dataSignature
                     + ((this->numEvents == 0) ? 1 : 0) // numEvent
                     ;
-                if (!stream.in_check_rem(expected)) {
+                if (remaining_len < expected) {
                     LOG( LOG_ERR
                        , "FastPath::ClientInputEventPDU_Recv: data truncated, expected=%u remains=%zu"
-                       , expected, stream.in_remain());
+                       , expected, remaining_len);
                     throw Error(ERR_RDP_FASTPATH);
                 }
-
+                clear_payload.reset(new uint8_t[stream.in_remain()]);
                 stream.in_copy_bytes(this->dataSignature, 8);
-                assert(out_decrypt_stream);
-                decrypt.decrypt(stream.get_current(), stream.in_remain(), out_decrypt_stream);
-
-                istream = InStream(out_decrypt_stream, stream.in_remain());
+                decrypt.decrypt(stream.get_current(), stream.in_remain(), clear_payload.get());
             }
-
+            return std::move(clear_payload);
+        }())
+        , payload([&stream, this](){
+            InStream istream((0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED))
+                                ? this->decrypted_payload.get()
+                                : stream.get_current(),
+                              stream.in_remain()
+                            );
+            // Consumes everything remaining in stream after decrypting was done
+            stream.in_skip_bytes(stream.in_remain());
             if (this->numEvents == 0) {
                 this->numEvents = istream.in_uint8();
             }
-            return istream;
+            return std::move(istream);
         }())
         {
-            stream.in_skip_bytes(this->payload.get_capacity());
+//            stream.in_skip_bytes(this->payload.get_capacity());
         }   // ClientInputEventPDU_Recv(InStream & stream)
     };  // struct ClientInputEventPDU_Recv
 

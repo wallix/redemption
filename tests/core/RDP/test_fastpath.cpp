@@ -50,7 +50,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     X224::RecvFactory fx224(in_t, &end, array_size);
 
     InStream in_s(array, end - array);
-    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
+    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     RED_CHECK_EQUAL(4, in_cie.numEvents);
 
@@ -128,7 +128,7 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     uint8_t * end = array;
     X224::RecvFactory fx224(in_t, &end, array_size);
     InStream in_s(array, end - array);
-    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt, array);
+    FastPath::ClientInputEventPDU_Recv in_cie(in_s, decrypt);
 
     RED_CHECK_EQUAL(6, in_cie.numEvents);
 

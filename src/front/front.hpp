@@ -2261,7 +2261,7 @@ public:
             // between client-side plug-ins and server-side applications).
             {
                 if (buf.current_pdu_is_fast_path()) {
-                    FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt, const_cast<uint8_t*>(new_x224_stream.get_data()));
+                    FastPath::ClientInputEventPDU_Recv cfpie(new_x224_stream, this->decrypt);
 
                     int num_events = cfpie.numEvents;
                     for (uint8_t i = 0; i < num_events; i++) {
