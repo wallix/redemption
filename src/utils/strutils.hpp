@@ -75,4 +75,4 @@ template<std::size_t N>
  * @}
  */
 
-}
+} // namespace utils

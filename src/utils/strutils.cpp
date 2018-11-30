@@ -64,4 +64,4 @@ bool strbcpy(char* dest, char const* src, std::size_t n) noexcept
     return strlcpy(dest, src, n) < n;
 }
 
-}
+} // namespace utils
