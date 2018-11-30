@@ -849,6 +849,7 @@ class Sesman():
 
                     data_to_send[u'target_login'] = target_login
                     data_to_send[u'target_device'] = device_name
+                    data_to_send[u'target_service'] = service_name
                     self._full_user_device_account = u"%s@%s:%s" % (target_login,
                                                                     device_name,
                                                                     wab_login)
