@@ -234,7 +234,7 @@ namespace FastPath {
                 stream.in_copy_bytes(this->dataSignature, 8);
                 decrypt.decrypt(stream.get_current(), stream.in_remain(), clear_payload.get());
             }
-            return std::move(clear_payload);
+            return clear_payload;
         }())
         , payload([&stream, this](){
             InStream istream((0!= (this->secFlags & FASTPATH_INPUT_ENCRYPTED))
@@ -247,7 +247,7 @@ namespace FastPath {
             if (this->numEvents == 0) {
                 this->numEvents = istream.in_uint8();
             }
-            return std::move(istream);
+            return istream;
         }())
         {
 //            stream.in_skip_bytes(this->payload.get_capacity());
