@@ -599,6 +599,7 @@ public:
                                                     , VncBogusClipboardInfiniteLoop::delayed
                                                     , this->reportMessage
                                                     , this->vnc_conf.is_apple
+                                                    , false
                                                     , &this->vnc_conf.exe
 //                                                    , to_verbose_flags(0xfffffffd)
                                                     , to_verbose_flags(0)

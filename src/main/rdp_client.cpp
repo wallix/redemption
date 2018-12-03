@@ -192,6 +192,7 @@ int main(int argc, char** argv)
               , VncBogusClipboardInfiniteLoop::delayed
               , report_message
               , false
+              , false
               , nullptr
               , to_verbose_flags(verbose) | VNCVerbose::connection | VNCVerbose::basic_trace
               , nullptr);
