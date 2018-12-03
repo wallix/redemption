@@ -65,8 +65,9 @@ struct [[nodiscard]] WorkingDirectory
      */
     /// @{
     [[nodiscard]] std::string add_file(std::string file);
-    [[nodiscard]] WorkingDirectory& add_files(std::initializer_list<std::string> files);
-    [[nodiscard]] WorkingDirectory& remove_files(std::initializer_list<std::string> files);
+    [[nodiscard]] WorkingDirectory& add_files(std::initializer_list<std::string_view> files);
+    void remove_file(std::string file);
+    [[nodiscard]] WorkingDirectory& remove_files(std::initializer_list<std::string_view> files);
     /// @}
 
     std::string path_of(std::string_view path) const;
@@ -79,6 +80,7 @@ struct [[nodiscard]] WorkingDirectory
 
 private:
     std::string const& add_file_(std::string file);
+    void remove_file_(std::string file);
 
     enum class Type : bool
     {

@@ -17,6 +17,7 @@ Product name: redemption, a FLOSS RDP proxy
 Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
+#include "system/redemption_unit_tests.hpp"
 
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"
@@ -68,12 +69,6 @@ namespace
             "-red_" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
             REDEMPTION_COMP_STRING_VERSION "/"
         ;
-    }
-
-    template<class... S>
-    [[noreturn]] void throw_error(S const&... s)
-    {
-        throw std::runtime_error(str_concat("WorkingDirectory: ", s...));
     }
 }
 
@@ -142,14 +137,14 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 WorkingDirectory::WorkingDirectory(std::string_view dirname)
 {
     if (dirname.empty() || dirname.find_first_of("/.") != std::string::npos) {
-        throw_error("invalid dirname");
+        BOOST_ERROR("invalid dirname");
     }
 
     this->directory = str_concat(tempbase(), dirname, suffix_by_compiler());
 
     recursive_delete_directory(this->directory.c_str());
     if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {
-        throw_error(strerror(errno), ": ", this->directory);
+        BOOST_ERROR(strerror(errno) << ": " << this->directory);
     }
 }
 
@@ -161,7 +156,7 @@ WorkingDirectory::SubDirectory WorkingDirectory::create_subdirectory(std::string
     }
 
     if (dirname.empty()) {
-        throw_error("empty dirname");
+        BOOST_ERROR("empty dirname");
     }
 
     if (dirname.back() == '/') {
@@ -178,10 +173,20 @@ std::string const& WorkingDirectory::add_file_(std::string file)
     auto [it, b] = this->paths.emplace(std::move(file), this->counter_id);
     if (!b) {
         this->has_error = true;
-        throw_error(it->name, " already exists");
+        BOOST_ERROR(it->name << " already exists");
     }
     this->is_checked = false;
     return it->name;
+}
+
+void WorkingDirectory::remove_file_(std::string file)
+{
+    // transparent compare to C++20
+    Path path(std::move(file), 0);
+    if (!this->paths.erase(path)) {
+        this->has_error = true;
+        BOOST_ERROR("unknown file '" << path.name << '\'');
+    }
 }
 
 std::string WorkingDirectory::add_file(std::string file)
@@ -189,21 +194,24 @@ std::string WorkingDirectory::add_file(std::string file)
     return this->path_of(this->add_file_(std::move(file)));
 }
 
-WorkingDirectory& WorkingDirectory::add_files(std::initializer_list<std::string> files)
+WorkingDirectory& WorkingDirectory::add_files(std::initializer_list<std::string_view> files)
 {
     for (auto const& sv : files) {
-        this->add_file_(sv);
+        this->add_file_(str_concat(sv));
     }
     return *this;
 }
 
-WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::string> files)
+void WorkingDirectory::remove_file(std::string file)
+{
+    this->remove_file_(std::move(file));
+    this->is_checked = false;
+}
+
+WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::string_view> files)
 {
     for (auto const& sv : files) {
-        if (this->paths.erase(Path(sv, 0))) {
-            this->has_error = true;
-            throw_error(sv, " unknown");
-        }
+        this->remove_file_(str_concat(sv));
     }
     this->is_checked = false;
     return *this;
@@ -307,7 +315,7 @@ WorkingDirectory::~WorkingDirectory() noexcept(false)
     if (!this->has_error) {
         recursive_delete_directory(this->dirname().c_str());
         if (!this->is_checked) {
-            throw_error("unchecked entries");
+            BOOST_ERROR("unchecked entries");
         }
     }
 }
