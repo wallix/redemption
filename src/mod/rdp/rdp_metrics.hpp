@@ -91,17 +91,17 @@ class RDPMetrics
             case ON_SERVER_IMAGE_PASTE_COUNT:      return "ON_SERVER_IMAGE_PASTE_COUNT";
             case ON_SERVER_FILE_PASTE_COUNT:       return "ON_SERVER_FILE_PASTE_COUNT";
             case ON_SERVER_TOTAL_DATA_PASTE:       return "ON_SERVER_TOTAL_DATA_PASTE";
-            case SERVER_TEXT_COPY_COUNT:           return "nb_copy_text_on_server";
-            case SERVER_IMAGE_COPY_COUNT:          return "nb_copy_image_on_server";
-            case SERVER_FILE_COPY_COUNT:           return "nb_copy_file_on_server";
+            case SERVER_TEXT_COPY_COUNT:           return "SERVER_TEXT_COPY_COUNT";
+            case SERVER_IMAGE_COPY_COUNT:          return "SERVER_IMAGE_COPY_COUNT";
+            case SERVER_FILE_COPY_COUNT:           return "SERVER_FILE_COPY_COUNT";
             case CLIENT_CLIPBOARD_CHANNEL_DATA:    return "CLIENT_CLIPBOARD_CHANNEL_DATA";
             case ON_CLIENT_TEXT_PASTE_COUNT:       return "ON_CLIENT_TEXT_PASTE_COUNT";
             case ON_CLIENT_IMAGE_PASTE_COUNT:      return "ON_CLIENT_IMAGE_PASTE_COUNT";
             case ON_CLIENT_FILE_PASTE_COUNT:       return "ON_CLIENT_FILE_PASTE_COUNT";
             case ON_CLIENT_TOTAL_DATA_PASTE:       return "ON_CLIENT_TOTAL_DATA_PASTE";
-            case CLIENT_TEXT_COPY_COUNT:           return "nb_copy_text_on_client";
-            case CLIENT_IMAGE_COPY_COUNT:          return "nb_copy_image_on_client";
-            case CLIENT_FILE_COPY_COUNT:           return "nb_copy_file_on_client";
+            case CLIENT_TEXT_COPY_COUNT:           return "CLIENT_TEXT_COPY_COUNT";
+            case CLIENT_IMAGE_COPY_COUNT:          return "CLIENT_IMAGE_COPY_COUNT";
+            case CLIENT_FILE_COPY_COUNT:           return "CLIENT_FILE_COPY_COUNT";
             case CLIENT_DISK_REDIR_CHANNEL_DATA:   return "CLIENT_DISK_REDIR_CHANNEL_DATA";
             case SERVER_DISK_REDIR_CHANNEL_DATA:   return "SERVER_DISK_REDIR_CHANNEL_DATA";
             case FILES_READ_COUNT:                 return "FILES_READ_COUNT";
@@ -110,10 +110,10 @@ class RDPMetrics
             case FILES_RENAME_COUNT:               return "FILES_RENAME_COUNT";
             case TOTAL_FILES_WRITTEN_DATA:         return "TOTAL_FILES_WRITTEN_DATA";
             case TOTAL_READ_DATA:                  return "TOTAL_READ_DATA";
-            case CLIENT_TOTAL_RAIL_CHANNEL_DATA:   return "rail_channel_data_from_client";
-            case SERVER_TOTAL_RAIL_CHANNEL_DATA:   return "rail_channel_data_from_server";
-            case CLIENT_TOTAL_OTHERS_CHANNEL_DATA: return "other_channel_data_from_client";
-            case SERVER_TOTAL_OTHERS_CHANNEL_DATA: return "other_channel_data_from_server";
+            case CLIENT_TOTAL_RAIL_CHANNEL_DATA:   return "CLIENT_TOTAL_RAIL_CHANNEL_DATA";
+            case SERVER_TOTAL_RAIL_CHANNEL_DATA:   return "SERVER_TOTAL_RAIL_CHANNEL_DATA";
+            case CLIENT_TOTAL_OTHERS_CHANNEL_DATA: return "CLIENT_TOTAL_OTHERS_CHANNEL_DATA";
+            case SERVER_TOTAL_OTHERS_CHANNEL_DATA: return "SERVER_TOTAL_OTHERS_CHANNEL_DATA";
             case COUNT_FIELD: break;
         }
 
