@@ -470,6 +470,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.bc
+  src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -494,6 +495,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.bc
+  src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -518,6 +520,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.bc
+  src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -542,6 +545,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   png.bc
   snappy.bc
   src/capture/file_to_graphic.bc
+  src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -571,6 +575,7 @@ test-run tests/client_redemption/client_config/test_client_redemption_config :
   openssl.bc
   png.bc
   snappy.bc
+  src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -3692,6 +3697,7 @@ objjs src/capture/video_recorder.bc : $(REDEMPTION_SRC_PATH)/capture/video_recor
 objjs src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
 objjs src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
 objjs src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
+objjs src/client_redemption/client_config/client_redemption_config.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 objjs src/core/RDP/RDPDrawable.bc : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
@@ -3717,7 +3723,6 @@ objjs src/main/ini_checker.bc : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 objjs src/main/main.bc : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 objjs src/main/proxy_recorder.bc : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 objjs src/main/rdp_client.bc : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-objjs src/main/rdpheadless.bc : $(REDEMPTION_SRC_PATH)/main/rdpheadless.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 objjs src/mod/internal/bouncer2_mod.bc : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 objjs src/mod/internal/client_execute.bc : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 objjs src/mod/internal/copy_paste.bc : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
