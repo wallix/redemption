@@ -268,6 +268,7 @@ RED_AUTO_TEST_CASE(TestDecodePacket)
         , bogus_clipboard_infinite_loop
         , report_message
         , false
+        , false
         , nullptr
         , vnc_verbose);
     mod.get_event().set_trigger_time(wait_obj::NOW);

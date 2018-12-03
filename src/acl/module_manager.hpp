@@ -1691,6 +1691,7 @@ public:
 				   	    this->ini.get<cfg::mod_vnc::bogus_clipboard_infinite_loop>(),
                         report_message,
 						this->ini.get<cfg::mod_vnc::server_is_apple>(),
+						this->ini.get<cfg::mod_vnc::server_unix_alt>(),
                         (this->front.client_info.remote_program ? &client_execute : nullptr),
                         to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
                         (enable_metrics)?protocol_metrics.get():nullptr

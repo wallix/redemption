@@ -206,6 +206,7 @@ private:
     ReportMessageApi & report_message;
     time_t beginning;
     bool server_is_apple;
+    bool remove_server_alt_state_for_char;
     int keylayout;
     ClientExecute* client_execute = nullptr;
     Zdecompressor<> zd;
@@ -238,6 +239,7 @@ public:
            , VncBogusClipboardInfiniteLoop bogus_clipboard_infinite_loop
            , ReportMessageApi & report_message
            , bool server_is_apple
+           , bool remove_server_alt_state_for_char
            , ClientExecute* client_execute
            , VNCVerbose verbose
 		   , VNCMetrics * metrics = nullptr
@@ -262,6 +264,7 @@ public:
     , bogus_clipboard_infinite_loop(bogus_clipboard_infinite_loop)
     , report_message(report_message)
     , server_is_apple(server_is_apple)
+    , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
     , keylayout(keylayout)
     , client_execute(client_execute)
     , frame_buffer_update_ctx(this->zd, verbose)
@@ -970,6 +973,23 @@ public:
         int key = this->keymapSym.get_sym();
 
         if (key > 0) {
+
+            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() && (key == 0x23 // #
+                || key == 0x7b                     // {
+                    || key == 0x5b                    // [
+                    || key == 0x7c                   // |
+                    || key == 0x60                  // `
+                    || key == 0x5c                 // \
+                    || key == 0x5e                // ^
+                    || key == 0x40               // @
+                    || key == 0x5d              // ]
+                    || key == 0x7d             // }
+                )) {
+
+                    this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
+                    this->send_keyevent(downflag, key);
+                    this->send_keyevent(KeymapSym::KBDFLAGS_DOWN, 0xffe9);
+            } else
             if (this->left_ctrl_pressed) {
                 if (key == 0xfe03) {
                     // alt gr => left ctrl is ignored

@@ -715,6 +715,7 @@ public:
               , VncBogusClipboardInfiniteLoop::delayed
               , this->report_message
               , false
+              , false
               , nullptr
               , to_verbose_flags(this->_verbose)
               );

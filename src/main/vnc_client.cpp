@@ -138,6 +138,7 @@ int main(int argc, char** argv)
       , bogus_clipboard_infinite_loop
       , report_message
       , false
+      , false
       , nullptr
       , to_verbose_flags(verbose)|VNCVerbose::connection | VNCVerbose::basic_trace);
     mod.get_event().set_trigger_time(wait_obj::NOW);
