@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "utils/pp.hpp"
+
 
 #define REDEMPTION_COMP_VERSION_NUMBER(major, minor, patch) \
   ( (((major)%100)*10000000) + (((minor)%100)*100000) + ((patch)%100000) )
@@ -29,12 +31,19 @@
 // Clang
 
 #ifdef __clang__
-# define REDEMPTION_COMP_CLANG REDEMPTION_COMP_VERSION_NUMBER( \
-    __clang_major__,                              \
-    __clang_minor__,                              \
+# define REDEMPTION_COMP_CLANG_VERSION \
+    REDEMPTION_COMP_VERSION_NUMBER(    \
+    __clang_major__,                   \
+    __clang_minor__,                   \
     __clang_patchlevel__)
+# define REDEMPTION_COMP_VERSION REDEMPTION_COMP_CLANG_VERSION
+# define REDEMPTION_COMP_STRING_VERSION   \
+    RED_PP_STRINGIFY(__clang_major__) "." \
+    RED_PP_STRINGIFY(__clang_minor__) "." \
+    RED_PP_STRINGIFY(__clang_patchlevel__)
+# define REDEMPTION_COMP_NAME clang
 #else
-# define REDEMPTION_COMP_CLANG REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_CLANG_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
 
@@ -42,18 +51,35 @@
 
 #ifdef __GNUC__
 # ifdef __GNUC_PATCHLEVEL__
-#   define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER( \
-      __GNUC__,                                    \
-      __GNUC_MINOR__,                              \
+#  define REDEMPTION_COMP_GNUC_VERSION \
+    REDEMPTION_COMP_VERSION_NUMBER(    \
+      __GNUC__,                        \
+      __GNUC_MINOR__,                  \
       __GNUC_PATCHLEVEL__)
+#  ifndef REDEMPTION_COMP_STRING_VERSION
+#   define REDEMPTION_COMP_STRING_VERSION  \
+      RED_PP_STRINGIFY(__GNUC__) "."       \
+      RED_PP_STRINGIFY(__GNUC_MINOR__) "." \
+      RED_PP_STRINGIFY(__GNUC_PATCHLEVEL__)
+#  endif
 # else
-#   define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER( \
-      __GNUC__,                                    \
-      __GNUC_MINOR__,                              \
+#  define REDEMPTION_COMP_GNUC_VERSION \
+    REDEMPTION_COMP_VERSION_NUMBER(    \
+      __GNUC__,                        \
+      __GNUC_MINOR__,                  \
       0)
+#  ifndef REDEMPTION_COMP_STRING_VERSION
+#   define REDEMPTION_COMP_STRING_VERSION \
+      RED_PP_STRINGIFY(__GNUC__) "."      \
+      RED_PP_STRINGIFY(__GNUC_MINOR__) ".0"
+#  endif
+# endif
+# ifndef REDEMPTION_COMP_VERSION
+#  define REDEMPTION_COMP_VERSION REDEMPTION_COMP_GNUC_VERSION
+#  define REDEMPTION_COMP_NAME gcc
 # endif
 #else
-# define REDEMPTION_COMP_GNUC REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_GNUC_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
 #endif
 
 
@@ -81,16 +107,30 @@
   mapping from MSC version to VS product version.
   */
 # if (_MSC_VER >= 1900)
-#   define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER( \
-      _MSC_VER/100-5,                              \
-      _MSC_VER%100,                                \
+#  define REDEMPTION_COMP_MSVC_VERSION \
+    REDEMPTION_COMP_VERSION_NUMBER(    \
+      _MSC_VER/100-5,                  \
+      _MSC_VER%100,                    \
       REDEMPTION_COMP_MSVC_BUILD)
 # else
-#   define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER( \
-      _MSC_VER/100-6,                              \
-      _MSC_VER%100,                                \
+#  define REDEMPTION_COMP_MSVC_VERSION \
+    REDEMPTION_COMP_VERSION_NUMBER(    \
+      _MSC_VER/100-6,                  \
+      _MSC_VER%100,                    \
       REDEMPTION_COMP_MSVC_BUILD)
 # endif
+# define REDEMPTION_COMP_VERSION REDEMPTION_COMP_MSVC_VERSION
+# ifndef _MSC_FULL_VER
+#  define REDEMPTION_COMP_STRING_VERSION RED_PP_STRINGIFY(_MSC_FULL_VER)
+# else
+#  define REDEMPTION_COMP_STRING_VERSION RED_PP_STRINGIFY(_MSC_VER)
+# endif
+# define REDEMPTION_COMP_NAME msvc
 #else
-# define REDEMPTION_COMP_MSVC REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_MSVC_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
+#endif
+
+#ifndef REDEMPTION_COMP_VERSION
+# define REDEMPTION_COMP_VERSION REDEMPTION_COMP_VERSION_NUMBER_NOT_AVAILABLE
+# define REDEMPTION_COMP_NAME unknown
 #endif

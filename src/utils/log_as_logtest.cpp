@@ -25,7 +25,7 @@
 #include "cxx/diagnostic.hpp"
 #include "cxx/compiler_version.hpp"
 REDEMPTION_DIAGNOSTIC_PUSH
-#if REDEMPTION_COMP_CLANG >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+#if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunused-template")
 #endif
 #include "utils/log.hpp"

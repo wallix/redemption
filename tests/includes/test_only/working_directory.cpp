@@ -20,8 +20,10 @@ Author(s): Jonathan Poelen
 
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/pp.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/scope_exit.hpp"
+#include "cxx/compiler_version.hpp"
 
 #include <algorithm>
 #include <stdexcept>
@@ -39,31 +41,39 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    struct TempBase
+    std::string const& tempbase()
     {
-        TempBase()
-        {
+        static const std::string base = []{
+            std::string dirname;
             char const* s = std::getenv("TMPDIR");
             if (s) {
                 if (*s) {
-                    this->dirname = s;
-                    if (this->dirname.back() != '/') {
-                        this->dirname += '/';
+                    dirname = s;
+                    if (dirname.back() != '/') {
+                        dirname += '/';
                     }
                 }
             }
             else {
-                this->dirname = "/tmp/";
+                dirname = "/tmp/";
             }
-        }
+            return dirname;
+        }();
+        return base;
+    }
 
-        std::string dirname;
-    };
-
-    std::string const& tempbase()
+    constexpr std::string_view suffix_by_compiler()
     {
-        static const TempBase tempbase;
-        return tempbase.dirname;
+        return
+            "-red_" RED_PP_STRINGIFY(REDEMPTION_COMP_NAME) "-"
+            REDEMPTION_COMP_STRING_VERSION "/"
+        ;
+    }
+
+    template<class... S>
+    [[noreturn]] void throw_error(S const&... s)
+    {
+        throw std::runtime_error(str_concat("WorkingDirectory: ", s...));
     }
 }
 
@@ -132,14 +142,14 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 WorkingDirectory::WorkingDirectory(std::string_view dirname)
 {
     if (dirname.empty() || dirname.find_first_of("/.") != std::string::npos) {
-        throw std::runtime_error("invalid dirname");
+        throw_error("invalid dirname");
     }
 
-    this->directory = str_concat(tempbase(), dirname, '/');
+    this->directory = str_concat(tempbase(), dirname, suffix_by_compiler());
 
     recursive_delete_directory(this->directory.c_str());
     if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {
-        throw std::runtime_error(strerror(errno));
+        throw_error(strerror(errno), ": ", this->directory);
     }
 }
 
@@ -151,7 +161,7 @@ WorkingDirectory::SubDirectory WorkingDirectory::create_subdirectory(std::string
     }
 
     if (dirname.empty()) {
-        throw std::runtime_error("empty dirname");
+        throw_error("empty dirname");
     }
 
     if (dirname.back() == '/') {
@@ -168,7 +178,7 @@ std::string const& WorkingDirectory::add_file_(std::string file)
     auto [it, b] = this->paths.emplace(std::move(file), this->counter_id);
     if (!b) {
         this->has_error = true;
-        throw std::runtime_error(str_concat("WorkingDirectory: ", it->name, " already exists"));
+        throw_error(it->name, " already exists");
     }
     this->is_checked = false;
     return it->name;
@@ -192,7 +202,7 @@ WorkingDirectory& WorkingDirectory::remove_files(std::initializer_list<std::stri
     for (auto const& sv : files) {
         if (this->paths.erase(Path(sv, 0))) {
             this->has_error = true;
-            throw std::runtime_error(str_concat("WorkingDirectory: ", sv, " unknown"));
+            throw_error(sv, " unknown");
         }
     }
     this->is_checked = false;
@@ -297,7 +307,7 @@ WorkingDirectory::~WorkingDirectory() noexcept(false)
     if (!this->has_error) {
         recursive_delete_directory(this->dirname().c_str());
         if (!this->is_checked) {
-            throw std::runtime_error("WorkingDirectory: unchecked entries");
+            throw_error("unchecked entries");
         }
     }
 }
