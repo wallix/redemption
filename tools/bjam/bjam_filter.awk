@@ -11,7 +11,7 @@ BEGINFILE {
     nb_rep=split(replacements, rep, ";")
 }
 {
-  if (/^Running [0-9]+ test cases\.\.\.$/)
+  if (/^Running [0-9]+ test cases?\.\.\.$/)
   {
     getline
     if (!$0) {

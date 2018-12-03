@@ -1,11 +1,5 @@
 #pragma once
 
-#ifndef REDEMPTION_UNIT_TEST_CPP
-# ifndef RED_TEST_MODULE
-#   error Missing RED_TEST_MODULE
-# endif
-#endif
-
 #define BOOST_TEST_MODULE RED_TEST_MODULE
 
 #include <boost/test/auto_unit_test.hpp>
@@ -356,14 +350,14 @@ namespace redemption_unit_test__
     ::unlink(filename);                                   \
 } while(0)
 
-// force line to last checkpoint
-#ifndef IN_IDE_PARSER
+#if !defined(REDEMPTION_UNIT_TEST_CPP) && defined(RED_TEST_MODULE)
+# ifdef IN_IDE_PARSER
+#  undef BOOST_AUTO_TEST_CASE
+#  define BOOST_AUTO_TEST_CASE(test_name)     \
+    struct test_name { static void test(); }; \
+    void test_name::test()
+# endif
+# define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
+#else
 # undef BOOST_AUTO_TEST_CASE
-# define BOOST_AUTO_TEST_CASE(test_name)                                       \
-    BOOST_FIXTURE_TEST_CASE(test_name##_start__, BOOST_AUTO_TEST_CASE_FIXTURE) \
-    { BOOST_CHECK(true); }                                                     \
-    BOOST_FIXTURE_TEST_CASE(test_name, BOOST_AUTO_TEST_CASE_FIXTURE)
 #endif
-
-#define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
-
