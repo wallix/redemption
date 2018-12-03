@@ -95,7 +95,10 @@ struct KeymapSym
         DEADKEY_TILDE
     };
 
-
+    enum {
+         VNC_KBDFLAGS_RELEASE  = 0x00
+       , VNC_KBDFLAGS_DOWN     = 0x01
+    };
 
     uint32_t verbose;
 
