@@ -508,6 +508,7 @@ public:
                   , this->config.vnc_conf.vnc_encodings.c_str()
                   , this->reportMessage
                   , this->config.vnc_conf.is_apple
+                  , false
                   , &this->config.vnc_conf.exe
                   , this->ini
                   // , to_verbose_flags(0xfffffffd)

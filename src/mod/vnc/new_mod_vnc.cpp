@@ -37,6 +37,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     const char * encodings,
     ReportMessageApi& report_message,
     bool server_is_apple,
+    bool remove_server_alt_state_for_char,
     ClientExecute* client_execute,
     ModVncVariables vars,
     VNCVerbose verbose,
@@ -47,6 +48,6 @@ std::unique_ptr<mod_api> new_mod_vnc(
         t, session_reactor, username, password, front,
         front_width, front_height, keylayout, key_flags,
         clipboard_up, clipboard_down, encodings, mod_vnc::ClipboardEncodingType::UTF8,
-        VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple,
+        VncBogusClipboardInfiniteLoop::delayed, report_message, server_is_apple, remove_server_alt_state_for_char,
         client_execute, vars, verbose, metrics);
 }
