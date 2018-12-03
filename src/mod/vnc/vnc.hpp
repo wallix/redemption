@@ -974,8 +974,9 @@ public:
 
         if (key > 0) {
 
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() && (key == 0x23 // #
-                || key == 0x7b                     // {
+            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() &&// #
+                    (  key == 0x23
+                    || key == 0x7b                     // {
                     || key == 0x5b                    // [
                     || key == 0x7c                   // |
                     || key == 0x60                  // `
