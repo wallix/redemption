@@ -95,7 +95,6 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     InStream in_stream(buf);
     RED_CHECK_NO_THROW(GCC::Create_Request_Recv{in_stream});
-//    RED_CHECK(t.get_status());
 }
 
 

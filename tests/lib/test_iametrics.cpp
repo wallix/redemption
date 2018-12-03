@@ -164,8 +164,8 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCycle1)
 }
 
 
-RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations) {
-
+RED_AUTO_TEST_CASE(TestRDPMetricsLogAndIncrementations)
+{
     WorkingDirectory wd("metrics_log_and_incrementatins");
 
     time_t epoch = 1533211681;

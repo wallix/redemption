@@ -57,8 +57,10 @@ RED_AUTO_TEST_CASE(TestTrim)
     RED_CHECK_EQUAL(int(checked_int<sE>(12)), 12);
     RED_CHECK_EQUAL(int(checked_int<sE>(12) = 13), 13);
 
+    is_safe_convertible<int, long long>{} = std::true_type{}; safe_cast<long>(1);
+    is_safe_convertible<long long, int>{} = std::bool_constant<(sizeof(int) == sizeof(long long))>{};
     is_safe_convertible<int, long>{} = std::true_type{}; safe_cast<long>(1);
-    is_safe_convertible<long, int>{} = std::false_type{};
+    is_safe_convertible<long, int>{} = std::bool_constant<(sizeof(int) == sizeof(long))>{};
     is_safe_convertible<signed char, unsigned>{} = std::false_type{};
     is_safe_convertible<unsigned, signed char>{} = std::false_type{};
     is_safe_convertible<sE, signed char>{} = std::true_type{}; safe_cast<sE>(static_cast<signed char>(1));

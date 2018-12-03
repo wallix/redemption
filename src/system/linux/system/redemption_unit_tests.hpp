@@ -52,7 +52,9 @@ namespace redemption_unit_test__
 # define RED_CHECK(a) ::redemption_unit_test__::X(bool(a))
 # define RED_CHECK_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
     ::redemption_unit_test__::Stream{} << iostream_expr
-# define RED_CHECK_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_CHECK_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
+    ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
+# define RED_CHECK_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_CHECK_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
@@ -69,7 +71,9 @@ namespace redemption_unit_test__
 # define RED_REQUIRE(a) ::redemption_unit_test__::X(bool(a))
 # define RED_REQUIRE_MESSAGE(a, iostream_expr) ::redemption_unit_test__::X(bool(a)), \
     ::redemption_unit_test__::Stream{} << iostream_expr
-# define RED_REQUIRE_EQUAL_COLLECTIONS(a, b) ::redemption_unit_test__::X(bool((a) == (b)))
+# define RED_REQUIRE_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
+    ::redemption_unit_test__::X(first1 == last1 && first2 == last2)
+# define RED_REQUIRE_EQUAL_RANGES(a, b) ::redemption_unit_test__::X((void(a), void(b), true))
 # define RED_REQUIRE_PREDICATE(pred, arg_list) pred arg_list
 
 # define RED_FAIL(mess) ::redemption_unit_test__::Stream{} << mess
@@ -115,53 +119,32 @@ namespace redemption_unit_test__
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, ErrId) \
     RED_CHECK_EXCEPTION(                           \
         stmt, Error,                               \
-        [&](Error const & e) {                     \
-            if (e.id == ErrId) {                   \
-                return true;                       \
-            }                                      \
-            RED_CHECK_EQUAL(e.id, ErrId);          \
-            return false;                          \
+        [&](Error const & e__) {                   \
+            RED_CHECK_EQUAL(e__.id, ErrId);        \
+            return (e__.id == ErrId);              \
         }                                          \
     )
 
+# define RED_TEST_EQUAL_RANGES_IMPL(impl, a, b) \
+    [](auto const & a__, auto const & b__) {    \
+        using std::begin;                       \
+        using std::end;                         \
+        impl(                                   \
+            (void(#a), begin(a__)), end(a__),   \
+            (void(#b), begin(b__)), end(b__)    \
+        );                                      \
+    }(a, b)
+
+# define RED_CHECK_EQUAL_RANGES(a, b) \
+    RED_TEST_EQUAL_RANGES_IMPL(RED_CHECK_EQUAL_COLLECTIONS, a, b)
+
+# define RED_REQUIRE_EQUAL_RANGES(a, b) \
+    RED_TEST_EQUAL_RANGES_IMPL(RED_REQUIRE_REQUIRE_COLLECTIONS, a, b)
+
 #endif
 
-# define RED_CHECK_EQUAL_RANGES(a, b)    \
-    do {                                 \
-        [](                              \
-            decltype(a) const & a__,     \
-            decltype(b) const & b__      \
-        ) {                              \
-            using std::begin;            \
-            using std::end;              \
-            RED_CHECK_EQUAL_COLLECTIONS( \
-                begin((void(#a), a__)),  \
-                  end((void(#a), a__)),  \
-                begin((void(#b), b__)),  \
-                  end((void(#b), b__))   \
-            );                           \
-        }(a, b);                         \
-    } while (0)
-
-# define RED_REQUIRE_EQUAL_RANGES(a, b)    \
-    do {                                   \
-        [](                                \
-            decltype(a) const & a__,       \
-            decltype(b) const & b__        \
-        ) {                                \
-            using std::begin;              \
-            using std::end;                \
-            RED_REQUIRE_EQUAL_COLLECTIONS( \
-                begin((void(#a), a__)),    \
-                  end((void(#a), a__)),    \
-                begin((void(#b), b__)),    \
-                  end((void(#b), b__))     \
-            );                             \
-        }(a, b);                           \
-    } while (0)
-
-#define RED_CHECK_EQ_RANGES(a, b) RED_CHECK_EQUAL_RANGES(a, b)
-#define RED_REQUIRE_EQ_RANGES(a, b) RED_REQUIRE_EQUAL_RANGES(a, b)
+#define RED_CHECK_EQ_RANGES RED_CHECK_EQUAL_RANGES
+#define RED_REQUIRE_EQ_RANGES RED_REQUIRE_EQUAL_RANGES
 
 namespace std // NOLINT(cert-dcl58-cpp)
 {
@@ -216,38 +199,29 @@ namespace redemption_unit_test__
     std::ostream & operator<<(std::ostream & out, xarray const & x);
 }  // namespace redemption_unit_test__
 
-#define RED_CHECK_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
-    RED_CHECK_MESSAGE(                                   \
-        (v1) op (v2),                                    \
-        "check " #src1 " " #op " " #src2 " failed ["     \
-        << v1 << " " #op " " << v2 << "]"                \
+#define RED_TEST_OP_VAR_MESSAGE(mode, op, v1, v2, src1, src2) \
+    RED_CHECK_MESSAGE(                                        \
+        (v1) op (v2),                                         \
+        #mode " " #src1 " " #op " " #src2 " failed ["         \
+        << v1 << " " #op " " << v2 << "]"                     \
     );
 
-#define RED_REQUIRE_OP_VAR_MESSAGE(op, v1, v2, src1, src2) \
-    RED_REQUIRE_MESSAGE(                                   \
-        (v1) op (v2),                                      \
-        "check " #src1 " " #op " " #src2 " failed ["       \
-        << v1 << " " #op " " << v2 << "]"                  \
-    );
-
-#define RED_CHECK_MEM_IMPL(red_check_op, mem, memref)                     \
+#define RED_TEST_MEM_IMPL(mode, mem, memref)                              \
     [](auto const& x_mem__, auto const& x_memref__){                      \
         size_t res__ = 0;                                                 \
         redemption_unit_test__::xarray_color mem__{res__, x_mem__};       \
         redemption_unit_test__::xarray_color memref__{res__, x_memref__}; \
-        red_check_op(                                                     \
-            ==, mem__.size(), memref__.size(),                            \
+        RED_TEST_OP_VAR_MESSAGE(                                          \
+            mode, ==, mem__.size(), memref__.size(),                      \
             mem.size(), memref.size());                                   \
-        red_check_op(                                                     \
-            ==, mem__, memref__,                                          \
-            mem, memref);                                                 \
+        RED_TEST_OP_VAR_MESSAGE(mode, ==, mem__, memref__, mem, memref);  \
     }(mem, memref)                                                        \
 
 #define RED_CHECK_MEM(mem, memref) \
-    RED_CHECK_MEM_IMPL(RED_CHECK_OP_VAR_MESSAGE, mem, memref)
+    RED_TEST_MEM_IMPL(check, mem, memref)
 
 #define RED_REQUIRE_MEM(mem, memref) \
-    RED_CHECK_MEM_IMPL(RED_REQUIRE_OP_VAR_MESSAGE, mem, memref)
+    RED_TEST_MEM_IMPL(require, mem, memref)
 
 #ifdef IN_IDE_PARSER
 # define RED_CHECK_MEM_C(mem, memref) void(mem), void("" memref)
@@ -282,17 +256,20 @@ namespace redemption_unit_test__
     std::ostream & operator<<(std::ostream & out, xsarray const & x);
 }  // namespace redemption_unit_test__
 
-#define RED_CHECK_SMEM(mem, memref)                           \
+#define RED_TEST_SMEM_IMPL(mode, mem, memref)                 \
     [](auto const& x_mem__, auto const& x_memref__){          \
         redemption_unit_test__::xsarray mem__{x_mem__};       \
         redemption_unit_test__::xsarray memref__{x_memref__}; \
-        RED_CHECK_OP_VAR_MESSAGE(                             \
-            ==, mem__.size(), memref__.size(),                \
+        RED_TEST_OP_VAR_MESSAGE(                              \
+            mode, ==, mem__.size(), memref__.size(),          \
             mem.size(), memref.size());                       \
-        RED_CHECK_OP_VAR_MESSAGE(                             \
-            ==, mem__, memref__,                              \
+        RED_TEST_OP_VAR_MESSAGE(                              \
+            mode, ==, mem__, memref__,                        \
             mem, memref);                                     \
-    }(mem, memref)                                            \
+    }(mem, memref)
+
+#define RED_CHECK_SMEM(mem, memref) \
+    RED_TEST_SMEM_IMPL(check, mem, memref)
 
 #ifdef IN_IDE_PARSER
 # define RED_CHECK_SMEM_C(mem, memref) void(mem), void("" memref)
@@ -305,50 +282,53 @@ namespace redemption_unit_test__
 # endif
 
 
-
-
 // require #include "utils/fileutils.hpp"
-#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, sz) do { \
-    RED_CHECK_EQUAL(filesize(filename), sz);             \
-    ::unlink(filename);                                  \
-} while(0)
+#define RED_CHECK_FILE_SIZE_AND_CLEAN(filename, size)                     \
+    [](auto&& filename__, ::std::size_t size__) {                         \
+        RED_CHECK_EQUAL(filesize((void(#filename), filename__)), size__); \
+        ::unlink(filename__);                                             \
+    }(filename, size)
 
-#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2) do { \
-    size_t fsize = filesize(filename);                              \
-    if (fsize != size2){                                            \
-        RED_CHECK_EQUAL(size1, fsize);                              \
-    }                                                               \
-    ::unlink(filename);                                             \
-} while(0)
+#define RED_CHECK_FILE_SIZE_AND_CLEAN2(filename, size1, size2)                    \
+    [](auto&& filename__, ::std::size_t size1__, ::std::size_t size2__) {         \
+        size_t fsize__ = filesize(filename__);                                    \
+        if (fsize__ != size2__){                                                  \
+            RED_CHECK_EQUAL((void("filesize(" #filename ")"), fsize__), size1__); \
+        }                                                                         \
+        ::unlink(filename__);                                                     \
+    }(filename, size1, size2)
 
-#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3) do { \
-    size_t fsize = filesize(filename);                                     \
-    if (fsize != size2 && fsize != size3){                                 \
-        RED_CHECK_EQUAL(size1, fsize);                                     \
-    }                                                                      \
-    ::unlink(filename);                                                    \
-} while(0)
+#define RED_CHECK_FILE_SIZE_AND_CLEAN3(filename, size1, size2, size3)                            \
+    [](auto&& filename__, ::std::size_t size1__, ::std::size_t size2__, ::std::size_t size3__) { \
+        size_t fsize__ = filesize(filename__);                                                   \
+        if (fsize__ != size2__ && fsize__ != size3__) {                                          \
+            RED_CHECK_EQUAL((void("filesize(" #filename ")"), fsize__), size1__);                \
+        }                                                                                        \
+        ::unlink(filename__);                                                                    \
+    }(filename, size1, size2, size3)
 
 
-#define RED_CHECK_FILE_EXISTS(filename) do {                      \
-    auto&& filename__ = filename;                                 \
-    RED_CHECK_MESSAGE(                                            \
-        file_exist(filename__),                                   \
-        "check file_exist(\"" << filename__ << "\") has failed"); \
-} while (0)
+#define RED_CHECK_FILE_EXISTS(filename)                               \
+    [](auto&& filename__) {                                           \
+        RED_CHECK_MESSAGE(                                            \
+            file_exist(filename__),                                   \
+            "check file_exist(\"" << filename__ << "\") has failed"); \
+    }(filename)
 
-#define RED_CHECK_FILE_NOT_EXISTS(filename) do {                   \
-    auto&& filename__ = filename;                                  \
-    RED_CHECK_MESSAGE(                                             \
-        !file_exist(filename__),                                   \
-        "check !file_exist(\"" << filename__ << "\") has failed"); \
-} while (0)
+#define RED_CHECK_FILE_NOT_EXISTS(filename)                            \
+    [](auto&& filename__) {                                            \
+        RED_CHECK_MESSAGE(                                             \
+            !file_exist(filename__),                                   \
+            "check !file_exist(\"" << filename__ << "\") has failed"); \
+    }(filename)
 
 // require #include "test_only/get_file_contents.hpp"
-#define RED_CHECK_FILE_CONTENTS(filename, contents)  do { \
-    RED_CHECK_EQ(get_file_contents(filename), contents);  \
-    ::unlink(filename);                                   \
-} while(0)
+#define RED_CHECK_FILE_CONTENTS(filename, contents)                                 \
+    [](auto&& filename__, auto&& contents__) {                                      \
+        RED_CHECK_EQ(get_file_contents((void(#filename), filename__)), contents__); \
+        ::unlink(filename__);                                                       \
+    }(filename, contents)
+
 
 #if !defined(REDEMPTION_UNIT_TEST_CPP) && defined(RED_TEST_MODULE)
 # ifdef IN_IDE_PARSER
