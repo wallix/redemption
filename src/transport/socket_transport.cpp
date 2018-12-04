@@ -252,10 +252,15 @@ SocketTransport::Read SocketTransport::do_atomic_read(uint8_t * buffer, size_t l
 }
 
 SocketTransport::AsyncBuf::AsyncBuf(const uint8_t* data, std::size_t len)
-: data(static_cast<uint8_t*>(memcpy(new uint8_t[len], data, len)))
+: data([](const uint8_t* data, std::size_t len){
+        uint8_t * tmp = new uint8_t[len];
+        memcpy(tmp, data, len);
+        return tmp;
+    }(data, len))
 , p(this->data.get())
 , e(this->p + len)
-{}
+{
+}
 
 void SocketTransport::do_send(const uint8_t * const buffer, size_t const len)
 {
