@@ -283,7 +283,6 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-//     ClientRedemptionConfig * config;
     ClientCallback * controllers;
 
     QFormLayout lay;
@@ -297,7 +296,6 @@ public:
 
     QtFormReplay(std::vector<IconMovieData> iconData, ClientCallback * controllers, QWidget * parent, const std::string & replay_default_dir)
     : QWidget(parent)
-//     , config(config)
     , controllers(controllers)
     , lay(this)
     , buttonReplay("Select a mwrm file", this)
@@ -724,6 +722,15 @@ public:
                 std::string title(this->config->_accountData[i].title);
                 this->line_edit_panel._IPCombobox.addItem(QString(title.c_str()), int(i+1));
                 stringList << title.c_str();
+            }
+        }
+        if (this->config->_last_target_index < this->config->_accountData.size()) {
+            if (this->protocol_type == this->config->_accountData[this->config->_last_target_index].protocol) {
+                this->line_edit_panel._IPField.insert(QString(this->config->_accountData[this->config->_last_target_index].IP.c_str()));
+                this->line_edit_panel._userNameField.insert(QString(this->config->_accountData[this->config->_last_target_index].name.c_str()));
+                this->line_edit_panel._PWDField.insert(QString(this->config->_accountData[this->config->_last_target_index].pwd.c_str()));
+                std::string port_string = std::to_string(this->config->_accountData[this->config->_last_target_index].port);
+                this->line_edit_panel._portField.insert(QString(port_string.c_str()));
             }
         }
     }

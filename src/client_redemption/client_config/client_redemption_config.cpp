@@ -1001,13 +1001,13 @@ void ClientRedemptionConfig::setAccountData()  {
             this->_accountNB = accountNB;
         }
 
-        if (this->_last_target_index < this->_accountData.size()) {
-
-            this->target_IP = this->_accountData[this->_last_target_index].IP;
-            this->user_name = this->_accountData[this->_last_target_index].name;
-            this->user_password = this->_accountData[this->_last_target_index].pwd;
-            this->port = this->_accountData[this->_last_target_index].port;
-        }
+//         if (this->_last_target_index < this->_accountData.size()) {
+//
+//             this->target_IP = this->_accountData[this->_last_target_index].IP;
+//             this->user_name = this->_accountData[this->_last_target_index].name;
+//             this->user_password = this->_accountData[this->_last_target_index].pwd;
+//             this->port = this->_accountData[this->_last_target_index].port;
+//         }
     }
 }
 

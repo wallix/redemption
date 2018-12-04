@@ -62,7 +62,6 @@ struct ArcsightLogInfo {
             KBD_INPUT,
             TITLE_BAR,
             MATCH_FINDER,
-
     };
 
     enum :  uint8_t {
@@ -87,7 +86,6 @@ struct ArcsightLogInfo {
     std::string WallixBastionSHA256Digest;
 
     uint8_t direction_flag = NONE;
-
 };
 
 
