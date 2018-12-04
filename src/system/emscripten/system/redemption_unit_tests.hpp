@@ -21,6 +21,8 @@
 #pragma once
 
 #include "utils/pp.hpp"
+// same in linux/system/redemption_unit_test.hpp"
+#include "utils/sugar/bytes_view.hpp"
 
 #include <ostream>
 #include <string>
@@ -81,15 +83,17 @@ int main()
     RED_EMSCRIPTEN_TEST_MESSAGE(lvl, cond, "check " RED_PP_STRINGIFY(#cond) " has failed")
 
 
-#define RED_EMSCRIPTEN_TEST_OP(lvl, op, x, y) do {                 \
-    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                         \
-    auto && x__ = (x);                                             \
-    auto && y__ = (y);                                             \
-    RED_EMSCRIPTEN_TEST_MESSAGE(lvl,                               \
-        ::redemption_unit_test__::get_a(x__, y__) op y__, "check " \
-        RED_PP_STRINGIFY(x) " " #op " " RED_PP_STRINGIFY(y)        \
-        " has failed [" << x__ << " " #op " " << y__ << "]"        \
-    );                                                             \
+#define RED_EMSCRIPTEN_TEST_OP(lvl, op, x, y) do {                     \
+    REDEMPTION_EMSCRIPTEN_TEST_PASSPOINT()                             \
+    auto && x__ = (x);                                                 \
+    auto && y__ = (y);                                                 \
+    RED_EMSCRIPTEN_TEST_MESSAGE(lvl,                                   \
+        ::redemption_unit_test__::get_a(x__, y__) op y__, "check "     \
+        RED_PP_STRINGIFY(x) " " #op " " RED_PP_STRINGIFY(y)            \
+        " has failed [" << ::redemption_unit_test__::ostream_wrap(x__) \
+        << " " #op " " << ::redemption_unit_test__::ostream_wrap(y__)  \
+        << "]"                                                         \
+    );                                                                 \
 } while (0)
 
 
@@ -463,5 +467,22 @@ namespace redemption_unit_test__
                 return static_cast<F&&>(f)(static_cast<Xs&&>(xs)...);
             }
         };
+    }
+
+    struct PrintableChar
+    {
+        unsigned char c;
+    };
+
+    std::ostream& operator <<(std::ostream& out, PrintableChar const& c);
+
+    PrintableChar ostream_wrap(unsigned char x);
+    PrintableChar ostream_wrap(char x);
+    PrintableChar ostream_wrap(signed char x);
+
+    template<class T>
+    T const& ostream_wrap(T const& x)
+    {
+        return x;
     }
 }

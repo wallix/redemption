@@ -29,105 +29,67 @@
 
 RED_AUTO_TEST_CASE(TestBasename)
 {
-// basename() change behavior depending if <filegen.h> is included
-// or not. The POSIX version chnage it's argument, not the glibc one
-// we WANT to use the glibc one. This test below will fail if
-// <filegen.h> is included
+    // basename() change behavior depending if <filegen.h> is included
+    // or not. The POSIX version chnage it's argument, not the glibc one
+    // we WANT to use the glibc one. This test below will fail if
+    // <filegen.h> is included
 
-//     Below expected behavior from the unix man pages
-//          path        basename
-//          "/usr/lib"  "lib"
-//          "/usr/"     ""
-//          "usr"       "usr"
-//          "/"         "/"
-//          "."         "."
-//          ".."        ".."
+    //  Below expected behavior from the unix man pages
+    //       path        basename
+    //       "/usr/lib"  "lib"
+    //       "/usr/"     ""
+    //       "usr"       "usr"
+    //       "/"         "/"
+    //       "."         "."
+    //       ".."        ".."
+    RED_CHECK_EQ(basename("/usr/lib"), "lib");
     {
-        char path[]= "/usr/lib";
-        RED_CHECK(0 == strcmp(basename(path), "lib"));
-    }
-    {
-        char path[]= "/usr/lib";
         size_t len = 0;
-        char * base = basename_len(path, len);
-        RED_CHECK_EQUAL(3, len);
-        RED_CHECK(0 == memcmp(base, "lib", len));
-
+        char const * base = basename_len("/usr/lib", len);
+        RED_CHECK_SMEM_C(make_array_view(base, len), "lib");
     }
 
+    RED_CHECK_EQ(basename("/usr/lib/"), "");
     {
-        char path[]= "/usr/lib/";
-        RED_CHECK(0 == strcmp(basename(path), ""));
-    }
-    {
-        char path[]= "/usr/lib/";
         size_t len = 0;
-        char * base = basename_len(path, len);
+        /*char const * base = */basename_len("/usr/lib/", len);
         RED_CHECK_EQUAL(0, len);
-        RED_CHECK(0 == memcmp(base, "", len));
+    }
 
-    }
+    RED_CHECK_EQ(basename("/usr/"), "");
     {
-        char path[]= "/usr/";
-        RED_CHECK(0 == strcmp(basename(path), ""));
-    }
-    {
-        char path[]= "/usr";
         size_t len = 0;
-        char * base = basename_len(path, len);
-        RED_CHECK_EQUAL(3, len);
-        RED_CHECK(0 == memcmp(base, "usr", len));
+        char const * base = basename_len("/usr", len);
+        RED_CHECK_SMEM_C(make_array_view(base, len), "usr");
+    }
 
-    }
+    RED_CHECK(0 == strcmp(basename("usr"), "usr"));
     {
-        char path[]= "usr";
-        RED_CHECK(0 == strcmp(basename(path), "usr"));
-    }
-    {
-        char path[]= "usr";
         size_t len = 0;
-        char * base = basename_len(path, len);
-        RED_CHECK_EQUAL(3, len);
-        RED_CHECK(0 == memcmp(base, "usr", len));
+        char const * base = basename_len("usr", len);
+        RED_CHECK_SMEM_C(make_array_view(base, len), "usr");
+    }
 
-    }
+    RED_CHECK_EQ(basename("/"), "");
     {
-        char path[]= "/";
-        RED_CHECK(0 == strcmp(basename(path), ""));
-    }
-    {
-        char path[]= "/";
         size_t len = 0;
-        char * base = basename_len(path, len);
+        /*char * base = */basename_len("/", len);
         RED_CHECK_EQUAL(0, len);
-        RED_CHECK(0 == memcmp(base, "", len));
+    }
 
-    }
+    RED_CHECK_EQ(basename("."), ".");
     {
-        char path[]= ".";
-        RED_CHECK(0 == strcmp(basename(path), "."));
-    }
-    {
-        char path[]= ".";
         size_t len = 0;
-        char * base = basename_len(path, len);
-        RED_CHECK_EQUAL(1, len);
-        RED_CHECK(0 == memcmp(base, ".", len));
+        char const * base = basename_len(".", len);
+        RED_CHECK_SMEM_C(make_array_view(base, len), ".");
+    }
 
-    }
+    RED_CHECK_EQ(basename(".."), "..");
     {
-        char path[]= "..";
-        RED_CHECK(0 == strcmp(basename(path), ".."));
-    }
-    {
-        const char path[]= "..";
         size_t len = 0;
-        const char * base = basename_len(path, len);
-        RED_CHECK_EQUAL(2, len);
-        RED_CHECK(0 == memcmp(base, "..", len));
-
+        char const * base = basename_len("..", len);
+        RED_CHECK_SMEM_C(make_array_view(base, len), "..");
     }
-
 }
 
 

@@ -32,6 +32,14 @@ project redjs
 
     <cxxflags>-fno-rtti
 
+    # https://github.com/kripken/emscripten/blob/master/src/settings.js
+    # DISABLE_EXCEPTION_CATCHING = 0 - generate code to actually catch exceptions
+    # DISABLE_EXCEPTION_CATCHING = 1 - disable exception catching at all
+    # DISABLE_EXCEPTION_CATCHING = 2 - disable exception catching, but enables catching in whitelist
+    <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
+    <cxxflags>"-s FS_LOG"
+    # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
+
     # <cxx-lto>on
     : default-build release
 ;
@@ -79,6 +87,9 @@ constant CXXFLAGS_TEST :
     <define>REDEMPTION_DECL_LOG_TEST
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    <cxxflags>"-s NODERAWFS"
+    # enable basename (see `man 3 basename`)
+    <cxxflags>"-D_GNU_SOURCE"
 ;
 
 actions exenode

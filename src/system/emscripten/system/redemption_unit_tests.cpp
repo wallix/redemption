@@ -19,7 +19,7 @@
 */
 
 #define REDEMPTION_UNIT_TEST_CPP 1
-#include "system/redemption_unit_tests.hpp"
+#include "./redemption_unit_tests.hpp"
 
 #include <vector>
 #include <iostream>
@@ -29,6 +29,38 @@
 
 namespace redemption_unit_test__
 {
+    std::ostream& operator <<(std::ostream& out, PrintableChar const& x)
+    {
+        auto const c = x.c;
+
+        if (31 < c && c < 127) {
+            out << c;
+        }
+        else {
+            char const* h = "0123456789abcdef";
+            char s[] = "'\\x  '";
+            s[3] = h[c>>4];
+            s[4] = h[c&0xf];
+            out << s;
+        }
+        return out;
+    }
+
+    PrintableChar ostream_wrap(char x)
+    {
+        return PrintableChar{static_cast<unsigned char>(x)};
+    }
+
+    PrintableChar ostream_wrap(unsigned char x)
+    {
+        return PrintableChar{x};
+    }
+
+    PrintableChar ostream_wrap(signed char x)
+    {
+        return PrintableChar{static_cast<unsigned char>(x)};
+    }
+
     namespace
     {
         struct item
@@ -81,7 +113,7 @@ namespace redemption_unit_test__
 
         for (auto& item: TESTS().tests){
             TESTS().current_name = item.name;
-            item.fn();
+            RED_CHECK_NO_THROW(item.fn());
         }
 
         if (TESTS().failure == 0) {

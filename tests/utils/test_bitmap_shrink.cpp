@@ -82,21 +82,23 @@ RED_AUTO_TEST_CASE(TestSimpleShrink)
         0x18, 0x19, 0x1a, /**/ 0x12, 0x13, 0x14, /**/ 0x2b, 0x2c, 0x2d, /**/ 0x25, 0x26, 0x27,
     };
 
-    unsigned zoom_factor = 50;
-    unsigned scaled_width = (((width * zoom_factor) / 100) + 3) & 0xFFC;
-    unsigned scaled_height = (height * zoom_factor) / 100;
-    RED_CHECK_EQUAL(scaled_width, 8);
-    RED_CHECK_EQUAL(scaled_height, 3);
+    unsigned const zoom_factor = 50;
+    unsigned const scaled_width = (((width * zoom_factor) / 100) + 3) & 0xFFC;
+    unsigned const scaled_height = (height * zoom_factor) / 100;
 
-    std::vector<uint8_t> scaled_buffer(scaled_width * scaled_height * 3);
+    static_assert(scaled_width == 8);
+    static_assert(scaled_height == 3);
+
+    uint8_t scaled_buffer[scaled_width * scaled_height * 3];
+
+    static_assert(sizeof(expected) == sizeof(scaled_buffer));
 
     // Zoom 50
     scale_data(
-        scaled_buffer.data(), data,
+        scaled_buffer, data,
         scaled_width, width,
         scaled_height, height,
         rowsize);
 
-//    hexdump_d(scaled_buffer.data(), scaled_width * scaled_height * 3);
-    RED_CHECK(0 == memcmp(&expected[0], scaled_buffer.data(), scaled_width * scaled_height * 3));
+    RED_CHECK_MEM_AA(expected, scaled_buffer);
 }

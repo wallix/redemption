@@ -25,6 +25,8 @@
 
 #include "utils/cfgloader.hpp"
 
+#include <sstream>
+
 
 RED_AUTO_TEST_CASE(TestCfgloader)
 {
