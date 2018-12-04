@@ -32,83 +32,73 @@
 
 namespace
 {
-// TODO We could probably use templated Entries instead of InputType_t and StorageType_t enums, this with also avoid combinatorial explosion. Well, not really, but the compiler will do the work.
 
-enum InputType_t {
-    INPUT_BOOLEAN,
-    INPUT_UNSIGNED,
-//     INPUT_LEVEL
+enum class StorageType : unsigned char
+{
+    Byte,
+    Uint16,
+    Uint32,
 };
 
-enum StorageType_t {
-    STORAGE_BYTE,
-    STORAGE_UINT16,
-    STORAGE_UINT32
-};
+template<class>
+struct to_storage_type;
 
-struct Entry {
-    char const    * key;
-    InputType_t     input_type;
-    StorageType_t   storage_type;
-    void          * storage;
+#define TO_STORAGE_TYPE(type, value)                                    \
+    template<>                                                          \
+    struct to_storage_type<type>                                        \
+    {                                                                   \
+        static constexpr StorageType storage_type = StorageType::value; \
+    }
 
+TO_STORAGE_TYPE(uint8_t, Byte);
+TO_STORAGE_TYPE(uint16_t, Uint16);
+TO_STORAGE_TYPE(uint32_t, Uint32);
+
+#undef TO_STORAGE_TYPE
+
+
+struct Entry
+{
     Entry() = delete;
 
-    Entry(const char * key, InputType_t input_type, StorageType_t storage_type, void * storage)
+    template<class T>
+    Entry(const char * key, T* storage) noexcept
     : key(key)
-    , input_type(input_type)
-    , storage_type(storage_type)
     , storage(storage)
-    {
-    }
+    , storage_type(to_storage_type<T>::storage_type)
+    {}
 
-    bool match(const char * key) const
-    {
-        return 0 == strcasecmp(this->key, key);
-    }
-
-    bool set_value(const char * key, const char * value) const
+    bool set_value(const char * key, const char * str_value) const noexcept
     {
         if (!this->match(key)) {
             return false;
         }
-        switch (this->input_type) {
-            case INPUT_BOOLEAN: {
-                // TODO: check behavior. Changed from previous version terminating zero is not checked
-                // on value. It will return true for all string beginning by one of the keywords
-                // as ulong_from_cstr also does not check for string end this seems to be the
-                // logical thing to do. But we should check use cases nevertheless.
-                unsigned long result = Parse(byte_ptr_cast(value)).bool_from_cstr();
-                this->store(result);
-            }
+
+        auto const value = Parse(byte_ptr_cast(str_value)).ulong_from_cstr();
+
+        switch (this->storage_type) {
+            case StorageType::Byte:
+                *static_cast<uint8_t*>(this->storage) = value;
             break;
-            case INPUT_UNSIGNED: {
-                unsigned long result = Parse(byte_ptr_cast(value)).ulong_from_cstr();;
-                this->store(result);
-            }
+            case StorageType::Uint16:
+                *static_cast<uint16_t*>(this->storage) = value;
             break;
-            //case INPUT_LEVEL: {
-            //    unsigned long level  = level_from_cstr(value);
-            //    this->store(level);
-            //}
-            //break;
+            case StorageType::Uint32:
+                *static_cast<uint32_t*>(this->storage) = value;
+            break;
         }
+
         return true;
     }
 
-    void store(unsigned long value) const
+private:
+    char const    * key;
+    void          * storage;
+    StorageType   storage_type;
+
+    bool match(const char * key) const
     {
-        switch (this->storage_type) {
-            case STORAGE_BYTE:
-                static_cast<uint8_t *>(this->storage)[0]  = static_cast<uint8_t>(value);
-            break;
-            case STORAGE_UINT16:
-                static_cast<uint16_t *>(this->storage)[0] = static_cast<uint16_t>(value);
-            break;
-            case STORAGE_UINT32:
-                static_cast<uint32_t *>(this->storage)[0] = static_cast<uint32_t>(value);
-            break;
-        }
+        return 0 == strcasecmp(this->key, key);
     }
 };
 
@@ -147,67 +137,67 @@ bool load(char const * filename, char const * section_name, std::initializer_lis
 bool general_caps_load(GeneralCaps & caps, char const * filename)
 {
     return load(filename, "General Capability Set", {
-        Entry("osMajorType", INPUT_UNSIGNED, STORAGE_UINT16, &caps.os_major),
-        Entry("osMinorType", INPUT_UNSIGNED, STORAGE_UINT16, &caps.os_minor),
-        Entry("protocolVersion", INPUT_UNSIGNED, STORAGE_UINT16, &caps.protocolVersion),
-        Entry("generalCompressionTypes", INPUT_UNSIGNED, STORAGE_UINT16, &caps.compressionType),
-        Entry("extraFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.extraflags),
-        Entry("updateCapabilityFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.updateCapability),
-        Entry("remoteUnshareFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.remoteUnshare),
-        Entry("generalCompressionLevel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.compressionLevel),
-        Entry("refreshRectSupport", INPUT_UNSIGNED, STORAGE_BYTE, &caps.refreshRectSupport),
-        Entry("suppressOutputSupport", INPUT_UNSIGNED, STORAGE_BYTE, &caps.suppressOutputSupport),
+        Entry("osMajorType", &caps.os_major),
+        Entry("osMinorType", &caps.os_minor),
+        Entry("protocolVersion", &caps.protocolVersion),
+        Entry("generalCompressionTypes", &caps.compressionType),
+        Entry("extraFlags", &caps.extraflags),
+        Entry("updateCapabilityFlag", &caps.updateCapability),
+        Entry("remoteUnshareFlag", &caps.remoteUnshare),
+        Entry("generalCompressionLevel", &caps.compressionLevel),
+        Entry("refreshRectSupport", &caps.refreshRectSupport),
+        Entry("suppressOutputSupport", &caps.suppressOutputSupport),
     });
 }
 
 bool bitmap_caps_load(BitmapCaps & caps, char const * filename)
 {
     return load(filename, "Bitmap Capability Set", {
-        Entry("preferredBitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.preferredBitsPerPixel),
-        Entry("receive1BitPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive1BitPerPixel),
-        Entry("receive4BitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive4BitsPerPixel),
-        Entry("receive8BitsPerPixel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.receive8BitsPerPixel),
-        Entry("desktopWidth", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopWidth),
-        Entry("desktopHeight", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopHeight),
-        Entry("desktopResizeFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopResizeFlag),
-        Entry("bitmapCompressionFlag", INPUT_UNSIGNED, STORAGE_UINT16, &caps.bitmapCompressionFlag),
-        Entry("highColorFlags", INPUT_UNSIGNED, STORAGE_BYTE, &caps.highColorFlags),
-        Entry("drawingFlags", INPUT_UNSIGNED, STORAGE_BYTE, &caps.drawingFlags),
-        Entry("multipleRectangleSupport", INPUT_UNSIGNED, STORAGE_UINT16, &caps.multipleRectangleSupport),
+        Entry("preferredBitsPerPixel", &caps.preferredBitsPerPixel),
+        Entry("receive1BitPerPixel", &caps.receive1BitPerPixel),
+        Entry("receive4BitsPerPixel", &caps.receive4BitsPerPixel),
+        Entry("receive8BitsPerPixel", &caps.receive8BitsPerPixel),
+        Entry("desktopWidth", &caps.desktopWidth),
+        Entry("desktopHeight", &caps.desktopHeight),
+        Entry("desktopResizeFlag", &caps.desktopResizeFlag),
+        Entry("bitmapCompressionFlag", &caps.bitmapCompressionFlag),
+        Entry("highColorFlags", &caps.highColorFlags),
+        Entry("drawingFlags", &caps.drawingFlags),
+        Entry("multipleRectangleSupport", &caps.multipleRectangleSupport),
     });
 }
 
 bool order_caps_load(OrderCaps & caps, char const * filename)
 {
     return load(filename, "Order Capability Set", {
-        Entry("desktopSaveXGranularity", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopSaveXGranularity),
-        Entry("desktopSaveYGranularity", INPUT_UNSIGNED, STORAGE_UINT16, &caps.desktopSaveYGranularity),
-        Entry("maximumOrderLevel", INPUT_UNSIGNED, STORAGE_UINT16, &caps.maximumOrderLevel),
-        Entry("numberFonts", INPUT_UNSIGNED, STORAGE_UINT16, &caps.numberFonts),
-        Entry("orderFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.orderFlags),
-        Entry("TS_NEG_DSTBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_DSTBLT_INDEX]),
-        Entry("TS_NEG_PATBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_PATBLT_INDEX]),
-        Entry("TS_NEG_SCRBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_SCRBLT_INDEX]),
-        Entry("TS_NEG_MEMBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MEMBLT_INDEX]),
-        Entry("TS_NEG_MEM3BLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MEM3BLT_INDEX]),
-        Entry("TS_NEG_DRAWNINEGRID_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX]),
-        Entry("TS_NEG_LINETO_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_LINETO_INDEX]),
-        Entry("TS_NEG_MULTI_DRAWNINEGRID_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]),
-        Entry("TS_NEG_SAVEBITMAP_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX]),
-        Entry("TS_NEG_MULTIDSTBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]),
-        Entry("TS_NEG_MULTIPATBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]),
-        Entry("TS_NEG_MULTISCRBLT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]),
-        Entry("TS_NEG_MULTIOPAQUERECT_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]),
-        Entry("TS_NEG_FAST_INDEX_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_FAST_INDEX_INDEX]),
-        Entry("TS_NEG_POLYGON_SC_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]),
-        Entry("TS_NEG_POLYGON_CB_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]),
-        Entry("TS_NEG_POLYLINE_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_POLYLINE_INDEX]),
-        Entry("TS_NEG_FAST_GLYPH_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]),
-        Entry("TS_NEG_ELLIPSE_SC_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]),
-        Entry("TS_NEG_ELLIPSE_CB_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]),
-        Entry("TS_NEG_INDEX_INDEX", INPUT_UNSIGNED, STORAGE_BYTE, &caps.orderSupport[TS_NEG_INDEX_INDEX]),
-        Entry("orderSupportExFlags", INPUT_UNSIGNED, STORAGE_UINT16, &caps.orderSupportExFlags),
-        Entry("desktopSaveSize", INPUT_UNSIGNED, STORAGE_UINT32, &caps.desktopSaveSize),
-        Entry("textANSICodePage", INPUT_UNSIGNED, STORAGE_UINT16, &caps.textANSICodePage),
+        Entry("desktopSaveXGranularity", &caps.desktopSaveXGranularity),
+        Entry("desktopSaveYGranularity", &caps.desktopSaveYGranularity),
+        Entry("maximumOrderLevel", &caps.maximumOrderLevel),
+        Entry("numberFonts", &caps.numberFonts),
+        Entry("orderFlags", &caps.orderFlags),
+        Entry("TS_NEG_DSTBLT_INDEX", &caps.orderSupport[TS_NEG_DSTBLT_INDEX]),
+        Entry("TS_NEG_PATBLT_INDEX", &caps.orderSupport[TS_NEG_PATBLT_INDEX]),
+        Entry("TS_NEG_SCRBLT_INDEX", &caps.orderSupport[TS_NEG_SCRBLT_INDEX]),
+        Entry("TS_NEG_MEMBLT_INDEX", &caps.orderSupport[TS_NEG_MEMBLT_INDEX]),
+        Entry("TS_NEG_MEM3BLT_INDEX", &caps.orderSupport[TS_NEG_MEM3BLT_INDEX]),
+        Entry("TS_NEG_DRAWNINEGRID_INDEX", &caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX]),
+        Entry("TS_NEG_LINETO_INDEX", &caps.orderSupport[TS_NEG_LINETO_INDEX]),
+        Entry("TS_NEG_MULTI_DRAWNINEGRID_INDEX", &caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX]),
+        Entry("TS_NEG_SAVEBITMAP_INDEX", &caps.orderSupport[TS_NEG_SAVEBITMAP_INDEX]),
+        Entry("TS_NEG_MULTIDSTBLT_INDEX", &caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]),
+        Entry("TS_NEG_MULTIPATBLT_INDEX", &caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]),
+        Entry("TS_NEG_MULTISCRBLT_INDEX", &caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]),
+        Entry("TS_NEG_MULTIOPAQUERECT_INDEX", &caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]),
+        Entry("TS_NEG_FAST_INDEX_INDEX", &caps.orderSupport[TS_NEG_FAST_INDEX_INDEX]),
+        Entry("TS_NEG_POLYGON_SC_INDEX", &caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]),
+        Entry("TS_NEG_POLYGON_CB_INDEX", &caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]),
+        Entry("TS_NEG_POLYLINE_INDEX", &caps.orderSupport[TS_NEG_POLYLINE_INDEX]),
+        Entry("TS_NEG_FAST_GLYPH_INDEX", &caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]),
+        Entry("TS_NEG_ELLIPSE_SC_INDEX", &caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]),
+        Entry("TS_NEG_ELLIPSE_CB_INDEX", &caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]),
+        Entry("TS_NEG_INDEX_INDEX", &caps.orderSupport[TS_NEG_INDEX_INDEX]),
+        Entry("orderSupportExFlags", &caps.orderSupportExFlags),
+        Entry("desktopSaveSize", &caps.desktopSaveSize),
+        Entry("textANSICodePage", &caps.textANSICodePage),
     });
 }
