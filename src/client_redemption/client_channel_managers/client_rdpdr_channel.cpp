@@ -21,7 +21,7 @@
 */
 
 
-#include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_rdpdr_channel.hpp"
 
 #include <sys/types.h>
 #include <sys/stat.h>

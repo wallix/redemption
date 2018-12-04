@@ -26,7 +26,7 @@
 
 
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
-#include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
+#include "client_redemption/client_channel_managers/client_remoteapp_channel.hpp"
 
 
 

@@ -22,7 +22,7 @@
 */
 
 
-#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
 #include "utils/difftimeval.hpp"
 #include "utils/sugar/numerics/safe_conversions.hpp"
 

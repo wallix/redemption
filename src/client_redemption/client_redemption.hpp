@@ -44,10 +44,10 @@
 
 #include "capture/wrm_capture.hpp"
 
-#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
-#include "client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp"
-#include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
-#include "client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp"
+#include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
+#include "client_redemption/client_channel_managers/client_rdpdr_channel.hpp"
+#include "client_redemption/client_channel_managers/client_rdpsnd_channel.hpp"
+#include "client_redemption/client_channel_managers/client_remoteapp_channel.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 

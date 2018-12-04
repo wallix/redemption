@@ -21,7 +21,7 @@
 */
 
 
-#include "client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp"
+#include "client_redemption/client_channel_managers/client_rdpsnd_channel.hpp"
 
 
 

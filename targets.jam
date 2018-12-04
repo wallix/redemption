@@ -18,9 +18,9 @@ exe headlessclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
   <library>src/capture/file_to_graphic.o
-  <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
-  <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
-  <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
+  <library>src/client_redemption/client_channel_managers/client_cliprdr_channel.o
+  <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channel_managers/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
@@ -185,6 +185,120 @@ exe rdpproxy :
   <library>src/utils/utf.o
   <library>z
   $(EXE_DEPENDENCIES)
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
+exe vnc_client :
+  src/main/vnc_client.o
+:
+  <library>app_path_exe.o
+  <library>boost_stacktrace
+  <library>crypto
+  <library>ffmpeg
+  <library>gssapi_krb5
+  <library>krb5
+  <library>openssl
+  <library>png
+  <library>ppocr
+  <library>program_options
+  <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>snappy
+  <library>src/acl/module_manager/create_module_rdp.o
+  <library>src/acl/module_manager/create_module_vnc.o
+  <library>src/acl/module_manager/mm_ini.o
+  <library>src/capture/capture.o
+  <library>src/capture/file_to_graphic.o
+  <library>src/capture/ocr/locale/latin_to_cyrillic.o
+  <library>src/capture/params_from_ini.o
+  <library>src/capture/rdp_ppocr/get_ocr_constants.o
+  <library>src/capture/utils/match_finder.o
+  <library>src/capture/video_capture.o
+  <library>src/capture/video_recorder.o
+  <library>src/core/RDP/RDPDrawable.o
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/date_dir_from_filename.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/core/set_server_redirection_target.o
+  <library>src/gdi/clip_from_cmd.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/protected_graphics.o
+  <library>src/gdi/screen_functions.o
+  <library>src/keyboard/keymap2.o
+  <library>src/keyboard/keymapSym.o
+  <library>src/mod/internal/bouncer2_mod.o
+  <library>src/mod/internal/client_execute.o
+  <library>src/mod/internal/copy_paste.o
+  <library>src/mod/internal/flat_dialog_mod.o
+  <library>src/mod/internal/flat_login_mod.o
+  <library>src/mod/internal/flat_wab_close_mod.o
+  <library>src/mod/internal/flat_wait_mod.o
+  <library>src/mod/internal/interactive_target_mod.o
+  <library>src/mod/internal/internal_mod.o
+  <library>src/mod/internal/locally_integrable_mod.o
+  <library>src/mod/internal/rail_module_host_mod.o
+  <library>src/mod/internal/replay_mod.o
+  <library>src/mod/internal/selector_mod.o
+  <library>src/mod/internal/test_card_mod.o
+  <library>src/mod/internal/widget/composite.o
+  <library>src/mod/internal/widget/edit.o
+  <library>src/mod/internal/widget/edit_valid.o
+  <library>src/mod/internal/widget/flat_button.o
+  <library>src/mod/internal/widget/flat_dialog.o
+  <library>src/mod/internal/widget/flat_form.o
+  <library>src/mod/internal/widget/flat_interactive_target.o
+  <library>src/mod/internal/widget/flat_login.o
+  <library>src/mod/internal/widget/flat_wab_close.o
+  <library>src/mod/internal/widget/flat_wait.o
+  <library>src/mod/internal/widget/group_box.o
+  <library>src/mod/internal/widget/image.o
+  <library>src/mod/internal/widget/label.o
+  <library>src/mod/internal/widget/labelgrid.o
+  <library>src/mod/internal/widget/language_button.o
+  <library>src/mod/internal/widget/module_host.o
+  <library>src/mod/internal/widget/multiline.o
+  <library>src/mod/internal/widget/number_edit.o
+  <library>src/mod/internal/widget/password.o
+  <library>src/mod/internal/widget/rail_module_host.o
+  <library>src/mod/internal/widget/screen.o
+  <library>src/mod/internal/widget/scroll.o
+  <library>src/mod/internal/widget/selector.o
+  <library>src/mod/internal/widget/tooltip.o
+  <library>src/mod/internal/widget/widget_rect.o
+  <library>src/mod/internal/widget_test_mod.o
+  <library>src/mod/rdp/rdp.o
+  <library>src/mod/rdp/rdp_negociation.o
+  <library>src/mod/vnc/encoder/copyrect.o
+  <library>src/mod/vnc/encoder/cursor.o
+  <library>src/mod/vnc/encoder/hextile.o
+  <library>src/mod/vnc/encoder/raw.o
+  <library>src/mod/vnc/encoder/rre.o
+  <library>src/mod/vnc/encoder/zrle.o
+  <library>src/transport/crypto_transport.o
+  <library>src/transport/mwrm_reader.o
+  <library>src/transport/socket_transport.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/bitmap_from_file.o
+  <library>src/utils/cfgloader.o
+  <library>src/utils/confdescriptor.o
+  <library>src/utils/d3des.o
+  <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/load_theme.o
+  <library>src/utils/netutils.o
+  <library>src/utils/pattutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
+  <library>src/utils/strutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/utf.o
+  <library>z
+  $(EXE_DEPENDENCIES)
+  <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -955,8 +1069,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_cliprdr_channel.cpp
 :
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -964,7 +1078,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>openssl
   <library>png
   <library>snappy
-  <library>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o
+  <library>src/client_redemption/client_channel_managers/client_cliprdr_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -981,14 +1095,14 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp
-  <covfile>src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp
+  <covfile>src/client_redemption/client_channel_managers/client_cliprdr_channel.cpp
+  <covfile>src/client_redemption/client_channel_managers/client_cliprdr_channel.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpdr_channel.cpp
 :
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -996,7 +1110,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>openssl
   <library>png
   <library>snappy
-  <library>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o
+  <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -1013,14 +1127,14 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp
-  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.hpp
+  <covfile>src/client_redemption/client_channel_managers/client_rdpdr_channel.cpp
+  <covfile>src/client_redemption/client_channel_managers/client_rdpdr_channel.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpsnd_channel.cpp
 :
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -1028,7 +1142,8 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>openssl
   <library>png
   <library>snappy
-  <library>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o
+  <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channel_managers/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -1045,14 +1160,14 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
-  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp
-  <covfile>src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.hpp
+  <covfile>src/client_redemption/client_channel_managers/client_rdpsnd_channel.cpp
+  <covfile>src/client_redemption/client_channel_managers/client_rdpsnd_channel.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_remoteapp_channel.cpp
 :
   <library>app_path_test.o
   <library>boost_stacktrace
@@ -1081,7 +1196,7 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_rem
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>z
-  <covfile>src/client_redemption/client_channel_managers/client_channel_remoteapp_manager.hpp
+  <covfile>src/client_redemption/client_channel_managers/client_remoteapp_channel.hpp
   <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -5554,9 +5669,9 @@ obj src/capture/rdp_ppocr/get_ocr_constants.o : $(REDEMPTION_SRC_PATH)/capture/r
 obj src/capture/utils/match_finder.o : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
 obj src/capture/video_capture.o : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 obj src/capture/video_recorder.o : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
-obj src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
-obj src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
-obj src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
+obj src/client_redemption/client_channel_managers/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_cliprdr_channel.cpp ;
+obj src/client_redemption/client_channel_managers/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_rdpdr_channel.cpp ;
+obj src/client_redemption/client_channel_managers/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_rdpsnd_channel.cpp ;
 obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
@@ -5583,6 +5698,7 @@ obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
+obj src/main/vnc_client.o : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp : <define>ZLIB_CONST ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
@@ -5692,14 +5808,14 @@ alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_po
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
-alias test_client_channel_CLIPRDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager ;
-alias test_client_channel_CLIPRDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.coverage ;
-alias test_client_channel_RDPDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager ;
-alias test_client_channel_RDPDR_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.coverage ;
-alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager ;
-alias test_client_channel_RDPSND_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.coverage ;
-alias test_client_channel_remoteapp_manager : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager ;
-alias test_client_channel_remoteapp_manager.coverage : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.coverage ;
+alias test_client_cliprdr_channel : tests/client_redemption/client_channel_managers/test_client_cliprdr_channel ;
+alias test_client_cliprdr_channel.coverage : tests/client_redemption/client_channel_managers/test_client_cliprdr_channel.coverage ;
+alias test_client_rdpdr_channel : tests/client_redemption/client_channel_managers/test_client_rdpdr_channel ;
+alias test_client_rdpdr_channel.coverage : tests/client_redemption/client_channel_managers/test_client_rdpdr_channel.coverage ;
+alias test_client_rdpsnd_channel : tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel ;
+alias test_client_rdpsnd_channel.coverage : tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel.coverage ;
+alias test_client_remoteapp_channel : tests/client_redemption/client_channel_managers/test_client_remoteapp_channel ;
+alias test_client_remoteapp_channel.coverage : tests/client_redemption/client_channel_managers/test_client_remoteapp_channel.coverage ;
 alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
 alias test_client_redemption_config.coverage : tests/client_redemption/client_config/test_client_redemption_config.coverage ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
@@ -6352,10 +6468,10 @@ alias tests/client_mods.norec :
   tests/client_mods/test_rdp_client_wab
 ;
 alias tests/client_redemption/client_channel_managers.norec :
-  tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager
+  tests/client_redemption/client_channel_managers/test_client_cliprdr_channel
+  tests/client_redemption/client_channel_managers/test_client_rdpdr_channel
+  tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel
+  tests/client_redemption/client_channel_managers/test_client_remoteapp_channel
 ;
 alias tests/client_redemption/client_config.norec :
   tests/client_redemption/client_config/test_client_redemption_config
