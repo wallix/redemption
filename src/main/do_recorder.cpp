@@ -1158,9 +1158,6 @@ static void raise_error(UpdateProgressData::Format pgs_format, std::string const
         return;
     }
 
-    char outfile_pid[32];
-    std::snprintf(outfile_pid, sizeof(outfile_pid), "%06u", unsigned(getpid()));
-
     char outfile_path     [1024] = {};
     char outfile_basename [1024] = {};
     char outfile_extension[1024] = {};
@@ -1175,8 +1172,8 @@ static void raise_error(UpdateProgressData::Format pgs_format, std::string const
                   );
 
     char progress_filename[4096];
-    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s-%s.pgs"
-            , outfile_path, outfile_basename, outfile_pid);
+    std::snprintf( progress_filename, sizeof(progress_filename), "%s%s.pgs"
+            , outfile_path, outfile_basename);
 
     UpdateProgressData update_progress_data(pgs_format, progress_filename, 0, 0, 0, 0);
 
