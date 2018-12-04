@@ -160,7 +160,7 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionConfig * config/*, ClientRedemptionAPI * front*/, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
         : QWidget(parent)
         , config(config)
 //         , _front(front)
@@ -182,10 +182,8 @@ public:
         , _recordingCB(this)
 
     	, _languageComboBox(this)
-
         , _labelProfil("Options Profil:", this)
         , _labelRecording("Record movie :", this)
-
         , _labelLanguage("Keyboard Language :", this)
 
         , _servicesTab(nullptr)

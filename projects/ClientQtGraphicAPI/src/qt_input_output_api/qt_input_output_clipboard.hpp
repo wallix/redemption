@@ -32,7 +32,7 @@
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.hpp"
+#include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
