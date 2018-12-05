@@ -72,7 +72,6 @@ namespace emscripten
         return select(a, b, to_const(a), to_const(b));
     }
 
-    class delegate_ostream {};
 
     template<class F, class... Xs>
     auto faccumulator(F&& f, Xs&&... xs)
@@ -108,30 +107,57 @@ namespace emscripten
     PrintableChar ostream_wrap(signed char x) noexcept;
 
     template<class T>
-    T const& ostream_wrap(T const& x) noexcept
+    struct delegate_ostream
     {
-        return x;
+        T const& x;
+    };
+
+    template<class T>
+    std::ostream& red_test_print_type(std::ostream& out, T const& x)
+    {
+        return out << x;
+    }
+
+    template<class T>
+    std::ostream& operator<<(std::ostream& out, delegate_ostream<T> const& d)
+    {
+        return red_test_print_type(out, d.x);
+    }
+
+    template<class T>
+    delegate_ostream<T> ostream_wrap(T const& x) noexcept
+    {
+        return delegate_ostream<T>{x};
     }
 
 } // namespace emscripten
 } // namespace redemption_unit_test__
 
-
+#ifdef RED_TEST_MODULE
 int main()
 {
     return ::redemption_unit_test__::emscripten::execute_tests(RED_PP_STRINGIFY(RED_TEST_MODULE));
 }
+#endif
 
 
 #define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
+
+#define RED_TEST_DONT_PRINT_LOG_VALUE(type)      \
+namespace emscripten::redemption_unit_test__ {   \
+    template<> struct delegate_ostream<::type> { \
+        delegate_ostream(::type const&){}        \
+        char const* x = "";                      \
+    };                                           \
+}
 
 
 #define RED_AUTO_TEST_CASE(name)                       \
     namespace redemption_unit_test__::emscripten::D {  \
         void test_##name##__();                        \
-        struct TEST_##name##__ {                       \
+        const struct TEST_##name##__ {                 \
             TEST_##name##__() {                        \
-                RED_TEST_PASSPOINT()                   \
+                RED_TEST_PASSPOINT();                  \
                 ::redemption_unit_test__::emscripten:: \
                     add_test_case(                     \
                         __FILE__, __LINE__,            \

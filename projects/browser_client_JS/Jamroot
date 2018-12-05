@@ -73,7 +73,40 @@ htmljs pentamino : penta.bc :
     # <cxxflags>"-s WASM=0"
 ;
 
-objjs unit_test.bc : $(SYSTEM_SRC_PATH)/system/redemption_unit_tests.cpp ;
+constant CXXFLAGS_TEST :
+    <include>$(REDEMPTION_TEST_PATH)/includes
+    <define>REDEMPTION_DECL_LOG_TEST
+    <define>REDEMPTION_TEST_BACKEND=emscripten
+    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    <cxxflags>"-s NODERAWFS"
+    # enable basename (see `man 3 basename`)
+    <cxxflags>"-D_GNU_SOURCE"
+;
+
+objjs register_exception.bc :
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/register_exception.cpp
+:
+    $(CXXFLAGS_TEST)
+;
+
+objjs redemption_unit_test_impl.bc :
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/emscripten/redemption_unit_tests_impl.cpp
+:
+    $(CXXFLAGS_TEST)
+;
+
+objjs redemption_unit_test.bc :
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/redemption_unit_tests.cpp
+:
+    $(CXXFLAGS_TEST)
+;
+
+alias unit_test.bc :
+    register_exception.bc
+    redemption_unit_test.bc
+    redemption_unit_test_impl.bc
+    src/core/error.bc
+;
 
 objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
 
@@ -81,15 +114,6 @@ objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
     <define>SHARE_PATH='\"$(FIXTURES_PATH)\"'
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
-;
-
-constant CXXFLAGS_TEST :
-    <define>REDEMPTION_DECL_LOG_TEST
-    <include>$(REDEMPTION_TEST_PATH)/includes
-    <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <cxxflags>"-s NODERAWFS"
-    # enable basename (see `man 3 basename`)
-    <cxxflags>"-D_GNU_SOURCE"
 ;
 
 actions exenode

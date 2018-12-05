@@ -19,7 +19,7 @@
 */
 
 #define REDEMPTION_UNIT_TEST_CPP 1
-#include "redemption_unit_tests.hpp"
+#include "redemption_unit_tests_impl.hpp"
 #include "register_exception.hpp"
 
 #include <vector>
