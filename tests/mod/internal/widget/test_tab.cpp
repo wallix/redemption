@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestWidgetTab
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 RED_AUTO_TEST_CASE(TraceWidgetTab)

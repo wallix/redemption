@@ -22,7 +22,7 @@
 */
 
 #define RED_TEST_MODULE TestX224
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 #include "core/RDP/x224.hpp"

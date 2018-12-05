@@ -24,7 +24,7 @@
 */
 
 #define RED_TEST_MODULE TestLul
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/utf.hpp"
 #include "utils/sugar/cast.hpp"
@@ -470,28 +470,30 @@ RED_AUTO_TEST_CASE(TestUTF16ToLatin1_1) {
     RED_CHECK_EQ(char_ptr_cast(latin1_dst), "100 \x80");
 }
 
-RED_AUTO_TEST_CASE(TestLatin1ToUTF16) {
+RED_AUTO_TEST_CASE(TestLatin1ToUTF16)
+{
     const uint8_t latin1_src[] = "trap\xe9zo\xef" "dal";
+    const size_t number_of_characters = sizeof(latin1_src) - 1;
+    const size_t utf16_chars_count = number_of_characters * 2;
 
-    const size_t number_of_characters = strlen(char_ptr_cast(latin1_src)) + 1;
-
-    const uint8_t utf16_expected[] = "\x74\x00\x72\x00\x61\x00\x70\x00"  // "trapézoïdal"
-                                     "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
-                                     "\x64\x00\x61\x00\x6c\x00\x00\x00";
+    // "trapézoïdal"
+    const auto utf16_expected = "\x74\x00\x72\x00\x61\x00\x70\x00"
+                                "\xe9\x00\x7a\x00\x6f\x00\xef\x00"
+                                "\x64\x00\x61\x00\x6c\x00\x00\x00"_av;
 
     uint8_t utf16_dst[32];
 
     RED_CHECK_EQUAL(
-        Latin1toUTF16({latin1_src, number_of_characters}, utf16_dst, sizeof(utf16_dst)),
-        number_of_characters * 2);
+        Latin1toUTF16({latin1_src, number_of_characters+1}, utf16_dst, sizeof(utf16_dst)),
+        utf16_chars_count + 2);
 
-    RED_CHECK_EQUAL(memcmp(utf16_dst, utf16_expected, number_of_characters * 2), 0);
+    RED_CHECK_SMEM(make_array_view(utf16_dst, utf16_chars_count + 2), utf16_expected);
 
-    uint8_t utf8_dst[16];
+    uint8_t utf8_dst[16]{};
 
     RED_CHECK_EQUAL(
-        UTF16toUTF8(utf16_dst, number_of_characters * 2, utf8_dst, sizeof(utf8_dst)),
-        number_of_characters + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
+        UTF16toUTF8(utf16_dst, utf16_chars_count + 2, utf8_dst, sizeof(utf8_dst)),
+        number_of_characters + 1 + 2 /* 'é' => 0xC3 0xA9, 'ï' => 0xC3 0xAF */);
 
     RED_CHECK_EQ(char_ptr_cast(utf8_dst), "trapézoïdal");
 }

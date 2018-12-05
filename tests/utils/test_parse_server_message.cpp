@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestParseServerMessage
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/parse_server_message.hpp"
 

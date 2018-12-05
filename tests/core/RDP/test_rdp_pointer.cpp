@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestCursor
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "gdi/graphic_api.hpp"
 #include "test_only/gdi/test_graphic.hpp"

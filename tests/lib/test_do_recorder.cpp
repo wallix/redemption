@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE TestDoRecorder
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"

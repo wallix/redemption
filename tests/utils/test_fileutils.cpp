@@ -20,10 +20,13 @@
 */
 
 #define RED_TEST_MODULE TestFileUtils
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/fileutils.hpp"
 
+#include <functional>
+
+#include <cstring>
 #include <unistd.h> // for getgid
 
 
@@ -344,20 +347,22 @@ RED_AUTO_TEST_CASE(TestMakePath)
     }
 }
 
+const auto file_not_exists = std::not_fn<bool(*)(char const*)>(file_exist);
+
 RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 {
     char tmpdirname[128];
     sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
     RED_CHECK(nullptr != mkdtemp(tmpdirname));
-    RED_CHECK_FILE_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
     recursive_delete_directory(tmpdirname);
 
-    RED_CHECK_FILE_NOT_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 
     recursive_create_directory(tmpdirname, 0777, getgid());
 
-    RED_CHECK_FILE_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
     char tmpfilename[128];
     strcpy(tmpfilename, tmpdirname);
@@ -365,7 +370,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
     close(mkstemp(tmpfilename));
 
     recursive_delete_directory(tmpdirname);
-    RED_CHECK_FILE_NOT_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 
 }
 
@@ -374,17 +379,17 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     char tmpdirname[128];
     sprintf(tmpdirname, "/tmp/test_dir_XXXXXX");
     RED_CHECK(nullptr != mkdtemp(tmpdirname));
-    RED_CHECK_FILE_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
     // Add a trailing slash to tmpdirname
     strcat(tmpdirname, "/");
     recursive_delete_directory(tmpdirname);
 
-    RED_CHECK_FILE_NOT_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 
     recursive_create_directory(tmpdirname, 0777, getgid());
 
-    RED_CHECK_FILE_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
     char tmpfilename[128];
     strcpy(tmpfilename, tmpdirname);
@@ -392,7 +397,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     close(mkstemp(tmpfilename));
 
     recursive_delete_directory(tmpdirname);
-    RED_CHECK_FILE_NOT_EXISTS((tmpdirname));
+    RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 }
 
 RED_AUTO_TEST_CASE(TestFileEquals)

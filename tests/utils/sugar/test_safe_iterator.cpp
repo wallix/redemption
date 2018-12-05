@@ -21,13 +21,16 @@
 */
 
 #define RED_TEST_MODULE TestSafeIterator
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/safe_iterator.hpp"
 
+using Iter = safe_iterator<char const*>;
+
+RED_TEST_DONT_PRINT_LOG_VALUE(Iter)
+
 RED_AUTO_TEST_CASE(TestSafeIterator)
 {
-    using Iter = safe_iterator<char const*>;
 
     RED_CHECK(!Iter().base());
 

@@ -23,7 +23,7 @@
 */
 
 #define RED_TEST_MODULE TestFrontMstscClientRDP50Bulk
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 // Comment the code block below to generate testing data.
 // Uncomment the code block below to generate testing data.

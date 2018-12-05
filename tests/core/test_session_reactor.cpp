@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE TestSessionReactor
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include <string>
 #include <sys/types.h>
@@ -30,7 +30,8 @@
 #include "core/session_reactor.hpp"
 #include "gdi/graphic_api.hpp"
 
-template<class> struct t_{};
+RED_TEST_DELEGATE_PRINT_NS(jln, R, int(x))
+
 RED_AUTO_TEST_CASE(TestSequencer)
 {
     using R = jln::R;
@@ -109,20 +110,20 @@ RED_AUTO_TEST_CASE(TestSessionReactorTimer)
     session_reactor.execute_timers_at(disable_gd, {11, 222}, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\n");
     RED_CHECK(!timer1);
-    RED_CHECK(timer2);
+    RED_CHECK(bool(timer2));
 
     session_reactor.execute_timers_at(disable_gd, {13, 0}, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\n");
     RED_CHECK(!timer1);
-    RED_CHECK(timer2);
+    RED_CHECK(bool(timer2));
 
     session_reactor.execute_timers_at(disable_gd, {14, 0}, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\n");
-    RED_CHECK(timer2);
+    RED_CHECK(bool(timer2));
 
     session_reactor.execute_timers_at(disable_gd, {15, 0}, &gdi::null_gd);
     RED_CHECK_EQ(s, "timer3\ntimer1\nd1\ntimer3\ntimer2\ntimer3\ntimer3\nd3\ntimer2\n");
-    RED_CHECK(timer2);
+    RED_CHECK(bool(timer2));
 
     timer2.reset();
     RED_CHECK(!timer2);
@@ -248,13 +249,13 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     ));
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abc");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK(!event);
@@ -281,13 +282,13 @@ RED_AUTO_TEST_CASE(TestSessionReactorSequence)
     ));
 
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "a");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "ab");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
-    RED_CHECK(event);
+    RED_CHECK(bool(event));
     RED_CHECK_EQ(s, "abd");
     session_reactor.execute_graphics(fd_is_set, gdi::null_gd());
     RED_CHECK(!event);

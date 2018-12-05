@@ -35,7 +35,7 @@
 #include <algorithm>
 #include <cstring>
 
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 #include "transport/transport.hpp"
 #include "utils/stream.hpp"
 

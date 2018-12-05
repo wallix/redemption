@@ -20,7 +20,7 @@
 
 
 #define RED_TEST_MODULE TestLocalFd
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/unique_fd.hpp"
 

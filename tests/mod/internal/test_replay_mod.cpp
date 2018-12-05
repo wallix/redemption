@@ -20,7 +20,7 @@
 */
 
 // #define RED_TEST_MODULE TestReplayMod
-// #include "system/redemption_unit_tests.hpp"
+// #include "test_framework/redemption_unit_tests.hpp"
 //
 //
 // #include "mod/internal/replay_mod.hpp"

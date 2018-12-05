@@ -22,9 +22,11 @@
 */
 
 #define RED_TEST_MODULE TestOrderGlyphIndex
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/orders/RDPOrdersPrimaryGlyphIndex.hpp"
+
+RED_TEST_DONT_PRINT_LOG_VALUE(RDPBrush)
 
 RED_AUTO_TEST_CASE(TestGlyphIndex)
 {

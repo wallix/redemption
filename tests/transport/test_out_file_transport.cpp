@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE TestInFileTransport
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "transport/out_file_transport.hpp"
 #include "test_only/get_file_contents.hpp"

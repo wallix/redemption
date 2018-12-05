@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE Test_audio_ouput
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDPEA/audio_output.hpp"
 #include "utils/sugar/cast.hpp"

@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestMPPC40
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "core/RDP/mppc/mppc_40.hpp"

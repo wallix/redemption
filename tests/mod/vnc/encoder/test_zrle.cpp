@@ -19,13 +19,14 @@
 */
 
 #define RED_TEST_MODULE TestVNCZrleEncoder
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "test_only/gdi/test_graphic.hpp"
 #include "test_only/check_sig.hpp"
 
 #include "mod/vnc/encoder/zrle.cpp"
 
+RED_TEST_DELEGATE_PRINT_NS(VNC::Encoder, EncoderState, int(x))
 
 //connection to 10.10.47.0:5900 (10.10.47.0) succeeded : socket 34
 //Connected to [10.10.47.0].

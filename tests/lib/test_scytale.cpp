@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE Testscytale
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "lib/scytale.hpp"
 #include "transport/crypto_transport.hpp"

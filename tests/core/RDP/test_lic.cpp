@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestLic
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "utils/stream.hpp"
@@ -175,7 +175,7 @@ RED_AUTO_TEST_CASE(Test_lic_new_licence)
     RED_CHECK_EQUAL(2031, lic.licenseInfo.wBlobLen);
 
     RED_CHECK_EQUAL(uint32_t(6), (lic.licenseInfo.dwVersion >> 16) & 0xFFFF); // major
-    RED_CHECK_EQUAL(uint32_t(0), lic.licenseInfo.dwVersion & 0xFFFF);         // minor
+    RED_CHECK_EQUAL(uint32_t(0), (lic.licenseInfo.dwVersion & 0xFFFF));       // minor
     RED_CHECK_EQUAL(uint32_t(14), lic.licenseInfo.cbScope);
     RED_CHECK_EQUAL(0, memcmp("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00", lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
     RED_CHECK_EQUAL(uint32_t(44), lic.licenseInfo.cbCompanyName);
@@ -465,7 +465,7 @@ RED_AUTO_TEST_CASE(Test_lic_upgrade_licence)
     RED_CHECK_EQUAL(uint16_t(2031), lic.licenseInfo.wBlobLen);
 
     RED_CHECK_EQUAL(uint32_t(6), (lic.licenseInfo.dwVersion >> 16) & 0xFFFF); // major
-    RED_CHECK_EQUAL(uint32_t(0), lic.licenseInfo.dwVersion & 0xFFFF);         // minor
+    RED_CHECK_EQUAL(uint32_t(0), (lic.licenseInfo.dwVersion & 0xFFFF));       // minor
     RED_CHECK_EQUAL(uint32_t(14), lic.licenseInfo.cbScope);
     RED_CHECK_EQUAL(0, memcmp("\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74\x2e\x63\x6f\x6d\x00", lic.licenseInfo.pbScope, lic.licenseInfo.cbScope));
     RED_CHECK_EQUAL(uint32_t(44), lic.licenseInfo.cbCompanyName);

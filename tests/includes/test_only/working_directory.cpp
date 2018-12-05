@@ -17,7 +17,7 @@ Product name: redemption, a FLOSS RDP proxy
 Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "working_directory.hpp"
 #include "utils/fileutils.hpp"

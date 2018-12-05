@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestWrmCapture
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "capture/file_to_graphic.hpp"
 #include "capture/wrm_capture.hpp"

@@ -20,7 +20,7 @@
 
 
 #define RED_TEST_MODULE TestCLIPRDRChannel
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/fake_base_virtual_channel.hpp"

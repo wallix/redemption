@@ -39,6 +39,8 @@ struct range
         value_type const
     >::type &;
     using const_reference = value_type const &;
+    using iterator = It;
+    using const_iterator = It;
 
     std::size_t size() const { return this->last_ - this->first_; }
 

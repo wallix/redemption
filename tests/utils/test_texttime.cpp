@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestTexttime
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/timeval_ops.hpp"
 #include "utils/texttime.hpp"

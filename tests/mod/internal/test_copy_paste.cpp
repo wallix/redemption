@@ -20,7 +20,7 @@
  */
 
 #define RED_TEST_MODULE TestCopyPaste
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "mod/internal/copy_paste.hpp"

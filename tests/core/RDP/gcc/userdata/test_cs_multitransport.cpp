@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestCS_MULTITRANSPORT
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "test_only/transport/test_transport.hpp"
@@ -46,11 +46,11 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_multitransport)
     cs_multitransport.recv(stream);
     RED_CHECK_EQUAL(CS_MULTITRANSPORT, cs_multitransport.userDataType);
     RED_CHECK_EQUAL(8, cs_multitransport.length);
-    RED_CHECK_EQUAL(GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
-                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
-                      GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
-                      GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP,
-                      cs_multitransport.flags);
+    RED_CHECK_EQUAL((GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECR |
+                     GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDPFECL |
+                     GCC::UserData::CSMultiTransport::TRANSPORTTYPE_UDP_PREFERRED |
+                     GCC::UserData::CSMultiTransport::SOFTSYNC_TCP_TO_UDP),
+                    cs_multitransport.flags);
 
     cs_multitransport.log("Client Received");
 }

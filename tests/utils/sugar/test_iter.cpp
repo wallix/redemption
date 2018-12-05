@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestIter
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/sugar/iter.hpp"
 #include <string>

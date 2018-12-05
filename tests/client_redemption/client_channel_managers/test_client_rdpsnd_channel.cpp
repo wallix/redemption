@@ -22,7 +22,7 @@
 */
 
 #define RED_TEST_MODULE TestRDPSNDChannelManager
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"

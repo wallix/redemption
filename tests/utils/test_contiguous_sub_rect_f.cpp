@@ -23,7 +23,7 @@
 */
 
 #define RED_TEST_MODULE TestSubRectGenerator
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/contiguous_sub_rect_f.hpp"
 #include <array>

@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE TestBouncer2Mod
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "keyboard/keymap2.hpp"
 #include "mod/internal/bouncer2_mod.hpp"

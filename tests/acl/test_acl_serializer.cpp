@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestAclSerializer
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "acl/acl_serializer.hpp"

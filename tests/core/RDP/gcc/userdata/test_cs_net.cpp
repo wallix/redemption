@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestCS_NET
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "test_only/transport/test_transport.hpp"
@@ -56,14 +56,14 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_net)
     RED_CHECK_EQUAL(2, cs_net.channelCount);
     RED_CHECK_EQUAL('c', cs_net.channelDefArray[0].name[0]);
     RED_CHECK_EQUAL(0, memcmp("cliprdr\0", cs_net.channelDefArray[0].name, 8));
-    RED_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+    RED_CHECK_EQUAL(( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
                      | GCC::UserData::CSNet::CHANNEL_OPTION_ENCRYPT_RDP
                      | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
-                     | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL)
                      , cs_net.channelDefArray[0].options);
     RED_CHECK_EQUAL(0, memcmp("rdpdr\0\0\0", cs_net.channelDefArray[1].name, 8));
-    RED_CHECK_EQUAL( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
-                     | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP
+    RED_CHECK_EQUAL(( GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED
+                     | GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS_RDP)
                      , cs_net.channelDefArray[1].options);
 
     cs_net.log("Client Received");

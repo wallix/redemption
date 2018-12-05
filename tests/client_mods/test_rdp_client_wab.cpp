@@ -22,7 +22,7 @@
 */
 
 #define RED_TEST_MODULE TestRdpClientWab
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"

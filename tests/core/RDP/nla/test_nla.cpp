@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestNLA
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/nla/nla.hpp"
 #include "core/RDP/tpdu_buffer.hpp"

@@ -20,7 +20,7 @@
 
 
 #define RED_TEST_MODULE TestCLIPRDRChannel
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"

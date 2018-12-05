@@ -23,7 +23,7 @@
 
 
 #define RED_TEST_MODULE TestPng
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/png.hpp"
 #include "utils/image_data_view.hpp"

@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestCapture
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "capture/capture.hpp"
 #include "capture/capture.cpp" // Yeaaahh...
@@ -41,6 +41,7 @@
 #include "utils/png.hpp"
 #include "utils/stream.hpp"
 
+const auto file_not_exists = std::not_fn<bool(char const*)>(file_exist);
 
 RED_AUTO_TEST_CASE(TestSplittedCapture)
 {
@@ -260,7 +261,7 @@ RED_AUTO_TEST_CASE(TestSplittedCapture)
         RED_CHECK_EQUAL(3223, ::filesize(filename));
         ::unlink(filename);
         filename = png_seq.get(7);
-        RED_CHECK_FILE_NOT_EXISTS((filename));
+        RED_CHECK_PREDICATE(file_not_exists, (filename));
     }
 
     for (auto x: fileinfo) {
@@ -3101,7 +3102,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture)
         RED_CHECK_EQUAL(4136, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_FILE_NOT_EXISTS((filename));
+        RED_CHECK_PREDICATE(file_not_exists, (filename));
     }
 
     for (auto x: fileinfo) {
@@ -3347,7 +3348,7 @@ RED_AUTO_TEST_CASE(TestResizingCapture1)
         RED_CHECK_EQUAL(2341, ::filesize(filename));
         if (remove_files) { ::unlink(filename); }
         filename = png_seq.get(8);
-        RED_CHECK_FILE_NOT_EXISTS((filename));
+        RED_CHECK_PREDICATE(file_not_exists, (filename));
     }
 
     for (auto x: fileinfo) {

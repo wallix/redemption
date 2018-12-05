@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestSC_CORE
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "core/RDP/gcc/userdata/sc_core.hpp"  

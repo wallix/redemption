@@ -21,7 +21,7 @@
 */
 
 #define RED_TEST_MODULE TestCS_MONITOR_EX
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "test_only/transport/test_transport.hpp"

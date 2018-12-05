@@ -19,7 +19,7 @@
 */
 
 #define RED_TEST_MODULE TestAuthorizationChannels
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "utils/authorization_channels.hpp"

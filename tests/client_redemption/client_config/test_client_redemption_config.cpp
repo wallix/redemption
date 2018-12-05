@@ -22,7 +22,7 @@
 */
 
 #define RED_TEST_MODULE TestClientRedemptionConfig
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
 
     // GENERAL
-    RED_CHECK_EQUAL(config.verbose, RDPVerbose::basic_trace | RDPVerbose::connection | RDPVerbose::capabilities | RDPVerbose::asynchronous_task | RDPVerbose::graphics | RDPVerbose::printer | RDPVerbose::rdpsnd | RDPVerbose::rail | RDPVerbose::cliprdr | RDPVerbose::rdpdr | RDPVerbose::rail_dump | RDPVerbose::basic_trace | RDPVerbose::rdpdr_dump | RDPVerbose::rail_order | RDPVerbose::cliprdr_dump);
+    RED_CHECK_EQUAL(config.verbose, (RDPVerbose::basic_trace | RDPVerbose::connection | RDPVerbose::capabilities | RDPVerbose::asynchronous_task | RDPVerbose::graphics | RDPVerbose::printer | RDPVerbose::rdpsnd | RDPVerbose::rail | RDPVerbose::cliprdr | RDPVerbose::rdpdr | RDPVerbose::rail_dump | RDPVerbose::basic_trace | RDPVerbose::rdpdr_dump | RDPVerbose::rail_order | RDPVerbose::cliprdr_dump));
     RED_CHECK_EQUAL(config.quick_connection_test, true);
     RED_CHECK_EQUAL(config.persist, false);
 //     std::chrono::milliseconds time_out_disconnection(5000);

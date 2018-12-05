@@ -22,7 +22,7 @@
 */
 
 #define RED_TEST_MODULE TestGraphicable
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "test_only/check_sig.hpp"
 #include "utils/bitmap.hpp"

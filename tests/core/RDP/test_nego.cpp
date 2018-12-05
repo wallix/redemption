@@ -20,7 +20,7 @@
 */
 
 #define RED_TEST_MODULE TestNego
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "utils/difftimeval.hpp"
 #include "core/RDP/nego.hpp"
