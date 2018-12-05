@@ -462,14 +462,14 @@ test-run tests/client_mods/test_rdp_client_wab :
   tests/includes/test_only/front/fake_front.bc
   tests/includes/test_only/gdi/test_graphic.bc
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_cliprdr_channel.cpp
   app_path_test.bc
   crypto.bc
   openssl.bc
   png.bc
   snappy.bc
-  src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.bc
+  src/client_redemption/client_channel_managers/client_cliprdr_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -487,14 +487,14 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_CLI
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpdr_channel.cpp
   app_path_test.bc
   crypto.bc
   openssl.bc
   png.bc
   snappy.bc
-  src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.bc
+  src/client_redemption/client_channel_managers/client_rdpdr_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -512,14 +512,14 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpsnd_channel.cpp
   app_path_test.bc
   crypto.bc
   openssl.bc
   png.bc
   snappy.bc
-  src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.bc
+  src/client_redemption/client_channel_managers/client_rdpsnd_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -537,8 +537,8 @@ test-run tests/client_redemption/client_channel_managers/test_client_channel_RDP
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
-test-run tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager.cpp
+test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_remoteapp_channel.cpp
   app_path_test.bc
   crypto.bc
   openssl.bc
@@ -1176,8 +1176,6 @@ test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
 ;
 test-run tests/core/RDP/test_out_per_bstream :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_out_per_bstream.cpp
-  crypto.bc
-  src/core/error.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_protocol :
@@ -3694,9 +3692,9 @@ objjs src/capture/rdp_ppocr/get_ocr_constants.bc : $(REDEMPTION_SRC_PATH)/captur
 objjs src/capture/utils/match_finder.bc : $(REDEMPTION_SRC_PATH)/capture/utils/match_finder.cpp ;
 objjs src/capture/video_capture.bc : $(REDEMPTION_SRC_PATH)/capture/video_capture.cpp : $(FFMPEG_CXXFLAGS) ;
 objjs src/capture/video_recorder.bc : $(REDEMPTION_SRC_PATH)/capture/video_recorder.cpp : $(FFMPEG_CXXFLAGS) ;
-objjs src/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_CLIPRDR_manager.cpp ;
-objjs src/client_redemption/client_channel_managers/client_channel_RDPDR_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPDR_manager.cpp ;
-objjs src/client_redemption/client_channel_managers/client_channel_RDPSND_manager.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_channel_RDPSND_manager.cpp ;
+objjs src/client_redemption/client_channel_managers/client_cliprdr_channel.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_cliprdr_channel.cpp ;
+objjs src/client_redemption/client_channel_managers/client_rdpdr_channel.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_rdpdr_channel.cpp ;
+objjs src/client_redemption/client_channel_managers/client_rdpsnd_channel.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channel_managers/client_rdpsnd_channel.cpp ;
 objjs src/client_redemption/client_config/client_redemption_config.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 objjs src/core/RDP/RDPDrawable.bc : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
@@ -3821,10 +3819,10 @@ alias test_rdp_client_large_pointer : tests/client_mods/test_rdp_client_large_po
 alias test_rdp_client_test_card : tests/client_mods/test_rdp_client_test_card ;
 alias test_rdp_client_tls_w2008 : tests/client_mods/test_rdp_client_tls_w2008 ;
 alias test_rdp_client_wab : tests/client_mods/test_rdp_client_wab ;
-alias test_client_channel_CLIPRDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager ;
-alias test_client_channel_RDPDR_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager ;
-alias test_client_channel_RDPSND_manager : tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager ;
-alias test_client_channel_remoteapp_manager : tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager ;
+alias test_client_cliprdr_channel : tests/client_redemption/client_channel_managers/test_client_cliprdr_channel ;
+alias test_client_rdpdr_channel : tests/client_redemption/client_channel_managers/test_client_rdpdr_channel ;
+alias test_client_rdpsnd_channel : tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel ;
+alias test_client_remoteapp_channel : tests/client_redemption/client_channel_managers/test_client_remoteapp_channel ;
 alias test_client_redemption_config : tests/client_redemption/client_config/test_client_redemption_config ;
 alias test_FileInformation : tests/core/FSCC/test_FileInformation ;
 alias test_bmpcache : tests/core/RDP/caches/test_bmpcache ;
@@ -4171,10 +4169,10 @@ alias tests/client_mods.norec :
   tests/client_mods/test_rdp_client_wab
 ;
 alias tests/client_redemption/client_channel_managers.norec :
-  tests/client_redemption/client_channel_managers/test_client_channel_CLIPRDR_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_RDPDR_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_RDPSND_manager
-  tests/client_redemption/client_channel_managers/test_client_channel_remoteapp_manager
+  tests/client_redemption/client_channel_managers/test_client_cliprdr_channel
+  tests/client_redemption/client_channel_managers/test_client_rdpdr_channel
+  tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel
+  tests/client_redemption/client_channel_managers/test_client_remoteapp_channel
 ;
 alias tests/client_redemption/client_config.norec :
   tests/client_redemption/client_config/test_client_redemption_config

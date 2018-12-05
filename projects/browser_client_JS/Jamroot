@@ -127,7 +127,24 @@ rule test-run ( name : objects + : requirements * )
     make $(name) : $(name).node : @exenode ;
 }
 
-# sed -E '/^lib |^exe |\.cpp\.lib\.o :$/,/^;/d;/^  <covfile|^  <variant|^  \$\(FFMPEG_CXXFLAGS\)|^  \$\(GCOV_NO_BUILD\)|^  <library>boost_stacktrace|\.coverage ;$/d;s/^obj /objjs /;s/\.o /.bc /;s/\.o$/.bc/;s/^  <library>(.*)/  \1.bc/;s/\.bc\.bc$/.bc/' ../../targets.jam | sed '/^test-run/,/^;/{/^:/d;s/^  </:\n&/;t}' > targets.jam
+
+actions gen_targets
+{
+    sed -E '/^lib |^exe |\.cpp\.lib\.o :$/,/^;/d;
+        /^  <covfile|^  <variant|^  \$\(FFMPEG_CXXFLAGS\)|^  \$\(GCOV_NO_BUILD\)|^  <library>boost_stacktrace|\.coverage ;$/d;
+        s/^obj /objjs /;
+        s/\.o /.bc /;
+        s/\.o$/.bc/;
+        s/^  <library>(.*)/  \1.bc/;
+        s/\.bc\.bc$/.bc/' \
+    ../../targets.jam | sed '/^test-run/,/^;/{
+        /^:/d;s/^  </:\n&/;t
+    }' > targets.jam
+}
+
+explicit targets.jam ;
+make targets.jam : : @gen_targets ;
+
 
 alias bz2.bc ;
 alias crypto.bc ;
