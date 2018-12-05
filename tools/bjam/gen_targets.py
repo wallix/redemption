@@ -23,9 +23,10 @@ disable_tests = set([
 
 disable_srcs = set([
     'src/main/redrec.cpp', # special case in Jamroot
-    'src/system/linux/system/redemption_unit_tests.cpp',
-    'src/system/linux/system/register_error_exception.cpp',
-    'src/system/linux/system/test_framework.cpp',
+    'tests/includes/test_only/test_framework/register_exception.cpp',
+    'tests/includes/test_only/test_framework/test_framework.cpp',
+    'tests/includes/test_only/test_framework/redemption_unit_tests.cpp',
+    'tests/includes/test_only/test_framework/emscripten/redemption_unit_tests_impl.cpp',
     'src/utils/log_as_syslog.cpp',
     'src/utils/log_as_logemasm.cpp',
     'src/utils/log_as_logprint.cpp',

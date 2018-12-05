@@ -189,120 +189,6 @@ exe rdpproxy :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-exe vnc_client :
-  src/main/vnc_client.o
-:
-  <library>app_path_exe.o
-  <library>boost_stacktrace
-  <library>crypto
-  <library>ffmpeg
-  <library>gssapi_krb5
-  <library>krb5
-  <library>openssl
-  <library>png
-  <library>ppocr
-  <library>program_options
-  <library>projects/redemption_configs/redemption_src/configs/config.o
-  <library>snappy
-  <library>src/acl/module_manager/create_module_rdp.o
-  <library>src/acl/module_manager/create_module_vnc.o
-  <library>src/acl/module_manager/mm_ini.o
-  <library>src/capture/capture.o
-  <library>src/capture/file_to_graphic.o
-  <library>src/capture/ocr/locale/latin_to_cyrillic.o
-  <library>src/capture/params_from_ini.o
-  <library>src/capture/rdp_ppocr/get_ocr_constants.o
-  <library>src/capture/utils/match_finder.o
-  <library>src/capture/video_capture.o
-  <library>src/capture/video_recorder.o
-  <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/mppc.o
-  <library>src/core/RDP/nego.o
-  <library>src/core/date_dir_from_filename.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/core/set_server_redirection_target.o
-  <library>src/gdi/clip_from_cmd.o
-  <library>src/gdi/graphic_api.o
-  <library>src/gdi/protected_graphics.o
-  <library>src/gdi/screen_functions.o
-  <library>src/keyboard/keymap2.o
-  <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
-  <library>src/mod/internal/copy_paste.o
-  <library>src/mod/internal/flat_dialog_mod.o
-  <library>src/mod/internal/flat_login_mod.o
-  <library>src/mod/internal/flat_wab_close_mod.o
-  <library>src/mod/internal/flat_wait_mod.o
-  <library>src/mod/internal/interactive_target_mod.o
-  <library>src/mod/internal/internal_mod.o
-  <library>src/mod/internal/locally_integrable_mod.o
-  <library>src/mod/internal/rail_module_host_mod.o
-  <library>src/mod/internal/replay_mod.o
-  <library>src/mod/internal/selector_mod.o
-  <library>src/mod/internal/test_card_mod.o
-  <library>src/mod/internal/widget/composite.o
-  <library>src/mod/internal/widget/edit.o
-  <library>src/mod/internal/widget/edit_valid.o
-  <library>src/mod/internal/widget/flat_button.o
-  <library>src/mod/internal/widget/flat_dialog.o
-  <library>src/mod/internal/widget/flat_form.o
-  <library>src/mod/internal/widget/flat_interactive_target.o
-  <library>src/mod/internal/widget/flat_login.o
-  <library>src/mod/internal/widget/flat_wab_close.o
-  <library>src/mod/internal/widget/flat_wait.o
-  <library>src/mod/internal/widget/group_box.o
-  <library>src/mod/internal/widget/image.o
-  <library>src/mod/internal/widget/label.o
-  <library>src/mod/internal/widget/labelgrid.o
-  <library>src/mod/internal/widget/language_button.o
-  <library>src/mod/internal/widget/module_host.o
-  <library>src/mod/internal/widget/multiline.o
-  <library>src/mod/internal/widget/number_edit.o
-  <library>src/mod/internal/widget/password.o
-  <library>src/mod/internal/widget/rail_module_host.o
-  <library>src/mod/internal/widget/screen.o
-  <library>src/mod/internal/widget/scroll.o
-  <library>src/mod/internal/widget/selector.o
-  <library>src/mod/internal/widget/tooltip.o
-  <library>src/mod/internal/widget/widget_rect.o
-  <library>src/mod/internal/widget_test_mod.o
-  <library>src/mod/rdp/rdp.o
-  <library>src/mod/rdp/rdp_negociation.o
-  <library>src/mod/vnc/encoder/copyrect.o
-  <library>src/mod/vnc/encoder/cursor.o
-  <library>src/mod/vnc/encoder/hextile.o
-  <library>src/mod/vnc/encoder/raw.o
-  <library>src/mod/vnc/encoder/rre.o
-  <library>src/mod/vnc/encoder/zrle.o
-  <library>src/transport/crypto_transport.o
-  <library>src/transport/mwrm_reader.o
-  <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/cfgloader.o
-  <library>src/utils/confdescriptor.o
-  <library>src/utils/d3des.o
-  <library>src/utils/drawable.o
-  <library>src/utils/fileutils.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/load_theme.o
-  <library>src/utils/netutils.o
-  <library>src/utils/pattutils.o
-  <library>src/utils/png.o
-  <library>src/utils/rle.o
-  <library>src/utils/strutils.o
-  <library>src/utils/sugar/multisz.o
-  <library>src/utils/utf.o
-  <library>z
-  $(EXE_DEPENDENCIES)
-  <define>ZLIB_CONST
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
-;
 exe rdpinichecker :
   src/main/ini_checker.o
 :
@@ -1142,7 +1028,6 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_chan
   <library>openssl
   <library>png
   <library>snappy
-  <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
   <library>src/client_redemption/client_channel_managers/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
@@ -2251,14 +2136,8 @@ test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
 test-run tests/core/RDP/test_out_per_bstream :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_out_per_bstream.cpp
 :
-  <library>boost_stacktrace
-  <library>crypto
-  <library>src/core/error.o
   <library>src/utils/utf.o
   <covfile>src/core/RDP/out_per_bstream.hpp
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
 ;
 test-run tests/core/RDP/test_protocol :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_protocol.cpp
@@ -5698,7 +5577,6 @@ obj src/main/ini_checker.o : $(REDEMPTION_SRC_PATH)/main/ini_checker.cpp ;
 obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
-obj src/main/vnc_client.o : $(REDEMPTION_SRC_PATH)/main/vnc_client.cpp : <define>ZLIB_CONST ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
 obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
