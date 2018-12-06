@@ -59,7 +59,6 @@ project redemption
 
     # <cxx-lto>on
 
-    <conditional>@flags
     $(GCOV)
     # <lto>on
     # <suggest>on

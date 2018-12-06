@@ -291,17 +291,6 @@ namespace redemption_unit_test__
     }(filename, contents)
 
 
-template<class Ch, class Tr, class E>
-typename std::enable_if<
-    std::is_enum<E>::value,
-    std::basic_ostream<Ch, Tr>&
->::type
-operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
-{
-    return out << +underlying_cast(e); // '+' for transform u8/s8 to int
-}
-
-
 namespace redemption_unit_test__
 {
     struct xarray
@@ -349,9 +338,9 @@ namespace redemption_unit_test__
 
 #endif
 
-#define RED_TEST_DELEGATE_PRINT(type, exp)                 \
-  inline std::ostream& RED_TEST_PRINT_TYPE_FUNCTION_NAME ( \
-    std::ostream& ostr, [[maybe_unused]] type const& x     \
+#define RED_TEST_DELEGATE_PRINT(type, exp)                   \
+  inline ::std::ostream& RED_TEST_PRINT_TYPE_FUNCTION_NAME ( \
+    ::std::ostream& ostr, [[maybe_unused]] type const& x     \
   ) { return ostr << exp; }
 
 #define RED_TEST_DELEGATE_PRINT_NS(ns, type, exp) \

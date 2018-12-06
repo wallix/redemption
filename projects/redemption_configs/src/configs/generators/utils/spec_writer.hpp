@@ -101,6 +101,17 @@ template<class T, class Pack>
 auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 { return detail_::get_default<T>(t, &infos); }
 
+template<template<class> class Default, class T, class Pack>
+auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
+{
+    if constexpr (is_t_convertible_v<Pack, Default>) {
+        return get_t_elem<Default>(infos).value;
+    }
+    else {
+        return detail_::get_default<T>(t, &infos);
+    }
+}
+
 
 template<class T, class Pack, class D>
 decltype(auto) value_or(Pack const& pack, D&& default_)
@@ -306,8 +317,8 @@ private:
     struct Sections
     {
         Names names;
-        std::vector<std::string> members_ordered;
-        std::unordered_map<std::string, std::unique_ptr<InfosBase>> members;
+        std::vector<std::string> members_ordered {};
+        std::unordered_map<std::string, std::unique_ptr<InfosBase>> members {};
     };
     std::unordered_map<std::string, Sections> sections;
     std::vector<std::string> sections_ordered;

@@ -19,11 +19,13 @@
 */
 
 #define RED_TEST_MODULE TestParser
-#include "system/redemption_unit_tests.hpp"
+#include "test_only/test_framework/redemption_unit_tests.hpp"
 
 #include "configs/autogen/enums.hpp"
 #include "configs/autogen/enums_func_ini.hpp"
 
+RED_TEST_DELEGATE_PRINT(ServerCertCheck, long(x))
+RED_TEST_DELEGATE_PRINT_NS(configs, parse_error, x.c_str())
 
 RED_AUTO_TEST_CASE(TestParser)
 {
@@ -35,7 +37,7 @@ RED_AUTO_TEST_CASE(TestParser)
         ServerCertCheck v{};
         RED_CHECK(!parse(v, configs::spec_type<ServerCertCheck>{}, cstr_array_view("3")));
         RED_CHECK_EQ(v, ServerCertCheck(3));
-        RED_CHECK( parse(v, configs::spec_type<ServerCertCheck>{}, cstr_array_view("4")));
+        RED_CHECK(!!parse(v, configs::spec_type<ServerCertCheck>{}, cstr_array_view("4")));
         RED_CHECK_EQ(v, ServerCertCheck(3));
 
         auto x = ServerCertCheck(2);
@@ -52,7 +54,7 @@ RED_AUTO_TEST_CASE(TestParser)
         CaptureFlags v{};
         RED_CHECK(!parse(v, configs::spec_type<CaptureFlags>{}, cstr_array_view("15")));
         RED_CHECK_EQ(v, CaptureFlags(15));
-        RED_CHECK( parse(v, configs::spec_type<CaptureFlags>{}, cstr_array_view("16")));
+        RED_CHECK(!!parse(v, configs::spec_type<CaptureFlags>{}, cstr_array_view("16")));
 
         auto x = CaptureFlags(15);
         configs::zstr_buffer_from<CaptureFlags> buf;
@@ -70,7 +72,7 @@ RED_AUTO_TEST_CASE(TestParser)
         RED_CHECK_EQ(v, RdpModeConsole::forbid);
         RED_CHECK(!parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("aLloW")));
         RED_CHECK_EQ(v, RdpModeConsole::allow);
-        RED_CHECK( parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("foRbI")));
+        RED_CHECK(!!parse(v, configs::spec_type<RdpModeConsole>{}, cstr_array_view("foRbI")));
         RED_CHECK_EQ(v, RdpModeConsole::allow);
 
         auto x = RdpModeConsole(2);

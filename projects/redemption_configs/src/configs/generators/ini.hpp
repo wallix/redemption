@@ -60,7 +60,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     }
 
     template<class Pack>
-    void do_member(std::string const & section_name, Pack const & infos)
+    void do_member(std::string const & /*section_name*/, Pack const & infos)
     {
         if constexpr (is_convertible_v<Pack, spec_attr_t>) {
             // comments variable
@@ -72,7 +72,7 @@ struct IniWriterBase : python_spec_writer::PythonSpecWriterBase<Inherit>
     void write_comment_line(Ts const & ... args)
     {
         this->out() << "\"# ";
-        (void)std::initializer_list<int>{(void(this->out() << args), 0)...};
+        (this->out() << ... << args);
         this->out() << "\\n\"\n";
     }
 

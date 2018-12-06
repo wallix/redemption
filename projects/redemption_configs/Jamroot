@@ -1,5 +1,6 @@
 REDEMPTION_CONFIG_PATH ?= . ;
 REDEMPTION_PUBLIC_PATH ?= ../.. ;
+REDEMPTION_INCLUDE_PATH ?= $(REDEMPTION_PUBLIC_PATH)/include ;
 
 include ../../jam/redemption-config.jam ;
 include ../../jam/cxxflags.jam ;
@@ -15,9 +16,7 @@ project configs
     <include>$(REDEMPTION_SRC_PATH)
     <include>$(SYSTEM_SRC_PATH)
 
-    <cxxflags>-std=c++17
-
-    $(CXXFLAGS)
+    $(REDEMPTION_CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
 
    : default-build release
@@ -68,7 +67,7 @@ obj hexdump.o : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 obj app_path_test.o : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
     <define>SHARE_PATH='\"\"'
-    <define>CFG_PATH='\"$(REDEMPTION_ROOT_PATH)/etc/rdpproxy/\"'
+    <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
 
 obj config.o : redemption_src/configs/config.cpp
@@ -81,8 +80,7 @@ obj config.o : redemption_src/configs/config.cpp
 rule test-run ( name )
 {
     unit-test $(name) : tests/$(name).cpp generate_config_spec :
-        $(UNIT_TEST_DEPENDENCIES)
-        <library>libunit_test
+        $(TEST_DEPENDENCIES)
         <library>app_path_test.o
         <library>cfgloader.o
         <library>config.o
@@ -91,8 +89,7 @@ rule test-run ( name )
         <library>fileutils.o
         <library>font.o
         <library>hexdump.o
-        <library>log_test.o
-        <cxxflags>-frtti
+        # <cxxflags>-frtti
         <include>redemption_src
         <conditional>@defines-for-test
     ;

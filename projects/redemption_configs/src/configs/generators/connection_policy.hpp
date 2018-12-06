@@ -91,7 +91,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
                 this->out() << "#_hex\n";
 
             this->out() << member_name << " = ";
-            this->inherit().write_type(type, get_default(type, infos));
+            this->inherit().write_type(type, get_default<connpolicy::default_>(type, infos));
             this->out() << "\n\n";
 
             auto&& sections = this->file_map[connpolicy.file];

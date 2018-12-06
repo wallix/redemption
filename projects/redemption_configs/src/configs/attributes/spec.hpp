@@ -206,6 +206,18 @@ namespace connpolicy
 
     struct section { char const* name; };
 
+    template<class T>
+    struct default_ : ::cfg_attributes::default_<T>
+    {};
+
+    template<class T>
+    default_<T> set(T const & x)
+    { return {{x}}; }
+
+    template<std::size_t N>
+    default_<std::string> set(char const (&x)[N])
+    { return {{std::string(x+0, x+N-1)}}; }
+
     namespace internal
     {
         enum class attr {
@@ -214,12 +226,12 @@ namespace connpolicy
             advanced_in_connpolicy = 1 << 2,
         };
 
-        attr operator | (attr x, attr y)
+        constexpr attr operator | (attr x, attr y)
         {
             return static_cast<attr>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
         }
 
-        attr operator & (attr x, attr y)
+        constexpr attr operator & (attr x, attr y)
         {
             return static_cast<attr>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
         }
@@ -256,11 +268,11 @@ namespace sesman
             rw = sesman_to_proxy | proxy_to_sesman,
         };
 
-        constexpr io operator | (io x, io y) {
+        inline io operator | (io x, io y) {
             return static_cast<io>(static_cast<unsigned>(x) | static_cast<unsigned>(y));
         }
 
-        constexpr io operator & (io x, io y) {
+        inline io operator & (io x, io y) {
             return static_cast<io>(static_cast<unsigned>(x) & static_cast<unsigned>(y));
         }
 
@@ -287,7 +299,7 @@ namespace sesman
         {}
     };
 
-    connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
+    inline connection_policy operator | (connection_policy const& x, connpolicy::internal::attr y)
     {
         return connection_policy{x.file, x.spec | y};
     }
