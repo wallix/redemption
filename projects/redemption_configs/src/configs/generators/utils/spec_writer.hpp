@@ -101,6 +101,18 @@ template<class T, class Pack>
 auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 { return detail_::get_default<T>(t, &infos); }
 
+template<template<class> class Default, class T, class Pack>
+auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
+{
+    if constexpr (is_t_convertible_v<Pack, Default>) {
+        (void)t;
+        return get_t_elem<Default>(infos).value;
+    }
+    else {
+        return detail_::get_default<T>(t, &infos);
+    }
+}
+
 
 template<class T, class Pack, class D>
 decltype(auto) value_or(Pack const& pack, D&& default_)

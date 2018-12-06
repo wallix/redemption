@@ -320,7 +320,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "use_native_remoteapp_capability", desc{"As far as possible, use native RemoteApp capability"}, set(true));
         W.sep();
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false), connpolicy::set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_use_smart_launcher", cpp::name{"session_probe_use_clipboard_based_launcher"}, connpolicy::name{"use_smart_launcher"}, desc{
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."

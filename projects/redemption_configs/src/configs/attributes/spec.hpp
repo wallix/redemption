@@ -206,6 +206,21 @@ namespace connpolicy
 
     struct section { char const* name; };
 
+    template<class T>
+    struct default_
+    {
+        using type = T;
+        T value;
+    };
+
+    template<class T>
+    default_<T> set(T const & x)
+    { return {x}; }
+
+    template<std::size_t N>
+    default_<std::string> set(char const (&x)[N])
+    { return {{std::string(x+0, x+N-1)}}; }
+
     namespace internal
     {
         enum class attr {

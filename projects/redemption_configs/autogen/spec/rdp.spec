@@ -117,7 +117,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 [session_probe]
 
-enable_session_probe = boolean(default=False)
+enable_session_probe = boolean(default=True)
 
 # Minimum supported server : Windows Server 2008.
 # Clipboard redirection should be remain enabled on Terminal Server.
