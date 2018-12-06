@@ -31,7 +31,8 @@ Author(s): Jonathan Poelen
 #   include "system/register_exception.hpp"
 # else
 #   define RED_TEST_INCLUDE(backend, path) <test_only/test_framework/backend/path>
-#   include RED_TEST_INCLUDE(REDEMPTION_TEST_BACKEND, register_exception.hpp)
+/* do not add a space before register_exception.hpp: this does not work with gcc */
+#   include RED_TEST_INCLUDE(REDEMPTION_TEST_BACKEND,register_exception.hpp)
 #   undef RED_TEST_INCLUDE
 # endif
 
