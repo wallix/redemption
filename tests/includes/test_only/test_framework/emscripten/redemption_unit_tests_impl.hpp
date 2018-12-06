@@ -143,13 +143,12 @@ int main()
 
 #define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
 
-#define RED_TEST_DONT_PRINT_LOG_VALUE(type)      \
-namespace emscripten::redemption_unit_test__ {   \
-    template<> struct delegate_ostream<::type> { \
-        delegate_ostream(::type const&){}        \
-        char const* x = "";                      \
-    };                                           \
-}
+#define RED_TEST_DONT_PRINT_LOG_VALUE(type)    \
+    template<> struct redemption_unit_test__:: \
+    emscripten::delegate_ostream<::type> {     \
+        delegate_ostream(::type const&){}      \
+        char const* x = "";                    \
+    };                                         \
 
 
 #define RED_AUTO_TEST_CASE(name)                       \
