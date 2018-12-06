@@ -2,6 +2,7 @@
 
 REDEMPTION_CXXFLAGS +=
     <cxxflags>-std=c++17
+    <cxxflags>-msse3
     <variant>debug:<cxx-libcxx-debug>allow_broken_abi
     # <variant>debug:<cxxflags>-O2
     <toolset>clang:<cxxflags>-Wno-overlength-strings
