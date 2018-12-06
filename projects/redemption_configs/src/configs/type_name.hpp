@@ -113,6 +113,6 @@ string_type_name type_name(T const * = nullptr)
     CONFIG_DEFINE_TYPE_NAME(type, #type)
 
 CONFIG_DEFINE_TYPE_NAME2(std::string)
-CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u16, "uint16_t");
-CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u32, "uint32_t");
-CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u64, "uint64_t");
+CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u16, "uint16_t")
+CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u32, "uint32_t")
+CONFIG_DEFINE_TYPE_NAME(cfg_attributes::types::u64, "uint64_t")

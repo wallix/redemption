@@ -105,6 +105,7 @@ template<template<class> class Default, class T, class Pack>
 auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 {
     if constexpr (is_t_convertible_v<Pack, Default>) {
+        (void)t;
         return get_t_elem<Default>(infos).value;
     }
     else {
@@ -231,6 +232,50 @@ namespace detail_
             return T(x);
         }
     }
+
+    template<class BaseName, class... Name>
+    struct Names_
+    {
+        template<class Pack>
+        explicit Names_(Pack const& pack)
+        : names{
+            static_cast<BaseName const&>(pack).name,
+            value_or<Name>(pack, Name{}).name...
+        }
+        {}
+
+        void merge(Names_ const& other)
+        {
+            for (std::size_t i = 0; i < std::size(names); ++i) {
+                if (!other.names[i].empty()) {
+                    if (names[i].empty()) {
+                        names[i] = other.names[i];
+                    }
+                    else if (names[i] != other.names[i]) {
+                        std::string msg = "name redefined: '";
+                        msg += names[i];
+                        msg += "' and '";
+                        msg += other.names[i];
+                        msg += "'";
+                        throw std::runtime_error(msg);
+                    }
+                }
+            }
+        }
+
+        template<class T>
+        std::string const& name() const
+        {
+            std::string const* p = &names[0];
+            std::size_t i = 1;
+            (void)(((std::is_same_v<T, Name> && ((void)(
+                !names[i].empty() && ((void)(p = &names[i]), true)
+            ), true)) || !++i) || ...);
+            return *p;
+        }
+
+        std::array<std::string, 1+sizeof...(Name)> names;
+    };
 }
 
 
@@ -268,51 +313,7 @@ private:
         { x.do_sep(); }
     };
 
-    template<class BaseName, class... Name>
-    struct Names_
-    {
-        template<class Pack>
-        explicit Names_(Pack const& pack)
-        : names{
-            static_cast<BaseName const&>(pack).name,
-            value_or<Name>(pack, Name{}).name...
-        }
-        {}
-
-        void merge(Names_ const& other)
-        {
-            for (std::size_t i = 0; i < std::size(names); ++i) {
-                if (!other.names[i].empty()) {
-                    if (names[i].empty()) {
-                        names[i] = other.names[i];
-                    }
-                    else if (names[i] != other.names[i]) {
-                        std::string msg = "name redifined: '";
-                        msg += names[i];
-                        msg += "' and '";
-                        msg += other.names[i];
-                        msg += "'";
-                        throw std::runtime_error(msg);
-                    }
-                }
-            }
-        }
-
-        template<class T>
-        std::string const& name() const
-        {
-            std::string const* p = &names[0];
-            std::size_t i = 1;
-            (void)(((std::is_same_v<T, Name> && ((void)(
-                !names[i].empty() && ((void)(p = &names[i]), true)
-            ), true)) || !++i) || ...);
-            return *p;
-        }
-
-        std::array<std::string, 1+sizeof...(Name)> names;
-    };
-
-    using Names = cfg_attributes::names::f<Names_>;
+    using Names = cfg_attributes::names::f<detail_::Names_>;
 
     struct Sections
     {
