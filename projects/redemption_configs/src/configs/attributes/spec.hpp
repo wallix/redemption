@@ -215,7 +215,7 @@ namespace connpolicy
 
     template<class T>
     default_<T> set(T const & x)
-    { return {{x}}; }
+    { return {x}; }
 
     template<std::size_t N>
     default_<std::string> set(char const (&x)[N])
