@@ -122,6 +122,7 @@ Note: `W.member("fish", sesman::name{"netfish"}, ini::name{"superfish"}, ...)` i
 
 - `set(CPP_EXPR(MACRO_NAME))`: instead of `MACRO_NAME` (cf: `set(CPP_MACRO(HASH_PATH)))`)
 - `set(any_value)`
+- `connpolicy::set(any_value)`
 
 By default, initialized with `{}` (cf: `type value = {}`).
 
