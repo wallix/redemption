@@ -293,7 +293,7 @@ private:
             std::string const* p = &names[0];
             std::size_t i = 1;
             (void)(((std::is_same_v<T, Name> && ((void)(
-                !names[i].empty() && (void(p = &names[i]), true)
+                !names[i].empty() && ((void)(p = &names[i]), true)
             ), true)) || !++i) || ...);
             return *p;
         }
@@ -318,11 +318,18 @@ public:
     Inherit & inherit() { return static_cast<Inherit&>(*this); }
     void sep() { this->section_->members_ordered.emplace_back(); }
 
+private:
+    template<class... Ts>
+    static Names names_impl(Ts&&... s)
+    {
+        return Names{pack_type<Ts...>{static_cast<Ts&&>(s)...}};
+    }
+
+public:
     template<class... Ts>
     static Names names(Ts const&... s)
     {
-        return Names{pack_type<decltype(detail_::normalize_name(s))...>{
-            detail_::normalize_name(s)...}};
+        return names_impl(detail_::normalize_name(s)...);
     }
 
     template<class Fn>
