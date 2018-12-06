@@ -207,8 +207,11 @@ namespace connpolicy
     struct section { char const* name; };
 
     template<class T>
-    struct default_ : ::cfg_attributes::default_<T>
-    {};
+    struct default_
+    {
+        using type = T;
+        T value;
+    };
 
     template<class T>
     default_<T> set(T const & x)

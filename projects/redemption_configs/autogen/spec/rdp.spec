@@ -68,7 +68,7 @@ use_session_probe_to_launch_remote_program = boolean(default=True)
 
 [session_probe]
 
-enable_session_probe = boolean(default=False)
+enable_session_probe = boolean(default=True)
 
 # Minimum supported server : Windows Server 2008.
 # Clipboard redirection should be remain enabled on Terminal Server.
