@@ -245,8 +245,9 @@ class CheckoutEngine(object):
         if not creds or not creds.get(CRED_TYPE_PASSWORD):
             Logger().debug("check_account_by_type: missing password")
             return None
+        passwords = creds.get(CRED_TYPE_PASSWORD, [])
         a_infos = {
-            'password': creds.get(CRED_TYPE_PASSWORD, []),
+            'password': passwords[0] if passwords else None,
             'login': creds.get(CRED_DATA_LOGIN, None)
         }
         return a_infos
