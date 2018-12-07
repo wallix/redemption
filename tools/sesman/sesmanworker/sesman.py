@@ -139,15 +139,24 @@ def pm_request(engine, request):
     reql = request.split('/', 2)
     if len(reql) < 3:
         Logger().debug("pm_request: invalid request")
-        return None
+        return {
+            'response_code': 202,
+            'response_message': "Invalid request format",
+            }
     req_name, req_cmd, req_param = reql
     if req_name != u'targetpasswords':
         Logger().debug("pm_request: invalid request name")
-        return None
+        return {
+            'response_code': 203,
+            'response_message': "Invalid request name",
+        }
     res_param = parse_param(req_param)
     if res_param is None:
         Logger().debug("pm_request: invalid params")
-        return None
+        return {
+            'response_code': 204,
+            'response_message': "Invalid request parameters",
+        }
     acc_n, domain_n, dev_n = res_param
     if req_name == u'checkout':
         res = engine.get_account_infos_by_type(
@@ -156,6 +165,13 @@ def pm_request(engine, request):
             device_name=dev_n,
             account_type='pm'
         )
+        if res is not None:
+            res['response_code'] = 0
+        else:
+            res = {
+                'response_code': 301,
+                'response_message': "Account not found",
+            }
         return res
     if req_name == u'checkin':
         engine.release_account_by_type(
@@ -164,7 +180,13 @@ def pm_request(engine, request):
             device_name=dev_n,
             account_type='pm'
         )
-    return None
+        return {
+                'response_code': 0,
+        }
+    return {
+        'response_code': 205,
+        'response_message': "Unknown request name",
+    }
 
 
 class AuthentifierSocketClosed(Exception):
