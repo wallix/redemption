@@ -5481,7 +5481,8 @@ private:
 
         LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
 
-        send_checkout_channel_data("{ \"ReturnCode\": 0, \"ReturnMessage\": \"Succeeded.\" }");
+//        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
+        this->authentifier.set_pm_request(checkout_channel_message.c_str());
     }
 
     void process_session_probe_event(

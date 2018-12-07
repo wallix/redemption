@@ -160,4 +160,10 @@ public:
             }
         }
     }
+
+    void set_pm_request(const char * request) override {
+        if (this->acl_serial){
+            this->acl_serial->ini.set_acl<cfg::context::pm_request>(request);
+        }
+    }
 };

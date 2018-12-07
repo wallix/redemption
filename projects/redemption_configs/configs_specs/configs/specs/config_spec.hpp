@@ -732,6 +732,10 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(no_ini_no_gui, no_sesman, L, type_<std::string>(), "close_box_extra_message");
+        W.sep();
+
+        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "pm_response");
+        W.member(no_ini_no_gui, proxy_to_sesman, L, type_<std::string>(), "pm_request");
     });
 }
 

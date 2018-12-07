@@ -33,6 +33,8 @@ struct AuthApi : noncopyable
     virtual void new_remote_mod() = 0;
     virtual void delete_remote_mod() = 0;
 
+    virtual void set_pm_request(const char * request) = 0;
+
     virtual ~AuthApi() = default;
 };
 
@@ -57,4 +59,9 @@ struct NullAuthentifier : AuthApi
 
     void delete_remote_mod() override
     {}
+
+    void set_pm_request(const char * request) override
+    {
+        (void)request;
+    }
 };

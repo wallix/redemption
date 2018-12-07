@@ -4511,6 +4511,38 @@ namespace cfg {
         using mapped_type = type;
         type value{};
     };
+    /// type: std::string <br/>
+    /// sesman -> proxy <br/>
+    /// value{} <br/>
+    struct context::pm_response {
+        static constexpr bool is_sesman_to_proxy = true;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "pm_response";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(150);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
+    /// type: std::string <br/>
+    /// sesman <- proxy <br/>
+    /// value{} <br/>
+    struct context::pm_request {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = true;
+        static constexpr char const * section = "context";
+        static constexpr char const * name = "pm_request";
+        // for old cppcheck
+        // cppcheck-suppress obsoleteFunctionsindex
+        static constexpr authid_t index = authid_t(151);
+        using type = std::string;
+        using sesman_and_spec_type = std::string;
+        using mapped_type = sesman_and_spec_type;
+        type value{};
+    };
 
 } // namespace cfg
 
@@ -4841,6 +4873,8 @@ struct context
 , cfg::context::rail_disconnect_message_delay
 , cfg::context::session_probe_launch_error_message
 , cfg::context::close_box_extra_message
+, cfg::context::pm_response
+, cfg::context::pm_request
 , cfg::context::opt_bitrate
 , cfg::context::opt_framerate
 , cfg::context::opt_qscale
@@ -5046,6 +5080,8 @@ using VariablesAclPack = Pack<
 , cfg::context::rail_disconnect_message_delay
 , cfg::context::use_session_probe_to_launch_remote_program
 , cfg::context::session_probe_launch_error_message
+, cfg::context::pm_response
+, cfg::context::pm_request
 >;
 
 
@@ -5057,7 +5093,7 @@ struct BitFlags {
 constexpr inline BitFlags is_loggable{{
   0b1111111111111111111111111111111111111111111111111111101111111111
 , 0b1111111111111111111111111111010111110111111111111111110011111111
-, 0b0000000000000000000000000000000000000000001110111111111111111111
+, 0b0000000000000000000000000000000000000000111110111111111111111111
 }};
 constexpr inline BitFlags is_unloggable_if_value_with_password{{
   0b0000000000000000000000000000000000000000000000000000000000000000

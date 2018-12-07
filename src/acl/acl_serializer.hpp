@@ -766,17 +766,33 @@ public:
 
         // LOG(LOG_INFO, "connect=%s check=%s", this->connected?"Y":"N", check()?"Y":"N");
 
-        // AuthCHANNEL CHECK
-        // if an answer has been received, send it to
-        // rdp serveur via mod (should be rdp module)
-        // TODO Check if this->mod is RDP MODULE
-        if (mm.connected && this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
-            // Get sesman answer to AUTHCHANNEL_TARGET
-            if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
-                // If set, transmit to auth_channel channel
-                mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
-                // Erase the context variable
-                this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
+        if (mm.connected) {
+            // AuthCHANNEL CHECK
+            // if an answer has been received, send it to
+            // rdp serveur via mod (should be rdp module)
+            // TODO Check if this->mod is RDP MODULE
+            if (this->ini.get<cfg::mod_rdp::auth_channel>()[0]) {
+                // Get sesman answer to AUTHCHANNEL_TARGET
+                if (!this->ini.get<cfg::context::auth_channel_answer>().empty()) {
+                    // If set, transmit to auth_channel channel
+                    mm.get_mod()->send_auth_channel_data(this->ini.get<cfg::context::auth_channel_answer>().c_str());
+                    // Erase the context variable
+                    this->ini.get_ref<cfg::context::auth_channel_answer>().clear();
+                }
+            }
+
+            // CheckoutCHANNEL CHECK
+            // if an answer has been received, send it to
+            // rdp serveur via mod (should be rdp module)
+            // TODO Check if this->mod is RDP MODULE
+            if (this->ini.get<cfg::mod_rdp::checkout_channel>()[0]) {
+                // Get sesman answer to AUTHCHANNEL_TARGET
+                if (!this->ini.get<cfg::context::pm_response>().empty()) {
+                    // If set, transmit to auth_channel channel
+                    mm.get_mod()->send_checkout_channel_data(this->ini.get<cfg::context::pm_response>().c_str());
+                    // Erase the context variable
+                    this->ini.get_ref<cfg::context::pm_response>().clear();
+                }
             }
         }
 

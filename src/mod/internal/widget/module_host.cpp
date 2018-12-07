@@ -82,6 +82,11 @@ void WidgetModuleHost::ModuleHolder::send_auth_channel_data(const char * string_
     this->managed_mod->send_auth_channel_data(string_data);
 }
 
+void WidgetModuleHost::ModuleHolder::send_checkout_channel_data(const char * string_data)
+{
+    this->managed_mod->send_checkout_channel_data(string_data);
+}
+
 // mod_api
 
 void WidgetModuleHost::ModuleHolder::draw_event(time_t now, gdi::GraphicApi& gd)

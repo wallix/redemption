@@ -77,6 +77,8 @@ public:
 
     void send_auth_channel_data(const char * string_data) override;
 
+    void send_checkout_channel_data(const char * string_data) override;
+
     // mod_api
 
     void draw_event(time_t now, gdi::GraphicApi& gapi) override;

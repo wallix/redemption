@@ -374,6 +374,9 @@ private:
         void send_auth_channel_data(const char * data) override
         { this->mm.mod->send_auth_channel_data(data); }
 
+        void send_checkout_channel_data(const char * data) override
+        { this->mm.mod->send_checkout_channel_data(data); }
+
         void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
             uint8_t const * data, size_t length, size_t chunk_size, int flags) override
         { this->mm.mod->send_to_front_channel(mod_channel_name, data, length, chunk_size, flags); }

@@ -102,6 +102,13 @@ void RailModuleHostMod::send_auth_channel_data(const char * string_data)
     mod.send_auth_channel_data(string_data);
 }
 
+void RailModuleHostMod::send_checkout_channel_data(const char * string_data)
+{
+    mod_api& mod = this->rail_module_host.get_managed_mod();
+
+    mod.send_checkout_channel_data(string_data);
+}
+
 // mod_api
 
 void RailModuleHostMod::draw_event(time_t now, gdi::GraphicApi& gapi)
