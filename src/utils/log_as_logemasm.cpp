@@ -38,8 +38,15 @@ REDEMPTION_DIAGNOSTIC_POP
 #include <cstdio>
 #include <cstdlib>
 
-#include <emscripten.h>
+#ifdef IN_IDE_PARSER
+# define EM_ASM(...)
+#else
+# include <emscripten.h>
+#endif
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wdollar-in-identifier-extension")
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wformat-nonliteral")
 
 namespace
 {
@@ -151,8 +158,6 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
             return ;
         }
         va_list ap;
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         va_start(ap, format);
         auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
         va_end(ap);
@@ -160,7 +165,6 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         va_start(ap, format);
         std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
         va_end(ap);
-        REDEMPTION_DIAGNOSTIC_POP
         log_buf.back() = '\n';
 
         // replace "priority (31905/31905) -- message" by "priority - message"
@@ -173,10 +177,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         va_list ap;
         va_start(ap, format);
         char buffer[4096];
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
-        REDEMPTION_DIAGNOSTIC_POP
         va_end(ap);
 
         buffer[len] = '\n';
@@ -192,8 +193,6 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
             return ;
         }
         va_list ap;
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         va_start(ap, format);
         auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
         va_end(ap);
@@ -201,7 +200,6 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
         va_start(ap, format);
         std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
         va_end(ap);
-        REDEMPTION_DIAGNOSTIC_POP
         log_buf.back() = '\n';
     }
     else if (is_enabled_log_print())
@@ -209,10 +207,7 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
         va_list ap;
         va_start(ap, format);
         char buffer[4096];
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
-        REDEMPTION_DIAGNOSTIC_POP
         va_end(ap);
 
         buffer[len] = '\n';
@@ -220,3 +215,5 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
         EM_ASM({console.log(Pointer_stringify($0));}, buffer);
     }
 }
+
+REDEMPTION_DIAGNOSTIC_POP

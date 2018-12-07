@@ -49,7 +49,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     RED_CHECK_EQUAL(test_ambiguous(as8), 2);
     RED_CHECK_EQUAL(test_ambiguous(au8), 3);
 
-    RED_CHECK_EQUAL(make_array_view(a8).size(), 3);
+    RED_CHECK_EQUAL(make_array_view(a8).size(), 3u);
 
     std::string s;
     RED_CHECK_EQUAL(test_ambiguous(s), 1);
@@ -98,9 +98,9 @@ RED_AUTO_TEST_CASE(TestArrayView)
     it2++;
     RED_CHECK_EQUAL(*it2, 'b');
 
-    RED_CHECK_EQUAL(make_array_view("abc").size(), 4);
-    RED_CHECK_EQUAL(cstr_array_view("abc").size(), 3);
-    RED_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1);
+    RED_CHECK_EQUAL(make_array_view("abc").size(), 4u);
+    RED_CHECK_EQUAL(cstr_array_view("abc").size(), 3u);
+    RED_CHECK_EQUAL(make_array_view(av.data(), 1).size(), 1u);
 
     RED_CHECK(array_view_char{nullptr}.empty());
 
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     char * right = &ca8[2];
     auto const avi = make_array_view(left, right);
 
-    RED_CHECK_EQUAL(avi.size(), 1);
+    RED_CHECK_EQUAL(avi.size(), 1u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
@@ -120,7 +120,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     const char * right = &ca8[2];
     auto const avi = make_array_view(left, right);
 
-    RED_CHECK_EQUAL(avi.size(), 1);
+    RED_CHECK_EQUAL(avi.size(), 1u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     const char * left = &ca8[1];
     auto const avi = make_const_array_view(left, 2);
 
-    RED_CHECK_EQUAL(avi.size(), 2);
+    RED_CHECK_EQUAL(avi.size(), 2u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
@@ -139,7 +139,7 @@ RED_AUTO_TEST_CASE(TestArrayView)
     const char * right = &ca8[1];
     auto const avi = make_const_array_view(left, right);
 
-    RED_CHECK_EQUAL(avi.size(), 0);
+    RED_CHECK_EQUAL(avi.size(), 0u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[1]));
     }
 
@@ -147,13 +147,13 @@ RED_AUTO_TEST_CASE(TestArrayView)
     const char ca8[] = {'x', 'y', 'z', 't'};
     auto const avi = make_const_array_view(ca8);
 
-    RED_CHECK_EQUAL(avi.size(), 4);
+    RED_CHECK_EQUAL(avi.size(), 4u);
     RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
     }
 
     {
     auto const avi = cstr_array_view("0123456789");
-    RED_CHECK_EQUAL(avi.size(), 10);
+    RED_CHECK_EQUAL(avi.size(), 10u);
 //    RED_CHECK_EQUAL(voidp(avi.data()), voidp(&ca8[0]));
     }
 }

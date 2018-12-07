@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestRange)
 
     auto rng = make_range(p, end);
 
-    RED_CHECK_EQ(rng.size(), 2);
+    RED_CHECK_EQ(rng.size(), 2u);
 
     auto first = rng.begin();
     auto last = rng.end();

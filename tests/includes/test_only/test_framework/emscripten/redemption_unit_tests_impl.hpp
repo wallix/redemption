@@ -282,7 +282,7 @@ int main()
 #define RED_CHECK_GE(x, y) RED_TEST_OP(CHECK, >=, x, y)
 
 #define RED_CHECK_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
-    RED_TEST_EQUAL_COLLECTIONS(CHECK, std::equal(first1, last1, first2, last2))
+    RED_TEST_EQUAL_COLLECTIONS(CHECK, first1, last1, first2, last2)
 
 #define RED_CHECK_PREDICATE(pred, arg_list) \
     RED_TEST_PREDICATE(CHECK, pred, arg_list)
@@ -311,7 +311,7 @@ int main()
 #define RED_REQUIRE_GE(x, y) RED_TEST_OP(REQUIRE, >=, x, y)
 
 #define RED_REQUIRE_EQUAL_COLLECTIONS(first1, last1, first2, last2) \
-    RED_TEST_EQUAL_COLLECTIONS(REQUIRE, std::equal(first1, last1, first2, last2))
+    RED_TEST_EQUAL_COLLECTIONS(REQUIRE, first1, last1, first2, last2)
 
 #define RED_REQUIRE_PREDICATE(pred, arg_list) \
     RED_TEST_PREDICATE(REQUIRE, pred, arg_list)

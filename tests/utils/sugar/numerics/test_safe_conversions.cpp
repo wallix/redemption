@@ -28,8 +28,8 @@ RED_AUTO_TEST_CASE(TestTrim)
 {
     RED_CHECK_EQUAL(int(saturated_cast<signed char>(1233412)), 127);
     RED_CHECK_EQUAL(int(saturated_cast<signed char>(-1233412)), -128);
-    RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(1233412)), 255);
-    RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(-1233412)), 0);
+    RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(1233412)), 255u);
+    RED_CHECK_EQUAL(unsigned(saturated_cast<unsigned char>(-1233412)), 0u);
     RED_CHECK_EQUAL(saturated_cast<int>(-1233412), -1233412);
 
     RED_CHECK_EQUAL(checked_cast<char>(12), 12);
@@ -46,8 +46,8 @@ RED_AUTO_TEST_CASE(TestTrim)
 
     RED_CHECK_EQUAL(int(saturated_cast<sE>(1233412)), 127);
     RED_CHECK_EQUAL(int(saturated_cast<sE>(-1233412)), -128);
-    RED_CHECK_EQUAL(unsigned(saturated_cast<uE>(1233412)), 255);
-    RED_CHECK_EQUAL(unsigned(saturated_cast<uE>(-1233412)), 0);
+    RED_CHECK_EQUAL(unsigned(saturated_cast<uE>(1233412)), 255u);
+    RED_CHECK_EQUAL(unsigned(saturated_cast<uE>(-1233412)), 0u);
 
     RED_CHECK_EQUAL(checked_cast<char>(12), 12);
 

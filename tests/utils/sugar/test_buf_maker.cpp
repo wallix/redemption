@@ -27,13 +27,13 @@ RED_AUTO_TEST_CASE(TestBufMaker)
 {
     using P = void const*;
     BufMaker<16> buf_maker;
-    RED_CHECK_EQ(buf_maker.static_array().size(), 16);
+    RED_CHECK_EQ(buf_maker.static_array().size(), 16u);
 
     auto av = buf_maker.dyn_array(12);
-    RED_CHECK_EQ(av.size(), 12);
+    RED_CHECK_EQ(av.size(), 12u);
     RED_CHECK_EQ(P(av.data()), P(buf_maker.static_array().data()));
 
     av = buf_maker.dyn_array(20);
-    RED_CHECK_EQ(av.size(), 20);
+    RED_CHECK_EQ(av.size(), 20u);
     RED_CHECK_NE(P(av.data()), P(buf_maker.static_array().data()));
 }

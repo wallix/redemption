@@ -18,7 +18,6 @@
    Author(s): Christophe Grosjean
 */
 
-#define REDEMPTION_UNIT_TEST_CPP 1
 #include "redemption_unit_tests_impl.hpp"
 #include "register_exception.hpp"
 
@@ -131,7 +130,7 @@ namespace emscripten
         TESTS().exception_translators.push_back(std::move(f));
     }
 
-    void print_current_exception()
+    static void print_current_exception()
     {
         #define CATCH(Exception) catch (Exception const& e) { \
             get_output() << #Exception ": " << e.what();      \
