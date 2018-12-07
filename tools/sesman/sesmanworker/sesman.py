@@ -158,7 +158,7 @@ def pm_request(engine, request):
             'response_message': "Invalid request parameters",
         }
     acc_n, domain_n, dev_n = res_param
-    if req_name == u'checkout':
+    if req_cmd == u'checkout':
         res = engine.get_account_infos_by_type(
             account_name=acc_n,
             domain_name=domain_n,
@@ -173,7 +173,7 @@ def pm_request(engine, request):
                 'response_message': "Account not found",
             }
         return res
-    if req_name == u'checkin':
+    if req_cmd == u'checkin':
         engine.release_account_by_type(
             account_name=acc_n,
             domain_name=domain_n,
@@ -185,7 +185,7 @@ def pm_request(engine, request):
         }
     return {
         'response_code': 205,
-        'response_message': "Unknown request name",
+        'response_message': "Unknown request command",
     }
 
 
