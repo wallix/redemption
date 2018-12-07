@@ -470,7 +470,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<VncBogusClipboardInfiniteLoop>(), "bogus_clipboard_infinite_loop", sesman::name{"vnc_bogus_clipboard_infinite_loop"}, set(VncBogusClipboardInfiniteLoop::delayed));
         W.sep();
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_is_apple", set(false));
-        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_unix_alt", set(false));
+        W.member(ini_and_gui, sesman_to_proxy, type_<bool>(), "server_unix_alt", set(false));
     });
 
     W.section("mod_replay", [&]
