@@ -27,3 +27,5 @@ Author(s): Jonathan Poelen
 #define RED_PP_CAT(a, b) RED_PP_CAT_I(a, b)
 
 #define RED_PP_IS_EMPTY(name) (name+0 != -14) && (7-name-7 == 14)
+
+#define RED_PP_IDENTITY(...) __VA_ARGS__

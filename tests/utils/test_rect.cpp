@@ -373,22 +373,22 @@ RED_AUTO_TEST_CASE(TestRect)
         // Test intersection of a rect with a line (defined by its end points)
 
         Rect r(100, 200, 300, 150);
-        RED_CHECK_EQUAL(Rect::LEFT | Rect::UP   , r.region_pt(50 , 50 ));
-        RED_CHECK_EQUAL(Rect::LEFT | Rect::UP   , r.region_pt(60 , 110));
-        RED_CHECK_EQUAL(Rect::UP                , r.region_pt(150, 100));
-        RED_CHECK_EQUAL(Rect::UP | Rect::RIGHT  , r.region_pt(432, 103));
-        RED_CHECK_EQUAL(Rect::LEFT              , r.region_pt(70 , 300));
-        RED_CHECK_EQUAL(Rect::LEFT | Rect::DOWN , r.region_pt(70 , 415));
-        RED_CHECK_EQUAL(Rect::IN                , r.region_pt(170, 299));
-        RED_CHECK_EQUAL(Rect::RIGHT             , r.region_pt(405, 322));
-        RED_CHECK_EQUAL(Rect::DOWN              , r.region_pt(242, 500));
-        RED_CHECK_EQUAL(Rect::DOWN | Rect::RIGHT, r.region_pt(555, 477));
+        RED_CHECK_EQUAL((Rect::LEFT | Rect::UP   ), r.region_pt(50 , 50 ));
+        RED_CHECK_EQUAL((Rect::LEFT | Rect::UP   ), r.region_pt(60 , 110));
+        RED_CHECK_EQUAL((Rect::UP                ), r.region_pt(150, 100));
+        RED_CHECK_EQUAL((Rect::UP | Rect::RIGHT  ), r.region_pt(432, 103));
+        RED_CHECK_EQUAL((Rect::LEFT              ), r.region_pt(70 , 300));
+        RED_CHECK_EQUAL((Rect::LEFT | Rect::DOWN ), r.region_pt(70 , 415));
+        RED_CHECK_EQUAL((Rect::IN                ), r.region_pt(170, 299));
+        RED_CHECK_EQUAL((Rect::RIGHT             ), r.region_pt(405, 322));
+        RED_CHECK_EQUAL((Rect::DOWN              ), r.region_pt(242, 500));
+        RED_CHECK_EQUAL((Rect::DOWN | Rect::RIGHT), r.region_pt(555, 477));
 
         // up and left border are in, right and bottom borders are out
-        RED_CHECK_EQUAL(Rect::IN                , r.region_pt(100, 200));
-        RED_CHECK_EQUAL(Rect::DOWN | Rect::RIGHT, r.region_pt(400, 350));
-        RED_CHECK_EQUAL(Rect::RIGHT             , r.region_pt(400, 200));
-        RED_CHECK_EQUAL(Rect::DOWN              , r.region_pt(100, 350));
+        RED_CHECK_EQUAL((Rect::IN                ), r.region_pt(100, 200));
+        RED_CHECK_EQUAL((Rect::DOWN | Rect::RIGHT), r.region_pt(400, 350));
+        RED_CHECK_EQUAL((Rect::RIGHT             ), r.region_pt(400, 200));
+        RED_CHECK_EQUAL((Rect::DOWN              ), r.region_pt(100, 350));
 
         LineEquation equa(300, 100, 50, 300);
         RED_CHECK_EQUAL(true, equa.resolve(r));

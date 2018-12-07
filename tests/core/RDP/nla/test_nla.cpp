@@ -28,6 +28,10 @@
 
 #include "test_only/lcg_random.hpp"
 
+RED_TEST_DELEGATE_PRINT(rdpCredsspClient::State, long(x))
+RED_TEST_DELEGATE_PRINT(rdpCredsspServer::State, long(x))
+
+
 RED_AUTO_TEST_CASE(TestNlaclient)
 {
     const char client[] =

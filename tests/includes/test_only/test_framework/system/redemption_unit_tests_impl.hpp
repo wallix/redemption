@@ -34,6 +34,7 @@ Author(s): Jonathan Poelen
 
 #define RED_TEST_DONT_PRINT_LOG_VALUE BOOST_TEST_DONT_PRINT_LOG_VALUE
 #define RED_TEST_PRINT_TYPE_FUNCTION_NAME boost_test_print_type
+#define RED_TEST_PRINT_TYPE_STRUCT_NAME boost::test_tools::tt_detail::print_log_value
 
 #define RED_CHECK_NO_THROW BOOST_CHECK_NO_THROW
 #define RED_CHECK_THROW BOOST_CHECK_THROW

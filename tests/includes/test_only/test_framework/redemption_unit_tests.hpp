@@ -346,10 +346,6 @@ namespace redemption_unit_test__
 #define RED_TEST_DELEGATE_PRINT_NS(ns, type, exp) \
   namespace ns { RED_TEST_DELEGATE_PRINT(type, exp) }
 
-namespace std
-{
-    RED_TEST_DELEGATE_PRINT(decltype(nullptr), "nullptr")
-}
 
 /// CHECK
 //@{

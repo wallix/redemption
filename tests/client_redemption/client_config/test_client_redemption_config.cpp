@@ -38,6 +38,9 @@
 #include <sys/statvfs.h>
 #include <linux/hdreg.h>
 
+RED_TEST_DELEGATE_PRINT(RDPVerbose, long(x))
+
+
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 {
     SessionReactor session_reactor;
