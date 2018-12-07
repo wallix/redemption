@@ -1962,6 +1962,7 @@ class Sesman():
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
                 u'enable_nla': 'enable_nla',
                 u'enable_kerberos': 'enable_kerberos'
+                u'disable_keyboard_log': 'disable_keyboard_log'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
