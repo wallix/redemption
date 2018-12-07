@@ -24,13 +24,22 @@ Author(s): Jonathan Poelen
 
 #include <boost/test/unit_test_monitor.hpp>
 
+#include "cxx/compiler_version.hpp"
+#include "cxx/diagnostic.hpp"
+
 namespace redemption_unit_test__
 {
     template<class Exception, class F>
     void register_exception_translator(F&& f)
     {
+        REDEMPTION_DIAGNOSTIC_PUSH
+        REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+        #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+            REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+        #endif
         boost::unit_test::unit_test_monitor.register_exception_translator<Exception>(
             static_cast<F&&>(f)
         );
+        REDEMPTION_DIAGNOSTIC_POP
     }
 }
