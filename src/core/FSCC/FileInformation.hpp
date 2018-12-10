@@ -3278,8 +3278,8 @@ public:
 
     void log() const {
         LOG(LOG_INFO, "     File Fs Size Information:");
-        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%ld (8 bytes)", this->TotalAllocationUnits);
-        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%ld (8 bytes)", this->AvailableAllocationUnits);
+        LOG(LOG_INFO, "          * TotalAllocationUnits     = 0x%lld (8 bytes)", this->TotalAllocationUnits);
+        LOG(LOG_INFO, "          * AvailableAllocationUnits = 0x%lld (8 bytes)", this->AvailableAllocationUnits);
         LOG(LOG_INFO, "          * SectorsPerAllocationUnit = 0x%08x (4 byte)", this->SectorsPerAllocationUnit);
         LOG(LOG_INFO, "          * BytesPerSector           = %u (4 bytes)", this->BytesPerSector);
     }

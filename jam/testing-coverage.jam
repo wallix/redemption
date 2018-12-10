@@ -86,7 +86,7 @@ constant CXXFLAGS_TEST :
 ;
 
 obj register_exception.o :
-    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/register_exception.cpp
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/register_exception.cpp
 :
     $(CXXFLAGS_TEST)
 ;

@@ -21,19 +21,13 @@ Author(s): Jonathan Poelen
 #include <string>
 #include <stdexcept>
 
+#include <boost/test/unit_test_monitor.hpp>
+
 #include "core/error.hpp"
+#include "cxx/compiler_version.hpp"
+#include "cxx/diagnostic.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/sugar/array_view.hpp"
-
-# ifdef IN_IDE_PARSER
-#   include "system/register_exception.hpp"
-# else
-#   define RED_TEST_INCLUDE(backend, path) <test_only/test_framework/backend/path>
-/* do not add a space before register_exception.hpp: this does not work with gcc */
-#   include RED_TEST_INCLUDE(REDEMPTION_TEST_BACKEND,register_exception.hpp)
-#   undef RED_TEST_INCLUDE
-# endif
-
 
 namespace
 {
@@ -41,16 +35,25 @@ namespace
     {
         register_exception()
         {
-            redemption_unit_test__::register_exception_translator<Error>(+[](Error const & e){
-                const auto prefix_msg_error = "Exception of type 'Error': "_av;
-                if (e.errnum) {
-                    throw std::runtime_error{str_concat(
-                        prefix_msg_error, e.errmsg(), ", errno=", std::to_string(e.errnum)
-                    )};
+            REDEMPTION_DIAGNOSTIC_PUSH
+            REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
+            #if REDEMPTION_COMP_CLANG_VERSION >= REDEMPTION_COMP_VERSION_NUMBER(5, 0, 0)
+                REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
+            #endif
+            boost::unit_test::unit_test_monitor.register_exception_translator<Error>(
+                +[](Error const & e){
+                    const auto prefix_msg_error = "Exception of type 'Error': "_av;
+                    if (e.errnum) {
+                        throw std::runtime_error{str_concat(
+                            prefix_msg_error, e.errmsg(), ", errno=", std::to_string(e.errnum)
+                        )};
+                    }
+                    throw std::runtime_error{str_concat(prefix_msg_error, e.errmsg())};
                 }
-                throw std::runtime_error{str_concat(prefix_msg_error, e.errmsg())};
-            });
+            );
+            REDEMPTION_DIAGNOSTIC_POP
         }
     };
+
     const register_exception Init; /*NOLINT*/
 } // namespace

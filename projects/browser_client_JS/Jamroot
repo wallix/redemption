@@ -83,7 +83,7 @@ constant CXXFLAGS_TEST :
 ;
 
 objjs register_exception.bc :
-    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/register_exception.cpp
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/register_exception.cpp
 :
     $(CXXFLAGS_TEST)
 ;
@@ -125,7 +125,7 @@ rule test-run ( name : objects + : requirements * )
 {
     if src/core/error.bc in $(objects)
     {
-        requirements += register_exception.bc ;
+        objects += register_exception.bc ;
     }
 
     exejs $(name).node : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
