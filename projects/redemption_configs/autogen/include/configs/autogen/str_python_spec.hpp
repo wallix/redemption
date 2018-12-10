@@ -473,6 +473,9 @@
 "#_hidden\n"
 "session_probe_memory_usage_limit = integer(min=0, max=200000000, default=0)\n\n"
 
+"#_hidden\n"
+"session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)\n\n"
+
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"
 "session_probe_public_session = boolean(default=False)\n\n"

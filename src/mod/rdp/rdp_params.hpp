@@ -108,6 +108,8 @@ struct ModRDPParams
     uint32_t                     session_probe_handle_usage_limit = 0;
     uint32_t                     session_probe_memory_usage_limit = 0;
 
+    bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
+
     bool                         session_probe_public_session = false;
 
     Transport  * persistent_key_list_transport = nullptr;
@@ -300,6 +302,8 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_handle_usage_limit);
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_memory_usage_limit);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_public_session);
 

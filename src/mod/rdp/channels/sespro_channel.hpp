@@ -46,8 +46,14 @@ enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
 
+// Proxy Options
 enum {
     OPTION_DELAY_DISABLED_LAUNCH_MASK = 0x00000001
+};
+
+// Session Probe Options
+enum {
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
 };
 
 class ExtraSystemProcesses
@@ -331,6 +337,8 @@ private:
     const uint32_t param_handle_usage_limit;
     const uint32_t param_memory_usage_limit;
 
+    const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -409,6 +417,8 @@ public:
         uninit_checked<uint32_t> session_probe_handle_usage_limit;
         uninit_checked<uint32_t> session_probe_memory_usage_limit;
 
+        uninit_checked<bool> session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
         uninit_checked<Translation::language_t> lang;
 
         uninit_checked<bool> bogus_refresh_rect_ex;
@@ -466,6 +476,7 @@ public:
     , param_enable_crash_dump(params.session_probe_enable_crash_dump)
     , param_handle_usage_limit(params.session_probe_handle_usage_limit)
     , param_memory_usage_limit(params.session_probe_memory_usage_limit)
+    , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -858,6 +869,30 @@ public:
                         const char cstr[] = "Version=" "1" "\x01" "3";
                         out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                     });
+
+                {
+                    uint32_t options = 0;
+
+                    if (this->param_session_probe_ignore_ui_less_processes_during_end_of_session_check) {
+                        options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                    }
+
+                    if (options)
+                    {
+                        send_client_message([this, options](OutStream & out_s) {
+                                {
+                                    const char cstr[] = "Options=";
+                                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                                }
+
+                                {
+                                    char cstr[128];
+                                    int len = std::snprintf(cstr, sizeof(cstr), "%u", options);
+                                    out_s.out_copy_bytes(cstr, size_t(len));
+                                }
+                            });
+                    }
+                }
 
                 send_client_message([](OutStream & out_s) {
                         {

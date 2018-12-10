@@ -160,6 +160,9 @@ handle_usage_limit = integer(min=0, max=1000, default=0)
 #_advanced
 memory_usage_limit = integer(min=0, max=200000000, default=0)
 
+#_advanced
+ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
+
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
