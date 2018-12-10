@@ -76,19 +76,19 @@ RED_AUTO_TEST_CASE(TestReverseOdd)
 
 RED_AUTO_TEST_CASE(TestNbBytes)
 {
-    RED_CHECK_EQUAL(4, nbbytes(8*5-8));
-    RED_CHECK_EQUAL(4, nbbytes_large(8*5-8));
-    RED_CHECK_EQUAL(5, nbbytes(8*5-7));
-    RED_CHECK_EQUAL(5, nbbytes_large(8*5-7));
-    RED_CHECK_EQUAL(5, nbbytes(8*5-1));
-    RED_CHECK_EQUAL(5, nbbytes_large(8*5-1));
-    RED_CHECK_EQUAL(5, nbbytes(8*5));
-    RED_CHECK_EQUAL(5, nbbytes_large(8*5));
-    RED_CHECK_EQUAL(6, nbbytes(8*5+1));
-    RED_CHECK_EQUAL(6, nbbytes_large(8*5+1));
+    RED_CHECK_EQUAL(4u, nbbytes(8*5-8));
+    RED_CHECK_EQUAL(4u, nbbytes_large(8*5-8));
+    RED_CHECK_EQUAL(5u, nbbytes(8*5-7));
+    RED_CHECK_EQUAL(5u, nbbytes_large(8*5-7));
+    RED_CHECK_EQUAL(5u, nbbytes(8*5-1));
+    RED_CHECK_EQUAL(5u, nbbytes_large(8*5-1));
+    RED_CHECK_EQUAL(5u, nbbytes(8*5));
+    RED_CHECK_EQUAL(5u, nbbytes_large(8*5));
+    RED_CHECK_EQUAL(6u, nbbytes(8*5+1));
+    RED_CHECK_EQUAL(6u, nbbytes_large(8*5+1));
 
-    RED_CHECK_EQUAL(320 % 256, nbbytes(320 * 8));
-    RED_CHECK_EQUAL(320, nbbytes_large(320 * 8));
+    RED_CHECK_EQUAL(320u % 256u, nbbytes(320 * 8));
+    RED_CHECK_EQUAL(320u, nbbytes_large(320 * 8));
 }
 
 // out_bytes_be is only defined for 1 to 4 bytes
@@ -125,20 +125,20 @@ RED_AUTO_TEST_CASE(TestBufOutUint32)
 RED_AUTO_TEST_CASE(TestInBytesLe)
 {
     uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
-    RED_CHECK_EQUAL(0xEEDDCC , in_uint32_from_nb_bytes_le(3, buffer));
+    RED_CHECK_EQUAL(0xEEDDCCu, in_uint32_from_nb_bytes_le(3, buffer));
 
     uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
-    RED_CHECK_EQUAL(0xBBAA9988 , in_uint32_from_nb_bytes_le(4, buffer2));
+    RED_CHECK_EQUAL(0xBBAA9988u, in_uint32_from_nb_bytes_le(4, buffer2));
 }
 
 // in_bytes_be is only defined for 1 to 4 bytes
 RED_AUTO_TEST_CASE(TestInBytesBe)
 {
     uint8_t buffer[10] = {0xCC, 0xDD, 0xEE, 0xFF };
-    RED_CHECK_EQUAL(0xCCDDEE , in_uint32_from_nb_bytes_be(3, buffer));
+    RED_CHECK_EQUAL(0xCCDDEEu, in_uint32_from_nb_bytes_be(3, buffer));
 
     uint8_t buffer2[10] = {0x88, 0x99, 0xAA, 0xBB };
-    RED_CHECK_EQUAL(0x8899AABB , in_uint32_from_nb_bytes_be(4, buffer2));
+    RED_CHECK_EQUAL(0x8899AABBu, in_uint32_from_nb_bytes_be(4, buffer2));
 }
 
 // rmemcpy : the area must not overlap
@@ -148,12 +148,12 @@ RED_AUTO_TEST_CASE(TestRmemcpy)
     uint8_t dest[sizeof(buffer)] = {};
     uint8_t expected[] = {0x99, 0x88, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00, 0xFF, 0xEE, 0xDD, 0xCC };
     rmemcpy(dest, buffer, sizeof(buffer));
-    RED_CHECK(0 == memcmp(dest, expected, sizeof(expected)));
+    RED_CHECK_MEM_AA(dest, expected);
 
     uint8_t buffer2[]   = {0xCC, 0xDD, 0xEE };
-    uint8_t dest2[sizeof(buffer)] = {};
+    uint8_t dest2[sizeof(buffer2)] = {};
     uint8_t expected2[] = {0xEE, 0xDD, 0xCC };
     rmemcpy(dest2, buffer2, sizeof(buffer2));
-    RED_CHECK(0 == memcmp(dest2, expected2, sizeof(expected2)));
+    RED_CHECK_MEM_AA(dest2, expected2);
 
 }

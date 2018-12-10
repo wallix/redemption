@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
     //
     SubRegion region2;
     region2.add_rect(Rect(10,10,90,90));
-    RED_CHECK_EQUAL(1, region2.rects.size());
+    RED_CHECK_EQUAL(1u, region2.rects.size());
 
     // (10,10)
     //   x----------------x
@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
     //   x----------------x
     //                  (100, 100)
     region2.subtract_rect(Rect(30, 30, 20, 20));
-    RED_CHECK_EQUAL(4, region2.rects.size());
+    RED_CHECK_EQUAL(4u, region2.rects.size());
 
     RED_CHECK_EQUAL(region2.rects[0], Rect(10, 10, 90, 20)); // A
     RED_CHECK_EQUAL(region2.rects[1], Rect(10, 30, 20, 20)); // B
@@ -83,7 +83,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
     // we substract a traversing rectangle
     SubRegion region3;
     region3.add_rect(Rect(10,10,90,90));
-    RED_CHECK_EQUAL(1, region3.rects.size());
+    RED_CHECK_EQUAL(1u, region3.rects.size());
 
 
     //         x-----x
@@ -100,7 +100,7 @@ RED_AUTO_TEST_CASE(TestSubRegion)
     //         x-----x
 
     region3.subtract_rect(Rect(30, 5, 20, 150));
-    RED_CHECK_EQUAL(2, region3.rects.size());
+    RED_CHECK_EQUAL(2u, region3.rects.size());
 
     RED_CHECK_EQUAL(region3.rects[0], Rect(10, 10, 20, 90)); // A
     RED_CHECK_EQUAL(region3.rects[1], Rect(50, 10, 50, 90)); // B

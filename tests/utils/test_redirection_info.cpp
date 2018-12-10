@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestRedirectionInfo)
 
     rinfo.log(LOG_INFO, "test rinfo");
 
-    RED_CHECK_EQUAL(rinfo.session_id, 3333);
+    RED_CHECK_EQUAL(rinfo.session_id, 3333u);
     rinfo = RedirectionInfo();
-    RED_CHECK_EQUAL(rinfo.session_id, 0);
+    RED_CHECK_EQUAL(rinfo.session_id, 0u);
 }

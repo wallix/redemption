@@ -36,6 +36,32 @@
 #include <dirent.h>
 #include <alloca.h>
 
+#ifdef __EMSCRIPTEN__
+char const* basename(char const* path)
+{
+    char const* p = path;
+
+    do {
+        while (*p != '/' && *p) {
+            ++p;
+        }
+
+        if (!*p) {
+            return path;
+        }
+
+        ++p;
+        path = p;
+    } while (*path);
+
+    return path;
+}
+
+char* basename(char* path)
+{
+    return const_cast<char*>(basename(const_cast<char const*>(path)));
+}
+#endif
 
 // two flavors of basename_len to make it const agnostic
 const char * basename_len(const char * path, size_t & len)
@@ -242,7 +268,7 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
 }
 
 
-static int _internal_make_directory(const char *directory, mode_t mode, const int groupid)
+static int _internal_make_directory(const char *directory, mode_t mode, int groupid)
 {
     struct stat st;
     int status = 0;
@@ -255,7 +281,13 @@ static int _internal_make_directory(const char *directory, mode_t mode, const in
                 LOG(LOG_ERR, "failed to create directory %s : %s [%d]", directory, strerror(errno), errno);
             }
             if (groupid >= 0) {
-                if (chown(directory, static_cast<uid_t>(-1), groupid) < 0){
+                #ifdef __EMSCRIPTEN__
+                    groupid = (groupid == -1) ? getpid() : groupid;
+                    const uid_t userid = getuid();
+                #else
+                    const uid_t userid = -1;
+                #endif
+                if (chown(directory, userid, groupid) < 0){
                     LOG(LOG_ERR, "can't set directory %s group to %d : %s [%d]", directory, groupid, strerror(errno), errno);
                 }
             }

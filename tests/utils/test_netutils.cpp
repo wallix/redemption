@@ -52,7 +52,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
 "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 packets=90 bytes=10061 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 packets=89 bytes=38707 [ASSURED] mark=0 secmark=0 use=2\n"
 "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 packets=1139 bytes=82008 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 packets=0 bytes=0 mark=0 secmark=0 use=2\n";
     int res = write(fd, conntrack, sizeof(conntrack)-1);
-    RED_CHECK_EQUAL(res, sizeof(conntrack)-1);
+    RED_CHECK_EQUAL(res, sizeof(conntrack)-1LL);
 
     // ----------------------------------------------------
     RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
@@ -61,13 +61,13 @@ RED_AUTO_TEST_CASE(ParseIpConntrack)
 
     res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
     RED_CHECK_EQUAL(res, 0);
-    RED_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
+    RED_CHECK_EQUAL(transparent_target, "10.10.46.78");
 
     RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     transparent_target[0] = 0;
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
     RED_CHECK_EQUAL(res, -1);
-    RED_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+    RED_CHECK_EQUAL(transparent_target, "");
 
     close(fd);
     unlink(tmpname);
@@ -99,7 +99,7 @@ RED_AUTO_TEST_CASE(ParseIpConntrack2)
 "tcp      6 431997 ESTABLISHED src=10.10.43.13 dst=10.10.47.93 sport=46392 dport=3389 src=10.10.47.93 dst=10.10.43.13 sport=3389 dport=46392 [ASSURED] mark=0 secmark=0 use=2\n"
 "udp      17 0 src=10.10.43.31 dst=10.10.47.255 sport=57621 dport=57621 [UNREPLIED] src=10.10.47.255 dst=10.10.43.31 sport=57621 dport=57621 mark=0 secmark=0 use=2\n";
     int res = write(fd, conntrack, sizeof(conntrack)-1);
-    RED_CHECK_EQUAL(res, sizeof(conntrack)-1);
+    RED_CHECK_EQUAL(res, sizeof(conntrack)-1LL);
 
     // ----------------------------------------------------
     RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
@@ -108,13 +108,13 @@ RED_AUTO_TEST_CASE(ParseIpConntrack2)
 
     res = parse_ip_conntrack(fd, "10.10.47.93", "10.10.43.13", 3389, 41971, transparent_target, sizeof(transparent_target));
     RED_CHECK_EQUAL(res, 0);
-    RED_CHECK_EQUAL(0, strcmp(transparent_target, "10.10.46.78"));
+    RED_CHECK_EQUAL(transparent_target, "10.10.46.78");
 
     RED_CHECK_EQUAL(0, lseek(fd, 0, SEEK_SET));
     transparent_target[0] = 0;
     res = parse_ip_conntrack(fd, "10.10.47.21", "10.10.43.13", 3389, 46392, transparent_target, sizeof(transparent_target));
     RED_CHECK_EQUAL(res, -1);
-    RED_CHECK_EQUAL(0, strcmp(transparent_target, ""));
+    RED_CHECK_EQUAL(transparent_target, "");
 
     close(fd);
     unlink(tmpname);

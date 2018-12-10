@@ -36,7 +36,7 @@ RED_AUTO_TEST_CASE(TestParseServerMessage)
             parameters
         ), true);
     RED_CHECK_EQUAL(order, "Request");
-    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters.size(), 3u);
     RED_CHECK_EQUAL(parameters[0], "Hello");
     RED_CHECK_EQUAL(parameters[1], "12345");
     RED_CHECK_EQUAL(parameters[2], "67890");
@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestParseServerMessage2)
             parameters
         ), true);
     RED_CHECK_EQUAL(order, "Request");
-    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters.size(), 3u);
     RED_CHECK_EQUAL(parameters[0], "Hello");
     RED_CHECK_EQUAL(parameters[1], "");
     RED_CHECK_EQUAL(parameters[2], "67890");
@@ -70,7 +70,7 @@ RED_AUTO_TEST_CASE(TestParseServerMessage3)
             parameters
         ), true);
     RED_CHECK_EQUAL(order, "Request");
-    RED_CHECK_EQUAL(parameters.size(), 3);
+    RED_CHECK_EQUAL(parameters.size(), 3u);
     RED_CHECK_EQUAL(parameters[0], "Hello");
     RED_CHECK_EQUAL(parameters[1], "12345");
     RED_CHECK_EQUAL(parameters[2], "");
@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(TestParseServerMessage4)
             parameters
         ), true);
     RED_CHECK_EQUAL(order, "Request");
-    RED_CHECK_EQUAL(parameters.size(), 0);
+    RED_CHECK_EQUAL(parameters.size(), 0u);
 }
 
 RED_AUTO_TEST_CASE(TestParseServerMessage5)
@@ -101,6 +101,6 @@ RED_AUTO_TEST_CASE(TestParseServerMessage5)
             parameters
         ), false);
     RED_CHECK_EQUAL(order, "");
-    RED_CHECK_EQUAL(parameters.size(), 1);
+    RED_CHECK_EQUAL(parameters.size(), 1u);
     RED_CHECK_EQUAL(parameters[0], "TOTO");
 }

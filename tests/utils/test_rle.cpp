@@ -44,8 +44,8 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
 
         const uint8_t * pmin = data;
         const uint8_t * pmax = pmin + sizeof(data);
-        RED_CHECK_EQUAL(16, decompressor.get_color_count(pmax, pmin, 0x05));
-        RED_CHECK_EQUAL(0, decompressor.get_color_count(pmax, pmin, 0xFE));
+        RED_CHECK_EQUAL(16u, decompressor.get_color_count(pmax, pmin, 0x05));
+        RED_CHECK_EQUAL(0u, decompressor.get_color_count(pmax, pmin, 0xFE));
     }
 
     // test COLOR COUNT 2
@@ -59,8 +59,8 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
 
         const uint8_t * pmin = data;
         const uint8_t * pmax = pmin + sizeof(data);
-        RED_CHECK_EQUAL(1, decompressor.get_color_count(pmax, pmin, 0x01));
-        RED_CHECK_EQUAL(2, decompressor.get_color_count(pmax, pmin + 1, 0x02));
+        RED_CHECK_EQUAL(1u, decompressor.get_color_count(pmax, pmin, 0x01));
+        RED_CHECK_EQUAL(2u, decompressor.get_color_count(pmax, pmin + 1, 0x02));
     }
 
     // test BICOLOR COUNT
@@ -74,9 +74,9 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
 
         const uint8_t * pmin = data;
         const uint8_t * pmax = pmin + sizeof(data);
-        RED_CHECK_EQUAL(16, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
-        RED_CHECK_EQUAL(14, decompressor.get_bicolor_count(pmax, pmin+1, 0x05, 0x01));
-        RED_CHECK_EQUAL(0 , decompressor.get_bicolor_count(pmax, pmin, 0x05, 0x01));
+        RED_CHECK_EQUAL(16u, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
+        RED_CHECK_EQUAL(14u, decompressor.get_bicolor_count(pmax, pmin+1, 0x05, 0x01));
+        RED_CHECK_EQUAL(0u , decompressor.get_bicolor_count(pmax, pmin, 0x05, 0x01));
     }
 
     // test BICOLOR COUNT
@@ -90,8 +90,8 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
 
         const uint8_t * pmin = data;
         const uint8_t * pmax = pmin + sizeof(data);
-        RED_CHECK_EQUAL(10, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
-        RED_CHECK_EQUAL(10, decompressor.get_bicolor_count(pmax, pmin + 1, 0x05, 0x01));
+        RED_CHECK_EQUAL(10u, decompressor.get_bicolor_count(pmax, pmin, 0x01, 0x05));
+        RED_CHECK_EQUAL(10u, decompressor.get_bicolor_count(pmax, pmin + 1, 0x05, 0x01));
     }
 
     // test FILL COUNT
@@ -108,11 +108,11 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(4, decompressor.get_fill_count(line_size, pmin, pmax, data));
-        RED_CHECK_EQUAL(3, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
+        RED_CHECK_EQUAL(4u, decompressor.get_fill_count(line_size, pmin, pmax, data));
+        RED_CHECK_EQUAL(3u, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
 
         // 3rd line, compared to 2nd line
-        RED_CHECK_EQUAL(3, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
+        RED_CHECK_EQUAL(3u, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
     }
 
     // test FILL COUNT
@@ -129,13 +129,13 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(0, decompressor.get_fill_count(line_size, pmin, pmax, data));
-        RED_CHECK_EQUAL(1, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
-        RED_CHECK_EQUAL(0, decompressor.get_fill_count(line_size, pmin, pmax, data+2));
-        RED_CHECK_EQUAL(2, decompressor.get_fill_count(line_size, pmin, pmax, data+3));
+        RED_CHECK_EQUAL(0u, decompressor.get_fill_count(line_size, pmin, pmax, data));
+        RED_CHECK_EQUAL(1u, decompressor.get_fill_count(line_size, pmin, pmax, data+1));
+        RED_CHECK_EQUAL(0u, decompressor.get_fill_count(line_size, pmin, pmax, data+2));
+        RED_CHECK_EQUAL(2u, decompressor.get_fill_count(line_size, pmin, pmax, data+3));
 
         // until the end
-        RED_CHECK_EQUAL(8, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
+        RED_CHECK_EQUAL(8u, decompressor.get_fill_count(line_size, pmin, pmax, data+8));
 
     }
 
@@ -153,11 +153,11 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(4, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
-        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
+        RED_CHECK_EQUAL(4u, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
+        RED_CHECK_EQUAL(3u, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
 
         // 3rd line, compared to 2nd line
-        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
+        RED_CHECK_EQUAL(3u, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
     }
 
     // test MIX COUNT
@@ -174,13 +174,13 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         const size_t line_size = 4;
 
         // Line above first line is black
-        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
-        RED_CHECK_EQUAL(1, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
-        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, data+2, white));
-        RED_CHECK_EQUAL(2, decompressor.get_mix_count(line_size, pmin, pmax, data+3, white));
+        RED_CHECK_EQUAL(0u, decompressor.get_mix_count(line_size, pmin, pmax, data, white));
+        RED_CHECK_EQUAL(1u, decompressor.get_mix_count(line_size, pmin, pmax, data+1, white));
+        RED_CHECK_EQUAL(0u, decompressor.get_mix_count(line_size, pmin, pmax, data+2, white));
+        RED_CHECK_EQUAL(2u, decompressor.get_mix_count(line_size, pmin, pmax, data+3, white));
 
         // until the end
-        RED_CHECK_EQUAL(8, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
+        RED_CHECK_EQUAL(8u, decompressor.get_mix_count(line_size, pmin, pmax, data+8, white));
     }
 
     // test FILL OR MIX COUNT
@@ -200,30 +200,30 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         uint8_t masks[512];
         unsigned flags = 0;
         unsigned color = white;
-        RED_CHECK_EQUAL(1, decompressor.get_fom_count_set(line_size, pmin, pmax, data+15, color, flags));
+        RED_CHECK_EQUAL(1u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+15, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FILL), flags);
-        RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, data+14, color, flags));
+        RED_CHECK_EQUAL(2u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+14, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+14, masks, 2);
         RED_CHECK_EQUAL(0x01, masks[0]);
 
 
-        RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, data+12, color, flags));
+        RED_CHECK_EQUAL(4u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+12, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+12, masks, 4);
         RED_CHECK_EQUAL(0x07, masks[0]);
 
-        RED_CHECK_EQUAL(5, decompressor.get_fom_count_set(line_size, pmin, pmax, data+11, color, flags));
+        RED_CHECK_EQUAL(5u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+11, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
 
-        RED_CHECK_EQUAL(6, decompressor.get_fom_count_set(line_size, pmin, pmax, data+10, color, flags));
+        RED_CHECK_EQUAL(6u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+10, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
-        RED_CHECK_EQUAL(12, decompressor.get_fom_count_set(line_size, pmin, pmax, data+4, color, flags));
+        RED_CHECK_EQUAL(12u, decompressor.get_fom_count_set(line_size, pmin, pmax, data+4, color, flags));
         RED_CHECK_EQUAL(white, color);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags);
         decompressor.get_fom_masks(line_size, pmin, pmin+4, masks, 12);
@@ -247,11 +247,11 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         unsigned flags = 0;
         const uint8_t * p = data+3;
         unsigned foreground = decompressor.get_pixel_above(line_size, pmin, p) ^ decompressor.get_pixel(p);
-        RED_CHECK_EQUAL(0x04, foreground);
-        RED_CHECK_EQUAL(3, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
+        RED_CHECK_EQUAL(0x04u, foreground);
+        RED_CHECK_EQUAL(3u, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
-        RED_CHECK_EQUAL(4, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
-        RED_CHECK_EQUAL(0x04, foreground);
+        RED_CHECK_EQUAL(4u, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
+        RED_CHECK_EQUAL(0x04u, foreground);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_MIX), flags);
     }
 
@@ -271,12 +271,12 @@ RED_AUTO_TEST_CASE(TestRleCompressHardenned)
         const size_t line_size = 4;
 
         unsigned foreground = decompressor.get_pixel_above(line_size, pmin, p) ^ decompressor.get_pixel(p);
-        RED_CHECK_EQUAL(4, foreground);
-        RED_CHECK_EQUAL(0, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
+        RED_CHECK_EQUAL(4u, foreground);
+        RED_CHECK_EQUAL(0u, decompressor.get_mix_count(line_size, pmin, pmax, p+nbbytes(bpp), foreground));
         foreground = white;
         unsigned flags = 0;
-        RED_CHECK_EQUAL(2, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
-        RED_CHECK_EQUAL(4, foreground);
+        RED_CHECK_EQUAL(2u, decompressor.get_fom_count_set(line_size, pmin, pmax, p, foreground, flags));
+        RED_CHECK_EQUAL(4u, foreground);
         RED_CHECK_EQUAL(static_cast<unsigned>(RLEDecompressorImpl<0>::FLAG_FOM), flags); // MIX then FILL
     }
 }
@@ -286,44 +286,44 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapGetRun) {
     uint32_t raw_bytes;
 
     get_run(byte_ptr_cast("AAAABBCCCCCD"), 12, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(3,  run_length);
-    RED_CHECK_EQUAL(1,  raw_bytes);
+    RED_CHECK_EQUAL(3u,  run_length);
+    RED_CHECK_EQUAL(1u,  raw_bytes);
 
     get_run(byte_ptr_cast("BBCCCCCD"), 8, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(4,  run_length);
-    RED_CHECK_EQUAL(3,  raw_bytes);
+    RED_CHECK_EQUAL(4u,  run_length);
+    RED_CHECK_EQUAL(3u,  raw_bytes);
 
     get_run(byte_ptr_cast("D"), 1, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(0,  run_length);
-    RED_CHECK_EQUAL(1,  raw_bytes);
+    RED_CHECK_EQUAL(0u,  run_length);
+    RED_CHECK_EQUAL(1u,  raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKL"), 12, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(0,  run_length);
-    RED_CHECK_EQUAL(12, raw_bytes);
+    RED_CHECK_EQUAL(0u,  run_length);
+    RED_CHECK_EQUAL(12u, raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKLMNOP"), 16, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(0,  run_length);
-    RED_CHECK_EQUAL(16, raw_bytes);
+    RED_CHECK_EQUAL(0u,  run_length);
+    RED_CHECK_EQUAL(16u, raw_bytes);
 
     get_run(byte_ptr_cast("ABCDEFGHIJKLMNOOOOO"), 19, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(4,  run_length);
-    RED_CHECK_EQUAL(15, raw_bytes);
+    RED_CHECK_EQUAL(4u,  run_length);
+    RED_CHECK_EQUAL(15u, raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(8,  run_length);
-    RED_CHECK_EQUAL(0,  raw_bytes);
+    RED_CHECK_EQUAL(8u,  run_length);
+    RED_CHECK_EQUAL(0u,  raw_bytes);
 
     get_run(byte_ptr_cast("AAABB"), 5, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(0,  run_length);
-    RED_CHECK_EQUAL(5,  raw_bytes);
+    RED_CHECK_EQUAL(0u,  run_length);
+    RED_CHECK_EQUAL(5u,  raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0, run_length, raw_bytes);
-    RED_CHECK_EQUAL(8,  run_length);
-    RED_CHECK_EQUAL(0,  raw_bytes);
+    RED_CHECK_EQUAL(8u,  run_length);
+    RED_CHECK_EQUAL(0u,  raw_bytes);
 
     get_run(byte_ptr_cast("\0\0\0\0\0\0\0\0"), 8, 0x64, run_length, raw_bytes);
-    RED_CHECK_EQUAL(7,  run_length);
-    RED_CHECK_EQUAL(1,  raw_bytes);
+    RED_CHECK_EQUAL(7u,  run_length);
+    RED_CHECK_EQUAL(1u,  raw_bytes);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
@@ -342,8 +342,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
         0x52
     };
 
-    RED_CHECK_EQUAL(sizeof(result),  outbuffer.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(outbuffer.get_data(), result, outbuffer.get_offset()));
+    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
@@ -364,8 +363,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
         0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
     };
 
-    RED_CHECK_EQUAL(sizeof(result),  outbuffer.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(outbuffer.get_data(), result, outbuffer.get_offset()));
+    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
@@ -464,8 +462,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
 /* 0140 */ 0x12, 0x2f, 0x82, 0x00, 0x07,                                   // ./...
     };
 
-    RED_CHECK_EQUAL(sizeof(result),  outbuffer.get_offset());
-    RED_CHECK_EQUAL(0, memcmp(outbuffer.get_data(), result, outbuffer.get_offset()));
+    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {
@@ -490,5 +487,5 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {
         253, 140, 62,  14,  135, 193
     };
 
-    RED_CHECK_EQUAL(0, memcmp(color_plane, result, sizeof(color_plane)));
+    RED_CHECK_MEM_AA(color_plane, result);
 }

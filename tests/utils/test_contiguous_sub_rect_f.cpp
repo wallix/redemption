@@ -33,7 +33,7 @@ struct AccuRect
 {
     std::array<Rect, N> const ref;
     std::array<Rect, N> computed;
-    int i;
+    std::size_t i;
 
     void operator()(Rect r)
     {

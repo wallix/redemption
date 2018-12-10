@@ -79,8 +79,6 @@ constant CXXFLAGS_TEST :
     <define>REDEMPTION_TEST_BACKEND=emscripten
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <cxxflags>"-s NODERAWFS"
-    # enable basename (see `man 3 basename`)
-    <cxxflags>"-D_GNU_SOURCE"
 ;
 
 objjs register_exception.bc :

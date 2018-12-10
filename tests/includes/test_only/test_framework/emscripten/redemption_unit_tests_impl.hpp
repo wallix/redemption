@@ -61,7 +61,8 @@ namespace emscripten
         return static_cast<T1&&>(x);
     }
 
-    inline std::string_view select(char const*, char const*, char const* x, char const*) noexcept
+    template<class T1, class U1>
+    std::string_view select(T1&&, U1&&, char const* x, char const*) noexcept
     {
         return x;
     }
@@ -70,29 +71,6 @@ namespace emscripten
     decltype(auto) get_a(T& a, U& b)
     {
         return select(a, b, to_const(a), to_const(b));
-    }
-
-
-    template<class F, class... Xs>
-    auto faccumulator(F&& f, Xs&&... xs)
-    {
-        return [&](auto&&... y){
-            if constexpr (sizeof...(y) == 1) {
-                return faccumulator(
-                    static_cast<F&&>(f),
-                    static_cast<Xs&&>(xs)...,
-                    static_cast<decltype(y)&&>(y)...
-                );
-            }
-            else if constexpr (sizeof...(y) == 2) {
-                return [&](std::ostream& out){
-                    ((out << xs << ", ") << ...);
-                };
-            }
-            else {
-                return static_cast<F&&>(f)(static_cast<Xs&&>(xs)...);
-            }
-        };
     }
 
     struct PrintableChar
@@ -128,6 +106,41 @@ namespace emscripten
     delegate_ostream<T> ostream_wrap(T const& x) noexcept
     {
         return delegate_ostream<T>{x};
+    }
+
+
+    template<class... Xs>
+    auto faccumulator(Xs&&... xs)
+    {
+        return [&]([[maybe_unused]] auto&&... y) {
+            if constexpr (sizeof...(y)) {
+                return faccumulator(
+                    static_cast<Xs&&>(xs)...,
+                    static_cast<decltype(y)&&>(y)...
+                );
+            }
+            else {
+                return [&](auto f){
+                    f(static_cast<Xs&&>(xs)...);
+                };
+            }
+        };
+    }
+
+    template<class F>
+    struct ostream_function
+    {
+        F f;
+    };
+
+    template<class F>
+    ostream_function(F f) -> ostream_function<F>;
+
+    template<class F>
+    std::ostream& operator<<(std::ostream& out, ostream_function<F> const& f)
+    {
+        f.f(out);
+        return out;
     }
 
 } // namespace emscripten
@@ -206,14 +219,22 @@ int main()
 
 
 
-#define RED_TEST_PREDICATE(lvl, pred, arg_list) \
-    [](auto&& f__pred__) {                      \
-        RED_TEST_MESSAGE(                       \
-            lvl, f__pred__(), #pred " with "    \
-            #arg_list "is not satisfied for "   \
-            << f__pred__(1, 1)                  \
-        );                                      \
-    }(redemption_unit_test__::emscripten::faccumulator(pred) arg_list)
+#define RED_TEST_PREDICATE(lvl, pred, arg_list)                          \
+    redemption_unit_test__::emscripten::faccumulator arg_list ()(        \
+        [&](auto&& arg1__, auto&&... args__) {                           \
+            RED_TEST_MESSAGE(                                            \
+                lvl, pred(                                               \
+                    static_cast<decltype(arg1__)&&>(arg1__),             \
+                    static_cast<decltype(args__) &&>(args__)...),        \
+                #pred " with " #arg_list " is not satisfied for "        \
+                << redemption_unit_test__::emscripten::ostream_function{ \
+                    [&](::std::ostream& out__) {                         \
+                        out__ << arg1__;                                 \
+                        ((out__ << ", " << args__), ...);                \
+                    }}                                                   \
+            );                                                           \
+        }                                                                \
+    )
 
 
 #define RED_TEST_NO_THROW(lvl, stmt) do {             \
@@ -294,7 +315,7 @@ int main()
     RED_TEST_THROW(CHECK, stmt, exception)
 
 #define RED_CHECK_EXCEPTION(stmt, exception, predicate) \
-    RED_TEST_EXCEPTION(CHECK, stmt, exception, exception)
+    RED_TEST_EXCEPTION(CHECK, stmt, exception, predicate)
 
 
 
@@ -323,4 +344,4 @@ int main()
     RED_TEST_THROW(REQUIRE, stmt, exception)
 
 #define RED_REQUIRE_EXCEPTION(stmt, exception, predicate) \
-    RED_TEST_EXCEPTION(REQUIRE, stmt, exception, exception)
+    RED_TEST_EXCEPTION(REQUIRE, stmt, exception, predicate)

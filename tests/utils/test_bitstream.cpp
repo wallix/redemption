@@ -31,34 +31,34 @@ RED_AUTO_TEST_CASE(TestBitStream) {
 
     InBitStream bs(data, 3);
     // 0100 1111 0000 1000 1111 1111
-    RED_CHECK_EQ(bs.getBits(4), 0x4);
+    RED_CHECK_EQ(bs.getBits(4), 0x4u);
     // 1111 0000 1000 1111 1111
-    RED_CHECK_EQ(bs.getBits(4), 0xf);
+    RED_CHECK_EQ(bs.getBits(4), 0xfu);
 
     // 0000 1000 1111 1111
-    RED_CHECK_EQ(bs.getBits(3), 0x0);
+    RED_CHECK_EQ(bs.getBits(3), 0x0u);
     for (int i = 0; i < 100; i++)
-        RED_CHECK_EQ(bs.peekBits(1), 0x0); // peek is idempotent
+        RED_CHECK_EQ(bs.peekBits(1), 0x0u); // peek is idempotent
 
     // 0 1000 1111 1111
-    RED_CHECK_EQ(bs.getBits(1), 0x0);
+    RED_CHECK_EQ(bs.getBits(1), 0x0u);
     // 1000 1111 1111
-    RED_CHECK_EQ(bs.getBits(2), 0x2);
+    RED_CHECK_EQ(bs.getBits(2), 0x2u);
 
     // 00 1111 1111
-    RED_CHECK_EQ(bs.getBits(1), 0x0);
+    RED_CHECK_EQ(bs.getBits(1), 0x0u);
 
     // 0 1111 1111
-    RED_CHECK_EQ(bs.getBits(4), 0x7);
+    RED_CHECK_EQ(bs.getBits(4), 0x7u);
     // 1 1111
-    RED_CHECK_EQ(bs.getBits(5), 0x1f);
+    RED_CHECK_EQ(bs.getBits(5), 0x1fu);
 
     // 01001111 00001000
     // ^------------^
     InBitStream bs2(data, 3);
-    RED_CHECK_EQ(bs2.getBits(13), 0x9e1);
+    RED_CHECK_EQ(bs2.getBits(13), 0x9e1u);
     bs2.shift(3);
-    RED_CHECK_EQ(bs2.peekBits(8), 0xff);
+    RED_CHECK_EQ(bs2.peekBits(8), 0xffu);
 
 
     // test the sequence involved in rlgr algorithm
@@ -75,9 +75,9 @@ RED_AUTO_TEST_CASE(TestBitStream) {
     bs3.shift(1);
     uint32_t v2 = bs3.peekBits(32);
 
-    RED_CHECK_EQ(v1, 0x9f7fffff);
-    RED_CHECK_EQ(v1, 0b10011111011111111111111111111111);
-    RED_CHECK_EQ(v2, 0x3effffff);
-    RED_CHECK_EQ(v2, 0b00111110111111111111111111111111);
+    RED_CHECK_EQ(v1, 0x9f7fffffu);
+    RED_CHECK_EQ(v1, 0b10011111011111111111111111111111u);
+    RED_CHECK_EQ(v2, 0x3effffffu);
+    RED_CHECK_EQ(v2, 0b00111110111111111111111111111111u);
 
 }

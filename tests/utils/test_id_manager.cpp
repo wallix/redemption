@@ -37,10 +37,10 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral)
         > id_manager;
 
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020);
-    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
+    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
     RED_CHECK_EQUAL(id_manager.is_dest_only_id(40020), false);
 
@@ -75,17 +75,17 @@ RED_AUTO_TEST_CASE(TestIDManagerGeneral2)
         > id_manager;
 
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020);
-    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
+    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
     RED_CHECK_EQUAL(id_manager.is_dest_only_id(40020), false);
 
 
     decltype(NEXT_USABLE_ID) src_id = id_manager.get_src_id(40020);
 
-    RED_CHECK_EQUAL(src_id, 40020);
+    RED_CHECK_EQUAL(src_id, 40020u);
 
     id_manager.unreg_src_id(src_id);
 
@@ -139,18 +139,18 @@ RED_AUTO_TEST_CASE(TestIDManagerUnregisterMappedSourceID0)
         > id_manager;
 
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020);
-    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
+    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
     id_manager.unreg_src_id(40020);
 
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id_ex(40020), 40020u);
 
-    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020);
-    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020);
+    RED_CHECK_EQUAL(id_manager.get_dest_id(40020), 40020u);
+    RED_CHECK_EQUAL(id_manager.get_src_id(40020), 40020u);
 
     id_manager.unreg_src_id(40020);
 
@@ -230,6 +230,9 @@ RED_AUTO_TEST_CASE(TestIDManagerInvariable)
 
     for (std::remove_const<decltype(NEXT_USABLE_ID)>::type i = INVARIABLE_FIRST;
          i <= INVARIABLE_LAST; ++i) {
-        RED_CHECK_EQUAL(id_manager.get_dest_id_ex(i), i);
+        RED_CHECK_PREDICATE(id_manager.get_dest_id_ex, (i));
     }
+
+    auto f = [](int i, int x) { return i+x; };
+    RED_CHECK_PREDICATE(f, (2)(3));
 }

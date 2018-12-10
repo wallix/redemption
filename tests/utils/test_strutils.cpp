@@ -75,13 +75,13 @@ RED_AUTO_TEST_CASE(Teststrlcpy)
 {
     using utils::strlcpy;
     char dest[10]{};
-    RED_CHECK_EQ(0, strlcpy(dest, "", 0));
-    RED_CHECK_EQ(0, strlcpy(dest, "", 1));
-    RED_CHECK_EQ(1, strlcpy(dest, "a"_av, 0));
+    RED_CHECK_EQ(0u, strlcpy(dest, "", 0));
+    RED_CHECK_EQ(0u, strlcpy(dest, "", 1));
+    RED_CHECK_EQ(1u, strlcpy(dest, "a"_av, 0));
     RED_CHECK_EQ(dest[0], '\0');
-    RED_CHECK_EQ(1, strlcpy(dest, "a"_av, 2));
+    RED_CHECK_EQ(1u, strlcpy(dest, "a"_av, 2));
     RED_CHECK_EQ(dest, "a");
-    RED_CHECK_EQ(7, strlcpy(dest, "abcdefg"_av, 5));
+    RED_CHECK_EQ(7u, strlcpy(dest, "abcdefg"_av, 5));
     RED_CHECK_EQ(dest[4], 0);
 }
 

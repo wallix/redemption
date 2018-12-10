@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TestDiffieHellman)
         uint64_t n = 1643213;
 
         uint64_t res = dh.xpowymodn(x, y, n);
-        RED_CHECK_EQUAL(res, 154659);
+        RED_CHECK_EQUAL(res, 154659u);
         uint8_t buffer[8] = {};
         dh.uint64_to_uint8p(res, buffer);
         uint64_t test = dh.uint8p_to_uint64(buffer);

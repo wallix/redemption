@@ -35,7 +35,7 @@ RED_AUTO_TEST_CASE(TestOutStream_Create)
     uint8_t buf[3];
     OutStream out_per_stream(buf);
 
-    RED_CHECK_EQ(out_per_stream.get_capacity(), 3);
+    RED_CHECK_EQ(out_per_stream.get_capacity(), 3u);
     RED_CHECK(out_per_stream.get_data());
     RED_CHECK_EQ(out_per_stream.get_data(), out_per_stream.get_current());
 }
@@ -123,12 +123,12 @@ RED_AUTO_TEST_CASE(TestStream_uint32)
 
     uint8_t const * oldp = s.get_current();
 
-    RED_CHECK_EQUAL(s.in_uint32_le(), 1);
+    RED_CHECK_EQUAL(s.in_uint32_le(), 1u);
     RED_CHECK_EQUAL(oldp+4, s.get_current());
 
-    RED_CHECK_EQUAL(s.in_uint32_be(), 0xFFFFFFFE);
-    RED_CHECK_EQUAL(s.in_uint32_be(), 1);
-    RED_CHECK_EQUAL(s.in_uint32_le(), 0xFFFFFFFC);
+    RED_CHECK_EQUAL(s.in_uint32_be(), 0xFFFFFFFEu);
+    RED_CHECK_EQUAL(s.in_uint32_be(), 1u);
+    RED_CHECK_EQUAL(s.in_uint32_le(), 0xFFFFFFFCu);
 
     // empty is OK
     RED_CHECK(!s.in_remain());
@@ -146,12 +146,12 @@ RED_AUTO_TEST_CASE(TestStream_uint64)
 
     uint8_t const * oldp = s.get_current();
 
-    RED_CHECK_EQUAL(s.in_uint64_le(), 1LL);
+    RED_CHECK_EQUAL(s.in_uint64_le(), 1u);
     RED_CHECK_EQUAL(oldp+8, s.get_current());
 
-    RED_CHECK_EQUAL(s.in_uint64_be(), 0xFFFFFFFFFFFFFFFELL);
-    RED_CHECK_EQUAL(s.in_uint64_be(), 1LL);
-    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFFFFFFFFFFFFFFCLL);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 0xFFFFFFFFFFFFFFFEull);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 1ull);
+    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFFFFFFFFFFFFFFCull);
 
     // empty is OK
     RED_CHECK(!s.in_remain());
@@ -160,8 +160,8 @@ RED_AUTO_TEST_CASE(TestStream_uint64)
     out.out_uint64_be(1LL);
     out.out_uint64_le(0xFFEECCLL);
     s.rewind();
-    RED_CHECK_EQUAL(s.in_uint64_be(), 1LL);
-    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFEECCLL);
+    RED_CHECK_EQUAL(s.in_uint64_be(), 1ull);
+    RED_CHECK_EQUAL(s.in_uint64_le(), 0xFFEECCull);
     RED_CHECK(s.get_current() == oldp + 16);
 }
 
@@ -255,7 +255,7 @@ RED_AUTO_TEST_CASE(TestStream_in_unistr)
     InStream in_stream(stream.get_data(), stream.get_offset());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    RED_CHECK_EQUAL(14, in_stream.get_offset());
+    RED_CHECK_EQUAL(14u, in_stream.get_offset());
     RED_CHECK_EQUAL('r', result[0]);
     RED_CHECK_EQUAL('e', result[1]);
     RED_CHECK_EQUAL('s', result[2]);
@@ -276,7 +276,7 @@ RED_AUTO_TEST_CASE(TestStream_in_unistr_2)
     InStream in_stream(stream.get_data(), stream.get_offset());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
-    RED_CHECK_EQUAL(14, in_stream.get_offset());
+    RED_CHECK_EQUAL(14u, in_stream.get_offset());
     RED_CHECK_EQUAL('r', result[0]);
     RED_CHECK_EQUAL(0xC3, result[1]);
     RED_CHECK_EQUAL(0xA9, result[2]);
@@ -291,11 +291,11 @@ RED_AUTO_TEST_CASE(TestStream_Stream_Compatibility)
 {
     StaticOutStream<512> stream;
 
-    RED_CHECK_EQUAL(512,   stream.get_capacity());
+    RED_CHECK_EQUAL(512u,   stream.get_capacity());
 
     stream.out_copy_bytes("0123456789", 10);
 
-    RED_CHECK_EQUAL(502,   stream.tailroom());
+    RED_CHECK_EQUAL(502u,   stream.tailroom());
     RED_CHECK_EQUAL(true,  stream.has_room(502));
     RED_CHECK_EQUAL(false, stream.has_room(503));
 }
@@ -310,7 +310,7 @@ RED_AUTO_TEST_CASE(TestStream_2BUE)
 
     InStream in_stream(stream.get_data(), stream.get_offset());
 
-    RED_CHECK_EQUAL(0x1A1B, in_stream.in_2BUE());
+    RED_CHECK_EQUAL(0x1A1Bu, in_stream.in_2BUE());
 }
 
 RED_AUTO_TEST_CASE(TestStream_4BUE)
@@ -323,7 +323,7 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 
     InStream in_stream(stream.get_data(), stream.get_offset());
 
-    RED_CHECK_EQUAL(0x001A1B1C, in_stream.in_4BUE());
+    RED_CHECK_EQUAL(0x001A1B1Cu, in_stream.in_4BUE());
 }
 
 RED_AUTO_TEST_CASE(TestStream_sint32)
@@ -331,7 +331,7 @@ RED_AUTO_TEST_CASE(TestStream_sint32)
     {
         const uint8_t tmp[4] = {0xFE, 0xFD, 0xFC, 0xFF};
         InStream ss_min_val(tmp);
-        RED_CHECK_EQUAL(0xFFFCFDFE, ss_min_val.in_sint32_le());
+        RED_CHECK_EQUAL(static_cast<int32_t>(0xFFFCFDFE), ss_min_val.in_sint32_le());
         uint8_t vartmp[4] = {};
         OutStream fs_min_val(vartmp);
         fs_min_val.out_sint32_le(0xFFFCFDFE);

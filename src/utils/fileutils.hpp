@@ -26,6 +26,11 @@
 #include <string>
 #include <sys/types.h> // mode_t
 
+#ifdef __EMSCRIPTEN__
+char* basename(char* path);
+char const* basename(char const* path);
+#endif
+
 // two flavors of basename_len to make it const agnostic
 const char * basename_len(const char * path, size_t & len);
 
@@ -52,6 +57,6 @@ bool canonical_path(const char * fullpath, char * path, size_t path_len,
                     char * basename, size_t basename_len, char * extension,
                     size_t extension_len);
 
-int recursive_create_directory(const char * directory, mode_t mode, const int groupid);
+int recursive_create_directory(const char * directory, mode_t mode, int groupid);
 
 int recursive_delete_directory(const char * directory_path);

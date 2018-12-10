@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestBasename)
     {
         size_t len = 0;
         /*char const * base = */basename_len("/usr/lib/", len);
-        RED_CHECK_EQUAL(0, len);
+        RED_CHECK_EQUAL(0u, len);
     }
 
     RED_CHECK_EQ(basename("/usr/"), "");
@@ -77,7 +77,7 @@ RED_AUTO_TEST_CASE(TestBasename)
     {
         size_t len = 0;
         /*char * base = */basename_len("/", len);
-        RED_CHECK_EQUAL(0, len);
+        RED_CHECK_EQUAL(0u, len);
     }
 
     RED_CHECK_EQ(basename("."), ".");
@@ -360,7 +360,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
 
     RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 
-    recursive_create_directory(tmpdirname, 0777, getgid());
+    RED_CHECK_MESSAGE(!recursive_create_directory(tmpdirname, 0777, getgid()), strerror(errno));
 
     RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
@@ -369,9 +369,8 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectory)
     strcat(tmpfilename, "/test_file_XXXXXX");
     close(mkstemp(tmpfilename));
 
-    recursive_delete_directory(tmpdirname);
+    RED_CHECK_MESSAGE(!recursive_delete_directory(tmpdirname), strerror(errno));
     RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
-
 }
 
 RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
@@ -387,7 +386,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
 
     RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 
-    recursive_create_directory(tmpdirname, 0777, getgid());
+    RED_CHECK_MESSAGE(!recursive_create_directory(tmpdirname, 0777, getgid()), strerror(errno));
 
     RED_CHECK_PREDICATE(file_exist, (tmpdirname));
 
@@ -396,7 +395,7 @@ RED_AUTO_TEST_CASE(TestRecursiveCreateDirectoryTrailingSlash)
     strcat(tmpfilename, "/test_file_XXXXXX");
     close(mkstemp(tmpfilename));
 
-    recursive_delete_directory(tmpdirname);
+    RED_CHECK_MESSAGE(!recursive_delete_directory(tmpdirname), strerror(errno));
     RED_CHECK_PREDICATE(file_not_exists, (tmpdirname));
 }
 
