@@ -18,7 +18,6 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#define REDEMPTION_UNIT_TEST_CPP 1
 #include "./redemption_unit_tests.hpp"
 
 #include <algorithm>

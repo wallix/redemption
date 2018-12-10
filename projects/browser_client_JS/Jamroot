@@ -78,7 +78,6 @@ constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
     <define>REDEMPTION_DECL_LOG_TEST
-    <define>BOOST_TEST_DYN_LINK
     <cxxflags>"-s NODERAWFS"
 ;
 
@@ -104,7 +103,6 @@ alias unit_test.bc :
 ;
 
 constant TEST_DEPENDENCIES :
-    # <define>BOOST_AUTO_TEST_MAIN
     $(CXXFLAGS_TEST)
 ;
 

@@ -133,16 +133,7 @@ namespace redemption_unit_test__
 
 #else
 
-# if defined(REDEMPTION_UNIT_TEST_CPP)
-#   if defined(RED_AUTO_TEST_CASE)
-#     undef RED_AUTO_TEST_CASE
-#   endif
-# else
-#   if !defined(RED_TEST_MODULE)
-#     error RED_TEST_MODULE is missing;
-#   endif
-#   include "impl/redemption_unit_tests_impl.hpp"
-# endif
+# include "impl/redemption_unit_tests_impl.hpp"
 
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref)
 # define RED_CHECK_SMEM(mem, memref) RED_TEST_SMEM(CHECK, mem, memref)

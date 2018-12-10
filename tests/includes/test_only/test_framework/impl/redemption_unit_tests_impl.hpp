@@ -22,7 +22,9 @@ Author(s): Jonathan Poelen
 
 #define BOOST_TEST_NO_OLD_TOOLS
 
-#define BOOST_TEST_MODULE RED_TEST_MODULE
+#ifdef RED_TEST_MODULE
+# define BOOST_TEST_MODULE RED_TEST_MODULE
+#endif
 
 #include <boost/test/auto_unit_test.hpp>
 

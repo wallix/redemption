@@ -70,6 +70,9 @@ namespace
             REDEMPTION_COMP_STRING_VERSION "/"
         ;
     }
+
+#define WD_ERROR_S(ostream_expr) RED_ERROR("WorkingDirectory: " ostream_expr)
+#define WD_ERROR(ostream_expr) RED_ERROR("WorkingDirectory: " << ostream_expr)
 }
 
 
@@ -137,14 +140,14 @@ std::size_t WorkingDirectory::HashPath::operator()(Path const& path) const
 WorkingDirectory::WorkingDirectory(std::string_view dirname)
 {
     if (dirname.empty() || dirname.find_first_of("/.") != std::string::npos) {
-        BOOST_ERROR("invalid dirname");
+        WD_ERROR_S("invalid dirname");
     }
 
     this->directory = str_concat(tempbase(), dirname, suffix_by_compiler());
 
     recursive_delete_directory(this->directory.c_str());
     if (-1 == mkdir(this->directory.c_str(), 0755) && errno != EEXIST) {
-        BOOST_ERROR(strerror(errno) << ": " << this->directory);
+        WD_ERROR(strerror(errno) << ": " << this->directory);
     }
 }
 
@@ -156,7 +159,7 @@ WorkingDirectory::SubDirectory WorkingDirectory::create_subdirectory(std::string
     }
 
     if (dirname.empty()) {
-        BOOST_ERROR("empty dirname");
+        WD_ERROR_S("empty dirname");
     }
 
     if (dirname.back() == '/') {
@@ -173,7 +176,7 @@ std::string const& WorkingDirectory::add_file_(std::string file)
     auto [it, b] = this->paths.emplace(std::move(file), this->counter_id);
     if (!b) {
         this->has_error = true;
-        BOOST_ERROR(it->name << " already exists");
+        WD_ERROR(it->name << " already exists");
     }
     this->is_checked = false;
     return it->name;
@@ -185,7 +188,7 @@ void WorkingDirectory::remove_file_(std::string file)
     Path path(std::move(file), 0);
     if (!this->paths.erase(path)) {
         this->has_error = true;
-        BOOST_ERROR("unknown file '" << path.name << '\'');
+        WD_ERROR_S("unknown file '" << path.name << '\'');
     }
 }
 
@@ -315,7 +318,7 @@ WorkingDirectory::~WorkingDirectory() noexcept(false)
     if (!this->has_error) {
         recursive_delete_directory(this->dirname().c_str());
         if (!this->is_checked) {
-            BOOST_ERROR("unchecked entries");
+            WD_ERROR_S("unchecked entries");
         }
     }
 }
