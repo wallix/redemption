@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestModExp)
     uint8_t out[sizeof(modulus)];
 
 
-    // 12^4 % 3 = 48 % 3 = 0
+    // 12^4 % 3 = 20736 % 3 = 0
     size_t len = mod_exp(
         out, sizeof(out)
       , byte_ptr_cast(inr), sizeof(inr)-1
@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestModExp)
     RED_CHECK_EQUAL(len, 0);
 
 
-    // 12^4 % 5 = 48 % 5 = 3
+    // 12^4 % 5 = 20736 % 5 = 1
     modulus[0] = '\x5';
     len = mod_exp(
         out, sizeof(out)
@@ -56,7 +56,7 @@ RED_AUTO_TEST_CASE(TestModExp)
     RED_CHECK_EQUAL(*out, '\x1');
 
 
-    // 12^4 % 17 = 48 % 17 = 13
+    // 12^4 % 17 = 20736 % 17 = 13
     char modulus2[] = "\x11";
     len = mod_exp(
         out, sizeof(out)

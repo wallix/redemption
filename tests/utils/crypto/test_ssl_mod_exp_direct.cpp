@@ -20,7 +20,7 @@
    Unit test to conversion of RDP drawing orders to PNG images
 */
 
-#define RED_TEST_MODULE mod_exp
+#define RED_TEST_MODULE mod_exp_direct
 
 #include "utils/crypto/ssl_mod_exp_direct.hpp"
 
@@ -38,4 +38,4 @@ static inline size_t mod_exp(
     );
 }
 
-#include "../../system/common/test_ssl_mod_exp.cpp"
+#include "../../system/common/test_ssl_mod_exp.hpp"
