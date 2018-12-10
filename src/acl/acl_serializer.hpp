@@ -785,7 +785,7 @@ private:
     {
         static constexpr size_t buf_len = 65535;
         char buf[buf_len];
-        char key_name_buf[64];
+        char key_name_buf[128];
         bool has_next_buffer = true;
         std::string data_multipacket;
         char * p;
@@ -805,7 +805,7 @@ private:
         array_view_const_char key(bool always_internal_copy)
         {
             auto m = std::find(this->p, this->e, '\n');
-            if (m == e) {
+            if (m == this->e) {
                 size_t key_buf_len = this->e - this->p;
                 if (key_buf_len) {
                     if (key_buf_len > sizeof(this->key_name_buf)) {
@@ -836,6 +836,10 @@ private:
             *m = 0;
             ++m;
             if (always_internal_copy) {
+                if (len > sizeof(this->key_name_buf)) {
+                    LOG(LOG_ERR, "Error: ACL key length too big (got %zu max 64o)", len);
+                    throw Error(ERR_ACL_MESSAGE_TOO_BIG);
+                }
                 memcpy(this->key_name_buf, this->p, len);
                 this->p = m;
                 return {this->key_name_buf, len};

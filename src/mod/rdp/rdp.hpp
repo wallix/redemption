@@ -363,6 +363,8 @@ private:
     const uint32_t                    session_probe_handle_usage_limit;
     const uint32_t                    session_probe_memory_usage_limit;
 
+    const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
     const bool                        session_probe_public_session;
 
     const bool                        bogus_ios_rdpdr_virtual_channel;
@@ -787,6 +789,7 @@ public:
         , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
         , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
+        , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
         , session_probe_public_session(mod_rdp_params.session_probe_public_session)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
@@ -1352,6 +1355,9 @@ private:
             this->session_probe_handle_usage_limit;
         session_probe_virtual_channel_params.session_probe_memory_usage_limit        =
             this->session_probe_memory_usage_limit;
+
+        session_probe_virtual_channel_params.session_probe_ignore_ui_less_processes_during_end_of_session_check =
+            this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();

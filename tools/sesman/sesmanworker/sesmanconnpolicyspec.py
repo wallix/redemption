@@ -51,6 +51,7 @@ cp_spec = {
     u'session_probe_enable_crash_dump': 'enable_crash_dump',
     u'session_probe_handle_usage_limit': 'handle_usage_limit',
     u'session_probe_memory_usage_limit': 'memory_usage_limit',
+    u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
     u'session_probe_public_session': 'public_session',
     u'session_probe_outbound_connection_monitoring_rules': 'outbound_connection_monitoring_rules',
     u'session_probe_process_monitoring_rules': 'process_monitoring_rules',

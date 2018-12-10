@@ -381,6 +381,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 200'000'000>>(), "session_probe_memory_usage_limit", connpolicy::name{"memory_usage_limit"}, set(0));
         W.sep();
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+        W.sep();
+
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
         W.sep();
 
