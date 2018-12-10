@@ -337,17 +337,6 @@ public:
         return 0;
     }
 
-    void send_key_to_keep_alive() {
-        if (this->config.keep_alive_freq) {
-            std::chrono::microseconds duration = difftimeval(tvtime(), this->start_win_session_time);
-
-            if ( ((duration.count() / 1000000) % this->config.keep_alive_freq) == 0) {
-                this->_callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
-                this->_callback.send_rdp_scanCode(0x1e, 0);
-            }
-        }
-    }
-
     virtual void update_keylayout() override {
         if (this->impl_keylayout) {
             this->impl_keylayout->update_keylayout(this->config.info.keylayout);

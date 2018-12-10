@@ -41,7 +41,7 @@
 
 using namespace std::chrono_literals;
 
-int run_mod(ClientRedemption & front);
+int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time);
 
 
 int main(int argc, char const** argv)
@@ -80,16 +80,16 @@ int main(int argc, char const** argv)
                            , nullptr
                            , nullptr);
 
-    return run_mod(client);
+    return run_mod(client, client.config, client._callback, client.start_win_session_time);
 }
 
 
-int run_mod(ClientRedemption & front) {
-    const timeval time_stop = addusectimeval(front.config.time_out_disconnection, tvtime());
+int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, ClientCallback & callback, timeval start_win_session_time) {
+    const timeval time_stop = addusectimeval(config.time_out_disconnection, tvtime());
     const std::chrono::milliseconds time_mark = 50ms;
 
-    if (front._callback.get_mod()) {
-        auto & mod = *(front._callback.get_mod());
+    if (callback.get_mod()) {
+        auto & mod = *(callback.get_mod());
 
         bool logged = false;
 
@@ -100,7 +100,7 @@ int run_mod(ClientRedemption & front) {
                 logged = true;
 
                 std::cout << "RDP Session Log On.\n";
-                if (front.config.quick_connection_test) {
+                if (config.quick_connection_test) {
 
                     std::cout << "quick_connection_test\n";
                     front.disconnect("", false);
@@ -108,8 +108,8 @@ int run_mod(ClientRedemption & front) {
                 }
             }
 
-            if (time_stop < tvtime() && !front.config.persist) {
-                std::cerr <<  " Exit timeout (timeout = " << front.config.time_out_disconnection.count() << " ms)" << std::endl;
+            if (time_stop < tvtime() && !config.persist) {
+                std::cerr <<  " Exit timeout (timeout = " << config.time_out_disconnection.count() << " ms)" << std::endl;
                 front.disconnect("", false);
                 return 8;
             }
@@ -118,7 +118,15 @@ int run_mod(ClientRedemption & front) {
                 return err;
             }
 
-            front.send_key_to_keep_alive();
+            // send key to keep alive
+            if (config.keep_alive_freq) {
+                std::chrono::microseconds duration = difftimeval(tvtime(), start_win_session_time);
+
+                if ( ((duration.count() / 1000000) % config.keep_alive_freq) == 0) {
+                    callback.send_rdp_scanCode(0x1e, KBD_FLAG_UP);
+                    callback.send_rdp_scanCode(0x1e, 0);
+                }
+            }
         }
     }
 

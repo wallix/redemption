@@ -113,8 +113,6 @@ public:
     }
 
 
-
-
     // Controller
     void init_layout(int lcid) {
         this->keymap.init_layout(lcid);
