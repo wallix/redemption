@@ -8,20 +8,20 @@ from collections import OrderedDict
 #project_root = '../..'
 project_root = '.'
 
-includes = set([
+includes = set((
     'src/',
     'src/system/linux/',
     'projects/redemption_configs/redemption_src/',
     'src/capture/ocr/',
     'tests/includes/',
-])
+))
 
-disable_tests = set([
+disable_tests = set((
     'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
     'tests/test_meta_protocol2.cpp',
-])
+))
 
-disable_srcs = set([
+disable_srcs = set((
     'src/main/redrec.cpp', # special case in Jamroot
     'tests/includes/test_only/test_framework/register_exception.cpp',
     'tests/includes/test_only/test_framework/test_framework.cpp',
@@ -31,7 +31,7 @@ disable_srcs = set([
     'src/utils/log_as_logemasm.cpp',
     'src/utils/log_as_logprint.cpp',
     'src/utils/log_as_logtest.cpp',
-])
+))
 
 src_deps = dict((
     ('src/acl/module_manager.hpp', glob.glob('src/acl/module_manager/*.cpp')),
@@ -79,23 +79,23 @@ target_renames = dict((
     ('rdp_client', 'rdpclient'),
 ))
 
-target_nosyslog = set([
+target_nosyslog = set((
     'proxy_recorder',
     'rdpinichecker',
     'rdpclient',
     #'main_client_redemption',
-])
+))
 
 #coverage_requirements = dict((
 #))
 
-dir_nocoverage = set([
+dir_nocoverage = set((
     'tests/server',
     'tests/system/common',
     'tests/system/emscripten',
     'tests/client_mods',
     'tests/lib',
-])
+))
 file_nocoverage = set(glob.glob('tests/*.cpp'))
 
 sys_lib_assoc = dict((
@@ -491,11 +491,6 @@ def get_sources_deps(f, cat, exclude):
             a.append('<library>'+cpp_to_obj(pf))
     return a
 
-all_targets = []
-def mark_target(target, dep = None):
-    all_targets.append([target, dep])
-    return target
-
 def generate(type, files, requirements, get_target_cb = get_target):
     for f in files:
         f.used = True
@@ -526,7 +521,7 @@ def generate(type, files, requirements, get_target_cb = get_target):
         elif type == 'lib':
             src += '.lib.o'
 
-        print(type, ' ', mark_target(target), ' :\n  ', src, '\n:', sep='')
+        print(type, ' ', target, ' :\n  ', src, '\n:', sep='')
 
         # <library> following by <...other...>
         deps = sorted(set(deps), key=lambda s: s if s.startswith('<library>') else 'Z'+s)
@@ -553,7 +548,7 @@ def inject_variable_prefix(path):
 def generate_obj(files):
     for f in files:
         if f.type == 'C' and f != app_path_cpp:
-            print('obj', mark_target(cpp_to_obj(f)), ':', inject_variable_prefix(f.path), end='')
+            print('obj', cpp_to_obj(f), ':', inject_variable_prefix(f.path), end='')
             if f.all_cxx_deps:
                 print(' :', ' '.join(sorted(f.all_cxx_deps)), end='')
             if f.path.startswith('tests/includes/test_only/'):
@@ -584,7 +579,7 @@ print()
 
 generate('lib', libs, ['$(LIB_DEPENDENCIES)', '<library>log.o'], lambda f: 'lib'+get_target(f))
 for f in libs:
-    print('obj ', mark_target(f.path), '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
+    print('obj ', f.path, '.lib.o :\n  ', inject_variable_prefix(f.path), '\n:\n  $(LIB_DEPENDENCIES)', sep='')
     if f.all_cxx_deps:
         print(' ', '\n  '.join(f.all_cxx_deps))
     print(';')
@@ -610,11 +605,9 @@ for k,t in test_targets_counter.items():
     if t[0] == 1:
         f = t[1]
         unprefixed = unprefixed_file(f)
-        print('alias', mark_target(k, unprefixed), ':', unprefixed, ';')
+        print('alias', k, ':', unprefixed, ';')
         if f.have_coverage:
-            print('alias ',
-                  mark_target(k+'.coverage', unprefixed), ' : ',
-                  mark_target(unprefixed+'.coverage'), ' ;', sep='')
+            print('alias ', k+'.coverage', ' : ', unprefixed+'.coverage', ' ;', sep='')
 
 # alias by directory
 dir_tests = OrderedDict()
@@ -625,7 +618,7 @@ explicit_no_rec = []
 for name,aliases in dir_tests.items():
     name += '.norec'
     explicit_no_rec.append(name)
-    print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
+    print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 
 # alias for recursive directory
@@ -641,7 +634,7 @@ for name,aliases in dir_tests.items():
 explicit_rec = []
 for name,aliases in dir_rec_tests.items():
     explicit_rec.append(name)
-    print('alias ', mark_target(name), ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
+    print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 if explicit_no_rec:
     print('explicit\n  ', '\n  '.join(explicit_no_rec), '\n;', sep='')
