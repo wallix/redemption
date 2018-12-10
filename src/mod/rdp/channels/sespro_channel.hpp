@@ -879,7 +879,7 @@ public:
 
                     if (options)
                     {
-                        send_client_message([this, options](OutStream & out_s) {
+                        send_client_message([options](OutStream & out_s) {
                                 {
                                     const char cstr[] = "Options=";
                                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
