@@ -317,6 +317,8 @@ public:
     int               port = 3389;
     BGRPalette        mod_palette = BGRPalette::classic_332();
 
+    bool help_mode = false;
+
 
 
     ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front, const std::string &MAIN_DIR );

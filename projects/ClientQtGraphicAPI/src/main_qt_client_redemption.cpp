@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     ClientKeyLayoutAPI     * keylayout_api = &keylayout_obj;
     ClientIODiskAPI        * ioDisk_api    = &ioDisk_api_obj;
 
-    RDPVerbose verbose = to_verbose_flags(0x0);             //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
+    RDPVerbose verbose = to_verbose_flags(0xffffffff);             //RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClientRedemption client_qt( reactor, const_cast<char const**>(argv), argc, verbose
                               , graphic_qt

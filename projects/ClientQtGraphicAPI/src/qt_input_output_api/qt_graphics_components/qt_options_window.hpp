@@ -363,7 +363,6 @@ public:
         this->config->keyCustomDefinitions.clear();
 
         const int row_count = this->_tableKeySetting->rowCount();
-        this->config->keyCustomDefinitions.clear();
 
         for (int i = 0; i < row_count; i++) {
             int qtKeyID(0);

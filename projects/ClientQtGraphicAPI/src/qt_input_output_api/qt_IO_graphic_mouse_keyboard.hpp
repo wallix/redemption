@@ -1415,11 +1415,13 @@ private:
 //         this->config->is_replaying = false;
 //         this->config->connected = false;
 
-        this->controller->disconnexionReleased();
 
-        if (this->form != nullptr && this->config->connected) {
+
+        if (this->form != nullptr /*&& this->config->connected*/) {
             this->form->close();
         }
+
+        this->controller->disconnexionReleased();
     }
 
 //     KeyCustomDefinition get_key_info(int key, std::string const& text) override {

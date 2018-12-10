@@ -329,7 +329,6 @@ namespace
     ssize_t tls_recv_all(TLSContext & tls, uint8_t * data, size_t const len)
     {
         size_t remaining_len = len;
-
         while (remaining_len > 0) {
             ssize_t const res = tls.privpartial_recv_tls(data, remaining_len);
 

@@ -119,7 +119,10 @@ ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, 
         cli::helper("Client ReDemPtion Help menu."),
 
         cli::option('h', "help").help("Show help")
-        .action(cli::help),
+        .action([this]() { this->help_mode = true;}),
+
+//         cli::option('h', "help").help("Show help")
+//         .action(cli::help),
 
         cli::option('v', "version").help("Show version")
         .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),

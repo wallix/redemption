@@ -281,9 +281,17 @@ public:
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
 
+
         if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
 
-           this->connect();
+            if (this->connect()) {
+                    this->config.writeAccoundData(
+                        this->config.target_IP,
+                        this->config.user_name,
+                        this->config.user_password,
+                        this->config.port
+                    );
+            }
 
         } else {
             std::cout <<  "Argument(s) required for connection: ";
@@ -303,6 +311,10 @@ public:
 
             if (this->impl_graphic) {
                 this->impl_graphic->init_form();
+                if (this->config.help_mode) {
+                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    this->impl_graphic->closeFromGUI();
+                }
             }
         }
     }
@@ -1100,6 +1112,11 @@ public:
                 };
                 this->session_reactor.execute_events(is_mod_fd);
                 this->session_reactor.execute_graphics(is_mod_fd, get_gd());
+
+                //execute_events(
+//             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
+//             *this->_callback.get_mod(), *this
+//         )
             }
         } catch (const Error & e) {
             if (this->impl_graphic) {
