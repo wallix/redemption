@@ -302,7 +302,7 @@ void write_authid_hpp(std::ostream & out_authid, ConfigCppWriter & writer)
       "#include \"utils/sugar/array_view.hpp\"\n"
       "\n"
       "enum authid_t : unsigned;\n\n"
-      "inline authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
+      "constexpr authid_t MAX_AUTHID = authid_t(" << writer.authstrs.size() << ");\n\n"
       "constexpr array_view_const_char const authstr[] = {\n"
     ;
     for (auto & authstr : writer.authstrs) {
@@ -442,9 +442,9 @@ void write_variables_configuration(std::ostream & out_varconf, ConfigCppWriter &
       "};\n\n"
     ;
 
-    out_varconf << "constexpr inline BitFlags is_loggable{{\n  ";
+    out_varconf << "constexpr BitFlags is_loggable{{\n  ";
     join(loggables, "0b", "\n");
-    out_varconf << "}};\nconstexpr inline BitFlags is_unloggable_if_value_with_password{{\n  ";
+    out_varconf << "}};\nconstexpr BitFlags is_unloggable_if_value_with_password{{\n  ";
     join(unloggable_if_value_contains_passwords, "0b", "\n");
     out_varconf <<
       "}};\n"
