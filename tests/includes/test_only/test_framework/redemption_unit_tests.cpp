@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 #include "./redemption_unit_tests.hpp"
 
 #include <algorithm>
+#include <ostream>
 
 
 namespace redemption_unit_test__

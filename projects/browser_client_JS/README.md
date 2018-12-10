@@ -48,3 +48,9 @@ em++ file.cpp -o file.html
 `--exclude-file path1`
 
 `-O1`, `-O2`, `-O3`
+
+# Include path
+
+```bash
+ln -s /usr/include/boost system_include/
+```

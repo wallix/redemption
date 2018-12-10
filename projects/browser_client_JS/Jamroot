@@ -31,6 +31,7 @@ project redjs
     <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
     <cxxflags>-fno-rtti
+    <cxxflags>"-isystem system_include"
 
     # https://github.com/kripken/emscripten/blob/master/src/settings.js
     # DISABLE_EXCEPTION_CATCHING = 0 - generate code to actually catch exceptions
@@ -75,9 +76,9 @@ htmljs pentamino : penta.bc :
 
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
-    <define>REDEMPTION_DECL_LOG_TEST
-    <define>REDEMPTION_TEST_BACKEND=emscripten
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
+    <define>REDEMPTION_DECL_LOG_TEST
+    <define>BOOST_TEST_DYN_LINK
     <cxxflags>"-s NODERAWFS"
 ;
 
@@ -86,13 +87,11 @@ objjs register_exception.bc :
 :
     $(CXXFLAGS_TEST)
 ;
-
-objjs redemption_unit_test_impl.bc :
-    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/emscripten/redemption_unit_tests_impl.cpp
+objjs test_framework.bc :
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/test_framework.cpp
 :
     $(CXXFLAGS_TEST)
 ;
-
 objjs redemption_unit_test.bc :
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/redemption_unit_tests.cpp
 :
@@ -100,10 +99,13 @@ objjs redemption_unit_test.bc :
 ;
 
 alias unit_test.bc :
-    register_exception.bc
+    test_framework.bc
     redemption_unit_test.bc
-    redemption_unit_test_impl.bc
-    src/core/error.bc
+;
+
+constant TEST_DEPENDENCIES :
+    # <define>BOOST_AUTO_TEST_MAIN
+    $(CXXFLAGS_TEST)
 ;
 
 objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
@@ -121,7 +123,12 @@ actions exenode
 
 rule test-run ( name : objects + : requirements * )
 {
-    exejs $(name).node : $(objects) unit_test.bc log_test.bc : $(requirements) $(CXXFLAGS_TEST) ;
+    if src/core/error.bc in $(objects)
+    {
+        requirements += register_exception.bc ;
+    }
+
+    exejs $(name).node : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
     make $(name) : $(name).node : @exenode ;
 }
 

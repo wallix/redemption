@@ -18,8 +18,18 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#define BOOST_AUTO_TEST_MAIN
-#define BOOST_TEST_DYN_LINK
+#ifdef __EMSCRIPTEN__
+#define BOOST_TEST_DISABLE_ALT_STACK
+extern "C" inline int sigaction(
+    int /*signum*/, const struct sigaction */*act*/, struct sigaction*/*oldact*/)
+{
+    return 0;
+};
+#else
+# define BOOST_AUTO_TEST_MAIN
+# define BOOST_TEST_DYN_LINK
+#endif
+
 // #define BOOST_TEST_ALTERNATIVE_INIT_API
 
 #include <boost/test/unit_test_monitor.hpp>

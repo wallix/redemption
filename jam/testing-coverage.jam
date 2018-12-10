@@ -82,7 +82,6 @@ actions id {
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
     <define>FIXTURES_PATH='\"$(FIXTURES_PATH)\"'
-    <define>REDEMPTION_TEST_BACKEND=system
     <define>REDEMPTION_DECL_LOG_TEST
 ;
 
@@ -93,7 +92,7 @@ obj register_exception.o :
 ;
 
 lib libunit_test :
-    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/test_framework.cpp
+    $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/impl/test_framework.cpp
     $(REDEMPTION_TEST_PATH)/includes/test_only/test_framework/redemption_unit_tests.cpp
 :
     $(CXXFLAGS_TEST)

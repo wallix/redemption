@@ -133,18 +133,15 @@ namespace redemption_unit_test__
 
 #else
 
-# ifdef IN_IDE_PARSER
-#   include "system/redemption_unit_tests_impl.hpp"
+# if defined(REDEMPTION_UNIT_TEST_CPP)
+#   if defined(RED_AUTO_TEST_CASE)
+#     undef RED_AUTO_TEST_CASE
+#   endif
 # else
-#   define RED_TEST_INCLUDE(backend, path) <test_only/test_framework/backend/path>
-/* do not add a space before register_exception.hpp: this does not work with gcc */
-#   include RED_TEST_INCLUDE(REDEMPTION_TEST_BACKEND,redemption_unit_tests_impl.hpp)
-#   undef RED_TEST_INCLUDE
-# endif
-
-
-# if defined(REDEMPTION_UNIT_TEST_CPP) && defined(RED_AUTO_TEST_CASE)
-#   undef RED_AUTO_TEST_CASE
+#   if !defined(RED_TEST_MODULE)
+#     error RED_TEST_MODULE is missing;
+#   endif
+#   include "impl/redemption_unit_tests_impl.hpp"
 # endif
 
 # define RED_CHECK_MEM(mem, memref) RED_TEST_MEM(CHECK, mem, memref)
