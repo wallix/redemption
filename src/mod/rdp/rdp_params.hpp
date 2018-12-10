@@ -104,6 +104,9 @@ struct ModRDPParams {
 
     bool         enable_transparent_mode = false;
     const char * output_filename = "";
+
+    bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
+
     Transport  * persistent_key_list_transport = nullptr;
     Transport  * transparent_recorder_transport = nullptr;
 
@@ -293,6 +296,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_handle_usage_limit);
         RDP_PARAMS_LOG("%u",     static_cast<unsigned>, session_probe_memory_usage_limit);
+
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);

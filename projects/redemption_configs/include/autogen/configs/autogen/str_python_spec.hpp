@@ -471,6 +471,9 @@
 "#_advanced\n"
 "session_probe_memory_usage_limit = integer(min=0, default=0)\n\n"
 
+"#_hidden\n"
+"session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "server_cert_store = boolean(default=True)\n\n"

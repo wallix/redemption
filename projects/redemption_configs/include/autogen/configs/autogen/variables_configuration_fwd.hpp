@@ -149,6 +149,7 @@ namespace cfg {
         struct session_probe_enable_crash_dump;
         struct session_probe_handle_usage_limit;
         struct session_probe_memory_usage_limit;
+        struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
         struct server_cert_store;
         struct server_cert_check;
         struct server_access_allowed_message;

@@ -397,6 +397,9 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, sesman_to_proxy, type_<types::u32>(), "session_probe_memory_usage_limit", set(0));
         W.sep();
 
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", set(true));
+        W.sep();
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 

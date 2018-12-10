@@ -44,6 +44,10 @@ enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
 
+// Session Probe Options
+enum {
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
+};
 
 class ExtraSystemProcesses
 {
@@ -325,6 +329,8 @@ private:
     const uint32_t param_handle_usage_limit;
     const uint32_t param_memory_usage_limit;
 
+    const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -395,6 +401,8 @@ public:
         uint32_t session_probe_handle_usage_limit;
         uint32_t session_probe_memory_usage_limit;
 
+        bool session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
         Translation::language_t lang;
 
         bool bogus_refresh_rect_ex;
@@ -449,6 +457,7 @@ public:
     , param_enable_crash_dump(params.session_probe_enable_crash_dump)
     , param_handle_usage_limit(params.session_probe_handle_usage_limit)
     , param_memory_usage_limit(params.session_probe_memory_usage_limit)
+    , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -894,6 +903,44 @@ public:
                 this->send_message_to_server(out_s.get_offset(),
                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                     out_s.get_data(), out_s.get_offset());
+            }
+
+            {
+                uint32_t options = 0;
+
+                if (this->param_session_probe_ignore_ui_less_processes_during_end_of_session_check) {
+                    options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                }
+
+                if (options)
+                {
+                    StaticOutStream<1024> out_s;
+
+                    const size_t message_length_offset = out_s.get_offset();
+                    out_s.out_skip_bytes(sizeof(uint16_t));
+
+                    {
+                        const char cstr[] = "Options=";
+                        out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                    }
+
+                    {
+                        char cstr[128];
+                        std::snprintf(cstr, sizeof(cstr), "%u", options);
+                        out_s.out_copy_bytes(cstr, strlen(cstr));
+                    }
+
+                    out_s.out_clear_bytes(1);   // Null-terminator.
+
+                    out_s.set_out_uint16_le(
+                        out_s.get_offset() - message_length_offset -
+                            sizeof(uint16_t),
+                        message_length_offset);
+
+                    this->send_message_to_server(out_s.get_offset(),
+                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                        out_s.get_data(), out_s.get_offset());
+                }
             }
 
             {
