@@ -1961,8 +1961,8 @@ class Sesman():
                 u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
                 u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
                 u'enable_nla': 'enable_nla',
-                u'enable_kerberos': 'enable_kerberos'
-                u'disable_keyboard_log': 'disable_keyboard_log'
+                u'enable_kerberos': 'enable_kerberos',
+                u'keyboard_input_masking_level': 'keyboard_input_masking_level'
                 },
             'session_probe': {
                 u'session_probe' : 'enable_session_probe',
