@@ -349,11 +349,6 @@ public:
 
         return true;
     }
-
-    void mini_dump() override
-    {
-        LOG(LOG_INFO, "Type=RDP 6.1 bulk decompressor");
-    }
 };
 
 

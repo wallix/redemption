@@ -434,9 +434,6 @@ public:
     virtual ~rdp_mppc_dec() = default;
 
     virtual int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) = 0;
-
-    virtual void mini_dump() = 0;
-
 };
 
 
@@ -462,8 +459,6 @@ public:
         uint8_t & compressedType, uint16_t & compressed_data_size,
         uint16_t max_compressed_data_size = MAX_COMPRESSED_DATA_SIZE_UNUSED);
 
-//    virtual void dump(bool mini_dump) const = 0;
-
     virtual void get_compressed_data(OutStream & stream) const = 0;
 
     uint32_t get_max_data_block_size() const;
@@ -483,10 +478,6 @@ class rdp_mppc_unified_dec : public rdp_mppc_dec
 public:
     rdp_mppc_unified_dec() = default;
     ~rdp_mppc_unified_dec() override;
-
-    void mini_dump() override;
-
-//    void dump() override;
 
     int decompress(uint8_t const * cbuf, int len, int ctype, const uint8_t *& rdata, uint32_t & rlen) override;
 };

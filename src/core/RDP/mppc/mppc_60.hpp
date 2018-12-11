@@ -237,17 +237,6 @@ struct rdp_mppc_60_dec : public rdp_mppc_dec
     , history_ptr(this->history_buf)
     {}
 
-    void mini_dump() override
-    {
-        LOG(LOG_INFO, "Type=RDP 6.0 bulk decompressor");
-        LOG(LOG_INFO, "historyBuffer");
-        hexdump_d(this->history_buf, 16);
-        LOG(LOG_INFO, "offsetCache");
-        hexdump16_d(this->offset_cache, RDP_60_OFFSET_CACHE_SIZE);
-        LOG(LOG_INFO, "historyPointerOffset=%" PRIdPTR,   this->history_ptr - this->history_buf);
-        LOG(LOG_INFO, "historyBufferEndOffset=%" PRIdPTR, this->history_buf_end - this->history_buf);
-    }
-
 protected:
     static inline uint16_t LEChash(uint16_t key)
     {
