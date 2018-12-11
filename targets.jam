@@ -816,7 +816,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -852,7 +851,6 @@ test-run tests/client_mods/test_rdp_client_test_card :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -896,7 +894,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -942,7 +939,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -1998,7 +1994,6 @@ test-run tests/core/RDP/test_bitmapupdate :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2006,7 +2001,6 @@ test-run tests/core/RDP/test_bitmapupdate :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -2149,7 +2143,6 @@ test-run tests/core/RDP/test_rdp_pointer :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2157,7 +2150,6 @@ test-run tests/core/RDP/test_rdp_pointer :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -2934,7 +2926,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2950,7 +2941,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -2967,7 +2957,6 @@ test-run tests/mod/internal/test_copy_paste :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -2984,7 +2973,6 @@ test-run tests/mod/internal/test_copy_paste :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3032,7 +3020,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3081,7 +3068,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3125,7 +3111,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3214,7 +3199,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>src/utils/cfgloader.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3355,7 +3339,6 @@ test-run tests/mod/internal/test_widget_test_mod :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -3371,7 +3354,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3388,7 +3370,6 @@ test-run tests/mod/internal/widget/test_composite :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3399,7 +3380,6 @@ test-run tests/mod/internal/widget/test_composite :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -3414,7 +3394,6 @@ test-run tests/mod/internal/widget/test_edit :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3429,7 +3408,6 @@ test-run tests/mod/internal/widget/test_edit :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3445,7 +3423,6 @@ test-run tests/mod/internal/widget/test_edit_valid :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3463,7 +3440,6 @@ test-run tests/mod/internal/widget/test_edit_valid :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3479,7 +3455,6 @@ test-run tests/mod/internal/widget/test_flat_button :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3494,7 +3469,6 @@ test-run tests/mod/internal/widget/test_flat_button :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3532,7 +3506,6 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3548,7 +3521,6 @@ test-run tests/mod/internal/widget/test_flat_form :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3565,7 +3537,6 @@ test-run tests/mod/internal/widget/test_flat_form :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3581,7 +3552,6 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3601,7 +3571,6 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3640,7 +3609,6 @@ test-run tests/mod/internal/widget/test_flat_login :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3676,7 +3644,6 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3692,7 +3659,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3712,7 +3678,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3728,7 +3693,6 @@ test-run tests/mod/internal/widget/test_grid :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3743,7 +3707,6 @@ test-run tests/mod/internal/widget/test_grid :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3758,7 +3721,6 @@ test-run tests/mod/internal/widget/test_group_box :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3775,7 +3737,6 @@ test-run tests/mod/internal/widget/test_group_box :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3806,7 +3767,6 @@ test-run tests/mod/internal/widget/test_image :
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3822,7 +3782,6 @@ test-run tests/mod/internal/widget/test_label :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3836,7 +3795,6 @@ test-run tests/mod/internal/widget/test_label :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3852,7 +3810,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3867,7 +3824,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3889,7 +3845,6 @@ test-run tests/mod/internal/widget/test_multiline :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3902,7 +3857,6 @@ test-run tests/mod/internal/widget/test_multiline :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3923,7 +3877,6 @@ test-run tests/mod/internal/widget/test_number_edit :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3939,7 +3892,6 @@ test-run tests/mod/internal/widget/test_number_edit :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3955,7 +3907,6 @@ test-run tests/mod/internal/widget/test_password :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3971,7 +3922,6 @@ test-run tests/mod/internal/widget/test_password :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -3987,7 +3937,6 @@ test-run tests/mod/internal/widget/test_screen :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4002,7 +3951,6 @@ test-run tests/mod/internal/widget/test_screen :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -4018,7 +3966,6 @@ test-run tests/mod/internal/widget/test_scroll :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4034,7 +3981,6 @@ test-run tests/mod/internal/widget/test_scroll :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -4050,7 +3996,6 @@ test-run tests/mod/internal/widget/test_selector :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4069,7 +4014,6 @@ test-run tests/mod/internal/widget/test_selector :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -4089,7 +4033,6 @@ test-run tests/mod/internal/widget/test_tooltip :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4103,7 +4046,6 @@ test-run tests/mod/internal/widget/test_tooltip :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -4124,7 +4066,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4138,7 +4079,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/core/font.o
@@ -4164,7 +4104,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4173,7 +4112,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
@@ -4231,7 +4169,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -4241,7 +4178,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
@@ -4346,7 +4282,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/drawable.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -4431,7 +4366,6 @@ test-run tests/mod/vnc/encoder/test_zrle :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4439,7 +4373,6 @@ test-run tests/mod/vnc/encoder/test_zrle :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o
@@ -5503,7 +5436,6 @@ test-run tests/utils/test_video_cropper :
 :
   <library>boost_stacktrace
   <library>crypto
-  <library>png
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -5511,7 +5443,6 @@ test-run tests/utils/test_video_cropper :
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
   <library>src/utils/hexdump.o
-  <library>src/utils/png.o
   <library>src/utils/rle.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/gdi/test_graphic.o

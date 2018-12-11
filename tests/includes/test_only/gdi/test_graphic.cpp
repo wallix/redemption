@@ -21,7 +21,6 @@
 #include "test_only/gdi/test_graphic.hpp"
 
 #include "core/RDP/RDPDrawable.hpp"
-#include "utils/png.hpp"
 
 struct TestGraphic::D
 {
@@ -42,11 +41,6 @@ uint16_t TestGraphic::width() const
 uint16_t TestGraphic::height() const
 {
     return this->d->gd.height();
-}
-
-void TestGraphic::save_to_png(const char * filename)
-{
-    dump_png24(filename, this->d->gd, true);
 }
 
 TestGraphic::operator ConstImageDataView() const

@@ -113,8 +113,6 @@ public:
 
     ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
 
-    void save_to_png(const char * filename);
-
     void update_pointer_position(uint16_t, uint16_t) override {}
 
     operator ConstImageDataView () const;

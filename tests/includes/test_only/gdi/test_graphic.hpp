@@ -39,8 +39,6 @@ struct TestGraphic
     uint16_t width() const;
     uint16_t height() const;
 
-    void save_to_png(const char * filename);
-
     operator ConstImageDataView () const;
     operator gdi::GraphicApi& ();
     operator gdi::ImageFrameApi& ();

@@ -103,7 +103,7 @@ actions gen_targets
              /^\s*<variant>coverage:/d
              s/^\s*</requirement_list += </
              s/$/ ;/' \
-        > projects/ClientQtGraphicAPI/redemption_deps.jam
+        | sort > projects/ClientQtGraphicAPI/redemption_deps.jam
 }
 
 explicit targets.jam ;

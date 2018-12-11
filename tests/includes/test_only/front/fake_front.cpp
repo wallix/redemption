@@ -24,7 +24,6 @@
 #include "test_only/gdi/test_graphic.hpp"
 
 #include "core/channel_list.hpp"
-#include "utils/png.hpp"
 
 
 struct FakeFront::D
@@ -215,11 +214,6 @@ FakeFront::ResizeResult FakeFront::server_resize(int width, int height, BitsPerP
     this->d->gd.resize(width, height);
     this->d->screen_info.bpp = bpp;
     return ResizeResult::done;
-}
-
-void FakeFront::save_to_png(const char * filename)
-{
-    dump_png24(filename, this->d->gd, true);
 }
 
 FakeFront::operator ConstImageDataView() const
