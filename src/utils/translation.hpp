@@ -267,8 +267,8 @@ namespace trkeys
         "(CBBL) Le cycle de lancement de Session Probe a été interrompu! La durée du délai d'attente de lancement peut être trop courte."
     );
     TR_KV(err_session_probe_cbbl_unknown_reason_refer_to_syslog,
-        "(ASBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition.",
-        "(ASBL) Le lancement de Session Probe a échoué pour une raison inconnue! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
+        "(CBBL) Session Probe launch has failed for unknown reason! Please refer to the syslog file for more detailed information regarding the error condition.",
+        "(CBBL) Le lancement de Session Probe a échoué pour une raison inconnue! Veuillez vous reporter au fichier syslog pour obtenir des informations plus détaillées concernant la condition d'erreur."
     );
     TR_KV(err_session_probe_rp_launch_refer_to_syslog,
         "(RP) Could not launch Session Probe! Please refer to the syslog file for more detailed information regarding the error condition.",
