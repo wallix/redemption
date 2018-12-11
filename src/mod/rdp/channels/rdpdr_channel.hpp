@@ -247,8 +247,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                                "\"%s\"(DeviceId=%u DeviceType=%u) is already in the device list. "
-                                "Old=\"%s\" (DeviceType=%u)",
+                                "\"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") is already"
+                                " in the device list. Old=\"%s\" (DeviceType=%" PRIu32 ")",
                             PreferredDosName, DeviceId, underlying_cast(DeviceType),
                             info.preferred_dos_name.c_str(), underlying_cast(info.device_type));
                     }
@@ -261,7 +261,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             if (bool(this->verbose & RDPVerbose::rdpdr)) {
                 LOG(LOG_INFO,
                     "FileSystemVirtualChannel::DeviceRedirectionManager::add_known_device: "
-                        "Add \"%s\"(DeviceId=%u DeviceType=%u) to known device list.",
+                        "Add \"%s\"(DeviceId=%" PRIu32 " DeviceType=%" PRIu32 ") to known device list.",
                     PreferredDosName, DeviceId, underlying_cast(DeviceType));
             }
 
@@ -332,7 +332,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::remove_known_device: "
-                                "Remove \"%s\"(DeviceId=%u) from known device list.",
+                                "Remove \"%s\"(DeviceId=%" PRIu32 ") from known device list.",
                             iter->preferred_dos_name,
                             DeviceId);
                     }
@@ -458,7 +458,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                            "DeviceCount=%u",
+                            "DeviceCount=%" PRIu32,
                         DeviceCount);
                 }
 
@@ -484,9 +484,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                         if (bool(this->verbose & RDPVerbose::rdpdr)) {
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                                    "%u byte(s) of request header are saved.",
-                                uint32_t(
-                                    this->remaining_device_announce_request_header_stream.get_offset()));
+                                    "%zu byte(s) of request header are saved.",
+                                this->remaining_device_announce_request_header_stream.get_offset());
                         }
 
                         break;
@@ -541,8 +540,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     if (bool(this->verbose & RDPVerbose::rdpdr)) {
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::DeviceRedirectionManager::process_client_device_list_announce_request: "
-                                "DeviceType=%s(%u) DeviceId=%u "
-                                "PreferredDosName=\"%s\" DeviceDataLength=%u",
+                                "DeviceType=%s(%" PRIu32 ") DeviceId=%" PRIu32 " "
+                                "PreferredDosName=\"%s\" DeviceDataLength=%" PRIu32,
                             rdpdr::get_DeviceType_name(static_cast<rdpdr::RDPDR_DTYP>(DeviceType)),
                             DeviceType, DeviceId, PreferredDosName,
                             DeviceDataLength);
@@ -997,8 +996,8 @@ public:
                 "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
                     "There is Device I/O request information "
                     "remaining in inventory. "
-                    "DeviceId=%u FileId=%u CompletionId=%u "
-                    "MajorFunction=%u extra_data=%u file_path=\"%s\"",
+                    "DeviceId=%" PRIu32 " FileId=%" PRIu32 " CompletionId=%" PRIu32 " "
+                    "MajorFunction=%" PRIu32 " extra_data=%" PRIu32 " file_path=\"%s\"",
                 request_info.device_id,
                 request_info.file_id,
                 request_info.completion_id,
@@ -1016,7 +1015,7 @@ public:
                 "FileSystemVirtualChannel::~FileSystemVirtualChannel: "
                     "There is Device I/O target information "
                     "remaining in inventory. "
-                    "DeviceId=%u FileId=%u file_path=\"%s\" for_reading=%s "
+                    "DeviceId=%" PRIu32 " FileId=%" PRIu32 " file_path=\"%s\" for_reading=%s "
                     "for_writing=%s",
                 target_info.device_id,
                 target_info.file_id,
@@ -1580,7 +1579,7 @@ public:
                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                     "The corresponding "
                     "Server Drive I/O Request is not found! "
-                    "DeviceId=%u CompletionId=%u",
+                    "DeviceId=%" PRIu32 " CompletionId=%" PRIu32,
                 this->client_device_io_response.DeviceId(),
                 this->client_device_io_response.CompletionId());
 
@@ -1599,7 +1598,7 @@ public:
                             (chunk.in_remain() != request_iter->remaining)) {
                             LOG(LOG_ERR,
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                    "in_remain(%" PRIu64 ") != remaining=(%u)",
+                                    "in_remain(%zu) != remaining=(%" PRIu32 ")",
                                 chunk.in_remain(), request_iter->remaining);
                             assert(false);
                         }
@@ -1710,7 +1709,7 @@ public:
                             LOG(LOG_INFO,
                                 "FileSystemVirtualChannel::process_client_drive_io_response: "
                                     "Add \"%s\" to known file list. "
-                                    "DeviceId=%u FileId=%u",
+                                    "DeviceId=%" PRIu32 " FileId=%" PRIu32,
                                 target_file_name,
                                 this->client_device_io_response.DeviceId(),
                                 device_create_response.FileId());
@@ -1731,7 +1730,7 @@ public:
                     else {
                         LOG(LOG_WARNING,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
-                                "Device not found. DeviceId=%u",
+                                "Device not found. DeviceId=%" PRIu32,
                             this->client_device_io_response.DeviceId());
 
                         //assert(false);
@@ -1928,7 +1927,7 @@ public:
                         LOG(LOG_INFO,
                             "FileSystemVirtualChannel::process_client_drive_io_response: "
                                 "Remove \"%s\" from known file list. "
-                                "DeviceId=%u FileId=%u EndOfFile=%" PRId64,
+                                "DeviceId=%" PRIu32 " FileId=%" PRIu32 " EndOfFile=%" PRId64,
                             file_path.c_str(),
                             this->client_device_io_response.DeviceId(),
                             FileId, target_iter->end_of_file);
@@ -1959,7 +1958,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_client_drive_io_response: "
-                            "Read request. Length=%u",
+                            "Read request. Length=%" PRIu32,
                         Length);
                 }
 
@@ -2167,7 +2166,7 @@ public:
         if (bool(this->verbose & RDPVerbose::rdpdr)) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_client_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
+                    "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
                 total_length, flags, chunk_data_length);
         }
 
@@ -2673,7 +2672,7 @@ public:
                                 (chunk.in_remain() != request_iter->remaining)) {
                                 LOG(LOG_WARNING,
                                     "FileSystemVirtualChannel::process_server_drive_io_request: "
-                                        "in_remain(%" PRIu64 ") != remaining=(%u)",
+                                        "in_remain(%zu) != remaining=(%" PRIu32 ")",
                                     chunk.in_remain(), request_iter->remaining);
                                 assert(false);
                             }
@@ -2853,7 +2852,7 @@ public:
                 if (bool(this->verbose & RDPVerbose::rdpdr)) {
                     LOG(LOG_INFO,
                         "FileSystemVirtualChannel::process_server_drive_io_request: "
-                            "Write Request. Length=%u Offset=%" PRIu64,
+                            "Write Request. Length=%" PRIu32 " Offset=%" PRIu64,
                         length, offset);
                 }
 
@@ -3115,7 +3114,7 @@ public:
         if (bool(this->verbose & RDPVerbose::rdpdr)) {
             LOG(LOG_INFO,
                 "FileSystemVirtualChannel::process_server_message: "
-                    "total_length=%u flags=0x%08X chunk_data_length=%u",
+                    "total_length=%" PRIu32 " flags=0x%08X chunk_data_length=%" PRIu32,
                 total_length, flags, chunk_data_length);
         }
 

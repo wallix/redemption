@@ -556,10 +556,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                             this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
 
                         }
+                        #ifndef __EMSCRIPTEN__
                         else {
-                            #ifndef __EMSCRIPTEN__
-
-//                                            LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
+                            // LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
                             uint32_t const certcount = sc_sec1.x509.certCount;
                             if (certcount < 2){
                                 LOG(LOG_ERR, "Server didn't send enough X509 certificates");
@@ -659,8 +658,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                             reverseit(modulus, len_n);
                             RSA_free(server_public_key);
 
-                            #endif // __EMSCRIPTEN__
                         }
+                        #endif // __EMSCRIPTEN__
 
                         /* Generate a client random, and determine encryption keys */
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);

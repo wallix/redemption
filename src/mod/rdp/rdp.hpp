@@ -80,7 +80,14 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
-#include "mod/rdp/rdp_metrics.hpp"
+
+#ifndef __EMSCRIPTEN__
+# include "mod/rdp/rdp_metrics.hpp"
+# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
+#else
+class RDPMetrics;
+# define IF_ENABLE_METRICS(m) do {} while(0)
+#endif
 
 #include "mod/internal/client_execute.hpp"
 #include "mod/mod_api.hpp"
@@ -109,7 +116,6 @@
 #include <cstdlib>
 #include <deque>
 
-#define IF_EXISTS(p, m) do { if (p) p->m; } while (0)
 
 class mod_rdp : public mod_api, public rdp_api
 {
@@ -685,8 +691,9 @@ private:
 
     ModRdpVariables vars;
 
+#ifndef __EMSCRIPTEN__
     RDPMetrics * metrics;
-
+#endif
 
 public:
     using Verbose = RDPVerbose;
@@ -703,7 +710,7 @@ public:
       , AuthApi & authentifier
       , ReportMessageApi & report_message
       , ModRdpVariables vars
-      , RDPMetrics * metrics
+      , [[maybe_unused]] RDPMetrics * metrics
     )
         : authorization_channels(
             mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -838,7 +845,9 @@ public:
         , client_rail_caps(info.rail_caps)
         , client_window_list_caps(info.window_list_caps)
         , vars(vars)
+        #ifndef __EMSCRIPTEN__
         , metrics(metrics)
+        #endif
     {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "Creation of new mod 'RDP'");
@@ -1546,7 +1555,7 @@ public:
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
-            IF_EXISTS(this->metrics, key_pressed());
+            IF_ENABLE_METRICS(key_pressed());
 
             if (this->remote_programs_session_manager) {
                 this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
@@ -1557,7 +1566,7 @@ public:
     void rdp_input_unicode(uint16_t unicode, uint16_t flag) override {
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             this->send_input(0, RDP_INPUT_UNICODE, flag, unicode, 0);
-            IF_EXISTS(this->metrics, key_pressed());
+            IF_ENABLE_METRICS(key_pressed());
         }
     }
 
@@ -1578,14 +1587,14 @@ public:
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
 
             if (device_flags & MOUSE_FLAG_MOVE) {
-                IF_EXISTS(this->metrics, mouse_move(x, y));
+                IF_ENABLE_METRICS(mouse_move(x, y));
             }
 
             if (device_flags & MOUSE_FLAG_DOWN) {
                 if (device_flags & MOUSE_FLAG_BUTTON2) {
-                    IF_EXISTS(this->metrics, right_click_pressed());
+                    IF_ENABLE_METRICS(right_click_pressed());
                 } else if (device_flags & MOUSE_FLAG_BUTTON1) {
-                    IF_EXISTS(this->metrics, left_click_pressed());
+                    IF_ENABLE_METRICS(left_click_pressed());
                 }
             }
 
@@ -1622,29 +1631,23 @@ public:
 
         switch (front_channel_name) {
             case channel_names::cliprdr:
-                {
-                    InStream metrics_stream = chunk.clone();
-                    IF_EXISTS(this->metrics, set_client_cliprdr_metrics(metrics_stream, length, flags));
-                }
+                IF_ENABLE_METRICS(set_client_cliprdr_metrics(chunk.clone(), length, flags));
                 this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rail:
-                IF_EXISTS(this->metrics, client_rail_channel_data(length));
+                IF_ENABLE_METRICS(client_rail_channel_data(length));
                 this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::rdpdr:
-                {
-                    InStream metrics_stream = chunk.clone();
-                    IF_EXISTS(this->metrics, set_client_rdpdr_metrics(metrics_stream, length, flags));
-                }
+                IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
                 this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
                 break;
             case channel_names::drdynvc:
-                IF_EXISTS(this->metrics, client_other_channel_data(length));
+                IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
                 break;
             default:
-                IF_EXISTS(this->metrics, client_other_channel_data(length));
+                IF_ENABLE_METRICS(client_other_channel_data(length));
                 this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
         }
     }
@@ -1939,7 +1942,7 @@ public:
     void connected_fast_path(gdi::GraphicApi & drawable, array_view_u8 array)
     {
         InStream stream(array);
-        IF_EXISTS(this->metrics, server_main_channel_data(stream.in_remain()));
+        IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
 
         FastPath::ServerUpdatePDU_Recv su(stream, this->decrypt, array.data());
 
@@ -2112,7 +2115,7 @@ public:
 
         X224::DT_TPDU_Recv x224(stream);
 
-        IF_EXISTS(this->metrics, server_main_channel_data(stream.in_remain()));
+        IF_ENABLE_METRICS(server_main_channel_data(stream.in_remain()));
 
         const int mcs_type = MCS::peekPerEncodedMCSType(x224.payload);
 
@@ -2199,29 +2202,23 @@ public:
             }
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
-                {
-                    InStream metrics_stream = sec.payload.clone();
-                    IF_EXISTS(this->metrics, set_server_cliprdr_metrics(metrics_stream, length, flags));
-                }
+                IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rail) {
-                IF_EXISTS(this->metrics, server_rail_channel_data(length));
+                IF_ENABLE_METRICS(server_rail_channel_data(length));
                 this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
-                {
-                    InStream metrics_stream = sec.payload.clone();
-                    IF_EXISTS(this->metrics, set_server_rdpdr_metrics(metrics_stream, length, flags));
-                }
+                IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
                 this->process_rdpdr_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
-                IF_EXISTS(this->metrics, server_other_channel_data(length));
+                IF_ENABLE_METRICS(server_other_channel_data(length));
                 this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else {
-                IF_EXISTS(this->metrics, server_other_channel_data(length));
+                IF_ENABLE_METRICS(server_other_channel_data(length));
                 if (mod_channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
                     InStream clone = sec.payload.clone();
                     rdpsnd::streamLogServer(clone, flags);
@@ -4814,7 +4811,7 @@ public:
                 stream.out_uint16_le(param1);
                 stream.out_uint16_le(param2);
 
-                IF_EXISTS(this->metrics, client_main_channel_data(stream.tailroom()));
+                IF_ENABLE_METRICS(client_main_channel_data(stream.tailroom()));
             }
         );
 
@@ -4857,7 +4854,7 @@ public:
                     LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
                     throw Error(ERR_RDP_FASTPATH);
                 }
-                IF_EXISTS(this->metrics, client_main_channel_data(stream.tailroom()));
+                IF_ENABLE_METRICS(client_main_channel_data(stream.tailroom()));
             },
             [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
                 FastPath::ClientInputEventPDU_Send out_cie(
@@ -4976,8 +4973,8 @@ public:
         this->rdp_input_invalidate(r);
     }
 
-    void set_last_tram_len(size_t tram_length) override {
-        IF_EXISTS(this->metrics, client_main_channel_data(tram_length));
+    void set_last_tram_len([[maybe_unused]] size_t tram_length) override {
+        IF_ENABLE_METRICS(client_main_channel_data(tram_length));
     }
 
 
@@ -5793,4 +5790,4 @@ private:
         char const* program, char const* directory);
 };
 
-#undef IF_EXISTS
+#undef IF_ENABLE_METRICS

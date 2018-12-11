@@ -159,7 +159,7 @@ public:
         this->metrics->add_to_current_data(CLIENT_TOTAL_RAIL_CHANNEL_DATA, len);
     }
 
-    void set_server_rdpdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+    void set_server_rdpdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             this->metrics->add_to_current_data(SERVER_DISK_REDIR_CHANNEL_DATA, length);
 
@@ -214,13 +214,13 @@ public:
         }
     }
 
-    void set_client_rdpdr_metrics(InStream & /*chunk*/, size_t length, uint32_t flags) {
+    void set_client_rdpdr_metrics(InStream const & /*chunk*/, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             this->metrics->add_to_current_data(CLIENT_DISK_REDIR_CHANNEL_DATA, length);
         }
     }
 
-    void set_server_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+    void set_server_cliprdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             this->metrics->add_to_current_data(SERVER_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
@@ -258,7 +258,7 @@ public:
         }
     }
 
-    void set_client_cliprdr_metrics(InStream & chunk, size_t length, uint32_t flags) {
+    void set_client_cliprdr_metrics(InStream chunk, size_t length, uint32_t flags) {
         if (bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
             this->metrics->add_to_current_data(CLIENT_CLIPBOARD_CHANNEL_DATA, length);
             RDPECLIP::CliprdrHeader header;
@@ -354,7 +354,7 @@ public:
 
 private:
     void format_list_process(
-        InStream & chunk, RDPECLIP::CliprdrHeader const& header,
+        InStream& chunk, RDPECLIP::CliprdrHeader const& header,
         FieldIndex nb_copy_text, FieldIndex nb_copy_image, FieldIndex nb_copy_file)
     {
         RDPECLIP::FormatListPDUEx format_list_pdu;

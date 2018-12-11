@@ -27,13 +27,14 @@
 #include "core/report_message_api.hpp"
 #include "utils/sugar/unique_fd.hpp"
 #include "utils/sugar/scope_exit.hpp"
-#include "mod/metrics_hmac.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "keyboard/keymap2.hpp"
-
 #include "acl/module_manager.hpp"
 
+#ifndef __EMSCRIPTEN__
+# include "mod/metrics_hmac.hpp"
+#endif
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -285,6 +286,7 @@ void ModuleManager::create_mod_rdp(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
+#ifndef __EMSCRIPTEN__
         struct ModRDPWithMetrics : public mod_rdp
         {
             std::unique_ptr<Metrics> metrics = nullptr;
@@ -324,6 +326,9 @@ void ModuleManager::create_mod_rdp(
 
             protocol_metrics = std::make_unique<RDPMetrics>(metrics.get());
         }
+#else
+        using ModRDPWithMetrics = mod_rdp;
+#endif
 
         auto new_mod = std::make_unique<ModWithSocket<ModRDPWithMetrics>>(
             *this,
@@ -346,6 +351,7 @@ void ModuleManager::create_mod_rdp(
             enable_metrics ? protocol_metrics.get() : nullptr
         );
 
+#ifndef __EMSCRIPTEN__
         if (enable_metrics) {
             new_mod->metrics = std::move(metrics);
             new_mod->protocol_metrics = std::move(protocol_metrics);
@@ -357,6 +363,7 @@ void ModuleManager::create_mod_rdp(
                 })
             ;
         }
+#endif
 
         if (host_mod_in_widget) {
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");

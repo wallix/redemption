@@ -1803,7 +1803,7 @@ public:
 
     FileDescriptor() = default;
 
-    explicit FileDescriptor(std::string name, const size_t size, const uint32_t attribute)
+    explicit FileDescriptor(std::string name, const uint64_t size, const uint32_t attribute)
       : flags(FD_SHOWPROGRESSUI |FD_FILESIZE | FD_WRITESTIME | FD_ATTRIBUTES)
       , fileAttributes(attribute)
       , lastWriteTime(TIME64_FILE_LIST)

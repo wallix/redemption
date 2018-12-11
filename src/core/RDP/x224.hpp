@@ -735,7 +735,7 @@ namespace X224
             }
                 hexdump_c(stream.get_data(), stream.get_capacity());
             if (end_of_header != stream.get_current()){
-                LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %" PRIdPTR, end_of_header - stream.get_current());
+                LOG(LOG_ERR, "CR TPDU header should be terminated, got trailing data %ld", end_of_header - stream.get_current());
                 hexdump_c(stream.get_data(), stream.get_capacity());
                 throw Error(ERR_X224);
             }
@@ -1082,7 +1082,7 @@ namespace X224
             }
 
             if (end_of_header != stream.get_current()){
-                LOG(LOG_ERR, "CC TPDU header should be terminated, got trailing data %" PRIdPTR , end_of_header - stream.get_current());
+                LOG(LOG_ERR, "CC TPDU header should be terminated, got trailing data %ld", end_of_header - stream.get_current());
                 throw Error(ERR_X224);
             }
             this->_header_size = stream.get_offset();
@@ -1244,7 +1244,7 @@ namespace X224
         {
             uint8_t const * end_of_header = stream.get_data() + X224::TPKT_HEADER_LEN + this->tpdu_hdr.LI + 1;
             if (end_of_header != stream.get_current()){
-                LOG(LOG_ERR, "DR TPDU header should be terminated, got trailing data %" PRIdPTR, end_of_header - stream.get_current());
+                LOG(LOG_ERR, "DR TPDU header should be terminated, got trailing data %ld", end_of_header - stream.get_current());
                 throw Error(ERR_X224);
             }
         }

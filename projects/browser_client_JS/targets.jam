@@ -345,7 +345,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -375,7 +374,6 @@ test-run tests/client_mods/test_rdp_client_test_card :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -413,7 +411,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -453,7 +450,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -1097,7 +1093,6 @@ test-run tests/core/RDP/test_autoreconnect :
 test-run tests/core/RDP/test_bitmapupdate :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_bitmapupdate.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -1105,7 +1100,6 @@ test-run tests/core/RDP/test_bitmapupdate :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -1184,7 +1178,6 @@ test-run tests/core/RDP/test_protocol :
 test-run tests/core/RDP/test_rdp_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rdp_pointer.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -1192,7 +1185,6 @@ test-run tests/core/RDP/test_rdp_pointer :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -1801,7 +1793,6 @@ test-run tests/lib/test_scytale :
 test-run tests/mod/internal/test_bouncer2_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_bouncer2_mod.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -1817,7 +1808,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -1827,7 +1817,6 @@ test-run tests/mod/internal/test_bouncer2_mod :
 test-run tests/mod/internal/test_copy_paste :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_copy_paste.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -1844,7 +1833,6 @@ test-run tests/mod/internal/test_copy_paste :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -1885,7 +1873,6 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -1927,7 +1914,6 @@ test-run tests/mod/internal/test_flat_login_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -1964,7 +1950,6 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2039,7 +2024,6 @@ test-run tests/mod/internal/test_interactive_target_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2146,7 +2130,6 @@ test-run tests/mod/internal/test_test_card_mod :
 test-run tests/mod/internal/test_widget_test_mod :
   $(REDEMPTION_TEST_PATH)/mod/internal/test_widget_test_mod.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -2162,7 +2145,6 @@ test-run tests/mod/internal/test_widget_test_mod :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2172,7 +2154,6 @@ test-run tests/mod/internal/test_widget_test_mod :
 test-run tests/mod/internal/widget/test_composite :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_composite.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2183,7 +2164,6 @@ test-run tests/mod/internal/widget/test_composite :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2191,7 +2171,6 @@ test-run tests/mod/internal/widget/test_composite :
 test-run tests/mod/internal/widget/test_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2206,7 +2185,6 @@ test-run tests/mod/internal/widget/test_edit :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2215,7 +2193,6 @@ test-run tests/mod/internal/widget/test_edit :
 test-run tests/mod/internal/widget/test_edit_valid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_edit_valid.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2233,7 +2210,6 @@ test-run tests/mod/internal/widget/test_edit_valid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2242,7 +2218,6 @@ test-run tests/mod/internal/widget/test_edit_valid :
 test-run tests/mod/internal/widget/test_flat_button :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_button.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2257,7 +2232,6 @@ test-run tests/mod/internal/widget/test_flat_button :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2288,7 +2262,6 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2297,7 +2270,6 @@ test-run tests/mod/internal/widget/test_flat_dialog :
 test-run tests/mod/internal/widget/test_flat_form :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_form.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2314,7 +2286,6 @@ test-run tests/mod/internal/widget/test_flat_form :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2323,7 +2294,6 @@ test-run tests/mod/internal/widget/test_flat_form :
 test-run tests/mod/internal/widget/test_flat_interactive_target :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_interactive_target.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2343,7 +2313,6 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2375,7 +2344,6 @@ test-run tests/mod/internal/widget/test_flat_login :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2404,7 +2372,6 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2413,7 +2380,6 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
 test-run tests/mod/internal/widget/test_flat_wait :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_flat_wait.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2433,7 +2399,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2442,7 +2407,6 @@ test-run tests/mod/internal/widget/test_flat_wait :
 test-run tests/mod/internal/widget/test_grid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_grid.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2457,7 +2421,6 @@ test-run tests/mod/internal/widget/test_grid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2466,7 +2429,6 @@ test-run tests/mod/internal/widget/test_grid :
 test-run tests/mod/internal/widget/test_group_box :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_group_box.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2483,7 +2445,6 @@ test-run tests/mod/internal/widget/test_group_box :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2507,7 +2468,6 @@ test-run tests/mod/internal/widget/test_image :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2516,7 +2476,6 @@ test-run tests/mod/internal/widget/test_image :
 test-run tests/mod/internal/widget/test_label :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_label.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2530,7 +2489,6 @@ test-run tests/mod/internal/widget/test_label :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2539,7 +2497,6 @@ test-run tests/mod/internal/widget/test_label :
 test-run tests/mod/internal/widget/test_labelgrid :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_labelgrid.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2554,7 +2511,6 @@ test-run tests/mod/internal/widget/test_labelgrid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2566,7 +2522,6 @@ test-run tests/mod/internal/widget/test_language_button :
 test-run tests/mod/internal/widget/test_multiline :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_multiline.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2579,7 +2534,6 @@ test-run tests/mod/internal/widget/test_multiline :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2591,7 +2545,6 @@ test-run tests/mod/internal/widget/test_notify_api :
 test-run tests/mod/internal/widget/test_number_edit :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_number_edit.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2607,7 +2560,6 @@ test-run tests/mod/internal/widget/test_number_edit :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2616,7 +2568,6 @@ test-run tests/mod/internal/widget/test_number_edit :
 test-run tests/mod/internal/widget/test_password :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_password.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2632,7 +2583,6 @@ test-run tests/mod/internal/widget/test_password :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2641,7 +2591,6 @@ test-run tests/mod/internal/widget/test_password :
 test-run tests/mod/internal/widget/test_screen :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_screen.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2656,7 +2605,6 @@ test-run tests/mod/internal/widget/test_screen :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2665,7 +2613,6 @@ test-run tests/mod/internal/widget/test_screen :
 test-run tests/mod/internal/widget/test_scroll :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_scroll.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2681,7 +2628,6 @@ test-run tests/mod/internal/widget/test_scroll :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2690,7 +2636,6 @@ test-run tests/mod/internal/widget/test_scroll :
 test-run tests/mod/internal/widget/test_selector :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_selector.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2709,7 +2654,6 @@ test-run tests/mod/internal/widget/test_selector :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2721,7 +2665,6 @@ test-run tests/mod/internal/widget/test_tab :
 test-run tests/mod/internal/widget/test_tooltip :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_tooltip.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2735,7 +2678,6 @@ test-run tests/mod/internal/widget/test_tooltip :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2747,7 +2689,6 @@ test-run tests/mod/internal/widget/test_widget :
 test-run tests/mod/internal/widget/test_widget_rect :
   $(REDEMPTION_TEST_PATH)/mod/internal/widget/test_widget_rect.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2761,7 +2702,6 @@ test-run tests/mod/internal/widget/test_widget_rect :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
@@ -2776,7 +2716,6 @@ test-run tests/mod/rdp/channels/test_base_channel :
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -2785,7 +2724,6 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2819,7 +2757,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_channel.cpp
   app_path_test.bc
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -2829,7 +2766,6 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -2908,7 +2844,6 @@ test-run tests/mod/rdp/test_rdp :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -2963,7 +2898,6 @@ test-run tests/mod/vnc/encoder/test_hextile :
 test-run tests/mod/vnc/encoder/test_zrle :
   $(REDEMPTION_TEST_PATH)/mod/vnc/encoder/test_zrle.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -2971,7 +2905,6 @@ test-run tests/mod/vnc/encoder/test_zrle :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -3654,7 +3587,6 @@ test-run tests/utils/test_utf :
 test-run tests/utils/test_video_cropper :
   $(REDEMPTION_TEST_PATH)/utils/test_video_cropper.cpp
   crypto.bc
-  png.bc
   src/core/RDP/RDPDrawable.bc
   src/core/error.bc
   src/core/font.bc
@@ -3662,7 +3594,6 @@ test-run tests/utils/test_video_cropper :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/rle.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc

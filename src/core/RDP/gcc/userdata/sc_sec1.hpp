@@ -36,8 +36,9 @@
 
 #include <cinttypes>
 
-#include <openssl/x509.h>
-
+#ifndef __EMSCRIPTEN__
+# include <openssl/x509.h>
+#endif
 
 namespace GCC { namespace UserData {
 
@@ -460,27 +461,29 @@ struct SCSecurity {
         = default;
     } proprietaryCertificate;
 
+#ifndef __EMSCRIPTEN__
     struct X509CertificateChain {
-        uint32_t certCount;
-        X509 * certs[32]; // a chain of at most 32 certificates, should be enough
-    } x509;
+        uint32_t certCount {};
+        X509 * certs[32] {}; // a chain of at most 32 certificates, should be enough
 
-    SCSecurity()
-    : x509{}
-    {
-    }
+        ~X509CertificateChain()
+        {
+            for (auto&& cert: this->certs){
+                if (cert){
+                    X509_free(cert);
+                    cert = nullptr;
+                }
+            }
+        }
+    } x509 {};
+#endif
+
+    SCSecurity() = default;
 
     SCSecurity(SCSecurity const &) = delete;
     SCSecurity & operator = (SCSecurity const &) = delete;
 
-    ~SCSecurity(){
-        for (auto&& cert: this->x509.certs){
-            if (cert){
-                X509_free(cert);
-                cert = nullptr;
-            }
-        }
-    }
+    ~SCSecurity() = default;
 
     void emit(OutStream & stream) /* TODO const*/
     {
@@ -678,6 +681,7 @@ struct SCSecurity {
             stream.in_copy_bytes(this->proprietaryCertificate.wSignatureBlob, 64 + SEC_PADDING_SIZE);
         }
         else {
+#ifndef __EMSCRIPTEN__
             this->x509.certCount = stream.in_uint32_le();
             if (this->x509.certCount > 32){
                 LOG(LOG_ERR, "More than 32 certificates (count=%u), this is probably an attack",
@@ -695,6 +699,10 @@ struct SCSecurity {
                 stream.in_skip_bytes(p - stream.get_current());
             }
             stream.in_skip_bytes(16); /* Padding */
+#else
+            LOG(LOG_ERR, "SCSecurity recv X509 certificate not implemented");
+            throw Error(ERR_GCC);
+#endif
         }
     }
 

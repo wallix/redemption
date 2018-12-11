@@ -30,6 +30,7 @@
 #include <vector>
 
 #include <cerrno>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -97,7 +98,7 @@ public:
         this->protocol_name = std::move(protocol_name);
         this->current_data.resize(nb_metric_item, 0);
 
-        LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%ld sec rotation=%ld hours",
+        LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%" PRIu64 " sec rotation=%" PRIu64 " hours",
             this->path.c_str(), this->log_delay.count(), this->file_interval.count());
 
         this->new_file(this->current_file_date);
@@ -207,7 +208,7 @@ private:
         char sentence[4096];
         char * ptr = sentence;
         for (auto x : this->current_data){
-            ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), " %lu", x);
+            ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), " %" PRIu64, x);
         }
         ptr += ::snprintf(ptr, sizeof(sentence) - (ptr - sentence), "\n");
 
