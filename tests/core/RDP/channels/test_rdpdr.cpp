@@ -589,7 +589,7 @@ RED_AUTO_TEST_CASE(ServerDriveLockControlRequest)
 
 RED_AUTO_TEST_CASE(ClientDriveSetInformationResponse)
 {
-    auto data = "\x01\x00\x00\x02"_av;
+    auto data = "\x01\x00\x00\x02\x00"_av;
 
     {
         StaticOutStream<128> stream;
@@ -659,7 +659,8 @@ RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseRequest)
 
 RED_AUTO_TEST_CASE(ServerDriveSetInformationRequest)
 {
-    auto data = "\x01\x00\x00\x02\x03\x00\x00\x04"_av;
+    auto data = "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av;
 
     {
         StaticOutStream<128> stream;
@@ -729,8 +730,8 @@ RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequest)
 RED_AUTO_TEST_CASE(GeneralCapabilitySet)
 {
     auto data =
-        "\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\xff\xff\x00\x00"
-        "\x0\x00\x00\x00\x07\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
+        "\x02\x00\x00\x00\x02\x00\x00\x00\x03\x00\x02\x00\x05\x00\x00\x00"
+        "\x06\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00"
         "\x00\x00\x00\x00"_av
         ;
     {
@@ -742,6 +743,12 @@ RED_AUTO_TEST_CASE(GeneralCapabilitySet)
                                         rdpdr::ENABLE_ASYNCIO,        // extraFlags1
                                         0,                          // SpecialTypeDeviceCap
                                         rdpdr::GENERAL_CAPABILITY_VERSION_02);
+        pdu.osVersion = 2;
+        pdu.protocolMajorVersion = 3;
+        pdu.ioCode1 = 5;
+        pdu.ioCode2 = 6;
+        pdu.extraFlags1_ = 8;
+        pdu.extraFlags2 = 9;
         pdu.emit(stream);
 
         RED_CHECK_MEM(stream.get_bytes(), data);
@@ -753,22 +760,22 @@ RED_AUTO_TEST_CASE(GeneralCapabilitySet)
 
         pdu.receive(in_stream, rdpdr::GENERAL_CAPABILITY_VERSION_02);
 
-        RED_CHECK_EQUAL(pdu.osType, 1);
+        RED_CHECK_EQUAL(pdu.osType, 2);
         RED_CHECK_EQUAL(pdu.osVersion, 2);
         RED_CHECK_EQUAL(pdu.protocolMajorVersion, 3);
-        RED_CHECK_EQUAL(pdu.protocolMinorVersion, 4);
+        RED_CHECK_EQUAL(pdu.protocolMinorVersion, uint16_t(rdpdr::MINOR_VERSION_2));
         RED_CHECK_EQUAL(pdu.ioCode1, 5);
         RED_CHECK_EQUAL(pdu.ioCode2, 6);
         RED_CHECK_EQUAL(pdu.extendedPDU_, 7);
         RED_CHECK_EQUAL(pdu.extraFlags1_, 8);
         RED_CHECK_EQUAL(pdu.extraFlags2, 9);
-        RED_CHECK_EQUAL(pdu.SpecialTypeDeviceCap, 10);
+        RED_CHECK_EQUAL(pdu.SpecialTypeDeviceCap, 0);
     }
 }
 
 RED_AUTO_TEST_CASE(ServerAnnounceRequest)
 {
-    auto data = "\x01\x00\x02\x00\x03\x00"_av;
+    auto data = "\x01\x00\x02\x00\x03\x00\x00\x00"_av;
 
     {
         StaticOutStream<128> stream;
@@ -817,7 +824,7 @@ RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponse)
 
 RED_AUTO_TEST_CASE(DeviceWriteResponse)
 {
-    auto data = "\x01\x00\x00\x00"_av;
+    auto data = "\x01\x00\x00\x00\x00"_av;
 
     {
         StaticOutStream<128> stream;

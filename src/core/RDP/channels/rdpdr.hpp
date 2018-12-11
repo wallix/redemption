@@ -2618,7 +2618,7 @@ public:
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->VersionMajor_);
         stream.out_uint16_le(this->VersionMinor_);
-        stream.out_uint16_le(this->ClientId_);
+        stream.out_uint32_le(this->ClientId_);
     }
 
     void receive(InStream & stream) {
