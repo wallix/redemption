@@ -249,7 +249,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
             rdpsnd::WaveConfirmPDU wc(this->last_wTimeStamp, this->last_cBlockNo);
             wc.emit(out_stream);
 
-            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+            InStream chunk_to_send(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                     , chunk_to_send
@@ -309,7 +309,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
                     }
                 }
 
-                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                InStream chunk_to_send(out_stream.get_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send
@@ -329,7 +329,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
                 rdpsnd::QualityModePDU qm(rdpsnd::HIGH_QUALITY);
                 qm.emit(quality_stream);
 
-                InStream chunk_to_send2(quality_stream.get_data(), quality_stream.get_offset());
+                InStream chunk_to_send2(quality_stream.get_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send2
@@ -360,7 +360,7 @@ void ClientChannelRDPSNDManager::receive(InStream & chunk) {
                 rdpsnd::TrainingConfirmPDU train_conf(train.wTimeStamp, train.wPackSize);
                 train_conf.emit(out_stream);
 
-                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                InStream chunk_to_send(out_stream.get_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::rdpsnd
                                                 , chunk_to_send

@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestCapabilityWindowListEmit)
     StaticOutStream<1024> out_stream;
     windowlist_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     WindowListCaps windowslist_caps2;
 

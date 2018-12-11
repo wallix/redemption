@@ -108,7 +108,7 @@ enum {
         stream.out_uint32_le(0);
         stream.out_uint32_le(0);
         stream.set_out_uint32_le(stream.get_offset(), 0);
-        this->t.send(stream.get_data(), stream.get_offset());
+        this->t.send(stream.get_bytes());
     }
 
     ~xup_mod() override = default;

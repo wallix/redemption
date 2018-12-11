@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestCapabilityOffScreenCacheEmit)
     StaticOutStream<1024> out_stream;
     offscreencache_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     OffScreenCacheCaps offscreencache_caps2;
 

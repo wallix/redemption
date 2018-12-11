@@ -347,7 +347,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsPassword)
 
     TSCredentials ts_cred_received;
 
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(s.get_bytes());
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 1);
@@ -407,7 +407,7 @@ RED_AUTO_TEST_CASE(TestTSCredentialsSmartCard)
 
     TSCredentials ts_cred_received;
 
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(s.get_bytes());
     ts_cred_received.recv(in_s);
 
     RED_CHECK_EQUAL(ts_cred_received.credType, 2);

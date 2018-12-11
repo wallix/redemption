@@ -51,9 +51,9 @@ RED_AUTO_TEST_CASE(TestFileBothDirectoryInformation)
 
     file_both_directory_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
-//     InStream in_test_stream(out_stream.get_data(), out_stream.get_offset());
+//     InStream in_test_stream(out_stream.get_bytes());
 //     fscc::FileBothDirectoryInformation fbdi;
 //     fbdi.receive(in_test_stream);
 //     fbdi.log();
@@ -91,10 +91,10 @@ RED_AUTO_TEST_CASE(TestFileBothDirectoryInformation1)
 
     file_both_directory_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
-    //hexdump(in_stream.get_data(), in_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
+    //hexdump_av(in_stream.get_bytes());
 
-//     InStream in_test_stream(out_stream.get_data(), out_stream.get_offset());
+//     InStream in_test_stream(out_stream.get_bytes());
 //     fscc::FileBothDirectoryInformation fbdi;
 //     fbdi.receive(in_test_stream);
 //     fbdi.log();
@@ -129,7 +129,7 @@ RED_AUTO_TEST_CASE(TestFileFullDirectoryInformation1)
 
     file_full_directory_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -157,7 +157,7 @@ RED_AUTO_TEST_CASE(TestFileFsAttributeInformation)
 
     file_fs_attribute_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -185,7 +185,7 @@ RED_AUTO_TEST_CASE(TestFileFsAttributeInformation1)
 
     file_fs_attribute_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -213,7 +213,7 @@ RED_AUTO_TEST_CASE(TestFileFsVolumeInformation1)
 
     file_fs_volume_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -246,7 +246,7 @@ RED_AUTO_TEST_CASE(TestFileObjectBuffer_Type1)
 
     fileObjectBuffer_Type1.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -278,7 +278,7 @@ RED_AUTO_TEST_CASE(TestFileObjectBuffer_Type2)
 
     fileObjectBuffer_Type2.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -306,7 +306,7 @@ RED_AUTO_TEST_CASE(TestReparseGUIDDataBuffer)
 //
 //     reparseGUIDDataBuffer.emit(out_stream);
 //     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-//     //hexdump(out_stream.get_data(), out_stream.get_offset());
+//     //hexdump_av(out_stream.get_bytes());
 //
 //     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
 //     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -335,7 +335,7 @@ RED_AUTO_TEST_CASE(TestFileAttributeTagInformation)
 
     fileAttributeTagInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -365,7 +365,7 @@ RED_AUTO_TEST_CASE(TestFileBasicInformation)
 
     fileBasicInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -396,7 +396,7 @@ RED_AUTO_TEST_CASE(TestFileDirectoryInformation)
 
     fileDirectoryInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -423,7 +423,7 @@ RED_AUTO_TEST_CASE(TestFileDispositionInformation)
 
     fileDispositionInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -451,7 +451,7 @@ RED_AUTO_TEST_CASE(TestFileNamesInformation)
 
     fileNamesInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -480,7 +480,7 @@ RED_AUTO_TEST_CASE(TestFileStandardInformation)
 
     fileStandardInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -509,7 +509,7 @@ RED_AUTO_TEST_CASE(TestFileFsSizeInformation)
 
     fileFsSizeInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -538,7 +538,7 @@ RED_AUTO_TEST_CASE(TestFileFsVolumeInformation)
 
     fileFsVolumeInformation.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));

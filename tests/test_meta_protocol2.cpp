@@ -160,7 +160,7 @@ void test_old() {
     memcpy(p, hstream.get_data(), hstream.get_offset());
     out_stream = OutStream(p, out_stream.get_current() - p);
     out_stream.out_skip_bytes(out_stream.get_capacity());
-    hexdump_c(out_stream.get_data(), out_stream.get_offset());
+    hexdump_c(out_stream.get_bytes());
 }
 
 #include "utils/sugar/bytes_view.hpp"

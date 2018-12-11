@@ -305,7 +305,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
         format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -323,7 +323,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
         format.emit(out_stream);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -343,7 +343,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerImageCopy_PasteOnClient)
         format_data_response_pdu.emit(out_stream, data, size);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -397,7 +397,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -415,7 +415,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
         format.emit(out_stream);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -434,7 +434,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
         fcrq_size.emit(out_stream);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -452,7 +452,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerFileCopy_PasteOnClient)
         fcrp_size.emit(out_stream);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -507,7 +507,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -525,7 +525,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
         format.emit(out_stream);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -545,7 +545,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIServerTextCopy_PasteOnClient)
         format_data_response_pdu.emit(out_stream, data, size);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -592,7 +592,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
         clientAnnounceReply.emit(out_stream);
 
         metrics.set_client_rdpdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -613,7 +613,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
         drr.emit(out_stream);
 
         metrics.set_server_rdpdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -634,7 +634,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
         dwr.emit(out_stream);
 
         metrics.set_server_rdpdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -655,7 +655,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
         sdsir.emit(out_stream);
 
         metrics.set_server_rdpdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -676,7 +676,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsRDPDRReadChunk)
         sdsir.emit(out_stream);
 
         metrics.set_server_rdpdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -730,7 +730,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -757,7 +757,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -775,7 +775,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
         format.emit(out_stream);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -795,7 +795,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientImageCopy_PasteOnServer)
         format_data_response_pdu.emit(out_stream, data, size);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -849,7 +849,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -876,7 +876,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
             metrics.set_client_cliprdr_metrics(
-                InStream(out_stream.get_data(), out_stream.get_offset()),
+                InStream(out_stream.get_bytes()),
                 out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
             m.log(epoch);
@@ -894,7 +894,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         format.emit(out_stream);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -912,7 +912,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         format.emit(out_stream);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -930,7 +930,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientFileCopy_PasteOnServer)
         fcrp_size.emit(out_stream);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -984,7 +984,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -1011,7 +1011,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
             format_list_pdu.emit(out_stream, use_long_format_names);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -1029,7 +1029,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         format.emit(out_stream);
 
         metrics.set_server_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);
@@ -1049,7 +1049,7 @@ RED_AUTO_TEST_CASE(TestRDPMetricsLogCLIPRDRIClientTextCopy_PasteOnServer)
         format_data_response_pdu.emit(out_stream, data, size);
 
         metrics.set_client_cliprdr_metrics(
-            InStream(out_stream.get_data(), out_stream.get_offset()),
+            InStream(out_stream.get_bytes()),
             out_stream.get_offset(), CHANNELS::CHANNEL_FLAG_FIRST);
 
         m.log(epoch);

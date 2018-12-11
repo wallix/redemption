@@ -2146,7 +2146,7 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_data(), out_chunk.get_offset());
+            OutStream out_stream(out_chunk.get_bytes());
             out_stream.rewind(chunk_offset);
             this->client_device_io_response.emit(out_stream);
 
@@ -3076,7 +3076,7 @@ public:
             StaticOutStream<65536> out_chunk;
             out_chunk.out_copy_bytes(chunk.get_data(), chunk.get_capacity());
 
-            OutStream out_stream(out_chunk.get_data(), out_chunk.get_offset());
+            OutStream out_stream(out_chunk.get_bytes());
             out_stream.rewind(chunk_offset);
             this->server_device_io_request.emit(out_stream);
 

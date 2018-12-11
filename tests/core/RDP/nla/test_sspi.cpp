@@ -60,7 +60,7 @@ RED_AUTO_TEST_CASE(Test_Array)
         RED_CHECK(array.get_data());
         RED_CHECK_EQUAL(array.size(), 65536);
         uint8_t source[] = {0,  1,  2,  3};
-        array.copy(source, 3, 1);
+        array.copy({source, 3}, 1);
         RED_CHECK(array.get_data());
         RED_CHECK_EQUAL(array.size(), 65536);
         RED_CHECK_EQUAL(array.get_data()[0], 42);

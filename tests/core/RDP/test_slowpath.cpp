@@ -111,7 +111,7 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU) {
         }
     }
 
-    out_t.send(out_s.get_data(), out_s.get_offset());
+    out_t.send(out_s.get_bytes());
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU)
 
 
@@ -188,5 +188,5 @@ RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2) {
         }
     }
 
-    out_t.send(out_s.get_data(), out_s.get_offset());
+    out_t.send(out_s.get_bytes());
 } // RED_AUTO_TEST_CASE(TestReceive_SlowPathClientInputPDU2)

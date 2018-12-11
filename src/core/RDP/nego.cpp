@@ -494,7 +494,7 @@ void RdpNego::send_negotiation_request(OutTransport trans)
                        (this->tls || this->nla) ? (X224::RDP_NEG_REQ) : (X224::RDP_NEG_NONE),
                        this->restricted_admin_mode ? X224::RESTRICTED_ADMIN_MODE_REQUIRED : 0,
                        rdp_neg_requestedProtocols);
-    trans.send(stream.get_data(), stream.get_offset());
+    trans.send(stream.get_bytes());
     LOG(LOG_INFO, "RdpNego::send_x224_connection_request_pdu done");
 }
 

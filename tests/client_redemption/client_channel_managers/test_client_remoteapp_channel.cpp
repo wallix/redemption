@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     HandshakePDU handshake;
     handshake.buildNumber(1);
     handshake.emit(out_handshake);
-    InStream chunk_handshake(out_handshake.get_data(), out_handshake.get_offset());
+    InStream chunk_handshake(out_handshake.get_bytes());
     manager.receive(chunk_handshake);
 
     StaticOutStream<32> out_sspu;
@@ -62,7 +62,7 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
     ServerSystemParametersUpdatePDU sspu;
     sspu.SystemParam(SPI_SETSCREENSAVEACTIVE);
     sspu.emit(out_sspu);
-    InStream chunk_sspu(out_sspu.get_data(), out_sspu.get_offset());
+    InStream chunk_sspu(out_sspu.get_bytes());
     manager.receive(chunk_sspu);
 
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 10);
@@ -85,23 +85,19 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 //     FakeClientInputMouseKeyboard input_io;
 //
 //     ClientChannelRemoteAppManager manager(RDPVerbose::rail, &client, &graph_io, &input_io);
-
-
-//
-//
 //
 //     StaticOutStream<512> out_WaveInfoPDU;
 //     rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVE, 12);
 //     header.emit(out_WaveInfoPDU);
 //     rdpsnd::WaveInfoPDU waveInfo(0, 0, 0);
 //     waveInfo.emit(out_WaveInfoPDU);
-//     InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_data(), out_WaveInfoPDU.get_offset());
+//     InStream chunk_WaveInfoPDU(out_WaveInfoPDU.get_bytes());
 //
 //     manager.receive(chunk_WaveInfoPDU);
 //
 //     StaticOutStream<512> out_WavePDU;
 //     out_WavePDU.out_uint32_be(0);
-//     InStream chunk_WavePDU(out_WavePDU.get_data(), out_WavePDU.get_offset());
+//     InStream chunk_WavePDU(out_WavePDU.get_bytes());
 //     manager.receive(chunk_WavePDU);
 //
 //     RED_CHECK_EQUAL(client.get_total_stream_produced(), 1);

@@ -37,7 +37,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClipboardCapabilitiesReceive)
     RDPECLIP::GeneralCapabilitySet caps(RDPECLIP::CB_CAPS_VERSION_1, RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
     caps.emit(stream);
 
-    InStream chunk(stream.get_data(), stream.get_offset());
+    InStream chunk(stream.get_bytes());
 
     ClipboardSideData state("client");
 
@@ -149,7 +149,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     StaticOutStream<1600> out_stream;
     out_stream.out_copy_bytes(utf16text, utf16size+2);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE,
                                    RDPECLIP::CB_RESPONSE_OK,
@@ -189,7 +189,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatDataResponseReceive)
     fd1.emit(out_stream);
     fd2.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     RDPECLIP::CliprdrHeader header (RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (cItems*RDPECLIP::FileDescriptor::size())+4);
     bool param_dont_log_data_into_syslog = false;
@@ -307,7 +307,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelClientFormatListReceive) {
     RDPECLIP::CliprdrHeader in_header(RDPECLIP::CB_FORMAT_LIST, RDPECLIP::CB_RESPONSE__NONE_, fl.size(use_long_format_name));
     fl.emit(stream, use_long_format_name);
 
-    InStream chunk(stream.get_data(), stream.get_offset());
+    InStream chunk(stream.get_bytes());
 
     ClientFormatListReceive received(use_long_format_name, use_long_format_name, in_header, chunk, format_name_inventory, RDPVerbose::none);
 
@@ -451,7 +451,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelLockClipDataReceive)
 
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_LOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
 
-    InStream chunk(stream.get_data(), stream.get_offset());
+    InStream chunk(stream.get_bytes());
 
     LockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
 
@@ -470,7 +470,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
 
     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_UNLOCK_CLIPDATA, RDPECLIP::CB_RESPONSE__NONE_, 4);
 
-    InStream chunk(stream.get_data(), stream.get_offset());
+    InStream chunk(stream.get_bytes());
 
     UnlockClipDataReceive receiver(state.client_data, state.server_data, chunk, RDPVerbose::none, header);
 
@@ -517,7 +517,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
 //
 //     stream.out_copy_bytes(data, 5);
 //
-//     InStream chunk(stream.get_data(), stream.get_offset());
+//     InStream chunk(stream.get_bytes());
 //
 //     const RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 9);
 //

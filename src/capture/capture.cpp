@@ -545,7 +545,7 @@ public:
     void flush() {
         if (this->kbd_stream.get_offset()) {
             this->formatted_message.assign("KBD_INPUT", {
-                {"data", stream_to_avchar(this->kbd_stream)}
+                {"data", this->kbd_stream.get_bytes().as_chars()}
             });
 
             ArcsightLogInfo arc_info;
@@ -1335,7 +1335,7 @@ private:
     void send_kbd() {
         if (this->kbd_stream.get_offset()) {
             this->formatted_message.assign("KBD_INPUT", {
-                {"data", stream_to_avchar(this->kbd_stream)}
+                {"data", this->kbd_stream.get_bytes().as_chars()}
             });
             this->send_data(this->last_time, this->formatted_message.av(), '-');
             this->kbd_stream.rewind();

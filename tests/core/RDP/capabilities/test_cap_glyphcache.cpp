@@ -47,7 +47,7 @@ RED_AUTO_TEST_CASE(TestCapabilityGlyphSupportEmit)
 
     RED_CHECK_EQUAL(out_stream.get_offset(), GlyphCacheCaps::LENGTH_CAPABILITY);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     GlyphCacheCaps glyphcache_caps2;
 

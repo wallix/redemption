@@ -380,7 +380,7 @@ public:
         stream.out_copy_bytes("PDBC", 4);  // Magic(4)
         stream.out_uint8(CURRENT_VERSION);
 
-        t.send(stream.get_data(), stream.get_offset());
+        t.send(stream.get_bytes());
 
         for (uint8_t cache_id = 0; cache_id < bmp_cache.number_of_cache; cache_id++) {
             save_to_disk(bmp_cache, cache_id, t, verbose);
@@ -402,7 +402,7 @@ private:
 
         StaticOutStream<65535> stream;
         stream.out_uint16_le(bitmap_count);
-        t.send(stream.get_data(), stream.get_offset());
+        t.send(stream.get_bytes());
         if (!bitmap_count) {
             return;
         }
@@ -454,7 +454,7 @@ private:
                     stream.out_copy_bytes(bmp.palette().data(), sizeof(bmp.palette()));
                 }
                 stream.out_uint16_le(bmp_size);
-                t.send(stream.get_data(), stream.get_offset());
+                t.send(stream.get_bytes());
 
                 t.send(bmp_data, bmp_size);
             }

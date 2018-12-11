@@ -213,7 +213,7 @@ private:
         SslHMAC_Md5 hmac_md5({signing_key, 16});
         StaticOutStream<4> out_stream;
         out_stream.out_uint32_le(SeqNo);
-        hmac_md5.update(stream_to_avu8(out_stream));
+        hmac_md5.update(out_stream.get_bytes());
         hmac_md5.update(data_buffer);
         hmac_md5.final(digest);
     }

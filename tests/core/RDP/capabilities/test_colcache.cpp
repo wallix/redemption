@@ -30,7 +30,7 @@ RED_AUTO_TEST_CASE(TestColorCacheCaps)
     StaticOutStream<1024> out_stream;
     cap.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     ColorCacheCaps cap2;
     cap2.recv(stream, CAPLEN_COLORCACHE);

@@ -106,8 +106,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_data(), out_s.get_offset());
-    out_t.send(out_payload.get_data(), out_payload.get_offset());
+    out_t.send(out_s.get_bytes());
+    out_t.send(out_payload.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
@@ -189,8 +189,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathClientInputPDU2) {
     FastPath::ClientInputEventPDU_Send out_cie(
         out_s, out_payload.get_data(), out_payload.get_offset(), in_cie.numEvents, decrypt, 0, 0);
 
-    out_t.send(out_s.get_data(), out_s.get_offset());
-    out_t.send(out_payload.get_data(), out_payload.get_offset());
+    out_t.send(out_s.get_bytes());
+    out_t.send(out_payload.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU) {
@@ -341,8 +341,8 @@ RED_AUTO_TEST_CASE(TestReceive_FastPathServerUpdatePDU3) {
                 , decrypt
                 );
 
-            out_t.send(SvrUpdPDU_s.get_data(), SvrUpdPDU_s.get_offset()); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
-            out_t.send(out_s.get_data(), out_s.get_offset());           // Fast-Path Update (TS_FP_UPDATE)
+            out_t.send(SvrUpdPDU_s.get_bytes()); // Server Fast-Path Update PDU (TS_FP_UPDATE_PDU)
+            out_t.send(out_s.get_bytes());           // Fast-Path Update (TS_FP_UPDATE)
         }
     }
 

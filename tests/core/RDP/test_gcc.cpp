@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(Test_gcc_write_conference_create_request)
 
     StaticOutStream<65536> gcc_header;
     GCC::Create_Request_Send(gcc_header, stream.get_offset());
-    t.send(gcc_header.get_data(), gcc_header.get_offset());
+    t.send(gcc_header.get_bytes());
 
     constexpr std::size_t sz = sizeof(gcc_conference_create_request_expected)-1;  // -1 to ignore final 0
     uint8_t buf[sz];
@@ -606,7 +606,7 @@ RED_AUTO_TEST_CASE(Test_gcc_user_data_sc_sec1_lage_rsa_key_blob)
 
     CheckTransport ct(indata, sizeof(indata) - 1);
 
-    ct.send(out_stream.get_data(), out_stream.get_offset());
+    ct.send(out_stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(Test_gcc_user_data_cs_mcs_msgchannel)

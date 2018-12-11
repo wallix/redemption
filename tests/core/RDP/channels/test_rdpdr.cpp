@@ -53,7 +53,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest1)
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateRequest2)
 
     device_create_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -119,7 +119,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse1)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(),
                       in_stream.get_offset() +
@@ -148,7 +148,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse2)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(),
                       in_stream.get_offset() +
@@ -177,7 +177,7 @@ RED_AUTO_TEST_CASE(TestDeviceCreateResponse3)
 
     device_create_response.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -196,7 +196,7 @@ RED_AUTO_TEST_CASE(ClientAnnounceReply) {
     clientAnnounceReply.emit(out_stream);
 
     auto expected_data = cstr_array_view("\x72\x44\x43\x43\x01\x00\x02\x00\x01\x00\x00\x00");
-    RED_CHECK_MEM(expected_data, stream_to_avchar(out_stream));
+    RED_CHECK_MEM(expected_data, out_stream.get_bytes());
 }
 
 
@@ -220,7 +220,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest1)
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -246,7 +246,7 @@ RED_AUTO_TEST_CASE(ClientNameRequest2)
 
     client_name_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(FileRenameInformation1)
 
     file_rename_information.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -300,7 +300,7 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest1)
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -329,7 +329,7 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
 
     server_drive_query_directory_request.emit(out_stream);
     //LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-    //hexdump(out_stream.get_data(), out_stream.get_offset());
+    //hexdump_av(out_stream.get_bytes())
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));

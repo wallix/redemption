@@ -686,7 +686,7 @@
         StaticOutStream<32> out_stream_unlock;
         header.emit(out_stream_unlock);
         unlockClipboardDataPDU.emit(out_stream_unlock);
-        InStream chunk_unlock(out_stream_unlock.get_data(), out_stream_unlock.get_offset());
+        InStream chunk_unlock(out_stream_unlock.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                         , chunk_unlock
@@ -776,7 +776,7 @@
         clipboard_header.emit(out_stream);
         format_list_pdu.emit(out_stream, use_long_format_names);
 
-        InStream chunk(out_stream.get_data(), out_stream.get_offset());
+        InStream chunk(out_stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                     , chunk
@@ -829,7 +829,7 @@
             header.emit(out_stream);
             format_list_pdu.emit(out_stream, use_long_format_names);
 
-            InStream chunk(out_stream.get_data(), out_stream.get_offset());
+            InStream chunk(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel( channel_names::cliprdr
                         , chunk
@@ -891,7 +891,7 @@
         StaticOutStream<256> out_stream;
         RDPECLIP::CliprdrHeader formatListResponsePDUHeader(RDPECLIP::CB_FORMAT_LIST_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 0);
         formatListResponsePDUHeader.emit(out_stream);
-        InStream chunk_format_list(out_stream.get_data(), out_stream.get_offset());
+        InStream chunk_format_list(out_stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                         , chunk_format_list
@@ -907,7 +907,7 @@
         StaticOutStream<32> out_stream_lock;
         lockClipboardDataHeader.emit(out_stream_lock);
         lockClipboardDataPDU.emit(out_stream_lock);
-        InStream chunk_lock(out_stream_lock.get_data(), out_stream_lock.get_offset());
+        InStream chunk_lock(out_stream_lock.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                         , chunk_lock
@@ -923,7 +923,7 @@
         StaticOutStream<256> out_streamRequest;
         formatListRequestPDUHeader.emit(out_streamRequest);
         formatDataRequestPDU.emit(out_streamRequest);
-        InStream chunkRequest(out_streamRequest.get_data(), out_streamRequest.get_offset());
+        InStream chunkRequest(out_streamRequest.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::cliprdr
                                         , chunkRequest
@@ -1108,7 +1108,7 @@
                 fileSizeHeader.emit(out_stream);
                 fileSize.emit(out_stream);
 
-                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                InStream chunk_to_send(out_stream.get_bytes());
                 this->callback->send_to_mod_channel( channel_names::cliprdr
                                                 , chunk_to_send
                                                 , out_stream.get_offset()

@@ -116,7 +116,7 @@ RED_AUTO_TEST_CASE(TestChallenge)
 
     NTLMChallengeMessage ChallengeMsgDuplicate;
 
-    InStream in_tosend(tosend.get_data(), tosend.get_offset());
+    InStream in_tosend(tosend.get_bytes());
     ChallengeMsgDuplicate.recv(in_tosend);
 
     RED_CHECK_EQUAL(ChallengeMsgDuplicate.negoFlags.flags, 0xE28A8235);

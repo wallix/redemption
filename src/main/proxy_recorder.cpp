@@ -170,8 +170,8 @@ public:
                     X224::RDP_NEG_RSP,
                     RdpNego::EXTENDED_CLIENT_DATA_SUPPORTED,
                     select_client_protocol());
-                outFile.write_packet(PacketType::DataIn, stream_to_avu8(front_x224_stream));
-                frontConn.send(stream_to_avu8(front_x224_stream));
+                outFile.write_packet(PacketType::DataIn, front_x224_stream.get_bytes());
+                frontConn.send(front_x224_stream.get_bytes());
 
                 if (is_tls_client || is_nla_client) {
                     frontConn.enable_server_tls("inquisition", nullptr);
@@ -202,8 +202,8 @@ public:
                 X224::CR_TPDU_Send(
                     back_x224_stream, x224.cookie, x224.rdp_neg_type, x224.rdp_neg_flags,
                     !nla_username.empty() ? X224::PROTOCOL_HYBRID : X224::PROTOCOL_TLS);
-                outFile.write_packet(PacketType::DataOut, stream_to_avchar(back_x224_stream));
-                backConn.send(stream_to_avchar(back_x224_stream));
+                outFile.write_packet(PacketType::DataOut, back_x224_stream.get_bytes());
+                backConn.send(back_x224_stream.get_bytes());
 
                 state = nego_server ? NEGOCIATING_FRONT_NLA : NEGOCIATING_BACK_NLA;
             }

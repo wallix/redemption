@@ -111,7 +111,7 @@ public:
             StaticOutStream<12> stream;
             this->write(stream, this->mod_mouse_state | mask);
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), stream.get_offset());
+            t.send(stream.get_bytes());
         }
 
     private:
@@ -129,7 +129,7 @@ public:
         void send(Transport & t) const {
             StaticOutStream<6> stream;
             this->write(stream, this->mod_mouse_state);
-            t.send(stream.get_data(), stream.get_offset());
+            t.send(stream.get_bytes());
         }
     } mouse;
 
@@ -591,7 +591,7 @@ public:
         out_stream.out_copy_bytes(cp_username, 256);
         out_stream.out_copy_bytes(cp_password, 64);
 
-        this->t.send(out_stream.get_data(), out_stream.get_offset());
+        this->t.send(out_stream.get_bytes());
         IF_EXISTS(this->metrics, data_from_client(out_stream.get_offset()));
         // sec result
 
@@ -1016,7 +1016,7 @@ public:
         stream.out_uint8(down_flag); /* down/up flag */
         stream.out_clear_bytes(2);
         stream.out_uint32_be(key);
-        this->t.send(stream.get_data(), stream.get_offset());
+        this->t.send(stream.get_bytes());
         IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
 
     }
@@ -1263,7 +1263,7 @@ protected:
             stream.out_uint32_be(str_len);          // length
             stream.out_copy_bytes(str, str_len);    // text
 
-            this->t.send(stream.get_data(), stream.get_offset());
+            this->t.send(stream.get_bytes());
             IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
             IF_EXISTS(this->metrics, clipboard_data_from_client(this->to_vnc_clipboard_data.get_offset()));
         };
@@ -1350,7 +1350,7 @@ private:
         stream.out_uint16_be(r.y);
         stream.out_uint16_be(r.cx);
         stream.out_uint16_be(r.cy);
-        this->t.send(stream.get_data(), stream.get_offset());
+        this->t.send(stream.get_bytes());
         IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
     } // update_screen
 
@@ -1925,7 +1925,7 @@ private:
                     "\0\0\0"; // padding      : 3 bytes
 
                 stream.out_copy_bytes(pixel_format, 16);
-                this->t.send(stream.get_data(), stream.get_offset());
+                this->t.send(stream.get_bytes());
                 IF_EXISTS(this->metrics, data_from_client(stream.get_offset()));
 
                 this->bpp = BitsPerPixel{16};

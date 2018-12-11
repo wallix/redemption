@@ -43,7 +43,7 @@ RED_AUTO_TEST_CASE(TestCapabilityPointerEmit)
     StaticOutStream<1024> out_stream;
     pointer_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     PointerCaps pointer_caps2;
 

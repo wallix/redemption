@@ -78,10 +78,10 @@ public:
         this->avbuf = this->buf_maker.dyn_array(v);
     }
 
-    void copy(const uint8_t * source, size_t size, uint32_t offset = 0) {
-        assert(this->size() >= size + offset);
-        if (size) {
-            memcpy(this->avbuf.data() + offset, source, size);
+    void copy(const_bytes_view source, uint32_t offset = 0) {
+        assert(this->size() >= source.size() + offset);
+        if (source.size()) {
+            memcpy(this->avbuf.data() + offset, source.data(), source.size());
         }
     }
 };

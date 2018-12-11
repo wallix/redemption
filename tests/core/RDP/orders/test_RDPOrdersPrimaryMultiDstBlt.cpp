@@ -51,7 +51,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
             deltaRectangles.out_sint16_le(10);
         }
 
-        InStream in_deltaRectangles(deltaRectangles.get_data(), deltaRectangles.get_offset());
+        InStream in_deltaRectangles(deltaRectangles.get_bytes());
 
         RDPMultiDstBlt multidstblt(316, 378, 200, 200, 0x55, 20, in_deltaRectangles);
 
@@ -77,9 +77,9 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
  /* 0040 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,  // ................
  /* 0050 */ 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,                          // ............
         };
-        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+        InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -97,7 +97,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, state_common, state_multidstblt);
         RED_CHECK_MEM(
-            stream_to_avu8(out_stream).array_from_offset(1),
-            stream_to_avu8(out_stream2).array_from_offset(1));
+            out_stream.get_bytes().array_from_offset(1),
+            out_stream2.get_bytes().array_from_offset(1));
     }
 }

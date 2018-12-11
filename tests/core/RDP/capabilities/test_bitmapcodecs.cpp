@@ -32,7 +32,7 @@ RED_AUTO_TEST_CASE(TestBitmapCodecCaps_emit)
     BitmapCodecCaps cap(true);
     cap.emit(out_stream);
 
-    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
     uint16_t capstype = in_stream.in_uint16_le();
     uint16_t capslen = in_stream.in_uint16_le();
     RED_CHECK_EQUAL(CAPSETTYPE_BITMAP_CODECS, capstype);

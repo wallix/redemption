@@ -162,7 +162,7 @@ private:
 
         data_stream.set_out_uint16_le(compressed_data_length, compressed_data_length_offset);
 
-        this->target_transport.send(data_stream.get_data(), data_stream.get_offset());
+        this->target_transport.send(data_stream.get_bytes());
     }
 
     void do_send(const uint8_t * const buffer, size_t len) override {

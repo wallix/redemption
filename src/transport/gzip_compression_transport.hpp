@@ -355,7 +355,7 @@ private:
         //       , this->compressed_data_length);
         //}
 
-        this->target_transport.send(buffer_stream.get_data(), buffer_stream.get_offset());
+        this->target_transport.send(buffer_stream.get_bytes());
 
         this->target_transport.send(this->compressed_data, this->compressed_data_length);
 

@@ -116,8 +116,8 @@ RED_AUTO_TEST_CASE(TestColCache)
             04, 07, 03, 00, 05, 07, 03, 00, 06, 07, 03, 00, 07, 07, 03, 00,
         };
 
-        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
-        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
+        InStream in_stream(out_stream.get_bytes());
 
         uint8_t control = in_stream.in_uint8();
         RED_CHECK_EQUAL(true, !!(control & (STANDARD|SECONDARY)));
@@ -127,6 +127,6 @@ RED_AUTO_TEST_CASE(TestColCache)
 
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2);
-        RED_CHECK_MEM(stream_to_avu8(out_stream), stream_to_avu8(out_stream2));
+        RED_CHECK_MEM(out_stream.get_bytes(), out_stream2.get_bytes());
     }
 }

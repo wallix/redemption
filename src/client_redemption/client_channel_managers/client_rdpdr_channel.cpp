@@ -335,7 +335,7 @@ void ClientChannelRDPDRManager::FremoveDriveDevice(const DeviceData * devices, c
     }
 
     int total_length(out_stream.get_offset());
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -366,7 +366,7 @@ void ClientChannelRDPDRManager::process_server_annnounce_request(InStream & chun
         clientAnnounceReply.emit(stream);
 
         int total_length(stream.get_offset());
-        InStream chunk_to_send(stream.get_data(), stream.get_offset());
+        InStream chunk_to_send(stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -391,7 +391,7 @@ void ClientChannelRDPDRManager::process_server_annnounce_request(InStream & chun
         clientNameRequest.emit(stream);
 
         int total_length(stream.get_offset());
-        InStream chunk_to_send(stream.get_data(), stream.get_offset());
+        InStream chunk_to_send(stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::rdpdr
                                             , chunk_to_send
@@ -542,7 +542,7 @@ void ClientChannelRDPDRManager::process_core_clientID_confirm() {
         }
 
         int total_length(out_stream.get_offset());
-        InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+        InStream chunk_to_send(out_stream.get_bytes());
 
         this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -577,7 +577,7 @@ deviceIOResponse.emit(out_stream);
     rdpdr::ClientDriveLockControlResponse cdlcr;
     cdlcr.emit(out_stream);
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -633,7 +633,7 @@ void ClientChannelRDPDRManager::process_iorequest_create(InStream & chunk, rdpdr
     deviceIOResponse.emit(out_stream);
     deviceCreateResponse.emit(out_stream);
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -676,7 +676,7 @@ void ClientChannelRDPDRManager::process_iorequest_query_information(InStream & c
 
             fileBasicInformation.emit(out_stream);
 
-            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+            InStream chunk_to_send(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel(
                 channel_names::rdpdr,
@@ -708,7 +708,7 @@ void ClientChannelRDPDRManager::process_iorequest_query_information(InStream & c
                                                 , fileStat.Directory);
             fsi.emit(out_stream);
 
-            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+            InStream chunk_to_send(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel( channel_names::rdpdr
                                                 , chunk_to_send
@@ -745,7 +745,7 @@ void ClientChannelRDPDRManager::process_iorequest_query_information(InStream & c
                                                     , 0);
                 fati.emit(out_stream);
 
-                InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                InStream chunk_to_send(out_stream.get_bytes());
 
                 this->callback->send_to_mod_channel( channel_names::rdpdr
                                                     , chunk_to_send
@@ -771,7 +771,7 @@ void ClientChannelRDPDRManager::process_iorequest_close(rdpdr::DeviceIOResponse 
 
     out_stream.out_uint32_le(0);
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -967,7 +967,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
                         break;
             }
 
-            InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+            InStream chunk_to_send(out_stream.get_bytes());
 
             this->callback->send_to_mod_channel( channel_names::rdpdr
                                                     , chunk_to_send
@@ -995,7 +995,7 @@ void ClientChannelRDPDRManager::process_iorequest_directory_control(InStream & c
     //                                                 fscc::FileNotifyInformation fni();
     //                                                 fni.emit(out_stream);
     //
-    //                                                 InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    //                                                 InStream chunk_to_send(out_stream.get_bytes());
     //
     //                                                 this->callback->send_to_mod_channel( channel_names::rdpdr
     //                                                                                     , chunk_to_send
@@ -1109,7 +1109,7 @@ void ClientChannelRDPDRManager::process_iorequest_query_volume_information(InStr
         }
     }
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -1146,7 +1146,7 @@ void ClientChannelRDPDRManager::provess_iorequest_write(InStream & chunk, rdpdr:
     rdpdr::DeviceWriteResponse dwrp(dwr.Length);
     dwrp.emit(out_stream);
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send
@@ -1234,7 +1234,7 @@ void ClientChannelRDPDRManager::process_iorequest_set_information(InStream & chu
             break;
     }
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                     , chunk_to_send
@@ -1290,7 +1290,7 @@ void ClientChannelRDPDRManager::process_iorequest_device_control(InStream & chun
             break;
     }
 
-    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+    InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
                                         , chunk_to_send

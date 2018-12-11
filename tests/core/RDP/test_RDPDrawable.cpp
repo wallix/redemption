@@ -230,7 +230,7 @@ RED_AUTO_TEST_CASE(TestMultiDstBlt)
         deltaRectangles.out_sint16_le(10);
     }
 
-    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
+    InStream deltaRectangles_in(deltaRectangles.get_bytes());
 
     gd.draw(RDPMultiDstBlt(100, 100, 200, 200, 0x55, 20, deltaRectangles_in), screen_rect);
 
@@ -265,7 +265,7 @@ RED_AUTO_TEST_CASE(TestMultiOpaqueRect)
         deltaRectangles.out_sint16_le(10);
     }
 
-    InStream deltaRectangles_in(deltaRectangles.get_data(), deltaRectangles.get_offset());
+    InStream deltaRectangles_in(deltaRectangles.get_bytes());
 
     gd.draw(RDPMultiOpaqueRect(100, 100, 200, 200, encode_color24()(BLACK), 20, deltaRectangles_in), screen_rect, color_cxt);
 

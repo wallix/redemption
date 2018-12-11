@@ -342,7 +342,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane) {
         0x52
     };
 
-    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
+    RED_CHECK_MEM_AA(outbuffer.get_bytes(), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
@@ -363,7 +363,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane1) {
         0x60, 0x01, 0x67, 0x8B, 0xA3, 0x78, 0xAF
     };
 
-    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
+    RED_CHECK_MEM_AA(outbuffer.get_bytes(), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
@@ -462,7 +462,7 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompressColorPlane2) {
 /* 0140 */ 0x12, 0x2f, 0x82, 0x00, 0x07,                                   // ./...
     };
 
-    RED_CHECK_MEM_AA(stream_to_avchar(outbuffer), result);
+    RED_CHECK_MEM_AA(outbuffer.get_bytes(), result);
 }
 
 RED_AUTO_TEST_CASE(TestRDP60BitmapDecompressColorPlane) {

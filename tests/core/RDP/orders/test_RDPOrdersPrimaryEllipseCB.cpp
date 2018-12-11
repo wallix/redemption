@@ -72,9 +72,9 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
             0x02, 0x03,
             0x04, 0x05,
             0x06, 0x07 };
-        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+        InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -90,8 +90,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            stream_to_avu8(out_stream).array_from_offset(2),
-            stream_to_avu8(out_stream2).array_from_offset(1));
+            out_stream.get_bytes().array_from_offset(2),
+            out_stream2.get_bytes().array_from_offset(1));
     }
 
     {
@@ -113,9 +113,9 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
               0xdf, 0x0f, 0x2c, 0x01, 0x90, 0x01, 0x5e, 0x01,
               0xcc, 0x01, 0xff, 0x30, 0x20, 0x10,
               0x33, 0x22, 0x11, 0x03, 0x04, 0x01, 0xdd };
-        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+        InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -131,8 +131,8 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            stream_to_avu8(out_stream).array_from_offset(2),
-            stream_to_avu8(out_stream2).array_from_offset(1));
+            out_stream.get_bytes().array_from_offset(2),
+            out_stream2.get_bytes().array_from_offset(1));
     }
 
     {
@@ -154,9 +154,9 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
               0xdf, 0x13, 0x2c, 0x01, 0x90, 0x01, 0x5e, 0x01,
               0xcc, 0x01, 0xff, 0x30, 0x20, 0x10, 0x33, 0x22, 0x11, 0x03, 0x04,
               0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07 };
-        RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+        RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-        InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+        InStream in_stream(out_stream.get_bytes());
 
         RDPOrderCommon common_cmd = state_common;
         uint8_t control = in_stream.in_uint8();
@@ -172,7 +172,7 @@ RED_AUTO_TEST_CASE(TestEllipseCB)
         decltype(out_stream) out_stream2;
         cmd.emit(out_stream2, newcommon, common_cmd, state_ellipse);
         RED_CHECK_MEM(
-            stream_to_avu8(out_stream).array_from_offset(2),
-            stream_to_avu8(out_stream2).array_from_offset(1));
+            out_stream.get_bytes().array_from_offset(2),
+            out_stream2.get_bytes().array_from_offset(1));
     }
 }

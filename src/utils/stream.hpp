@@ -85,6 +85,9 @@ public:
         return InStream(*this);
     }
 
+    const_bytes_view get_bytes() const noexcept {
+        return {this->get_data(), this->get_offset()};
+    }
 
     uint8_t const * get_data() const {
         return this->begin;
@@ -416,6 +419,10 @@ public:
 
     bool has_room(size_t n) const {
         return  n <= this->tailroom();
+    }
+
+    bytes_view get_bytes() const noexcept {
+        return {this->get_data(), this->get_offset()};
     }
 
     uint8_t * get_data() const {
@@ -837,16 +844,6 @@ public:
         ER_CLASS_PRIV           = 0xC0  // 1 1
     };
 };
-
-inline array_view_const_u8 stream_to_avu8(OutStream & stream) noexcept
-{
-    return make_array_view(stream.get_data(), stream.get_offset());
-}
-
-inline array_view_const_char stream_to_avchar(OutStream & stream) noexcept
-{
-    return make_array_view(char_ptr_cast(stream.get_data()), stream.get_offset());
-}
 
 
 template<std::size_t N, class StreamBase>

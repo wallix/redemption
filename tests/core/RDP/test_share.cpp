@@ -59,10 +59,10 @@ RED_AUTO_TEST_CASE(TestSendShareControlAndData)
 
     // concatenate Data and control before checking read
     StaticOutStream<65536> stream2;
-    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.get_offset());
-    stream2.out_copy_bytes(stream.get_data(), stream.get_offset());
+    stream2.out_copy_bytes(sctrl_header.get_bytes());
+    stream2.out_copy_bytes(stream.get_bytes());
 
-    InStream in_stream2(stream2.get_data(), stream2.get_offset());
+    InStream in_stream2(stream2.get_bytes());
 
     ShareControl_Recv sctrl2(in_stream2);
     RED_CHECK_EQUAL(unsigned(PDUTYPE_DATAPDU), unsigned(sctrl2.pduType));
@@ -99,10 +99,10 @@ RED_AUTO_TEST_CASE(TestX224SendShareControlAndData)
 
     // concatenate Data and control before checking read
     StaticOutStream<65536> stream2;
-    stream2.out_copy_bytes(sctrl_header.get_data(), sctrl_header.get_offset());
-    stream2.out_copy_bytes(stream.get_data(), stream.get_offset());
+    stream2.out_copy_bytes(sctrl_header.get_bytes());
+    stream2.out_copy_bytes(stream.get_bytes());
 
-    InStream in_stream2(stream2.get_data(), stream2.get_offset());
+    InStream in_stream2(stream2.get_bytes());
 
     ShareControl_Recv sctrl2(in_stream2);
     RED_CHECK_EQUAL(unsigned(PDUTYPE_DATAPDU), unsigned(sctrl2.pduType));

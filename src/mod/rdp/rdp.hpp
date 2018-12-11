@@ -1980,7 +1980,7 @@ public:
                 }
             }
 
-            InStream fud(this->multifragment_update_data.get_data(), this->multifragment_update_data.get_offset());
+            InStream fud(this->multifragment_update_data.get_bytes());
 
             InStream& stream = ((upd.fragmentation == FastPath::FASTPATH_FRAGMENT_SINGLE) ? upd.payload : fud);
 
@@ -2717,7 +2717,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        this->trans.send(stream.get_data(), stream.get_offset());
+                        this->trans.send(stream.get_bytes());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){

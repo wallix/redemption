@@ -130,7 +130,7 @@ protected:
 
         auto const key = this->trans.get_public_key();
         this->PublicKey.init(key.size());
-        this->PublicKey.copy(key.data(), key.size());
+        this->PublicKey.copy(key);
     }
 
     void credssp_send()
@@ -140,7 +140,7 @@ protected:
         }
         StaticOutStream<65536> ts_request_emit;
         this->ts_request.emit(ts_request_emit);
-        this->trans.send(ts_request_emit.get_data(), ts_request_emit.get_offset());
+        this->trans.send(ts_request_emit.get_bytes());
     }
 
 protected:
@@ -164,7 +164,7 @@ private:
     void SetHostnameFromUtf8(const uint8_t * pszTargetName) {
         size_t length = (pszTargetName && *pszTargetName) ? strlen(char_ptr_cast(pszTargetName)) : 0;
         this->ServicePrincipalName.init(length + 1);
-        this->ServicePrincipalName.copy(pszTargetName, length);
+        this->ServicePrincipalName.copy({pszTargetName, length});
         this->ServicePrincipalName.get_data()[length] = 0;
     }
 

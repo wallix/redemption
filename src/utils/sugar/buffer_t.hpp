@@ -38,6 +38,11 @@ struct buffer_t : bytes_view
     buffer_t(T (& a)[n]) noexcept
     : bytes_view(a, n)
     {}
+
+    template<class T>
+    buffer_t(T&& a) noexcept(noexcept(bytes_view(static_cast<T&&>(a))))
+    : bytes_view(static_cast<T&&>(a))
+    {}
 };
 
 /**

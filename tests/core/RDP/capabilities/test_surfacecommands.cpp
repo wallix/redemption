@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestCapabilitySurfaceCommandsEmit)
     StaticOutStream<1024> out_stream;
     surfacecommands_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     SurfaceCommandsCaps surfacecommands_caps2;
 

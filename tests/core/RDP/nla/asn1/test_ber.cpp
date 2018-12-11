@@ -33,7 +33,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
     RED_CHECK_EQUAL(res, 6);
 
 
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(s.get_bytes());
     res = BER::read_integer(in_s, value);
     RED_CHECK_EQUAL(res, true);
 
@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
     res = BER::write_integer(s, 1);
     RED_CHECK_EQUAL(res, 3);
 
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
     RED_CHECK_EQUAL(res, true);
 
@@ -55,7 +55,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
     res = BER::write_integer(s, 52165);
     RED_CHECK_EQUAL(res, 5);
 
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
     RED_CHECK_EQUAL(res, true);
 
@@ -66,7 +66,7 @@ RED_AUTO_TEST_CASE(TestBERInteger)
     res = BER::write_integer(s, 0x0FFF);
     RED_CHECK_EQUAL(res, 4);
 
-    in_s = InStream(s.get_data(), s.get_offset());
+    in_s = InStream(s.get_bytes());
     res = BER::read_integer(in_s, value);
     RED_CHECK_EQUAL(res, true);
 
@@ -110,7 +110,7 @@ RED_AUTO_TEST_CASE(TestBEROctetString)
         { 1, 2, 3, 4, 5, 6 , 7 };
 
     BER::write_octet_string(s, oct_str, 7);
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(s.get_bytes());
     res = BER::read_octet_string_tag(in_s, value);
     RED_CHECK_EQUAL(res, true);
     RED_CHECK_EQUAL(value, 7);
@@ -127,7 +127,7 @@ RED_AUTO_TEST_CASE(TestBERContextual)
     uint8_t tag = 0x06;
 
     BER::write_contextual_tag(s, tag, 3, true);
-    InStream in_s(s.get_data(), s.get_offset());
+    InStream in_s(s.get_bytes());
     res = BER::read_contextual_tag(in_s, tag, value, true);
     RED_CHECK_EQUAL(res, true);
     RED_CHECK_EQUAL(value, 3);

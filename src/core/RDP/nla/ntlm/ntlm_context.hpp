@@ -989,10 +989,10 @@ public:
         StaticOutStream<65535> out_stream;
         this->NEGOTIATE_MESSAGE.emit(out_stream);
         output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.copy(out_stream.get_bytes());
 
         this->SavedNegotiateMessage.init(out_stream.get_offset());
-        this->SavedNegotiateMessage.copy(out_stream.get_data(), out_stream.get_offset());
+        this->SavedNegotiateMessage.copy(out_stream.get_bytes());
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
     }
@@ -1008,7 +1008,7 @@ public:
         }
 
         this->SavedNegotiateMessage.init(in_stream.get_offset());
-        this->SavedNegotiateMessage.copy(in_stream.get_data(), in_stream.get_offset());
+        this->SavedNegotiateMessage.copy(in_stream.get_bytes());
 
         this->state = NTLM_STATE_CHALLENGE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1022,10 +1022,10 @@ public:
         StaticOutStream<65535> out_stream;
         this->CHALLENGE_MESSAGE.emit(out_stream);
         output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.copy(out_stream.get_bytes());
 
         this->SavedChallengeMessage.init(out_stream.get_offset());
-        this->SavedChallengeMessage.copy(out_stream.get_data(), out_stream.get_offset());
+        this->SavedChallengeMessage.copy(out_stream.get_bytes());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1038,7 +1038,7 @@ public:
         InStream in_stream(input_buffer);
         this->CHALLENGE_MESSAGE.recv(in_stream);
         this->SavedChallengeMessage.init(in_stream.get_offset());
-        this->SavedChallengeMessage.copy(in_stream.get_data(), in_stream.get_offset());
+        this->SavedChallengeMessage.copy(in_stream.get_bytes());
 
         this->state = NTLM_STATE_AUTHENTICATE;
         return SEC_I_CONTINUE_NEEDED;
@@ -1060,7 +1060,7 @@ public:
             this->AUTHENTICATE_MESSAGE.ignore_mic = false;
 
             this->SavedAuthenticateMessage.init(out_stream.get_offset());
-            this->SavedAuthenticateMessage.copy(out_stream.get_data(), out_stream.get_offset());
+            this->SavedAuthenticateMessage.copy(out_stream.get_bytes());
             this->ntlm_compute_MIC();
             memcpy(this->AUTHENTICATE_MESSAGE.MIC, this->MessageIntegrityCheck, 16);
             // this->AUTHENTICATE_MESSAGE.has_mic = true;
@@ -1069,7 +1069,7 @@ public:
         this->AUTHENTICATE_MESSAGE.ignore_mic = false;
         this->AUTHENTICATE_MESSAGE.emit(out_stream);
         output_buffer.init(out_stream.get_offset());
-        output_buffer.copy(out_stream.get_data(), out_stream.get_offset());
+        output_buffer.copy(out_stream.get_bytes());
         if (this->verbose) {
             this->AUTHENTICATE_MESSAGE.log();
         }
@@ -1089,20 +1089,18 @@ public:
             uint8_t const null_data[null_data_sz]{0u};
             auto const p = in_stream.get_data();
             std::size_t offset = 0u;
-            this->SavedAuthenticateMessage.copy(p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset, offset);
+            this->SavedAuthenticateMessage.copy({p + offset, this->AUTHENTICATE_MESSAGE.PayloadOffset}, offset);
             offset += this->AUTHENTICATE_MESSAGE.PayloadOffset;
-            this->SavedAuthenticateMessage.copy(null_data, null_data_sz, offset);
+            this->SavedAuthenticateMessage.copy({null_data, null_data_sz}, offset);
             offset += null_data_sz;
-            this->SavedAuthenticateMessage.copy(p + offset, in_stream.get_offset() - offset, offset);
+            this->SavedAuthenticateMessage.copy({p + offset, in_stream.get_offset() - offset}, offset);
         }
         this->identity.User.init(this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
-        this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.get_data(),
-                                 this->AUTHENTICATE_MESSAGE.UserName.buffer.size());
+        this->identity.User.copy(this->AUTHENTICATE_MESSAGE.UserName.buffer.av());
         // LOG(LOG_INFO, "USER from authenticate size = %u", this->identity.User.size());
         // hexdump_c(this->identity.User.get_data(), this->identity.User.size());
         this->identity.Domain.init(this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
-        this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.get_data(),
-                                   this->AUTHENTICATE_MESSAGE.DomainName.buffer.size());
+        this->identity.Domain.copy(this->AUTHENTICATE_MESSAGE.DomainName.buffer.av());
         // LOG(LOG_INFO, "DOMAIN from authenticate size = %u", this->identity.Domain.size());
         // hexdump_c(this->identity.Domain.get_data(), this->identity.Domain.size());
 

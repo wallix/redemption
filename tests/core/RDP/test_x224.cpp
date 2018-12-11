@@ -292,7 +292,8 @@ RED_AUTO_TEST_CASE(TestSend_CR_TPDU_TLS_Negotiation_packet_forge)
 {
     StaticOutStream<256> stream;
     X224::CR_TPDU_Send(stream, "", X224::RDP_NEG_REQ, 0, X224::PROTOCOL_TLS);
-    hexdump_d(stream.get_data(), stream.get_offset());
+    RED_CHECK_MEM(stream.get_bytes(),
+        "\x03\x00\x00\x13\x0e\xe0\x00\x00\x00\x00\x00\x01\x00\x08\x00\x01\x00\x00\x00"_av);
 }
 
 
@@ -519,6 +520,6 @@ RED_AUTO_TEST_CASE(TestSend_DT_TPDU)
     RED_CHECK_EQUAL(0, memcmp("\x12\x34\x56\x78\x9A", payload.get_data(), 5));
 
     CheckTransport t("\x03\x00\x00\x0C\x02\xF0\x80\x12\x34\x56\x78\x9A", 12);
-    t.send(stream.get_data(), stream.get_offset());
+    t.send(stream.get_bytes());
     t.send(payload.get_data(), payload_len);
 }

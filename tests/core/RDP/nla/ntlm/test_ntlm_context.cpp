@@ -264,7 +264,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario)
 
     // send CHALLENGE MESSAGE
     server_context.CHALLENGE_MESSAGE.emit(out_server_to_client);
-    InStream in_server_to_client(out_server_to_client.get_data(), out_server_to_client.get_offset());
+    InStream in_server_to_client(out_server_to_client.get_bytes());
     client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
 
     // CLIENT RECV CHALLENGE AND BUILD AUTHENTICATE
@@ -381,7 +381,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     memcpy(client_context.SavedNegotiateMessage.get_data(),
            out_client_to_server.get_data(), out_client_to_server.get_offset());
 
-    InStream in_client_to_server(out_client_to_server.get_data(), out_client_to_server.get_offset());
+    InStream in_client_to_server(out_client_to_server.get_bytes());
     server_context.NEGOTIATE_MESSAGE.recv(in_client_to_server);
     server_context.SavedNegotiateMessage.init(in_client_to_server.get_offset());
     memcpy(server_context.SavedNegotiateMessage.get_data(),
@@ -395,7 +395,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     memcpy(server_context.SavedChallengeMessage.get_data(),
            out_server_to_client.get_data(), out_server_to_client.get_offset());
 
-    InStream in_server_to_client(out_server_to_client.get_data(), out_server_to_client.get_offset());
+    InStream in_server_to_client(out_server_to_client.get_bytes());
     client_context.CHALLENGE_MESSAGE.recv(in_server_to_client);
     client_context.SavedChallengeMessage.init(in_server_to_client.get_offset());
     memcpy(client_context.SavedChallengeMessage.get_data(),
@@ -422,7 +422,7 @@ RED_AUTO_TEST_CASE(TestNtlmScenario2)
     }
     out_client_to_server.rewind();
     client_context.AUTHENTICATE_MESSAGE.emit(out_client_to_server);
-    in_client_to_server = InStream(out_client_to_server.get_data(), out_client_to_server.get_offset());
+    in_client_to_server = InStream(out_client_to_server.get_bytes());
     server_context.AUTHENTICATE_MESSAGE.recv(in_client_to_server);
     if (server_context.AUTHENTICATE_MESSAGE.has_mic) {
         memset(client_to_server_buf +

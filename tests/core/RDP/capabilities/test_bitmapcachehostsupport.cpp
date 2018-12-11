@@ -42,7 +42,7 @@ RED_AUTO_TEST_CASE(TestCapabilityBitmapCacheHostSupportsEmit)
 
     StaticOutStream<1024> out_stream;
     bitmapcachehostsupport_caps.emit(out_stream);
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     BitmapCacheHostSupportCaps bitmapcachehostsupport_caps2;
 

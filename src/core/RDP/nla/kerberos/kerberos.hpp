@@ -128,7 +128,7 @@ public:
         if (pszPrincipal && pvLogonID) {
             size_t length = strlen(pszPrincipal);
             pvLogonID->init(length + 1);
-            pvLogonID->copy(byte_ptr_cast(pszPrincipal), length);
+            pvLogonID->copy({pszPrincipal, length});
             pvLogonID->get_data()[length] = 0;
         }
         this->credentials = Krb5CredsPtr(new Krb5Creds);
@@ -248,7 +248,7 @@ public:
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         output_buffer.init(output_tok.length);
-        output_buffer.copy(static_cast<uint8_t const*>(output_tok.value), output_tok.length);
+        output_buffer.copy({static_cast<uint8_t const*>(output_tok.value), output_tok.length});
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -333,7 +333,7 @@ public:
 
         // LOG(LOG_INFO, "output tok length : %d", output_tok.length);
         output_buffer.init(output_tok.length);
-        output_buffer.copy(static_cast<const uint8_t*>(output_tok.value), output_tok.length);
+        output_buffer.copy({static_cast<const uint8_t*>(output_tok.value), output_tok.length});
 
         (void) gss_release_buffer(&minor_status, &output_tok);
 
@@ -380,7 +380,7 @@ public:
         }
         // LOG(LOG_INFO, "GSS_WRAP outbuf length : %d", outbuf.length);
         data_out.init(outbuf.length);
-        data_out.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
         gss_release_buffer(&minor_status, &outbuf);
 
         return SEC_E_OK;
@@ -421,7 +421,7 @@ public:
         }
         // LOG(LOG_INFO, "GSS_UNWRAP outbuf length : %d", outbuf.length);
         data_out.init(outbuf.length);
-        data_out.copy(static_cast<uint8_t const*>(outbuf.value), outbuf.length);
+        data_out.copy({static_cast<uint8_t const*>(outbuf.value), outbuf.length});
         gss_release_buffer(&minor_status, &outbuf);
         return SEC_E_OK;
     }
@@ -453,7 +453,7 @@ public:
                 continue;
             }
 
-            LOG(LOG_ERR," - %s\n", static_cast<uint8_t const*>(status_string.value));
+            LOG(LOG_ERR," - %s\n", static_cast<char const*>(status_string.value));
         }
         while (ms == GSS_S_COMPLETE && msgctx);
 

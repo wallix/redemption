@@ -127,7 +127,7 @@ public:
             out_stream.out_uint8(safe_int(this->bpp_));
             out_stream.out_uint16_le(this->cx_);
             out_stream.out_uint16_le(this->cy_);
-            sha1.update(stream_to_avu8(out_stream));
+            sha1.update(out_stream.get_bytes());
             const uint8_t * first = this->get();
             const uint8_t * last = first + this->cy_ * this->line_size_;
             for (; first != last; first += this->line_size_) {

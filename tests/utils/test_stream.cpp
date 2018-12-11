@@ -252,7 +252,7 @@ RED_AUTO_TEST_CASE(TestStream_in_unistr)
     stream.out_copy_bytes(data, sizeof(data));
     stream.out_uint32_le(-1); // just to put a padding after usefull data
 
-    InStream in_stream(stream.get_data(), stream.get_offset());
+    InStream in_stream(stream.get_bytes());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     RED_CHECK_EQUAL(14u, in_stream.get_offset());
@@ -273,7 +273,7 @@ RED_AUTO_TEST_CASE(TestStream_in_unistr_2)
     stream.out_copy_bytes(data, sizeof(data));
     stream.out_uint32_le(-1); // just to put a padding after usefull data
 
-    InStream in_stream(stream.get_data(), stream.get_offset());
+    InStream in_stream(stream.get_bytes());
     uint8_t result[256];
     in_stream.in_uni_to_ascii_str(result, sizeof(data), sizeof(result));
     RED_CHECK_EQUAL(14u, in_stream.get_offset());
@@ -308,7 +308,7 @@ RED_AUTO_TEST_CASE(TestStream_2BUE)
 
     //hexdump_d(stream.get_data(), stream.size());
 
-    InStream in_stream(stream.get_data(), stream.get_offset());
+    InStream in_stream(stream.get_bytes());
 
     RED_CHECK_EQUAL(0x1A1Bu, in_stream.in_2BUE());
 }
@@ -321,7 +321,7 @@ RED_AUTO_TEST_CASE(TestStream_4BUE)
 
     //hexdump_d(stream.get_data(), stream.size());
 
-    InStream in_stream(stream.get_data(), stream.get_offset());
+    InStream in_stream(stream.get_bytes());
 
     RED_CHECK_EQUAL(0x001A1B1Cu, in_stream.in_4BUE());
 }

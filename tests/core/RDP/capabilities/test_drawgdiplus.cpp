@@ -73,7 +73,7 @@ RED_AUTO_TEST_CASE(TestCapabilityDrawGdiPlusEmit)
     StaticOutStream<1024> out_stream;
     drawgdiplus_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     DrawGdiPlusCaps drawgdiplus_caps2;
 

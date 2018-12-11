@@ -75,7 +75,7 @@ struct CopyPasteFront : FakeFront
                 StaticOutStream<256> out_s;
                 clipboard_header.emit(out_s);
                 format_list_pdu.emit(out_s, use_long_format_names);
-                InStream in_s(out_s.get_data(), out_s.get_offset());
+                InStream in_s(out_s.get_bytes());
                 this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
             }
             break;
@@ -92,13 +92,13 @@ struct CopyPasteFront : FakeFront
                 buf[unicode_data_length    ] = 0;
                 buf[unicode_data_length + 1] = 0;
                 unicode_data_length += 2;
-                
+
                 RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, unicode_data_length);
                 RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                 StaticOutStream<256> out_s;
                 header.emit(out_s);
                 format_data_response_pdu.emit(out_s, buf, unicode_data_length);
-                InStream in_s(out_s.get_data(), out_s.get_offset());
+                InStream in_s(out_s.get_bytes());
                 this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
             }
             break;
@@ -123,7 +123,7 @@ struct CopyPasteFront : FakeFront
         StaticOutStream<256> out_s;
         clipboard_header.emit(out_s);
         format_list_pdu.emit(out_s, use_long_format_names);
-        InStream in_s(out_s.get_data(), out_s.get_offset());
+        InStream in_s(out_s.get_bytes());
         this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
     }
 
@@ -132,7 +132,7 @@ private:
 //    void send_to_server(PDU && pdu, Args && ...args) {
 //        StaticOutStream<256> out_s;
 //        pdu.emit(out_s, std::move(args)...);
-//        InStream in_s(out_s.get_data(), out_s.get_offset());
+//        InStream in_s(out_s.get_bytes());
 //        this->copy_paste.send_to_mod_channel(in_s, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST);
 //    }
 

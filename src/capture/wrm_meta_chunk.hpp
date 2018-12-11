@@ -34,7 +34,7 @@ inline void send_wrm_chunk(Transport& t, WrmChunkType chunktype, uint16_t data_s
     header.out_uint16_le(safe_int(chunktype));
     header.out_uint32_le(WRM_HEADER_SIZE + data_size);
     header.out_uint16_le(count);
-    t.send(header.get_data(), header.get_offset());
+    t.send(header.get_bytes());
 }
 
 struct WrmMetaChunk
@@ -118,7 +118,7 @@ struct WrmMetaChunk
 
         payload.set_out_uint32_le(payload.get_offset(), pos);
 
-        t.send(payload.get_data(), payload.get_offset());
+        t.send(payload.get_bytes());
     }
 
     void receive(InStream& stream)

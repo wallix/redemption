@@ -390,7 +390,7 @@ namespace CHANNELS {
 
                     if (enable_verbose && this->verbose) {
                         LOG(LOG_INFO, "Sec clear payload to send (channelId=%d):", channelId);
-                        hexdump_d(stream.get_data(), stream.get_offset());
+                        hexdump_av_d(stream.get_bytes());
                     }
                 },
                 [&](StreamSize<256>, OutStream & sec_header, uint8_t * packet_data, std::size_t packet_size) {

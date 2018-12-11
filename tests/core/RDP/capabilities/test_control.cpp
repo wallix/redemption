@@ -44,7 +44,7 @@ RED_AUTO_TEST_CASE(TestCapabilityControlEmit)
     StaticOutStream<1024> out_stream;
     control_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     ControlCaps control_caps2;
 

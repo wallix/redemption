@@ -387,7 +387,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETDRAGFULLWINDOWS);
                     out_stream.out_uint8(1);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -410,7 +410,7 @@ public:
                     out_stream.out_uint32_le(2);
                     out_stream.out_uint16_le(0);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -431,7 +431,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETKEYBOARDCUES);
                     out_stream.out_uint8(0);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -452,7 +452,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETKEYBOARDPREF);
                     out_stream.out_uint8(0);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -476,7 +476,7 @@ public:
                     out_stream.out_uint16_le(this->width);
                     out_stream.out_uint16_le(this->height);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -497,7 +497,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETMOUSEBUTTONSWAP);
                     out_stream.out_uint8(0);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -521,7 +521,7 @@ public:
                     out_stream.out_uint16_le(800);
                     out_stream.out_uint16_le(600);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -542,7 +542,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETCARETWIDTH);
                     out_stream.out_uint32_le(1);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -563,7 +563,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETSTICKYKEYS);
                     out_stream.out_uint32_le(1);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -584,7 +584,7 @@ public:
                     out_stream.out_uint32_le(SPI_SETTOGGLEKEYS);
                     out_stream.out_uint32_le(1);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -609,7 +609,7 @@ public:
                     out_stream.out_uint32_le(1);
                     out_stream.out_uint32_le(1);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -632,7 +632,7 @@ public:
                                             //| TS_RAIL_CLIENTSTATUS_APPBAR_REMOTING_SUPPORTED
                                             );
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -652,7 +652,7 @@ public:
                     out_stream.out_uint16_le(8);
                     out_stream.out_uint32_le(this->build_number);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                   , chunk_to_send
@@ -674,7 +674,7 @@ public:
 //                     out_stream.out_uint32_le(0x491);
 //
 //
-//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//                     InStream chunk_to_send(out_stream.get_bytes());
 //
 //                     // this->mod_rail_hosted
 //                     this->callback->send_to_mod_channel( channel_names::rail
@@ -711,7 +711,7 @@ public:
                     out_stream.out_copy_bytes(unicode_WorkingDir, size_of_unicode_WorkingDir);
                     out_stream.out_copy_bytes(unicode_Arguments, size_of_unicode_Arguments);
 
-                    InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+                    InStream chunk_to_send(out_stream.get_bytes());
 
                     this->channel_mod->send_to_mod_channel( channel_names::rail
                                                 , chunk_to_send
@@ -754,7 +754,7 @@ public:
 //                     out_stream.out_uint32_le(this->ServerWwindowID);
 //                     out_stream.out_uint16_le(SC_MINIMIZE);
 //
-//                     InStream chunk_to_send(out_stream.get_data(), out_stream.get_offset());
+//                     InStream chunk_to_send(out_stream.get_bytes());
 //
 //                     this->callback->send_to_mod_channel( channel_names::rail
 //                                                     , chunk_to_send

@@ -34,7 +34,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFileList)
     RDPECLIP::FormatDataResponsePDU_FileList fdr(cItems);
     fdr.emit(ou_stream_fileList);
 
-    RED_CHECK_MEM_C(stream_to_avchar(ou_stream_fileList), "\x01\x00\x00\x00");
+    RED_CHECK_MEM_C(ou_stream_fileList.get_bytes(), "\x01\x00\x00\x00");
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFileList)
@@ -105,7 +105,7 @@ RED_AUTO_TEST_CASE(TestFormatDataResponsePDUEmitFilePic)
         "\x34\xbc\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
         "\x00\x00\x00\x00");
 
-    RED_CHECK_MEM(metafilepic_out_data, stream_to_avu8(ou_stream_metaFilePic));
+    RED_CHECK_MEM(metafilepic_out_data, ou_stream_metaFilePic.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFormatDataResponsePDURecvFilePic)
@@ -379,7 +379,7 @@ RED_AUTO_TEST_CASE(TestFileDescriptor)
 
     file_descriptor.emit(out_stream);
 //     LOG(LOG_INFO, "out_stream_size=%u", (unsigned)out_stream.get_offset());
-//     hexdump(out_stream.get_data(), out_stream.get_offset());
+//     hexdump_av(out_stream.get_bytes());
 
     RED_CHECK_EQUAL(out_stream.get_offset(), in_stream.get_offset());
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
@@ -441,7 +441,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeEmit)
         "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x00\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    RED_CHECK_MEM(exp_data, out_stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDURangeRecv)
@@ -483,7 +483,7 @@ RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeEmit)
         "\x01\x00\x00\x00\x01\x00\x00\x00\x03\x00\x00\x00\x07\x00\x00\x00"
         "\x07\x00\x00\x00\x01\x00\x00\x00");
 
-    RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+    RED_CHECK_MEM(exp_data, out_stream.get_bytes());
 }
 
 RED_AUTO_TEST_CASE(TestFileContentsRequestPDUSizeRecv)
@@ -529,7 +529,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
         auto exp_data = cstr_array_view("\x01\x00\x00\x00\x00\x00");
 
         RED_CHECK_EQUAL(6, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -552,7 +552,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
             );
 
         RED_CHECK_EQUAL(12, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -571,7 +571,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_LongFormatName)
         auto exp_data = cstr_array_view("\x00\x7D\x00\x00T\x00" "e\x00s\x00t\x00\x00\x00");
 
         RED_CHECK_EQUAL(14, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 }
 
@@ -707,7 +707,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
             );
 
         RED_CHECK_EQUAL(36, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -737,7 +737,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
             );
 
         RED_CHECK_EQUAL(72, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -760,7 +760,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
             );
 
         RED_CHECK_EQUAL(36, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -786,7 +786,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
             );
 
         RED_CHECK_EQUAL(36, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 
     {
@@ -809,7 +809,7 @@ RED_AUTO_TEST_CASE(TestFormatListPDUEx_Emit_ShortFormatName)
             );
 
         RED_CHECK_EQUAL(36, out_stream.get_offset());
-        RED_CHECK_MEM(exp_data, stream_to_avchar(out_stream));
+        RED_CHECK_MEM(exp_data, out_stream.get_bytes());
     }
 }
 

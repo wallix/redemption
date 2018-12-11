@@ -48,9 +48,9 @@ RED_AUTO_TEST_CASE(TestPolygonSCEmpty)
         0x90,
         0x01,
         0x4C };
-    RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+    RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     RDPOrderCommon common_cmd = state_common;
     uint8_t control = in_stream.in_uint8();
@@ -69,8 +69,8 @@ RED_AUTO_TEST_CASE(TestPolygonSCEmpty)
     decltype(out_stream) out_stream2;
     cmd.emit(out_stream2, newcommon, state_common, state_Polygon);
     RED_CHECK_MEM(
-        stream_to_avu8(out_stream).array_from_offset(1),
-        stream_to_avu8(out_stream2).array_from_offset(1));
+        out_stream.get_bytes().array_from_offset(1),
+        out_stream2.get_bytes().array_from_offset(1));
 }
 RED_AUTO_TEST_CASE(TestPolygonSC)
 {
@@ -104,7 +104,7 @@ RED_AUTO_TEST_CASE(TestPolygonSC)
     deltaPoints.out_sint16_le(-160);
     deltaPoints.out_sint16_le(0);
 
-    InStream deltaPoints_in(deltaPoints.get_data(), deltaPoints.get_offset());
+    InStream deltaPoints_in(deltaPoints.get_bytes());
 
     RDPPolygonSC polygonSC(158, 230, 0x0D, 0, encode_color24()(BLACK), 7, deltaPoints_in);
 
@@ -125,9 +125,9 @@ RED_AUTO_TEST_CASE(TestPolygonSC)
         0x98, 0x24, 0x14, 0x80, 0xA0, 0x62, 0x32, 0x32,
         0x4E, 0x32, 0x62, 0xFF, 0x60
     };
-    RED_CHECK_MEM(stream_to_avu8(out_stream), make_array_view(datas));
+    RED_CHECK_MEM(out_stream.get_bytes(), make_array_view(datas));
 
-    InStream in_stream(out_stream.get_data(), out_stream.get_offset());
+    InStream in_stream(out_stream.get_bytes());
 
     RDPOrderCommon common_cmd = state_common;
     uint8_t control = in_stream.in_uint8();
@@ -145,6 +145,6 @@ RED_AUTO_TEST_CASE(TestPolygonSC)
     decltype(out_stream) out_stream2;
     cmd.emit(out_stream2, newcommon, state_common, state_polygonSC);
     RED_CHECK_MEM(
-        stream_to_avu8(out_stream).array_from_offset(1),
-        stream_to_avu8(out_stream2).array_from_offset(1));
+        out_stream.get_bytes().array_from_offset(1),
+        out_stream2.get_bytes().array_from_offset(1));
 }

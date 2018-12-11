@@ -59,7 +59,7 @@ RED_AUTO_TEST_CASE(TestCapabilityBmpCachepEmit)
 
     StaticOutStream<1024> out_stream;
     bmpcache_caps.emit(out_stream);
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     BmpCacheCaps bmpcache_caps2;
 

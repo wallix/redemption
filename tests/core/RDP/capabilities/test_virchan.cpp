@@ -41,7 +41,7 @@ RED_AUTO_TEST_CASE(TestCapabilityVirtualChannelEmit)
     StaticOutStream<1024> out_stream;
     virtualchannel_caps.emit(out_stream);
 
-    InStream stream(out_stream.get_data(), out_stream.get_offset());
+    InStream stream(out_stream.get_bytes());
 
     VirtualChannelCaps virtualchannel_caps2;
 
