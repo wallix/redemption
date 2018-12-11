@@ -130,7 +130,6 @@ struct ModVNCParamsData {
     bool is_apple;
     Theme      theme;
     WindowListCaps windowListCaps;
-    ClientExecute exe;
     std::string vnc_encodings;
     int keylayout = 0x040C;
     int width = 800;
@@ -144,9 +143,8 @@ struct ModVNCParamsData {
     std::vector<UserProfil> userProfils;
     int current_user_profil = 0;
 
-    ModVNCParamsData(SessionReactor& session_reactor, FrontAPI & client)
+    ModVNCParamsData()
         : is_apple(false)
-        , exe(session_reactor, client, this->windowListCaps, false)
         , vnc_encodings("5,16,0,1,-239")
     {}
 };
@@ -277,7 +275,7 @@ public:
     std::vector<UserProfil> userProfils;
 
     ModRDPParamsData modRDPParamsData;
-    ModVNCParamsData vnc_conf;
+    ModVNCParamsData modVNCParamsData;
 
                                                      // _accountData[MAX_ACCOUNT_DATA];
     std::vector<AccountData> _accountData;
@@ -321,7 +319,7 @@ public:
 
 
 
-    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front, const std::string &MAIN_DIR );
+    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR );
 
     ~ClientRedemptionConfig() = default;
 

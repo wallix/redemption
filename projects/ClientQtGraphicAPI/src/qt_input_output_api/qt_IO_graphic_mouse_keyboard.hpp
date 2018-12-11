@@ -345,11 +345,11 @@ private:
                     break;
 
             case ClientRedemptionConfig::MOD_VNC:
-                if (this->config->vnc_conf.width == width && this->config->vnc_conf.height == height) {
+                if (this->config->modVNCParamsData.width == width && this->config->modVNCParamsData.height == height) {
                     return FrontAPI::ResizeResult::instant_done;
                 }
-                this->config->vnc_conf.width = width;
-                this->config->vnc_conf.height = height;
+                this->config->modVNCParamsData.width = width;
+                this->config->modVNCParamsData.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
                 this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);

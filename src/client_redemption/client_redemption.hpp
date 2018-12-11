@@ -348,7 +348,7 @@ public:
 
         switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:
-                this->_callback.init_layout(this->config.vnc_conf.keylayout);
+                this->_callback.init_layout(this->config.modVNCParamsData.keylayout);
                 break;
 
             default: this->_callback.init_layout(this->config.info.keylayout);
@@ -500,17 +500,17 @@ public:
                   , this->config.user_name.c_str()
                   , this->config.user_password.c_str()
                   , *this
-                  , this->config.vnc_conf.width
-                  , this->config.vnc_conf.height
-                  , this->config.vnc_conf.keylayout
+                  , this->config.modVNCParamsData.width
+                  , this->config.modVNCParamsData.height
+                  , this->config.modVNCParamsData.keylayout
                   , 0
                   , true
                   , true
-                  , this->config.vnc_conf.vnc_encodings.c_str()
+                  , this->config.modVNCParamsData.vnc_encodings.c_str()
                   , this->reportMessage
-                  , this->config.vnc_conf.is_apple
+                  , this->config.modVNCParamsData.is_apple
                   , true                                    // alt server unix
-                  , &this->config.vnc_conf.exe
+                  , &this->client_execute
                   , this->ini
                   // , to_verbose_flags(0xfffffffd)
                   , to_verbose_flags(0)
@@ -692,8 +692,8 @@ public:
                 this->config.rdp_width  = this->impl_graphic->screen_max_width;
                 this->config.rdp_height = this->impl_graphic->screen_max_height;
 
-                this->config.vnc_conf.width = this->impl_graphic->screen_max_width;
-                this->config.vnc_conf.height = this->impl_graphic->screen_max_height;
+                this->config.modVNCParamsData.width = this->impl_graphic->screen_max_width;
+                this->config.modVNCParamsData.height = this->impl_graphic->screen_max_height;
             }
 
             switch (this->config.mod_state) {
@@ -703,8 +703,8 @@ public:
                     break;
 
                 case ClientRedemptionConfig::MOD_VNC:
-                    this->config.info.screen_info.width = this->config.vnc_conf.width;
-                    this->config.info.screen_info.height = this->config.vnc_conf.height;
+                    this->config.info.screen_info.width = this->config.modVNCParamsData.width;
+                    this->config.info.screen_info.height = this->config.modVNCParamsData.height;
                     break;
 
                 default: break;

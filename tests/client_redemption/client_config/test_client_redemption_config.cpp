@@ -159,17 +159,17 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     RED_CHECK_EQUAL(config.enable_shared_clipboard, true);
 
     // VNC
-    RED_CHECK_EQUAL(config.vnc_conf.is_apple, false);
-    RED_CHECK_EQUAL(config.vnc_conf.vnc_encodings, "5,16,0,1,-239");
-    RED_CHECK_EQUAL(config.vnc_conf.keylayout, 0x040C);
-    RED_CHECK_EQUAL(config.vnc_conf.width, 800);
-    RED_CHECK_EQUAL(config.vnc_conf.height, 600);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_tls, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_nla, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_sound, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_shared_clipboard, false);
-    RED_CHECK_EQUAL(config.vnc_conf.userProfils.size(), 0);
-    RED_CHECK_EQUAL(config.vnc_conf.current_user_profil, 0);
+    RED_CHECK_EQUAL(config.modVNCParamsData.is_apple, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
+    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
+    RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_tls, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_nla, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_sound, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_shared_clipboard, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.userProfils.size(), 0);
+    RED_CHECK_EQUAL(config.modVNCParamsData.current_user_profil, 0);
 
     // ACCOUNT
     RED_CHECK_EQUAL(config._accountData.size(), 0);
@@ -332,17 +332,17 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
     RED_CHECK_EQUAL(config.enable_shared_clipboard, true);
 
     // VNC
-    RED_CHECK_EQUAL(config.vnc_conf.is_apple, false);
-    RED_CHECK_EQUAL(config.vnc_conf.vnc_encodings, "5,16,0,1,-239");
-    RED_CHECK_EQUAL(config.vnc_conf.keylayout, 0x040C);
-    RED_CHECK_EQUAL(config.vnc_conf.width, 800);
-    RED_CHECK_EQUAL(config.vnc_conf.height, 600);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_tls, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_nla, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_sound, false);
-    RED_CHECK_EQUAL(config.vnc_conf.enable_shared_clipboard, false);
-    RED_CHECK_EQUAL(config.vnc_conf.userProfils.size(), 0);
-    RED_CHECK_EQUAL(config.vnc_conf.current_user_profil, 0);
+    RED_CHECK_EQUAL(config.modVNCParamsData.is_apple, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.vnc_encodings, "5,16,0,1,-239");
+    RED_CHECK_EQUAL(config.modVNCParamsData.keylayout, 0x040C);
+    RED_CHECK_EQUAL(config.modVNCParamsData.width, 800);
+    RED_CHECK_EQUAL(config.modVNCParamsData.height, 600);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_tls, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_nla, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_sound, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.enable_shared_clipboard, false);
+    RED_CHECK_EQUAL(config.modVNCParamsData.userProfils.size(), 0);
+    RED_CHECK_EQUAL(config.modVNCParamsData.current_user_profil, 0);
 
     // ACCOUNT
     RED_CHECK_EQUAL(config._accountData.size(), 0);

@@ -358,7 +358,7 @@ public:
         this->config->is_recording = this->_recordingCB.isChecked();
 
         // Keyboard tab
-        this->config->vnc_conf.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
+        this->config->modVNCParamsData.keylayout = this->_languageComboBox.itemData(this->_languageComboBox.currentIndex()).toInt();
 
         this->config->keyCustomDefinitions.clear();
 
@@ -875,22 +875,22 @@ public:
         // General tab
         bool new_profil = true;
         std::string text_profil = this->profilComboBox.currentText().toStdString();
-        for (size_t i = 0; i < this->config->vnc_conf.userProfils.size(); i++) {
-            if (this->config->vnc_conf.userProfils[i].name == text_profil) {
+        for (size_t i = 0; i < this->config->modVNCParamsData.userProfils.size(); i++) {
+            if (this->config->modVNCParamsData.userProfils[i].name == text_profil) {
                 new_profil = false;
             }
         }
         if (new_profil) {
-            this->config->vnc_conf.userProfils.push_back({int(this->config->vnc_conf.userProfils.size()), text_profil.c_str()});
-            this->config->vnc_conf.current_user_profil = this->config->vnc_conf.userProfils.size()-1;
+            this->config->modVNCParamsData.userProfils.push_back({int(this->config->modVNCParamsData.userProfils.size()), text_profil.c_str()});
+            this->config->modVNCParamsData.current_user_profil = this->config->modVNCParamsData.userProfils.size()-1;
         } else {
-            this->config->vnc_conf.current_user_profil = this->profilComboBox.currentIndex();
+            this->config->modVNCParamsData.current_user_profil = this->profilComboBox.currentIndex();
         }
-        this->config->vnc_conf.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
+        this->config->modVNCParamsData.is_apple = this->keyboard_apple_compatibility_CB.isChecked();
 
         // Services tab
-        this->config->vnc_conf.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
-        this->config->vnc_conf.enable_sound = this->_soundBox.isChecked();
+        this->config->modVNCParamsData.enable_shared_clipboard = this->_clipboardCheckBox.isChecked();
+        this->config->modVNCParamsData.enable_sound = this->_soundBox.isChecked();
     }
 
 
@@ -898,14 +898,14 @@ public:
         QtOptions::setConfigValues();
 
         // General tab
-        int indexProfil = this->profilComboBox.findData(this->config->vnc_conf.current_user_profil);
+        int indexProfil = this->profilComboBox.findData(this->config->modVNCParamsData.current_user_profil);
         if ( indexProfil >= 0) {
             this->profilComboBox.setCurrentIndex(indexProfil);
         }
 
         // Services tab
-        this->_soundBox.setChecked(this->config->vnc_conf.enable_sound);
-        this->_clipboardCheckBox.setChecked(this->config->vnc_conf.enable_shared_clipboard);
+        this->_soundBox.setChecked(this->config->modVNCParamsData.enable_sound);
+        this->_clipboardCheckBox.setChecked(this->config->modVNCParamsData.enable_shared_clipboard);
     }
 
 };

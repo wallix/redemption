@@ -22,7 +22,7 @@
 
 
 
-ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, FrontAPI &front, const std::string &MAIN_DIR )
+ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR )
 : MAIN_DIR((MAIN_DIR.empty() || MAIN_DIR == "/")
     ? MAIN_DIR
     : (MAIN_DIR.back() == '/')
@@ -36,7 +36,6 @@ ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, 
 , time_out_disconnection(5000)
 , keep_alive_freq(100)
 , windowsData(this->WINDOWS_CONF)
-, vnc_conf(session_reactor, front)
 {
     this->setDefaultConfig();
 
@@ -279,7 +278,7 @@ ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, 
             this->info.rdp5_performanceflags)),
 
         cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
-        .action(cli::on_off_location(this->vnc_conf.is_apple)),
+        .action(cli::on_off_location(this->modVNCParamsData.is_apple)),
 
 
         cli::option("keep_alive_frequence")
@@ -607,7 +606,7 @@ void ClientRedemptionConfig::parse_options(int argc, char const* const argv[])
             this->info.rdp5_performanceflags)),
 
         cli::option("vnc-applekeyboard").help("Set keyboard compatibility mod with apple VNC server")
-        .action(cli::on_off_location(this->vnc_conf.is_apple)),
+        .action(cli::on_off_location(this->modVNCParamsData.is_apple)),
 
         cli::helper("========= Client ========="),
 
@@ -911,7 +910,7 @@ void ClientRedemptionConfig::setClientInfo()  {
                     this->info.rdp5_performanceflags = std::stoi(info);
                 } else
                 if (tag == "vnc-applekeyboard ") {
-                    this->vnc_conf.is_apple = bool(std::stoi(info));
+                    this->modVNCParamsData.is_apple = bool(std::stoi(info));
                 } else
                 if (tag == "mod") {
                     this->mod_state = std::stoi(info);
@@ -1248,7 +1247,7 @@ void ClientRedemptionConfig::writeClientInfo()  {
             "share-dir ", this->SHARE_DIR, "\n"
             "remote-exe ", this->rDPRemoteAppConfig.full_cmd_line, "\n"
             "remote-dir ", this->rDPRemoteAppConfig.source_of_WorkingDir, "\n"
-            "vnc-applekeyboard ", std::to_string(this->vnc_conf.is_apple), "\n"
+            "vnc-applekeyboard ", std::to_string(this->modVNCParamsData.is_apple), "\n"
             "mod ", std::to_string(static_cast<int>(this->mod_state)) , "\n"
         );
 
