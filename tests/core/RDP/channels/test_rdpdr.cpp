@@ -335,140 +335,118 @@ RED_AUTO_TEST_CASE(ServerDriveQueryDirectoryRequest2)
     RED_CHECK_EQUAL(0, memcmp(in_data, out_data, sizeof(in_data) - 1));
 }
 
-RED_AUTO_TEST_CASE(CapabilityHeaderEmit)
+RED_AUTO_TEST_CASE(CapabilityHeader)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x08\x00\x01\x00\x00\x00";
+    auto data = "\x01\x00\x08\x00\x01\x00\x00\x00"_av;
 
-    StaticOutStream<8> stream;
-    rdpdr::CapabilityHeader ch(0x01, 0x0001);
+    {
+        StaticOutStream<8> stream;
+        rdpdr::CapabilityHeader ch(0x01, 0x0001);
 
-    ch.emit(stream);
+        ch.emit(stream);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::CapabilityHeader ch;
+
+        ch.receive(in_stream);
+
+        RED_CHECK_EQUAL(ch.CapabilityType, 0x01);
+        RED_CHECK_EQUAL(ch.CapabilityLength, 0x08);
+        RED_CHECK_EQUAL(ch.Version, 0x0001);
+    }
 }
 
-RED_AUTO_TEST_CASE(CapabilityHeaderReceive)
+
+RED_AUTO_TEST_CASE(ClientDriveDeviceListRemove)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x08\x00\x01\x00\x00\x00";
+    auto data = "\x03\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00"_av;
 
-    InStream in_stream(data, len);
+    {
+        StaticOutStream<128> stream;
+        uint32_t DeviceIds[] = {1, 2, 3};
+        rdpdr::ClientDriveDeviceListRemove cddlr(03, DeviceIds);
 
-    rdpdr::CapabilityHeader ch;
-    ch.receive(in_stream);
+        cddlr.emit(stream);
 
-    RED_CHECK_EQUAL(ch.CapabilityType, 0x01);
-    RED_CHECK_EQUAL(ch.CapabilityLength, 0x08);
-    RED_CHECK_EQUAL(ch.Version, 0x0001);
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDriveDeviceListRemove cddlr;
+
+        cddlr.receive(in_stream);
+
+        RED_CHECK_EQUAL(cddlr.DeviceCount, 3);
+        RED_CHECK_EQUAL(cddlr.DeviceIds[0], 1);
+        RED_CHECK_EQUAL(cddlr.DeviceIds[1], 2);
+        RED_CHECK_EQUAL(cddlr.DeviceIds[2], 3);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveDeviceListRemoveEmit)
+RED_AUTO_TEST_CASE(DeviceAnnounceHeader)
 {
-    const size_t len = 16;
-    const char data[] =
-            "\x03\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00";
+    auto data =
+        "\x20\x00\x00\x00\x01\x00\x00\x00\x53\x43\x41\x52\x44\x00\x00\x00"
+        "\x00\x00\x00\x00"_av;
 
-    StaticOutStream<128> stream;
-    uint32_t DeviceIds[] = {1, 2, 3};
-    rdpdr::ClientDriveDeviceListRemove cddlr(03, DeviceIds);
+    {
+        StaticOutStream<128> stream;
+        uint8_t device_data[1] {};
+        rdpdr::DeviceAnnounceHeader pdu(rdpdr::RDPDR_DTYP_SMARTCARD, 01, "SCARD", device_data, 0);
 
-    cddlr.emit(stream);
+        pdu.emit(stream);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::DeviceAnnounceHeader pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.DeviceType(), 0x00000020);
+        RED_CHECK_EQUAL(pdu.DeviceId(), 01);
+        RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD");
+        RED_CHECK_EQUAL(pdu.DeviceDataLength(), 0);
+        RED_CHECK_EQUAL(pdu.DeviceData(), nullptr);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveDeviceListRemoveReceive)
+RED_AUTO_TEST_CASE(DeviceIORequest)
 {
-    const size_t len = 16;
-    const char data[] =
-            "\x03\x00\x00\x00\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00";
+    auto data =
+        "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\01\x00\x00\x00"
+        "\x01\x00\x00\x00"_av;
 
-    InStream in_stream(data, len);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::DeviceIORequest pdu(01, 02, 03, smb2::FILE_OPEN, smb2::FILE_DIRECTORY_FILE);
 
-    rdpdr::ClientDriveDeviceListRemove cddlr;
-    cddlr.receive(in_stream);
+        pdu.emit(stream);
 
-    RED_CHECK_EQUAL(cddlr.DeviceCount, 3);
-    RED_CHECK_EQUAL(cddlr.DeviceIds[0], 1);
-    RED_CHECK_EQUAL(cddlr.DeviceIds[1], 2);
-    RED_CHECK_EQUAL(cddlr.DeviceIds[2], 3);
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::DeviceIORequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.DeviceId(), 01);
+        RED_CHECK_EQUAL(pdu.FileId(), 02);
+        RED_CHECK_EQUAL(pdu.CompletionId(), 03);
+        RED_CHECK_EQUAL(pdu.MajorFunction(), smb2::FILE_OPEN);
+        RED_CHECK_EQUAL(pdu.MinorFunction(), smb2::FILE_DIRECTORY_FILE);
+    }
 }
 
-RED_AUTO_TEST_CASE(DeviceAnnounceHeaderEmit)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x20\x00\x00\x00\x01\x00\x00\x00\x53\x43\x41\x52\x44\x00\x00\x00"
-            "\x00\x00\x00\x00";
-
-    StaticOutStream<128> stream;
-    uint8_t device_data[1] {};
-    rdpdr::DeviceAnnounceHeader pdu(rdpdr::RDPDR_DTYP_SMARTCARD, 01, "SCARD", device_data, 0);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(DeviceAnnounceHeaderReceive)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x20\x00\x00\x00\x01\x00\x00\x00\x53\x43\x41\x52\x44\x00\x00\x00"
-            "\x00\x00\x00\x00";
-
-    InStream in_stream(data, len);
-    rdpdr::DeviceAnnounceHeader pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.DeviceType(), 0x00000020);
-    RED_CHECK_EQUAL(pdu.DeviceId(), 01);
-    RED_CHECK_EQUAL(pdu.PreferredDosName(), "SCARD");
-    RED_CHECK_EQUAL(pdu.DeviceDataLength(), 0);
-    RED_CHECK_EQUAL(pdu.DeviceData(), nullptr);
-}
-
-RED_AUTO_TEST_CASE(DeviceIORequestEmit)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\01\x00\x00\x00"
-            "\x01\x00\x00\x00";
-
-    StaticOutStream<128> stream;
-    rdpdr::DeviceIORequest pdu(01, 02, 03, smb2::FILE_OPEN, smb2::FILE_DIRECTORY_FILE);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(DeviceIORequestReceive)
-{
-    const size_t len = 20;
-    const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x00\x00\01\x00\x00\x00"
-            "\x01\x00\x00\x00";
-
-    InStream in_stream(data, len);
-    rdpdr::DeviceIORequest pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.DeviceId(), 01);
-    RED_CHECK_EQUAL(pdu.FileId(), 02);
-    RED_CHECK_EQUAL(pdu.CompletionId(), 03);
-    RED_CHECK_EQUAL(pdu.MajorFunction(), smb2::FILE_OPEN);
-    RED_CHECK_EQUAL(pdu.MinorFunction(), smb2::FILE_DIRECTORY_FILE);
-}
 
 /*RED_AUTO_TEST_CASE(DeviceCloseRequestEmit)
 {
@@ -490,90 +468,73 @@ RED_AUTO_TEST_CASE(DeviceIORequestReceive)
 }*/
 
 
-RED_AUTO_TEST_CASE(ClientDriveNotifyChangeDirectoryResponseEmit)
+RED_AUTO_TEST_CASE(ClientDriveNotifyChangeDirectoryResponse)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\xff\x07\xff\x07";
+    auto data = "\xff\x07\xff\x07"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ClientDriveNotifyChangeDirectoryResponse pdu(0x07ff07ff);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ClientDriveNotifyChangeDirectoryResponse pdu(0x07ff07ff);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDriveNotifyChangeDirectoryResponse pdu;
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Length, 0x07ff07ff);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveNotifyChangeDirectoryResponseReceive)
+RED_AUTO_TEST_CASE(ServerDriveNotifyChangeDirectoryRequest)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\xff\x07\xff\x07";
+    auto data = "\x01\xff\x07\xff\x07"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::ClientDriveNotifyChangeDirectoryResponse pdu;
-    pdu.receive(in_stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerDriveNotifyChangeDirectoryRequest pdu(01, 0x07ff07ff);
 
-    RED_CHECK_EQUAL(pdu.Length, 0x07ff07ff);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerDriveNotifyChangeDirectoryRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.WatchTree, 01);
+        RED_CHECK_EQUAL(pdu.CompletionFilter, 0x07ff07ff);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerDriveNotifyChangeDirectoryRequestEmit)
+RED_AUTO_TEST_CASE(RDP_Lock_Info)
 {
-    const size_t len = 5;
-    const char data[] =
-            "\x01\xff\x07\xff\x07";
+    auto data = "\x01\x00\xff\x00\xff\x00\xff\x02\x03\x00\xff\x00\xff\x00\xff\x04"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ServerDriveNotifyChangeDirectoryRequest pdu(01, 0x07ff07ff);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::RDP_Lock_Info pdu(0x02ff00ff00ff0001, 0x04ff00ff00ff0003);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
+        pdu.emit(stream);
 
-RED_AUTO_TEST_CASE(ServerDriveNotifyChangeDirectoryRequestReceive)
-{
-    const size_t len = 5;
-    const char data[] =
-            "\x01\xff\x07\xff\x07";
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
 
-    InStream in_stream(data, len);
-    rdpdr::ServerDriveNotifyChangeDirectoryRequest pdu;
-    pdu.receive(in_stream);
+    {
+        InStream in_stream(data);
+        rdpdr::RDP_Lock_Info pdu;
+        pdu.receive(in_stream);
 
-    RED_CHECK_EQUAL(pdu.WatchTree, 01);
-    RED_CHECK_EQUAL(pdu.CompletionFilter, 0x07ff07ff);
-}
-
-RED_AUTO_TEST_CASE(RDP_Lock_InfoEmit)
-{
-    const size_t len = 16;
-    const char data[] =
-            "\x01\x00\xff\x00\xff\x00\xff\x02\x03\x00\xff\x00\xff\x00\xff\x04";
-
-    StaticOutStream<128> stream;
-    rdpdr::RDP_Lock_Info pdu(0x02ff00ff00ff0001, 0x04ff00ff00ff0003);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(RDP_Lock_InfoReceive)
-{
-    const size_t len = 16;
-    const char data[] =
-            "\x01\x00\xff\x00\xff\x00\xff\x02\x03\x00\xff\x00\xff\x00\xff\x04";
-
-    InStream in_stream(data, len);
-    rdpdr::RDP_Lock_Info pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.Length, 0x02ff00ff00ff0001);
-    RED_CHECK_EQUAL(pdu.Offset, 0x04ff00ff00ff0003);
+        RED_CHECK_EQUAL(pdu.Length, 0x02ff00ff00ff0001);
+        RED_CHECK_EQUAL(pdu.Offset, 0x04ff00ff00ff0003);
+    }
 }
 
 RED_AUTO_TEST_CASE(streamLog)
@@ -595,371 +556,307 @@ RED_AUTO_TEST_CASE(streamLog)
     rdpdr::RdpDrStatus status;
 
     rdpdr::streamLog(in_stream, status);
+
+    // TODO TEST this not a test
 }
 
-RED_AUTO_TEST_CASE(ServerDriveLockControlRequestEmit)
+RED_AUTO_TEST_CASE(ServerDriveLockControlRequest)
 {
-    const size_t len = 32;
-    const char data[] =
-            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    auto data =
+        "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ServerDriveLockControlRequest pdu(0x02000001, 1, 0x04000003);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerDriveLockControlRequest pdu(0x02000001, 1, 0x04000003);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerDriveLockControlRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Operation, 0x02000001);
+        RED_CHECK_EQUAL(pdu.F, 1);
+        RED_CHECK_EQUAL(pdu.NumLocks, 0x04000003);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerDriveLockControlRequestReceive)
+RED_AUTO_TEST_CASE(ClientDriveSetInformationResponse)
 {
-    const size_t len = 32;
-    const char data[] =
-            "\x01\x00\x00\x02\x80\x00\x00\x00\x03\x00\x00\x04\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    auto data = "\x01\x00\x00\x02"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::ServerDriveLockControlRequest pdu;
-    pdu.receive(in_stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ClientDriveSetInformationResponse pdu(0x02000001);
 
-    RED_CHECK_EQUAL(pdu.Operation, 0x02000001);
-    RED_CHECK_EQUAL(pdu.F, 1);
-    RED_CHECK_EQUAL(pdu.NumLocks, 0x04000003);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDriveSetInformationResponse pdu;
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Length, 0x02000001);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveSetInformationResponseEmit)
+RED_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequest)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
+    auto data =
+        "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
+        "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ClientDriveSetInformationResponse pdu(0x02000001);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerDriveSetVolumeInformationRequest pdu(0x02000001, 0x04000003);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerDriveSetVolumeInformationRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.FsInformationClass, 0x02000001);
+        RED_CHECK_EQUAL(pdu.Length, 0x04000003);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveSetInformationResponseReceive)
+RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseRequest)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
+    auto data = "\x01\x00\x00\x02"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::ClientDriveSetInformationResponse pdu;
-    pdu.receive(in_stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ClientDriveQueryDirectoryResponse pdu(0x02000001);
 
-    RED_CHECK_EQUAL(pdu.Length, 0x02000001);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDriveQueryDirectoryResponse pdu;
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Length, 0x02000001);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestEmit)
+RED_AUTO_TEST_CASE(ServerDriveSetInformationRequest)
 {
-    const size_t len = 32;
-    const char data[] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    auto data = "\x01\x00\x00\x02\x03\x00\x00\x04"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ServerDriveSetVolumeInformationRequest pdu(0x02000001, 0x04000003);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerDriveSetInformationRequest pdu(0x02000001, 0x04000003);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerDriveSetInformationRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.FsInformationClass(), 0x02000001);
+        RED_CHECK_EQUAL(pdu.Length(), 0x04000003);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerDriveSetVolumeInformationRequestReceive)
+RED_AUTO_TEST_CASE(ClientDriveQueryVolumeInformationResponse)
 {
-    const size_t len = 32;
-    const char data[] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00"
-            "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00";
+    auto data = "\x01\x00\x00\x02"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::ServerDriveSetVolumeInformationRequest pdu;
-    pdu.receive(in_stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ClientDriveQueryVolumeInformationResponse pdu(0x02000001);
 
-    RED_CHECK_EQUAL(pdu.FsInformationClass, 0x02000001);
-    RED_CHECK_EQUAL(pdu.Length, 0x04000003);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDriveQueryVolumeInformationResponse pdu;
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Length, 0x02000001);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseRequestEmit)
+RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequest)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
+    auto data = "\x0a\x00\x00\x00"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ClientDriveQueryDirectoryResponse pdu(0x02000001);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ClientDeviceListAnnounceRequest pdu(10);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ClientDeviceListAnnounceRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.DeviceCount, 0x0a);
+    }
 }
 
-RED_AUTO_TEST_CASE(ClientDriveQueryDirectoryResponseReceive)
+RED_AUTO_TEST_CASE(GeneralCapabilitySet)
 {
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
-
-    InStream in_stream(data, len);
-    rdpdr::ClientDriveQueryDirectoryResponse pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.Length, 0x02000001);
-}
-
-RED_AUTO_TEST_CASE(ServerDriveSetInformationRequestEmit)
-{
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04";
-
-    StaticOutStream<128> stream;
-    rdpdr::ServerDriveSetInformationRequest pdu(0x02000001, 0x04000003);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(ServerDriveSetInformationRequestReceive)
-{
-    const char data[32] =
-            "\x01\x00\x00\x02\x03\x00\x00\x04";
-
-    InStream in_stream(data);
-    rdpdr::ServerDriveSetInformationRequest pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.FsInformationClass(), 0x02000001);
-    RED_CHECK_EQUAL(pdu.Length(), 0x04000003);
-}
-
-RED_AUTO_TEST_CASE(ClientDriveQueryVolumeInformationResponseEmit)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
-
-    StaticOutStream<128> stream;
-    rdpdr::ClientDriveQueryVolumeInformationResponse pdu(0x02000001);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(ClientDriveQueryVolumeInformationResponseReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x02";
-
-    InStream in_stream(data, len);
-    rdpdr::ClientDriveQueryVolumeInformationResponse pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.Length, 0x02000001);
-}
-
-RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequestEmit)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x0a\x00\x00\x00";
-
-    StaticOutStream<128> stream;
-    rdpdr::ClientDeviceListAnnounceRequest pdu(10);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(ClientDeviceListAnnounceRequestReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x0a\x00\x00\x00";
-
-    InStream in_stream(data, len);
-    rdpdr::ClientDeviceListAnnounceRequest pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.DeviceCount, 0x0a);
-}
-
-RED_AUTO_TEST_CASE(GeneralCapabilitySetEmit)
-{
-    const size_t len = 36;
-    const char data[] =
+    auto data =
         "\x02\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\xff\xff\x00\x00"
         "\x0\x00\x00\x00\x07\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00"
-        "\x00\x00\x00\x00"
+        "\x00\x00\x00\x00"_av
         ;
+    {
+        StaticOutStream<128> stream;
+        rdpdr::GeneralCapabilitySet pdu(0x2,        // osType
+                                        rdpdr::MINOR_VERSION_2,        // protocolMinorVersion -
+                                        rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
+                                        0x00000007,
+                                        rdpdr::ENABLE_ASYNCIO,        // extraFlags1
+                                        0,                          // SpecialTypeDeviceCap
+                                        rdpdr::GENERAL_CAPABILITY_VERSION_02);
+        pdu.emit(stream);
 
-    StaticOutStream<128> stream;
-    rdpdr::GeneralCapabilitySet pdu(0x2,        // osType
-                                    rdpdr::MINOR_VERSION_2,        // protocolMinorVersion -
-                                    rdpdr::SUPPORT_ALL_REQUEST,     // ioCode1
-                                    0x00000007,
-                                    rdpdr::ENABLE_ASYNCIO,        // extraFlags1
-                                    0,                          // SpecialTypeDeviceCap
-                                    rdpdr::GENERAL_CAPABILITY_VERSION_02);
-    pdu.emit(stream);
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+    {
+        InStream in_stream(data);
+        rdpdr::GeneralCapabilitySet pdu;
+
+        pdu.receive(in_stream, rdpdr::GENERAL_CAPABILITY_VERSION_02);
+
+        RED_CHECK_EQUAL(pdu.osType, 1);
+        RED_CHECK_EQUAL(pdu.osVersion, 2);
+        RED_CHECK_EQUAL(pdu.protocolMajorVersion, 3);
+        RED_CHECK_EQUAL(pdu.protocolMinorVersion, 4);
+        RED_CHECK_EQUAL(pdu.ioCode1, 5);
+        RED_CHECK_EQUAL(pdu.ioCode2, 6);
+        RED_CHECK_EQUAL(pdu.extendedPDU_, 7);
+        RED_CHECK_EQUAL(pdu.extraFlags1_, 8);
+        RED_CHECK_EQUAL(pdu.extraFlags2, 9);
+        RED_CHECK_EQUAL(pdu.SpecialTypeDeviceCap, 10);
+    }
 }
 
-RED_AUTO_TEST_CASE(GeneralCapabilitySetReceive)
+RED_AUTO_TEST_CASE(ServerAnnounceRequest)
 {
-    const size_t len = 36;
-    const char data[] =
-            "\x01\x00\x00\x00\x02\x00\x00\x00\x03\x00\x04\x00\x05\x00\x00\x00"
-            "\x06\x00\x00\x00\x07\x00\x00\x00\x08\x00\x00\x00\x09\x00\x00\x00"
-            "\x0a\x00\x00\x00";
+    auto data = "\x01\x00\x02\x00\x03\x00"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::GeneralCapabilitySet pdu;
-    pdu.receive(in_stream, rdpdr::GENERAL_CAPABILITY_VERSION_02);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerAnnounceRequest pdu(1, 2, 3);
 
-    RED_CHECK_EQUAL(pdu.osType, 1);
-    RED_CHECK_EQUAL(pdu.osVersion, 2);
-    RED_CHECK_EQUAL(pdu.protocolMajorVersion, 3);
-    RED_CHECK_EQUAL(pdu.protocolMinorVersion, 4);
-    RED_CHECK_EQUAL(pdu.ioCode1, 5);
-    RED_CHECK_EQUAL(pdu.ioCode2, 6);
-    RED_CHECK_EQUAL(pdu.extendedPDU_, 7);
-    RED_CHECK_EQUAL(pdu.extraFlags1_, 8);
-    RED_CHECK_EQUAL(pdu.extraFlags2, 9);
-    RED_CHECK_EQUAL(pdu.SpecialTypeDeviceCap, 10);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerAnnounceRequest pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.VersionMajor(), 1);
+        RED_CHECK_EQUAL(pdu.VersionMinor(), 2);
+        RED_CHECK_EQUAL(pdu.ClientId(), 3);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerAnnounceRequestEmit)
+RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponse)
 {
-    const size_t len = 6;
-    const char data[] =
-            "\x01\x00\x02\x00\x03\x00";
+    auto data = "\x01\x00\x00\x00\x01\x00\x00\xc0"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ServerAnnounceRequest pdu(1, 2, 3);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::ServerDeviceAnnounceResponse pdu(1, erref::NTSTATUS::STATUS_UNSUCCESSFUL);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::ServerDeviceAnnounceResponse pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.DeviceId(), 1);
+        RED_CHECK_EQUAL(uint32_t(pdu.ResultCode()), uint32_t(erref::NTSTATUS::STATUS_UNSUCCESSFUL));
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerAnnounceRequestReceive)
+RED_AUTO_TEST_CASE(DeviceWriteResponse)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x02\x00\x03\x00\x00\x00";
+    auto data = "\x01\x00\x00\x00"_av;
 
-    InStream in_stream(data, len);
-    rdpdr::ServerAnnounceRequest pdu;
-    pdu.receive(in_stream);
+    {
+        StaticOutStream<128> stream;
+        rdpdr::DeviceWriteResponse pdu(1);
 
-    RED_CHECK_EQUAL(pdu.VersionMajor(), 1);
-    RED_CHECK_EQUAL(pdu.VersionMinor(), 2);
-    RED_CHECK_EQUAL(pdu.ClientId(), 3);
+        pdu.emit(stream);
+
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
+
+    {
+        InStream in_stream(data);
+        rdpdr::DeviceWriteResponse pdu;
+
+        pdu.receive(in_stream);
+
+        RED_CHECK_EQUAL(pdu.Length, 1);
+    }
 }
 
-RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponseEmit)
+RED_AUTO_TEST_CASE(DeviceReadResponse)
 {
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x00\x00\x01\x00\x00\xc0";
+    auto data = "\x04\x00\x00\x00"_av;
 
-    StaticOutStream<128> stream;
-    rdpdr::ServerDeviceAnnounceResponse pdu(1, erref::NTSTATUS::STATUS_UNSUCCESSFUL);
-    pdu.emit(stream);
+    {
+        StaticOutStream<128> stream;
+        //uint8_t readData[] = {1, 2, 3, 4};
+        rdpdr::DeviceReadResponse pdu(4);
 
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
+        pdu.emit(stream);
 
-RED_AUTO_TEST_CASE(ServerDeviceAnnounceResponseReceive)
-{
-    const size_t len = 8;
-    const char data[] =
-            "\x01\x00\x00\x00\x01\x00\x00\xc0";
+        RED_CHECK_MEM(stream.get_bytes(), data);
+    }
 
-    InStream in_stream(data, len);
-    rdpdr::ServerDeviceAnnounceResponse pdu;
-    pdu.receive(in_stream);
+    {
+        InStream in_stream(data);
+        rdpdr::DeviceReadResponse pdu;
+        pdu.receive(in_stream);
 
-    RED_CHECK_EQUAL(pdu.DeviceId(), 1);
-    RED_CHECK_EQUAL(uint32_t(pdu.ResultCode()), uint32_t(erref::NTSTATUS::STATUS_UNSUCCESSFUL));
-}
-
-RED_AUTO_TEST_CASE(DeviceWriteResponseEmit)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x00";
-
-    StaticOutStream<128> stream;
-    rdpdr::DeviceWriteResponse pdu(1);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(DeviceWriteResponseReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x01\x00\x00\x00";
-
-    InStream in_stream(data, len);
-    rdpdr::DeviceWriteResponse pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.Length, 1);
-}
-
-RED_AUTO_TEST_CASE(DeviceReadResponseEmit)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x04\x00\x00\x00";
-
-    StaticOutStream<128> stream;
-    //uint8_t readData[] = {1, 2, 3, 4};
-    rdpdr::DeviceReadResponse pdu(4);
-    pdu.emit(stream);
-
-    std::string const out_data(data, len);
-    std::string const expected(char_ptr_cast(stream.get_data()), len);
-    RED_CHECK_EQUAL(expected, out_data);
-}
-
-RED_AUTO_TEST_CASE(DeviceReadResponseReceive)
-{
-    const size_t len = 4;
-    const char data[] =
-            "\x04\x00\x00\x00";
-
-    InStream in_stream(data, len);
-    rdpdr::DeviceReadResponse pdu;
-    pdu.receive(in_stream);
-
-    RED_CHECK_EQUAL(pdu.Length, 4);
+        RED_CHECK_EQUAL(pdu.Length, 4);
+    }
 }

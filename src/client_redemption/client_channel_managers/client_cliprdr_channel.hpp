@@ -156,6 +156,10 @@ public:
         int    pic_height = 0;
         int    pic_bpp = 0;
 
+        array_view_const_u8 av() const noexcept
+        {
+            return {this->data.get(), this->size};
+        }
     } _cb_buffers;
 
     struct CB_FilesList {

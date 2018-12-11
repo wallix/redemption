@@ -21,13 +21,8 @@
 #define RED_TEST_MODULE TestCLIPRDRChannelManager
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include <stdio.h>
-#include <string.h>
-
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 #include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
-
-
 
 
 
@@ -185,11 +180,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
 
     // Manager state check
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
-    RED_CHECK_EQUAL(sizeof(clip_data_part1), manager._cb_buffers.size);
-    RED_CHECK_EQUAL(sizeof(clip_data_total), manager._cb_buffers.sizeTotal);
-    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(manager._cb_buffers.data.get()));
-    std::string data_sent_expected_part1(clip_txt_part1);
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+    RED_CHECK_EQUAL(std::size(clip_data_total), manager._cb_buffers.sizeTotal);
+    RED_CHECK_SMEM(manager._cb_buffers.av(), clip_txt_part1);
 
     // Format Data Response PDU part 2
     StaticOutStream<1600> out_FormatDataResponsep_part2;
@@ -203,9 +195,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
 
     // check clip io data
-    std::string data_sent_to_local_clipboard(clip_io.data_text);
-    std::string data_sent_expected(clip_txt_total, sizeof(clip_txt_total));
-    RED_CHECK_EQUAL(clip_io.data_text, data_sent_expected);
+    RED_CHECK_SMEM(clip_io.data_text, clip_txt_total);
 
     // Unlock Clipboard Data PDU
     pdu_data = mod.stream();
@@ -307,16 +297,12 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total));
-    std::string data_sent_to_local_clipboard_part1(char_ptr_cast( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
-    std::string data_sent_expected_part1(clip_txt_part1, sizeof(clip_txt_part1));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+    RED_CHECK_SMEM(stream_formatDataResponse_part1.get_bytes(), clip_txt_part1);
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
     InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    std::string data_sent_to_local_clipboard_part2(char_ptr_cast( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
-    std::string data_sent_expected_part2(clip_txt_part2, sizeof(clip_txt_part2));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part2, data_sent_expected_part2);
+    RED_CHECK_SMEM(stream_formatDataResponse_part2.get_bytes(), clip_txt_part2);
 }
 
 
@@ -490,9 +476,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(manager._waiting_for_data, true);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-    std::string data_sent_to_local_clipboard_part1(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_part1));
-    std::string data_sent_expected_part1(clip_txt_part1,  sizeof(clip_txt_part1));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+    RED_CHECK_SMEM(clip_io.get_file_item(0), clip_txt_part1);
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
 
     // File Content Response Range part 2
@@ -519,9 +503,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
     RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
-    std::string data_sent_to_local_clipboard_total(char_ptr_cast(clip_io._chunk.get()),  sizeof(clip_txt_total));
-    std::string data_sent_expected_total(clip_txt_total,  sizeof(clip_txt_total));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_total, data_sent_expected_total);
+    RED_CHECK_SMEM(clip_io.get_file_item(0), clip_txt_total);
 }
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
@@ -673,14 +655,10 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total)+4);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), 1);
-    std::string data_sent_to_local_clipboard_part1(char_ptr_cast( stream_formatDataResponse_part1.get_current()), sizeof(clip_txt_part1));
-    std::string data_sent_expected_part1(clip_txt_part1, sizeof(clip_txt_part1));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part1, data_sent_expected_part1);
+    RED_CHECK_SMEM(stream_formatDataResponse_part1.get_bytes(), clip_txt_part1);
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
     InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    std::string data_sent_to_local_clipboard_part2(char_ptr_cast( stream_formatDataResponse_part2.get_current()), sizeof(clip_txt_part2));
-    std::string data_sent_expected_part2(clip_txt_part2, sizeof(clip_txt_part2));
-    RED_CHECK_EQUAL(data_sent_to_local_clipboard_part2, data_sent_expected_part2);
+    RED_CHECK_SMEM(stream_formatDataResponse_part2.get_bytes(), clip_txt_part2);
 }

@@ -24,6 +24,7 @@
 
 #include "lib/do_recorder.hpp"
 #include "utils/fileutils.hpp"
+#include "utils/sugar/algostring.hpp"
 #include "transport/crypto_transport.hpp"
 
 #include "test_only/get_file_contents.hpp"
@@ -251,22 +252,16 @@ RED_AUTO_TEST_CASE(TestVerifierUpdateData)
         std::string s;
         struct stat64 stat;
         ::stat64(filename, &stat);
-        s += std::to_string(stat.st_size);
-        s += ' ';
-        s += std::to_string(stat.st_mode);
-        s += ' ';
-        s += std::to_string(stat.st_uid);
-        s += ' ';
-        s += std::to_string(stat.st_gid);
-        s += ' ';
-        s += std::to_string(stat.st_dev);
-        s += ' ';
-        s += std::to_string(stat.st_ino);
-        s += ' ';
-        s += std::to_string(stat.st_mtime);
-        s += ' ';
-        s += std::to_string(stat.st_ctime);
-        return s;
+        return str_concat(
+            std::to_string(stat.st_size), ' ',
+            std::to_string(stat.st_mode), ' ',
+            std::to_string(stat.st_uid), ' ',
+            std::to_string(stat.st_gid), ' ',
+            std::to_string(stat.st_dev), ' ',
+            std::to_string(stat.st_ino), ' ',
+            std::to_string(stat.st_mtime), ' ',
+            std::to_string(stat.st_ctime)
+        );
     };
 
     std::string mwrm_hash_contents = "v2\n\n\n" MWRM_FILENAME " " + str_stat(tmp_recorded_mwrm) + "\n";
