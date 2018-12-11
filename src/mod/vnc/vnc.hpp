@@ -997,7 +997,6 @@ public:
                 }
                 this->left_ctrl_pressed = false;
             }
-            // TODO magic number
             else if (!((key == KeymapSym::VNC_LEFT_CTRL) && downflag)) {
                 this->send_keyevent(downflag, key);
             }
