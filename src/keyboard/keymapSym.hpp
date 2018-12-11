@@ -43,6 +43,12 @@ struct KeymapSym
          , FLG_ALTGR   = 0x80
     };
 
+    enum :  uint16_t {
+            VNC_LEFT_ALT  = 0xffe9,
+            VNC_RIGHT_ALT = 0xffea,
+            VNC_LEFT_CTRL = 0xffe3, 
+    };
+
     enum {
            LEFT_SHIFT  = 0x36
          , RIGHT_SHIFT = 0x2A

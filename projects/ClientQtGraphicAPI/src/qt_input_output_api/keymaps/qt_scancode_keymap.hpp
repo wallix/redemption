@@ -375,7 +375,7 @@ private:
                         this->_keyboardMods -= ALT_MOD;
                     }
                 }
-                this->flag = this->flag | KBD_FLAGS_EXTENDED;
+                //this->flag = this->flag | KBD_FLAGS_EXTENDED;
                 this->layout_Work_Update();
                 break;
 
@@ -563,7 +563,7 @@ public:
     //   CONSTRUCTOR   //
     //===================================================================================
     Qt_ScanCode_KeyMap(int LCID = KEYBOARDS::EN_US_INTERNATIONAL, int verbose = 0):
-      _verbose(verbose)
+      _verbose(1/*verbose*/)
     , _keyboardMods(0)
     , _keylayout_WORK(nullptr)
     , _layoutMods()

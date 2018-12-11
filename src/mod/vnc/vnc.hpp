@@ -967,7 +967,7 @@ public:
         uint32_t const key {this->keymapSym.get_sym()};
 
         if (key > 0) {
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed()
+            if (this->remove_server_alt_state_for_char && this->keymapSym.is_right_alt_pressed()
              && (key == '#'
               || key == '{'
               || key == '['
@@ -979,26 +979,26 @@ public:
               || key == ']'
               || key == '}'
             )) {
-                // TODO magic number
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, 0xffe9);
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_RELEASE, KeymapSym::VNC_RIGHT_ALT);
                 this->send_keyevent(downflag, key);
-                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, 0xffe9);
+                this->send_keyevent(KeymapSym::VNC_KBDFLAGS_DOWN, KeymapSym::VNC_RIGHT_ALT);
+
             } else
             if (this->left_ctrl_pressed) {
-                // TODO magic number
+
                 if (key == 0xfe03) {
                     // alt gr => left ctrl is ignored
                     this->send_keyevent(downflag, key);
                 }
                 else {
                     // TODO magic number
-                    this->send_keyevent(1, 0xffe3);
+                    this->send_keyevent(1, KeymapSym::VNC_LEFT_CTRL);
                     this->send_keyevent(downflag, key);
                 }
                 this->left_ctrl_pressed = false;
             }
             // TODO magic number
-            else if (!((key == 0xffe3) && downflag)) {
+            else if (!((key == KeymapSym::VNC_LEFT_CTRL) && downflag)) {
                 this->send_keyevent(downflag, key);
             }
             else {
