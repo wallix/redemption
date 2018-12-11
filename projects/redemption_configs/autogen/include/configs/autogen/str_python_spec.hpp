@@ -138,7 +138,7 @@
 
 "enable_arcsight_log = boolean(default=False)\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "log_path = string(default='')\n\n"
 
 "#   0: keyboard input are not masked\n"
