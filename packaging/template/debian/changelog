@@ -1,3 +1,9 @@
+redemption (1.1.99%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Allows logoff if the remaining process does not have a visible window.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 11 Dec 2018 10:02:20 +0200
+
 redemption (1.1.97%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 
