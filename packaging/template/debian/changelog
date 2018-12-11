@@ -1,3 +1,9 @@
+redemption (1.1.101%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Disable (SIEM) keyboard input logging by connection policy.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Tue, 11 Dec 2018 11:59:33 +0200
+
 redemption (1.1.99%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Allows logoff if the remaining process does not have a visible window.
