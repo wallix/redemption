@@ -43,3 +43,26 @@ http://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
 - Compile with -g and -fno-omit-frame-pointer
 - `export UBSAN_OPTIONS=print_stacktrace=1`
 - Make sure llvm-symbolizer binary is in PATH (example: `export ASAN_SYMBOLIZER_PATH=/usr/lib/llvm-3.8/bin/llvm-symbolizer`).
+
+# Utils
+
+## include_tree
+
+```bash
+include_tree [-v filters='file1;file2'] [-v nolist=1] [-v notree=1] [-v oneline=1] [-v headeronly=1] files
+```
+
+### Examples
+
+#### Zsh
+
+```zsh
+set extendedglob
+./tools/c++-analyzer/include_tree -v oneline=1 src/**/*~src/keyboard*(^/) tests/includes/test-only/**/*(^/) tests/mod/rdp/test_rdp.cpp
+```
+
+#### Bash
+
+```bash
+find src -type f -exec ./tools/c++-analyzer/include_tree -v oneline=1 {} +
+```

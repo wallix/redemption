@@ -1,38 +1,170 @@
 #!/usr/bin/awk -f
-BEGINFILE {
-    f=substr(FILENAME,5) # skip src/
+# -v filters="file1;file2"
+# -v nolist=1
+# -v notree=1
+# -v oneline=1
+# -v headeronly=1
+{
+    visited_n=0
+    ptree_counter=0
 }
+function sanitize_filename(s)
+{
+    if (substr(s,1,4) == "src/")
+    {
+        return substr(s,5)
+    }
+    if (substr(s,1,6) == "tests/")
+    {
+        if (substr(s,1,15) == "tests/includes/")
+        {
+            return substr(s,16)
+        }
+        return substr(s,7)
+    }
+    return s
+}
+
+BEGINFILE {
+    f = sanitize_filename(FILENAME)
+}
+
 /^\s*#\s*include "/ {
     gsub(/^\s*\#\s*include "|".*$/, "")
     m[f][$0]
 }
-function ptree(s, f,    ns)
+
+function ptree_impl(s, f,     ns)
 {
     print s f
-    if (f in m)
+    if ((f in m) && !(f in pvisited))
     {
+        pvisited[f]
         ns=s "| "
         for (sf in m[f])
         {
-            ptree(ns, sf)
+            ptree_impl(ns, sf)
         }
     }
 }
-END {
-    for (f in m)
+
+function ptree(f)
+{
+    delete pvisited
+    if (oneline)
     {
-        ptree("", f)
+        ptree_impl(f "  ",f)
     }
-    print "\n"
-    for (f in m)
+    else
     {
-        print "\x1b[31m" f "\x1b[0m"
+        ++ptree_counter
+        ptree_impl(ptree_counter "  ",f)
+    }
+    print
+}
+
+function pmark(f)
+{
+    if (f in m)
+    {
+        visited[f]
         for (sf in m[f])
         {
-            i=index(sf, "/")
-            subf=substr(sf, i+1)
-            i2=index(subf, "/")
-            print "  \x1b[37m" substr(sf, 0, i) "\x1b[36m" substr(subf, 0, i2) "\x1b[0m" substr(subf, i2+1)
+            pmark(sf)
+        }
+    }
+}
+
+function plist(f)
+{
+    prefix = "\x1b[31m" f "\x1b[0m"
+    if (!oneline)
+    {
+        print prefix
+        prefix = ""
+    }
+
+    arr_n=0
+    delete arr
+    for (sf in m[f])
+    {
+        ++arr_n
+        arr[arr_n] = sf
+    }
+    asort(arr)
+    prefix = prefix "  \x1b[37m"
+    for (k=1; k<=arr_n; ++k)
+    {
+        sf=arr[k]
+        i=index(sf, "/")
+        subf=substr(sf, i+1)
+        i2=index(subf, "/")
+        print prefix substr(sf, 0, i) "\x1b[36m" substr(subf, 0, i2) "\x1b[0m" substr(subf, i2+1)
+    }
+}
+
+END {
+    if (filters)
+    {
+        nb_rep = split(filters, rep, ";")
+        for (k=1; k<=nb_rep; ++k)
+        {
+            f = sanitize_filename(rep[k])
+            if (!notree)
+            {
+                ptree(f)
+            }
+            pmark(f)
+        }
+
+        if (!headeronly)
+        {
+            do
+            {
+                found=0
+                for (sf in visited)
+                {
+                    f = substr(sf, 1, length(sf)-3) "cpp"
+                    if (!(f in visited) && f in m)
+                    {
+                        found=1
+                        if (!notree)
+                        {
+                            ptree(f)
+                        }
+                        pmark(f)
+                    }
+                }
+            } while (found)
+        }
+
+        print "\n"
+
+        if (!nolist)
+        {
+            for (sf in visited)
+            {
+                plist(sf)
+            }
+        }
+    }
+    else
+    {
+        if (!notree)
+        {
+            for (f in m)
+            {
+                ptree(f)
+            }
+            print "\n"
+        }
+
+        if (!nolist)
+        {
+            for (f in m)
+            {
+                plist(f)
+            }
         }
     }
 }
