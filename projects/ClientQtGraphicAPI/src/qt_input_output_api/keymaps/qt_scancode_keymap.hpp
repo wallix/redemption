@@ -563,7 +563,7 @@ public:
     //   CONSTRUCTOR   //
     //===================================================================================
     Qt_ScanCode_KeyMap(int LCID = KEYBOARDS::EN_US_INTERNATIONAL, int verbose = 0):
-      _verbose(1/*verbose*/)
+      _verbose(verbose)
     , _keyboardMods(0)
     , _keylayout_WORK(nullptr)
     , _layoutMods()

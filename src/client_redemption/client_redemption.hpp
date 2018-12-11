@@ -312,7 +312,6 @@ public:
             if (this->impl_graphic) {
                 this->impl_graphic->init_form();
                 if (this->config.help_mode) {
-                    LOG(LOG_INFO, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     this->impl_graphic->closeFromGUI();
                 }
             }

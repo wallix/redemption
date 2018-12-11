@@ -180,16 +180,20 @@ public:
     }
 
     void mouseButtonEvent(int x, int y, int flag) {
-        if (this->mod != nullptr) {
+        if (this->mod != nullptr && flag != MOUSE_FLAG_BUTTON4) {
+
             this->mod->rdp_input_mouse(flag, x, y, &(this->keymap));
         }
     }
 
     void wheelEvent(int  x,  int  y, int delta) {
-        int flag(MOUSE_FLAG_WHEEL);
+        int flag(0);
         if (delta < 0) {
-            flag = flag | MOUSE_FLAG_WHEEL_NEGATIVE;
+            flag = MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE;
+        } else {
+            flag = MOUSE_FLAG_BUTTON4;
         }
+
         if (this->mod != nullptr) {
             this->mod->rdp_input_mouse(flag, 0, 0, &(this->keymap));
         }
