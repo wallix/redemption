@@ -136,7 +136,7 @@
 
 "enable_session_log = boolean(default=True)\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "log_path = string(default='')\n\n"
 
 "#   0: keyboard input are not masked\n"

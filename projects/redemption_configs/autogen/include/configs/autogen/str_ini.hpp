@@ -136,7 +136,7 @@
 
 "#enable_session_log = 1\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#log_path = \n\n"
 
 "#   0: keyboard input are not masked\n"
