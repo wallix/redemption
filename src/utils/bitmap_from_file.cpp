@@ -46,26 +46,28 @@
 
 using std::size_t; /*NOLINT*/
 
-inline bool read_all(int fd, void * data_, std::size_t len)
+namespace
 {
-    unsigned char * data = static_cast<unsigned char *>(data_);
-    while (len) {
-        ssize_t const ret = ::read(fd, data, len);
-        if (ret <= 0) {
-            if (errno == EINTR) {
-                continue;
+    bool read_all(int fd, void * data_, std::size_t len)
+    {
+        unsigned char * data = static_cast<unsigned char *>(data_);
+        while (len) {
+            ssize_t const ret = ::read(fd, data, len);
+            if (ret <= 0) {
+                if (errno == EINTR) {
+                    continue;
+                }
+                return false;
             }
-            return false;
+            len -= ret;
+            data += ret;
         }
-        len -= ret;
-        data += ret;
+        return true;
     }
-    return true;
-}
 
-
-inline Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
-inline Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
+    Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
+    Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
+} // namespace
 
 
 Bitmap bitmap_from_file_impl(const char * filename)
@@ -112,7 +114,7 @@ Bitmap bitmap_from_file(const char * filename)
     return load_error_bitmap();
 }
 
-
+namespace {
 Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
 {
     Bitmap bitmap;
@@ -392,7 +394,7 @@ Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 
     return bitmap;
 }
-
+} // namespace
 
 Bitmap load_error_bitmap()
 {
