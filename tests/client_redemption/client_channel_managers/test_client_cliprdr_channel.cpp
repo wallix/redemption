@@ -24,6 +24,7 @@
 #include "client_redemption/client_channel_managers/fake_client_mod.hpp"
 #include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
 
+#include <string>
 
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
@@ -107,13 +108,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
 
-    char clip_txt_part1[1592 + 1] = {0};
     char clip_txt_total[1800] = {0};
 
     memset (clip_data_part1, 97, 1592);
     memset (clip_data_part2, 97, 208 );
     memset (clip_data_total, 97, 1800);
-    memset (clip_txt_part1, 'a', 1592);
     memset (clip_txt_total, 'a', 1800);
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST
@@ -181,7 +180,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     // Manager state check
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 3);
     RED_CHECK_EQUAL(std::size(clip_data_total), manager._cb_buffers.sizeTotal);
-    RED_CHECK_SMEM(manager._cb_buffers.av(), clip_txt_part1);
+    RED_CHECK_SMEM(manager._cb_buffers.av(), std::string(1592, 'a'));
 
     // Format Data Response PDU part 2
     StaticOutStream<1600> out_FormatDataResponsep_part2;
@@ -195,7 +194,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     RED_CHECK_EQUAL(0, manager._cb_buffers.sizeTotal);
 
     // check clip io data
-    RED_CHECK_SMEM(clip_io.data_text, clip_txt_total);
+    RED_CHECK_SMEM_AA(clip_io.data_text, clip_txt_total);
 
     // Unlock Clipboard Data PDU
     pdu_data = mod.stream();
@@ -216,15 +215,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     uint8_t clip_data_part2[208]  = {0};
     uint8_t clip_data_total[1800] = {0};
 
-    char clip_txt_part1[1592] = {0};
-    char clip_txt_part2[208]  = {0};
     char clip_txt_total[1800] = {0};
 
     memset (clip_data_part1, 97, 1592);
     memset (clip_data_part2, 97, 208 );
     memset (clip_data_total, 97, 1800);
-    memset (clip_txt_part1, 'a', 1592);
-    memset (clip_txt_part2, 'a', 208) ;
     memset (clip_txt_total, 'a', 1800);
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
@@ -297,12 +292,14 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_FORMAT_DATA_RESPONSE);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total));
-    RED_CHECK_SMEM(stream_formatDataResponse_part1.get_bytes(), clip_txt_part1);
+    RED_CHECK_SMEM(
+        make_array_view(stream_formatDataResponse_part1.get_current(), 1592),
+        std::string(1592, 'a')
+    );
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
-    InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    RED_CHECK_SMEM(stream_formatDataResponse_part2.get_bytes(), clip_txt_part2);
+    RED_CHECK_SMEM(make_array_view(pdu_data->data, 208), std::string(208, 'a'));
 }
 
 
@@ -314,14 +311,12 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};
 
-    char clip_txt_part1[1588] = {0};
     char clip_txt_part2[212]  = {0};
     char clip_txt_total[1800] = {0};
 
     memset (clip_data_part1, 97, 1588);
     memset (clip_data_part2, 97, 212 );
     memset (clip_data_total, 97, 1800);
-    memset (clip_txt_part1, 'a', 1588);
     memset (clip_txt_part2, 'a', 212 );
     memset (clip_txt_total, 'a', 1800);
 
@@ -476,7 +471,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(manager._waiting_for_data, true);
     RED_CHECK_EQUAL(sizeof(clip_data_part1), clip_io.offset);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
-    RED_CHECK_SMEM(clip_io.get_file_item(0), clip_txt_part1);
+    RED_CHECK_SMEM(make_array_view(clip_io._chunk.get(), 1588), std::string(1588, 'a'));
     RED_CHECK_EQUAL(mod.get_total_stream_produced(), 5);
 
     // File Content Response Range part 2
@@ -503,7 +498,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.size);
     RED_CHECK_EQUAL(sizeof(clip_data_total), clip_io.offset);
     RED_CHECK_EQUAL("file_name.name", clip_io.fileName);
-    RED_CHECK_SMEM(clip_io.get_file_item(0), clip_txt_total);
+    RED_CHECK_SMEM_AA(clip_io.get_file_item(0), clip_txt_total);
 }
 
 RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
@@ -514,15 +509,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     uint8_t clip_data_part2[212]  = {0};
     uint8_t clip_data_total[1800] = {0};
 
-    char clip_txt_part1[1588] = {0};
-    char clip_txt_part2[212]  = {0};
     char clip_txt_total[1800] = {0};
 
     memset (clip_data_part1, 97, 1588);
     memset (clip_data_part2, 97, 212 );
     memset (clip_data_total, 97, 1800);
-    memset (clip_txt_part1, 'a', 1588);
-    memset (clip_txt_part2, 'a', 212 );
     memset (clip_txt_total, 'a', 1800);
 
     const int flag_channel = CHANNELS::CHANNEL_FLAG_LAST  | CHANNELS::CHANNEL_FLAG_FIRST |
@@ -655,10 +646,11 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint16_le(), RDPECLIP::CB_RESPONSE_OK);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), sizeof(clip_data_total)+4);
     RED_CHECK_EQUAL(stream_formatDataResponse_part1.in_uint32_le(), 1);
-    RED_CHECK_SMEM(stream_formatDataResponse_part1.get_bytes(), clip_txt_part1);
+    RED_CHECK_SMEM(
+        make_array_view(stream_formatDataResponse_part1.get_current(), 1588),
+        std::string(1588, 'a'));
 
     // Format Data Response PDU par 2
     pdu_data = mod.stream();
-    InStream stream_formatDataResponse_part2(pdu_data->data, pdu_data->size);
-    RED_CHECK_SMEM(stream_formatDataResponse_part2.get_bytes(), clip_txt_part2);
+    RED_CHECK_SMEM(make_array_view(pdu_data->data, 212), std::string(212, 'a'));
 }
