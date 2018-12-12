@@ -66,6 +66,7 @@ test-run tests/acl/test_module_manager :
   ppocr.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   snappy.bc
+  src/RAIL/client_execute.bc
   src/acl/module_manager/create_module_rdp.bc
   src/acl/module_manager/create_module_vnc.bc
   src/acl/module_manager/mm_ini.bc
@@ -90,7 +91,6 @@ test-run tests/acl/test_module_manager :
   src/keyboard/keymap2.bc
   src/keyboard/keymapSym.bc
   src/mod/internal/bouncer2_mod.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_dialog_mod.bc
   src/mod/internal/flat_login_mod.bc
@@ -322,6 +322,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   krb5.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -332,7 +333,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/widget/flat_button.bc
   src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -388,6 +388,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   krb5.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -398,7 +399,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/widget/flat_button.bc
   src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -427,6 +427,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   krb5.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -437,7 +438,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/widget/flat_button.bc
   src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -460,10 +460,8 @@ test-run tests/client_mods/test_rdp_client_wab :
 ;
 test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_cliprdr_channel.cpp
-  app_path_test.bc
   crypto.bc
   openssl.bc
-  png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_cliprdr_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
@@ -471,24 +469,18 @@ test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_cha
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
-  src/mod/internal/client_execute.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/netutils.bc
-  src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpdr_channel.cpp
-  app_path_test.bc
   crypto.bc
   openssl.bc
-  png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_rdpdr_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
@@ -496,24 +488,18 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_chann
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
-  src/mod/internal/client_execute.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/netutils.bc
-  src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpsnd_channel.cpp
-  app_path_test.bc
   crypto.bc
   openssl.bc
-  png.bc
   snappy.bc
   src/client_redemption/client_channel_managers/client_rdpsnd_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
@@ -521,15 +507,11 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_chan
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
-  src/mod/internal/client_execute.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/netutils.bc
-  src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -547,12 +529,10 @@ test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_c
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/replay_mod.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
   src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/netutils.bc
@@ -566,25 +546,19 @@ test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_c
 ;
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
-  app_path_test.bc
   crypto.bc
   openssl.bc
-  png.bc
   snappy.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
-  src/mod/internal/client_execute.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/netutils.bc
-  src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/working_directory.bc
@@ -1315,6 +1289,7 @@ test-run tests/core/test_mainloop :
   ppocr.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   snappy.bc
+  src/RAIL/client_execute.bc
   src/acl/module_manager/create_module_rdp.bc
   src/acl/module_manager/create_module_vnc.bc
   src/acl/module_manager/mm_ini.bc
@@ -1341,7 +1316,6 @@ test-run tests/core/test_mainloop :
   src/keyboard/keymap2.bc
   src/keyboard/keymapSym.bc
   src/mod/internal/bouncer2_mod.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_dialog_mod.bc
   src/mod/internal/flat_login_mod.bc
@@ -1428,6 +1402,7 @@ test-run tests/core/test_session :
   ppocr.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   snappy.bc
+  src/RAIL/client_execute.bc
   src/acl/module_manager/create_module_rdp.bc
   src/acl/module_manager/create_module_vnc.bc
   src/acl/module_manager/mm_ini.bc
@@ -1453,7 +1428,6 @@ test-run tests/core/test_session :
   src/keyboard/keymap2.bc
   src/keyboard/keymapSym.bc
   src/mod/internal/bouncer2_mod.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_dialog_mod.bc
   src/mod/internal/flat_login_mod.bc
@@ -1543,6 +1517,7 @@ test-run tests/core/test_session_server :
   ppocr.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   snappy.bc
+  src/RAIL/client_execute.bc
   src/acl/module_manager/create_module_rdp.bc
   src/acl/module_manager/create_module_vnc.bc
   src/acl/module_manager/mm_ini.bc
@@ -1568,7 +1543,6 @@ test-run tests/core/test_session_server :
   src/keyboard/keymap2.bc
   src/keyboard/keymapSym.bc
   src/mod/internal/bouncer2_mod.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_dialog_mod.bc
   src/mod/internal/flat_login_mod.bc
@@ -1651,6 +1625,7 @@ test-run tests/front/test_front :
   ppocr.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   snappy.bc
+  src/RAIL/client_execute.bc
   src/capture/capture.bc
   src/capture/ocr/locale/latin_to_cyrillic.bc
   src/capture/params_from_ini.bc
@@ -1669,7 +1644,6 @@ test-run tests/front/test_front :
   src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/widget/flat_button.bc
   src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -1845,13 +1819,13 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_dialog_mod.bc
   src/mod/internal/internal_mod.bc
@@ -1885,13 +1859,13 @@ test-run tests/mod/internal/test_flat_login_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_login_mod.bc
   src/mod/internal/internal_mod.bc
@@ -1926,13 +1900,13 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/flat_wab_close_mod.bc
   src/mod/internal/internal_mod.bc
   src/mod/internal/locally_integrable_mod.bc
@@ -1962,12 +1936,12 @@ test-run tests/mod/internal/test_flat_wait_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/flat_wait_mod.bc
   src/mod/internal/internal_mod.bc
@@ -1996,13 +1970,13 @@ test-run tests/mod/internal/test_interactive_target_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/interactive_target_mod.bc
   src/mod/internal/internal_mod.bc
@@ -2077,12 +2051,12 @@ test-run tests/mod/internal/test_selector_mod :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/copy_paste.bc
   src/mod/internal/internal_mod.bc
   src/mod/internal/locally_integrable_mod.bc
@@ -2821,6 +2795,7 @@ test-run tests/mod/rdp/test_rdp :
   krb5.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -2831,7 +2806,6 @@ test-run tests/mod/rdp/test_rdp :
   src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
-  src/mod/internal/client_execute.bc
   src/mod/internal/widget/flat_button.bc
   src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
@@ -2922,6 +2896,7 @@ test-run tests/mod/vnc/test_vnc :
   crypto.bc
   png.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
@@ -2929,7 +2904,6 @@ test-run tests/mod/vnc/test_vnc :
   src/gdi/screen_functions.bc
   src/keyboard/keymap2.bc
   src/keyboard/keymapSym.bc
-  src/mod/internal/client_execute.bc
   src/mod/vnc/encoder/copyrect.bc
   src/mod/vnc/encoder/cursor.bc
   src/mod/vnc/encoder/hextile.bc
@@ -3193,16 +3167,6 @@ test-run tests/system/linux/system/test_tls_context :
   src/core/error.bc
   src/utils/fileutils.bc
   src/utils/strutils.bc
-;
-test-run tests/test_bitmap_perf :
-  $(REDEMPTION_TEST_PATH)/test_bitmap_perf.cpp
-  crypto.bc
-  png.bc
-  src/core/error.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
-  src/utils/rle.bc
-  src/utils/utf.bc
 ;
 test-run tests/transport/test_crypto_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_crypto_transport.cpp
@@ -3609,6 +3573,7 @@ test-run tests/utils/winpr/test_pattern :
 ;
 
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+objjs src/RAIL/client_execute.bc : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 objjs src/acl/module_manager/create_module_rdp.bc : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 objjs src/acl/module_manager/create_module_vnc.bc : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 objjs src/acl/module_manager/mm_ini.bc : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
@@ -3653,7 +3618,6 @@ objjs src/main/main.bc : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 objjs src/main/proxy_recorder.bc : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 objjs src/main/rdp_client.bc : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 objjs src/mod/internal/bouncer2_mod.bc : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
-objjs src/mod/internal/client_execute.bc : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 objjs src/mod/internal/copy_paste.bc : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 objjs src/mod/internal/flat_dialog_mod.bc : $(REDEMPTION_SRC_PATH)/mod/internal/flat_dialog_mod.cpp ;
 objjs src/mod/internal/flat_login_mod.bc : $(REDEMPTION_SRC_PATH)/mod/internal/flat_login_mod.cpp ;
@@ -3985,7 +3949,6 @@ alias test_ssl_sha1 : tests/system/linux/system/test_ssl_sha1 ;
 alias test_ssl_sha256 : tests/system/linux/system/test_ssl_sha256 ;
 alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
 alias test_tls_context : tests/system/linux/system/test_tls_context ;
-alias test_bitmap_perf : tests/test_bitmap_perf ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
 alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
 alias test_in_file_transport : tests/transport/test_in_file_transport ;
@@ -4402,9 +4365,6 @@ alias tests/system/linux/system.norec :
   tests/system/linux/system/test_ssl_sha512
   tests/system/linux/system/test_tls_context
 ;
-alias tests.norec :
-  tests/test_bitmap_perf
-;
 alias tests/transport.norec :
   tests/transport/test_crypto_transport
   tests/transport/test_gzip_compression_transport
@@ -4504,8 +4464,26 @@ alias tests/utils/winpr.norec :
 alias tests/acl :
   tests/acl.norec
 ;
+alias tests :
+  tests/acl
+  tests/capture
+  tests/client_mods
+  tests/core
+  tests/front
+  tests/gdi
+  tests/keyboard
+  tests/lib
+  tests/mod
+  tests/regex
+  tests/server
+  tests/transport
+  tests/utils
+;
 alias tests/capture/ocr/locale :
   tests/capture/ocr/locale.norec
+;
+alias tests/capture/ocr :
+  tests/capture/ocr/locale
 ;
 alias tests/capture :
   tests/capture.norec
@@ -4520,14 +4498,35 @@ alias tests/client_mods :
 alias tests/client_redemption/client_channel_managers :
   tests/client_redemption/client_channel_managers.norec
 ;
+alias tests/client_redemption :
+  tests/client_redemption/client_channel_managers
+  tests/client_redemption/client_config
+;
 alias tests/client_redemption/client_config :
   tests/client_redemption/client_config.norec
 ;
 alias tests/core/FSCC :
   tests/core/FSCC.norec
 ;
+alias tests/core :
+  tests/core/FSCC
+  tests/core/RDP
+  tests/core/RDPEA
+  tests/core/SMB2
+  tests/core/WMF
+  tests/core.norec
+;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches.norec
+;
+alias tests/core/RDP :
+  tests/core/RDP/caches
+  tests/core/RDP/capabilities
+  tests/core/RDP/channels
+  tests/core/RDP/mppc
+  tests/core/RDP/nla
+  tests/core/RDP/orders
+  tests/core/RDP.norec
 ;
 alias tests/core/RDP/capabilities :
   tests/core/RDP/capabilities.norec
@@ -4538,11 +4537,20 @@ alias tests/core/RDP/channels :
 alias tests/core/RDP/gcc/userdata :
   tests/core/RDP/gcc/userdata.norec
 ;
+alias tests/core/RDP/gcc :
+  tests/core/RDP/gcc/userdata
+;
 alias tests/core/RDP/mppc :
   tests/core/RDP/mppc.norec
 ;
 alias tests/core/RDP/nla/asn1 :
   tests/core/RDP/nla/asn1.norec
+;
+alias tests/core/RDP/nla :
+  tests/core/RDP/nla/asn1
+  tests/core/RDP/nla/kerberos
+  tests/core/RDP/nla/ntlm
+  tests/core/RDP/nla.norec
 ;
 alias tests/core/RDP/nla/kerberos :
   tests/core/RDP/nla/kerberos.norec
@@ -4550,23 +4558,8 @@ alias tests/core/RDP/nla/kerberos :
 alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm.norec
 ;
-alias tests/core/RDP/nla :
-  tests/core/RDP/nla.norec
-  tests/core/RDP/nla/asn1
-  tests/core/RDP/nla/kerberos
-  tests/core/RDP/nla/ntlm
-;
 alias tests/core/RDP/orders :
   tests/core/RDP/orders.norec
-;
-alias tests/core/RDP :
-  tests/core/RDP.norec
-  tests/core/RDP/caches
-  tests/core/RDP/capabilities
-  tests/core/RDP/channels
-  tests/core/RDP/mppc
-  tests/core/RDP/nla
-  tests/core/RDP/orders
 ;
 alias tests/core/RDPEA :
   tests/core/RDPEA.norec
@@ -4576,14 +4569,6 @@ alias tests/core/SMB2 :
 ;
 alias tests/core/WMF :
   tests/core/WMF.norec
-;
-alias tests/core :
-  tests/core.norec
-  tests/core/FSCC
-  tests/core/RDP
-  tests/core/RDPEA
-  tests/core/SMB2
-  tests/core/WMF
 ;
 alias tests/front :
   tests/front.norec
@@ -4601,6 +4586,14 @@ alias tests/mod/internal :
   tests/mod/internal.norec
   tests/mod/internal/widget
 ;
+alias tests/mod :
+  tests/mod/internal
+  tests/mod/null
+  tests/mod/rdp
+  tests/mod.norec
+  tests/mod/vnc
+  tests/mod/xup
+;
 alias tests/mod/internal/widget :
   tests/mod/internal/widget.norec
 ;
@@ -4611,23 +4604,15 @@ alias tests/mod/rdp/channels :
   tests/mod/rdp/channels.norec
 ;
 alias tests/mod/rdp :
-  tests/mod/rdp.norec
   tests/mod/rdp/channels
-;
-alias tests/mod :
-  tests/mod.norec
-  tests/mod/internal
-  tests/mod/null
-  tests/mod/rdp
-  tests/mod/vnc
-  tests/mod/xup
+  tests/mod/rdp.norec
 ;
 alias tests/mod/vnc/encoder :
   tests/mod/vnc/encoder.norec
 ;
 alias tests/mod/vnc :
-  tests/mod/vnc.norec
   tests/mod/vnc/encoder
+  tests/mod/vnc.norec
 ;
 alias tests/mod/xup :
   tests/mod/xup.norec
@@ -4641,21 +4626,8 @@ alias tests/server :
 alias tests/system/linux/system :
   tests/system/linux/system.norec
 ;
-alias tests :
-  tests.norec
-  tests/acl
-  tests/capture
-  tests/client_mods
-  tests/core
-  tests/front
-  tests/gdi
-  tests/keyboard
-  tests/lib
-  tests/mod
-  tests/regex
-  tests/server
-  tests/transport
-  tests/utils
+alias tests/system/linux :
+  tests/system/linux/system
 ;
 alias tests/transport :
   tests/transport.norec
@@ -4663,18 +4635,18 @@ alias tests/transport :
 alias tests/utils/crypto :
   tests/utils/crypto.norec
 ;
+alias tests/utils :
+  tests/utils/crypto
+  tests/utils/sugar
+  tests/utils.norec
+  tests/utils/winpr
+;
 alias tests/utils/sugar/numerics :
   tests/utils/sugar/numerics.norec
 ;
 alias tests/utils/sugar :
-  tests/utils/sugar.norec
   tests/utils/sugar/numerics
-;
-alias tests/utils :
-  tests/utils.norec
-  tests/utils/crypto
-  tests/utils/sugar
-  tests/utils/winpr
+  tests/utils/sugar.norec
 ;
 alias tests/utils/winpr :
   tests/utils/winpr.norec
@@ -4719,7 +4691,6 @@ explicit
   tests/regex.norec
   tests/server.norec
   tests/system/linux/system.norec
-  tests.norec
   tests/transport.norec
   tests/utils/crypto.norec
   tests/utils/sugar/numerics.norec
@@ -4729,49 +4700,53 @@ explicit
 ;
 explicit
   tests/acl
+  tests
   tests/capture/ocr/locale
+  tests/capture/ocr
   tests/capture
   tests/capture/utils
   tests/client_mods
   tests/client_redemption/client_channel_managers
+  tests/client_redemption
   tests/client_redemption/client_config
   tests/core/FSCC
+  tests/core
   tests/core/RDP/caches
+  tests/core/RDP
   tests/core/RDP/capabilities
   tests/core/RDP/channels
   tests/core/RDP/gcc/userdata
+  tests/core/RDP/gcc
   tests/core/RDP/mppc
   tests/core/RDP/nla/asn1
+  tests/core/RDP/nla
   tests/core/RDP/nla/kerberos
   tests/core/RDP/nla/ntlm
-  tests/core/RDP/nla
   tests/core/RDP/orders
-  tests/core/RDP
   tests/core/RDPEA
   tests/core/SMB2
   tests/core/WMF
-  tests/core
   tests/front
   tests/gdi
   tests/keyboard
   tests/lib
   tests/mod/internal
+  tests/mod
   tests/mod/internal/widget
   tests/mod/null
   tests/mod/rdp/channels
   tests/mod/rdp
-  tests/mod
   tests/mod/vnc/encoder
   tests/mod/vnc
   tests/mod/xup
   tests/regex
   tests/server
   tests/system/linux/system
-  tests
+  tests/system/linux
   tests/transport
   tests/utils/crypto
+  tests/utils
   tests/utils/sugar/numerics
   tests/utils/sugar
-  tests/utils
   tests/utils/winpr
 ;
