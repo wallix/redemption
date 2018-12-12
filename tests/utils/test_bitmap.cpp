@@ -23,6 +23,7 @@
 
 #define RED_TEST_MODULE TestBitmap
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/data_test_case.hpp"
 
 #include "test_only/transport/test_transport.hpp"
 #include "utils/bitmap.hpp"
@@ -32,6 +33,8 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "test_only/check_sig.hpp"
+
+#include <array>
 
 
 RED_AUTO_TEST_CASE(TestBitmapCompress)
@@ -3324,16 +3327,27 @@ RED_AUTO_TEST_CASE(TestBitmapCompress)
     }
 }
 
-
-RED_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
+RED_DATA_TEST_CASE(TestRDP60BitmapCompression, (std::array{
+    FIXTURES_PATH "/color_image.bmp",
+    FIXTURES_PATH "/logo-redemption.bmp"
+    FIXTURES_PATH "/color_image.png",
+    FIXTURES_PATH "/logo-redemption.png",
+    FIXTURES_PATH "/color_image_40x30.png",
+    FIXTURES_PATH "/color_image_160x120.png",
+    FIXTURES_PATH "/red_box.png",
+    FIXTURES_PATH "/wablogoblue_220x76.png",
+    FIXTURES_PATH "/red_box_20x20.png"
+}), filename)
+{
     BGRPalette const & palette332 = BGRPalette::classic_332();
 
-
-    const char * filename = FIXTURES_PATH "/color_image_160x120.png";
-
     Bitmap bmp = bitmap_from_file(filename);
 
-    StaticOutStream<65536> compressed_bitmap_data;
+    auto sz = std::max(std::size_t{65536}, 2u * bmp.bmp_size());
+    auto uptr = std::make_unique<uint8_t[]>(sz);
+
+    OutStream compressed_bitmap_data(uptr.get(), sz);
+
     bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
 
     Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
@@ -3341,71 +3355,8 @@ RED_AUTO_TEST_CASE(TestRDP60BitmapCompression) {
     RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
 }
 
-RED_AUTO_TEST_CASE(TestRDP60BitmapCompression1) {
-    BGRPalette const & palette332 = BGRPalette::classic_332();
-
-
-    const char * filename = FIXTURES_PATH "/color_image_40x30.png";
-
-    Bitmap bmp = bitmap_from_file(filename);
-
-    StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
-
-    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
-
-    RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
-}
-
-RED_AUTO_TEST_CASE(TestRDP60BitmapCompression2) {
-    BGRPalette const & palette332 = BGRPalette::classic_332();
-
-
-    const char * filename = FIXTURES_PATH "/red_box.png";
-
-    Bitmap bmp = bitmap_from_file(filename);
-
-    StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
-
-    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
-
-    RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
-}
-
-RED_AUTO_TEST_CASE(TestRDP60BitmapCompression3) {
-    BGRPalette const & palette332 = BGRPalette::classic_332();
-
-
-    const char * filename = FIXTURES_PATH "/wablogoblue_220x76.png";
-
-    Bitmap bmp = bitmap_from_file(filename);
-
-    StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
-
-    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
-
-    RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
-}
-
-
-RED_AUTO_TEST_CASE(TestRDP60BitmapCompression4) {
-    const BGRPalette & palette332 = BGRPalette::classic_332();
-
-    const char * filename = FIXTURES_PATH "/red_box_20x20.png";
-
-    Bitmap bmp = bitmap_from_file(filename);
-
-    StaticOutStream<65536> compressed_bitmap_data;
-    bmp.compress(BitsPerPixel{32}, compressed_bitmap_data);
-
-    Bitmap bmp2(BitsPerPixel{32}, BitsPerPixel{24}, &palette332, bmp.cx(), bmp.cy(), compressed_bitmap_data.get_data(), compressed_bitmap_data.get_offset(), true);
-
-    RED_CHECK_EQUAL(0, memcmp(bmp.data(), bmp2.data(), bmp.bmp_size()));
-}
-
-RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression) {
+RED_AUTO_TEST_CASE(TestRDP60BitmapDecompression)
+{
     uint8_t bitmap_data[]     = {
 /* 0000 */ 0x10, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,  // ................
 /* 0010 */ 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0x81, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,  // ................

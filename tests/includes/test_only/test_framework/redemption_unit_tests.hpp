@@ -51,9 +51,9 @@ namespace redemption_unit_test__
 # define RED_TEST_DONT_PRINT_LOG_VALUE(type)
 # define RED_TEST_PRINT_TYPE_FUNCTION_NAME red_test_print_type
 
-# define RED_AUTO_TEST_CASE(test_name)        \
-    struct test_name { static void test(); }; \
-    void test_name::test()
+# define RED_AUTO_TEST_CASE(test_name)       \
+    struct test_name { void operator()(); }; \
+    void test_name::operator()()
 
 /// CHECK
 //@{

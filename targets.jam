@@ -4739,22 +4739,6 @@ test-run tests/system/linux/system/test_tls_context :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/test_bitmap_perf :
-  $(REDEMPTION_TEST_PATH)/test_bitmap_perf.cpp
-:
-  <library>boost_stacktrace
-  <library>crypto
-  <library>png
-  <library>src/core/error.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
-  <library>src/utils/rle.o
-  <library>src/utils/utf.o
-  $(GCOV_NO_BUILD)
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
-;
 test-run tests/transport/test_crypto_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_crypto_transport.cpp
 :
@@ -6054,7 +6038,6 @@ alias test_ssl_sha512 : tests/system/linux/system/test_ssl_sha512 ;
 alias test_ssl_sha512.coverage : tests/system/linux/system/test_ssl_sha512.coverage ;
 alias test_tls_context : tests/system/linux/system/test_tls_context ;
 alias test_tls_context.coverage : tests/system/linux/system/test_tls_context.coverage ;
-alias test_bitmap_perf : tests/test_bitmap_perf ;
 alias test_crypto_transport : tests/transport/test_crypto_transport ;
 alias test_crypto_transport.coverage : tests/transport/test_crypto_transport.coverage ;
 alias test_gzip_compression_transport : tests/transport/test_gzip_compression_transport ;
@@ -6553,9 +6536,6 @@ alias tests/system/linux/system.norec :
   tests/system/linux/system/test_ssl_sha512
   tests/system/linux/system/test_tls_context
 ;
-alias tests.norec :
-  tests/test_bitmap_perf
-;
 alias tests/transport.norec :
   tests/transport/test_crypto_transport
   tests/transport/test_gzip_compression_transport
@@ -6655,8 +6635,26 @@ alias tests/utils/winpr.norec :
 alias tests/acl :
   tests/acl.norec
 ;
+alias tests :
+  tests/acl
+  tests/capture
+  tests/client_mods
+  tests/core
+  tests/front
+  tests/gdi
+  tests/keyboard
+  tests/lib
+  tests/mod
+  tests/regex
+  tests/server
+  tests/transport
+  tests/utils
+;
 alias tests/capture/ocr/locale :
   tests/capture/ocr/locale.norec
+;
+alias tests/capture/ocr :
+  tests/capture/ocr/locale
 ;
 alias tests/capture :
   tests/capture.norec
@@ -6671,14 +6669,35 @@ alias tests/client_mods :
 alias tests/client_redemption/client_channel_managers :
   tests/client_redemption/client_channel_managers.norec
 ;
+alias tests/client_redemption :
+  tests/client_redemption/client_channel_managers
+  tests/client_redemption/client_config
+;
 alias tests/client_redemption/client_config :
   tests/client_redemption/client_config.norec
 ;
 alias tests/core/FSCC :
   tests/core/FSCC.norec
 ;
+alias tests/core :
+  tests/core/FSCC
+  tests/core/RDP
+  tests/core/RDPEA
+  tests/core/SMB2
+  tests/core/WMF
+  tests/core.norec
+;
 alias tests/core/RDP/caches :
   tests/core/RDP/caches.norec
+;
+alias tests/core/RDP :
+  tests/core/RDP/caches
+  tests/core/RDP/capabilities
+  tests/core/RDP/channels
+  tests/core/RDP/mppc
+  tests/core/RDP/nla
+  tests/core/RDP/orders
+  tests/core/RDP.norec
 ;
 alias tests/core/RDP/capabilities :
   tests/core/RDP/capabilities.norec
@@ -6689,11 +6708,20 @@ alias tests/core/RDP/channels :
 alias tests/core/RDP/gcc/userdata :
   tests/core/RDP/gcc/userdata.norec
 ;
+alias tests/core/RDP/gcc :
+  tests/core/RDP/gcc/userdata
+;
 alias tests/core/RDP/mppc :
   tests/core/RDP/mppc.norec
 ;
 alias tests/core/RDP/nla/asn1 :
   tests/core/RDP/nla/asn1.norec
+;
+alias tests/core/RDP/nla :
+  tests/core/RDP/nla/asn1
+  tests/core/RDP/nla/kerberos
+  tests/core/RDP/nla/ntlm
+  tests/core/RDP/nla.norec
 ;
 alias tests/core/RDP/nla/kerberos :
   tests/core/RDP/nla/kerberos.norec
@@ -6701,23 +6729,8 @@ alias tests/core/RDP/nla/kerberos :
 alias tests/core/RDP/nla/ntlm :
   tests/core/RDP/nla/ntlm.norec
 ;
-alias tests/core/RDP/nla :
-  tests/core/RDP/nla.norec
-  tests/core/RDP/nla/asn1
-  tests/core/RDP/nla/kerberos
-  tests/core/RDP/nla/ntlm
-;
 alias tests/core/RDP/orders :
   tests/core/RDP/orders.norec
-;
-alias tests/core/RDP :
-  tests/core/RDP.norec
-  tests/core/RDP/caches
-  tests/core/RDP/capabilities
-  tests/core/RDP/channels
-  tests/core/RDP/mppc
-  tests/core/RDP/nla
-  tests/core/RDP/orders
 ;
 alias tests/core/RDPEA :
   tests/core/RDPEA.norec
@@ -6727,14 +6740,6 @@ alias tests/core/SMB2 :
 ;
 alias tests/core/WMF :
   tests/core/WMF.norec
-;
-alias tests/core :
-  tests/core.norec
-  tests/core/FSCC
-  tests/core/RDP
-  tests/core/RDPEA
-  tests/core/SMB2
-  tests/core/WMF
 ;
 alias tests/front :
   tests/front.norec
@@ -6752,6 +6757,14 @@ alias tests/mod/internal :
   tests/mod/internal.norec
   tests/mod/internal/widget
 ;
+alias tests/mod :
+  tests/mod/internal
+  tests/mod/null
+  tests/mod/rdp
+  tests/mod.norec
+  tests/mod/vnc
+  tests/mod/xup
+;
 alias tests/mod/internal/widget :
   tests/mod/internal/widget.norec
 ;
@@ -6762,23 +6775,15 @@ alias tests/mod/rdp/channels :
   tests/mod/rdp/channels.norec
 ;
 alias tests/mod/rdp :
-  tests/mod/rdp.norec
   tests/mod/rdp/channels
-;
-alias tests/mod :
-  tests/mod.norec
-  tests/mod/internal
-  tests/mod/null
-  tests/mod/rdp
-  tests/mod/vnc
-  tests/mod/xup
+  tests/mod/rdp.norec
 ;
 alias tests/mod/vnc/encoder :
   tests/mod/vnc/encoder.norec
 ;
 alias tests/mod/vnc :
-  tests/mod/vnc.norec
   tests/mod/vnc/encoder
+  tests/mod/vnc.norec
 ;
 alias tests/mod/xup :
   tests/mod/xup.norec
@@ -6792,21 +6797,8 @@ alias tests/server :
 alias tests/system/linux/system :
   tests/system/linux/system.norec
 ;
-alias tests :
-  tests.norec
-  tests/acl
-  tests/capture
-  tests/client_mods
-  tests/core
-  tests/front
-  tests/gdi
-  tests/keyboard
-  tests/lib
-  tests/mod
-  tests/regex
-  tests/server
-  tests/transport
-  tests/utils
+alias tests/system/linux :
+  tests/system/linux/system
 ;
 alias tests/transport :
   tests/transport.norec
@@ -6814,18 +6806,18 @@ alias tests/transport :
 alias tests/utils/crypto :
   tests/utils/crypto.norec
 ;
+alias tests/utils :
+  tests/utils/crypto
+  tests/utils/sugar
+  tests/utils.norec
+  tests/utils/winpr
+;
 alias tests/utils/sugar/numerics :
   tests/utils/sugar/numerics.norec
 ;
 alias tests/utils/sugar :
-  tests/utils/sugar.norec
   tests/utils/sugar/numerics
-;
-alias tests/utils :
-  tests/utils.norec
-  tests/utils/crypto
-  tests/utils/sugar
-  tests/utils/winpr
+  tests/utils/sugar.norec
 ;
 alias tests/utils/winpr :
   tests/utils/winpr.norec
@@ -6870,7 +6862,6 @@ explicit
   tests/regex.norec
   tests/server.norec
   tests/system/linux/system.norec
-  tests.norec
   tests/transport.norec
   tests/utils/crypto.norec
   tests/utils/sugar/numerics.norec
@@ -6880,49 +6871,53 @@ explicit
 ;
 explicit
   tests/acl
+  tests
   tests/capture/ocr/locale
+  tests/capture/ocr
   tests/capture
   tests/capture/utils
   tests/client_mods
   tests/client_redemption/client_channel_managers
+  tests/client_redemption
   tests/client_redemption/client_config
   tests/core/FSCC
+  tests/core
   tests/core/RDP/caches
+  tests/core/RDP
   tests/core/RDP/capabilities
   tests/core/RDP/channels
   tests/core/RDP/gcc/userdata
+  tests/core/RDP/gcc
   tests/core/RDP/mppc
   tests/core/RDP/nla/asn1
+  tests/core/RDP/nla
   tests/core/RDP/nla/kerberos
   tests/core/RDP/nla/ntlm
-  tests/core/RDP/nla
   tests/core/RDP/orders
-  tests/core/RDP
   tests/core/RDPEA
   tests/core/SMB2
   tests/core/WMF
-  tests/core
   tests/front
   tests/gdi
   tests/keyboard
   tests/lib
   tests/mod/internal
+  tests/mod
   tests/mod/internal/widget
   tests/mod/null
   tests/mod/rdp/channels
   tests/mod/rdp
-  tests/mod
   tests/mod/vnc/encoder
   tests/mod/vnc
   tests/mod/xup
   tests/regex
   tests/server
   tests/system/linux/system
-  tests
+  tests/system/linux
   tests/transport
   tests/utils/crypto
+  tests/utils
   tests/utils/sugar/numerics
   tests/utils/sugar
-  tests/utils
   tests/utils/winpr
 ;
