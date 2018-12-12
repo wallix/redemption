@@ -79,9 +79,6 @@ include $(JAM_INCLUDE_PATH)/redemption-dependencies.jam ;
 
 obj program_options : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
-# test-run test_meta_protocol2 : test_meta_protocol2.cpp : : <cxxflags>-std=c++14 <library>crypto <library>openssl ;
-# explicit test_meta_protocol2 ;
-
 make test_libredrec : libredrec : @test_libredrec
 : <variant>san:<build>no <variant>coverage:<build>no ;
 
