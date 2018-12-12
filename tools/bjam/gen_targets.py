@@ -46,12 +46,12 @@ class Dep:
             linkflags=self.linkflags + other.linkflags,
             cxxflags=self.cxxflags + other.cxxflags)
 
-inc_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for lcg_random or fixed_random
+inc_test_dep = Dep(cxxflags=['<include>$(REDEMPTION_TEST_PATH)/includes']) # for lcg_random or fixed_random
 
 src_requirements = dict((
-    ('src/lib/scytale.cpp', inc_dep),
-    ('src/main/rdp_client.cpp', inc_dep),
-    ('src/main/main_client_redemption.cpp', inc_dep),
+    ('src/lib/scytale.cpp', inc_test_dep),
+    ('src/main/rdp_client.cpp', inc_test_dep),
+    ('src/main/main_client_redemption.cpp', inc_test_dep),
     ('src/capture/ocr/main/ppocr_extract_text.cpp', Dep(linkflags=['<library>log_print.o'])),
 ))
 
@@ -228,19 +228,16 @@ def get_files(a, dirpath):
 def startswith(str, prefix):
     return str[:len(prefix)] == prefix
 
-get_files(sources, "src/acl")
-get_files(sources, "src/capture")
-get_files(sources, "src/client_redemption")
-get_files(sources, "src/core")
-get_files(sources, "src/RAIL")
-get_files(sources, "src/front")
-get_files(sources, "src/gdi")
-get_files(sources, "src/keyboard")
-get_files(sources, "src/mod")
-get_files(sources, "src/regex")
+for d in os.listdir('src'):
+    if d not in (
+        'ftests',
+        'main',
+        'lib',
+        'system',
+    ):
+        get_files(sources, 'src/' + d)
+
 get_files(sources, "src/system/linux/system")
-get_files(sources, "src/transport")
-get_files(sources, "src/utils")
 get_files(sources, 'tests/includes/test_only')
 
 for t in ((mains, 'src/main'), (libs, 'src/lib')):
@@ -626,15 +623,14 @@ for name,aliases in dir_tests.items():
 dir_rec_tests = OrderedDict()
 for name,aliases in dir_tests.items():
     dir_rec_tests.setdefault(name, []).append(name+'.norec')
-
-for name,aliases in dir_tests.items():
     dirname = os.path.dirname(name)
     if dirname:
-        dir_rec_tests.get(dirname, []).append(name)
+        dir_rec_tests.setdefault(dirname, []).append(name)
 
 explicit_rec = []
 for name,aliases in dir_rec_tests.items():
     explicit_rec.append(name)
+    sorted(aliases)
     print('alias ', name, ' :\n  ', '\n  '.join(aliases), '\n;', sep='')
 
 if explicit_no_rec:
