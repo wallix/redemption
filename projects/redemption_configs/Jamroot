@@ -19,7 +19,7 @@ project configs
     $(REDEMPTION_CXXFLAGS)
     <toolset>clang:<cxxflags>-Wno-class-varargs
 
-   : default-build release
+   : default-build debug
 ;
 
 constant AUTOGEN_SPEC_DIR : autogen/spec ;
