@@ -89,7 +89,7 @@ class RDPMetrics;
 # define IF_ENABLE_METRICS(m) do {} while(0)
 #endif
 
-#include "mod/internal/client_execute.hpp"
+#include "RAIL/client_execute.hpp"
 #include "mod/mod_api.hpp"
 
 #include "mod/rdp/alternate_shell.hpp"

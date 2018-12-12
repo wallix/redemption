@@ -17,6 +17,7 @@ exe headlessclient :
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channel_managers/client_cliprdr_channel.o
   <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
@@ -33,7 +34,6 @@ exe headlessclient :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/replay_mod.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
@@ -89,6 +89,7 @@ exe rdpproxy :
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
@@ -116,7 +117,6 @@ exe rdpproxy :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
@@ -235,6 +235,7 @@ exe rdpclient :
   <library>png
   <library>program_options
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -247,7 +248,6 @@ exe rdpclient :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -480,6 +480,7 @@ test-run tests/acl/test_module_manager :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
@@ -504,7 +505,6 @@ test-run tests/acl/test_module_manager :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
@@ -793,6 +793,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>krb5
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -803,7 +804,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -871,6 +871,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>krb5
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -881,7 +882,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -916,6 +916,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>krb5
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -926,7 +927,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -954,11 +954,9 @@ test-run tests/client_mods/test_rdp_client_wab :
 test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_cliprdr_channel.cpp
 :
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
-  <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_cliprdr_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
@@ -966,15 +964,11 @@ test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_cha
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/mod/internal/client_execute.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <covfile>src/client_redemption/client_channel_managers/client_cliprdr_channel.cpp
@@ -986,11 +980,9 @@ test-run tests/client_redemption/client_channel_managers/test_client_cliprdr_cha
 test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpdr_channel.cpp
 :
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
-  <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_rdpdr_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
@@ -998,15 +990,11 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_chann
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/mod/internal/client_execute.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <covfile>src/client_redemption/client_channel_managers/client_rdpdr_channel.cpp
@@ -1018,11 +1006,9 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpdr_chann
 test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channel_managers/test_client_rdpsnd_channel.cpp
 :
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
-  <library>png
   <library>snappy
   <library>src/client_redemption/client_channel_managers/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
@@ -1030,15 +1016,11 @@ test-run tests/client_redemption/client_channel_managers/test_client_rdpsnd_chan
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/mod/internal/client_execute.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <covfile>src/client_redemption/client_channel_managers/client_rdpsnd_channel.cpp
@@ -1063,12 +1045,10 @@ test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_c
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
@@ -1086,26 +1066,20 @@ test-run tests/client_redemption/client_channel_managers/test_client_remoteapp_c
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
 :
-  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
-  <library>png
   <library>snappy
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
-  <library>src/mod/internal/client_execute.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/bitmap.o
-  <library>src/utils/bitmap_from_file.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
-  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/working_directory.o
@@ -2379,6 +2353,7 @@ test-run tests/core/test_mainloop :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
@@ -2405,7 +2380,6 @@ test-run tests/core/test_mainloop :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
@@ -2503,6 +2477,7 @@ test-run tests/core/test_session :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
@@ -2528,7 +2503,6 @@ test-run tests/core/test_session :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
@@ -2629,6 +2603,7 @@ test-run tests/core/test_session_server :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/acl/module_manager/create_module_rdp.o
   <library>src/acl/module_manager/create_module_vnc.o
   <library>src/acl/module_manager/mm_ini.o
@@ -2654,7 +2629,6 @@ test-run tests/core/test_session_server :
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
   <library>src/mod/internal/bouncer2_mod.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/flat_login_mod.o
@@ -2742,6 +2716,7 @@ test-run tests/front/test_front :
   <library>ppocr
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>snappy
+  <library>src/RAIL/client_execute.o
   <library>src/capture/capture.o
   <library>src/capture/ocr/locale/latin_to_cyrillic.o
   <library>src/capture/params_from_ini.o
@@ -2760,7 +2735,6 @@ test-run tests/front/test_front :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -2992,13 +2966,13 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_dialog_mod.o
   <library>src/mod/internal/internal_mod.o
@@ -3039,13 +3013,13 @@ test-run tests/mod/internal/test_flat_login_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_login_mod.o
   <library>src/mod/internal/internal_mod.o
@@ -3087,13 +3061,13 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/flat_wab_close_mod.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -3130,12 +3104,12 @@ test-run tests/mod/internal/test_flat_wait_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/flat_wait_mod.o
   <library>src/mod/internal/internal_mod.o
@@ -3171,13 +3145,13 @@ test-run tests/mod/internal/test_interactive_target_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/interactive_target_mod.o
   <library>src/mod/internal/internal_mod.o
@@ -3272,12 +3246,12 @@ test-run tests/mod/internal/test_selector_mod :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/copy_paste.o
   <library>src/mod/internal/internal_mod.o
   <library>src/mod/internal/locally_integrable_mod.o
@@ -4259,6 +4233,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>krb5
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
@@ -4269,7 +4244,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/gdi/protected_graphics.o
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/internal/widget/flat_button.o
   <library>src/mod/internal/widget/label.o
   <library>src/mod/rdp/new_mod_rdp.o
@@ -4402,6 +4376,7 @@ test-run tests/mod/vnc/test_vnc :
   <library>crypto
   <library>png
   <library>projects/redemption_configs/redemption_src/configs/config.o
+  <library>src/RAIL/client_execute.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -4409,7 +4384,6 @@ test-run tests/mod/vnc/test_vnc :
   <library>src/gdi/screen_functions.o
   <library>src/keyboard/keymap2.o
   <library>src/keyboard/keymapSym.o
-  <library>src/mod/internal/client_execute.o
   <library>src/mod/vnc/encoder/copyrect.o
   <library>src/mod/vnc/encoder/cursor.o
   <library>src/mod/vnc/encoder/hextile.o
@@ -5465,6 +5439,7 @@ test-run tests/utils/winpr/test_pattern :
 ;
 
 obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+obj src/RAIL/client_execute.o : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 obj src/acl/module_manager/create_module_rdp.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/create_module_vnc.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_vnc.cpp : <define>ZLIB_CONST ;
 obj src/acl/module_manager/mm_ini.o : $(REDEMPTION_SRC_PATH)/acl/module_manager/mm_ini.cpp ;
@@ -5509,7 +5484,6 @@ obj src/main/main.o : $(REDEMPTION_SRC_PATH)/main/main.cpp ;
 obj src/main/proxy_recorder.o : $(REDEMPTION_SRC_PATH)/main/proxy_recorder.cpp ;
 obj src/main/rdp_client.o : $(REDEMPTION_SRC_PATH)/main/rdp_client.cpp : <include>$(REDEMPTION_TEST_PATH)/includes ;
 obj src/mod/internal/bouncer2_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/bouncer2_mod.cpp ;
-obj src/mod/internal/client_execute.o : $(REDEMPTION_SRC_PATH)/mod/internal/client_execute.cpp ;
 obj src/mod/internal/copy_paste.o : $(REDEMPTION_SRC_PATH)/mod/internal/copy_paste.cpp ;
 obj src/mod/internal/flat_dialog_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_dialog_mod.cpp ;
 obj src/mod/internal/flat_login_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/flat_login_mod.cpp ;

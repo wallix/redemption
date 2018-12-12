@@ -18,7 +18,7 @@
     Author(s): Christophe Grosjean, Raphael Zhou
 */
 
-#include "mod/internal/client_execute.hpp"
+#include "RAIL/client_execute.hpp"
 #include "core/app_path.hpp"
 #include "core/channel_list.hpp"
 #include "core/channel_names.hpp"

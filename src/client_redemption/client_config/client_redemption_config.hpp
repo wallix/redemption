@@ -38,7 +38,6 @@
 #include "core/session_reactor.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"
-#include "mod/internal/client_execute.hpp"
 
 #include "capture/cryptofile.hpp"
 

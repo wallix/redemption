@@ -48,7 +48,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
     char const ** argv = nullptr;
     int argc = 0;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, "");
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -221,7 +221,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 39;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, "");
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, (RDPVerbose::basic_trace | RDPVerbose::connection | RDPVerbose::capabilities | RDPVerbose::asynchronous_task | RDPVerbose::graphics | RDPVerbose::printer | RDPVerbose::rdpsnd | RDPVerbose::rail | RDPVerbose::cliprdr | RDPVerbose::rdpdr | RDPVerbose::rail_dump | RDPVerbose::basic_trace | RDPVerbose::rdpdr_dump | RDPVerbose::rail_order | RDPVerbose::cliprdr_dump));
@@ -364,7 +364,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 6;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, "");
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -408,7 +408,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 2;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, "");
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, "");
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -447,7 +447,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/config/",
@@ -467,7 +467,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
     FakeClient client;
     char const * argv[] = {"cmd"};
     const int argc = 1;
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     {
         unique_fd fd(test_file, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -564,7 +564,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     ::write(fd.fd(), toReadData, string_to_read.length());
     fd.close();
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
@@ -631,7 +631,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
         ::write(fd_2.fd(), string_to_read1.data(), string_to_read1.size());
     }
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     config.set_icon_movie_data();
 
@@ -691,7 +691,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     RED_CHECK_EQUAL(config.windowsData.no_data, false);
     RED_CHECK_EQUAL(config.windowsData.form_x, 1920);
@@ -726,7 +726,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     RED_REQUIRE_EQUAL(config.keyCustomDefinitions.size(), 2);
 
@@ -784,7 +784,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     RED_CHECK_EQUAL(config._last_target_index, 1);
     RED_CHECK_EQUAL(config._save_password_account, true);
@@ -823,7 +823,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     config.writeClientInfo();
 
@@ -875,7 +875,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     config.add_key_custom_definition(1, 2, "x", 0x100, "key_x");
     config.add_key_custom_definition(3, 4, "y", 0, "key_y");
@@ -907,7 +907,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     config.connected = true;
     config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
@@ -953,7 +953,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
     char const * argv[] = {"cmd"};
     const int argc = 1;
 
-    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, client, wd.dirname());
+    ClientRedemptionConfig config(session_reactor, argv, argc, RDPVerbose::none, wd.dirname());
 
     config.windowsData.form_x   = 1;
     config.windowsData.form_y   = 2;

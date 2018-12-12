@@ -20,7 +20,7 @@
 
 #include "mod/internal/locally_integrable_mod.hpp"
 #include "core/RDP/slowpath.hpp"
-#include "mod/internal/client_execute.hpp"
+#include "RAIL/client_execute.hpp"
 
 LocallyIntegrableMod::LocallyIntegrableMod(
     SessionReactor& session_reactor, FrontAPI & front,
