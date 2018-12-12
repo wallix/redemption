@@ -226,7 +226,6 @@ public:
 
         painter.end();
     }
-
 };
 
 
@@ -939,29 +938,13 @@ private Q_SLOTS:
         QPoint points = this->mapToGlobal({0, 0});
         this->config->windowsData.form_x = points.x()-14;
         this->config->windowsData.form_y = points.y()-85;
-        this->config->writeWindowsData();
 
         this->options->getConfigValues();
 
-//         this->_front->rdp_width = 1920;
-//         this->_front->rdp_height = 1080;
-
-        this->config->writeCustomKeyConfig();
-        this->config->writeClientInfo();
-
-        this->config->port = this->get_portField();
-        this->config->target_IP = this->get_IPField();
-        this->config->user_name = this->get_userNameField();
-        this->config->user_password = this->get_PWDField();
-
-        if (this->controllers->connect()) {
-            this->config->writeAccoundData(
-                this->get_IPField(),
-                this->get_userNameField(),
-                this->get_PWDField(),
-                this->get_portField()
-            );
-        }
+        this->controllers->connect(this->get_IPField(),
+                                   this->get_userNameField(),
+                                   this->get_PWDField(),
+                                   this->get_portField());
 
         if (this->_pwdCheckBox.isChecked()) {
             this->config->_save_password_account = true;

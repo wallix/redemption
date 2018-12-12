@@ -139,8 +139,8 @@ public:
         this->client->closeFromGUI();
     }
 
-    bool connect() {
-        return this->client->connect();
+    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
+        this->client->connect(ip, name, pwd, port);
     }
 
     void disconnect(time_t now, bool pipe_broken) {

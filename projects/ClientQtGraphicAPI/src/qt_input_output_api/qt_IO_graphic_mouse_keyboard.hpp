@@ -1306,8 +1306,6 @@ private:
             } else {
                 LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache 0xFD");
             }
-
-
         }
         //this->draw_VariableBytes(cmd.data, cmd.data_len, has_delta_bytes,
             //draw_pos, offset_y, color, cmd.bk.x + offset_x, cmd.bk.y,
@@ -1390,25 +1388,25 @@ private:
     //      CONTROLLERS
     //------------------------
 
-    bool connexionReleased() {
-        bool conn_res = false;
-        if (this->form) {
-            this->form->setCursor(Qt::WaitCursor);
-            this->config->user_name     = this->form->get_userNameField();
-            this->config->target_IP     = this->form->get_IPField();
-            this->config->user_password = this->form->get_PWDField();
-            this->config->port          = this->form->get_portField();
-
-            this->config->is_full_capturing = true;
-            this->config->full_capture_file_name = "/tmp/capture.dump";
-
-            if (!this->config->target_IP.empty()){
-                conn_res = this->controller->connect();
-            }
-            this->form->setCursor(Qt::ArrowCursor);
-        }
-        return conn_res;
-    }
+//     bool connexionReleased() {
+//         bool conn_res = false;
+//         if (this->form) {
+//             this->form->setCursor(Qt::WaitCursor);
+//             this->config->user_name     = this->form->get_userNameField();
+//             this->config->target_IP     = this->form->get_IPField();
+//             this->config->user_password = this->form->get_PWDField();
+//             this->config->port          = this->form->get_portField();
+//
+//             this->config->is_full_capturing = true;
+//             this->config->full_capture_file_name = "/tmp/capture.dump";
+//
+//             if (!this->config->target_IP.empty()){
+//                 conn_res = this->controller->connect();
+//             }
+//             this->form->setCursor(Qt::ArrowCursor);
+//         }
+//         return conn_res;
+//     }
 
     void closeFromGUI() override {
 

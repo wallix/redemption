@@ -400,11 +400,10 @@ public:
     void set_remoteapp_cmd_line(const std::string & cmd);
 
     bool is_no_win_data();
+    
     void deleteCurrentProtile();
 
-
     void setDefaultConfig();
-
 
     void writeClientInfo();
 };

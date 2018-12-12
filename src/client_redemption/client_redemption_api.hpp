@@ -42,7 +42,7 @@ public:
     virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
-    virtual bool connect() {return true;}
+    virtual bool connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {return true;}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void closeFromGUI() {}
     virtual void disconnexionReleased() {}

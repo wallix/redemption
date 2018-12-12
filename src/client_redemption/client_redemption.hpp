@@ -282,17 +282,12 @@ public:
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
 
-
         if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
 
-            if (this->connect()) {
-                    this->config.writeAccoundData(
-                        this->config.target_IP,
+            this->connect(this->config.target_IP,
                         this->config.user_name,
                         this->config.user_password,
-                        this->config.port
-                    );
-            }
+                        this->config.port);
 
         } else {
             std::cout <<  "Argument(s) required for connection: ";
@@ -600,7 +595,16 @@ public:
     //      CONTROLLERS
     //------------------------
 
-    virtual bool connect() override {
+    virtual bool connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+
+        this->config.writeWindowsData();
+        this->config.writeCustomKeyConfig();
+        this->config.writeClientInfo();
+
+        this->config.port          = port;
+        this->config.target_IP     = ip;
+        this->config.user_name     = name;
+        this->config.user_password = pwd;
 
         if (this->config.is_full_capturing || this->config.is_full_replaying) {
             this->gen = std::make_unique<FixedRandom>();
@@ -741,6 +745,8 @@ public:
                                 this->impl_graphic->show_screen();
                             }
                         }
+
+                        this->config.writeAccoundData(ip, name, pwd, port);
 
                         return true;
                     }
