@@ -26,9 +26,10 @@ project redjs
 
     $(REDEMPTION_CXXFLAGS)
     $(REDEMPTION_FFMPEG_FLAGS)
-    $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
+    # $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
+    <define>REDEMPTION_NO_STACKTRACE
 
-    <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
+    # <define>REDEMPTION_DISABLE_NO_BOOST_PREPROCESSOR_WARNING=1
 
     <cxxflags>-fno-rtti
     <cxxflags>"-isystem system_include"
@@ -114,6 +115,8 @@ objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <define>CFG_PATH='\"$(REDEMPTION_SYS_PATH)/etc/rdpproxy/\"'
 ;
 
+alias app_path_exe.bc : app_path_test.bc ;
+
 actions exenode
 {
   node $(>:S=.js) && : > $(<)
@@ -130,18 +133,28 @@ rule test-run ( name : objects + : requirements * )
     make $(name) : $(name).node : @exenode ;
 }
 
+rule exe-main ( name : objects + : requirements * )
+{
+    exejs $(name).node : $(objects) : $(requirements) ;
+    make $(name) : $(name).node : @exenode ;
+}
+
 
 actions gen_targets
 {
-    sed -E '/^lib |^exe |\.cpp\.lib\.o :$/,/^;/d;
+    sed -E '/^lib |\.cpp\.lib\.o :$/,/^;/d;
         /^  <covfile|^  <variant|^  \$\(FFMPEG_CXXFLAGS\)|^  \$\(GCOV_NO_BUILD\)|^  <library>boost_stacktrace|\.coverage ;$/d;
         s/^obj /objjs /;
+        s/^exe /exe-main /;
         s/\.o /.bc /;
         s/\.o$/.bc/;
         s/^  <library>(.*)/  \1.bc/;
         s/\.bc\.bc$/.bc/' \
     ../../targets.jam | sed '/^test-run/,/^;/{
         /^:/d;s/^  </:\n&/;t
+    }
+    /^exe-main/,/^;/{
+        /^:/d;s/^  \$/:\n&/;t
     }' > targets.jam
 }
 

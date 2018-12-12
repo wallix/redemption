@@ -48,7 +48,7 @@ namespace
 #ifndef NDEBUG
 # include <cstring>
 # include "utils/log.hpp"
-# if __has_include(<boost/stacktrace.hpp>)
+# if !defined(REDEMPTION_NO_STACKTRACE) && __has_include(<boost/stacktrace.hpp>)
 //#  include <iostream>
 #  include <boost/stacktrace.hpp>
 #  define REDEMPTION_ERROR_WITH_STACKTRACE

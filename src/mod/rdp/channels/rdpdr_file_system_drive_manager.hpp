@@ -43,6 +43,13 @@
 #include <string>
 #include <algorithm>
 
+#ifdef __EMSCRIPTEN__
+inline int futimes(int /*fd*/, const timeval /*tv*/[2])
+{
+    return 0;
+}
+#endif
+
 template<typename T> T Flag(bool condition, T value)
 {
     return (condition) ? value : T(0);
@@ -1553,7 +1560,7 @@ public:
 
         off64_t seek_result = ::lseek64(this->fd, current_offset, SEEK_SET);
         (void)seek_result;
-        assert(seek_result == current_offset);
+        assert(seek_result == off64_t(current_offset));
         int write_result = ::write(this->fd, in_stream.get_current(), in_stream.in_remain());
         (void)write_result;
 

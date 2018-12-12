@@ -39,7 +39,9 @@
 #include "utils/sugar/unique_fd.hpp"
 #include "cxx/cxx.hpp"
 
-#include <png.h>
+#ifndef __EMSCRIPTEN__
+# include <png.h>
+#endif
 
 #include <cerrno>
 
@@ -66,12 +68,17 @@ namespace
     }
 
     Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename);
+#ifndef __EMSCRIPTEN__
     Bitmap bitmap_from_png_without_sig(int fd, const char * filename);
+#endif
 } // namespace
 
 
 Bitmap bitmap_from_file_impl(const char * filename)
 {
+#ifdef __EMSCRIPTEN__
+    using png_byte = uint8_t;
+#endif
     png_byte type1[8];
 
     unique_fd file{filename, O_RDONLY};
@@ -95,10 +102,12 @@ Bitmap bitmap_from_file_impl(const char * filename)
         LOG(LOG_ERR, "Bitmap: error bitmap file [%s] read error", filename);
         return Bitmap{};
     }
+#ifndef __EMSCRIPTEN__
     if (png_sig_cmp(type1, 0, 8) == 0) {
         //LOG(LOG_INFO, "Bitmap: image file [%s] is PNG file\n", filename);
         return bitmap_from_png_without_sig(file.fd(), filename);
     }
+#endif
 
     LOG(LOG_ERR, "Bitmap: error bitmap file [%s] not BMP or PNG file\n", filename);
     return Bitmap{};
@@ -114,7 +123,9 @@ Bitmap bitmap_from_file(const char * filename)
     return load_error_bitmap();
 }
 
-namespace {
+namespace
+{
+#ifndef __EMSCRIPTEN__
 Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
 {
     Bitmap bitmap;
@@ -209,7 +220,7 @@ Bitmap bitmap_from_png_without_sig(int fd, const char * /*filename*/)
 
     return bitmap;
 }
-
+#endif
 
 Bitmap bitmap_from_bmp_without_sig(int fd, const char * filename)
 {

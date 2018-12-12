@@ -34,16 +34,17 @@ BEGINFILE {
     m[f][$0]
 }
 
-function ptree_impl(s, f,     ns)
+function ptree_impl(s, f, ni,     ns)
 {
-    print s f
+    print s "\x1b[0m" f
     if ((f in m) && !(f in pvisited))
     {
         pvisited[f]
-        ns=s "| "
+        ++ni
+        ns=s "\x1b[3" (ni%4+2) "m| "
         for (sf in m[f])
         {
-            ptree_impl(ns, sf)
+            ptree_impl(ns, sf, ni)
         }
     }
 }

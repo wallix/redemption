@@ -1149,7 +1149,7 @@ namespace re {
 
             StepRange & next_uninitialized()
             {
-                assert((this->last - this->list) != this->nodes);
+                assert(unsigned(this->last - this->list) != this->nodes);
                 return *this->last++;
             }
 

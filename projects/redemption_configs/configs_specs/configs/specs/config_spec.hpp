@@ -663,7 +663,7 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "end_time");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow));
-        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<signed>(), "timezone", set(-3600));
+        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<int>(), "timezone", set(-3600));
         W.sep();
         W.member(no_ini_no_gui, sesman_rw, L, type_<std::string>(), "real_target_device");
         W.sep();
