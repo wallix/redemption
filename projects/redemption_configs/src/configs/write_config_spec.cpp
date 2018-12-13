@@ -49,13 +49,32 @@ int main()
             }
         };
         char const* av[]{
-            "conn_policy_writer",
+            "conn_policy_python_writer",
             "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py",
             "autogen/spec/rdp.spec",
             "autogen/spec/vnc.spec",
             nullptr,
         };
         return cfg_generators::app_write_connection_policy<Writer>(std::size(av)-1, av);
+    },[]{
+        struct Writer : cfg_generators::connection_policy_writer::ConnectionPolicyWriterBaseJson<Writer>
+        {
+            using base_type::base_type;
+
+            void do_init()
+            {
+                base_type::do_init();
+                cfg_specs::config_type_definition(this->enums);
+                cfg_specs::config_spec_definition(*this);
+            }
+        };
+        char const* av[]{
+            "conn_policy_json_writer",
+            "autogen/spec/rdp.json",
+            "autogen/spec/vnc.json",
+            nullptr,
+        };
+        return cfg_generators::app_write_connection_policy_json<Writer>(std::size(av)-1, av);
     },
     []{
         struct Writer : cfg_generators::cpp_config_writer::CppConfigWriterBase<Writer>
