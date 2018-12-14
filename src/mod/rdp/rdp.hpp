@@ -120,9 +120,48 @@ class RDPMetrics;
 class mod_rdp : public mod_api, public rdp_api
 {
 private:
+    struct AsynchronousTaskContainer
+    {
+    private:
+        static auto remover() noexcept
+        {
+            return [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
+                (void)task;
+                assert(&task == pself->tasks.front().get());
+                pself->tasks.pop_front();
+                pself->next();
+            };
+        }
+
+    public:
+        explicit AsynchronousTaskContainer(SessionReactor& session_reactor)
+          : session_reactor(session_reactor)
+        {}
+
+        void add(std::unique_ptr<AsynchronousTask>&& task)
+        {
+            this->tasks.emplace_back(std::move(task));
+            if (this->tasks.size() == 1u) {
+                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            }
+        }
+
+    private:
+        void next()
+        {
+            if (!this->tasks.empty()) {
+                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
+            }
+        }
+
+        std::deque<std::unique_ptr<AsynchronousTask>> tasks;
+        SessionReactor& session_reactor;
+    };
+
     struct Channels {
         CHANNELS::ChannelDefArray mod_channel_list;
         const AuthorizationChannels authorization_channels;
+        ReportMessageApi & report_message;
         const bool enable_auth_channel;
         const CHANNELS::ChannelNameId auth_channel;
         int auth_channel_flags      = 0;
@@ -130,14 +169,28 @@ private:
         const CHANNELS::ChannelNameId checkout_channel;
         int checkout_channel_flags  = 0;
         int checkout_channel_chanid = 0;
+        const bool disable_clipboard_log_syslog;
+        const bool disable_clipboard_log_wrm;
+        const bool log_only_relevant_clipboard_activities;
+
+        data_size_type max_clipboard_data = 0;
+
         const RDPVerbose verbose;
 
+        std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
+        std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
 
-        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose) 
+        std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
+
+
+        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message) 
             : authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
                 mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
               )
+            , report_message(report_message)
+            , enable_auth_channel(mod_rdp_params.alternate_shell[0]
+                               && !mod_rdp_params.ignore_auth_channel)
             , auth_channel([&]{
                 switch (mod_rdp_params.auth_channel) {
                     case CHANNELS::ChannelNameId():
@@ -148,8 +201,9 @@ private:
                 }
               }())
             , checkout_channel(mod_rdp_params.checkout_channel)
-            , enable_auth_channel(mod_rdp_params.alternate_shell[0]
-                               && !mod_rdp_params.ignore_auth_channel)
+            , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
+            , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
+            , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
             , verbose(verbose)
         {
         }
@@ -180,6 +234,81 @@ private:
                 std::move(to_client_sender));
         }
         
+        const ClipboardVirtualChannel::Params get_clipboard_virtual_channel_params() const
+        {
+            ClipboardVirtualChannel::Params cvc_params(this->report_message);
+
+            cvc_params.exchanged_data_limit      = this->max_clipboard_data;
+            cvc_params.verbose                   = this->verbose;
+            cvc_params.clipboard_down_authorized = this->authorization_channels.cliprdr_down_is_authorized();
+            cvc_params.clipboard_up_authorized   = this->authorization_channels.cliprdr_up_is_authorized();
+            cvc_params.clipboard_file_authorized = this->authorization_channels.cliprdr_file_is_authorized();
+            cvc_params.dont_log_data_into_syslog = this->disable_clipboard_log_syslog;
+            cvc_params.dont_log_data_into_wrm    = this->disable_clipboard_log_wrm;
+            cvc_params.log_only_relevant_clipboard_activities = this->log_only_relevant_clipboard_activities;
+
+            return cvc_params;
+        }
+        
+        
+        inline ClipboardVirtualChannel& get_clipboard_virtual_channel(
+                    FrontAPI& front,
+                    Transport& trans, CryptContext & encrypt, 
+                    const RdpNegociationResult negociation_result,
+                    AsynchronousTaskContainer & asynchronous_tasks) {
+        if (!this->clipboard_virtual_channel) {
+            assert(!this->clipboard_to_client_sender &&
+                !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
+            this->clipboard_to_server_sender = this->create_to_server_sender(channel_names::cliprdr,
+                    trans, encrypt, negociation_result, asynchronous_tasks);
+
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    front,
+                    this->get_clipboard_virtual_channel_params());
+            }
+
+            return *this->clipboard_virtual_channel;
+        }
+
+        std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
+            CHANNELS::ChannelNameId channel_name, 
+            Transport& trans, CryptContext & encrypt, 
+            const RdpNegociationResult negociation_result,
+            AsynchronousTaskContainer & asynchronous_tasks)
+        {
+            const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
+            if (!channel)
+            {
+                return nullptr;
+            }
+
+            std::unique_ptr<ToServerSender> to_server_sender =
+                std::make_unique<ToServerSender>(
+                    trans,
+                    encrypt,
+                    negociation_result.encryptionLevel,
+                    negociation_result.userid,
+                    channel_name,
+                    channel->chanid,
+                    (channel->flags &
+                     GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
+                    this->verbose);
+
+            if (channel_name != channel_names::rdpdr) {
+                return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
+            }
+
+            return std::make_unique<ToServerAsynchronousSender>(
+                std::move(to_server_sender),
+                asynchronous_tasks,
+                this->verbose);
+        }
+
     } channels;
 
     /// shared with RdpNegociation
@@ -208,11 +337,6 @@ private:
     std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
 
     std::unique_ptr<FileSystemVirtualChannel>     file_system_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
-
-    std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
 
     std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_client_sender;
     std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_server_sender;
@@ -333,7 +457,6 @@ private:
         }
     };
 
-    data_size_type max_clipboard_data = 0;
     data_size_type max_rdpdr_data     = 0;
     data_size_type max_drdynvc_data   = 0;
 
@@ -380,8 +503,6 @@ private:
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool enable_ninegrid_bitmap;
-    const bool disable_clipboard_log_syslog;
-    const bool disable_clipboard_log_wrm;
     const bool disable_file_system_log_syslog;
     const bool disable_file_system_log_wrm;
 
@@ -481,45 +602,7 @@ private:
     std::string real_alternate_shell;
     std::string real_working_dir;
 
-    const bool log_only_relevant_clipboard_activities;
 
-    struct AsynchronousTaskContainer
-    {
-    private:
-        static auto remover() noexcept
-        {
-            return [](AsynchronousTaskContainer* pself, AsynchronousTask& task) noexcept {
-                (void)task;
-                assert(&task == pself->tasks.front().get());
-                pself->tasks.pop_front();
-                pself->next();
-            };
-        }
-
-    public:
-        explicit AsynchronousTaskContainer(SessionReactor& session_reactor)
-          : session_reactor(session_reactor)
-        {}
-
-        void add(std::unique_ptr<AsynchronousTask>&& task)
-        {
-            this->tasks.emplace_back(std::move(task));
-            if (this->tasks.size() == 1u) {
-                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
-            }
-        }
-
-    private:
-        void next()
-        {
-            if (!this->tasks.empty()) {
-                this->tasks.front()->configure_event(this->session_reactor, {this, remover()});
-            }
-        }
-
-        std::deque<std::unique_ptr<AsynchronousTask>> tasks;
-        SessionReactor& session_reactor;
-    };
     AsynchronousTaskContainer asynchronous_tasks;
 
     Translation::language_t lang;
@@ -574,27 +657,6 @@ private:
     };
 
 
-    inline ClipboardVirtualChannel& get_clipboard_virtual_channel() {
-        if (!this->clipboard_virtual_channel) {
-            assert(!this->clipboard_to_client_sender &&
-                !this->clipboard_to_server_sender);
-
-            this->clipboard_to_client_sender =
-                this->channels.create_to_client_sender(channel_names::cliprdr, this->front);
-            this->clipboard_to_server_sender =
-                this->create_to_server_sender(channel_names::cliprdr);
-
-            this->clipboard_virtual_channel =
-                std::make_unique<ClipboardVirtualChannel>(
-                    this->clipboard_to_client_sender.get(),
-                    this->clipboard_to_server_sender.get(),
-                    this->front,
-                    this->get_clipboard_virtual_channel_params());
-        }
-
-        return *this->clipboard_virtual_channel;
-    }
-
     inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel() {
         if (!this->dynamic_channel_virtual_channel) {
             assert(!this->dynamic_channel_to_client_sender &&
@@ -603,8 +665,8 @@ private:
             this->dynamic_channel_to_client_sender =
                 this->channels.create_to_client_sender(channel_names::drdynvc, this->front);
             this->dynamic_channel_to_server_sender =
-                this->create_to_server_sender(channel_names::drdynvc);
-
+                this->channels.create_to_server_sender(channel_names::drdynvc, 
+                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
             this->dynamic_channel_virtual_channel =
                 std::make_unique<DynamicChannelVirtualChannel>(
                     this->dynamic_channel_to_client_sender.get(),
@@ -626,8 +688,8 @@ private:
                  this->channels.create_to_client_sender(channel_names::rdpdr, this->front) :
                  nullptr);
             this->file_system_to_server_sender =
-                this->create_to_server_sender(channel_names::rdpdr);
-
+                this->channels.create_to_server_sender(channel_names::rdpdr,
+                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
             this->file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(
                     this->session_reactor,
@@ -656,7 +718,8 @@ private:
             assert(!this->session_probe_to_server_sender);
 
             this->session_probe_to_server_sender =
-                this->create_to_server_sender(channel_names::sespro);
+                this->channels.create_to_server_sender(channel_names::sespro,
+                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
             FileSystemVirtualChannel& file_system_virtual_channel =
                 get_file_system_virtual_channel();
@@ -684,7 +747,8 @@ private:
             this->remote_programs_to_client_sender =
                 this->channels.create_to_client_sender(channel_names::rail, this->front);
             this->remote_programs_to_server_sender =
-                this->create_to_server_sender(channel_names::rail);
+                this->channels.create_to_server_sender(channel_names::rail,
+                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
             this->remote_programs_virtual_channel =
                 std::make_unique<RemoteProgramsVirtualChannel>(
@@ -763,7 +827,7 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(mod_rdp_params, mod_rdp_params.verbose)
+        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
@@ -797,8 +861,6 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
-        , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
-        , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
@@ -859,7 +921,6 @@ public:
         , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
-        , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
         , font(mod_rdp_params.font)
@@ -1198,62 +1259,7 @@ public:
 
 private:
 
-    std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-        CHANNELS::ChannelNameId channel_name)
-    {
-        const CHANNELS::ChannelDef* channel =
-            this->channels.mod_channel_list.get_by_name(channel_name);
-        if (!channel)
-        {
-            return nullptr;
-        }
 
-        std::unique_ptr<ToServerSender> to_server_sender =
-            std::make_unique<ToServerSender>(
-                this->trans,
-                this->encrypt,
-                this->negociation_result.encryptionLevel,
-                this->negociation_result.userid,
-                channel_name,
-                channel->chanid,
-                (channel->flags &
-                 GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
-                this->verbose);
-
-        if (channel_name != channel_names::rdpdr) {
-            return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
-        }
-
-        return std::make_unique<ToServerAsynchronousSender>(
-            std::move(to_server_sender),
-            this->asynchronous_tasks,
-            this->verbose);
-    }
-
-    const ClipboardVirtualChannel::Params
-        get_clipboard_virtual_channel_params() const
-    {
-        ClipboardVirtualChannel::Params clipboard_virtual_channel_params(this->report_message);
-
-        clipboard_virtual_channel_params.exchanged_data_limit            =
-            this->max_clipboard_data;
-        clipboard_virtual_channel_params.verbose                         =
-            this->verbose;
-        clipboard_virtual_channel_params.clipboard_down_authorized       =
-            this->channels.authorization_channels.cliprdr_down_is_authorized();
-        clipboard_virtual_channel_params.clipboard_up_authorized         =
-            this->channels.authorization_channels.cliprdr_up_is_authorized();
-        clipboard_virtual_channel_params.clipboard_file_authorized       =
-            this->channels.authorization_channels.cliprdr_file_is_authorized();
-        clipboard_virtual_channel_params.dont_log_data_into_syslog       =
-            this->disable_clipboard_log_syslog;
-        clipboard_virtual_channel_params.dont_log_data_into_wrm          =
-            this->disable_clipboard_log_wrm;
-        clipboard_virtual_channel_params.log_only_relevant_clipboard_activities =
-            this->log_only_relevant_clipboard_activities;
-
-        return clipboard_virtual_channel_params;
-    }
 
     const DynamicChannelVirtualChannel::Params
         get_dynamic_channel_virtual_channel_params() const
@@ -1664,7 +1670,9 @@ public:
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
-        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(
+                this->front,
+                this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = chunk.clone();
@@ -5517,7 +5525,9 @@ private:
         uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)cliprdr_channel;
-        ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel();
+        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(
+            this->front,
+            this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = stream.clone();
@@ -5652,7 +5662,9 @@ private:
     void do_enable_session_probe() {
         if (this->enable_session_probe) {
             ClipboardVirtualChannel& cvc =
-                this->get_clipboard_virtual_channel();
+                this->channels.get_clipboard_virtual_channel(
+                    this->front,
+                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
             if (this->session_probe_launcher) {
                 cvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
