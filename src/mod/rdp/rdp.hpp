@@ -120,17 +120,44 @@ class RDPMetrics;
 class mod_rdp : public mod_api, public rdp_api
 {
 private:
+    struct Channels {
+        CHANNELS::ChannelDefArray mod_channel_list;
+        const AuthorizationChannels authorization_channels;
+        const bool enable_auth_channel;
+        const CHANNELS::ChannelNameId auth_channel;
+        int auth_channel_flags      = 0;
+        int auth_channel_chanid     = 0;
+        const CHANNELS::ChannelNameId checkout_channel;
+        int checkout_channel_flags  = 0;
+        int checkout_channel_chanid = 0;
+
+        Channels(const ModRDPParams & mod_rdp_params) 
+            : authorization_channels(
+                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+              )
+            , auth_channel([&]{
+                switch (mod_rdp_params.auth_channel) {
+                    case CHANNELS::ChannelNameId():
+                    case CHANNELS::ChannelNameId("*"):
+                        return CHANNELS::ChannelNameId("wablnch");
+                    default:
+                        return mod_rdp_params.auth_channel;
+                }
+              }())
+            , checkout_channel(mod_rdp_params.checkout_channel)
+            , enable_auth_channel(mod_rdp_params.alternate_shell[0]
+                               && !mod_rdp_params.ignore_auth_channel)
+        {
+        }
+    } channels;
+
     /// shared with RdpNegociation
     //@{
-    CHANNELS::ChannelDefArray mod_channel_list;
-    const AuthorizationChannels authorization_channels;
-    const CHANNELS::ChannelNameId auth_channel;
-    const CHANNELS::ChannelNameId checkout_channel;
 
     CryptContext decrypt {};
     CryptContext encrypt {};
 
-    const bool enable_auth_channel;
     RedirectionInfo & redir_info;
 
     const RdpLogonInfo logon_info;
@@ -305,12 +332,6 @@ private:
 
     const RDPVerbose verbose;
     const BmpCache::Verbose cache_verbose;
-
-    int auth_channel_flags;
-    int auth_channel_chanid;
-
-    int checkout_channel_flags = 0;
-    int checkout_channel_chanid = 0;
 
     AuthApi & authentifier;
     ReportMessageApi & report_message;
@@ -712,22 +733,7 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : authorization_channels(
-            mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-            mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-          )
-        , auth_channel([&]{
-            switch (mod_rdp_params.auth_channel) {
-                case CHANNELS::ChannelNameId():
-                case CHANNELS::ChannelNameId("*"):
-                    return CHANNELS::ChannelNameId("wablnch");
-                default:
-                    return mod_rdp_params.auth_channel;
-            }
-          }())
-        , checkout_channel(mod_rdp_params.checkout_channel)
-        , enable_auth_channel(mod_rdp_params.alternate_shell[0]
-                           && !mod_rdp_params.ignore_auth_channel)
+        : channels(mod_rdp_params)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
@@ -746,8 +752,6 @@ public:
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
-        , auth_channel_flags(0)
-        , auth_channel_chanid(0)
         , authentifier(authentifier)
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
@@ -1166,7 +1170,7 @@ private:
     std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
         CHANNELS::ChannelNameId channel_name) const
     {
-        if (!this->authorization_channels.is_authorized(channel_name))
+        if (!this->channels.authorization_channels.is_authorized(channel_name))
         {
             return nullptr;
         }
@@ -1193,7 +1197,7 @@ private:
         CHANNELS::ChannelNameId channel_name)
     {
         const CHANNELS::ChannelDef* channel =
-            this->mod_channel_list.get_by_name(channel_name);
+            this->channels.mod_channel_list.get_by_name(channel_name);
         if (!channel)
         {
             return nullptr;
@@ -1231,11 +1235,11 @@ private:
         clipboard_virtual_channel_params.verbose                         =
             this->verbose;
         clipboard_virtual_channel_params.clipboard_down_authorized       =
-            this->authorization_channels.cliprdr_down_is_authorized();
+            this->channels.authorization_channels.cliprdr_down_is_authorized();
         clipboard_virtual_channel_params.clipboard_up_authorized         =
-            this->authorization_channels.cliprdr_up_is_authorized();
+            this->channels.authorization_channels.cliprdr_up_is_authorized();
         clipboard_virtual_channel_params.clipboard_file_authorized       =
-            this->authorization_channels.cliprdr_file_is_authorized();
+            this->channels.authorization_channels.cliprdr_file_is_authorized();
         clipboard_virtual_channel_params.dont_log_data_into_syslog       =
             this->disable_clipboard_log_syslog;
         clipboard_virtual_channel_params.dont_log_data_into_wrm          =
@@ -1272,20 +1276,20 @@ private:
         file_system_virtual_channel_params.client_name                     =
             this->client_name;
         file_system_virtual_channel_params.file_system_read_authorized     =
-            this->authorization_channels.rdpdr_drive_read_is_authorized();
+            this->channels.authorization_channels.rdpdr_drive_read_is_authorized();
         file_system_virtual_channel_params.file_system_write_authorized    =
-            this->authorization_channels.rdpdr_drive_write_is_authorized();
+            this->channels.authorization_channels.rdpdr_drive_write_is_authorized();
         file_system_virtual_channel_params.parallel_port_authorized        =
-            this->authorization_channels.rdpdr_type_is_authorized(
+            this->channels.authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_PARALLEL);
         file_system_virtual_channel_params.print_authorized                =
-            this->authorization_channels.rdpdr_type_is_authorized(
+            this->channels.authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_PRINT);
         file_system_virtual_channel_params.serial_port_authorized          =
-            this->authorization_channels.rdpdr_type_is_authorized(
+            this->channels.authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SERIAL);
         file_system_virtual_channel_params.smart_card_authorized           =
-            this->authorization_channels.rdpdr_type_is_authorized(
+            this->channels.authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SMARTCARD);
         file_system_virtual_channel_params.random_number                   =
             ::getpid();
@@ -1621,12 +1625,12 @@ public:
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
                 front_channel_name);
         }
-        const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
+        const CHANNELS::ChannelDef * mod_channel = this->channels.mod_channel_list.get_by_name(front_channel_name);
         if (!mod_channel) {
             return;
         }
         if (bool(this->verbose & RDPVerbose::channels)) {
-            mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
+            mod_channel->log(unsigned(mod_channel - &this->channels.mod_channel_list[0]));
         }
 
         switch (front_channel_name) {
@@ -1683,7 +1687,7 @@ private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (!this->enable_rdpdr_data_analysis &&
-            this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            this->channels.authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1762,9 +1766,9 @@ public:
 
         virtual_channel_pdu.send_to_server(
             this->trans, this->encrypt, this->negociation_result.encryptionLevel
-          , this->negociation_result.userid, this->auth_channel_chanid
+          , this->negociation_result.userid, this->channels.auth_channel_chanid
           , stream_data.get_offset()
-          , this->auth_channel_flags
+          , this->channels.auth_channel_flags
           , stream_data.get_data()
           , stream_data.get_offset());
     }
@@ -1783,9 +1787,9 @@ private:
 
         virtual_channel_pdu.send_to_server(
             this->trans, this->encrypt, this->negociation_result.encryptionLevel
-          , this->negociation_result.userid, this->checkout_channel_chanid
+          , this->negociation_result.userid, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
-          , this->checkout_channel_flags
+          , this->channels.checkout_channel_flags
           , stream_data.get_data()
           , stream_data.get_offset());
     }
@@ -2175,13 +2179,13 @@ public:
                 LOG(LOG_INFO, "received channel data on mcs.chanid=%u", mcs.channelId);
             }
 
-            int num_channel_src = this->mod_channel_list.get_index_by_id(mcs.channelId);
+            int num_channel_src = this->channels.mod_channel_list.get_index_by_id(mcs.channelId);
             if (num_channel_src == -1) {
                 LOG(LOG_ERR, "mod::rdp::MOD_RDP_CONNECTED::Unknown Channel id=%d", mcs.channelId);
                 throw Error(ERR_CHANNEL_UNKNOWN_CHANNEL);
             }
 
-            const CHANNELS::ChannelDef & mod_channel = this->mod_channel_list[num_channel_src];
+            const CHANNELS::ChannelDef & mod_channel = this->channels.mod_channel_list[num_channel_src];
             if (bool(this->verbose & RDPVerbose::channels)) {
                 mod_channel.log(num_channel_src);
             }
@@ -2191,10 +2195,10 @@ public:
             size_t chunk_size = sec.payload.in_remain();
 
             // If channel name is our virtual channel, then don't send data to front
-            if      (mod_channel.name == this->auth_channel && this->enable_auth_channel) {
+            if      (mod_channel.name == this->channels.auth_channel && this->channels.enable_auth_channel) {
                 this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
-            else if (mod_channel.name == this->checkout_channel) {
+            else if (mod_channel.name == this->channels.checkout_channel) {
                 this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
             }
             else if (mod_channel.name == channel_names::sespro) {
@@ -5419,8 +5423,8 @@ private:
 
         std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        this->auth_channel_flags  = flags;
-        this->auth_channel_chanid = auth_channel.chanid;
+        this->channels.auth_channel_flags  = flags;
+        this->channels.auth_channel_chanid = auth_channel.chanid;
 
         std::string              order;
         std::vector<std::string> parameters;
@@ -5479,8 +5483,8 @@ private:
 
         std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
 
-        this->checkout_channel_flags  = flags;
-        this->checkout_channel_chanid = checkout_channel.chanid;
+        this->channels.checkout_channel_flags  = flags;
+        this->channels.checkout_channel_chanid = checkout_channel.chanid;
 
         LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
 
@@ -5539,7 +5543,7 @@ private:
     void process_rdpdr_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
-            this->authorization_channels.rdpdr_type_all_is_authorized() &&
+            this->channels.authorization_channels.rdpdr_type_all_is_authorized() &&
             !this->file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
