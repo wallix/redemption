@@ -130,8 +130,10 @@ private:
         const CHANNELS::ChannelNameId checkout_channel;
         int checkout_channel_flags  = 0;
         int checkout_channel_chanid = 0;
+        const RDPVerbose verbose;
 
-        Channels(const ModRDPParams & mod_rdp_params) 
+
+        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose) 
             : authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
                 mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -148,8 +150,36 @@ private:
             , checkout_channel(mod_rdp_params.checkout_channel)
             , enable_auth_channel(mod_rdp_params.alternate_shell[0]
                                && !mod_rdp_params.ignore_auth_channel)
+            , verbose(verbose)
         {
         }
+        
+        std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
+            CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
+        {
+            if (!this->authorization_channels.is_authorized(channel_name))
+            {
+                return nullptr;
+            }
+
+            const CHANNELS::ChannelDefArray& front_channel_list =
+                front.get_channel_list();
+
+            const CHANNELS::ChannelDef* channel =
+                front_channel_list.get_by_name(channel_name);
+            if (!channel)
+            {
+                return nullptr;
+            }
+
+            std::unique_ptr<ToClientSender> to_client_sender =
+                std::make_unique<ToClientSender>(front, *channel,
+                    this->verbose);
+
+            return std::unique_ptr<VirtualChannelDataSender>(
+                std::move(to_client_sender));
+        }
+        
     } channels;
 
     /// shared with RdpNegociation
@@ -550,7 +580,7 @@ private:
                 !this->clipboard_to_server_sender);
 
             this->clipboard_to_client_sender =
-                this->create_to_client_sender(channel_names::cliprdr);
+                this->channels.create_to_client_sender(channel_names::cliprdr, this->front);
             this->clipboard_to_server_sender =
                 this->create_to_server_sender(channel_names::cliprdr);
 
@@ -571,7 +601,7 @@ private:
                 !this->dynamic_channel_to_server_sender);
 
             this->dynamic_channel_to_client_sender =
-                this->create_to_client_sender(channel_names::drdynvc);
+                this->channels.create_to_client_sender(channel_names::drdynvc, this->front);
             this->dynamic_channel_to_server_sender =
                 this->create_to_server_sender(channel_names::drdynvc);
 
@@ -593,7 +623,7 @@ private:
             this->file_system_to_client_sender =
                 (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
                   !this->bogus_ios_rdpdr_virtual_channel) ?
-                 this->create_to_client_sender(channel_names::rdpdr) :
+                 this->channels.create_to_client_sender(channel_names::rdpdr, this->front) :
                  nullptr);
             this->file_system_to_server_sender =
                 this->create_to_server_sender(channel_names::rdpdr);
@@ -652,7 +682,7 @@ private:
                 !this->remote_programs_to_server_sender);
 
             this->remote_programs_to_client_sender =
-                this->create_to_client_sender(channel_names::rail);
+                this->channels.create_to_client_sender(channel_names::rail, this->front);
             this->remote_programs_to_server_sender =
                 this->create_to_server_sender(channel_names::rail);
 
@@ -733,7 +763,7 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(mod_rdp_params)
+        : channels(mod_rdp_params, mod_rdp_params.verbose)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
@@ -1167,31 +1197,6 @@ public:
     }
 
 private:
-    std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
-        CHANNELS::ChannelNameId channel_name) const
-    {
-        if (!this->channels.authorization_channels.is_authorized(channel_name))
-        {
-            return nullptr;
-        }
-
-        const CHANNELS::ChannelDefArray& front_channel_list =
-            this->front.get_channel_list();
-
-        const CHANNELS::ChannelDef* channel =
-            front_channel_list.get_by_name(channel_name);
-        if (!channel)
-        {
-            return nullptr;
-        }
-
-        std::unique_ptr<ToClientSender> to_client_sender =
-            std::make_unique<ToClientSender>(this->front, *channel,
-                this->verbose);
-
-        return std::unique_ptr<VirtualChannelDataSender>(
-            std::move(to_client_sender));
-    }
 
     std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
         CHANNELS::ChannelNameId channel_name)

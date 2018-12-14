@@ -99,7 +99,7 @@ public:
         this->current_data.resize(nb_metric_item, 0);
 
         LOG(LOG_INFO, "Metrics recording is enabled (%s) log_delay=%" PRIu64 " sec rotation=%" PRIu64 " hours",
-            this->path.c_str(), this->log_delay.count(), this->file_interval.count());
+            this->path.c_str(), static_cast<uint64_t>(this->log_delay.count()), static_cast<uint64_t>(this->file_interval.count()));
 
         this->new_file(this->current_file_date);
     }
