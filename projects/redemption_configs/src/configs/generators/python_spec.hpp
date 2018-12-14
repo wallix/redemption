@@ -116,12 +116,6 @@ inline void write_section(std::ostream& out, std::string const& section_name)
 }
 
 
-inline void write_sep(std::ostream& out)
-{
-    out << "\\n\\n\"\n\n";
-}
-
-
 namespace impl
 {
     struct exprio
@@ -388,10 +382,6 @@ struct IniPythonSpecWriterBase
             this->out_file_ << str;
             this->out_member_.str("");
         }
-    }
-
-    void do_sep()
-    {
     }
 };
 

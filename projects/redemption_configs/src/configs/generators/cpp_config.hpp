@@ -350,9 +350,6 @@ struct CppConfigWriterBase
             "        }\n";
         }
     }
-
-    void do_sep()
-    {}
 };
 
 

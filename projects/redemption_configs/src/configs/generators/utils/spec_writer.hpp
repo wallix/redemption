@@ -307,14 +307,6 @@ private:
         pack_type<Ts...> infos;
     };
 
-    struct Sep final : InfosBase
-    {
-        void apply(type_enumerations&, std::pair<Writers&, std::string>&... pws) override
-        {
-            (pws.do_sep(), ...);
-        }
-    };
-
     using Names = cfg_attributes::names::f<detail_::Names_>;
 
     struct Sections
@@ -328,10 +320,7 @@ private:
 
     Sections* section_;
 
-public:
-    void sep() { this->section_->members_ordered.emplace_back(); }
 
-private:
     template<class... Ts>
     static Names names_impl(Ts&&... s)
     {
@@ -417,13 +406,8 @@ public:
 
             (ws.do_start_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
             for (std::string const & member_name : section.members_ordered) {
-                if (member_name.empty()) {
-                    (ws.do_sep(), ...);
-                }
-                else {
-                    section.members.find(member_name)->second
-                        ->apply(this->enums, static_cast<std::pair<Writers&, std::string>&>(pws)...);
-                }
+                section.members.find(member_name)->second
+                    ->apply(this->enums, static_cast<std::pair<Writers&, std::string>&>(pws)...);
             }
             (ws.do_stop_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
         }
@@ -456,7 +440,6 @@ struct EvaluatorBase
 private:
     void do_start_section(std::string const & section_name) { (void)section_name; }
     void do_stop_section(std::string const & section_name) { (void)section_name; }
-    void do_sep() {}
     void do_init() {}
     void do_finish() {}
 };

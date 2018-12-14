@@ -120,9 +120,6 @@ struct ConnectionPolicyWriterBase : python_spec_writer::IniPythonSpecWriterBase
         }
     }
 
-    void do_sep()
-    {}
-
     static void update_sesman_contains(
         std::string& s,
         std::string const sesman_name,
