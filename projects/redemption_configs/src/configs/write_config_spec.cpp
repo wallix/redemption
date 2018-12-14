@@ -40,10 +40,10 @@ int main()
         "autogen/include/configs/autogen/variables_configuration.hpp",
         "autogen/include/configs/autogen/set_value.tcc"
     });
-    ConnPolicy conn_policy({
-        std::pair{"rdp", "autogen/spec/rdp.spec"},
-        std::pair{"vnc", "autogen/spec/vnc.spec"}
-    }, "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py");
+    ConnPolicy conn_policy(
+        "autogen/spec/", {"rdp", "vnc"},
+        "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
+    );
 
     auto evaluate = [](auto&&... writers){
         cfg_generators::ConfigSpecWrapper<std::remove_reference_t<decltype(writers)>...> config;

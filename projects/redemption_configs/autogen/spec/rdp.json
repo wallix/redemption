@@ -1,0 +1,440 @@
+{
+  "sections": [
+    {
+      "name": "general",
+      "members": [
+        {
+          "name": "transformation_rule",
+          "type": "string",
+          "default": "",
+          "description": "Secondary login Transformation rule\n${LOGIN} will be replaced by login\n${DOMAIN} (optional) will be replaced by domain if it exists.\nEmpty value means no transformation rule."
+        },
+        {
+          "name": "vault_transformation_rule",
+          "type": "string",
+          "default": "",
+          "description": "Account Mapping password retriever\nTransformation to apply to find the correct account.\n${USER} will be replaced by the user's login.\n${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).\n${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).\n${GROUP} will be replaced by the authorization's user group.\n${DEVICE} will be replaced by the device's name.\nA regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \\1, \\2, ...\nFor example to replace leading \"A\" by \"B\" in the username: ${USER:/^A/B}\nEmpty value means no transformation rule."
+        }
+      ]
+    },
+    {
+      "name": "session",
+      "members": [
+        {
+          "name": "inactivity_timeout",
+          "type": "duration",
+          "min": 0,
+          "default": 0,
+          "description": "No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."
+        }
+      ]
+    },
+    {
+      "name": "session_log",
+      "members": [
+        {
+          "name": "keyboard_input_masking_level",
+          "type": "option",
+          "default": 2,
+          "values": [
+            {
+               "value": 0,
+               "label": "unmasked",
+               "description": "keyboard input are not masked"
+            },
+            {
+               "value": 1,
+               "label": "password_only",
+               "description": "only passwords are masked"
+            },
+            {
+               "value": 2,
+               "label": "password_and_unidentified",
+               "description": "passwords and unidentified texts are masked"
+            },
+            {
+               "value": 3,
+               "label": "fully_masked",
+               "description": "keyboard input are fully masked"
+            }
+          ],
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "rdp",
+      "members": [
+        {
+          "name": "enable_nla",
+          "type": "bool",
+          "default": true,
+          "description": "NLA authentication in secondary target."
+        },
+        {
+          "name": "enable_kerberos",
+          "type": "bool",
+          "default": false,
+          "description": "If enabled, NLA authentication will try Kerberos before NTLM.\n(if enable_nla is disabled, this value is ignored)."
+        },
+        {
+          "name": "server_redirection",
+          "type": "bool",
+          "default": false,
+          "description": "Enables Server Redirection Support."
+        },
+        {
+          "name": "load_balance_info",
+          "type": "string",
+          "default": "",
+          "description": "Load balancing information"
+        },
+        {
+          "name": "use_client_provided_alternate_shell",
+          "type": "bool",
+          "default": false,
+          "description": "As far as possible, use client-provided initial program (Alternate Shell)"
+        },
+        {
+          "name": "use_client_provided_remoteapp",
+          "type": "bool",
+          "default": false,
+          "description": "As far as possible, use client-provided remote program (RemoteApp)"
+        },
+        {
+          "name": "use_native_remoteapp_capability",
+          "type": "bool",
+          "default": true,
+          "description": "As far as possible, use native RemoteApp capability"
+        },
+        {
+          "name": "remote_programs_disconnect_message_delay",
+          "type": "duration",
+          "min": 0,
+          "default": 3000,
+          "advanced": true,
+          "description": "Delay before showing disconnect message after the last RemoteApp window is closed."
+        },
+        {
+          "name": "use_session_probe_to_launch_remote_program",
+          "type": "bool",
+          "default": true,
+          "description": "Use Session Probe to launch Remote Program as much as possible."
+        }
+      ]
+    },
+    {
+      "name": "session_probe",
+      "members": [
+        {
+          "name": "enable_session_probe",
+          "type": "bool",
+          "default": true,
+          "description": ""
+        },
+        {
+          "name": "use_smart_launcher",
+          "type": "bool",
+          "default": true,
+          "description": "Minimum supported server : Windows Server 2008.\nClipboard redirection should be remain enabled on Terminal Server."
+        },
+        {
+          "name": "enable_launch_mask",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "on_launch_failure",
+          "type": "option",
+          "default": 2,
+          "values": [
+            {
+               "value": 0,
+               "label": "ignore_and_continue",
+               "description": "ignore failure and continue."
+            },
+            {
+               "value": 1,
+               "label": "disconnect_user",
+               "description": "disconnect user."
+            },
+            {
+               "value": 2,
+               "label": "retry_without_session_probe",
+               "description": "reconnect without Session Probe."
+            }
+          ],
+          "description": "Behavior on failure to launch Session Probe."
+        },
+        {
+          "name": "launch_timeout",
+          "type": "integer",
+          "min": 0,
+          "max": 300000,
+          "default": 40000,
+          "advanced": true,
+          "description": "This parameter is used if session_probe_on_launch_failure is 1 (disconnect user).\n0 to disable timeout."
+        },
+        {
+          "name": "launch_fallback_timeout",
+          "type": "integer",
+          "min": 0,
+          "max": 300000,
+          "default": 10000,
+          "advanced": true,
+          "description": "This parameter is used if session_probe_on_launch_failure is 0 (ignore failure and continue) or 2 (reconnect without Session Probe).\n0 to disable timeout."
+        },
+        {
+          "name": "start_launch_timeout_timer_only_after_logon",
+          "type": "bool",
+          "default": true,
+          "description": "Minimum supported server : Windows Server 2008."
+        },
+        {
+          "name": "keepalive_timeout",
+          "type": "integer",
+          "min": 0,
+          "max": 60000,
+          "default": 5000,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "on_keepalive_timeout",
+          "type": "option",
+          "default": 1,
+          "values": [
+            {
+               "value": 0,
+               "label": "ignore_and_continue",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "disconnect_user",
+               "description": ""
+            },
+            {
+               "value": 2,
+               "label": "freeze_connection_and_wait",
+               "description": ""
+            }
+          ],
+          "description": ""
+        },
+        {
+          "name": "end_disconnected_session",
+          "type": "bool",
+          "default": false,
+          "description": "End automatically a disconnected session.\nSession Probe must be enabled to use this feature."
+        },
+        {
+          "name": "enable_log",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "enable_log_rotation",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "disconnected_application_limit",
+          "type": "integer",
+          "min": 0,
+          "max": 172800000,
+          "default": 0,
+          "advanced": true,
+          "description": "This policy setting allows you to configure a time limit for disconnected application sessions.\n0 to disable timeout."
+        },
+        {
+          "name": "disconnected_session_limit",
+          "type": "integer",
+          "min": 0,
+          "max": 172800000,
+          "default": 0,
+          "advanced": true,
+          "description": "This policy setting allows you to configure a time limit for disconnected Terminal Services sessions.\n0 to disable timeout."
+        },
+        {
+          "name": "idle_session_limit",
+          "type": "integer",
+          "min": 0,
+          "max": 172800000,
+          "default": 0,
+          "advanced": true,
+          "description": "This parameter allows you to specify the maximum amount of time that an active Terminal Services session can be idle (without user input) before it is automatically locked by Session Probe.\n0 to disable timeout."
+        },
+        {
+          "name": "smart_launcher_clipboard_initialization_delay",
+          "type": "duration",
+          "min": 0,
+          "default": 2000,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "smart_launcher_start_delay",
+          "type": "duration",
+          "min": 0,
+          "default": 0,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "smart_launcher_long_delay",
+          "type": "duration",
+          "min": 0,
+          "default": 500,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "smart_launcher_short_delay",
+          "type": "duration",
+          "min": 0,
+          "default": 50,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "enable_crash_dump",
+          "type": "bool",
+          "default": false,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "handle_usage_limit",
+          "type": "integer",
+          "min": 0,
+          "max": 1000,
+          "default": 0,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "memory_usage_limit",
+          "type": "integer",
+          "min": 0,
+          "max": 200000000,
+          "default": 0,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "ignore_ui_less_processes_during_end_of_session_check",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
+          "name": "public_session",
+          "type": "bool",
+          "default": false,
+          "description": "If enabled, disconnected session can be recovered by a different primary user."
+        },
+        {
+          "name": "outbound_connection_monitoring_rules",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated rules (Ex.: $deny:192.168.0.0/24:*,$allow:host.domain.net:3389,$allow:192.168.0.110:*)\n(Ex. for backwards compatibility only: 10.1.0.0/16:22)\nSession Probe must be enabled to use this feature."
+        },
+        {
+          "name": "process_monitoring_rules",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated rules (Ex.: $deny:Taskmgr)\n@ = All child processes of Bastion Application (Ex.: $deny:@)\nSession Probe must be enabled to use this feature."
+        },
+        {
+          "name": "extra_system_processes",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"
+        }
+      ]
+    },
+    {
+      "name": "server_cert",
+      "members": [
+        {
+          "name": "server_cert_store",
+          "type": "bool",
+          "default": true,
+          "description": "Keep known server certificates on WAB"
+        },
+        {
+          "name": "server_cert_check",
+          "type": "option",
+          "default": 1,
+          "values": [
+            {
+               "value": 0,
+               "label": "fails_if_no_match_or_missing",
+               "description": "fails if certificates doesn't match or miss."
+            },
+            {
+               "value": 1,
+               "label": "fails_if_no_match_and_succeed_if_no_know",
+               "description": "fails if certificate doesn't match, succeed if no known certificate."
+            },
+            {
+               "value": 2,
+               "label": "succeed_if_exists_and_fails_if_missing",
+               "description": "succeed if certificates exists (not checked), fails if missing."
+            },
+            {
+               "value": 3,
+               "label": "always_succeed",
+               "description": "always succeed."
+            }
+          ],
+          "description": "Behavior of certificates check."
+        },
+        {
+          "name": "server_access_allowed_message",
+          "type": "bitset",
+          "min": 0,
+          "max": 7,
+          "default": 1,
+          "advanced": true,
+          "description": "Warn if check allow connexion to server."
+        },
+        {
+          "name": "server_cert_create_message",
+          "type": "bitset",
+          "min": 0,
+          "max": 7,
+          "default": 1,
+          "advanced": true,
+          "description": "Warn that new server certificate file was created."
+        },
+        {
+          "name": "server_cert_success_message",
+          "type": "bitset",
+          "min": 0,
+          "max": 7,
+          "default": 1,
+          "advanced": true,
+          "description": "Warn that server certificate file was successfully checked."
+        },
+        {
+          "name": "server_cert_failure_message",
+          "type": "bitset",
+          "min": 0,
+          "max": 7,
+          "default": 1,
+          "advanced": true,
+          "description": "Warn that server certificate file checking failed."
+        }
+      ]
+    }
+  ]
+}
