@@ -23,6 +23,8 @@
 
 #include <fstream>
 #include <cstring>
+#include <string>
+
 
 template<class Arg>
 struct MultiFilenameWriter
@@ -33,7 +35,14 @@ struct MultiFilenameWriter
     {}
 
     template<class Fn>
-    MultiFilenameWriter & then(const char * new_filename, Fn fn) {
+    MultiFilenameWriter & then(std::string const& new_filename, Fn fn)
+    {
+        return this->then(new_filename.c_str(), fn);
+    }
+
+    template<class Fn>
+    MultiFilenameWriter & then(const char * new_filename, Fn fn)
+    {
         if (!this->err) {
             const char * filename = this->filename;
             if (new_filename && *new_filename && strcmp(this->filename, new_filename)) {

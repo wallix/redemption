@@ -46,7 +46,7 @@ struct map_binder
 };
 
 template<std::size_t i, class Binder>
-static Binder const & get_binder(map_binder<i, Binder> const & mbinder)
+Binder const & get_binder(map_binder<i, Binder> const & mbinder)
 { return mbinder.binder; }
 
 template<std::size_t... Ints, class... Binders>

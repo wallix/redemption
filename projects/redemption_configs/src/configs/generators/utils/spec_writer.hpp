@@ -279,17 +279,15 @@ namespace detail_
 }
 
 
-template<class Inherit, class AttributeName>
-struct ConfigSpecWriterBase
+template<class... Writers>
+struct ConfigSpecWrapper
 {
     type_enumerations enums;
-
-    unsigned depth = 0;
 
 private:
     struct InfosBase
     {
-        virtual void apply(std::string const & section_name, Inherit & x) = 0;
+        virtual void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) = 0;
         virtual ~InfosBase() = default;
     };
 
@@ -301,16 +299,20 @@ private:
         : infos{static_cast<Us&&>(args)...}
         {}
 
-        void apply(std::string const& section_name, Inherit& x) override
-        { x.do_member(section_name, this->infos); }
+        void apply(type_enumerations& enums, std::pair<Writers&, std::string>&... pws) override
+        {
+            (pws.first.evaluate_member(pws.second, this->infos, enums), ...);
+        }
 
         pack_type<Ts...> infos;
     };
 
     struct Sep final : InfosBase
     {
-        void apply(std::string const&, Inherit& x) override
-        { x.do_sep(); }
+        void apply(type_enumerations&, std::pair<Writers&, std::string>&... pws) override
+        {
+            (pws.do_sep(), ...);
+        }
     };
 
     using Names = cfg_attributes::names::f<detail_::Names_>;
@@ -327,7 +329,6 @@ private:
     Sections* section_;
 
 public:
-    Inherit & inherit() { return static_cast<Inherit&>(*this); }
     void sep() { this->section_->members_ordered.emplace_back(); }
 
 private:
@@ -402,26 +403,48 @@ public:
         this->section_->members.emplace(varname, std::move(u));
     }
 
-    void evaluate()
+    int evaluate(Writers&... ws)
     {
-        this->inherit().do_init();
+        (ws.do_init(), ...);
         for (std::string const & global_section_name : this->sections_ordered) {
             auto const & section = this->sections.find(global_section_name)->second;
-            auto const& section_name = section.names.template name<AttributeName>();
-            this->inherit().do_start_section(section_name);
+
+            pack_type<std::pair<Writers&, std::string>...> pws{
+                {ws, section.names.template name<
+                    typename std::remove_reference_t<decltype(ws)>::attribute_name_type>()
+                }...
+            };
+
+            (ws.do_start_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
             for (std::string const & member_name : section.members_ordered) {
                 if (member_name.empty()) {
-                    this->inherit().do_sep();
+                    (ws.do_sep(), ...);
                 }
                 else {
                     section.members.find(member_name)->second
-                    ->apply(section_name, this->inherit());
+                        ->apply(this->enums, static_cast<std::pair<Writers&, std::string>&>(pws)...);
                 }
             }
-            this->inherit().do_stop_section(section_name);
+            (ws.do_stop_section(static_cast<std::pair<Writers&, std::string>&>(pws).second), ...);
         }
-        this->inherit().do_finish();
+
+        auto error_code = 0;
+        auto check_final = [&](auto& w){
+            if (int err = w.do_finish()) {
+                error_code = error_code ? error_code : err;
+            }
+        };
+        (check_final(ws), ...);
+        return error_code;
     }
+};
+
+
+template<class Inherit>
+struct EvaluatorBase
+{
+    Inherit & inherit() { return static_cast<Inherit&>(*this); }
+
 
     template<class T>
     void write(T const & x) { this->inherit().do_write(x); }
