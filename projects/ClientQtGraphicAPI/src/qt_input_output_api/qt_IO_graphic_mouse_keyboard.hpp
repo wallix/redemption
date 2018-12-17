@@ -210,6 +210,7 @@ public:
             }
             LOG(LOG_INFO, "QtGraphicControl::init_form");
             this->form->show();
+            LOG(LOG_INFO, "QtGraphicControl::init_form form shown");
         }
     }
 

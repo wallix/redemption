@@ -1,5 +1,8 @@
 add_obj projects/redemption_configs/redemption_src/configs/config.o : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 add_obj src/capture/file_to_graphic.o : $(REDEMPTION_SRC_PATH)/capture/file_to_graphic.cpp : <define>ZLIB_CONST ;
+add_obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
+add_obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
+add_obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
 add_obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
 add_obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 add_obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
@@ -57,6 +60,9 @@ requirement_list += <library>png ;
 requirement_list += <library>projects/redemption_configs/redemption_src/configs/config.o ;
 requirement_list += <library>snappy ;
 requirement_list += <library>src/capture/file_to_graphic.o ;
+requirement_list += <library>src/client_redemption/client_channels/client_cliprdr_channel.o ;
+requirement_list += <library>src/client_redemption/client_channels/client_rdpdr_channel.o ;
+requirement_list += <library>src/client_redemption/client_channels/client_rdpsnd_channel.o ;
 requirement_list += <library>src/client_redemption/client_config/client_redemption_config.o ;
 requirement_list += <library>src/core/error.o ;
 requirement_list += <library>src/core/font.o ;
