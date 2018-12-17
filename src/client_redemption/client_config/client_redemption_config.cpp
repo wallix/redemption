@@ -22,7 +22,7 @@
 
 
 
-ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR )
+ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR )
 : MAIN_DIR((MAIN_DIR.empty() || MAIN_DIR == "/")
     ? MAIN_DIR
     : (MAIN_DIR.back() == '/')
@@ -95,7 +95,6 @@ ClientRedemptionConfig::ClientRedemptionConfig(SessionReactor& session_reactor, 
     this->rDPSoundConfig.wDGramPort = 0;
     this->rDPSoundConfig.wNumberOfFormats = 1;
     this->rDPSoundConfig.wVersion = 0x06;
-
 
 
     this->userProfils.emplace_back(0, "Default");
@@ -987,10 +986,10 @@ void ClientRedemptionConfig::setAccountData()  {
                 this->_accountData.back().index = accountNB;
 
                 accountNB++;
-                if (accountNB == MAX_ACCOUNT_DATA) {
-                    this->_accountNB = MAX_ACCOUNT_DATA;
-                    accountNB = 0;
-                }
+//                 if (accountNB == _accountData) {
+//                     this->_accountNB = MAX_ACCOUNT_DATA;
+//                     accountNB = 0;
+//                 }
             } else
             if (line.compare(0, pos, "port") == 0) {
                 this->_accountData.back().port = std::stoi(info);
@@ -999,7 +998,7 @@ void ClientRedemptionConfig::setAccountData()  {
             line = "";
         }
 
-        if (this->_accountNB < MAX_ACCOUNT_DATA) {
+        if (this->_accountNB < int(this->_accountData.size())) {
             this->_accountNB = accountNB;
         }
 
@@ -1031,7 +1030,7 @@ void ClientRedemptionConfig::writeAccoundData(const std::string& ip, const std::
             }
         }
 
-        if (!alreadySet && (this->_accountNB < MAX_ACCOUNT_DATA)) {
+        if (!alreadySet) {
             AccountData new_account;
             this->_accountData.push_back(new_account);
             this->_accountData[this->_accountNB].title = title;
@@ -1043,9 +1042,9 @@ void ClientRedemptionConfig::writeAccoundData(const std::string& ip, const std::
             this->_accountData[this->_accountNB].protocol = this->mod_state;
             this->_accountNB++;
 
-            if (this->_accountNB > MAX_ACCOUNT_DATA) {
-                this->_accountNB = MAX_ACCOUNT_DATA;
-            }
+//             if (this->_accountNB > MAX_ACCOUNT_DATA) {
+//                 this->_accountNB = MAX_ACCOUNT_DATA;
+//             }
             this->_last_target_index = this->_accountNB;
         }
 

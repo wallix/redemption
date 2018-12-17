@@ -186,7 +186,7 @@ public:
         }
     }
 
-    void wheelEvent(int  x,  int  y, int delta) {
+    void wheelEvent(int delta) {
         int flag(0);
         if (delta < 0) {
             flag = MOUSE_FLAG_WHEEL | MOUSE_FLAG_WHEEL_NEGATIVE;

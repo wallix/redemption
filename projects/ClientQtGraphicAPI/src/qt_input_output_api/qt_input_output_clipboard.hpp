@@ -32,7 +32,7 @@
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 
 #include <QtCore/QMimeData>
 #include <QtGui/QClipboard>
@@ -276,7 +276,7 @@ public Q_SLOTS:
                 RDPECLIP::FormatDataResponsePDU_MetaFilePic::Ender ender;
                 ender.emit(this->_chunk.get(), this->_cliboard_data_length);
 
-                this->manager->send_FormatListPDU();
+                this->channel->send_FormatListPDU();
             //==========================================================================
 
 
@@ -358,7 +358,7 @@ public Q_SLOTS:
                             }
                         }
 
-                        this->manager->send_FormatListPDU();
+                        this->channel->send_FormatListPDU();
                 //==========================================================================
 
 
@@ -382,7 +382,7 @@ public Q_SLOTS:
 
                         this->_cliboard_data_length += TextEnder::SIZE;
 
-                        this->manager->send_FormatListPDU();
+                        this->channel->send_FormatListPDU();
                 //==========================================================================
                     }
                 }

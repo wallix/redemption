@@ -247,7 +247,6 @@ public:
 
     enum : int {
         BALISED_FRAME = 15,
-        MAX_ACCOUNT_DATA = 15
     };
 
 
@@ -276,7 +275,7 @@ public:
     ModRDPParamsData modRDPParamsData;
     ModVNCParamsData modVNCParamsData;
 
-                                                     // _accountData[MAX_ACCOUNT_DATA];
+
     std::vector<AccountData> _accountData;
     int  _accountNB = 0;
     bool _save_password_account = false;
@@ -318,7 +317,7 @@ public:
 
 
 
-    ClientRedemptionConfig(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR );
+    ClientRedemptionConfig(char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR );
 
     ~ClientRedemptionConfig() = default;
 
@@ -400,7 +399,7 @@ public:
     void set_remoteapp_cmd_line(const std::string & cmd);
 
     bool is_no_win_data();
-    
+
     void deleteCurrentProtile();
 
     void setDefaultConfig();

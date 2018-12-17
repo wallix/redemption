@@ -25,7 +25,7 @@
 
 #include <string>
 
-class ClientChannelCLIPRDRManager;
+class ClientCLIPRDRChannel;
 class ClientRedemptionAPI;
 
 
@@ -34,7 +34,7 @@ class ClientIOClipboardAPI
     // TODO private !!!!!!!!!!!!!!!!
 public:
     ClientRedemptionAPI * client = nullptr;
-    ClientChannelCLIPRDRManager * manager;
+    ClientCLIPRDRChannel * channel;
 
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
@@ -55,8 +55,8 @@ public:
 
     virtual ~ClientIOClipboardAPI() = default;
 
-    void set_manager(ClientChannelCLIPRDRManager * manager) {
-        this->manager = manager;
+    void set_manager(ClientCLIPRDRChannel * channel) {
+        this->channel = channel;
     }
 
     void set_client(ClientRedemptionAPI * client) {

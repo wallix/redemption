@@ -27,6 +27,7 @@
 #include <ctime>
 
 
+
 class ClientRedemptionAPI : public FrontAPI
 {
 
@@ -42,7 +43,7 @@ public:
     virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
-    virtual bool connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {return true;}
+    virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void closeFromGUI() {}
     virtual void disconnexionReleased() {}
