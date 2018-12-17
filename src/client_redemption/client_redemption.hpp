@@ -95,7 +95,7 @@ public:
     ClientOutputGraphicAPI      * graphic_api;
     ClientIOClipboardAPI        * io_clipboard_api;
     ClientOutputSoundAPI        * output_sound_api;
-    ClientInputSocketAPI        * socket_listener;
+//     ClientInputSocketAPI        * socket_listener;
     ClientKeyLayoutAPI          * keylayout_api;
     ClientIODiskAPI             * io_disk_api;
 
@@ -232,7 +232,7 @@ public:
                      ClientOutputGraphicAPI * graphic_api,
                      ClientIOClipboardAPI * io_clipboard_api,
                      ClientOutputSoundAPI * output_sound_api,
-                     ClientInputSocketAPI * socket_listener,
+//                      ClientInputSocketAPI * socket_listener,
                      ClientKeyLayoutAPI * keylayout_api,
                      ClientIODiskAPI * io_disk_api)
         : config(config)
@@ -242,7 +242,7 @@ public:
         , graphic_api(graphic_api)
         , io_clipboard_api(io_clipboard_api)
         , output_sound_api (output_sound_api)
-        , socket_listener (socket_listener)
+//         , socket_listener (socket_listener)
         , keylayout_api(keylayout_api)
         , io_disk_api(io_disk_api)
         , close_box_extra_message_ref("Close")
@@ -273,11 +273,11 @@ public:
         } else {
             LOG(LOG_WARNING, "No sound output implementation.");
         }
-        if (this->socket_listener) {
-            this->socket_listener->set_client(this);
-        } else {
-            LOG(LOG_WARNING, "No socket lister implementation.");
-        }
+//         if (this->socket_listener) {
+//             this->socket_listener->set_client(this);
+//         } else {
+//             LOG(LOG_WARNING, "No socket lister implementation.");
+//         }
         if (this->graphic_api) {
             this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
         } else {
@@ -403,13 +403,15 @@ public:
         }
     }
 
+
+
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
 
-        this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
+//         if (this->socket_listener) {
+//             this->socket_listener->disconnect();
+//         }
 
-        if (this->socket_listener) {
-            this->socket_listener->disconnect();
-        }
+        this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
 
         if (!this->socket) {
             this->socket.reset();
@@ -439,7 +441,9 @@ public:
         }
         this->config.set_icon_movie_data();
         if (this->graphic_api) {
+            LOG(LOG_INFO, "ClientRedemption::disconnect graphic api init form");
             this->graphic_api->init_form();
+            LOG(LOG_INFO, "ClientRedemption::disconnect graphic api new form called");
         }
     }
 

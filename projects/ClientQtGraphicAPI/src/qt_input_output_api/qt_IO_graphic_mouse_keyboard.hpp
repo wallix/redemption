@@ -208,6 +208,7 @@ public:
                 this->form->set_PWDField(this->config->user_password);
                 this->form->set_userNameField(this->config->user_name);
             }
+            LOG(LOG_INFO, "QtGraphicControl::init_form");
             this->form->show();
         }
     }

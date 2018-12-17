@@ -87,7 +87,7 @@ class ClientRedemptionQt : public ClientRedemption
 //     ClientIODiskAPI             * io_disk_api;
 
 
-
+    QtInputSocket qt_socket_listener;
 
 
 public:
@@ -96,10 +96,10 @@ public:
                      ClientOutputGraphicAPI * graphic_api,
                      ClientIOClipboardAPI * io_clipboard_api,
                      ClientOutputSoundAPI * output_sound_api,
-                     ClientInputSocketAPI * socket_listener,
                      ClientKeyLayoutAPI * keylayout_api,
                      ClientIODiskAPI * io_disk_api)
-            :ClientRedemption(session_reactor, config, graphic_api, io_clipboard_api, output_sound_api, socket_listener, keylayout_api, io_disk_api)
+            :ClientRedemption(session_reactor, config, graphic_api, io_clipboard_api, output_sound_api, /*socket_listener,*/ keylayout_api, io_disk_api)
+            , qt_socket_listener(session_reactor, nullptr)
 //         : config(config)
 //         , client_sck(-1)
 //         , _callback(this, keylayout_api)
@@ -121,7 +121,7 @@ public:
 //         , primary_connection_finished(false)
 //         , local_IP("unknow_local_IP")
     {
-
+        this->qt_socket_listener.set_client(this);
         this->cmd_launch_conn();
     }
 
@@ -130,9 +130,9 @@ public:
     void listen_to_socket(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
         if (this->config.connected) {
 
-            if (this->socket_listener) {
+//             if (this->socket_listener) {
 
-                if (this->socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
+                if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                     this->start_wab_session_time = tvtime();
 
@@ -144,7 +144,7 @@ public:
 
                     this->config.writeAccoundData(ip, name, pwd, port);
                 }
-            }
+//             }
         }
     }
 
@@ -154,6 +154,11 @@ public:
         if (this->config.connected) {
             this->listen_to_socket(ip, name, pwd, port);
         }
+    }
+
+    void disconnect(std::string const & error, bool pipe_broken) override {
+        this->qt_socket_listener.disconnect();
+         ClientRedemption::disconnect(error, pipe_broken);
     }
 };
 
@@ -172,13 +177,13 @@ int main(int argc, char** argv)
     QtInputOutputClipboard clipboard_api_obj(qwidget_parent);
     QtOutputSound sound_api_obj(qwidget_parent);
     IODisk ioDisk_api_obj;
-    QtInputSocket socket_api_obj(session_reactor, qwidget_parent);
+//     QtInputSocket socket_api_obj(session_reactor, qwidget_parent);
     QtClientRDPKeyLayout keylayout_obj;
 
     ClientOutputGraphicAPI * graphic_qt    = &graphic_control_qt_obj;
     ClientIOClipboardAPI   * clipboard_api = &clipboard_api_obj;
     ClientOutputSoundAPI   * sound_api     = &sound_api_obj;
-    ClientInputSocketAPI   * socket_api    = &socket_api_obj;
+//     ClientInputSocketAPI   * socket_api    = &socket_api_obj;
     ClientKeyLayoutAPI     * keylayout_api = &keylayout_obj;
     ClientIODiskAPI        * ioDisk_api    = &ioDisk_api_obj;
 
@@ -192,7 +197,7 @@ int main(int argc, char** argv)
                               , graphic_qt
                               , clipboard_api
                               , sound_api
-                              , socket_api
+//                               , socket_api
                               , keylayout_api
                               , ioDisk_api);
 
