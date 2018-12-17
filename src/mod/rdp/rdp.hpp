@@ -172,6 +172,9 @@ private:
         const bool disable_clipboard_log_syslog;
         const bool disable_clipboard_log_wrm;
         const bool log_only_relevant_clipboard_activities;
+        const bool bogus_ios_rdpdr_virtual_channel;
+        const bool enable_session_probe;
+        const bool use_application_driver;
 
         data_size_type max_clipboard_data = 0;
         data_size_type max_rdpdr_data     = 0;
@@ -206,6 +209,8 @@ private:
 
         std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
+        FileSystemDriveManager file_system_drive_manager;
+
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message) 
             : authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -227,6 +232,10 @@ private:
             , disable_clipboard_log_syslog(mod_rdp_params.disable_clipboard_log_syslog)
             , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
             , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
+            , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
+            , enable_session_probe(mod_rdp_params.enable_session_probe)
+            , use_application_driver(mod_rdp_params.alternate_shell 
+                && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
             , verbose(verbose)
         {
         }
@@ -387,7 +396,6 @@ private:
     const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
     const uint32_t monitor_count;
 
-    FileSystemDriveManager file_system_drive_manager;
     Transport& trans;
 
 
@@ -529,7 +537,6 @@ private:
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
-    const bool enable_session_probe;
     const bool session_probe_enable_launch_mask;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
@@ -543,8 +550,6 @@ private:
     std::string proxy_managed_drive_prefix;
 
     bool delayed_start_capture = false;
-
-    const bool use_application_driver;
 
     const std::chrono::milliseconds   session_probe_launch_timeout;
     const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
@@ -578,8 +583,6 @@ private:
     const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
     const bool                        session_probe_public_session;
-
-    const bool                        bogus_ios_rdpdr_virtual_channel;
 
     const bool                        enable_rdpdr_data_analysis;
 
@@ -689,36 +692,40 @@ private:
     };
 
 
+    inline FileSystemVirtualChannel& get_file_system_virtual_channel(
+                FrontAPI& front,
+                Transport& trans, CryptContext & encrypt, 
+                const RdpNegociationResult negociation_result,
+                AsynchronousTaskContainer & asynchronous_tasks,
+                SessionReactor& session_reactor,
+                GeneralCaps const & client_general_caps) {
 
-
-    inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
         if (!this->channels.file_system_virtual_channel) {
             assert(!this->channels.file_system_to_client_sender &&
                 !this->channels.file_system_to_server_sender);
 
             this->channels.file_system_to_client_sender =
-                (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
-                  !this->bogus_ios_rdpdr_virtual_channel) ?
-                 this->channels.create_to_client_sender(channel_names::rdpdr, this->front) :
-                 nullptr);
+                (((client_general_caps.os_major != OSMAJORTYPE_IOS) ||
+                  !this->channels.bogus_ios_rdpdr_virtual_channel) ?
+                 this->channels.create_to_client_sender(channel_names::rdpdr, front) : nullptr);
             this->channels.file_system_to_server_sender =
                 this->channels.create_to_server_sender(channel_names::rdpdr,
-                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+                    trans, encrypt, negociation_result, asynchronous_tasks);
             this->channels.file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(
-                    this->session_reactor,
+                    session_reactor,
                     this->channels.file_system_to_client_sender.get(),
                     this->channels.file_system_to_server_sender.get(),
-                    this->file_system_drive_manager,
-                    this->front,
+                    this->channels.file_system_drive_manager,
+                    front,
                     this->get_file_system_virtual_channel_params());
 
             if (this->channels.file_system_to_server_sender) {
-                if (this->enable_session_probe) {
+                if (this->channels.enable_session_probe) {
                     this->channels.file_system_virtual_channel->enable_session_probe_drive();
                 }
 
-                if (this->use_application_driver) {
+                if (this->channels.use_application_driver) {
                     this->channels.file_system_virtual_channel->enable_session_probe_drive();
                 }
             }
@@ -736,7 +743,7 @@ private:
                     this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
             FileSystemVirtualChannel& file_system_virtual_channel =
-                get_file_system_virtual_channel();
+                get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
 
             this->channels.session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
@@ -867,7 +874,6 @@ public:
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-        , enable_session_probe(mod_rdp_params.enable_session_probe)
         , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
@@ -878,8 +884,6 @@ public:
         , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
         , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
         , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
-        , use_application_driver(mod_rdp_params.alternate_shell &&
-              !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
@@ -908,7 +912,6 @@ public:
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
         , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
         , session_probe_public_session(mod_rdp_params.session_probe_public_session)
-        , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
@@ -979,7 +982,7 @@ public:
 
         std::string session_probe_arguments = mod_rdp_params.session_probe_arguments;
 
-        if (this->enable_session_probe) {
+        if (this->channels.enable_session_probe) {
             // Executable file name of SP.
             char exe_var_str[16] {};
             if (mod_rdp_params.session_probe_customize_executable_name) {
@@ -1061,7 +1064,7 @@ public:
             std::string alternate_shell,
             std::string working_dir
         ){
-            if (this->enable_session_probe) {
+            if (this->channels.enable_session_probe) {
                 this->real_alternate_shell = std::move(alternate_shell);
                 this->real_working_dir     = std::move(working_dir);
 
@@ -1101,7 +1104,7 @@ public:
                 get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
 
             if (this->remote_program) {
-                if (this->enable_session_probe) {
+                if (this->channels.enable_session_probe) {
                     if (this->use_session_probe_to_launch_remote_program) {
                         std::string alternate_shell(mod_rdp_params.alternate_shell);
 
@@ -1154,7 +1157,7 @@ public:
                 && mod_rdp_params.client_execute_exe_or_file
                 && *mod_rdp_params.client_execute_exe_or_file
                 ) {
-                    if (this->enable_session_probe) {
+                    if (this->channels.enable_session_probe) {
                         this->real_alternate_shell = "[None]";
 
                         this->real_client_execute_flags       = mod_rdp_params.client_execute_flags;
@@ -1185,7 +1188,7 @@ public:
                 set_alternate_shell_program_and_directory(
                     info.alternate_shell, info.working_dir);
             }
-            else if (this->enable_session_probe) {
+            else if (this->channels.enable_session_probe) {
                 std::string alternate_shell(mod_rdp_params.session_probe_exe_or_file);
 
                 if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
@@ -1241,7 +1244,7 @@ public:
     }   // mod_rdp
 
     ~mod_rdp() override {
-        if (this->enable_session_probe) {
+        if (this->channels.enable_session_probe) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             this->disable_input_event_and_graphics_update(
@@ -1547,7 +1550,7 @@ public:
                     int(trimmed_range.size()), trimmed_range.begin());
             }
 
-            this->file_system_drive_manager.enable_drive(
+            this->channels.file_system_drive_manager.enable_drive(
                 FileSystemDriveManager::DriveName(
                     array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
                 proxy_managed_drive_prefix, this->verbose);
@@ -1558,7 +1561,7 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             if (this->first_scancode && !(device_flags & 0x8000) &&
-                (!this->enable_session_probe ||
+                (!this->channels.enable_session_probe ||
                  !this->session_probe_launcher->is_keyboard_sequences_started() ||
                  this->get_session_probe_virtual_channel().has_been_launched())
                ) {
@@ -1702,7 +1705,7 @@ private:
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (!this->enable_rdpdr_data_analysis &&
             this->channels.authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.has_managed_drive()) {
+            !this->channels.file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
@@ -1729,7 +1732,7 @@ private:
             return;
         }
 
-        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -2402,7 +2405,7 @@ public:
                                 this->already_upped_and_running = true;
                             }
 
-                            if (this->enable_session_probe &&
+                            if (this->channels.enable_session_probe &&
                                 this->session_probe_enable_launch_mask) {
                                 this->delayed_start_capture = true;
 
@@ -2745,7 +2748,7 @@ public:
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
-                if (this->enable_session_probe) {
+                if (this->channels.enable_session_probe) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
                     this->disable_input_event_and_graphics_update(
@@ -4229,7 +4232,7 @@ public:
 
         this->fd_event->disable_timeout();
 
-        if (this->enable_session_probe) {
+        if (this->channels.enable_session_probe) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->session_probe_enable_launch_mask;
             this->disable_input_event_and_graphics_update(
@@ -4274,7 +4277,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->enable_session_probe) {
+            if (this->channels.enable_session_probe) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->session_probe_enable_launch_mask;
                 this->disable_input_event_and_graphics_update(
@@ -5454,7 +5457,7 @@ private:
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-            FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel();
+            FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
             rdpdr_channel.disable_session_probe_drive();
         }
         else {
@@ -5560,7 +5563,7 @@ private:
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         if (!this->enable_rdpdr_data_analysis &&
             this->channels.authorization_channels.rdpdr_type_all_is_authorized() &&
-            !this->file_system_drive_manager.has_managed_drive()) {
+            !this->channels.file_system_drive_manager.has_managed_drive()) {
 
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
                 if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
@@ -5586,7 +5589,7 @@ private:
             return;
         }
 
-        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel();
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5661,7 +5664,7 @@ private:
     }
 
     void do_enable_session_probe() {
-        if (this->enable_session_probe) {
+        if (this->channels.enable_session_probe) {
             ClipboardVirtualChannel& cvc =
                 this->channels.get_clipboard_virtual_channel(
                     this->front,
@@ -5672,14 +5675,14 @@ private:
             }
 
             FileSystemVirtualChannel& fsvc =
-                this->get_file_system_virtual_channel();
+                this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
             if (this->session_probe_launcher) {
                 fsvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
             }
 
             if (this->session_probe_launcher) {
-                this->file_system_drive_manager.set_session_probe_launcher(
+                this->channels.file_system_drive_manager.set_session_probe_launcher(
                     this->session_probe_launcher.get());
             }
 
