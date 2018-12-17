@@ -122,6 +122,7 @@ public:
 //         , local_IP("unknow_local_IP")
     {
         this->qt_socket_listener.set_client(this);
+        this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
         this->cmd_launch_conn();
     }
 

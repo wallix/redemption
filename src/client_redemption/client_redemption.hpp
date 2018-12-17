@@ -278,11 +278,11 @@ public:
 //         } else {
 //             LOG(LOG_WARNING, "No socket lister implementation.");
 //         }
-        if (this->graphic_api) {
-            this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
-        } else {
-            LOG(LOG_WARNING, "No graphic output implementation.");
-        }
+//         if (this->graphic_api) {
+//             this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
+//         } else {
+//             LOG(LOG_WARNING, "No graphic output implementation.");
+//         }
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
 

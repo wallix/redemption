@@ -209,8 +209,11 @@ public:
                 this->form->set_userNameField(this->config->user_name);
             }
             LOG(LOG_INFO, "QtGraphicControl::init_form");
+            LOG(LOG_INFO, "QtGraphicControl::init_form form shown %s", this->form->get_IPField());
             this->form->show();
-            LOG(LOG_INFO, "QtGraphicControl::init_form form shown");
+
+
+
         }
     }
 
