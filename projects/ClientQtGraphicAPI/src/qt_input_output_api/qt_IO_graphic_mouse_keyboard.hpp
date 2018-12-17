@@ -201,19 +201,16 @@ public:
 
     void init_form() override {
         if (this->form) {
+            this->form->init_form();
             if (this->config->mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
-                this->form->init_form();
+
                 this->form->set_IPField(this->config->target_IP);
                 this->form->set_portField(this->config->port);
                 this->form->set_PWDField(this->config->user_password);
                 this->form->set_userNameField(this->config->user_name);
             }
-            LOG(LOG_INFO, "QtGraphicControl::init_form");
-            LOG(LOG_INFO, "QtGraphicControl::init_form form shown %s", this->form->get_IPField());
+
             this->form->show();
-
-
-
         }
     }
 

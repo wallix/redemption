@@ -232,7 +232,6 @@ public:
                      ClientOutputGraphicAPI * graphic_api,
                      ClientIOClipboardAPI * io_clipboard_api,
                      ClientOutputSoundAPI * output_sound_api,
-//                      ClientInputSocketAPI * socket_listener,
                      ClientKeyLayoutAPI * keylayout_api,
                      ClientIODiskAPI * io_disk_api)
         : config(config)
@@ -242,7 +241,6 @@ public:
         , graphic_api(graphic_api)
         , io_clipboard_api(io_clipboard_api)
         , output_sound_api (output_sound_api)
-//         , socket_listener (socket_listener)
         , keylayout_api(keylayout_api)
         , io_disk_api(io_disk_api)
         , close_box_extra_message_ref("Close")
@@ -273,49 +271,8 @@ public:
         } else {
             LOG(LOG_WARNING, "No sound output implementation.");
         }
-//         if (this->socket_listener) {
-//             this->socket_listener->set_client(this);
-//         } else {
-//             LOG(LOG_WARNING, "No socket lister implementation.");
-//         }
-//         if (this->graphic_api) {
-//             this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
-//         } else {
-//             LOG(LOG_WARNING, "No graphic output implementation.");
-//         }
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
-
-//         if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
-//
-//             this->connect(this->config.target_IP,
-//                           this->config.user_name,
-//                           this->config.user_password,
-//                           this->config.port);
-//
-//         } else {
-//             std::cout <<  "Argument(s) required for connection: ";
-//             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::NAME_GOT)) {
-//                 std::cout << "-u [user_name] ";
-//             }
-//             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::PWD_GOT)) {
-//                 std::cout << "-p [password] ";
-//             }
-//             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::IP_GOT)) {
-//                 std::cout << "-i [ip_server] ";
-//             }
-//             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::PORT_GOT)) {
-//                 std::cout << "-P [port] ";
-//             }
-//             std::cout << std::endl;
-//
-//             if (this->graphic_api) {
-//                 this->graphic_api->init_form();
-//                 if (this->config.help_mode) {
-//                     this->graphic_api->closeFromGUI();
-//                 }
-//             }
-//         }
     }
 
    ~ClientRedemption() = default;

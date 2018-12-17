@@ -86,20 +86,21 @@ class ClientRedemptionQt : public ClientRedemption
 //     ClientKeyLayoutAPI          * keylayout_api;
 //     ClientIODiskAPI             * io_disk_api;
 
-
+    QtIOGraphicMouseKeyboard qt_graphic;
     QtInputSocket qt_socket_listener;
+
 
 
 public:
     ClientRedemptionQt(SessionReactor & session_reactor,
                      ClientRedemptionConfig & config,
-                     ClientOutputGraphicAPI * graphic_api,
+//                      QtIOGraphicMouseKeyboard & graphic_api,
                      ClientIOClipboardAPI * io_clipboard_api,
                      ClientOutputSoundAPI * output_sound_api,
                      ClientKeyLayoutAPI * keylayout_api,
                      ClientIODiskAPI * io_disk_api)
-            :ClientRedemption(session_reactor, config, graphic_api, io_clipboard_api, output_sound_api, /*socket_listener,*/ keylayout_api, io_disk_api)
-            , qt_socket_listener(session_reactor, nullptr)
+            :ClientRedemption(session_reactor, config, &qt_graphic, io_clipboard_api, output_sound_api, /*socket_listener,*/ keylayout_api, io_disk_api)
+            , qt_socket_listener(session_reactor, qt_graphic.get_static_qwidget())
 //         : config(config)
 //         , client_sck(-1)
 //         , _callback(this, keylayout_api)
@@ -131,21 +132,18 @@ public:
     void listen_to_socket(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
         if (this->config.connected) {
 
-//             if (this->socket_listener) {
+            if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
-                if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
+                this->start_wab_session_time = tvtime();
 
-                    this->start_wab_session_time = tvtime();
-
-                    if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-                        if (this->graphic_api) {
-                            this->graphic_api->show_screen();
-                        }
+                if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+                    if (this->graphic_api) {
+                        this->graphic_api->show_screen();
                     }
-
-                    this->config.writeAccoundData(ip, name, pwd, port);
                 }
-//             }
+
+                this->config.writeAccoundData(ip, name, pwd, port);
+            }
         }
     }
 
@@ -195,7 +193,7 @@ int main(int argc, char** argv)
     sound_api->set_path(config.SOUND_TEMP_DIR);
 
     ClientRedemptionQt client_qt(session_reactor, config /*const_cast<char const**>(argv), argc, verbose*/
-                              , graphic_qt
+//                               , graphic_control_qt_obj
                               , clipboard_api
                               , sound_api
 //                               , socket_api

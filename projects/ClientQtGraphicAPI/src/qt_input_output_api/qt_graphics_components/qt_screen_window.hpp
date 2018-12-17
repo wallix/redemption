@@ -62,7 +62,6 @@ public:
         READING_BAR_H = 12,
     };
 
-//     ClientRedemptionConfig * config;
     WindowsData * win_data;
 
     ClientCallback * callback;
@@ -762,7 +761,8 @@ public Q_SLOTS:
 
     void closeReplay() {
         this->callback->delete_replay_mod();
-        this->callback->closeFromGUI();
+        this->callback->disconnexionReleased();
+        this->close();
     }
 
     void stopRelease() override {
