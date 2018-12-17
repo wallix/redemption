@@ -175,6 +175,9 @@ private:
         const bool bogus_ios_rdpdr_virtual_channel;
         const bool enable_session_probe;
         const bool use_application_driver;
+        const bool disable_file_system_log_syslog;
+        const bool disable_file_system_log_wrm;
+        std::string proxy_managed_drive_prefix;
 
         data_size_type max_clipboard_data = 0;
         data_size_type max_rdpdr_data     = 0;
@@ -236,10 +239,41 @@ private:
             , enable_session_probe(mod_rdp_params.enable_session_probe)
             , use_application_driver(mod_rdp_params.alternate_shell 
                 && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+            , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
+            , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
+            , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
             , verbose(verbose)
         {
+            if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
+                this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives, mod_rdp_params.proxy_managed_drive_prefix);
+            }
+
         }
+
+        private:        
+        void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
+            if (bool(this->verbose & RDPVerbose::connection)) {
+                LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
+            }
+
+            for (auto & r : get_line(proxy_managed_drives, ',')) {
+                auto const trimmed_range = trim(r);
+
+                if (trimmed_range.empty()) continue;
+
+                if (bool(this->verbose & RDPVerbose::connection)) {
+                    LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
+                        int(trimmed_range.size()), trimmed_range.begin());
+                }
+
+                this->file_system_drive_manager.enable_drive(
+                    FileSystemDriveManager::DriveName(
+                        array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
+                    proxy_managed_drive_prefix, this->verbose);
+            }
+        }   // configure_proxy_managed_drives
         
+        public:
         std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
         {
@@ -544,10 +578,6 @@ private:
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool enable_ninegrid_bitmap;
-    const bool disable_file_system_log_syslog;
-    const bool disable_file_system_log_wrm;
-
-    std::string proxy_managed_drive_prefix;
 
     bool delayed_start_capture = false;
 
@@ -698,7 +728,8 @@ private:
                 const RdpNegociationResult negociation_result,
                 AsynchronousTaskContainer & asynchronous_tasks,
                 SessionReactor& session_reactor,
-                GeneralCaps const & client_general_caps) {
+                GeneralCaps const & client_general_caps,
+                const char (& client_name)[128]) {
 
         if (!this->channels.file_system_virtual_channel) {
             assert(!this->channels.file_system_to_client_sender &&
@@ -718,7 +749,7 @@ private:
                     this->channels.file_system_to_server_sender.get(),
                     this->channels.file_system_drive_manager,
                     front,
-                    this->get_file_system_virtual_channel_params());
+                    this->get_file_system_virtual_channel_params(client_name));
 
             if (this->channels.file_system_to_server_sender) {
                 if (this->channels.enable_session_probe) {
@@ -743,7 +774,7 @@ private:
                     this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
             FileSystemVirtualChannel& file_system_virtual_channel =
-                get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
+                get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps, this->client_name);
 
             this->channels.session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
@@ -881,9 +912,6 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
-        , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
-        , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
-        , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
         , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
         , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
         , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
@@ -968,11 +996,6 @@ public:
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->encrypt.encryptionMethod = 2; /* 128 bits */
-
-        if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
-            this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives,
-                                                 mod_rdp_params.proxy_managed_drive_prefix);
-        }
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
@@ -1279,7 +1302,7 @@ private:
 
 
     const FileSystemVirtualChannel::Params
-        get_file_system_virtual_channel_params() const
+        get_file_system_virtual_channel_params(const char (& client_name)[128]) const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->report_message);
 
@@ -1289,7 +1312,7 @@ private:
             this->verbose;
 
         file_system_virtual_channel_params.client_name                     =
-            this->client_name;
+            client_name;
         file_system_virtual_channel_params.file_system_read_authorized     =
             this->channels.authorization_channels.rdpdr_drive_read_is_authorized();
         file_system_virtual_channel_params.file_system_write_authorized    =
@@ -1306,16 +1329,17 @@ private:
         file_system_virtual_channel_params.smart_card_authorized           =
             this->channels.authorization_channels.rdpdr_type_is_authorized(
                 rdpdr::RDPDR_DTYP_SMARTCARD);
+        // TODO: getpid() is global and execution dependent, replace by a constant because it will break tests
         file_system_virtual_channel_params.random_number                   =
             ::getpid();
 
         file_system_virtual_channel_params.dont_log_data_into_syslog       =
-            this->disable_file_system_log_syslog;
+            this->channels.disable_file_system_log_syslog;
         file_system_virtual_channel_params.dont_log_data_into_wrm          =
-            this->disable_file_system_log_wrm;
+            this->channels.disable_file_system_log_wrm;
 
         file_system_virtual_channel_params.proxy_managed_drive_prefix      =
-            this->proxy_managed_drive_prefix.c_str();
+            this->channels.proxy_managed_drive_prefix.c_str();
 
         return file_system_virtual_channel_params;
     }
@@ -1535,28 +1559,6 @@ public:
         }
     }   // configure_extra_orders
 
-    void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
-        if (bool(this->verbose & RDPVerbose::connection)) {
-            LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
-        }
-
-        for (auto & r : get_line(proxy_managed_drives, ',')) {
-            auto const trimmed_range = trim(r);
-
-            if (trimmed_range.empty()) continue;
-
-            if (bool(this->verbose & RDPVerbose::connection)) {
-                LOG(LOG_INFO, "Proxy managed drive=\"%.*s\"",
-                    int(trimmed_range.size()), trimmed_range.begin());
-            }
-
-            this->channels.file_system_drive_manager.enable_drive(
-                FileSystemDriveManager::DriveName(
-                    array_view_const_char{trimmed_range.begin(), trimmed_range.end()}),
-                proxy_managed_drive_prefix, this->verbose);
-        }
-    }   // configure_proxy_managed_drives
-
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
@@ -1732,7 +1734,7 @@ private:
             return;
         }
 
-        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps, this->client_name);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -5457,7 +5459,7 @@ private:
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-            FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
+            FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps, this->client_name);
             rdpdr_channel.disable_session_probe_drive();
         }
         else {
@@ -5589,7 +5591,7 @@ private:
             return;
         }
 
-        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
+        FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5675,7 +5677,7 @@ private:
             }
 
             FileSystemVirtualChannel& fsvc =
-                this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps);
+                this->get_file_system_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->session_reactor, this->client_general_caps, this->client_name);
             if (this->session_probe_launcher) {
                 fsvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
