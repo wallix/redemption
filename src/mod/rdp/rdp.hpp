@@ -174,7 +174,9 @@ private:
         const bool log_only_relevant_clipboard_activities;
 
         data_size_type max_clipboard_data = 0;
-
+        data_size_type max_rdpdr_data     = 0;
+        data_size_type max_drdynvc_data   = 0;
+        
         const RDPVerbose verbose;
 
         std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
@@ -182,6 +184,27 @@ private:
 
         std::unique_ptr<ClipboardVirtualChannel>      clipboard_virtual_channel;
 
+        std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
+        std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
+
+        std::unique_ptr<FileSystemVirtualChannel>     file_system_virtual_channel;
+
+        std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_client_sender;
+        std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_server_sender;
+
+        std::unique_ptr<DynamicChannelVirtualChannel> dynamic_channel_virtual_channel;
+
+        std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
+
+        std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
+        SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
+
+        std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
+        std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
+
+        std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
+
+        std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message) 
             : authorization_channels(
@@ -309,6 +332,40 @@ private:
                 this->verbose);
         }
 
+        inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel(
+                    FrontAPI& front,
+                    Transport& trans, CryptContext & encrypt, 
+                    const RdpNegociationResult negociation_result,
+                    AsynchronousTaskContainer & asynchronous_tasks) {
+            if (!this->dynamic_channel_virtual_channel) {
+                assert(!this->dynamic_channel_to_client_sender &&
+                    !this->dynamic_channel_to_server_sender);
+
+                this->dynamic_channel_to_client_sender =
+                    this->create_to_client_sender(channel_names::drdynvc, front);
+                this->dynamic_channel_to_server_sender =
+                    this->create_to_server_sender(channel_names::drdynvc, 
+                        trans, encrypt, negociation_result, asynchronous_tasks);
+                this->dynamic_channel_virtual_channel =
+                    std::make_unique<DynamicChannelVirtualChannel>(
+                        this->dynamic_channel_to_client_sender.get(),
+                        this->dynamic_channel_to_server_sender.get(),
+                        this->get_dynamic_channel_virtual_channel_params());
+            }
+
+            return *this->dynamic_channel_virtual_channel;
+        }
+
+        const DynamicChannelVirtualChannel::Params get_dynamic_channel_virtual_channel_params() const
+        {
+            DynamicChannelVirtualChannel::Params dcvc_params(this->report_message);
+
+            dcvc_params.exchanged_data_limit = this->max_drdynvc_data;
+            dcvc_params.verbose              = this->verbose;
+            return dcvc_params;
+        }
+
+
     } channels;
 
     /// shared with RdpNegociation
@@ -333,26 +390,6 @@ private:
     FileSystemDriveManager file_system_drive_manager;
     Transport& trans;
 
-    std::unique_ptr<VirtualChannelDataSender>     file_system_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>     file_system_to_server_sender;
-
-    std::unique_ptr<FileSystemVirtualChannel>     file_system_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>     dynamic_channel_to_server_sender;
-
-    std::unique_ptr<DynamicChannelVirtualChannel> dynamic_channel_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
-
-    std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
-
-    std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
-    std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
-
-    std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
-
-    std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
 
     bool remote_apps_not_enabled = false;
 
@@ -457,9 +494,6 @@ private:
         }
     };
 
-    data_size_type max_rdpdr_data     = 0;
-    data_size_type max_drdynvc_data   = 0;
-
     rdp_orders orders;
 
     int share_id;
@@ -556,8 +590,6 @@ private:
     const bool                        experimental_fix_too_long_cookie;
 
     std::string session_probe_target_informations;
-
-    SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
     const std::string session_probe_extra_system_processes;
     const std::string session_probe_outbound_connection_monitoring_rules;
@@ -657,77 +689,59 @@ private:
     };
 
 
-    inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel() {
-        if (!this->dynamic_channel_virtual_channel) {
-            assert(!this->dynamic_channel_to_client_sender &&
-                !this->dynamic_channel_to_server_sender);
 
-            this->dynamic_channel_to_client_sender =
-                this->channels.create_to_client_sender(channel_names::drdynvc, this->front);
-            this->dynamic_channel_to_server_sender =
-                this->channels.create_to_server_sender(channel_names::drdynvc, 
-                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-            this->dynamic_channel_virtual_channel =
-                std::make_unique<DynamicChannelVirtualChannel>(
-                    this->dynamic_channel_to_client_sender.get(),
-                    this->dynamic_channel_to_server_sender.get(),
-                    this->get_dynamic_channel_virtual_channel_params());
-        }
-
-        return *this->dynamic_channel_virtual_channel;
-    }
 
     inline FileSystemVirtualChannel& get_file_system_virtual_channel() {
-        if (!this->file_system_virtual_channel) {
-            assert(!this->file_system_to_client_sender &&
-                !this->file_system_to_server_sender);
+        if (!this->channels.file_system_virtual_channel) {
+            assert(!this->channels.file_system_to_client_sender &&
+                !this->channels.file_system_to_server_sender);
 
-            this->file_system_to_client_sender =
+            this->channels.file_system_to_client_sender =
                 (((this->client_general_caps.os_major != OSMAJORTYPE_IOS) ||
                   !this->bogus_ios_rdpdr_virtual_channel) ?
                  this->channels.create_to_client_sender(channel_names::rdpdr, this->front) :
                  nullptr);
-            this->file_system_to_server_sender =
+            this->channels.file_system_to_server_sender =
                 this->channels.create_to_server_sender(channel_names::rdpdr,
                     this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-            this->file_system_virtual_channel =
+            this->channels.file_system_virtual_channel =
                 std::make_unique<FileSystemVirtualChannel>(
                     this->session_reactor,
-                    this->file_system_to_client_sender.get(),
-                    this->file_system_to_server_sender.get(),
+                    this->channels.file_system_to_client_sender.get(),
+                    this->channels.file_system_to_server_sender.get(),
                     this->file_system_drive_manager,
                     this->front,
                     this->get_file_system_virtual_channel_params());
 
-            if (this->file_system_to_server_sender) {
+            if (this->channels.file_system_to_server_sender) {
                 if (this->enable_session_probe) {
-                    this->file_system_virtual_channel->enable_session_probe_drive();
+                    this->channels.file_system_virtual_channel->enable_session_probe_drive();
                 }
 
                 if (this->use_application_driver) {
-                    this->file_system_virtual_channel->enable_session_probe_drive();
+                    this->channels.file_system_virtual_channel->enable_session_probe_drive();
                 }
             }
         }
 
-        return *this->file_system_virtual_channel;
+        return *this->channels.file_system_virtual_channel;
     }
 
     inline SessionProbeVirtualChannel& get_session_probe_virtual_channel() {
-        if (!this->session_probe_virtual_channel) {
-            assert(!this->session_probe_to_server_sender);
+        if (!this->channels.session_probe_virtual_channel) {
+            assert(!this->channels.session_probe_to_server_sender);
 
-            this->session_probe_to_server_sender =
+            this->channels.session_probe_to_server_sender =
                 this->channels.create_to_server_sender(channel_names::sespro,
                     this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
             FileSystemVirtualChannel& file_system_virtual_channel =
                 get_file_system_virtual_channel();
 
-            this->session_probe_virtual_channel =
+            this->channels.session_probe_virtual_channel =
                 std::make_unique<SessionProbeVirtualChannel>(
                     this->session_reactor,
-                    this->session_probe_to_server_sender.get(),
+                    this->channels.session_probe_to_server_sender.get(),
                     this->front,
                     *this,
                     *this,
@@ -736,30 +750,30 @@ private:
                     this->get_session_probe_virtual_channel_params());
         }
 
-        return *this->session_probe_virtual_channel;
+        return *this->channels.session_probe_virtual_channel;
     }
 
     inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel() {
-        if (!this->remote_programs_virtual_channel) {
-            assert(!this->remote_programs_to_client_sender &&
-                !this->remote_programs_to_server_sender);
+        if (!this->channels.remote_programs_virtual_channel) {
+            assert(!this->channels.remote_programs_to_client_sender &&
+                !this->channels.remote_programs_to_server_sender);
 
-            this->remote_programs_to_client_sender =
+            this->channels.remote_programs_to_client_sender =
                 this->channels.create_to_client_sender(channel_names::rail, this->front);
-            this->remote_programs_to_server_sender =
+            this->channels.remote_programs_to_server_sender =
                 this->channels.create_to_server_sender(channel_names::rail,
                     this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
-            this->remote_programs_virtual_channel =
+            this->channels.remote_programs_virtual_channel =
                 std::make_unique<RemoteProgramsVirtualChannel>(
-                    this->remote_programs_to_client_sender.get(),
-                    this->remote_programs_to_server_sender.get(),
+                    this->channels.remote_programs_to_client_sender.get(),
+                    this->channels.remote_programs_to_server_sender.get(),
                     this->front,
                     this->vars,
                     this->get_remote_programs_virtual_channel_params());
         }
 
-        return *this->remote_programs_virtual_channel;
+        return *this->channels.remote_programs_virtual_channel;
     }
 
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
@@ -1208,7 +1222,7 @@ public:
         }
 
         if (this->remote_program) {
-            this->remote_programs_session_manager =
+            this->channels.remote_programs_session_manager =
                 std::make_unique<RemoteProgramsSessionManager>(
                     this->session_reactor, front, *this, this->lang,
                     this->font, mod_rdp_params.theme, this->authentifier,
@@ -1250,7 +1264,7 @@ public:
                 this->recv_bmp_update);
         }
 
-        this->remote_programs_session_manager.reset();
+        this->channels.remote_programs_session_manager.reset();
 
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
@@ -1261,26 +1275,13 @@ private:
 
 
 
-    const DynamicChannelVirtualChannel::Params
-        get_dynamic_channel_virtual_channel_params() const
-    {
-        DynamicChannelVirtualChannel::Params dynamic_channel_virtual_channel_params(this->report_message);
-
-        dynamic_channel_virtual_channel_params.exchanged_data_limit =
-            this->max_drdynvc_data;
-        dynamic_channel_virtual_channel_params.verbose              =
-            this->verbose;
-
-        return dynamic_channel_virtual_channel_params;
-    }
-
     const FileSystemVirtualChannel::Params
         get_file_system_virtual_channel_params() const
     {
         FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->report_message);
 
         file_system_virtual_channel_params.exchanged_data_limit            =
-            this->max_rdpdr_data;
+            this->channels.max_rdpdr_data;
         file_system_virtual_channel_params.verbose                         =
             this->verbose;
 
@@ -1431,7 +1432,7 @@ private:
             this->real_client_execute_arguments.c_str();
 
         remote_programs_virtual_channel_params.rail_session_manager               =
-            this->remote_programs_session_manager.get();
+            this->channels.remote_programs_session_manager.get();
 
         remote_programs_virtual_channel_params.should_ignore_first_client_execute =
             this->should_ignore_first_client_execute;
@@ -1572,8 +1573,8 @@ public:
 
             IF_ENABLE_METRICS(key_pressed());
 
-            if (this->remote_programs_session_manager) {
-                this->remote_programs_session_manager->input_scancode(param1, param2, device_flags);
+            if (this->channels.remote_programs_session_manager) {
+                this->channels.remote_programs_session_manager->input_scancode(param1, param2, device_flags);
             }
         }
     }
@@ -1613,8 +1614,8 @@ public:
                 }
             }
 
-            if (this->remote_programs_session_manager) {
-                this->remote_programs_session_manager->input_mouse(device_flags, x, y);
+            if (this->channels.remote_programs_session_manager) {
+                this->channels.remote_programs_session_manager->input_mouse(device_flags, x, y);
             }
         }
     }
@@ -1761,7 +1762,7 @@ private:
         // return;
 
 
-        DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel();
+        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -2148,8 +2149,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            if ((!this->session_probe_virtual_channel_p
-                || !this->session_probe_virtual_channel_p->is_disconnection_reconnection_required())
+            if ((!this->channels.session_probe_virtual_channel_p
+                || !this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
@@ -2663,8 +2664,8 @@ public:
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
-        if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->set_drawable(&gd);
+        if (this->channels.remote_programs_session_manager) {
+            this->channels.remote_programs_session_manager->set_drawable(&gd);
         }
 
         this->buf.load_data(this->trans);
@@ -2679,8 +2680,8 @@ public:
 
             try{
                 gdi::GraphicApi & drawable =
-                    ( this->remote_programs_session_manager
-                    ? (*this->remote_programs_session_manager)
+                    ( this->channels.remote_programs_session_manager
+                    ? (*this->channels.remote_programs_session_manager)
                     : ( this->graphics_update_disabled
                         ? gdi::null_gd()
                         : gd
@@ -2700,8 +2701,8 @@ public:
                     throw;
                 }
 
-                if (this->session_probe_virtual_channel_p &&
-                    this->session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                if (this->channels.session_probe_virtual_channel_p &&
+                    this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
                 this->front.must_be_stop_capture();
@@ -4217,9 +4218,9 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
-        if (this->session_probe_virtual_channel_p &&
+        if (this->channels.session_probe_virtual_channel_p &&
             this->session_probe_start_launch_timeout_timer_only_after_logon) {
-            this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+            this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
         }
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
@@ -4280,9 +4281,9 @@ public:
                     disable_input_event, disable_graphics_update);
             }
 
-            if (this->session_probe_virtual_channel_p &&
+            if (this->channels.session_probe_virtual_channel_p &&
                 this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                this->session_probe_virtual_channel_p->start_launch_timeout_timer();
+                this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
             }
         }
         break;
@@ -5622,7 +5623,7 @@ private:
         //     channel_names::rdpdr, stream.get_current(), length, chunk_size, flags);
         // return;
 
-        DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel();
+        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5651,8 +5652,8 @@ private:
         this->input_event_disabled     = disable_input_event;
         this->graphics_update_disabled = disable_graphics_update;
 
-        if (this->remote_programs_session_manager) {
-            this->remote_programs_session_manager->disable_graphics_update(
+        if (this->channels.remote_programs_session_manager) {
+            this->channels.remote_programs_session_manager->disable_graphics_update(
                 disable_graphics_update);
         }
 
@@ -5687,7 +5688,7 @@ private:
             if (this->session_probe_launcher) {
                 spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             }
-            this->session_probe_virtual_channel_p = &spvc;
+            this->channels.session_probe_virtual_channel_p = &spvc;
             if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
                 spvc.start_launch_timeout_timer();
             }
@@ -5696,7 +5697,7 @@ private:
                 this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
 
                 this->session_probe_launcher->set_session_probe_virtual_channel(
-                    this->session_probe_virtual_channel_p);
+                    this->channels.session_probe_virtual_channel_p);
             }
 
             if (this->remote_program) {
@@ -5704,7 +5705,7 @@ private:
                     this->get_remote_programs_virtual_channel();
 
                 rpvc.set_session_probe_virtual_channel(
-                    this->session_probe_virtual_channel_p);
+                    this->channels.session_probe_virtual_channel_p);
 
                 if (this->session_probe_launcher) {
                     rpvc.set_session_probe_launcher(
@@ -5719,8 +5720,8 @@ private:
 
 public:
     windowing_api* get_windowing_api() const {
-        if (this->remote_programs_session_manager) {
-            return this->remote_programs_session_manager.get();
+        if (this->channels.remote_programs_session_manager) {
+            return this->channels.remote_programs_session_manager.get();
         }
 
         return nullptr;
