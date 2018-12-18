@@ -82,7 +82,9 @@ public:
    ~ClientRedemptionHeadless() = default;
 
 
-    void listen_to_socket(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
+    virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+        ClientRedemption::connect(ip, name, pwd, port);
+
         if (this->config.connected) {
 
             if (this->headless_socket.start_to_listen(this->client_sck, this->_callback.get_mod())) {
@@ -94,14 +96,9 @@ public:
         }
     }
 
-    virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
-        ClientRedemption::connect(ip, name, pwd, port);
-        this->listen_to_socket(ip, name, pwd, port);
-    }
-
     void disconnect(std::string const & error, bool pipe_broken) override {
         this->headless_socket.disconnect();
-         ClientRedemption::disconnect(error, pipe_broken);
+        ClientRedemption::disconnect(error, pipe_broken);
     }
 };
 

@@ -101,6 +101,8 @@ public:
 
         this->clientRDPDRChannel.set_api(&(this->ioDisk));
 
+        this->clientRemoteAppChannel.set_api(&(this->qt_graphic));
+
         this->_callback.set_rdp_keyLayout_api(&(this->qt_rdp_keylayout));
 
         this->cmd_launch_conn();

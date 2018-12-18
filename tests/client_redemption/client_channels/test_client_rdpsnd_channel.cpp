@@ -37,7 +37,8 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelInitialization)
     callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;
-    ClientRDPSNDChannel channel(to_verbose_flags(0x0), &callback, &snd_io, config);
+    ClientRDPSNDChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&snd_io);
 
 
     StaticOutStream<512> out_ServerAudioFormatsandVersion;
@@ -129,7 +130,8 @@ RED_AUTO_TEST_CASE(TestRDPSNDChannelWave)
     callback.set_mod(&mod);
     FakeClientOutPutSound snd_io;
     RDPSoundConfig config;
-    ClientRDPSNDChannel channel(to_verbose_flags(0x0), &callback, &snd_io, config);
+    ClientRDPSNDChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&snd_io);
 
     StaticOutStream<512> out_WaveInfoPDU;
     rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVE, 12);

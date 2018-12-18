@@ -237,7 +237,7 @@ public:
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
-        , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod), graphic_api)
+        , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod))
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
@@ -1274,7 +1274,7 @@ public:
         (void) bmp;
     }
 
-    virtual void set_pointer(Pointer const & cursor) override {
+    virtual void set_pointer(Pointer const &) override {
 //         if (this->graphic_api) {
 //             this->graphic_api->set_pointer(cursor);
 //         }

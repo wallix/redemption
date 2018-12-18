@@ -50,7 +50,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelInitialization)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     StaticOutStream<512> out_serverAnnounce;
     rdpdr::SharedHeader header_serverAnnounce(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_SERVER_ANNOUNCE);
@@ -204,7 +205,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelCreateFileOrDir)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -261,7 +263,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelLockControl)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     StaticOutStream<512> out_stream;
     rdpdr::SharedHeader header(rdpdr::Component::RDPDR_CTYP_CORE, rdpdr::PacketId::PAKID_CORE_DEVICE_IOREQUEST);
@@ -303,7 +306,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileBasicInformation)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
 
@@ -358,7 +362,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileStandardInformation)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
 
@@ -413,7 +418,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelQueryInformationFileAttributeTagInformation)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
 
@@ -465,7 +471,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelClose)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
 
@@ -507,7 +514,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelRead)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
     fakeIODisk.fil_size = 4;
@@ -556,7 +564,8 @@ RED_AUTO_TEST_CASE(TestRDPDRChannelDirectoryControl)
     FakeIODisk fakeIODisk;
     RDPDiskConfig config;
     config.add_drive("", rdpdr::RDPDR_DTYP_FILESYSTEM);
-    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, &fakeIODisk, config);
+    ClientRDPDRChannel channel(to_verbose_flags(0x0), &callback, config);
+    channel.set_api(&fakeIODisk);
 
     channel.paths.emplace(1, "test");
 

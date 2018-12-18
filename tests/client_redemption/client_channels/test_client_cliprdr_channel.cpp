@@ -42,7 +42,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelInitialization)
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-    ClientCLIPRDRChannel channel(/*to_verbose_flags(0x0)*/RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump, &callback, &clip_io, conf);
+    ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
+    channel.set_api(&clip_io);
     channel.server_use_long_format_names = false;
 
     // Server Capabilities
@@ -129,7 +130,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromServerToCLient)
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
 
-    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, &clip_io, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, conf);
+    channel.set_api(&clip_io);
 
     // Format List PDU
     StaticOutStream<512> out_FormatListPDU;
@@ -234,7 +236,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelTextCopyFromClientToServer)
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, &clip_io, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, conf);
+    channel.set_api(&clip_io);
 
     // COPY from clipboard
     clip_io._bufferTypeID = RDPECLIP::CF_TEXT;
@@ -332,7 +335,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromServerToCLient)
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, &clip_io, conf);
+    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr, &callback, conf);
+    channel.set_api(&clip_io);
 
     // Format List PDU
     StaticOutStream<512> out_FormatListPDU;
@@ -527,7 +531,8 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
     conf.add_format(ClientCLIPRDRConfig::CF_QT_CLIENT_FILECONTENTS, RDPECLIP::FILECONTENTS.data());
     conf.add_format(RDPECLIP::CF_TEXT, {});
     conf.add_format(RDPECLIP::CF_METAFILEPICT, {});
-    ClientCLIPRDRChannel channel(RDPVerbose::cliprdr/*to_verbose_flags(0x0)*/, &callback, &clip_io, conf);
+    ClientCLIPRDRChannel channel(to_verbose_flags(0x0), &callback, conf);
+    channel.set_api(&clip_io);
 
     // COPY from clipboard
     clip_io._bufferTypeID = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;

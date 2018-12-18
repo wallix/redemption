@@ -177,16 +177,16 @@ public:
 
 
     ClientRemoteAppChannel(RDPVerbose verbose,
-                                  ClientCallback * callback,
-                                  ClientChannelMod * channel_mod,
-                                  ClientOutputGraphicAPI * impl_graphic)
+                           ClientCallback * callback,
+                           ClientChannelMod * channel_mod)
       : verbose(verbose)
       , callback(callback)
       , channel_mod(channel_mod)
-      , impl_graphic(impl_graphic)
       {}
 
-
+    void set_api(ClientOutputGraphicAPI * impl_graphic) {
+        this->impl_graphic = impl_graphic;
+    }
 
     void set_configuration(int width, int height, RDPRemoteAppConfig & config) {
         this->width  = width;
