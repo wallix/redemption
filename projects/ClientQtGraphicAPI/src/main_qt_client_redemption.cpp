@@ -111,6 +111,38 @@ public:
     }
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+        if (this->config.mod_state != ClientRedemptionConfig::MOD_VNC) {
+            if (this->config.is_spanning) {
+                this->config.rdp_width  = this->graphic_api->screen_max_width;
+                this->config.rdp_height = this->graphic_api->screen_max_height;
+
+                this->config.modVNCParamsData.width = this->graphic_api->screen_max_width;
+                this->config.modVNCParamsData.height = this->graphic_api->screen_max_height;
+            }
+
+            switch (this->config.mod_state) {
+                case ClientRedemptionConfig::MOD_RDP:
+                    this->config.info.screen_info.width = this->config.rdp_width;
+                    this->config.info.screen_info.height = this->config.rdp_height;
+                    break;
+
+                case ClientRedemptionConfig::MOD_VNC:
+                    this->config.info.screen_info.width = this->config.modVNCParamsData.width;
+                    this->config.info.screen_info.height = this->config.modVNCParamsData.height;
+                    break;
+
+                default: break;
+            }
+
+            if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
+
+                this->graphic_api->reset_cache(this->config.info.screen_info.width, this->config.info.screen_info.height);
+                this->graphic_api->create_screen();
+            } else {
+                this->graphic_api->reset_cache(this->graphic_api->screen_max_width, this->graphic_api->screen_max_height);
+            }
+        }
+
         ClientRedemption::connect(ip, name, pwd, port);
 
         if (this->config.connected) {
@@ -131,6 +163,7 @@ public:
     }
 
     void disconnect(std::string const & error, bool pipe_broken) override {
+        this->graphic_api->dropScreen();
         this->qt_socket_listener.disconnect();
         ClientRedemption::disconnect(error, pipe_broken);
         this->graphic_api->init_form();
@@ -150,7 +183,7 @@ public:
         this->graphic_api->closeFromGUI();
     }
 
-    void set_error_msg(const std::string & error) {
+    void set_error_msg(const std::string & error) override {
         ClientRedemption::set_error_msg(error);
         this->graphic_api->set_ErrorMsg(error);
     }
@@ -158,6 +191,150 @@ public:
     void set_pointer(Pointer const & cursor) override {
         this->graphic_api->set_pointer(cursor);
     }
+
+    bool init_mod() override {
+        switch (this->config.mod_state) {
+            case ClientRedemptionConfig::MOD_RDP_REMOTE_APP:
+                this->config.info.screen_info.width = this->graphic_api->screen_max_width;
+                this->config.info.screen_info.height = this->graphic_api->screen_max_height;
+                break;
+            default: break;
+        }
+        return ClientRedemption::init_mod();
+    }
+
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
+        }
+        return this->graphic_api->server_resize(width, height, bpp);
+    }
+
+    void begin_update() override {
+        if ((this->config.connected || this->config.is_replaying)) {
+            this->graphic_api->begin_update();
+        }
+        ClientRedemption::begin_update();
+    }
+
+    void end_update() override {
+        if ((this->config.connected || this->config.is_replaying)) {
+            this->graphic_api->end_update();
+        }
+        ClientRedemption::end_update();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //-----------------------------
+    //       DRAW FUNCTIONS
+    //-----------------------------
+
+    using ClientRedemptionAPI::draw;
+
+    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        this->graphic_api->draw(bitmap_data, bmp);
+        ClientRedemption::draw(bitmap_data, bmp);
+    }
+
+    void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPScrBlt & cmd, Rect clip) override {
+        this->graphic_api->draw(cmd, clip);
+        ClientRedemption::draw(cmd, clip);
+    }
+
+    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
+        this->graphic_api->draw(cmd, clip, bitmap);
+        ClientRedemption::draw(cmd, clip, bitmap);
+        this->record_connection_nego_times();
+    }
+
+    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
+        this->graphic_api->draw(cmd, clip, color_ctx, bitmap);
+        ClientRedemption::draw(cmd, clip, color_ctx, bitmap);
+    }
+
+    void draw(const RDPDestBlt & cmd, Rect clip) override {
+        this->graphic_api->draw(cmd, clip);
+        ClientRedemption::draw(cmd, clip);
+    }
+
+    void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
+        this->graphic_api->draw(cmd, clip);
+        ClientRedemption::draw(cmd, clip);
+    }
+
+    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
+        this->graphic_api->draw(cmd, clip);
+        ClientRedemption::draw(cmd, clip);
+    }
+
+    void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
+        this->graphic_api->draw(cmd, clip, color_ctx, gly_cache);
+        ClientRedemption::draw(cmd, clip, color_ctx, gly_cache);
+    }
+
+    void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        this->graphic_api->draw(cmd, clip, color_ctx);
+        ClientRedemption::draw(cmd, clip, color_ctx);
+    }
+
+    void draw(const RDP::FrameMarker& order) override {
+        this->graphic_api->draw(order);
+        ClientRedemption::draw(order);
+    }
+
+    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+        (void) cmd;
+        (void) clip;
+        (void) color_ctx;
+        (void) bmp;
+    }
+
 };
 
 

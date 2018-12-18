@@ -287,7 +287,7 @@ public:
 
     bool enable_shared_clipboard = true;
 
-
+    bool                 is_pre_loading = false;
     bool                 is_recording = false;
     bool                 is_spanning = false;
 

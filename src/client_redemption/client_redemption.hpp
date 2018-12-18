@@ -253,14 +253,13 @@ public:
 
    ~ClientRedemption() = default;
 
-   void cmd_launch_conn() {
+    void cmd_launch_conn() {
         if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
 
             this->connect(this->config.target_IP,
-                          this->config.user_name,
-                          this->config.user_password,
-                          this->config.port);
-
+                            this->config.user_name,
+                            this->config.user_password,
+                            this->config.port);
         } else {
             std::cout <<  "Argument(s) required for connection: ";
             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::NAME_GOT)) {
@@ -276,19 +275,12 @@ public:
                 std::cout << "-P [port] ";
             }
             std::cout << std::endl;
-
-            if (this->graphic_api) {
-//                 this->graphic_api->init_form();
-                if (this->config.help_mode) {
-                    this->graphic_api->closeFromGUI();
-                }
-            }
         }
-   }
+    }
 
-   virtual bool is_connected() override {
+    virtual bool is_connected() override {
         return this->config.connected;
-   }
+    }
 
     int wait_and_draw_event(std::chrono::milliseconds timeout) override
     {
@@ -301,8 +293,6 @@ public:
         }
         return 0;
     }
-
-
 
     virtual void update_keylayout() override {;
 
@@ -330,9 +320,10 @@ public:
 //         }
     }
 
-
-
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
+
+        this->config.is_replaying = false;
+        this->config.connected = false;
 
         this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
 
@@ -369,7 +360,7 @@ public:
         }
     }
 
-    bool init_mod()  {
+    virtual bool init_mod() {
 
         try {
             this->_callback.init();
@@ -415,10 +406,10 @@ public:
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
 
-                    if (this->graphic_api) {
-                        this->config.info.screen_info.width = this->graphic_api->screen_max_width;
-                        this->config.info.screen_info.height = this->graphic_api->screen_max_height;
-                    }
+//                     if (this->graphic_api) {
+//                         this->config.info.screen_info.width = this->graphic_api->screen_max_width;
+//                         this->config.info.screen_info.height = this->graphic_api->screen_max_height;
+//                     }
 
                     this->clientRemoteAppChannel.set_configuration(
                         this->config.info.screen_info.width,
@@ -654,39 +645,6 @@ public:
             }
         }
 
-        if (this->graphic_api) {
-
-            if (this->config.is_spanning) {
-                this->config.rdp_width  = this->graphic_api->screen_max_width;
-                this->config.rdp_height = this->graphic_api->screen_max_height;
-
-                this->config.modVNCParamsData.width = this->graphic_api->screen_max_width;
-                this->config.modVNCParamsData.height = this->graphic_api->screen_max_height;
-            }
-
-            switch (this->config.mod_state) {
-                case ClientRedemptionConfig::MOD_RDP:
-                    this->config.info.screen_info.width = this->config.rdp_width;
-                    this->config.info.screen_info.height = this->config.rdp_height;
-                    break;
-
-                case ClientRedemptionConfig::MOD_VNC:
-                    this->config.info.screen_info.width = this->config.modVNCParamsData.width;
-                    this->config.info.screen_info.height = this->config.modVNCParamsData.height;
-                    break;
-
-                default: break;
-            }
-
-            if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-
-                this->graphic_api->reset_cache(this->config.info.screen_info.width, this->config.info.screen_info.height);
-                this->graphic_api->create_screen();
-            } else {
-                this->graphic_api->reset_cache(this->graphic_api->screen_max_width, this->graphic_api->screen_max_height);
-            }
-        }
-
         if (this->init_socket()) {
 
             this->update_keylayout();
@@ -720,16 +678,12 @@ public:
         }
     }
 
-    void disconnexionReleased() override{
-
-        if (this->graphic_api) {
-            this->graphic_api->dropScreen();
-        }
-        this->config.is_replaying = false;
-        this->config.connected = false;
-
-        this->disconnect("", false);
-    }
+//     void disconnexionReleased() override{
+//
+//
+//
+//         this->disconnect("", false);
+//     }
 
     virtual void set_capture() {
         std::string record_path = this->config.REPLAY_DIR + "/";
@@ -1073,138 +1027,114 @@ public:
 
     using ClientRedemptionAPI::draw;
 
-    void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPatBlt, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, color_ctx);
+    virtual void draw(const RDPPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPatBlt, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, color_ctx);
+    virtual void draw(const RDPOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = cmd.rect.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
-                             (bitmap_data.dest_right - bitmap_data.dest_left + 1),
-                             (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
-                const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
-            }
-            this->draw_impl(no_log{}, bitmap_data, bmp);
+    virtual void draw(const RDPBitmapData & bitmap_data, const Bitmap & bmp) override {
+        if (this->config.is_pre_loading) {
+            Rect rectBmp( bitmap_data.dest_left, bitmap_data.dest_top,
+                            (bitmap_data.dest_right - bitmap_data.dest_left + 1),
+                            (bitmap_data.dest_bottom - bitmap_data.dest_top + 1));
+            const Rect rect = rectBmp.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPOpaqueRect, rect.cx * rect.cy);
         }
+        this->draw_impl(no_log{}, bitmap_data, bmp);
 
         this->record_connection_nego_times();
     }
 
-    void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPLineTo, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, color_ctx);
+    virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPLineTo, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPScrBlt & cmd, Rect clip) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPScrBlt, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip);
+    virtual void draw(const RDPScrBlt & cmd, Rect clip) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPScrBlt, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip);
     }
 
-    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMemBlt, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, bitmap);
+    virtual void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMemBlt, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, bitmap);
         this->record_connection_nego_times();
     }
 
-    void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMem3Blt, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
+    virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMem3Blt, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx, bitmap);
         /*if (this->wab_diag_question) {
             this->answer_question(this->asked_color);
         }*/
     }
 
-    void draw(const RDPDestBlt & cmd, Rect clip) override {
-        if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPDestBlt, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip);
+    virtual void draw(const RDPDestBlt & cmd, Rect clip) override {
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(cmd.rect);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPDestBlt, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip);
     }
 
-    void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.wrmOrderStat[WRMGraphicStat::RDPMultiDstBlt]++;
+    virtual void draw(const RDPMultiDstBlt & cmd, Rect clip) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMultiDstBlt, rect.cx * rect.cy);
-//             this->wrmGraphicStat.RDPMultiDstBlt+= rect.cx * rect.cy;
         }
         this->draw_unimplemented(with_log{}, cmd, clip);
     }
 
-    void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPMultiOpaqueRect++;
+    virtual void draw(const RDPMultiOpaqueRect & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPMultiOpaqueRect+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMultiOpaqueRect, rect.cx * rect.cy);
         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPMultiPatBlt++;
+    virtual void draw(const RDP::RDPMultiPatBlt & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMultiPatBlt, rect.cx * rect.cy);
-//             this->wrmGraphicStat.RDPMultiPatBlt+= rect.cx * rect.cy;
         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPMultiScrBlt++;
+    virtual void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPMultiScrBlt+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMultiScrBlt, rect.cx * rect.cy);
         }
         this->draw_unimplemented(with_log{}, cmd, clip);
     }
 
-    void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
+    virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
         if (this->graphic_api) {
-            if (this->graphic_api->is_pre_loading) {
+            if (this->config.is_pre_loading) {
                 const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
                 this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPGlyphIndex, rect.cx * rect.cy);
             }
@@ -1212,104 +1142,69 @@ public:
         }
     }
 
-    void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPPolygonSC++;
+    virtual void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPPolygonSC+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPolygonSC, rect.cx * rect.cy);
         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPPolygonCB++;
+    virtual void draw(const RDPPolygonCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPPolygonCB+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPolygonCB, rect.cx * rect.cy);
         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPPolyline++;
+    virtual void draw(const RDPPolyline & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPPolyline+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPPolyline, rect.cx * rect.cy);
         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPEllipseSC++;
+    virtual void draw(const RDPEllipseSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPEllipseSC+= rect.cx * rect.cy;
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPEllipseSC, rect.cx * rect.cy);
         }
         this->draw_unimplemented(with_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
-        if (this->graphic_api->is_pre_loading) {
-//             this->wrmGraphicStat.RDPEllipseCB++;
+    virtual void draw(const RDPEllipseCB & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
+        if (this->config.is_pre_loading) {
             const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h).intersect(clip);
-//             this->wrmGraphicStat.RDPEllipseCB+= rect.cx * rect.cy;
 
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPEllipseCB, rect.cx * rect.cy);
         }
         this->draw_unimplemented(no_log{}, cmd, clip, color_ctx);
     }
 
-    void draw(const RDP::FrameMarker& order) override {
+    virtual void draw(const RDP::FrameMarker& order) override {
         this->draw_impl(no_log{}, order);
     }
 
-    void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
+    virtual void draw(RDPNineGrid const & cmd, Rect clip, gdi::ColorCtx color_ctx, Bitmap const & bmp) override {
         (void) cmd;
         (void) clip;
         (void) color_ctx;
         (void) bmp;
     }
 
-    virtual void set_pointer(Pointer const &) override {
-//         if (this->graphic_api) {
-//             this->graphic_api->set_pointer(cursor);
-//         }
-    }
+    virtual void set_pointer(Pointer const &) override {}
 
-//     void draw_frame(int frame_index) override {
-//         if (this->graphic_api) {
-//             this->graphic_api->draw_frame(frame_index);
-//         }
-//     }
-
-//     void update_pointer_position(uint16_t xPos, uint16_t yPos) override {
-//
-//         if (this->is_replaying) {
-// //             this->screen->_trans_cache.fill(Qt::transparent);
-//             QRect nrect(xPos, yPos, this->cursor_image.width(), this->cursor_image.height());
-//
-// //             this->screen->paintTransCache().drawImage(nrect, this->cursor_image);
-//         }
-//     }
-
-    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
-        LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
-        if (this->graphic_api) {
-            return this->graphic_api->server_resize(width, height, bpp);
+    virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+        if (bool(this->config.verbose & RDPVerbose::graphics)) {
+            LOG(LOG_INFO, "server_resize to (%d, %d, %d)", width, height, bpp);
         }
         return ResizeResult::instant_done;
     }
 
-    void begin_update() override {
+    virtual void begin_update() override {
         if ((this->config.connected || this->config.is_replaying)) {
-
-            if (this->graphic_api) {
-                this->graphic_api->begin_update();
-            }
 
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.begin_update();
@@ -1320,12 +1215,8 @@ public:
     }
 
 
-    void end_update() override {
+    virtual void end_update() override {
         if ((this->config.connected || this->config.is_replaying)) {
-
-            if (this->graphic_api) {
-                this->graphic_api->end_update();
-            }
 
             if (this->config.is_recording && !this->config.is_replaying) {
                 this->capture->drawable.end_update();
@@ -1367,10 +1258,6 @@ private:
             }
         }
 
-        if (this->graphic_api) {
-            this->graphic_api->draw(order, clip_or_bmp, others...);
-        }
-
         if (this->config.is_recording && !this->config.is_replaying) {
             this->capture->drawable.draw(order, clip_or_bmp, others...);
             this->capture->wrm_capture.draw(order, clip_or_bmp, others...);
@@ -1385,10 +1272,6 @@ private:
             if constexpr (with_log) { /*NOLINT*/
                 order.log(LOG_INFO, clip);
             }
-        }
-
-        if (this->graphic_api) {
-            this->graphic_api->draw(order, clip, color_ctx, others...);
         }
 
         if (this->config.is_recording && !this->config.is_replaying) {

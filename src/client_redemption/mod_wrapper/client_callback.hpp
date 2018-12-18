@@ -157,7 +157,7 @@ public:
     }
 
     void disconnexionReleased() {
-        this->client->disconnexionReleased();
+        this->client->disconnect("", false);
     }
 
     void refreshPressed(const int width, const int height) {

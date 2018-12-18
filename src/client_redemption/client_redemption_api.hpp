@@ -46,7 +46,7 @@ public:
     virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void closeFromGUI() {}
-    virtual void disconnexionReleased() {}
+//     virtual void disconnexionReleased() {}
     virtual void update_keylayout() {}
 
     // Replay functions

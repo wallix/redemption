@@ -366,7 +366,7 @@ private:
                 if (!this->config->is_loading_replay_mod) {
                     time_t current_time_movie = 0;
 
-                    if (!this->is_pre_loading) {
+                    if (!this->config->is_pre_loading) {
                         if (this->screen) {
                             current_time_movie = this->screen->get_current_time_movie();
                         }
@@ -375,7 +375,7 @@ private:
 
                     this->reset_cache(width, height);
 
-                    if (!this->is_pre_loading) {
+                    if (!this->config->is_pre_loading) {
 
                         this->screen = new ReplayQtScreen(this->controller, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
 
@@ -425,7 +425,7 @@ private:
 
         long int endin_frame = 0;
 
-        this->is_pre_loading = true;
+        this->config->is_pre_loading = true;
 
         bool res = false;
 
@@ -450,7 +450,7 @@ private:
             res = true;
         }
 
-        this->is_pre_loading = false;
+        this->config->is_pre_loading = false;
 
         if (this->screen) {
             this->screen->stopRelease();
