@@ -43,11 +43,6 @@
 
 #include "capture/wrm_capture.hpp"
 
-// #include "client_redemption/client_channel_managers/client_cliprdr_channel.hpp"
-// #include "client_redemption/client_channel_managers/client_rdpdr_channel.hpp"
-// #include "client_redemption/client_channel_managers/client_rdpsnd_channel.hpp"
-// #include "client_redemption/client_channel_managers/client_remoteapp_channel.hpp"
-
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
@@ -78,58 +73,44 @@
 class ClientRedemptionQt : public ClientRedemption
 {
 
-    // io API
-//     ClientOutputGraphicAPI      * graphic_api;
-//     ClientIOClipboardAPI        * io_clipboard_api;
-//     ClientOutputSoundAPI        * output_sound_api;
-//     ClientInputSocketAPI        * socket_listener;
-//     ClientKeyLayoutAPI          * keylayout_api;
-//     ClientIODiskAPI             * io_disk_api;
-
+private:
     QtIOGraphicMouseKeyboard qt_graphic;
+    QtOutputSound qt_sound;
     QtInputSocket qt_socket_listener;
-
-
+    QtInputOutputClipboard qt_clipboard;
+    QtClientRDPKeyLayout qt_rdp_keylayout;
+    IODisk ioDisk;
 
 public:
     ClientRedemptionQt(SessionReactor & session_reactor,
-                     ClientRedemptionConfig & config,
-//                      QtIOGraphicMouseKeyboard & graphic_api,
-                     ClientIOClipboardAPI * io_clipboard_api,
-                     ClientOutputSoundAPI * output_sound_api,
-                     ClientKeyLayoutAPI * keylayout_api,
-                     ClientIODiskAPI * io_disk_api)
-            :ClientRedemption(session_reactor, config, &qt_graphic, io_clipboard_api, output_sound_api, /*socket_listener,*/ keylayout_api, io_disk_api)
+                       ClientRedemptionConfig & config)
+            :ClientRedemption(session_reactor, config, &qt_graphic)
+            , qt_sound(qt_graphic.get_static_qwidget())
             , qt_socket_listener(session_reactor, qt_graphic.get_static_qwidget())
-//         : config(config)
-//         , client_sck(-1)
-//         , _callback(this, keylayout_api)
-//         , session_reactor(session_reactor)
-//         , graphic_api(graphic_api)
-//         , io_clipboard_api(io_clipboard_api)
-//         , output_sound_api (output_sound_api)
-//         , socket_listener (socket_listener)
-//         , keylayout_api(keylayout_api)
-//         , io_disk_api(io_disk_api)
-//         , close_box_extra_message_ref("Close")
-//         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
-//         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->output_sound_api, this->config.rDPSoundConfig)
-//         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->io_clipboard_api, this->config.rDPClipboardConfig)
-//         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->io_disk_api, this->config.rDPDiskConfig)
-//         , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod), this->graphic_api)
-//         , start_win_session_time(tvtime())
-//         , secondary_connection_finished(false)
-//         , primary_connection_finished(false)
-//         , local_IP("unknow_local_IP")
+            , qt_clipboard(qt_graphic.get_static_qwidget())
     {
         this->qt_socket_listener.set_client(this);
-        this->graphic_api->set_drawn_client(&(this->_callback), &(this->config));
+        this->qt_graphic.set_drawn_client(&(this->_callback), &(this->config));
+
+        this->qt_sound.set_path(this->config.SOUND_TEMP_DIR);
+        this->clientRDPSNDChannel.set_api(&(this->qt_sound));
+
+        this->qt_clipboard.set_path(this->config.CB_TEMP_DIR);
+        this->qt_clipboard.set_channel(&(this->clientCLIPRDRChannel));
+        this->clientCLIPRDRChannel.set_api(&(this->qt_clipboard));
+
+        this->clientRDPDRChannel.set_api(&(this->ioDisk));
+
+        this->_callback.set_rdp_keyLayout_api(&(this->qt_rdp_keylayout));
+
         this->cmd_launch_conn();
+
+        this->graphic_api->init_form();
     }
 
+    void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
+        ClientRedemption::connect(ip, name, pwd, port);
 
-
-    void listen_to_socket(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
         if (this->config.connected) {
 
             if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
@@ -147,20 +128,35 @@ public:
         }
     }
 
-    virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
-        ClientRedemption::connect(ip, name, pwd, port);
-
-        if (this->config.connected) {
-            this->listen_to_socket(ip, name, pwd, port);
-        }
-    }
-
     void disconnect(std::string const & error, bool pipe_broken) override {
         this->qt_socket_listener.disconnect();
-         ClientRedemption::disconnect(error, pipe_broken);
+        ClientRedemption::disconnect(error, pipe_broken);
+        this->graphic_api->init_form();
+    }
+
+    void update_keylayout() override {
+        this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
+
+        this->qt_rdp_keylayout.clearCustomKeyCode();
+        for (KeyCustomDefinition& key : this->config.keyCustomDefinitions) {
+            this->qt_rdp_keylayout.setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
+        }
+        ClientRedemption::update_keylayout();
+    }
+
+    void closeFromGUI() override {
+        this->graphic_api->closeFromGUI();
+    }
+
+    void set_error_msg(const std::string & error) {
+        ClientRedemption::set_error_msg(error);
+        this->graphic_api->set_ErrorMsg(error);
+    }
+
+    void set_pointer(Pointer const & cursor) override {
+        this->graphic_api->set_pointer(cursor);
     }
 };
-
 
 
 int main(int argc, char** argv)
@@ -171,34 +167,10 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    QtIOGraphicMouseKeyboard graphic_control_qt_obj;
-    QWidget * qwidget_parent = graphic_control_qt_obj.get_static_qwidget();
-    QtInputOutputClipboard clipboard_api_obj(qwidget_parent);
-    QtOutputSound sound_api_obj(qwidget_parent);
-    IODisk ioDisk_api_obj;
-//     QtInputSocket socket_api_obj(session_reactor, qwidget_parent);
-    QtClientRDPKeyLayout keylayout_obj;
-
-    ClientOutputGraphicAPI * graphic_qt    = &graphic_control_qt_obj;
-    ClientIOClipboardAPI   * clipboard_api = &clipboard_api_obj;
-    ClientOutputSoundAPI   * sound_api     = &sound_api_obj;
-//     ClientInputSocketAPI   * socket_api    = &socket_api_obj;
-    ClientKeyLayoutAPI     * keylayout_api = &keylayout_obj;
-    ClientIODiskAPI        * ioDisk_api    = &ioDisk_api_obj;
-
-    RDPVerbose verbose = /*to_verbose_flags(0x0)*/RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
-
+    RDPVerbose verbose = to_verbose_flags(0x0)/*RDPVerbose::rdpsnd*/;
     ClientRedemptionConfig config(const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
 
-    sound_api->set_path(config.SOUND_TEMP_DIR);
-
-    ClientRedemptionQt client_qt(session_reactor, config /*const_cast<char const**>(argv), argc, verbose*/
-//                               , graphic_control_qt_obj
-                              , clipboard_api
-                              , sound_api
-//                               , socket_api
-                              , keylayout_api
-                              , ioDisk_api);
+    ClientRedemptionQt client_qt(session_reactor, config);
 
     app.exec();
 }

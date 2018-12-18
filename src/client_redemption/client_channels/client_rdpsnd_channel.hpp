@@ -230,7 +230,9 @@ class ClientRDPSNDChannel {
 
 
 public:
-    ClientRDPSNDChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config);
+    ClientRDPSNDChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPSoundConfig & config);
 
     void receive(InStream & chunk);
+
+    void set_api(ClientOutputSoundAPI * impl_sound);
 };

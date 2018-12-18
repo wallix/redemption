@@ -170,9 +170,11 @@ public:
 
 
 
-    ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config);
+    ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPDiskConfig & config);
 
     ~ClientRDPDRChannel();
+
+    void set_api(ClientIODiskAPI * impl_io_disk);
 
     void receive(InStream & chunk) /*NOLINT*/;
 

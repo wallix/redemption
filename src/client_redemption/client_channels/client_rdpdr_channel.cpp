@@ -98,9 +98,8 @@
 
 
 
-ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientIODiskAPI * impl_io_disk, RDPDiskConfig & config)
+ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback,  RDPDiskConfig & config)
     : verbose(verbose)
-    , impl_io_disk(impl_io_disk)
     , callback(callback)
     , ioCode1(config.ioCode1)
     , extendedPDU(config.extendedPDU)
@@ -122,6 +121,10 @@ ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * ca
 
 ClientRDPDRChannel::~ClientRDPDRChannel() {
     this->elem_in_path.clear();
+}
+
+void ClientRDPDRChannel::set_api(ClientIODiskAPI * impl_io_disk) {
+    this->impl_io_disk = impl_io_disk;
 }
 
 void ClientRDPDRChannel::set_share_dir(const std::string & share_dir) {

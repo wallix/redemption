@@ -52,13 +52,10 @@ public:
         using namespace std::chrono_literals;
 
         while (!mod->is_up_and_running()) {
-//                 std::cout << " Early negociations...\n";
             if (int err = this->client->wait_and_draw_event(3s)) {
                 std::cout << " Error: wait_and_draw_event() fail during negociation (" << err << ").\n";
             }
         }
-        //std::cout << " Early negociations completes.\n";
-
         return true;
     }
 
@@ -75,7 +72,7 @@ private:
 public:
     ClientRedemptionHeadless(SessionReactor & session_reactor,
                              ClientRedemptionConfig & config)
-        :ClientRedemption(session_reactor, config, nullptr, nullptr, nullptr, nullptr, nullptr)
+        :ClientRedemption(session_reactor, config, nullptr)
         , headless_socket(session_reactor)
     {
         this->headless_socket.set_client(this);

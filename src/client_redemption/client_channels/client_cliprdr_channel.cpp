@@ -119,7 +119,7 @@
 
 
 
-    ClientCLIPRDRChannel::ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config)
+    ClientCLIPRDRChannel::ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config)
       :  verbose(verbose)
       , clientIOClipboardAPI(clientIOClipboardAPI)
       , callback(callback)
@@ -142,6 +142,10 @@
         for (auto const& format : config.formats) {
             this->add_format(format.ID, format.name);
         }
+    }
+
+    void ClientCLIPRDRChannel::set_api(ClientIOClipboardAPI * clientIOClipboardAPI) {
+        this->clientIOClipboardAPI = clientIOClipboardAPI;
     }
 
     ClientCLIPRDRChannel::~ClientCLIPRDRChannel() {

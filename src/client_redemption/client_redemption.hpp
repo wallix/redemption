@@ -91,13 +91,10 @@ public:
 
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
+
+
     // io API
     ClientOutputGraphicAPI      * graphic_api;
-    ClientIOClipboardAPI        * io_clipboard_api;
-    ClientOutputSoundAPI        * output_sound_api;
-//     ClientInputSocketAPI        * socket_listener;
-    ClientKeyLayoutAPI          * keylayout_api;
-    ClientIODiskAPI             * io_disk_api;
 
 
     // RDP
@@ -229,25 +226,17 @@ public:
 public:
     ClientRedemption(SessionReactor & session_reactor,
                      ClientRedemptionConfig & config,
-                     ClientOutputGraphicAPI * graphic_api,
-                     ClientIOClipboardAPI * io_clipboard_api,
-                     ClientOutputSoundAPI * output_sound_api,
-                     ClientKeyLayoutAPI * keylayout_api,
-                     ClientIODiskAPI * io_disk_api)
+                     ClientOutputGraphicAPI * graphic_api)
         : config(config)
         , client_sck(-1)
-        , _callback(this, keylayout_api)
+        , _callback(this)
         , session_reactor(session_reactor)
         , graphic_api(graphic_api)
-        , io_clipboard_api(io_clipboard_api)
-        , output_sound_api (output_sound_api)
-        , keylayout_api(keylayout_api)
-        , io_disk_api(io_disk_api)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
-        , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), output_sound_api, this->config.rDPSoundConfig)
-        , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), io_clipboard_api, this->config.rDPClipboardConfig)
-        , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), io_disk_api, this->config.rDPDiskConfig)
+        , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
+        , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
+        , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
         , clientRemoteAppChannel(this->config.verbose, &(this->_callback), &(this->channel_mod), graphic_api)
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
@@ -258,19 +247,6 @@ public:
         SSL_library_init();
 
         this->config.set_icon_movie_data();
-
-        if (this->io_clipboard_api) {
-            this->io_clipboard_api->set_client(this);
-            this->io_clipboard_api->set_path(this->config.CB_TEMP_DIR);
-            this->io_clipboard_api->set_manager(&(this->clientCLIPRDRChannel));
-        } else {
-            LOG(LOG_WARNING, "No clipoard IO implementation.");
-        }
-        if (this->output_sound_api) {
-            this->output_sound_api->set_path(this->config.SOUND_TEMP_DIR);
-        } else {
-            LOG(LOG_WARNING, "No sound output implementation.");
-        }
 
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
@@ -302,7 +278,7 @@ public:
             std::cout << std::endl;
 
             if (this->graphic_api) {
-                this->graphic_api->init_form();
+//                 this->graphic_api->init_form();
                 if (this->config.help_mode) {
                     this->graphic_api->closeFromGUI();
                 }
@@ -326,15 +302,9 @@ public:
         return 0;
     }
 
-    virtual void update_keylayout() override {
-        if (this->keylayout_api) {
-            this->keylayout_api->update_keylayout(this->config.info.keylayout);
 
-            this->keylayout_api->clearCustomKeyCode();
-            for (KeyCustomDefinition& key : this->config.keyCustomDefinitions) {
-                this->keylayout_api->setCustomKeyCode(key.qtKeyID, key.scanCode, key.ASCII8, key.extended);
-            }
-        }
+
+    virtual void update_keylayout() override {;
 
         switch (this->config.mod_state) {
             case ClientRedemptionConfig::MOD_VNC:
@@ -354,19 +324,15 @@ public:
         this->replay_mod.reset();
     }
 
-    void closeFromGUI() override {
-        if (this->graphic_api) {
-            this->graphic_api->closeFromGUI();
-        }
+    virtual void closeFromGUI() override {
+//         if (this->graphic_api) {
+//             this->graphic_api->closeFromGUI();
+//         }
     }
 
 
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
-
-//         if (this->socket_listener) {
-//             this->socket_listener->disconnect();
-//         }
 
         this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
 
@@ -387,9 +353,7 @@ public:
         std::string date(buffer);
 
         if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
-            if (this->graphic_api) {
-                this->graphic_api->set_ErrorMsg(error);
-            }
+            this->set_error_msg(error);
             std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
             LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
         } else {
@@ -397,10 +361,11 @@ public:
 
         }
         this->config.set_icon_movie_data();
-        if (this->graphic_api) {
-            LOG(LOG_INFO, "ClientRedemption::disconnect graphic api init form");
-            this->graphic_api->init_form();
-            LOG(LOG_INFO, "ClientRedemption::disconnect graphic api new form called");
+    }
+
+    virtual void set_error_msg(const std::string & error) {
+        if (!error.empty()) {
+            LOG(LOG_WARNING, "RDP Session disconnected error: %s", error);
         }
     }
 
@@ -648,7 +613,7 @@ public:
 
             } else {
 
-                if (this->config.modRDPParamsData.enable_shared_virtual_disk /*&& this->io_disk_api*/) {
+                if (this->config.modRDPParamsData.enable_shared_virtual_disk) {
                     CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
                                                       , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
@@ -660,7 +625,7 @@ public:
                 }
             }
 
-            if (this->config.enable_shared_clipboard /*&& this->io_clipboard_api*/) {
+            if (this->config.enable_shared_clipboard) {
                 CHANNELS::ChannelDef channel_cliprdr { channel_names::cliprdr
                                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -678,7 +643,7 @@ public:
                                                  };
             this->cl.push_back(channel_WabDiag);
 
-            if (this->config.modRDPParamsData.enable_sound /*&& this->output_sound_api*/) {
+            if (this->config.modRDPParamsData.enable_sound) {
                 CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
                                                         , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
                                                         GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
@@ -727,25 +692,6 @@ public:
             this->update_keylayout();
 
             this->config.connected = this->init_mod();
-
-//             if (this->config.connected) {
-//
-//                 if (this->socket_listener) {
-//
-//                     if (this->socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
-//
-//                         this->start_wab_session_time = tvtime();
-//
-//                         if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
-//                             if (this->graphic_api) {
-//                                 this->graphic_api->show_screen();
-//                             }
-//                         }
-//
-//                         this->config.writeAccoundData(ip, name, pwd, port);
-//                     }
-//                 }
-//             }
         }
     }
 
@@ -775,11 +721,13 @@ public:
     }
 
     void disconnexionReleased() override{
-        this->config.is_replaying = false;
-        this->config.connected = false;
+
         if (this->graphic_api) {
             this->graphic_api->dropScreen();
         }
+        this->config.is_replaying = false;
+        this->config.connected = false;
+
         this->disconnect("", false);
     }
 
@@ -1326,10 +1274,10 @@ public:
         (void) bmp;
     }
 
-    void set_pointer(Pointer const & cursor) override {
-        if (this->graphic_api) {
-            this->graphic_api->set_pointer(cursor);
-        }
+    virtual void set_pointer(Pointer const & cursor) override {
+//         if (this->graphic_api) {
+//             this->graphic_api->set_pointer(cursor);
+//         }
     }
 
 //     void draw_frame(int frame_index) override {

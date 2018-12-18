@@ -199,9 +199,9 @@
 
 
 
-ClientRDPSNDChannel::ClientRDPSNDChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientOutputSoundAPI * impl_sound, RDPSoundConfig & config)
+ClientRDPSNDChannel::ClientRDPSNDChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPSoundConfig & config)
     : verbose(verbose)
-    , impl_sound(impl_sound)
+    , impl_sound(nullptr)
     , callback(callback)
     , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST)
     , last_cBlockNo(0)
@@ -241,6 +241,7 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 uint8_t data[] = {'\0'};
                 this->impl_sound->setData(data, 1);
                 this->impl_sound->play();
+//                 LOG(LOG_INFO, "ClientRDPSNDChannel::receive play!!!");
             }
 
             StaticOutStream<16> out_stream;
@@ -460,6 +461,9 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 break;
         }
     }
-
 }
+
+    void ClientRDPSNDChannel::set_api(ClientOutputSoundAPI * impl_sound) {
+        this->impl_sound = impl_sound;
+    }
 

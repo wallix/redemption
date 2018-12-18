@@ -185,7 +185,7 @@ public:
     size_t last_header_data_len = 0;
 
 
-    ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, ClientIOClipboardAPI * clientIOClipboardAPI, RDPClipboardConfig const& config);
+    ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config);
 
     ~ClientCLIPRDRChannel();
 
@@ -193,6 +193,7 @@ private:
     void add_format(uint32_t ID, const std::string & name);
 
 public:
+    void set_api(ClientIOClipboardAPI * clientIOClipboardAPI);
 
     void receive(InStream & chunk, int flags);
 

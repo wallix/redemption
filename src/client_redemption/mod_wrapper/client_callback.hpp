@@ -37,7 +37,7 @@ private:
     mod_api            * mod = nullptr;
     ClientRedemptionAPI * client;
 
-    ClientKeyLayoutAPI * keyLayout;
+    ClientKeyLayoutAPI * rdp_keyLayout_api;
     ReplayMod * replay_mod = nullptr;
 
 public:
@@ -46,11 +46,15 @@ public:
         uint16_t y = 0;
     } mouse_data;
 
-    ClientCallback(ClientRedemptionAPI * client, ClientKeyLayoutAPI * keyLayout)
+    ClientCallback(ClientRedemptionAPI * client)
     :  _timer(0)
     , client(client)
-    , keyLayout(keyLayout)
+    , rdp_keyLayout_api(nullptr)
     {}
+
+    void set_rdp_keyLayout_api(ClientKeyLayoutAPI * rdp_keyLayout_api) {
+        this->rdp_keyLayout_api = rdp_keyLayout_api;
+    }
 
     mod_api * get_mod() {
         return this->mod;
@@ -119,19 +123,19 @@ public:
     }
     // TODO string_view
     void keyPressEvent(const int key, std::string const& text) {
-        this->keyLayout->init(0, key, text);
-        int keyCode = this->keyLayout->get_scancode();
+        this->rdp_keyLayout_api->init(0, key, text);
+        int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->keyLayout->get_flag());
+            this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
         }
     }
 
     // TODO string_view
     void keyReleaseEvent(const int key, std::string const& text) {
-        this->keyLayout->init(KBD_FLAG_UP, key, text);
-        int keyCode = this->keyLayout->get_scancode();
+        this->rdp_keyLayout_api->init(KBD_FLAG_UP, key, text);
+        int keyCode = this->rdp_keyLayout_api->get_scancode();
         if (keyCode != 0) {
-            this->send_rdp_scanCode(keyCode, this->keyLayout->get_flag());
+            this->send_rdp_scanCode(keyCode, this->rdp_keyLayout_api->get_flag());
         }
     }
 
@@ -242,7 +246,7 @@ public:
     }
 
     KeyCustomDefinition get_key_info(int keyCode, std::string const& text) {
-        return this->keyLayout->get_key_info(keyCode, text);
+        return this->rdp_keyLayout_api->get_key_info(keyCode, text);
     }
 
 };

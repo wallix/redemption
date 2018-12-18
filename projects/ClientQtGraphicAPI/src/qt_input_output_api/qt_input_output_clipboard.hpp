@@ -113,11 +113,6 @@ public:
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 
-    void set_client(ClientRedemptionAPI * client, std::string & path) {
-        this->client = client;
-        this->tmp_path = path;
-    }
-
     void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
         std::string filePath(this->tmp_path + "/" + fileName);
         std::string filePath_mem(filePath);

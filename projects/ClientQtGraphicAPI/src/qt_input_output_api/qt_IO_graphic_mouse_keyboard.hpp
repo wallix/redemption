@@ -1412,12 +1412,7 @@ private:
 
     void closeFromGUI() override {
 
-//         this->config->is_replaying = false;
-//         this->config->connected = false;
-
-
-
-        if (this->form != nullptr /*&& this->config->connected*/) {
+        if (this->form != nullptr) {
             this->form->close();
         }
 
