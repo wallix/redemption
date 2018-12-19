@@ -108,10 +108,10 @@ namespace trkeys
         "Fermeture sur inactivité");
     TR_KV(acl_fail,
         "Authentifier service failed",
-        "Echec du service d'authentification");
+        "Échec du service d'authentification");
     TR_KV(target_fail,
         "Failed to connect to remote host.",
-        "Echec de la connexion à l'hôte distant.");
+        "Échec de la connexion à l'hôte distant.");
 
     TR_KV(authentification_rdp_fail,
         "Failed to authenticate with remote RDP host.",
