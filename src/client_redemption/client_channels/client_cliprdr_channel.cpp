@@ -121,7 +121,7 @@
 
     ClientCLIPRDRChannel::ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config)
       :  verbose(verbose)
-      , clientIOClipboardAPI(clientIOClipboardAPI)
+      , clientIOClipboardAPI(nullptr)
       , callback(callback)
       , _waiting_for_data(false)
       , channel_flags(CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL)

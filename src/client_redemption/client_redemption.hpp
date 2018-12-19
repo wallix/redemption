@@ -92,11 +92,6 @@ public:
     std::unique_ptr<Transport> _socket_in_recorder;
     std::unique_ptr<ReplayMod> replay_mod;
 
-
-    // io API
-    ClientOutputGraphicAPI      * graphic_api;
-
-
     // RDP
     CHANNELS::ChannelDefArray   cl;
     std::string          _error;
@@ -217,6 +212,13 @@ public:
             return this->wrmOrderStat[index].pixels;
         }
 
+        void reset() {
+            for (int i = 0; i < COUNT_FIELD; i++) {
+                this->wrmOrderStat[i].count = 0;
+                this->wrmOrderStat[i].pixels = 0;
+            }
+        }
+
     } wrmGraphicStat;
 
     std::string       local_IP;
@@ -225,13 +227,11 @@ public:
 
 public:
     ClientRedemption(SessionReactor & session_reactor,
-                     ClientRedemptionConfig & config,
-                     ClientOutputGraphicAPI * graphic_api)
+                     ClientRedemptionConfig & config)
         : config(config)
         , client_sck(-1)
         , _callback(this)
         , session_reactor(session_reactor)
-        , graphic_api(graphic_api)
         , close_box_extra_message_ref("Close")
         , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
@@ -315,9 +315,7 @@ public:
     }
 
     virtual void closeFromGUI() override {
-//         if (this->graphic_api) {
-//             this->graphic_api->closeFromGUI();
-//         }
+
     }
 
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
@@ -405,11 +403,6 @@ public:
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
                     this->config.info.cs_monitor = GCC::UserData::CSMonitor{};
-
-//                     if (this->graphic_api) {
-//                         this->config.info.screen_info.width = this->graphic_api->screen_max_width;
-//                         this->config.info.screen_info.height = this->graphic_api->screen_max_height;
-//                     }
 
                     this->clientRemoteAppChannel.set_configuration(
                         this->config.info.screen_info.width,
@@ -535,7 +528,7 @@ public:
         if (has_error) {
             std::string errorMsg = str_concat(
                 "Cannot connect to [", this->config.target_IP, "]. Socket error: ", has_error_string);
-            LOG(LOG_WARNING, "%s", errorMsg);
+            this->set_error_msg(errorMsg);
             this->disconnect(str_concat("<font color='Red'>", errorMsg, "</font>"), true);
         }
 
@@ -678,13 +671,6 @@ public:
         }
     }
 
-//     void disconnexionReleased() override{
-//
-//
-//
-//         this->disconnect("", false);
-//     }
-
     virtual void set_capture() {
         std::string record_path = this->config.REPLAY_DIR + "/";
         std::string hash_path = this->config.REPLAY_DIR + "/signatures/";
@@ -750,11 +736,9 @@ public:
         }
 
         if (this->replay_mod == nullptr) {
-            if (this->graphic_api) {
-                this->graphic_api->dropScreen();
-            }
             const std::string errorMsg = str_concat("Cannot read movie \"", this->config._movie_full_path, "\".");
-            LOG(LOG_ERR, "%s", errorMsg);
+//             LOG(LOG_ERR, "%s", errorMsg);
+            this->set_error_msg(errorMsg);
             std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
             this->disconnect(labelErrorMsg, false);
         }
@@ -775,7 +759,7 @@ public:
         this->config._movie_full_path = movie_path;
 
         if (this->config._movie_name.empty()) {
-//              this->graphic_api->readError(movie_path_);
+            this->set_error_msg(movie_path);
             return;
         }
 
@@ -785,32 +769,29 @@ public:
         if (this->load_replay_mod({0, 0}, {0, 0})) {
 
             this->config.is_loading_replay_mod = false;
-
-            if (graphic_api) {
-                this->graphic_api->create_replay_screen();
-
-                if (this->replay_mod->get_wrm_version() == WrmVersion::v2) {
-
-                    if (this->graphic_api->pre_load_movie(movie_path)) {
-
-                        for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
-                            unsigned int to_count = this->wrmGraphicStat.get_count(i);
-                            std::string spacer("       ");
-
-                            while (to_count >=  10) {
-                                to_count /=  10;
-                                spacer = spacer.substr(0, spacer.length()-1);
-                            }
-
-                            LOG(LOG_INFO, "%s= %u %spixels = %lu", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
-                        }
-                    }
-                }
-                this->graphic_api->show_screen();
-            }
+            this->wrmGraphicStat.reset();
+            this->print_wrm_graphic_stat(movie_path);
         }
 
         this->config.is_loading_replay_mod = false;
+    }
+
+
+
+
+    virtual void print_wrm_graphic_stat(const std::string &) {
+
+        for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
+            unsigned int to_count = this->wrmGraphicStat.get_count(i);
+            std::string spacer("       ");
+
+            while (to_count >=  10) {
+                to_count /=  10;
+                spacer = spacer.substr(0, spacer.length()-1);
+            }
+
+            LOG(LOG_INFO, "%s= %u %spixels = %lu", this->wrmGraphicStat.get_field_name(i), this->wrmGraphicStat.get_count(i), spacer, this->wrmGraphicStat.get_pixels(i));
+        }
     }
 
 
@@ -837,15 +818,8 @@ public:
 
                         this->config.is_loading_replay_mod = false;
 
-                        if (this->graphic_api) {
-                            this->graphic_api->draw_frame(last_balised);
-                        }
-
-                        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
-
-                        if (this->graphic_api) {
-                            this->graphic_api->update_screen();
-                        }
+                        this->instant_replay_client(begin, last_balised);
+//                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
 
                         movie_time_start = tvtime();
                         timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
@@ -860,6 +834,10 @@ public:
         }
 
         return movie_time_start;
+    }
+
+    virtual void instant_replay_client(int begin, int ) {
+        this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
     }
 
 
@@ -1008,9 +986,7 @@ public:
 //         );
             }
         } catch (const Error & e) {
-            if (this->graphic_api) {
-                this->graphic_api->dropScreen();
-            }
+
             const std::string errorMsg = str_concat('[', this->config.target_IP, "] lost: pipe broken");
             LOG(LOG_ERR, "%s: %s", errorMsg, e.errmsg());
             std::string labelErrorMsg = str_concat("<font color='Red'>", errorMsg, "</font>");
@@ -1053,7 +1029,9 @@ public:
         }
         this->draw_impl(no_log{}, bitmap_data, bmp);
 
-        this->record_connection_nego_times();
+        if (!this->config.is_pre_loading && !this->config.is_replaying) {
+            this->record_connection_nego_times();
+        }
     }
 
     virtual void draw(const RDPLineTo & cmd, Rect clip, gdi::ColorCtx color_ctx) override {
@@ -1078,7 +1056,9 @@ public:
             this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPMemBlt, rect.cx * rect.cy);
         }
         this->draw_impl(with_log{}, cmd, clip, bitmap);
-        this->record_connection_nego_times();
+        if (!this->config.is_pre_loading && !this->config.is_replaying) {
+            this->record_connection_nego_times();
+        }
     }
 
     virtual void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {
@@ -1133,13 +1113,11 @@ public:
     }
 
     virtual void draw(const RDPGlyphIndex & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override {
-        if (this->graphic_api) {
-            if (this->config.is_pre_loading) {
-                const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
-                this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPGlyphIndex, rect.cx * rect.cy);
-            }
-            this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
+        if (this->config.is_pre_loading) {
+            const Rect rect = clip.intersect(this->replay_mod->get_dim().w, this->replay_mod->get_dim().h);
+            this->wrmGraphicStat.add_wrm_order_stat(WRMGraphicStat::RDPGlyphIndex, rect.cx * rect.cy);
         }
+        this->draw_impl(with_log{}, cmd, clip, color_ctx, gly_cache);
     }
 
     virtual void draw(const RDPPolygonSC & cmd, Rect clip, gdi::ColorCtx color_ctx) override {

@@ -72,7 +72,7 @@ private:
 public:
     ClientRedemptionHeadless(SessionReactor & session_reactor,
                              ClientRedemptionConfig & config)
-        :ClientRedemption(session_reactor, config, nullptr)
+        :ClientRedemption(session_reactor, config)
         , headless_socket(session_reactor)
     {
         this->headless_socket.set_client(this);

@@ -305,7 +305,7 @@ public:
         this->update_counter++;
     }
 
-private:
+public:
     size_t update_counter = 0;
 
     void end_update() override {
@@ -415,48 +415,51 @@ private:
         }
     }
 
+    long int init_replay(const std::string & movie_path, bool is_v2_wrm) {
+        this->create_replay_screen();
 
-    bool pre_load_movie(const std::string & movie_path) override {
+        if (is_v2_wrm) {
+            this->balises.clear();
+            long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
+            this->form->hide();
 
-        this->balises.clear();
-
-        long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
-        this->form->hide();
-
-        long int endin_frame = 0;
-
-        this->config->is_pre_loading = true;
-
-        bool res = false;
-
-        if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {
-            this->bar = new ProgressBarWindow(movie_length);
-
-            while (endin_frame < movie_length) {
-
-                this->controller->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
-
-                this->balises.push_back(this->cache);
-                endin_frame += ClientRedemptionConfig::BALISED_FRAME;
-                if (this->bar) {
-                    this->bar->setValue(endin_frame);
-                }
+            if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {
+                this->bar = new ProgressBarWindow(movie_length);
+                return movie_length;
             }
-
-            if (this->bar) {
-                this->bar->close();
-            }
-
-            res = true;
         }
 
-        this->config->is_pre_loading = false;
+        return 0;
+    }
 
+
+    bool pre_load_movie(const std::string & movie_path, bool is_v2_wrm) override {
+
+        long int endin_frame = 0;
+        bool res = false;
+
+        long int movie_length = this->init_replay(movie_path, is_v2_wrm);
+
+        while (endin_frame < movie_length) {
+            this->controller->instant_play_client(std::chrono::microseconds(endin_frame*1000000));
+            this->balises.push_back(this->cache);
+            endin_frame += ClientRedemptionConfig::BALISED_FRAME;
+            if (this->bar) {
+                this->bar->setValue(endin_frame);
+            }
+        }
+
+        if (this->bar) {
+            this->bar->close();
+        }
+
+        return (movie_length != 0);
+    }
+
+    void stop_replay() override {
         if (this->screen) {
             this->screen->stopRelease();
         }
-
-        return res;
     }
 
 //     void answer_question(int color) {

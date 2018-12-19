@@ -83,6 +83,12 @@ public:
 
     virtual void draw_frame(int  /*unused*/) {}
 
+    virtual void stop_replay() {}
+
+    virtual void set_bar_value(long int) {}
+
+    virtual bool pre_load_movie(const std::string & /*movie_path*/, bool) { return false; }
+
 
     // remote app
 
@@ -115,5 +121,5 @@ public:
 
     virtual void open_options() {}
 
-    virtual bool pre_load_movie(const std::string & /*movie_path*/) { return false; }
+
 };
