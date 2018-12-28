@@ -121,7 +121,7 @@ RED_AUTO_TEST_CASE(TestTranslation)
     RED_CHECK_EQUAL(TR(trkeys::session_out_time, lang),   std::string("L'autorisation de la session a expiré"));
     RED_CHECK_EQUAL(TR(trkeys::miss_keepalive, lang),     std::string("Absence de réponse de Keepalive de l'ACL"));
     RED_CHECK_EQUAL(TR(trkeys::close_inactivity, lang),   std::string("Fermeture sur inactivité"));
-    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           std::string("Echec du service d'authentification"));
+    RED_CHECK_EQUAL(TR(trkeys::acl_fail, lang),           std::string("Échec du service d'authentification"));
 
     RED_CHECK_EQUAL(TR(trkeys::close, lang),      std::string("Fermer"));
     RED_CHECK_EQUAL(TR(trkeys::password, lang),   std::string("Mot de passe"));
