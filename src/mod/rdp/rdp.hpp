@@ -233,6 +233,9 @@ private:
         std::string real_client_execute_working_dir;
         std::string real_client_execute_arguments;
 
+        const bool remote_program;
+        const bool remote_program_enhanced;
+
 
         data_size_type max_clipboard_data = 0;
         data_size_type max_rdpdr_data     = 0;
@@ -332,6 +335,8 @@ private:
             , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
             , session_probe_windows_of_these_applications_as_unidentified_input_field(mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field)
             , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
+            , remote_program(mod_rdp_params.remote_program)
+            , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
             , verbose(verbose)
         {
             if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -1000,31 +1005,37 @@ private:
     };
 
 
-    inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel() {
+    inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
+                    FrontAPI& front,
+                    Transport& trans, CryptContext & encrypt, 
+                    const RdpNegociationResult negociation_result,
+                    AsynchronousTaskContainer & asynchronous_tasks,
+                    const ModRdpVariables & vars,
+                    RailCaps const & client_rail_caps) {
         if (!this->channels.remote_programs_virtual_channel) {
             assert(!this->channels.remote_programs_to_client_sender &&
                 !this->channels.remote_programs_to_server_sender);
 
             this->channels.remote_programs_to_client_sender =
-                this->channels.create_to_client_sender(channel_names::rail, this->front);
+                this->channels.create_to_client_sender(channel_names::rail, front);
             this->channels.remote_programs_to_server_sender =
                 this->channels.create_to_server_sender(channel_names::rail,
-                    this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+                    trans, encrypt, negociation_result, asynchronous_tasks);
 
             this->channels.remote_programs_virtual_channel =
                 std::make_unique<RemoteProgramsVirtualChannel>(
                     this->channels.remote_programs_to_client_sender.get(),
                     this->channels.remote_programs_to_server_sender.get(),
-                    this->front,
-                    this->vars,
-                    this->get_remote_programs_virtual_channel_params());
+                    front,
+                    vars,
+                    this->get_remote_programs_virtual_channel_params(client_rail_caps));
         }
 
         return *this->channels.remote_programs_virtual_channel;
     }
 
     const RemoteProgramsVirtualChannel::Params
-        get_remote_programs_virtual_channel_params() const
+        get_remote_programs_virtual_channel_params(RailCaps const & client_rail_caps) const
     {
         RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
 
@@ -1061,9 +1072,9 @@ private:
             this->channels.use_session_probe_to_launch_remote_program;
 
         remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
-            (this->client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+            (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
         remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
-            this->remote_program_enhanced;
+            this->channels.remote_program_enhanced;
 
         return remote_programs_virtual_channel_params;
     }
@@ -1733,7 +1744,7 @@ private:
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/,
                                   InStream & chunk, size_t length, uint32_t flags) {
-        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
@@ -5588,7 +5599,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel();
+        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5744,7 +5755,7 @@ private:
 
             if (this->remote_program) {
                 RemoteProgramsVirtualChannel& rpvc =
-                    this->get_remote_programs_virtual_channel();
+                    this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
                 rpvc.set_session_probe_virtual_channel(
                     this->channels.session_probe_virtual_channel_p);
@@ -5784,7 +5795,7 @@ private:
             const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel();
+                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
                 working_dir, arguments, account, password);
@@ -5798,7 +5809,7 @@ private:
             uint16_t exec_result) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel();
+                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
         }
@@ -5811,7 +5822,7 @@ private:
         uint16_t exec_result, uint32_t raw_result) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel();
+                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
         }
