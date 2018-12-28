@@ -498,11 +498,6 @@ public:
     , gen(gen)
     , session_reactor(session_reactor)
     {
-        this->front.session_probe_started(false);
-        this->front.set_focus_on_password_textbox(false);
-        this->front.set_focus_on_password_textbox_or_unidentified_input_field(false);
-        this->front.set_consent_ui_visible(false);
-
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
             LOG(LOG_INFO,
                 "SessionProbeVirtualChannel::SessionProbeVirtualChannel: "
@@ -513,6 +508,11 @@ public:
                 ms2ll(this->session_probe_effective_launch_timeout),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
+
+        this->front.session_probe_started(false);
+        this->front.set_focus_on_password_textbox(false);
+        this->front.set_focus_on_password_textbox_or_unidentified_input_field(false);
+        this->front.set_consent_ui_visible(false);
     }
 
     bool has_been_launched() const {

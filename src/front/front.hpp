@@ -2686,12 +2686,6 @@ private:
         this->update_keyboard_input_mask_state();
     }
 
-    void set_focus_on_unidentified_input_field(bool set) override {
-        this->focus_on_password_textbox_or_unidentified_input_field = set;
-
-        this->update_keyboard_input_mask_state();
-    }
-
     void set_consent_ui_visible(bool set) override {
         this->consent_ui_is_visible = set;
 
