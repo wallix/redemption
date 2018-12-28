@@ -331,6 +331,8 @@ private:
 
     const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
+    const bool param_session_probe_childless_window_as_unidentified_input_field;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -343,6 +345,7 @@ private:
     ExtraSystemProcesses           extra_system_processes;
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
     ProcessMonitorRules            process_monitor_rules;
+    ExtraSystemProcesses           windows_of_these_applications_as_unidentified_input_field;
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
@@ -394,6 +397,8 @@ public:
 
         const char* session_probe_process_monitoring_rules;
 
+        const char* session_probe_windows_of_these_applications_as_unidentified_input_field;
+
         bool session_probe_allow_multiple_handshake;
 
         bool session_probe_enable_crash_dump;
@@ -402,6 +407,8 @@ public:
         uint32_t session_probe_memory_usage_limit;
 
         bool session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
+        bool session_probe_childless_window_as_unidentified_input_field;
 
         Translation::language_t lang;
 
@@ -458,6 +465,7 @@ public:
     , param_handle_usage_limit(params.session_probe_handle_usage_limit)
     , param_memory_usage_limit(params.session_probe_memory_usage_limit)
     , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
+    , param_session_probe_childless_window_as_unidentified_input_field(params.session_probe_childless_window_as_unidentified_input_field)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -467,6 +475,7 @@ public:
           params.session_probe_outbound_connection_monitoring_rules)
     , process_monitor_rules(
           params.session_probe_process_monitoring_rules)
+    , windows_of_these_applications_as_unidentified_input_field(params.session_probe_windows_of_these_applications_as_unidentified_input_field)
     , gen(gen)
     {
         if (bool(this->verbose & RDPVerbose::sesprobe)) {
@@ -479,6 +488,11 @@ public:
                 this->session_probe_effective_launch_timeout.count(),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
+
+        this->front.session_probe_started(false);
+        this->front.set_focus_on_password_textbox(false);
+        this->front.set_focus_on_password_textbox_or_unidentified_input_field(false);
+        this->front.set_consent_ui_visible(false);
     }
 
     bool has_been_launched() const {
@@ -741,6 +755,9 @@ public:
         const char request_process_monitoring_rule[] =
             "Request=Get process monitoring rule\x01";
 
+        const char request_windows_of_application_as_unidentified_input_field[] =
+            "Request=Get windows of application as unidentified input field\x01";
+
         const char request_hello[] = "Request=Hello";
 
         const char ExtraInfo[]     = "ExtraInfo=";
@@ -860,7 +877,7 @@ public:
                 out_s.out_skip_bytes(sizeof(uint16_t));
 
                 {
-                    const char cstr[] = "Version=" "1" "\x01" "3";
+                    const char cstr[] = "Version=" "1" "\x01" "4";
                     out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
                 }
 
@@ -941,6 +958,38 @@ public:
                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
                         out_s.get_data(), out_s.get_offset());
                 }
+            }
+
+            {
+                StaticOutStream<1024> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "ChildlessWindowAsUnidentifiedInputField=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                if (this->param_session_probe_childless_window_as_unidentified_input_field) {
+                    const char cstr[] = "Yes";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+                else {
+                    const char cstr[] = "No";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
             }
 
             {
@@ -1549,6 +1598,64 @@ public:
                     out_s.get_data(), out_s.get_offset());
             }
         }
+
+        else if (!this->server_message.compare(
+                     0,
+                     sizeof(request_windows_of_application_as_unidentified_input_field) - 1,
+                     request_windows_of_application_as_unidentified_input_field)) {
+            const char * remaining_data =
+                (this->server_message.c_str() +
+                 sizeof(request_windows_of_application_as_unidentified_input_field) - 1);
+
+            const unsigned int app_index =
+                ::strtoul(remaining_data, nullptr, 10);
+
+            // WindowsOfApplicationAsUnidentifiedInputField=AppIndex\x01ErrorCode[\x01AppName]
+            // ErrorCode : 0 on success. -1 if an error occurred.
+
+            {
+                StaticOutStream<8192> out_s;
+
+                const size_t message_length_offset = out_s.get_offset();
+                out_s.out_skip_bytes(sizeof(uint16_t));
+
+                {
+                    const char cstr[] = "WindowsOfApplicationAsUnidentifiedInputField=";
+                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                }
+
+                std::string name;
+
+                const bool result =
+                    this->windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
+
+                {
+                    const int error_code = (result ? 0 : -1);
+                    char cstr[128];
+                    std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                        app_index, error_code);
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                if (result) {
+                    char cstr[1024];
+                    std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
+                        name.c_str());
+                    out_s.out_copy_bytes(cstr, strlen(cstr));
+                }
+
+                out_s.out_clear_bytes(1);   // Null-terminator.
+
+                out_s.set_out_uint16_le(
+                    out_s.get_offset() - message_length_offset -
+                        sizeof(uint16_t),
+                    message_length_offset);
+
+                this->send_message_to_server(out_s.get_offset(),
+                    CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST,
+                    out_s.get_data(), out_s.get_offset());
+            }
+        }
         else if (!this->server_message.compare("KeepAlive=OK")) {
             if (bool(this->verbose & RDPVerbose::sesprobe_repetitive)) {
                 LOG(LOG_INFO,
@@ -1631,6 +1738,27 @@ public:
 
                     if (parameters.size() == 1) {
                         this->front.set_focus_on_password_textbox(
+                            !parameters[0].compare("yes"));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!order.compare("PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
+
+                    auto info = key_qvalue_pairs({
+                        {"type",   "PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
+                        {"status", parameters[0]},
+                    });
+
+                    this->report_message.log5(info);
+
+                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                        LOG(LOG_INFO, "%s", info);
+                    }
+
+                    if (parameters.size() == 1) {
+                        this->front.set_focus_on_password_textbox_or_unidentified_input_field(
                             !parameters[0].compare("yes"));
                     }
                     else {

@@ -400,6 +400,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", set(true));
         W.sep();
 
+        W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", set(true));
+        W.sep();
+
         W.member(hidden_in_gui, sesman_to_proxy, type_<bool>(), "server_cert_store", desc{"Keep known server certificates on WAB"}, set(true));
         W.member(hidden_in_gui, sesman_to_proxy, type_<ServerCertCheck>(), "server_cert_check", set(ServerCertCheck::fails_if_no_match_and_succeed_if_no_know));
 
@@ -700,6 +703,9 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_outbound_connection_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_process_monitoring_rules");
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_extra_system_processes");
+
+        W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "session_probe_windows_of_these_applications_as_unidentified_input_field");
+
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, type_<bool>(), "disconnect_reason_ack", set(false));

@@ -474,6 +474,9 @@
 "#_hidden\n"
 "session_probe_ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)\n\n"
 
+"#_hidden\n"
+"session_probe_childless_window_as_unidentified_input_field = boolean(default=True)\n\n"
+
 "# Keep known server certificates on WAB\n"
 "#_hidden\n"
 "server_cert_store = boolean(default=True)\n\n"

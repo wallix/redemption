@@ -1362,6 +1362,8 @@ public:
                 mod_rdp_params.session_probe_process_monitoring_rules             =
                     this->ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
 
+                mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field = ini.get<cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field>().c_str();
+
                 mod_rdp_params.session_probe_enable_log            = this->ini.get<cfg::mod_rdp::session_probe_enable_log>();
                 mod_rdp_params.session_probe_enable_log_rotation   = this->ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();
 
@@ -1374,6 +1376,8 @@ public:
                 mod_rdp_params.session_probe_memory_usage_limit    = this->ini.get<cfg::mod_rdp::session_probe_memory_usage_limit>();
 
                 mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
+
+                mod_rdp_params.session_probe_childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
 
                 mod_rdp_params.ignore_auth_channel                 = this->ini.get<cfg::mod_rdp::ignore_auth_channel>();
                 mod_rdp_params.auth_channel                        = CHANNELS::ChannelNameId(this->ini.get<cfg::mod_rdp::auth_channel>());

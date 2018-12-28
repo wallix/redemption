@@ -107,6 +107,8 @@ struct ModRDPParams {
 
     bool                         session_probe_ignore_ui_less_processes_during_end_of_session_check = true;
 
+    bool                         session_probe_childless_window_as_unidentified_input_field = true;
+
     Transport  * persistent_key_list_transport = nullptr;
     Transport  * transparent_recorder_transport = nullptr;
 
@@ -115,6 +117,8 @@ struct ModRDPParams {
     const char * session_probe_extra_system_processes               = "";
     const char * session_probe_outbound_connection_monitoring_rules = "";
     const char * session_probe_process_monitoring_rules             = "";
+
+    const char * session_probe_windows_of_these_applications_as_unidentified_input_field = "";
 
     bool         ignore_auth_channel = false;
     CHANNELS::ChannelNameId auth_channel;
@@ -299,6 +303,8 @@ struct ModRDPParams {
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_ignore_ui_less_processes_during_end_of_session_check);
 
+        RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_childless_window_as_unidentified_input_field);
+
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_syslog);
         RDP_PARAMS_LOG("%s",     yes_or_no,             disable_clipboard_log_wrm);
 
@@ -317,6 +323,8 @@ struct ModRDPParams {
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_outbound_connection_monitoring_rules);
 
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_process_monitoring_rules);
+
+        RDP_PARAMS_LOG("\"%s\"", s_or_null,             session_probe_windows_of_these_applications_as_unidentified_input_field);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             ignore_auth_channel);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             auth_channel.c_str());
