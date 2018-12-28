@@ -163,6 +163,9 @@ memory_usage_limit = integer(min=0, max=200000000, default=0)
 #_advanced
 ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
 
+#_advanced
+childless_window_as_unidentified_input_field = boolean(default=True)
+
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
@@ -178,6 +181,9 @@ process_monitoring_rules = string(default='')
 
 # Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
 extra_system_processes = string(default='')
+
+# Comma-separated processes (Ex.: chrome.exe,ngf.exe)
+windows_of_these_applications_as_unidentified_input_field = string(default='')
 
 [server_cert]
 

@@ -336,6 +336,13 @@
           "description": ""
         },
         {
+          "name": "childless_window_as_unidentified_input_field",
+          "type": "bool",
+          "default": true,
+          "advanced": true,
+          "description": ""
+        },
+        {
           "name": "public_session",
           "type": "bool",
           "default": false,
@@ -358,6 +365,12 @@
           "type": "string",
           "default": "",
           "description": "Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"
+        },
+        {
+          "name": "windows_of_these_applications_as_unidentified_input_field",
+          "type": "string",
+          "default": "",
+          "description": "Comma-separated processes (Ex.: chrome.exe,ngf.exe)"
         }
       ]
     },

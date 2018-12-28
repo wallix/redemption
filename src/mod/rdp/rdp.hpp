@@ -211,17 +211,20 @@ private:
 
         const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
+        const bool                        session_probe_childless_window_as_unidentified_input_field;
+
         const bool                        session_probe_public_session;
 
         std::string session_probe_target_informations;
         const std::string session_probe_extra_system_processes;
         const std::string session_probe_outbound_connection_monitoring_rules;
         const std::string session_probe_process_monitoring_rules;
+        const std::string session_probe_windows_of_these_applications_as_unidentified_input_field;
 
         data_size_type max_clipboard_data = 0;
         data_size_type max_rdpdr_data     = 0;
         data_size_type max_drdynvc_data   = 0;
-        
+
         const RDPVerbose verbose;
 
         std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
@@ -253,7 +256,7 @@ private:
 
         FileSystemDriveManager file_system_drive_manager;
 
-        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message, Random & gen) 
+        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message, Random & gen)
             : authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
                 mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
@@ -277,7 +280,7 @@ private:
             , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
             , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
             , enable_session_probe(mod_rdp_params.enable_session_probe)
-            , use_application_driver(mod_rdp_params.alternate_shell 
+            , use_application_driver(mod_rdp_params.alternate_shell
                 && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
             , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
             , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
@@ -309,10 +312,12 @@ private:
             , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
             , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
             , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
+            , session_probe_childless_window_as_unidentified_input_field(mod_rdp_params.session_probe_childless_window_as_unidentified_input_field)
             , session_probe_public_session(mod_rdp_params.session_probe_public_session)
             , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
             , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
             , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
+            , session_probe_windows_of_these_applications_as_unidentified_input_field(mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field)
             , verbose(verbose)
         {
             if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
@@ -321,7 +326,7 @@ private:
 
         }
 
-        private:        
+        private:
         void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
             if (bool(this->verbose & RDPVerbose::connection)) {
                 LOG(LOG_INFO, "Proxy managed drives=\"%s\"", proxy_managed_drives);
@@ -343,7 +348,7 @@ private:
                     proxy_managed_drive_prefix, this->verbose);
             }
         }   // configure_proxy_managed_drives
-        
+
         public:
         std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
@@ -370,7 +375,7 @@ private:
             return std::unique_ptr<VirtualChannelDataSender>(
                 std::move(to_client_sender));
         }
-        
+
         const ClipboardVirtualChannel::Params get_clipboard_virtual_channel_params() const
         {
             ClipboardVirtualChannel::Params cvc_params(this->report_message);
@@ -386,11 +391,11 @@ private:
 
             return cvc_params;
         }
-        
-        
+
+
         inline ClipboardVirtualChannel& get_clipboard_virtual_channel(
                     FrontAPI& front,
-                    Transport& trans, CryptContext & encrypt, 
+                    Transport& trans, CryptContext & encrypt,
                     const RdpNegociationResult negociation_result,
                     AsynchronousTaskContainer & asynchronous_tasks) {
         if (!this->clipboard_virtual_channel) {
@@ -413,8 +418,8 @@ private:
         }
 
         std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(
-            CHANNELS::ChannelNameId channel_name, 
-            Transport& trans, CryptContext & encrypt, 
+            CHANNELS::ChannelNameId channel_name,
+            Transport& trans, CryptContext & encrypt,
             const RdpNegociationResult negociation_result,
             AsynchronousTaskContainer & asynchronous_tasks)
         {
@@ -448,7 +453,7 @@ private:
 
         inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel(
                     FrontAPI& front,
-                    Transport& trans, CryptContext & encrypt, 
+                    Transport& trans, CryptContext & encrypt,
                     const RdpNegociationResult negociation_result,
                     AsynchronousTaskContainer & asynchronous_tasks) {
             if (!this->dynamic_channel_virtual_channel) {
@@ -458,7 +463,7 @@ private:
                 this->dynamic_channel_to_client_sender =
                     this->create_to_client_sender(channel_names::drdynvc, front);
                 this->dynamic_channel_to_server_sender =
-                    this->create_to_server_sender(channel_names::drdynvc, 
+                    this->create_to_server_sender(channel_names::drdynvc,
                         trans, encrypt, negociation_result, asynchronous_tasks);
                 this->dynamic_channel_virtual_channel =
                     std::make_unique<DynamicChannelVirtualChannel>(
@@ -481,7 +486,7 @@ private:
 
         inline FileSystemVirtualChannel& get_file_system_virtual_channel(
                     FrontAPI& front,
-                    Transport& trans, CryptContext & encrypt, 
+                    Transport& trans, CryptContext & encrypt,
                     const RdpNegociationResult negociation_result,
                     AsynchronousTaskContainer & asynchronous_tasks,
                     SessionReactor& session_reactor,
@@ -567,7 +572,7 @@ private:
 
         inline SessionProbeVirtualChannel& get_session_probe_virtual_channel(
                         FrontAPI& front,
-                        Transport& trans, CryptContext & encrypt, 
+                        Transport& trans, CryptContext & encrypt,
                         const RdpNegociationResult negociation_result,
                         AsynchronousTaskContainer & asynchronous_tasks,
                         SessionReactor& session_reactor,
@@ -610,7 +615,7 @@ private:
         const SessionProbeVirtualChannel::Params
             get_session_probe_virtual_channel_params(
                 const RdpNegociationResult negociation_result,
-                const Translation::language_t & lang, 
+                const Translation::language_t & lang,
                 const bool bogus_refresh_rect,
                 const bool allow_using_multiple_monitors, // TODO duplicate monitor_count ?
                 const uint32_t monitor_count,
@@ -676,6 +681,9 @@ private:
             session_probe_virtual_channel_params.session_probe_ignore_ui_less_processes_during_end_of_session_check =
                 this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
 
+            session_probe_virtual_channel_params.session_probe_childless_window_as_unidentified_input_field =
+                this->session_probe_childless_window_as_unidentified_input_field;
+
             session_probe_virtual_channel_params.real_alternate_shell                   =
                 real_alternate_shell.c_str();
             session_probe_virtual_channel_params.real_working_dir                       =
@@ -689,6 +697,9 @@ private:
 
             session_probe_virtual_channel_params.session_probe_process_monitoring_rules =
                 this->session_probe_process_monitoring_rules.c_str();
+
+            session_probe_virtual_channel_params.session_probe_windows_of_these_applications_as_unidentified_input_field   =
+                this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
 
             session_probe_virtual_channel_params.lang = lang;
 
@@ -2436,7 +2447,7 @@ public:
                                 this->delayed_start_capture = true;
 
                                 LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
-                            }   
+                            }
                             else if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect
                                  && this->allow_using_multiple_monitors

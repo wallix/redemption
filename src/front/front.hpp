@@ -594,6 +594,7 @@ private:
     size_t max_data_block_size = MAX_DATA_BLOCK_SIZE;
 
     bool focus_on_password_textbox = false;
+    bool focus_on_password_textbox_or_unidentified_input_field = false;
     bool consent_ui_is_visible     = false;
 
     bool session_probe_started_ = false;
@@ -2675,6 +2676,18 @@ private:
 
     void set_focus_on_password_textbox(bool set) override {
         this->focus_on_password_textbox = set;
+
+        this->update_keyboard_input_mask_state();
+    }
+
+    void set_focus_on_password_textbox_or_unidentified_input_field(bool set) override {
+        this->focus_on_password_textbox_or_unidentified_input_field = set;
+
+        this->update_keyboard_input_mask_state();
+    }
+
+    void set_focus_on_unidentified_input_field(bool set) override {
+        this->focus_on_password_textbox_or_unidentified_input_field = set;
 
         this->update_keyboard_input_mask_state();
     }
@@ -4842,6 +4855,7 @@ private:
         if (this->capture) {
             this->capture->enable_kbd_input_mask(
                     this->focus_on_password_textbox ||
+                    this->focus_on_password_textbox_or_unidentified_input_field ||
                     this->consent_ui_is_visible || mask_unidentified_data
                 );
         }

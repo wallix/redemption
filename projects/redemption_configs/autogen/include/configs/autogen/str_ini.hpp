@@ -571,6 +571,10 @@
 "#_hidden\n"
 "#session_probe_ignore_ui_less_processes_during_end_of_session_check = 1\n\n"
 
+"# value: 0 or 1\n"
+"#_hidden\n"
+"#session_probe_childless_window_as_unidentified_input_field = 1\n\n"
+
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "# value: 0 or 1\n"
 "#_hidden\n"

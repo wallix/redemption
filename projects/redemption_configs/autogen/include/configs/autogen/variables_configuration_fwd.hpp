@@ -151,6 +151,7 @@ namespace cfg {
         struct session_probe_handle_usage_limit;
         struct session_probe_memory_usage_limit;
         struct session_probe_ignore_ui_less_processes_during_end_of_session_check;
+        struct session_probe_childless_window_as_unidentified_input_field;
         struct session_probe_public_session;
         struct server_cert_store;
         struct server_cert_check;
@@ -343,6 +344,7 @@ namespace cfg {
         struct session_probe_outbound_connection_monitoring_rules;
         struct session_probe_process_monitoring_rules;
         struct session_probe_extra_system_processes;
+        struct session_probe_windows_of_these_applications_as_unidentified_input_field;
         struct disconnect_reason;
         struct disconnect_reason_ack;
         struct ip_target;
