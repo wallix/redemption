@@ -491,7 +491,7 @@ public:
 
         this->front.session_probe_started(false);
         this->front.set_focus_on_password_textbox(false);
-        this->front.set_focus_on_password_textbox_or_unidentified_input_field(false);
+        this->front.set_focus_on_unidentified_input_field(false);
         this->front.set_consent_ui_visible(false);
     }
 
@@ -1744,10 +1744,10 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!order.compare("PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
+                else if (!order.compare("UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
 
                     auto info = key_qvalue_pairs({
-                        {"type",   "PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
+                        {"type",   "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
                         {"status", parameters[0]},
                     });
 
@@ -1758,7 +1758,7 @@ public:
                     }
 
                     if (parameters.size() == 1) {
-                        this->front.set_focus_on_password_textbox_or_unidentified_input_field(
+                        this->front.set_focus_on_unidentified_input_field(
                             !parameters[0].compare("yes"));
                     }
                     else {
