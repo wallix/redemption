@@ -62,7 +62,7 @@ struct ArcsightLogInfo {
             KBD_INPUT,
             TITLE_BAR,
             MATCH_FINDER,
-            PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS,
+            UNIDENTIFIED_INPUT_FIELD_GET_FOCUS,
     };
 
     enum :  uint8_t {

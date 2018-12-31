@@ -511,7 +511,7 @@ public:
 
         this->front.session_probe_started(false);
         this->front.set_focus_on_password_textbox(false);
-        this->front.set_focus_on_password_textbox_or_unidentified_input_field(false);
+        this->front.set_focus_on_unidentified_input_field(false);
         this->front.set_consent_ui_visible(false);
     }
 
@@ -1458,15 +1458,15 @@ public:
                         message_format_invalid = true;
                     }
                 }
-                else if (!::strcasecmp(order_.c_str(), "PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
+                else if (!::strcasecmp(order_.c_str(), "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
                     auto info = key_qvalue_pairs({
-                        {"type",   "PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
+                        {"type",   "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
                         {"status", parameters_[0]},
                     });
 
                     ArcsightLogInfo arc_info;
-                    arc_info.name = "PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS";
-                    arc_info.signatureID = ArcsightLogInfo::PASSWORD_TEXT_BOX_OR_UNIDENTIFIED_INPUT_FIELD_GET_FOCUS;
+                    arc_info.name = "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS";
+                    arc_info.signatureID = ArcsightLogInfo::UNIDENTIFIED_INPUT_FIELD_GET_FOCUS;
                     arc_info.WallixBastionStatus = parameters_[0];
                     arc_info.ApplicationProtocol = "rdp";
                     arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
@@ -1478,7 +1478,7 @@ public:
                     }
 
                     if (parameters_.size() == 1) {
-                        this->front.set_focus_on_password_textbox_or_unidentified_input_field(
+                        this->front.set_focus_on_unidentified_input_field(
                             !::strcasecmp(parameters_[0].c_str(), "yes"));
                     }
                     else {
