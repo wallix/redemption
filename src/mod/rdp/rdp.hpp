@@ -730,6 +730,81 @@ private:
             return session_probe_virtual_channel_params;
         }
 
+        inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
+                        FrontAPI& front,
+                        Transport& trans, CryptContext & encrypt, 
+                        const RdpNegociationResult negociation_result,
+                        AsynchronousTaskContainer & asynchronous_tasks,
+                        const ModRdpVariables & vars,
+                        RailCaps const & client_rail_caps) {
+            if (!this->remote_programs_virtual_channel) {
+                assert(!this->remote_programs_to_client_sender &&
+                    !this->remote_programs_to_server_sender);
+
+                this->remote_programs_to_client_sender =
+                    this->create_to_client_sender(channel_names::rail, front);
+                this->remote_programs_to_server_sender =
+                    this->create_to_server_sender(channel_names::rail,
+                        trans, encrypt, negociation_result, asynchronous_tasks);
+
+                this->remote_programs_virtual_channel =
+                    std::make_unique<RemoteProgramsVirtualChannel>(
+                        this->remote_programs_to_client_sender.get(),
+                        this->remote_programs_to_server_sender.get(),
+                        front,
+                        vars,
+                        this->get_remote_programs_virtual_channel_params(client_rail_caps));
+            }
+
+            return *this->remote_programs_virtual_channel;
+        }
+
+        const RemoteProgramsVirtualChannel::Params
+            get_remote_programs_virtual_channel_params(RailCaps const & client_rail_caps) const
+        {
+            RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
+
+            remote_programs_virtual_channel_params.exchanged_data_limit               =
+                0;
+            remote_programs_virtual_channel_params.verbose                            =
+                this->verbose;
+
+            remote_programs_virtual_channel_params.client_execute_flags               =
+                this->client_execute_flags;
+            remote_programs_virtual_channel_params.client_execute_exe_or_file         =
+                this->client_execute_exe_or_file.c_str();
+            remote_programs_virtual_channel_params.client_execute_working_dir         =
+                this->client_execute_working_dir.c_str();
+            remote_programs_virtual_channel_params.client_execute_arguments           =
+                this->client_execute_arguments.c_str();
+
+            remote_programs_virtual_channel_params.client_execute_flags_2             =
+                this->real_client_execute_flags;
+            remote_programs_virtual_channel_params.client_execute_exe_or_file_2       =
+                this->real_client_execute_exe_or_file.c_str();
+            remote_programs_virtual_channel_params.client_execute_working_dir_2       =
+                this->real_client_execute_working_dir.c_str();
+            remote_programs_virtual_channel_params.client_execute_arguments_2         =
+                this->real_client_execute_arguments.c_str();
+
+            remote_programs_virtual_channel_params.rail_session_manager               =
+                this->remote_programs_session_manager.get();
+
+            remote_programs_virtual_channel_params.should_ignore_first_client_execute =
+                this->should_ignore_first_client_execute;
+
+            remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
+                this->use_session_probe_to_launch_remote_program;
+
+            remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
+                (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+            remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
+                this->remote_program_enhanced;
+
+            return remote_programs_virtual_channel_params;
+        }
+
+
     } channels;
 
     /// shared with RdpNegociation
@@ -1005,79 +1080,6 @@ private:
     };
 
 
-    inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
-                    FrontAPI& front,
-                    Transport& trans, CryptContext & encrypt, 
-                    const RdpNegociationResult negociation_result,
-                    AsynchronousTaskContainer & asynchronous_tasks,
-                    const ModRdpVariables & vars,
-                    RailCaps const & client_rail_caps) {
-        if (!this->channels.remote_programs_virtual_channel) {
-            assert(!this->channels.remote_programs_to_client_sender &&
-                !this->channels.remote_programs_to_server_sender);
-
-            this->channels.remote_programs_to_client_sender =
-                this->channels.create_to_client_sender(channel_names::rail, front);
-            this->channels.remote_programs_to_server_sender =
-                this->channels.create_to_server_sender(channel_names::rail,
-                    trans, encrypt, negociation_result, asynchronous_tasks);
-
-            this->channels.remote_programs_virtual_channel =
-                std::make_unique<RemoteProgramsVirtualChannel>(
-                    this->channels.remote_programs_to_client_sender.get(),
-                    this->channels.remote_programs_to_server_sender.get(),
-                    front,
-                    vars,
-                    this->get_remote_programs_virtual_channel_params(client_rail_caps));
-        }
-
-        return *this->channels.remote_programs_virtual_channel;
-    }
-
-    const RemoteProgramsVirtualChannel::Params
-        get_remote_programs_virtual_channel_params(RailCaps const & client_rail_caps) const
-    {
-        RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
-
-        remote_programs_virtual_channel_params.exchanged_data_limit               =
-            0;
-        remote_programs_virtual_channel_params.verbose                            =
-            this->verbose;
-
-        remote_programs_virtual_channel_params.client_execute_flags               =
-            this->channels.client_execute_flags;
-        remote_programs_virtual_channel_params.client_execute_exe_or_file         =
-            this->channels.client_execute_exe_or_file.c_str();
-        remote_programs_virtual_channel_params.client_execute_working_dir         =
-            this->channels.client_execute_working_dir.c_str();
-        remote_programs_virtual_channel_params.client_execute_arguments           =
-            this->channels.client_execute_arguments.c_str();
-
-        remote_programs_virtual_channel_params.client_execute_flags_2             =
-            this->channels.real_client_execute_flags;
-        remote_programs_virtual_channel_params.client_execute_exe_or_file_2       =
-            this->channels.real_client_execute_exe_or_file.c_str();
-        remote_programs_virtual_channel_params.client_execute_working_dir_2       =
-            this->channels.real_client_execute_working_dir.c_str();
-        remote_programs_virtual_channel_params.client_execute_arguments_2         =
-            this->channels.real_client_execute_arguments.c_str();
-
-        remote_programs_virtual_channel_params.rail_session_manager               =
-            this->channels.remote_programs_session_manager.get();
-
-        remote_programs_virtual_channel_params.should_ignore_first_client_execute =
-            this->channels.should_ignore_first_client_execute;
-
-        remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
-            this->channels.use_session_probe_to_launch_remote_program;
-
-        remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
-            (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
-        remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
-            this->channels.remote_program_enhanced;
-
-        return remote_programs_virtual_channel_params;
-    }
 
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
@@ -1744,7 +1746,7 @@ private:
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/,
                                   InStream & chunk, size_t length, uint32_t flags) {
-        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
@@ -5599,7 +5601,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5755,7 +5757,7 @@ private:
 
             if (this->remote_program) {
                 RemoteProgramsVirtualChannel& rpvc =
-                    this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+                    this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
                 rpvc.set_session_probe_virtual_channel(
                     this->channels.session_probe_virtual_channel_p);
@@ -5795,7 +5797,7 @@ private:
             const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
                 working_dir, arguments, account, password);
@@ -5809,7 +5811,7 @@ private:
             uint16_t exec_result) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
         }
@@ -5822,7 +5824,7 @@ private:
         uint16_t exec_result, uint32_t raw_result) override {
         if (this->remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
-                this->get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks, this->vars, this->client_rail_caps);
 
             rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
         }
