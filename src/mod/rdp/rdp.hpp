@@ -403,6 +403,44 @@ private:
                 return nullptr;
             }
 
+            class ToClientSender : public VirtualChannelDataSender
+            {
+                FrontAPI& front;
+                const CHANNELS::ChannelDef& channel;
+                const RDPVerbose verbose;
+
+            public:
+                explicit ToClientSender(
+                    FrontAPI& front,
+                    const CHANNELS::ChannelDef& channel,
+                    RDPVerbose verbose)
+                : front(front)
+                , channel(channel)
+                , verbose(verbose)
+                {}
+
+                void operator()(uint32_t total_length, uint32_t flags,
+                    const uint8_t* chunk_data, uint32_t chunk_data_length)
+                        override
+                {
+                    if ((
+                        bool(this->verbose & RDPVerbose::cliprdr_dump)
+                        && this->channel.name == channel_names::cliprdr
+                    ) || (
+                        bool(this->verbose & RDPVerbose::rdpdr_dump)
+                        && this->channel.name == channel_names::rdpdr
+                    )) {
+                        const bool send              = true;
+                        const bool from_or_to_client = true;
+                        ::msgdump_c(send, from_or_to_client, total_length, flags,
+                            chunk_data, chunk_data_length);
+                    }
+
+                    this->front.send_to_channel(this->channel,
+                        chunk_data, total_length, chunk_data_length, flags);
+                }
+            };
+
             std::unique_ptr<ToClientSender> to_client_sender =
                 std::make_unique<ToClientSender>(front, *channel,
                     this->verbose);
@@ -463,6 +501,67 @@ private:
             {
                 return nullptr;
             }
+
+            class ToServerSender : public VirtualChannelDataSender
+            {
+                OutTransport    transport;
+                CryptContext&   encrypt;
+                int             encryption_level;
+                uint16_t        user_id;
+                CHANNELS::ChannelNameId channel_name;
+                uint16_t        channel_id;
+                bool            show_protocol;
+
+                const RDPVerbose verbose;
+
+            public:
+                explicit ToServerSender(
+                    OutTransport transport,
+                    CryptContext& encrypt,
+                    int encryption_level,
+                    uint16_t user_id,
+                    CHANNELS::ChannelNameId channel_name,
+                    uint16_t channel_id,
+                    bool show_protocol,
+                    RDPVerbose verbose)
+                : transport(transport)
+                , encrypt(encrypt)
+                , encryption_level(encryption_level)
+                , user_id(user_id)
+                , channel_name(channel_name)
+                , channel_id(channel_id)
+                , show_protocol(show_protocol)
+                , verbose(verbose)
+                {}
+
+                void operator()(uint32_t total_length, uint32_t flags,
+                    const uint8_t* chunk_data, uint32_t chunk_data_length)
+                        override {
+                    CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+                    if (this->show_protocol) {
+                        flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+                    }
+
+                    if ((
+                        bool(this->verbose & RDPVerbose::cliprdr_dump)
+                        && this->channel_name == channel_names::cliprdr
+                    ) || (
+                        bool(this->verbose & RDPVerbose::rdpdr_dump)
+                        && this->channel_name == channel_names::rdpdr
+                    )) {
+                        const bool send              = true;
+                        const bool from_or_to_client = false;
+                        ::msgdump_c(send, from_or_to_client, total_length, flags,
+                            chunk_data, chunk_data_length);
+                    }
+
+                    virtual_channel_pdu.send_to_server(this->transport,
+                        this->encrypt, this->encryption_level, this->user_id,
+                        this->channel_id, total_length, flags, chunk_data,
+                        chunk_data_length);
+                }
+            };
 
             std::unique_ptr<ToServerSender> to_server_sender =
                 std::make_unique<ToServerSender>(
@@ -605,7 +704,7 @@ private:
             return file_system_virtual_channel_params;
         }
 
-        std::string channels_get_session_probe_arguments(const char * session_probe_window_title)
+        std::string get_session_probe_arguments(const char * session_probe_window_title)
         {
             struct build_session_probe_arguments
             {
@@ -959,105 +1058,6 @@ private:
 
     FrontAPI& front;
 
-    class ToClientSender : public VirtualChannelDataSender
-    {
-        FrontAPI& front;
-        const CHANNELS::ChannelDef& channel;
-        const RDPVerbose verbose;
-
-    public:
-        explicit ToClientSender(
-            FrontAPI& front,
-            const CHANNELS::ChannelDef& channel,
-            RDPVerbose verbose)
-        : front(front)
-        , channel(channel)
-        , verbose(verbose)
-        {}
-
-        void operator()(uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length)
-                override
-        {
-            if ((
-                bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && this->channel.name == channel_names::cliprdr
-            ) || (
-                bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && this->channel.name == channel_names::rdpdr
-            )) {
-                const bool send              = true;
-                const bool from_or_to_client = true;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            this->front.send_to_channel(this->channel,
-                chunk_data, total_length, chunk_data_length, flags);
-        }
-    };
-
-    class ToServerSender : public VirtualChannelDataSender
-    {
-        OutTransport    transport;
-        CryptContext&   encrypt;
-        int             encryption_level;
-        uint16_t        user_id;
-        CHANNELS::ChannelNameId channel_name;
-        uint16_t        channel_id;
-        bool            show_protocol;
-
-        const RDPVerbose verbose;
-
-    public:
-        explicit ToServerSender(
-            OutTransport transport,
-            CryptContext& encrypt,
-            int encryption_level,
-            uint16_t user_id,
-            CHANNELS::ChannelNameId channel_name,
-            uint16_t channel_id,
-            bool show_protocol,
-            RDPVerbose verbose)
-        : transport(transport)
-        , encrypt(encrypt)
-        , encryption_level(encryption_level)
-        , user_id(user_id)
-        , channel_name(channel_name)
-        , channel_id(channel_id)
-        , show_protocol(show_protocol)
-        , verbose(verbose)
-        {}
-
-        void operator()(uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length)
-                override {
-            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
-            if (this->show_protocol) {
-                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-            }
-
-            if ((
-                bool(this->verbose & RDPVerbose::cliprdr_dump)
-                && this->channel_name == channel_names::cliprdr
-            ) || (
-                bool(this->verbose & RDPVerbose::rdpdr_dump)
-                && this->channel_name == channel_names::rdpdr
-            )) {
-                const bool send              = true;
-                const bool from_or_to_client = false;
-                ::msgdump_c(send, from_or_to_client, total_length, flags,
-                    chunk_data, chunk_data_length);
-            }
-
-            virtual_channel_pdu.send_to_server(this->transport,
-                this->encrypt, this->encryption_level, this->user_id,
-                this->channel_id, total_length, flags, chunk_data,
-                chunk_data_length);
-        }
-    };
-
     rdp_orders orders;
 
     int share_id;
@@ -1362,7 +1362,7 @@ public:
                 );
         }
 
-        std::string session_probe_arguments = this->channels.channels_get_session_probe_arguments(session_probe_window_title);
+        std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
 
         char program[512] = {};
         char directory[512] = {};
