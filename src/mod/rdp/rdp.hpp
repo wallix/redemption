@@ -607,6 +607,46 @@ private:
 
         std::string channels_get_session_probe_arguments(const char * session_probe_window_title)
         {
+            struct build_session_probe_arguments
+            {
+                struct Exe { char const* s; };
+                struct Cookie { char const* s; };
+                struct Title { char const* s; };
+                struct Cbspl { char const* s; };
+
+                [[nodiscard]] std::string operator()(
+                    std::string probe_arguments,
+                    Exe exe,
+                    Title title,
+                    Cookie cookie,
+                    Cbspl cbspl
+                ) const
+                {
+                    auto replace = [&](char const* marker, char const* replacement){
+                        size_t pos = 0;
+                        auto const marker_len = strlen(marker);
+                        auto const replacement_len = strlen(replacement);
+                        while ((pos = probe_arguments.find(marker, pos)) != std::string::npos) {
+                            probe_arguments.replace(pos, marker_len, replacement);
+                            pos += replacement_len;
+                        }
+                    };
+
+                    std::string cookie_param = (cookie.s && *cookie.s)
+                      ? str_concat("/#", cookie.s, ' ')
+                      : std::string();
+
+                    replace("${EXE_VAR}", exe.s);
+                    replace("${TITLE_VAR} ", title.s);
+                    replace("/${COOKIE_VAR} ", cookie_param.c_str());
+                    replace("${CBSPL_VAR} ", cbspl.s);
+
+                    return probe_arguments;
+                }
+            };
+
+            constexpr build_session_probe_arguments build_session_probe_arguments {};
+        
             if (this->enable_session_probe) {
                 // Executable file name of SP.
                 char exe_var_str[16] {};
@@ -623,13 +663,13 @@ private:
                 if (this->remote_program) {
                     std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
 
-                    this->session_probe_arguments = get_session_probe_arguments(
+                    this->session_probe_arguments = build_session_probe_arguments(
                         std::move(this->session_probe_arguments),
-                        get_session_probe_arguments::Exe{exe_var_str},
-                        get_session_probe_arguments::Title{title_param.c_str()},
-                        get_session_probe_arguments::Cookie{
+                        build_session_probe_arguments::Exe{exe_var_str},
+                        build_session_probe_arguments::Title{title_param.c_str()},
+                        build_session_probe_arguments::Cookie{
                             this->session_probe_target_informations.c_str()},
-                        get_session_probe_arguments::Cbspl{""}
+                        build_session_probe_arguments::Cbspl{""}
                     );
                 }   // if (this->remote_program)
                 else {
@@ -657,17 +697,17 @@ private:
                             sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9]);
                     }
 
-                    this->session_probe_arguments = get_session_probe_arguments(
+                    this->session_probe_arguments = build_session_probe_arguments(
                         std::move(this->session_probe_arguments),
-                        get_session_probe_arguments::Exe{exe_var_str},
-                        get_session_probe_arguments::Title{""},
-                        get_session_probe_arguments::Cookie{
+                        build_session_probe_arguments::Exe{exe_var_str},
+                        build_session_probe_arguments::Title{""},
+                        build_session_probe_arguments::Cookie{
                             this->session_probe_use_clipboard_based_launcher
                                 ? "" 
                                 : ((this->experimental_fix_too_long_cookie && (this->session_probe_target_informations.length() > 20)) 
                                     ? clipboard_based_launcher_cookie 
                                         : this->session_probe_target_informations.c_str())},
-                        get_session_probe_arguments::Cbspl{
+                        build_session_probe_arguments::Cbspl{
                             this->session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""}
                     );
                 }   // if (!this->remote_program)
