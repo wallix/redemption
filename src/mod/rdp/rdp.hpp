@@ -579,6 +579,42 @@ private:
                 return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
             }
 
+            class ToServerAsynchronousSender : public VirtualChannelDataSender
+            {
+                std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
+
+                AsynchronousTaskContainer& asynchronous_tasks;
+
+                RDPVerbose verbose;
+
+            public:
+                explicit ToServerAsynchronousSender(
+                    std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
+                    AsynchronousTaskContainer& asynchronous_tasks,
+                    RDPVerbose verbose)
+                : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
+                , asynchronous_tasks(asynchronous_tasks)
+                , verbose(verbose)
+                {}
+
+                VirtualChannelDataSender& SynchronousSender() override {
+                    return *(to_server_synchronous_sender.get());
+                }
+
+                void operator()(
+                    uint32_t total_length, uint32_t flags,
+                    const uint8_t* chunk_data, uint32_t chunk_data_length) override
+                {
+                    this->asynchronous_tasks.add(
+                        std::make_unique<RdpdrSendClientMessageTask>(
+                            total_length, flags, chunk_data, chunk_data_length,
+                            *this->to_server_synchronous_sender,
+                            this->verbose
+                        )
+                    );
+                }
+            };
+
             return std::make_unique<ToServerAsynchronousSender>(
                 std::move(to_server_sender),
                 asynchronous_tasks,
@@ -1168,44 +1204,6 @@ private:
     BmpCacheRev2_Cache_NumEntries()
     { return std::array<uint32_t, BmpCache::MAXIMUM_NUMBER_OF_CACHES>{{ 120, 120, 2553, 0, 0 }}; }
 
-    class ToServerAsynchronousSender : public VirtualChannelDataSender
-    {
-        std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender;
-
-        AsynchronousTaskContainer& asynchronous_tasks;
-
-        RDPVerbose verbose;
-
-    public:
-        explicit ToServerAsynchronousSender(
-            std::unique_ptr<VirtualChannelDataSender> to_server_synchronous_sender,
-            AsynchronousTaskContainer& asynchronous_tasks,
-            RDPVerbose verbose)
-        : to_server_synchronous_sender(std::move(to_server_synchronous_sender))
-        , asynchronous_tasks(asynchronous_tasks)
-        , verbose(verbose)
-        {}
-
-        VirtualChannelDataSender& SynchronousSender() override {
-            return *(to_server_synchronous_sender.get());
-        }
-
-        void operator()(
-            uint32_t total_length, uint32_t flags,
-            const uint8_t* chunk_data, uint32_t chunk_data_length) override
-        {
-            this->asynchronous_tasks.add(
-                std::make_unique<RdpdrSendClientMessageTask>(
-                    total_length, flags, chunk_data, chunk_data_length,
-                    *this->to_server_synchronous_sender,
-                    this->verbose
-                )
-            );
-        }
-    };
-
-
-
     std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
     time_t beginning;
@@ -1454,8 +1452,36 @@ public:
                     str_append(alternate_shell, ' ', shell_arguments);
                 }
 
-                set_alternate_shell_program_and_directory(
-                    std::move(alternate_shell), mod_rdp_params.shell_working_dir);
+                if (this->channels.enable_session_probe) {
+                    this->real_alternate_shell = std::move(std::string(alternate_shell));
+                    this->real_working_dir     = std::move(std::string(mod_rdp_params.shell_working_dir));
+
+                    alternate_shell = mod_rdp_params.session_probe_exe_or_file;
+
+                    if (!::strncmp(alternate_shell.c_str(), "||", 2)) {
+                        alternate_shell.erase(0, 2);
+                    }
+
+                    str_append(alternate_shell, ' ', session_probe_arguments);
+
+                    strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
+                    program[sizeof(program) - 1] = 0;
+                    //LOG(LOG_INFO, "AlternateShell: \"%s\"", this->program);
+
+                    const char * session_probe_working_dir = "%TMP%";
+                    strncpy(directory, session_probe_working_dir, sizeof(directory) - 1);
+                    directory[sizeof(directory) - 1] = 0;
+
+                    this->session_probe_launcher =
+                        std::make_unique<SessionProbeAlternateShellBasedLauncher>(
+                            this->verbose);
+                }
+                else {
+                    strncpy(program, std::string(alternate_shell).c_str(), sizeof(program) - 1);
+                    program[sizeof(program) - 1] = 0;
+                    strncpy(directory, std::string(mod_rdp_params.shell_working_dir).c_str(), sizeof(directory) - 1);
+                    directory[sizeof(directory) - 1] = 0;
+                }
             }
         }
         else {
