@@ -161,11 +161,13 @@ private:
 
     struct ServerTransportContext {
         OutTransport trans;
-        CryptContext encrypt {};
-        RdpNegociationResult negociation_result;
+        CryptContext & encrypt;
+        const RdpNegociationResult & negociation_result;
         
-        ServerTransportContext(Transport& trans)
+        ServerTransportContext(Transport& trans, CryptContext & encrypt, const RdpNegociationResult & negociation_result)
             : trans(trans)
+            , encrypt(encrypt)
+            , negociation_result(negociation_result)
         {
         }
     };
@@ -1090,6 +1092,9 @@ private:
     const uint32_t monitor_count;
 
     Transport & trans;
+    CryptContext encrypt {};
+    RdpNegociationResult negociation_result;
+    
     ServerTransportContext stc;
 
 
@@ -1268,7 +1273,7 @@ public:
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , monitor_count(info.cs_monitor.monitorCount)
         , trans(trans)
-        , stc(trans)
+        , stc(trans, this->encrypt, this->negociation_result)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
@@ -1569,8 +1574,8 @@ public:
                 );
         }
 
-        this->stc.negociation_result.front_width = safe_int(info.screen_info.width);
-        this->stc.negociation_result.front_height = safe_int(info.screen_info.height);
+        this->negociation_result.front_width = safe_int(info.screen_info.width);
+        this->negociation_result.front_height = safe_int(info.screen_info.height);
 
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
 
@@ -4523,8 +4528,8 @@ public:
                         bitmap_caps.log("Received from server");
                     }
                     this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
-                    this->stc.negociation_result.front_width = bitmap_caps.desktopWidth;
-                    this->stc.negociation_result.front_height = bitmap_caps.desktopHeight;
+                    this->negociation_result.front_width = bitmap_caps.desktopWidth;
+                    this->negociation_result.front_height = bitmap_caps.desktopHeight;
                 }
                 break;
             case CAPSTYPE_ORDER:
