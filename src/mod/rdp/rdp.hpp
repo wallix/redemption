@@ -510,8 +510,6 @@ private:
             class ToServerSender : public VirtualChannelDataSender
             {
                 ServerTransportContext & stc;
-                int             encryption_level;
-                uint16_t        user_id;
                 CHANNELS::ChannelNameId channel_name;
                 uint16_t        channel_id;
                 bool            show_protocol;
@@ -521,15 +519,11 @@ private:
             public:
                 explicit ToServerSender(
                     ServerTransportContext & stc,
-                    int encryption_level,
-                    uint16_t user_id,
                     CHANNELS::ChannelNameId channel_name,
                     uint16_t channel_id,
                     bool show_protocol,
                     RDPVerbose verbose)
                 : stc(stc)
-                , encryption_level(encryption_level)
-                , user_id(user_id)
                 , channel_name(channel_name)
                 , channel_id(channel_id)
                 , show_protocol(show_protocol)
@@ -559,7 +553,7 @@ private:
                     }
 
                     virtual_channel_pdu.send_to_server(this->stc.trans,
-                        this->stc.encrypt, this->encryption_level, this->user_id,
+                        this->stc.encrypt, this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.userid,
                         this->channel_id, total_length, flags, chunk_data,
                         chunk_data_length);
                 }
@@ -568,8 +562,6 @@ private:
             std::unique_ptr<ToServerSender> to_server_sender =
                 std::make_unique<ToServerSender>(
                     stc,
-                    stc.negociation_result.encryptionLevel,
-                    stc.negociation_result.userid,
                     channel_name,
                     channel->chanid,
                     (channel->flags &
