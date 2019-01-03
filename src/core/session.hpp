@@ -198,7 +198,11 @@ public:
                     timeout = {0, 0};
                 }
 
-                
+                wait_obj* front_flow_control_event = front.get_flow_control_event();
+                if (front_flow_control_event) {
+                    front_flow_control_event->wait_on_fd(INVALID_SOCKET, rfds, max, timeout);
+                }
+
                 int num = select(max + 1, &rfds, nullptr/*&wfds*/, nullptr, &timeout);
 
                 if ((mm.mod->get_metrics() != nullptr) and (metrics_now >= next_metrics_time)){
@@ -254,6 +258,11 @@ public:
                 }
 
                 try {
+                    if (front_flow_control_event &&
+                        front_flow_control_event->is_set(INVALID_SOCKET, rfds)) {
+                        front.process_flow_control_event(now);
+                    }
+
                     if (front.up_and_running) {
                         // new value incoming from authentifier
                         if (this->ini.check_from_acl()) {

@@ -684,6 +684,8 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
+    const std::chrono::milliseconds rdp_keepalive_connection_interval;
+
 public:
     Front(  Transport & trans
           , Random & gen
@@ -723,6 +725,10 @@ public:
     , report_message(report_message)
     , auth_info_sent(false)
     , timeout(now, this->ini.get<cfg::globals::handshake_timeout>().count())
+    , rdp_keepalive_connection_interval(
+            (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
+             (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
+        )
     {
         // init TLS
         // --------------------------------------------------------
@@ -786,6 +792,10 @@ public:
         }
 
         this->event.set_trigger_time(500000);
+
+        if (this->rdp_keepalive_connection_interval.count()) {
+            this->flow_control_event.set_trigger_time(this->rdp_keepalive_connection_interval);
+        }
     }
 
     ~Front() override {
@@ -4873,5 +4883,33 @@ private:
                     this->consent_ui_is_visible || mask_unidentified_data
                 );
         }
+    }
+
+    wait_obj flow_control_event;
+
+public:
+    void process_flow_control_event(time_t) {
+        this->send_data_indication_ex_impl(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [&](StreamSize<256>, OutStream & stream) {
+                ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
+                if (bool(this->verbose & Verbose::global_channel)) {
+                    LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
+                    hexdump_d(stream.get_data(), stream.get_offset());
+                }
+            }
+        );
+
+        assert(this->rdp_keepalive_connection_interval.count());
+
+        this->flow_control_event.set_trigger_time(this->rdp_keepalive_connection_interval);
+    }
+
+    wait_obj* get_flow_control_event() {
+        if (this->up_and_running && this->flow_control_event.is_trigger_time_set()) {
+            return &this->flow_control_event;
+        }
+
+        return nullptr;
     }
 };

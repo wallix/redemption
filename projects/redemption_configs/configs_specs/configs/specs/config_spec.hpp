@@ -204,6 +204,12 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, type_<bool>(), "experimental_support_resize_session_during_recording",set(false));
+        W.sep();
+
+        W.member(ini_and_gui, no_sesman, type_<std::chrono::milliseconds>(), "rdp_keepalive_connection_interval", desc{
+            "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+            "Set to 0 to disable this feature."
+        }, set(0));
     });
 
     W.section("session_log", [&]
