@@ -33,9 +33,9 @@ public:
 
     std::string path;
 
-    void set_path(const std::string & path) {
-        this->path = path;
-    }
+//     void set_path(const std::string & path) {
+//         this->path = path;
+//     }
 
     virtual void init(size_t raw_total_size) = 0;
     virtual void setData(const uint8_t * data, size_t size) = 0;

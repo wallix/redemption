@@ -337,7 +337,8 @@ public:
 
         if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
             this->set_error_msg(error);
-            std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
+            LOG(LOG_INFO, "Session duration = %ld ms %s ", movie_len, date);
+//             std::cout << "Session duration = " << movie_len << " ms" << " " << date <<  std::endl;
             LOG(LOG_INFO, "Disconnected from [%s].", this->config.target_IP.c_str());
         } else {
             LOG(LOG_INFO, "Replay closed.");

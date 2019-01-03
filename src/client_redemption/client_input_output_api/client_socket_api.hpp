@@ -28,12 +28,15 @@ class ClientInputSocketAPI
     // TODO private
 public:
     mod_api * _callback = nullptr;
-    ClientRedemptionAPI * client;
+//     ClientRedemptionAPI * client;
+/*
+    ClientInputSocketAPI(ClientRedemptionAPI * client)
+      : client(client) {}*/
 
-    // TODO API ?????
-    void set_client(ClientRedemptionAPI * client) {
-        this->client = client;
-    }
+//     // TODO API ?????
+//     void set_client(ClientRedemptionAPI * client) {
+//         this->client = client;
+//     }
 
     virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
     virtual void disconnect() = 0;

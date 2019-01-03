@@ -85,22 +85,14 @@ public:
     ClientRedemptionQt(SessionReactor & session_reactor,
                        ClientRedemptionConfig & config)
             :ClientRedemption(session_reactor, config)
-            , qt_sound(qt_graphic.get_static_qwidget())
-            , qt_socket_listener(session_reactor, qt_graphic.get_static_qwidget())
-            , qt_clipboard(qt_graphic.get_static_qwidget())
+            , qt_graphic(&(this->_callback), &(this->config))
+            , qt_sound(this->config.SOUND_TEMP_DIR, qt_graphic.get_static_qwidget())
+            , qt_socket_listener(session_reactor, this, qt_graphic.get_static_qwidget())
+            , qt_clipboard(&(this->clientCLIPRDRChannel), this->config.CB_TEMP_DIR, qt_graphic.get_static_qwidget())
     {
-        this->qt_socket_listener.set_client(this);
-        this->qt_graphic.set_drawn_client(&(this->_callback), &(this->config));
-
-        this->qt_sound.set_path(this->config.SOUND_TEMP_DIR);
         this->clientRDPSNDChannel.set_api(&(this->qt_sound));
-
-        this->qt_clipboard.set_path(this->config.CB_TEMP_DIR);
-        this->qt_clipboard.set_channel(&(this->clientCLIPRDRChannel));
         this->clientCLIPRDRChannel.set_api(&(this->qt_clipboard));
-
         this->clientRDPDRChannel.set_api(&(this->ioDisk));
-
         this->clientRemoteAppChannel.set_api(&(this->qt_graphic));
 
         this->_callback.set_rdp_keyLayout_api(&(this->qt_rdp_keylayout));
@@ -269,7 +261,6 @@ public:
     void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bitmap) override {
         this->qt_graphic.draw(cmd, clip, bitmap);
         ClientRedemption::draw(cmd, clip, bitmap);
-        this->record_connection_nego_times();
     }
 
     void draw(const RDPMem3Blt & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bitmap) override {

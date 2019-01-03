@@ -42,9 +42,11 @@ class ClientHeadlessSocket : public ClientInputSocketAPI
 public:
 
     SessionReactor& session_reactor;
+    ClientRedemptionAPI * client;
 
-    ClientHeadlessSocket(SessionReactor& session_reactor)
+    ClientHeadlessSocket(SessionReactor& session_reactor, ClientRedemptionAPI * client)
       : session_reactor(session_reactor)
+      , client(client)
     {}
 
     virtual bool start_to_listen(int /*client_sck*/, mod_api * mod) override
@@ -63,6 +65,7 @@ public:
 };
 
 
+
 class ClientRedemptionHeadless : public ClientRedemption
 {
 
@@ -73,9 +76,8 @@ public:
     ClientRedemptionHeadless(SessionReactor & session_reactor,
                              ClientRedemptionConfig & config)
         :ClientRedemption(session_reactor, config)
-        , headless_socket(session_reactor)
+        , headless_socket(session_reactor, this)
     {
-        this->headless_socket.set_client(this);
         this->cmd_launch_conn();
     }
 
@@ -134,7 +136,7 @@ int main(int argc, char const** argv)
         REDEMPTION_DIAGNOSTIC_POP
     }
 
-    ClientRedemptionConfig config(/*session_reactor,*/ const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientRedemptionConfig config(const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
 
     ClientRedemptionHeadless client( session_reactor, config);
 

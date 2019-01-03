@@ -81,12 +81,10 @@ ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDP
     this->rDPClipboardConfig.add_format(RDPECLIP::CF_METAFILEPICT, {});
     this->rDPClipboardConfig.path = this->CB_TEMP_DIR;
 
-
     // Set RDP RDPDR config
     this->rDPDiskConfig.add_drive(this->SHARE_DIR, rdpdr::RDPDR_DTYP_FILESYSTEM);
     this->rDPDiskConfig.enable_drive_type = true;
     this->rDPDiskConfig.enable_printer_type = true;
-
 
     // Set RDP SND config
     this->rDPSoundConfig.dwFlags = rdpsnd::TSSNDCAPS_ALIVE | rdpsnd::TSSNDCAPS_VOLUME;
@@ -116,11 +114,11 @@ ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDP
     auto options = cli::options(
         cli::helper("Client ReDemPtion Help menu."),
 
-        cli::option('h', "help").help("Show help")
-        .action([this]() { this->help_mode = true;}),
-
 //         cli::option('h', "help").help("Show help")
-//         .action(cli::help),
+//         .action([this]() { this->help_mode = true;}),
+
+        cli::option('h', "help").help("Show help")
+        .action(cli::help),
 
         cli::option('v', "version").help("Show version")
         .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),

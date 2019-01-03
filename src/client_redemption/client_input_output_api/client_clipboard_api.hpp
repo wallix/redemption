@@ -34,7 +34,7 @@ class ClientIOClipboardAPI
     // TODO private !!!!!!!!!!!!!!!!
 public:
 //     ClientRedemptionAPI * client = nullptr;
-    ClientCLIPRDRChannel * channel;
+
 
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
@@ -51,21 +51,11 @@ public:
     std::string tmp_path;
 
 public:
-    ClientIOClipboardAPI() = default;
+    ClientIOClipboardAPI(const std::string & path)
+      : tmp_path(path)
+      {}
 
     virtual ~ClientIOClipboardAPI() = default;
-
-    void set_channel(ClientCLIPRDRChannel * channel) {
-        this->channel = channel;
-    }
-
-//     void set_client(ClientRedemptionAPI * client) {
-//         this->client = client;
-//     }
-
-    void set_path(const std::string & path) {
-        this->tmp_path = path;
-    }
 
     // control state
     virtual void emptyBuffer() = 0;

@@ -62,14 +62,17 @@ REDEMPTION_DIAGNOSTIC_POP
     int total_wav_files;
     std::string wave_file_to_write;
 
+    std::string path;
+
 
 public:
-    QtOutputSound(QWidget * parent)
+    QtOutputSound(const std::string & path, QWidget * parent)
       : QObject(parent), ClientOutputSoundAPI()
       , media(nullptr)
       , audioOutput(nullptr)
       , current_wav_index(0)
       , total_wav_files(0)
+      , path(path)
     {
         this->media = new Phonon::MediaObject(this);
         this->audioOutput = new Phonon::AudioOutput(Phonon::MusicCategory, this);

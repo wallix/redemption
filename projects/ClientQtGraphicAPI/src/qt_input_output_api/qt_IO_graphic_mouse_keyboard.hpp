@@ -78,13 +78,15 @@ public:
     //      CONSTRUCTOR
     //------------------------
 
-    QtIOGraphicMouseKeyboard()
-      : ClientOutputGraphicAPI(QApplication::desktop()->width(), QApplication::desktop()->height())
+    QtIOGraphicMouseKeyboard(ClientCallback * controller, ClientRedemptionConfig * config)
+      : ClientOutputGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
       , bar(nullptr)
-    {}
+    {
+        this->form = new QtForm(this->config, this->controller, this);
+    }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
     virtual void draw(const RDP::RAIL::WindowIcon & ) override {}
@@ -102,10 +104,10 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //----------------------------------
 
-    void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override {
-        ClientOutputGraphicAPI::set_drawn_client(controller, config);
-        this->form = new QtForm(this->config, this->controller, this);
-    }
+//     void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override {
+//         ClientOutputGraphicAPI::set_drawn_client(controller, config);
+//
+//     }
 
     void show_screen() override {
         if (this->form) {

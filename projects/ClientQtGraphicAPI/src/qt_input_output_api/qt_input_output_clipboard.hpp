@@ -102,14 +102,15 @@ public:
     std::vector<CB_out_File*>  _items_list;
     std::vector<std::string>  _temp_files_list;
 
+    ClientCLIPRDRChannel * channel;
 
 
-    QtInputOutputClipboard(QWidget * parent)
-        : QObject(parent), ClientIOClipboardAPI()
-        , _clipboard(nullptr)
+
+    QtInputOutputClipboard(ClientCLIPRDRChannel * channel, const std::string & path, QWidget * parent)
+        : QObject(parent), ClientIOClipboardAPI(path)
+        , _clipboard(QApplication::clipboard())
+        , channel(channel)
     {
-        //this->clean_CB_temp_dir();
-        this->_clipboard = QApplication::clipboard();
         this->QObject::connect(this->_clipboard, SIGNAL(dataChanged()),  this, SLOT(mem_clipboard()));
     }
 

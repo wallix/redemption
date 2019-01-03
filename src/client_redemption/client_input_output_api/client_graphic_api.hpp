@@ -44,9 +44,9 @@ public:
     bool is_pre_loading;
     ClientRedemptionAPI * client_replay;
 
-    ClientOutputGraphicAPI(int max_width, int max_height)
-      : controller(nullptr)
-      , config(nullptr)
+    ClientOutputGraphicAPI(ClientCallback * controller, ClientRedemptionConfig * config, int max_width, int max_height)
+      : controller(controller)
+      , config(config)
       , screen_max_width(max_width)
       , screen_max_height(max_height)
       , is_pre_loading(false) {}
@@ -55,10 +55,10 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-    virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
-        this->config = config;
-        this->controller = controller;
-    }
+//     virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
+//         this->config = config;
+//         this->controller = controller;
+//     }
 
     virtual void set_ErrorMsg(std::string const & movie_path) = 0;
 

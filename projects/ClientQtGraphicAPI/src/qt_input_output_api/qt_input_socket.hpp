@@ -55,22 +55,21 @@ public:
 
     QTimer timer;
 
+    ClientRedemptionAPI * client;
 
-    QtInputSocket(SessionReactor& session_reactor, QWidget * parent)
+
+    QtInputSocket(SessionReactor& session_reactor, ClientRedemptionAPI * client, QWidget * parent)
         : QObject(parent)
         , session_reactor(session_reactor)
         , _sckListener(nullptr)
         , timer(this)
+        , client(client)
     {}
 
     ~QtInputSocket() {
         this->disconnect();
     }
-
-    void set_client(ClientRedemptionAPI * client) {
-        this->client = client;
-    }
-
+    
     void disconnect() override {
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);

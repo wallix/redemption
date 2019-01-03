@@ -35,17 +35,16 @@ public:
     virtual ~ClientRedemptionAPI() = default;
 
     bool can_be_start_capture() override { return true; }
-
-    virtual bool is_connected() {return false;}
     void send_to_channel( const CHANNELS::ChannelDef &  /*channel*/, uint8_t const *
                          /*data*/, std::size_t  /*length*/, std::size_t  /*chunk_size*/, int  /*flags*/) override {}
+
+    virtual bool is_connected() {return false;}
     virtual int wait_and_draw_event(std::chrono::milliseconds timeout) = 0;
     virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
     virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
-//     virtual void disconnexionReleased() {}
     virtual void update_keylayout() {}
 
     // Replay functions
