@@ -52,16 +52,16 @@
 #undef REDEMPTION_QT_INCLUDE_WIDGET
 
 
-    struct TextEnder {
-        enum : uint32_t {
-            SIZE = 2
-        };
-
-        void emit (uint8_t * chunk, size_t data_len) {
-            chunk[data_len + 1] = 0;
-            chunk[data_len + 2] = 0;
-        }
+struct TextEnder {
+    enum : uint32_t {
+        SIZE = 2
     };
+
+    void emit (uint8_t * chunk, size_t data_len) {
+        chunk[data_len + 1] = 0;
+        chunk[data_len + 2] = 0;
+    }
+};
 
 class QtInputOutputClipboard : public QObject, public ClientIOClipboardAPI
 {

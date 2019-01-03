@@ -221,9 +221,11 @@ public:
 //                 break;
 
             default:
+                if (bool(this->verbose & RDPVerbose::rail)) {
+                    cmd.log(LOG_INFO);
+                }
                 if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
-                        //cmd.log(LOG_INFO);
-
+                    
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {}
 
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {

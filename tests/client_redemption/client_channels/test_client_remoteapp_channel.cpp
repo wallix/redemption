@@ -71,8 +71,6 @@ RED_AUTO_TEST_CASE(TestRemoteAppChannelInitialization)
 
     FakeRDPChannelsMod::PDUData * pdu_data = mod.stream();
     RED_REQUIRE(pdu_data);
-
-
 }
 
 

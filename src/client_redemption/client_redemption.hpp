@@ -218,7 +218,6 @@ public:
                 this->wrmOrderStat[i].pixels = 0;
             }
         }
-
     } wrmGraphicStat;
 
     std::string       local_IP;
@@ -314,7 +313,7 @@ public:
         this->replay_mod.reset();
     }
 
-    virtual void  disconnect(std::string const & error, bool pipe_broken) override {
+    virtual void  disconnect(std::string const & error, bool /*pipe_broken*/) override {
 
         this->config.is_replaying = false;
         this->config.connected = false;
@@ -382,7 +381,7 @@ public:
                 mod_rdp_params.enable_mem3blt                  = true;
                 mod_rdp_params.enable_new_pointer              = true;
                 mod_rdp_params.enable_glyph_cache              = true;
-                mod_rdp_params.enable_ninegrid_bitmap          = true;
+//                 mod_rdp_params.enable_ninegrid_bitmap          = true;
                 std::string allow_channels                     = "*";
                 mod_rdp_params.allow_channels                  = &allow_channels;
                 mod_rdp_params.deny_channels = nullptr;
@@ -422,9 +421,9 @@ public:
 
                 if (is_remote_app) {
                     std::string target_info = str_concat(
-                        this->ini.get<cfg::context::target_str>(),
+                        this->config.user_name,  // this->ini.get<cfg::context::target_str>(),
                         ':',
-                        this->ini.get<cfg::globals::primary_user_id>());
+                        this->config.target_IP); // this->ini.get<cfg::globals::primary_user_id>());
                     this->client_execute.set_target_info(target_info);
                 }
 
