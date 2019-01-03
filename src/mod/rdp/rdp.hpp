@@ -509,8 +509,7 @@ private:
 
             class ToServerSender : public VirtualChannelDataSender
             {
-                OutTransport    transport;
-                CryptContext&   encrypt;
+                ServerTransportContext & stc;
                 int             encryption_level;
                 uint16_t        user_id;
                 CHANNELS::ChannelNameId channel_name;
@@ -521,16 +520,14 @@ private:
 
             public:
                 explicit ToServerSender(
-                    OutTransport transport,
-                    CryptContext& encrypt,
+                    ServerTransportContext & stc,
                     int encryption_level,
                     uint16_t user_id,
                     CHANNELS::ChannelNameId channel_name,
                     uint16_t channel_id,
                     bool show_protocol,
                     RDPVerbose verbose)
-                : transport(transport)
-                , encrypt(encrypt)
+                : stc(stc)
                 , encryption_level(encryption_level)
                 , user_id(user_id)
                 , channel_name(channel_name)
@@ -561,8 +558,8 @@ private:
                             chunk_data, chunk_data_length);
                     }
 
-                    virtual_channel_pdu.send_to_server(this->transport,
-                        this->encrypt, this->encryption_level, this->user_id,
+                    virtual_channel_pdu.send_to_server(this->stc.trans,
+                        this->stc.encrypt, this->encryption_level, this->user_id,
                         this->channel_id, total_length, flags, chunk_data,
                         chunk_data_length);
                 }
@@ -570,8 +567,7 @@ private:
 
             std::unique_ptr<ToServerSender> to_server_sender =
                 std::make_unique<ToServerSender>(
-                    stc.trans,
-                    stc.encrypt,
+                    stc,
                     stc.negociation_result.encryptionLevel,
                     stc.negociation_result.userid,
                     channel_name,
