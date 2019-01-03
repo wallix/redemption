@@ -80,14 +80,10 @@ public:
 
     QtIOGraphicMouseKeyboard()
       : ClientOutputGraphicAPI(QApplication::desktop()->width(), QApplication::desktop()->height())
-      //, ClientInputMouseKeyboardAPI()
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
-     // , cache(nullptr)
       , bar(nullptr)
-//       , trans_cache(nullptr)
-//       , qtRDPKeymap()
     {}
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}

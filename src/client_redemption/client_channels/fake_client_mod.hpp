@@ -179,7 +179,7 @@ public:
     void create_screen() override {}
     void create_replay_screen() override {}
 
-    void closeFromGUI() override {}
+    void close() override {}
 
     void set_screen_size(int x, int y) override { (void)x; (void)y; }
     void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
