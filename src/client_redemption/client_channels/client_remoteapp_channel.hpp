@@ -229,8 +229,8 @@ public:
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
                         if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDOFFSET) {
 
-                                this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
-                                this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
+                            this->impl_graphic->create_remote_app_screen(win_id, cmd.WindowWidth(), cmd.WindowHeight(), cmd.WindowOffsetX(), cmd.WindowOffsetY());
+                            this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
                         }
                     }
 
@@ -335,7 +335,7 @@ public:
 
         if ( this->z_order.size() <= 1) {
             this->impl_graphic->clear_remote_app_screen();
-            this->callback->disconnexionReleased();
+            this->callback->disconnect(false);
         } else {
             this->callback->refreshPressed(this->impl_graphic->screen_max_width, this->impl_graphic->screen_max_height);
         }

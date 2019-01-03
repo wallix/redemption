@@ -70,7 +70,7 @@ public:
 
     virtual void create_screen() = 0;
 
-    virtual void closeFromGUI() = 0;
+    virtual void close() = 0;
 
     virtual void set_screen_size(int x, int y) = 0;
 

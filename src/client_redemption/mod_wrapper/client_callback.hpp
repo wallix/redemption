@@ -139,24 +139,20 @@ public:
         }
     }
 
-    void closeFromGUI() {
-        this->client->closeFromGUI();
-    }
-
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) {
         this->client->connect(ip, name, pwd, port);
     }
 
-    void disconnect(time_t now, bool pipe_broken) {
+    void disconnect(/*time_t now, */bool pipe_broken) {
         if (this->get_mod() != nullptr) {
             if (!pipe_broken) {
+                time_t now;
+                time(&now);
+
                 this->mod->disconnect(now);
             }
             this->mod = nullptr;
         }
-    }
-
-    void disconnexionReleased() {
         this->client->disconnect("", false);
     }
 

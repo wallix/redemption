@@ -65,6 +65,7 @@ public:
     WindowsData * win_data;
 
     ClientCallback * callback;
+    ClientOutputGraphicAPI * client_graphic_api;
 
     int            _width;
     int            _height;
@@ -77,10 +78,11 @@ public:
     int cursorHotx;
     int cursorHoty;
 
-     QRect clip;
+    QRect clip;
 
 
-    QtScreen(WindowsData * win_data, ClientCallback * callback, QPixmap * cache, int w, int h)
+
+    QtScreen(WindowsData * win_data, ClientCallback * callback, ClientOutputGraphicAPI * client_graphic_api, QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
     , callback(callback)
@@ -92,6 +94,7 @@ public:
     , cursorHotx(0)
     , cursorHoty(0)
     , clip(-1, -1, 0, 0)
+    , client_graphic_api(client_graphic_api)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);
@@ -104,7 +107,8 @@ public:
         this->win_data->writeWindowsData();
 
         if (!this->_connexionLasted) {
-            this->callback->closeFromGUI();
+            this->client_graphic_api->close();
+//             this->callback->closeFromGUI();
         }
     }
 
@@ -226,8 +230,8 @@ public:
 
 
 
-    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, int width, int height, int x, int y, QPixmap * cache)
-        : QtScreen(wind_data, callback, cache, width, height)
+    RemoteAppQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientOutputGraphicAPI * client_graphic_api, int width, int height, int x, int y, QPixmap * cache)
+        : QtScreen(wind_data, callback, client_graphic_api, cache, width, height)
         , x_pixmap_shift(x)
         , y_pixmap_shift(y)
     {
@@ -343,8 +347,8 @@ public:
     QPushButton    _buttonRefresh;
     QPushButton    _buttonDisconnexion;
 
-    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, QPixmap * cache, bool is_spanning, std::string & target_IP)
-        : QtScreen(wind_data, callback, cache, cache->width(), cache->height())
+    RDPQtScreen (WindowsData * wind_data, ClientCallback * callback, ClientOutputGraphicAPI * client_graphic_api, QPixmap * cache, bool is_spanning, std::string & target_IP)
+        : QtScreen(wind_data, callback, client_graphic_api, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("CTRL + ALT + DELETE", this)
         , _buttonRefresh("Refresh", this)
         , _buttonDisconnexion("Disconnection", this)
@@ -414,7 +418,7 @@ public:
 public Q_SLOTS:
 
     void disconnexionRelease(){
-        this->callback->disconnexionReleased();
+        this->callback->disconnect(false);
     }
 
     void RefreshPressed() {
@@ -468,8 +472,8 @@ public:
 
 
 public:
-    ReplayQtScreen (ClientCallback * callback, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
-        : QtScreen(win_data, callback, cache, cache->width(), cache->height())
+    ReplayQtScreen (ClientCallback * callback, ClientOutputGraphicAPI * client_graphic_api, QPixmap * cache, time_t movie_time, time_t current_time_movie, WindowsData * win_data, std::string & movie_name)
+        : QtScreen(win_data, callback, client_graphic_api, cache, cache->width(), cache->height())
         , _buttonCtrlAltDel("Play", this)
         , _buttonRefresh("Stop", this)
         , _buttonDisconnexion("Close", this)
@@ -761,7 +765,7 @@ public Q_SLOTS:
 
     void closeReplay() {
         this->callback->delete_replay_mod();
-        this->callback->disconnexionReleased();
+        this->callback->disconnect(false);
         this->close();
     }
 

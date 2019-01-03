@@ -177,10 +177,6 @@ public:
         ClientRedemption::update_keylayout();
     }
 
-    void closeFromGUI() override {
-        this->qt_graphic.closeFromGUI();
-    }
-
     void set_error_msg(const std::string & error) override {
         ClientRedemption::set_error_msg(error);
         this->qt_graphic.set_ErrorMsg(error);

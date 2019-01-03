@@ -153,13 +153,13 @@ public:
 
     void create_screen() override {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, map, this->config->is_spanning, this->config->target_IP);
+        this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, map, this->config->is_spanning, this->config->target_IP);
     }
 
     void create_replay_screen() override {
         QPixmap * map = &(this->cache);
 
-        this->screen = new ReplayQtScreen(this->controller, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
+        this->screen = new ReplayQtScreen(this->controller, this, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
     }
 
     QWidget * get_static_qwidget() {
@@ -223,7 +223,7 @@ public:
     void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&(this->config->windowsData), this->controller, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&(this->config->windowsData), this->controller, this, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
@@ -342,7 +342,7 @@ public:
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -354,7 +354,7 @@ public:
                 this->config->modVNCParamsData.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -377,7 +377,7 @@ public:
 
                     if (!this->config->is_pre_loading) {
 
-                        this->screen = new ReplayQtScreen(this->controller, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
+                        this->screen = new ReplayQtScreen(this->controller, this, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
 
                         this->screen->show();
                     }
@@ -1413,13 +1413,13 @@ public:
 //         return conn_res;
 //     }
 
-    void closeFromGUI() override {
+    void close() override {
 
         if (this->form != nullptr) {
             this->form->close();
         }
 
-        this->controller->disconnexionReleased();
+        this->controller->disconnect(false);
     }
 
 //     KeyCustomDefinition get_key_info(int key, std::string const& text) override {

@@ -314,16 +314,10 @@ public:
         this->replay_mod.reset();
     }
 
-    virtual void closeFromGUI() override {
-
-    }
-
     virtual void  disconnect(std::string const & error, bool pipe_broken) override {
 
         this->config.is_replaying = false;
         this->config.connected = false;
-
-        this->_callback.disconnect(this->timeSystem.get_time().tv_sec, pipe_broken);
 
         if (!this->socket) {
             this->socket.reset();
@@ -652,7 +646,7 @@ public:
 
             std::chrono::microseconds prim_duration = difftimeval(this->start_wab_session_time, this->start_connection_time);
             long prim_len = prim_duration.count() / 1000;
-            std::cout << "primary connection length = " <<  prim_len << " ms\n";
+            LOG(LOG_INFO, "primary connection length = %ld ms", prim_len);
 
             this->start_win_session_time = tvtime();
 
@@ -667,7 +661,7 @@ public:
             strftime (buffer,80,"%F_%r",timeinfo);
             std::string date(buffer);
 
-            std::cout << "secondary connection length = " <<  sec_len << " ms " <<  date << "\n";
+            LOG(LOG_INFO, "secondary connection length = %ld ms %s", sec_len, date);
         }
     }
 
@@ -819,7 +813,6 @@ public:
                         this->config.is_loading_replay_mod = false;
 
                         this->instant_replay_client(begin, last_balised);
-//                         this->replay_mod->instant_play_client(std::chrono::microseconds(begin*1000000));
 
                         movie_time_start = tvtime();
                         timeval waited_for_load = {movie_time_start.tv_sec - now_stop.tv_sec, movie_time_start.tv_usec - now_stop.tv_usec};
@@ -979,11 +972,6 @@ public:
                 };
                 this->session_reactor.execute_events(is_mod_fd);
                 this->session_reactor.execute_graphics(is_mod_fd, get_gd());
-
-//                 execute_events(
-//             timeout, this->session_reactor, SessionReactor::EnableGraphics{true},
-//             *this->_callback.get_mod(), *this
-//         );
             }
         } catch (const Error & e) {
 
