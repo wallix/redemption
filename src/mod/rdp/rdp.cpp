@@ -87,13 +87,13 @@ void mod_rdp::init_negociate_event_(
     };
 
     this->fd_event = this->session_reactor
-    .create_graphic_fd_event(this->trans.get_fd(), jln::emplace<Private_RdpNegociation>(
+    .create_graphic_fd_event(this->stc.trans.get_fd(), jln::emplace<Private_RdpNegociation>(
         program, directory,
         this->channels.authorization_channels, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,
-        this->decrypt, this->encrypt, this->logon_info,
+        this->decrypt, this->stc.encrypt, this->logon_info,
         this->channels.enable_auth_channel,
-        this->trans, this->front, info, this->redir_info,
+        this->stc.trans, this->front, info, this->redir_info,
         this->gen, timeobj, mod_rdp_params, this->report_message,
         (this->channels.file_system_drive_manager.has_managed_drive() || this->channels.enable_session_probe)
     ))
@@ -112,7 +112,7 @@ void mod_rdp::init_negociate_event_(
             bool const is_finish = rdp_negociation.recv_data(this->buf);
 
             // RdpNego::recv_next_data set a new fd if tls
-            int const fd = this->trans.get_fd();
+            int const fd = this->stc.trans.get_fd();
             if (fd >= 0) {
                 ctx.set_fd(fd);
             }
@@ -121,7 +121,7 @@ void mod_rdp::init_negociate_event_(
                 return ctx.need_more_data();
             }
 
-            this->negociation_result = rdp_negociation.get_result();
+            this->stc.negociation_result = rdp_negociation.get_result();
             if (this->buf.remaining()) {
                 private_rdp_negociation.graphic_event = ctx.get_reactor().create_graphic_event()
                 .on_action(jln::one_shot([this](gdi::GraphicApi& gd){

@@ -161,14 +161,11 @@ private:
 
     struct ServerTransportContext {
         Transport& trans;
-        CryptContext & encrypt;
-        const RdpNegociationResult negociation_result;
+        CryptContext encrypt {};
+        RdpNegociationResult negociation_result;
         
-        ServerTransportContext(Transport& trans, CryptContext & encrypt,
-                const RdpNegociationResult negociation_result)
+        ServerTransportContext(Transport& trans)
             : trans(trans)
-            , encrypt(encrypt)
-            , negociation_result(negociation_result)
         {
         }
     };
@@ -1079,7 +1076,6 @@ private:
     //@{
 
     CryptContext decrypt {};
-    CryptContext encrypt {};
 
     RedirectionInfo & redir_info;
 
@@ -1088,13 +1084,12 @@ private:
     std::array<uint8_t, 28>& server_auto_reconnect_packet_ref;
     //@}
 
-    RdpNegociationResult negociation_result;
     std::string target_host;
 
     const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
     const uint32_t monitor_count;
 
-    Transport& trans;
+    ServerTransportContext stc;
 
 
     bool remote_apps_not_enabled = false;
@@ -1271,7 +1266,7 @@ public:
         , target_host(mod_rdp_params.target_host)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , monitor_count(info.cs_monitor.monitorCount)
-        , trans(trans)
+        , stc(trans)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
@@ -1347,7 +1342,7 @@ public:
         }
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
-        this->encrypt.encryptionMethod = 2; /* 128 bits */
+        this->stc.encrypt.encryptionMethod = 2; /* 128 bits */
 
         this->configure_extra_orders(mod_rdp_params.extra_orders);
 
@@ -1572,8 +1567,8 @@ public:
                 );
         }
 
-        this->negociation_result.front_width = safe_int(info.screen_info.width);
-        this->negociation_result.front_height = safe_int(info.screen_info.height);
+        this->stc.negociation_result.front_width = safe_int(info.screen_info.width);
+        this->stc.negociation_result.front_height = safe_int(info.screen_info.height);
 
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
 
@@ -1703,7 +1698,6 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             
-            ServerTransportContext stc(trans, encrypt, negociation_result);
             if (this->first_scancode && !(device_flags & 0x8000) &&
                 (!this->channels.enable_session_probe ||
                  !this->session_probe_launcher->is_keyboard_sequences_started() ||
@@ -1811,8 +1805,7 @@ public:
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, stc);
+        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = chunk.clone();
@@ -1829,8 +1822,7 @@ private:
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/, InStream & chunk, size_t length, uint32_t flags) {
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
@@ -1868,8 +1860,7 @@ private:
             return;
         }
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -1877,9 +1868,7 @@ private:
     void send_to_mod_drdynvc_channel(const CHANNELS::ChannelDef */* rdpdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-
-        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, stc);
+        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->stc);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -1896,8 +1885,8 @@ public:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->encrypt, this->negociation_result.encryptionLevel
-          , this->negociation_result.userid, this->channels.auth_channel_chanid
+            this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
+          , this->stc.negociation_result.userid, this->channels.auth_channel_chanid
           , stream_data.get_offset()
           , this->channels.auth_channel_flags
           , stream_data.get_data()
@@ -1917,8 +1906,8 @@ private:
         stream_data.out_copy_bytes(string_data, data_size);
 
         virtual_channel_pdu.send_to_server(
-            this->trans, this->encrypt, this->negociation_result.encryptionLevel
-          , this->negociation_result.userid, this->channels.checkout_channel_chanid
+            this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
+          , this->stc.negociation_result.userid, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
           , stream_data.get_data()
@@ -1949,8 +1938,8 @@ private:
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
             virtual_channel_pdu.send_to_server(
-                this->trans, this->encrypt, this->negociation_result.encryptionLevel
-              , this->negociation_result.userid, channel.chanid, length, flags, chunk, chunk_size);
+                this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
+              , this->stc.negociation_result.userid, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
             uint8_t const * virtual_channel_data = chunk;
@@ -1978,8 +1967,8 @@ private:
                 LOG(LOG_INFO, "send to server");
 
                 virtual_channel_pdu.send_to_server(
-                    this->trans, this->encrypt,
-                    this->negociation_result.encryptionLevel, this->negociation_result.userid, channel.chanid, length, get_channel_control_flags(
+                    this->stc.trans, this->stc.encrypt,
+                    this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.userid, channel.chanid, length, get_channel_control_flags(
                         flags, length, remaining_data_length, virtual_channel_data_length
                     ), virtual_channel_data, virtual_channel_data_length);
 
@@ -2001,11 +1990,11 @@ private:
         }
 
         write_packets(
-            this->trans,
+            this->stc.trans,
             writer_data...,
             [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
                 MCS::SendDataRequest_Send mcs(
-                    mcs_header, this->negociation_result.userid,
+                    mcs_header, this->stc.negociation_result.userid,
                     channelId, 1, 3, packet_size, MCS::PER_ENCODING
                 );
                 (void)mcs;
@@ -2022,7 +2011,7 @@ private:
         this->send_data_request(
             channelId,
             writer_data...,
-            SEC::write_sec_send_fn{0, this->encrypt, this->negociation_result.encryptionLevel}
+            SEC::write_sec_send_fn{0, this->stc.encrypt, this->stc.negociation_result.encryptionLevel}
         );
     }
 
@@ -2124,7 +2113,7 @@ public:
                 this->front.begin_update();
                 this->orders.process_orders(
                     stream, true, drawable,
-                    this->negociation_result.front_width, this->negociation_result.front_height);
+                    this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                 this->front.end_update();
                 break;
 
@@ -2304,7 +2293,7 @@ public:
 
 
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->negociation_result.encryptionLevel);
+        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->stc.negociation_result.encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
             // TODO: this should move to channels
             if (bool(this->verbose & RDPVerbose::channels)) {
@@ -2443,9 +2432,9 @@ public:
                                     }
                                 }
                                 else {
-                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
+                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->stc.negociation_result.front_width, this->stc.negociation_result.front_height, this->orders.bpp);
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->stc.negociation_result.front_width, this->stc.negociation_result.front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -2524,9 +2513,9 @@ public:
                                  && this->monitor_count > 1
                                 ) {
                                     this->rdp_suppress_display_updates();
-                                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+                                    this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                                 }
-                                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
+                                this->rdp_input_invalidate(Rect(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height));
                             }
                             break;
                         case UP_AND_RUNNING:
@@ -2554,7 +2543,7 @@ public:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
-                                                drawable, this->negociation_result.front_width, this->negociation_result.front_height);
+                                                drawable, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
@@ -2698,7 +2687,7 @@ public:
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
 
                             /* Including RDP 5.0 capabilities */
-                            if (this->negociation_result.use_rdp5){
+                            if (this->stc.negociation_result.use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
                                 if (this->enable_persistent_disk_bitmap_cache &&
                                     this->persist_bitmap_cache_on_disk) {
@@ -2778,7 +2767,7 @@ public:
             this->channels.remote_programs_session_manager->set_drawable(&gd);
         }
 
-        this->buf.load_data(this->trans);
+        this->buf.load_data(this->stc.trans);
         draw_event_impl(now, gd);
     }
 
@@ -2845,7 +2834,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        this->trans.send(stream.get_bytes());
+                        this->stc.trans.send(stream.get_bytes());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){
@@ -2948,7 +2937,7 @@ public:
 
                 GeneralCaps general_caps;
                 general_caps.extraflags  =
-                    this->negociation_result.use_rdp5
+                    this->stc.negociation_result.use_rdp5
                     ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
                     : 0
                     ;
@@ -2967,8 +2956,8 @@ public:
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
                 bitmap_caps.preferredBitsPerPixel = safe_int(this->orders.bpp);
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
-                bitmap_caps.desktopWidth          = this->negociation_result.front_width;
-                bitmap_caps.desktopHeight         = this->negociation_result.front_height;
+                bitmap_caps.desktopWidth          = this->stc.negociation_result.front_width;
+                bitmap_caps.desktopHeight         = this->stc.negociation_result.front_height;
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
@@ -3231,7 +3220,7 @@ public:
                 // containing information about the packet. The type subfield of the pduType
                 // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
                 ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
-                    this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                    this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
             }
         );
 
@@ -4532,8 +4521,8 @@ public:
                         bitmap_caps.log("Received from server");
                     }
                     this->orders.bpp = checked_int(bitmap_caps.preferredBitsPerPixel);
-                    this->negociation_result.front_width = bitmap_caps.desktopWidth;
-                    this->negociation_result.front_height = bitmap_caps.desktopHeight;
+                    this->stc.negociation_result.front_width = bitmap_caps.desktopWidth;
+                    this->stc.negociation_result.front_height = bitmap_caps.desktopHeight;
                 }
                 break;
             case CAPSTYPE_ORDER:
@@ -4750,7 +4739,7 @@ public:
                 sdata.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             }
         );
@@ -4790,7 +4779,7 @@ public:
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
                 ShareControl_Send(
                     sctrl_header, PDUTYPE_DATAPDU,
-                    this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                    this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
                 );
             }
         );
@@ -4955,7 +4944,7 @@ public:
         }
 
         write_packets(
-            this->trans,
+            this->stc.trans,
             [&](StreamSize<256>, OutStream & stream) {
 
                 switch (message_type) {
@@ -4987,7 +4976,7 @@ public:
             [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
                 FastPath::ClientInputEventPDU_Send out_cie(
                     fastpath_header, packet_data, packet_size, 1,
-                    this->encrypt, this->negociation_result.encryptionLevel, this->negociation_result.encryptionMethod
+                    this->stc.encrypt, this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.encryptionMethod
                 );
                 (void)out_cie;
             }
@@ -5018,13 +5007,13 @@ public:
         if (UP_AND_RUNNING == this->connection_finalization_state) {
             if (!r.isempty()){
                 RDP::RefreshRectPDU rrpdu(this->share_id,
-                                          this->negociation_result.userid,
-                                          this->negociation_result.encryptionLevel,
-                                          this->encrypt);
+                                          this->stc.negociation_result.userid,
+                                          this->stc.negociation_result.encryptionLevel,
+                                          this->stc.encrypt);
 
                 rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
 
-                rrpdu.emit(this->trans);
+                rrpdu.emit(this->stc.trans);
             }
         }
         //this->draw_event(time(nullptr), this->front);
@@ -5039,15 +5028,15 @@ public:
         }
         if ((UP_AND_RUNNING == this->connection_finalization_state) && !vr.empty()) {
             RDP::RefreshRectPDU rrpdu(this->share_id,
-                                      this->negociation_result.userid,
-                                      this->negociation_result.encryptionLevel,
-                                      this->encrypt);
+                                      this->stc.negociation_result.userid,
+                                      this->stc.negociation_result.encryptionLevel,
+                                      this->stc.encrypt);
             for (Rect const & rect : vr) {
                 if (!rect.isempty()){
                     rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
                 }
             }
-            rrpdu.emit(this->trans);
+            rrpdu.emit(this->stc.trans);
         }
         if (bool(this->verbose & RDPVerbose::input)){
             LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
@@ -5510,7 +5499,7 @@ private:
 
         if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
             write_packets(
-                this->trans,
+                this->stc.trans,
                 [](StreamSize<256>, OutStream & mcs_data) {
                     MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
                 },
@@ -5565,8 +5554,7 @@ private:
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-            FileSystemVirtualChannel& rdpdr_channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+            FileSystemVirtualChannel& rdpdr_channel = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             rdpdr_channel.disable_session_probe_drive();
         }
         else {
@@ -5625,8 +5613,7 @@ private:
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)session_probe_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
+        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5642,8 +5629,7 @@ private:
         uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)cliprdr_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, stc);
+        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
             InStream clone = stream.clone();
@@ -5662,8 +5648,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5703,8 +5688,7 @@ private:
             return;
         }
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5733,8 +5717,7 @@ private:
     void process_drdynvc_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
-        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, stc);
+        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->stc);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5774,15 +5757,14 @@ private:
     // TODO: pass stc ref as parameter
     void do_enable_session_probe() {
         if (this->channels.enable_session_probe) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
 
-            ClipboardVirtualChannel& cvc = this->channels.get_clipboard_virtual_channel(this->front, stc);
+            ClipboardVirtualChannel& cvc = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
             if (this->session_probe_launcher) {
                 cvc.set_session_probe_launcher(
                     this->session_probe_launcher.get());
             }
 
-            FileSystemVirtualChannel& fsvc = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+            FileSystemVirtualChannel& fsvc = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             if (this->session_probe_launcher) {
                 fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
             }
@@ -5793,7 +5775,7 @@ private:
             }
 
             SessionProbeVirtualChannel& spvc =
-                this->channels.get_session_probe_virtual_channel(front, stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
+                this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
             if (this->session_probe_launcher) {
                 spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             }
@@ -5810,9 +5792,8 @@ private:
             }
 
             if (this->remote_program) {
-                ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
                 RemoteProgramsVirtualChannel& rpvc =
-                    this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+                    this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
                 rpvc.set_session_probe_virtual_channel(
                     this->channels.session_probe_virtual_channel_p);
@@ -5838,7 +5819,7 @@ public:
     }
 
     Dimension get_dim() const override
-    { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
+    { return Dimension(this->stc.negociation_result.front_width, this->stc.negociation_result.front_height); }
 
     bool is_auto_reconnectable() override {
         return (this->is_server_auto_reconnec_packet_received &&
@@ -5851,9 +5832,8 @@ private:
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
                 working_dir, arguments, account, password);
@@ -5866,9 +5846,8 @@ private:
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
             uint16_t exec_result) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
             rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
         }
@@ -5880,9 +5859,8 @@ private:
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
         uint16_t exec_result, uint32_t raw_result) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
+                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
             rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
         }
@@ -5912,9 +5890,9 @@ private:
                  && this->monitor_count > 1
                 ) {
                     this->rdp_suppress_display_updates();
-                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
+                    this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
                 }
-                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
+                this->rdp_input_invalidate(Rect(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height));
             }
         }
     }
