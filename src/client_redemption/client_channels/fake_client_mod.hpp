@@ -110,6 +110,9 @@ public:
     std::string fileName;
 
 
+    FakeClientIOClipboard()
+      : ClientIOClipboardAPI("") {}
+
     void emptyBuffer() override {}
 
     void resize_chunk(size_t size) {
@@ -164,7 +167,7 @@ public:
 class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
 
 public:
-    FakeClientOutputGraphic() : ClientOutputGraphicAPI(0, 0) {}
+    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientOutputGraphicAPI(controller, config, 0, 0) {}
 
     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
 
