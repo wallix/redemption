@@ -160,7 +160,7 @@ private:
     };
 
     struct ServerTransportContext {
-        Transport& trans;
+        OutTransport trans;
         CryptContext encrypt {};
         RdpNegociationResult negociation_result;
         
@@ -1089,6 +1089,7 @@ private:
     const bool allow_using_multiple_monitors; // TODO duplicate monitor_count ?
     const uint32_t monitor_count;
 
+    Transport & trans;
     ServerTransportContext stc;
 
 
@@ -1266,6 +1267,7 @@ public:
         , target_host(mod_rdp_params.target_host)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)
         , monitor_count(info.cs_monitor.monitorCount)
+        , trans(trans)
         , stc(trans)
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
@@ -2767,7 +2769,7 @@ public:
             this->channels.remote_programs_session_manager->set_drawable(&gd);
         }
 
-        this->buf.load_data(this->stc.trans);
+        this->buf.load_data(this->trans);
         draw_event_impl(now, gd);
     }
 
