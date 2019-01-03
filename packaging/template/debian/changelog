@@ -1,3 +1,9 @@
+redemption (1.1.105%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Support of RDP KeepAlive.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 03 Jan 2019 15:52:22 +0200
+
 redemption (1.1.101%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Disable (SIEM) keyboard input logging by connection policy.
