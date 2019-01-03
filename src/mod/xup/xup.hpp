@@ -338,13 +338,4 @@ enum {
             this->front.must_be_stop_capture();
         }
     }
-
-    void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
-        // TODO xup_mod::send_to_front_channel: unimplemented
-        (void)mod_channel_name;
-        (void)data;
-        (void)length;
-        (void)chunk_size;
-        (void)flags;
-    }
 };

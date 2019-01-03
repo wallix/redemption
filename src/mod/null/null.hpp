@@ -57,13 +57,5 @@ struct null_mod : public mod_api
     void draw_event(time_t now, gdi::GraphicApi & /*gd*/) override { (void)now; }
 
     bool is_up_and_running() const override { return true; }
-
-    void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
-        (void)mod_channel_name;
-        (void)data;
-        (void)length;
-        (void)chunk_size;
-        (void)flags;
-    }
 };
 

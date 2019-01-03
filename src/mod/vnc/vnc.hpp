@@ -2802,9 +2802,10 @@ private:
         return true;
     } // lib_clip_data
 
+private:
     void send_to_front_channel(
         CHANNELS::ChannelNameId mod_channel_name,
-        uint8_t const * data, size_t length, size_t chunk_size, int flags) override
+        uint8_t const * data, size_t length, size_t chunk_size, int flags)
     {
         if (bool(this->verbose & VNCVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_vnc::send_to_front_channel");
@@ -2818,6 +2819,7 @@ private:
         }
     }
 
+public:
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk,

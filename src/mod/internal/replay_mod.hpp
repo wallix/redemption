@@ -134,11 +134,6 @@ public:
 
     void refresh(Rect /*rect*/) override {}
 
-    void send_to_front_channel(
-        CHANNELS::ChannelNameId /*mod_channel_name*/,
-        const uint8_t * /*data*/, size_t /*length*/, size_t /*chunk_size*/, int /*flags*/
-    ) override {}
-
     // event from back end (draw event from remote or internal server)
     // returns module continuation status, 0 if module want to continue
     // non 0 if it wants to stop (to run another module)

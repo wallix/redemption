@@ -96,15 +96,6 @@ public:
     void refresh(Rect clip) override { (void) clip; }
 
     void draw_event(time_t now, gdi::GraphicApi & gd) override { (void)now; (void)gd; }
-
-    void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name,
-        uint8_t const * data, size_t length, size_t chunk_size, int flags) override {
-            (void) mod_channel_name;
-            (void) data;
-            (void) length;
-            (void) chunk_size;
-            (void) flags;
-    }
 };
 
 

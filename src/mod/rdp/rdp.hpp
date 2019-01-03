@@ -1758,14 +1758,16 @@ public:
         }
     }
 
+private:
     void send_to_front_channel(CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data
-                              , size_t length, size_t chunk_size, int flags) override {
+                              , size_t length, size_t chunk_size, int flags) {
         const CHANNELS::ChannelDef * front_channel = this->front.get_channel_list().get_by_name(mod_channel_name);
         if (front_channel) {
             this->front.send_to_channel(*front_channel, data, length, chunk_size, flags);
         }
     }
 
+public:
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags

@@ -55,10 +55,6 @@ public:
         return this->screen.get_rect();
     }
 
-    void send_to_front_channel(
-        CHANNELS::ChannelNameId mod_channel_name,
-        uint8_t const * data, size_t length, size_t chunk_size, int flags) override;
-
     void rdp_input_invalidate(Rect r) override
     {
         this->screen.rdp_input_invalidate(r);

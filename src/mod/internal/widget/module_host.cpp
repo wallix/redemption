@@ -108,15 +108,6 @@ bool WidgetModuleHost::ModuleHolder::is_auto_reconnectable()
     return this->managed_mod->is_auto_reconnectable();
 }
 
-void WidgetModuleHost::ModuleHolder::send_to_front_channel(
-    CHANNELS::ChannelNameId mod_channel_name,
-    const uint8_t* data, size_t length,
-    size_t chunk_size, int flags)
-{
-    this->managed_mod->send_to_front_channel(mod_channel_name,
-        data, length, chunk_size, flags);
-}
-
 // RdpInput
 
 void WidgetModuleHost::ModuleHolder::rdp_input_invalidate(Rect r)
