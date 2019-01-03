@@ -163,15 +163,12 @@ private:
         Transport& trans;
         CryptContext & encrypt;
         const RdpNegociationResult negociation_result;
-        AsynchronousTaskContainer & asynchronous_tasks;
         
         ServerTransportContext(Transport& trans, CryptContext & encrypt,
-                const RdpNegociationResult negociation_result,
-                AsynchronousTaskContainer & asynchronous_tasks)
+                const RdpNegociationResult negociation_result)
             : trans(trans)
             , encrypt(encrypt)
             , negociation_result(negociation_result)
-            , asynchronous_tasks(asynchronous_tasks)
         {
         }
     };
@@ -490,7 +487,7 @@ private:
                     !this->clipboard_to_server_sender);
 
                 this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
-                this->clipboard_to_server_sender = this->create_to_server_sender(channel_names::cliprdr, stc);
+                this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
                 this->clipboard_virtual_channel =
                     std::make_unique<ClipboardVirtualChannel>(
@@ -503,7 +500,7 @@ private:
             return *this->clipboard_virtual_channel;
         }
 
-        std::unique_ptr<VirtualChannelDataSender> create_to_server_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc)
+        std::unique_ptr<VirtualChannelDataSender> create_to_server_synchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc)
         {
             const CHANNELS::ChannelDef* channel = this->mod_channel_list.get_by_name(channel_name);
             if (!channel)
@@ -584,9 +581,13 @@ private:
                      GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL),
                     this->verbose);
 
-            if (channel_name != channel_names::rdpdr) {
-                return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
-            }
+            return std::unique_ptr<VirtualChannelDataSender>(std::move(to_server_sender));
+        }
+
+
+        std::unique_ptr<VirtualChannelDataSender> create_to_server_asynchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc, AsynchronousTaskContainer & asynchronous_tasks)
+        {
+            auto to_server_sender =  create_to_server_synchronous_sender(channel_name, stc);
 
             class ToServerAsynchronousSender : public VirtualChannelDataSender
             {
@@ -626,7 +627,7 @@ private:
 
             return std::make_unique<ToServerAsynchronousSender>(
                 std::move(to_server_sender),
-                stc.asynchronous_tasks,
+                asynchronous_tasks,
                 this->verbose);
         }
 
@@ -639,7 +640,7 @@ private:
                 this->dynamic_channel_to_client_sender =
                     this->create_to_client_sender(channel_names::drdynvc, front);
                 this->dynamic_channel_to_server_sender =
-                    this->create_to_server_sender(channel_names::drdynvc, stc);
+                    this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
                 this->dynamic_channel_virtual_channel =
                     std::make_unique<DynamicChannelVirtualChannel>(
                         this->dynamic_channel_to_client_sender.get(),
@@ -662,22 +663,22 @@ private:
         inline FileSystemVirtualChannel& get_file_system_virtual_channel(
                     FrontAPI& front,
                     ServerTransportContext & stc,
+                    AsynchronousTaskContainer & asynchronous_tasks,
                     GeneralCaps const & client_general_caps,
                     const char (& client_name)[128]) {
 
             if (!this->file_system_virtual_channel) {
-                assert(!this->file_system_to_client_sender &&
-                    !this->file_system_to_server_sender);
+                assert(!this->file_system_to_client_sender && !this->file_system_to_server_sender);
 
-                this->file_system_to_client_sender =
-                    (((client_general_caps.os_major != OSMAJORTYPE_IOS) ||
-                      !this->bogus_ios_rdpdr_virtual_channel) ?
-                     this->create_to_client_sender(channel_names::rdpdr, front) : nullptr);
-                this->file_system_to_server_sender =
-                    this->create_to_server_sender(channel_names::rdpdr, stc);
+                this->file_system_to_client_sender = (((client_general_caps.os_major != OSMAJORTYPE_IOS) 
+                                                        || !this->bogus_ios_rdpdr_virtual_channel) 
+                                                   ? this->create_to_client_sender(channel_names::rdpdr, front) 
+                                                   : nullptr);
+                this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
+                
                 this->file_system_virtual_channel =
                     std::make_unique<FileSystemVirtualChannel>(
-                        stc.asynchronous_tasks.session_reactor,
+                        asynchronous_tasks.session_reactor,
                         this->file_system_to_client_sender.get(),
                         this->file_system_to_server_sender.get(),
                         this->file_system_drive_manager,
@@ -854,6 +855,7 @@ private:
         inline SessionProbeVirtualChannel& get_session_probe_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
+                        AsynchronousTaskContainer & asynchronous_tasks,
                         SessionReactor& session_reactor,
                         mod_api& mod, rdp_api& rdp,
                         const Translation::language_t & lang,
@@ -870,10 +872,10 @@ private:
                 assert(!this->session_probe_to_server_sender);
 
                 this->session_probe_to_server_sender =
-                    this->create_to_server_sender(channel_names::sespro, stc);
+                    this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
                 FileSystemVirtualChannel& file_system_virtual_channel =
-                    this->get_file_system_virtual_channel(front, stc, client_general_caps, client_name);
+                    this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
 
                 this->session_probe_virtual_channel =
                     std::make_unique<SessionProbeVirtualChannel>(
@@ -1001,7 +1003,7 @@ private:
                 this->remote_programs_to_client_sender =
                     this->create_to_client_sender(channel_names::rail, front);
                 this->remote_programs_to_server_sender =
-                    this->create_to_server_sender(channel_names::rail, stc);
+                    this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
                 this->remote_programs_virtual_channel =
                     std::make_unique<RemoteProgramsVirtualChannel>(
@@ -1701,11 +1703,11 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) &&
             !this->input_event_disabled) {
             
-            ServerTransportContext stc(trans, encrypt, negociation_result, asynchronous_tasks);
+            ServerTransportContext stc(trans, encrypt, negociation_result);
             if (this->first_scancode && !(device_flags & 0x8000) &&
                 (!this->channels.enable_session_probe ||
                  !this->session_probe_launcher->is_keyboard_sequences_started() ||
-                 this->channels.get_session_probe_virtual_channel(front, stc, session_reactor,*this,*this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name).has_been_launched())
+                 this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this,*this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name).has_been_launched())
                ) {
                 LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
 
@@ -1809,7 +1811,7 @@ public:
 private:
     void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
         ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, stc);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -1827,7 +1829,7 @@ private:
     }
 
     void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/, InStream & chunk, size_t length, uint32_t flags) {
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
         RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
@@ -1866,8 +1868,8 @@ private:
             return;
         }
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->client_general_caps, this->client_name);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
+        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
 
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
@@ -1875,7 +1877,7 @@ private:
     void send_to_mod_drdynvc_channel(const CHANNELS::ChannelDef */* rdpdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
 
         DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, stc);
 
@@ -5563,8 +5565,8 @@ private:
             LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
         }
         else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-            FileSystemVirtualChannel& rdpdr_channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->client_general_caps, this->client_name);
+            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
+            FileSystemVirtualChannel& rdpdr_channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             rdpdr_channel.disable_session_probe_drive();
         }
         else {
@@ -5623,8 +5625,8 @@ private:
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)session_probe_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, stc, session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
+        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5640,7 +5642,7 @@ private:
         uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)cliprdr_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
         ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, stc);
 
         if (bool(this->verbose & RDPVerbose::cliprdr)) {
@@ -5660,7 +5662,7 @@ private:
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
         (void)rail_channel;
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
         RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -5701,8 +5703,8 @@ private:
             return;
         }
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
-        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->client_general_caps, this->client_name);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
+        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5731,13 +5733,12 @@ private:
     void process_drdynvc_event(const CHANNELS::ChannelDef & /*unused*/,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
 
-        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+        ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
         DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, stc);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
-            out_asynchronous_task);
+        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
 
         if (out_asynchronous_task) {
             this->asynchronous_tasks.add(std::move(out_asynchronous_task));
@@ -5773,7 +5774,7 @@ private:
     // TODO: pass stc ref as parameter
     void do_enable_session_probe() {
         if (this->channels.enable_session_probe) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
 
             ClipboardVirtualChannel& cvc = this->channels.get_clipboard_virtual_channel(this->front, stc);
             if (this->session_probe_launcher) {
@@ -5781,7 +5782,7 @@ private:
                     this->session_probe_launcher.get());
             }
 
-            FileSystemVirtualChannel& fsvc = this->channels.get_file_system_virtual_channel(this->front, stc, this->client_general_caps, this->client_name);
+            FileSystemVirtualChannel& fsvc = this->channels.get_file_system_virtual_channel(this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             if (this->session_probe_launcher) {
                 fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
             }
@@ -5792,7 +5793,7 @@ private:
             }
 
             SessionProbeVirtualChannel& spvc =
-                this->channels.get_session_probe_virtual_channel(front, stc, session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
+                this->channels.get_session_probe_virtual_channel(front, stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->real_alternate_shell, this->real_working_dir, this->client_general_caps, this->client_name);
             if (this->session_probe_launcher) {
                 spvc.set_session_probe_launcher(this->session_probe_launcher.get());
             }
@@ -5809,7 +5810,7 @@ private:
             }
 
             if (this->remote_program) {
-                ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+                ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
                 RemoteProgramsVirtualChannel& rpvc =
                     this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
@@ -5850,7 +5851,7 @@ private:
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
@@ -5865,7 +5866,7 @@ private:
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
             uint16_t exec_result) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
@@ -5879,7 +5880,7 @@ private:
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
         uint16_t exec_result, uint32_t raw_result) override {
         if (this->remote_program) {
-            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result, this->asynchronous_tasks);
+            ServerTransportContext stc(this->trans, this->encrypt, this->negociation_result);
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, stc, this->vars, this->client_rail_caps);
 
