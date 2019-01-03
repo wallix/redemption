@@ -471,6 +471,9 @@
 "#_hidden\n"
 "#session_probe_ignore_ui_less_processes_during_end_of_session_check = 1\n\n"
 
+"#_hidden\n"
+"#session_probe_childless_window_as_unidentified_input_field = 1\n\n"
+
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"
 "#session_probe_public_session = 0\n\n"

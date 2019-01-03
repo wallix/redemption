@@ -143,6 +143,8 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
 
+    mod_rdp_params.session_probe_childless_window_as_unidentified_input_field = ini.get<cfg::mod_rdp::session_probe_childless_window_as_unidentified_input_field>();
+
     mod_rdp_params.session_probe_public_session        = ini.get<cfg::mod_rdp::session_probe_public_session>();
 
     mod_rdp_params.disable_clipboard_log_syslog        = bool(ini.get<cfg::video::disable_clipboard_log>() & ClipboardLogFlags::syslog);
@@ -155,6 +157,9 @@ void ModuleManager::create_mod_rdp(
         ini.get<cfg::context::session_probe_outbound_connection_monitoring_rules>().c_str();
     mod_rdp_params.session_probe_process_monitoring_rules             =
         ini.get<cfg::context::session_probe_process_monitoring_rules>().c_str();
+
+    mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field =
+        ini.get<cfg::context::session_probe_windows_of_these_applications_as_unidentified_input_field>().c_str();
 
     mod_rdp_params.session_probe_enable_log            = ini.get<cfg::mod_rdp::session_probe_enable_log>();
     mod_rdp_params.session_probe_enable_log_rotation   = ini.get<cfg::mod_rdp::session_probe_enable_log_rotation>();

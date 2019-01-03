@@ -384,6 +384,9 @@ void config_spec_definition(Writer && W)
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
         W.sep();
 
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
+        W.sep();
+
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
         W.sep();
 
@@ -697,6 +700,10 @@ void config_spec_definition(Writer && W)
         });
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), "session_probe_extra_system_processes", connpolicy::name{"extra_system_processes"}, desc{"Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"});
         W.sep();
+
+        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), "session_probe_windows_of_these_applications_as_unidentified_input_field", connpolicy::name{"windows_of_these_applications_as_unidentified_input_field"}, desc{"Comma-separated processes (Ex.: chrome.exe,ngf.exe)"});
+        W.sep();
+
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, L, type_<bool>(), "disconnect_reason_ack", set(false));
         W.sep();
