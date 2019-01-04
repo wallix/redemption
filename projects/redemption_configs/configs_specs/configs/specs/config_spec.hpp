@@ -189,6 +189,7 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, no_sesman, L, type_<std::chrono::milliseconds>(), "rdp_keepalive_connection_interval", desc{
             "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+            "!!!May cause FreeRDP-based client to CRASH!!!\n"
             "Set to 0 to disable this feature."
         }, set(0));
     });

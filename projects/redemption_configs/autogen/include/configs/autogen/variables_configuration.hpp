@@ -661,6 +661,7 @@ namespace cfg {
         type value{false};
     };
     /// Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client. <br/>
+    /// !!!May cause FreeRDP-based client to CRASH!!! <br/>
     /// Set to 0 to disable this feature. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// value{0} <br/>
