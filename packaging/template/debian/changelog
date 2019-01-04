@@ -1,3 +1,9 @@
+redemption (1.1.107%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Set DH size to 3072 bits for TLS.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Jan 2019 14:57:26 +0200
+
 redemption (1.1.77%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * 6.0 CSPN
