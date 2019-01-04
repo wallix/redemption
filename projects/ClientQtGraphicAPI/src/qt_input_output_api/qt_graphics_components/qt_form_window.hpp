@@ -917,13 +917,13 @@ public:
 
     void delete_account(int index) override {
 //         this->config->_accountData.size();
-        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+//         LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
         this->config->_accountData.erase(this->config->_accountData.begin()+index);
         for (size_t i = 0; i < this->config->_accountData.size(); i++) {
             this->config->_accountData[i].index = i;
         }
         this->config->_accountNB = this->config->_accountData.size();
-        LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
+//         LOG(LOG_INFO, "this->config->_accountData.size() = %zu", this->config->_accountData.size());
         this->formAccountConnectionPanel.set_account_panel();
        // this->show();
     }

@@ -221,6 +221,7 @@ public:
     } wrmGraphicStat;
 
     std::string       local_IP;
+    bool wab_diag_channel_on = false;
 
 
 
@@ -255,10 +256,10 @@ public:
     void cmd_launch_conn() {
         if (this->config.connection_info_cmd_complete == ClientRedemptionConfig::COMMAND_VALID) {
 
-            this->connect(this->config.target_IP,
-                            this->config.user_name,
-                            this->config.user_password,
-                            this->config.port);
+            this->connect( this->config.target_IP,
+                           this->config.user_name,
+                           this->config.user_password,
+                           this->config.port);
         } else {
             std::cout <<  "Argument(s) required for connection: ";
             if (!(this->config.connection_info_cmd_complete & ClientRedemptionConfig::NAME_GOT)) {
@@ -565,6 +566,8 @@ public:
 
             if (this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
 
+                LOG(LOG_INFO, "ClientRedemption::connect()::MOD_RDP_REMOTE_APP");
+
                 //this->config.info.remote_program |= INFO_RAIL;
                 this->config.info.remote_program_enhanced |= INFO_HIDEF_RAIL_SUPPORTED;
                 this->config.info.rail_caps.RailSupportLevel =   TS_RAIL_LEVEL_SUPPORTED
@@ -582,25 +585,23 @@ public:
                 this->config.info.window_list_caps.NumIconCacheEntries = 12;
 
                 CHANNELS::ChannelDef channel_rail { channel_names::rail
-                                            , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                            , CHANID_RAIL
-                                            };
+                                                  , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                    GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                  , CHANID_RAIL
+                                                  };
                 this->cl.push_back(channel_rail);
+            }
 
-            } else {
+            if (this->config.modRDPParamsData.enable_shared_virtual_disk) {
+                CHANNELS::ChannelDef channel_rdpdr { channel_names::rdpdr
+                                                   , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                     GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                                   , CHANID_RDPDR
+                                                   };
+                this->cl.push_back(channel_rdpdr);
 
-                if (this->config.modRDPParamsData.enable_shared_virtual_disk) {
-                    CHANNELS::ChannelDef channel_rdpdr{ channel_names::rdpdr
-                                                      , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                                      , CHANID_RDPDR
-                                                      };
-                    this->cl.push_back(channel_rdpdr);
-
-                    this->clientRDPDRChannel.set_share_dir(this->config.SHARE_DIR);
-                }
+                this->clientRDPDRChannel.set_share_dir(this->config.SHARE_DIR);
             }
 
             if (this->config.enable_shared_clipboard) {
@@ -610,24 +611,25 @@ public:
                                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
                                                      , CHANID_CLIPDRD
                                                      };
-//                 this->_to_client_sender._channel = channel_cliprdr;
                 this->cl.push_back(channel_cliprdr);
             }
 
-            CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
-                                                 , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                   GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
-                                                 , CHANID_WABDIAG
-                                                 };
-            this->cl.push_back(channel_WabDiag);
+            if (this->wab_diag_channel_on) {
+                CHANNELS::ChannelDef channel_WabDiag { channel_names::wabdiag
+                                                     , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                       GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS
+                                                     , CHANID_WABDIAG
+                                                     };
+                this->cl.push_back(channel_WabDiag);
+            }
 
             if (this->config.modRDPParamsData.enable_sound) {
                 CHANNELS::ChannelDef channel_audio_output{ channel_names::rdpsnd
-                                                        , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
-                                                        GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
-                                                        , CHANID_RDPSND
-                                                        };
+                                                         , GCC::UserData::CSNet::CHANNEL_OPTION_INITIALIZED |
+                                                           GCC::UserData::CSNet::CHANNEL_OPTION_COMPRESS |
+                                                           GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL
+                                                         , CHANID_RDPSND
+                                                         };
                 this->cl.push_back(channel_audio_output);
             }
         }

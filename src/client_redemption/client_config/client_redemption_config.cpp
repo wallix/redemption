@@ -114,9 +114,6 @@ ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDP
     auto options = cli::options(
         cli::helper("Client ReDemPtion Help menu."),
 
-//         cli::option('h', "help").help("Show help")
-//         .action([this]() { this->help_mode = true;}),
-
         cli::option('h', "help").help("Show help")
         .action(cli::help),
 
@@ -128,21 +125,18 @@ ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDP
         cli::option('u', "username").help("Set target session user name")
         .action(cli::arg([this](std::string s){
             this->user_name = std::move(s);
-
             this->connection_info_cmd_complete |= NAME_GOT;
         })),
 
         cli::option('p', "password").help("Set target session user password")
         .action(cli::arg([this](std::string s){
             this->user_password = std::move(s);
-
             this->connection_info_cmd_complete |= PWD_GOT;
         })),
 
         cli::option('i', "ip").help("Set target IP address")
         .action(cli::arg([this](std::string s){
             this->target_IP = std::move(s);
-
             this->connection_info_cmd_complete |= IP_GOT;
         })),
 
@@ -332,6 +326,7 @@ ClientRedemptionConfig::ClientRedemptionConfig(char const* argv[], int argc, RDP
             // TODO return 0;
             break;
         case cli::Res::Help:
+            this->help_mode = true;
             cli::print_help(options, std::cout);
             // TODO return 0;
             break;
@@ -456,6 +451,7 @@ void ClientRedemptionConfig::parse_options(int argc, char const* const argv[])
 
         cli::option('v', "version").help("Show version")
         .action(cli::quit([]{ std::cout << redemption_info_version() << "\n"; })),
+
 
         cli::helper("========= Connection ========="),
 
@@ -646,6 +642,8 @@ void ClientRedemptionConfig::parse_options(int argc, char const* const argv[])
 
     );
 
+    LOG(LOG_INFO, "ClientRedemptionConfig::ClientRedemptionConfig");
+
     auto cli_result = cli::parse(options, argc, argv);
     switch (cli_result.res) {
         case cli::Res::Ok:
@@ -654,7 +652,9 @@ void ClientRedemptionConfig::parse_options(int argc, char const* const argv[])
             // TODO return 0;
             break;
         case cli::Res::Help:
-            cli::print_help(options, std::cout);
+            this->help_mode = true;
+            LOG(LOG_INFO, "ClientRedemptionConfig::ClientRedemptionConfig::Help");
+          //  cli::print_help(options, std::cout);
             // TODO return 0;
             break;
         case cli::Res::BadFormat:

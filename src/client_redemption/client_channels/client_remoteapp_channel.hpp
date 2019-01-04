@@ -203,6 +203,8 @@ public:
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) {
 
+
+
         uint32_t win_id = cmd.header.WindowId();
 
         switch (win_id) {
@@ -225,7 +227,7 @@ public:
                     cmd.log(LOG_INFO);
                 }
                 if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_OWNER) {
-                    
+
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_CLIENTAREAOFFSET) {}
 
                     if (cmd.header.FieldsPresentFlags() & RDP::RAIL::WINDOW_ORDER_FIELD_WNDSIZE) {
@@ -345,11 +347,11 @@ public:
 
 
     void receive(InStream & stream) {
-        if (!this->impl_graphic || !this->callback) {
+        LOG(LOG_INFO, "ClientRemoteAppChannel::receive()");
+        if (!this->impl_graphic || !this->callback || !this->channel_mod) {
             return;
         }
 
-        LOG(LOG_INFO,  "ClientChannelRemoteAppManager::receive");
         RAILPDUHeader header;
         header.receive(stream);
 
@@ -381,7 +383,7 @@ public:
                 if (sspu.SystemParam() == SPI_SETSCREENSAVEACTIVE) {
 
                     {
-                    StaticOutStream<32> out_stream;;
+                    StaticOutStream<32> out_stream;
 
                     out_stream.out_uint16_le(TS_RAIL_ORDER_SYSPARAM);
                     out_stream.out_uint16_le(9);                //(20*4) + (15*2) + 4);

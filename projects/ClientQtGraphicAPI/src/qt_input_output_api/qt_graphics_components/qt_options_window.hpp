@@ -112,7 +112,6 @@ public:
         VNC
     };
     ClientRedemptionConfig * config;
-//     ClientRedemptionAPI   * _front;
     ClientCallback * controllers;
     ClientOutputGraphicAPI * graphic;
 

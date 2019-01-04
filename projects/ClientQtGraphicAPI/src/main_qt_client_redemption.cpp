@@ -84,7 +84,7 @@ private:
 public:
     ClientRedemptionQt(SessionReactor & session_reactor,
                        ClientRedemptionConfig & config)
-            :ClientRedemption(session_reactor, config)
+            : ClientRedemption(session_reactor, config)
             , qt_graphic(&(this->_callback), &(this->config))
             , qt_sound(this->config.SOUND_TEMP_DIR, qt_graphic.get_static_qwidget())
             , qt_socket_listener(session_reactor, this, qt_graphic.get_static_qwidget())
@@ -97,9 +97,13 @@ public:
 
         this->_callback.set_rdp_keyLayout_api(&(this->qt_rdp_keylayout));
 
-        this->cmd_launch_conn();
-
         this->qt_graphic.init_form();
+
+        if (this->config.help_mode) {
+            this->qt_graphic.form->close();
+        } else {
+            this->cmd_launch_conn();
+        }
     }
 
     void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
