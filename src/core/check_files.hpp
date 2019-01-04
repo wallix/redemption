@@ -77,7 +77,7 @@ static CheckFileList euser_check_file_list[] =
 //     { THEME_INI,          CFG_THEMES_PATH, true,  false, false, false },
     { RDPPROXY_KEY,       app_path(AppPath::Cfg),               true,  false, false, false },
     { RDPPROXY_CRT,       app_path(AppPath::Cfg),               true,  false, false, false },
-    { DH2048_PEM,         app_path(AppPath::Cfg),               true,  false, false, false },
+    { DH_PEM,             app_path(AppPath::Cfg),               true,  false, false, false },
 
 
     // End of list.

@@ -73,7 +73,7 @@ std::string app_path_s(AppPath);
 #define RDPPROXY_CRT "rdpproxy.crt"
 #define RDPPROXY_KEY "rdpproxy.key"
 // #define DH1024_PEM "dh1024.pem"
-#define DH2048_PEM "dh2048.pem"
-#define DH_PEM DH2048_PEM
+#define DH3072_PEM "dh3072.pem"
+#define DH_PEM DH3072_PEM
 
 #define DEFAULT_FONT_NAME "dejavu_14.fv1"
