@@ -159,6 +159,19 @@ struct ShareFlow_Recv
 }; // END CLASS ShareFlow_Recv
 
 
+struct ShareFlow_Send
+{
+    ShareFlow_Send(OutStream & stream, uint8_t pduTypeFlow, uint8_t flowIdentifier, uint8_t flowNumber, uint16_t pduSource) {
+        stream.out_uint16_le(0x8000),   // flowMarker(2)
+        stream.out_clear_bytes(1);      // pad8bits(1)
+        stream.out_uint8(pduTypeFlow);
+        stream.out_uint8(flowIdentifier);
+        stream.out_uint8(flowNumber);
+        stream.out_uint16_le(pduSource);
+    }
+};
+
+
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)
 // =======================================================================
 

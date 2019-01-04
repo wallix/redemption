@@ -132,6 +132,11 @@
 "#_advanced\n"
 "experimental_support_resize_session_during_recording = boolean(default=False)\n\n"
 
+"# Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+"# Set to 0 to disable this feature.\n"
+"# (is in millisecond)\n"
+"rdp_keepalive_connection_interval = integer(min=0, default=0)\n\n"
+
 "[session_log]\n\n"
 
 "enable_session_log = boolean(default=True)\n\n"
