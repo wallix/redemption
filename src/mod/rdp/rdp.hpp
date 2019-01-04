@@ -105,6 +105,7 @@ class RDPMetrics;
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "mod/rdp/server_transport_context.hpp"
 
 #include "utils/authorization_channels.hpp"
 #include "utils/genrandom.hpp"
@@ -157,19 +158,6 @@ private:
         std::deque<std::unique_ptr<AsynchronousTask>> tasks;
     public:
         SessionReactor& session_reactor;
-    };
-
-    struct ServerTransportContext {
-        OutTransport trans;
-        CryptContext & encrypt;
-        const RdpNegociationResult & negociation_result;
-        
-        ServerTransportContext(Transport& trans, CryptContext & encrypt, const RdpNegociationResult & negociation_result)
-            : trans(trans)
-            , encrypt(encrypt)
-            , negociation_result(negociation_result)
-        {
-        }
     };
 
     struct Channels {
@@ -552,9 +540,7 @@ private:
                             chunk_data, chunk_data_length);
                     }
 
-                    virtual_channel_pdu.send_to_server(this->stc.trans,
-                        this->stc.encrypt, this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.userid,
-                        this->channel_id, total_length, flags, chunk_data,
+                    virtual_channel_pdu.send_to_server(this->stc, this->channel_id, total_length, flags, chunk_data,
                         chunk_data_length);
                 }
             };
@@ -1879,13 +1865,11 @@ public:
 
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server(
-            this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
-          , this->stc.negociation_result.userid, this->channels.auth_channel_chanid
-          , stream_data.get_offset()
-          , this->channels.auth_channel_flags
-          , stream_data.get_data()
-          , stream_data.get_offset());
+        virtual_channel_pdu.send_to_server(this->stc, this->channels.auth_channel_chanid
+                                          , stream_data.get_offset()
+                                          , this->channels.auth_channel_flags
+                                          , stream_data.get_data()
+                                          , stream_data.get_offset());
     }
 
 private:
@@ -1900,9 +1884,7 @@ private:
         stream_data.out_uint16_le(data_size);
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server(
-            this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
-          , this->stc.negociation_result.userid, this->channels.checkout_channel_chanid
+        virtual_channel_pdu.send_to_server(this->stc, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
           , stream_data.get_data()
@@ -1932,9 +1914,7 @@ private:
         if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
             CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
-            virtual_channel_pdu.send_to_server(
-                this->stc.trans, this->stc.encrypt, this->stc.negociation_result.encryptionLevel
-              , this->stc.negociation_result.userid, channel.chanid, length, flags, chunk, chunk_size);
+            virtual_channel_pdu.send_to_server(this->stc, channel.chanid, length, flags, chunk, chunk_size);
         }
         else {
             uint8_t const * virtual_channel_data = chunk;
@@ -1961,9 +1941,7 @@ private:
 
                 LOG(LOG_INFO, "send to server");
 
-                virtual_channel_pdu.send_to_server(
-                    this->stc.trans, this->stc.encrypt,
-                    this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.userid, channel.chanid, length, get_channel_control_flags(
+                virtual_channel_pdu.send_to_server(this->stc, channel.chanid, length, get_channel_control_flags(
                         flags, length, remaining_data_length, virtual_channel_data_length
                     ), virtual_channel_data, virtual_channel_data_length);
 

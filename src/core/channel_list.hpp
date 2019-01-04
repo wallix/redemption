@@ -34,6 +34,10 @@
 #include "core/RDP/sec.hpp"
 #include "core/RDP/x224.hpp"
 
+// TODO: the header below is only useful for send_to_server we could
+// split this file to move the send_to_server part to mod/rdp instead of keeping it here
+
+#include "mod/rdp/server_transport_context.hpp"
 #include <cassert>
 
 namespace CHANNELS {
@@ -350,17 +354,22 @@ namespace CHANNELS {
 
     static const uint32_t PROXY_CHUNKED_VIRTUAL_CHANNEL_DATA_LENGTH_LIMIT = 1024 * 1024 * 10;   // 10 Mb
 
+
+    // TODO: The VirtualChannelPDU object should be splitted in two objects: VirtualChannelServerPDU and VirtualChannelClientPDU
+    // as MCS lmayer is differen anyway, the PDU can't be used in both directions at the same time
+    // Also it seems it's a mere empty shell used only to store verbose level, splitting it in two separate object
+    // would avoid using the same object in both directions (merely forcing to use the same verbose level in both directions)
     struct VirtualChannelPDU {
         bool verbose;
 
         explicit VirtualChannelPDU(bool verbose = false) : verbose(verbose) {}
 
-        void send_to_server( OutTransport trans, CryptContext & crypt_context, int encryptionLevel
-                           , uint16_t userId, uint16_t channelId, uint32_t length, uint32_t flags
+        void send_to_server( ServerTransportContext & stc,
+                             uint16_t channelId, uint32_t length, uint32_t flags
                            , const uint8_t * chunk, size_t chunk_size) {
             this->send_<false, MCS::SendDataRequest_Send>(
-                trans, crypt_context, encryptionLevel,
-                userId, channelId, length, flags,
+                stc.trans, stc.encrypt, stc.negociation_result.encryptionLevel,
+                stc.negociation_result.userid, channelId, length, flags,
                 chunk, chunk_size
             );
         }
