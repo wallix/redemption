@@ -660,6 +660,21 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{false};
     };
+    /// Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client. <br/>
+    /// !!!May cause FreeRDP-based client to CRASH!!! <br/>
+    /// Set to 0 to disable this feature. <br/>
+    /// type: std::chrono::milliseconds <br/>
+    /// value{0} <br/>
+    struct globals::rdp_keepalive_connection_interval {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "globals";
+        static constexpr char const * name = "rdp_keepalive_connection_interval";
+        using type = std::chrono::milliseconds;
+        using sesman_and_spec_type = std::chrono::milliseconds;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
 
     /// type: bool <br/>
     /// value{true} <br/>
@@ -4616,6 +4631,7 @@ struct globals
 , cfg::globals::close_timeout
 , cfg::globals::movie_path
 , cfg::globals::codec_id
+, cfg::globals::rdp_keepalive_connection_interval
 , cfg::globals::port
 , cfg::globals::capture_chunk
 , cfg::globals::bitmap_cache

@@ -158,6 +158,12 @@
 "#_advanced\n"
 "#experimental_support_resize_session_during_recording = 0\n\n"
 
+"# Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+"# !!!May cause FreeRDP-based client to CRASH!!!\n"
+"# Set to 0 to disable this feature.\n"
+"# (is in millisecond)\n"
+"#rdp_keepalive_connection_interval = 0\n\n"
+
 "[session_log]\n\n"
 
 "# value: 0 or 1\n"

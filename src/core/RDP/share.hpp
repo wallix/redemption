@@ -145,18 +145,41 @@ struct ShareFlow_Recv
     , flowNumber(stream.in_uint8())
     , mcs_channel(stream.in_uint16_le())
     {
-        LOG(LOG_INFO, "Flow control packet %.4x (offset=%zu)", this->flowMarker, stream.get_offset());
+        //LOG(LOG_INFO, "Flow control packet %.4x (offset=%zu)", this->flowMarker, stream.get_offset());
         if (this->flowMarker != 0x8000) {
             LOG(LOG_ERR, "Expected flow control packet, got %.4x", this->flowMarker);
             throw Error(ERR_SEC);
         }
 
-        LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
+        if ((FLOW_TEST_PDU == this->pad) || (FLOW_RESPONSE_PDU == this->pad) || (FLOW_STOP_PDU == this->pad)) {
+            // Bug Microsoft?! The fields pad8bits and pduTypeFlow are reversed from their positions described in T.128 documentation.
+            uint8_t tmp = this->pduTypeFlow;
+            this->pduTypeFlow = this->pad;
+            this->pad         = tmp;
+        }
+
+        //LOG(LOG_INFO, "PDUTypeFlow=%u", this->pduTypeFlow);
         if (stream.in_remain()) {
             LOG(LOG_INFO, "trailing bytes in FlowPDU, remains %zu bytes", stream.in_remain());
         }
     }
 }; // END CLASS ShareFlow_Recv
+
+
+struct ShareFlow_Send
+{
+    ShareFlow_Send(OutStream & stream, uint8_t pduTypeFlow, uint8_t flowIdentifier, uint8_t flowNumber, uint16_t pduSource) {
+        stream.out_uint16_le(0x8000),   // flowMarker(2)
+
+        // Bug Microsoft?! The fields pad8bits and pduTypeFlow are reversed from their positions described in T.128 documentation.
+        stream.out_uint8(pduTypeFlow);
+        stream.out_clear_bytes(1);      // pad8bits(1)
+
+        stream.out_uint8(flowIdentifier);
+        stream.out_uint8(flowNumber);
+        stream.out_uint16_le(pduSource);
+    }
+};
 
 
 // [MS-RDPBCGR] 2.2.8.1.1.1.1 Share Control Header (TS_SHARECONTROLHEADER)

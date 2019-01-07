@@ -609,6 +609,7 @@ private:
     SessionReactor::TimerPtr handshake_timeout;
     SessionReactor::CallbackEventPtr incoming_event;
     SessionReactor::TimerPtr capture_timer;
+     SessionReactor::TimerPtr flow_control_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
@@ -657,6 +658,8 @@ public:
 
     BGRPalette const & get_palette() const { return this->mod_palette_rgb; }
 
+    const std::chrono::milliseconds rdp_keepalive_connection_interval;
+
 public:
     Front( SessionReactor& session_reactor
          , Transport & trans
@@ -687,6 +690,10 @@ public:
     , report_message(report_message)
     , auth_info_sent(false)
     , session_reactor(session_reactor)
+    , rdp_keepalive_connection_interval(
+            (ini.get<cfg::globals::rdp_keepalive_connection_interval>().count() &&
+             (ini.get<cfg::globals::rdp_keepalive_connection_interval>() < std::chrono::milliseconds(1000))) ? std::chrono::milliseconds(1000) : ini.get<cfg::globals::rdp_keepalive_connection_interval>()
+          )
     {
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
             this->handshake_timeout = session_reactor.create_timer()
@@ -757,6 +764,27 @@ public:
             this->decrypt.encryptionMethod = 2; /* 128 bits */
             this->encrypt.encryptionMethod = 2; /* 128 bits */
         break;
+        }
+
+        if (this->rdp_keepalive_connection_interval.count()) {
+            this->flow_control_timer = this->session_reactor.create_timer()
+            .set_delay(std::chrono::milliseconds(0))
+            .on_action([this](auto ctx){
+                if (this->up_and_running) {
+                    this->send_data_indication_ex_impl(
+                        GCC::MCS_GLOBAL_CHANNEL,
+                        [&](StreamSize<256>, OutStream & stream) {
+                            ShareFlow_Send(stream, FLOW_TEST_PDU, 0, 0, this->userid + GCC::MCS_USERCHANNEL_BASE);
+                            if (bool(this->verbose & Verbose::global_channel)) {
+                                LOG(LOG_INFO, "Front::process_flow_control_event: Sec clear payload to send:");
+                                hexdump_d(stream.get_data(), stream.get_offset());
+                            }
+                        }
+                    );
+                }
+
+                return ctx.ready_to(this->rdp_keepalive_connection_interval);
+            });
         }
     }
 
