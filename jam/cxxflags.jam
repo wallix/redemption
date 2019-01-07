@@ -397,8 +397,9 @@ rule flags ( properties * )
         flags +=
           <cxxflags>-fno-PIE
           <cxxflags>-fno-PIC
-          <linkflags>-fno-PIE
-          <linkflags>-fno-PIC
+          <linkflags>-fno-pie
+          <linkflags>-fno-pic
+          <linkflags>-no-pie
         ;
       }
       else if <cxx-pie>on in $(properties)
@@ -406,6 +407,7 @@ rule flags ( properties * )
         flags +=
           <cxxflags>-fPIE
           <linkflags>-fPIE
+          <linkflags>-pie
         ;
       }
       else if <cxx-pie>pic in $(properties)
@@ -413,6 +415,7 @@ rule flags ( properties * )
         flags +=
           <cxxflags>-fPIC
           <linkflags>-fPIC
+          <linkflags>-pie
          ;
        }
     }
