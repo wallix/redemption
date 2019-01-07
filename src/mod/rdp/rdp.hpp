@@ -290,6 +290,8 @@ private:
 
         FileSystemDriveManager file_system_drive_manager;
 
+        RDPECLIP::CliprdrLogState cliprdrLogStatus;
+
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message, Random & gen)
             : authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
@@ -1045,6 +1047,52 @@ private:
             }
         }
 
+        void process_cliprdr_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+            FrontAPI& front,
+            ServerTransportContext & stc
+        ) {
+            ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel(front, stc);
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                InStream clone = stream.clone();
+                RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);// FIX
+            }
+
+            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+            channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+            assert(!out_asynchronous_task);
+        }   // process_cliprdr_event
+
+        void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
+                                FrontAPI& front,
+                                ServerTransportContext & stc) {
+            ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel(front, stc);
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                InStream clone = chunk.clone();
+                RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+            }
+
+            if (this->session_probe_launcher) {
+                if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
+                    return;
+                }
+            }
+
+            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        }
+
+        void send_to_mod_rail_channel(InStream & chunk, size_t length, uint32_t flags, 
+                        FrontAPI& front,
+                        ServerTransportContext & stc,
+                        const ModRdpVariables & vars,
+                        RailCaps const & client_rail_caps) {
+            RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+
+            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+
+        }   // send_to_mod_rail_channel
+
     } channels;
 
     /// shared with RdpNegociation
@@ -1185,7 +1233,6 @@ private:
     bool   session_disconnection_logged = false;
 
     rdpdr::RdpDrStatus rdpdrLogStatus;
-    RDPECLIP::CliprdrLogState cliprdrLogStatus;
 
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
@@ -1755,11 +1802,11 @@ public:
         switch (front_channel_name) {
             case channel_names::cliprdr:
                 IF_ENABLE_METRICS(set_client_cliprdr_metrics(chunk.clone(), length, flags));
-                this->send_to_mod_cliprdr_channel(mod_channel, chunk, length, flags);
+                this->channels.send_to_mod_cliprdr_channel(chunk, length, flags, this->front, this->stc);
                 break;
             case channel_names::rail:
                 IF_ENABLE_METRICS(client_rail_channel_data(length));
-                this->send_to_mod_rail_channel(mod_channel, chunk, length, flags);
+                this->channels.send_to_mod_rail_channel(chunk, length, flags, this->front, this->stc, this->vars, this->client_rail_caps);
                 break;
             case channel_names::rdpdr:
                 IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
@@ -1776,30 +1823,6 @@ public:
     }
 
 private:
-    void send_to_mod_cliprdr_channel(const CHANNELS::ChannelDef * /*cliprdr_channel*/,
-                                     InStream & chunk, size_t length, uint32_t flags) {
-        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            InStream clone = chunk.clone();
-            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
-        }
-
-        if (this->channels.session_probe_launcher) {
-            if (!this->channels.session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
-                return;
-            }
-        }
-
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-    }
-
-    void send_to_mod_rail_channel(const CHANNELS::ChannelDef * /*unused*/, InStream & chunk, size_t length, uint32_t flags) {
-        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-
-    }   // send_to_mod_rail_channel
 
 private:
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
@@ -2293,7 +2316,7 @@ public:
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
-                this->process_cliprdr_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, this->stc);
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
@@ -5590,26 +5613,6 @@ private:
         assert(!out_asynchronous_task);
     }
 
-    // TODO: this should move to channels
-    void process_cliprdr_event(
-        const CHANNELS::ChannelDef & cliprdr_channel, InStream & stream,
-        uint32_t length, uint32_t flags, size_t chunk_size
-    ) {
-        (void)cliprdr_channel;
-        ClipboardVirtualChannel& channel = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
-
-        if (bool(this->verbose & RDPVerbose::cliprdr)) {
-            InStream clone = stream.clone();
-            RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
-        }
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
-            out_asynchronous_task);
-
-        assert(!out_asynchronous_task);
-    }   // process_cliprdr_event
 
     // TODO: this should move to channels
     void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
