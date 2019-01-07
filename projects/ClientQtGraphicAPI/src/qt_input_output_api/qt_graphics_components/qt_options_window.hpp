@@ -206,7 +206,7 @@ public:
 //         , key_editting(true)/**/
     {
         this->setFixedSize(this->_width, this->_height);
-        this->config->setClientInfo();
+        ClientConfig::setClientInfo(*this->config);
         this->_layout = new QGridLayout(this);
 
 
@@ -458,13 +458,13 @@ public Q_SLOTS:
     }
 
     void restoreConfig() {
-        this->config->setDefaultConfig();
+        ClientConfig::setDefaultConfig(*(this->config));
         this->setConfigValues();
     }
 
     void changeProfil(int index) {
         this->config->current_user_profil = this->profilComboBox.itemData(index).toInt();
-        this->config->setClientInfo();
+        ClientConfig::setClientInfo(*this->config);
         this->setConfigValues();
     }
 

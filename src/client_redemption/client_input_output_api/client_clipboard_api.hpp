@@ -33,8 +33,6 @@ class ClientIOClipboardAPI
 {
     // TODO private !!!!!!!!!!!!!!!!
 public:
-//     ClientRedemptionAPI * client = nullptr;
-
 
     enum : int {
         FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,

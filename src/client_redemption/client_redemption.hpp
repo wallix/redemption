@@ -774,7 +774,6 @@ public:
 
 
 
-
     virtual void print_wrm_graphic_stat(const std::string &) {
 
         for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
@@ -836,9 +835,9 @@ public:
     }
 
 
-    void instant_play_client(std::chrono::microseconds time) override {
-        this->replay_mod->instant_play_client(time);
-    }
+//     void instant_play_client(std::chrono::microseconds time) override {
+//         this->replay_mod->instant_play_client(time);
+//     }
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

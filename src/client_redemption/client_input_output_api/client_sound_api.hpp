@@ -30,8 +30,8 @@ public:
     uint16_t n_channels = 0;
     uint16_t n_block_align = 0;
     uint32_t bit_per_sec = 0;
-
-    std::string path;
+/*
+    std::string path;*/
 
 //     void set_path(const std::string & path) {
 //         this->path = path;

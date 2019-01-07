@@ -45,10 +45,11 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 {
 
     FakeClient client;
-    char const ** argv = nullptr;
-    int argc = 0;
+//     char const ** argv = nullptr;
+//     int argc = 0;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, "");
+    ClientRedemptionConfig config(RDPVerbose::none, "");
+    ClientConfig::setDefaultConfig(config);
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -221,7 +222,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 39;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, "");
+    ClientRedemptionConfig config(RDPVerbose::none, "");
+    ClientConfig::set_config(argc, argv, config);
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, (RDPVerbose::basic_trace | RDPVerbose::connection | RDPVerbose::capabilities | RDPVerbose::asynchronous_task | RDPVerbose::graphics | RDPVerbose::printer | RDPVerbose::rdpsnd | RDPVerbose::rail | RDPVerbose::cliprdr | RDPVerbose::rdpdr | RDPVerbose::rail_dump | RDPVerbose::basic_trace | RDPVerbose::rdpdr_dump | RDPVerbose::rail_order | RDPVerbose::cliprdr_dump));
@@ -364,7 +366,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 6;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, "");
+    ClientRedemptionConfig config(RDPVerbose::none, "");
+    ClientConfig::set_config(argc, argv, config);
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -408,7 +411,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigArgs)
 
     int argc = 2;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, "");
+    ClientRedemptionConfig config(RDPVerbose::none, "");
+    ClientConfig::set_config(argc, argv, config);
 
     // GENERAL
     RED_CHECK_EQUAL(config.verbose, RDPVerbose::none);
@@ -446,8 +450,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigCreateDir)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    int argc = 1;
+
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     RED_CHECK_WORKSPACE(wd.add_files({
         "DATA/config/",
@@ -466,8 +472,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    int argc = 1;
+
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     {
         unique_fd fd(test_file, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -503,8 +511,6 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
 
 
     FakeClient client;
-    char const * argv[] = {"cmd"};
-    const int argc = 1;
 
     unique_fd fd(userConfig, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
@@ -564,7 +570,11 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     ::write(fd.fd(), toReadData, string_to_read.length());
     fd.close();
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    char const * argv[] = {"cmd"};
+    int argc = 1;
+
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     RED_CHECK_EQUAL(config.rdp_width, 1600);
     RED_CHECK_EQUAL(config.rdp_height, 900);
@@ -605,7 +615,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
     {
         unique_fd fd_1(movie1, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -631,7 +641,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
         ::write(fd_2.fd(), string_to_read1.data(), string_to_read1.size());
     }
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     config.set_icon_movie_data();
 
@@ -679,7 +690,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
     {
         unique_fd fd(windows_config, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -691,7 +702,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     RED_CHECK_EQUAL(config.windowsData.no_data, false);
     RED_CHECK_EQUAL(config.windowsData.form_x, 1920);
@@ -715,7 +727,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
     {
         unique_fd fd(keySetting, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -726,7 +738,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     RED_REQUIRE_EQUAL(config.keyCustomDefinitions.size(), 2);
 
@@ -758,7 +771,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
     {
         unique_fd fd(login, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -784,7 +797,8 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
         ::write(fd.fd(), toReadData.data(), toReadData.size());
     }
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     RED_CHECK_EQUAL(config._last_target_index, 1);
     RED_CHECK_EQUAL(config._save_password_account, true);
@@ -821,9 +835,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteClientInfo)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     config.writeClientInfo();
 
@@ -873,9 +888,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteCustomKey)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     config.add_key_custom_definition(1, 2, "x", 0x100, "key_x");
     config.add_key_custom_definition(3, 4, "y", 0, "key_y");
@@ -905,9 +921,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteAccountData)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     config.connected = true;
     config.writeAccoundData("10.10.12.13", "account_name", "mdp", 3389);
@@ -951,9 +968,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigWriteWindowsData)
 
     FakeClient client;
     char const * argv[] = {"cmd"};
-    const int argc = 1;
+    int argc = 1;
 
-    ClientRedemptionConfig config(argv, argc, RDPVerbose::none, wd.dirname());
+    ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
+    ClientConfig::set_config(argc, argv, config);
 
     config.windowsData.form_x   = 1;
     config.windowsData.form_y   = 2;

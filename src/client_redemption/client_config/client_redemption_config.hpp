@@ -317,9 +317,9 @@ public:
 
 
 
-    ClientRedemptionConfig(char const* argv[], int argc, RDPVerbose verbose, const std::string &MAIN_DIR );
+    ClientRedemptionConfig(RDPVerbose verbose, const std::string &MAIN_DIR );
 
-    ~ClientRedemptionConfig() = default;
+//     ~ClientRedemptionConfig() = default;
 
     void set_icon_movie_data();
 
@@ -327,74 +327,21 @@ public:
 
     std::vector<IconMovieData> const& get_icon_movie_data();
 
-    void parse_options(int argc, char const* const argv[]);
+//     void parse_options(int argc, char const* const argv[]);
 
-    void openWindowsData();
+//     void openWindowsData();
 
     void writeWindowsData();
 
-    void setUserProfil();
-
-    void setCustomKeyConfig();
-
     void writeCustomKeyConfig();
 
-    void setAccountData();
-
+//     void setAccountData();
 
     void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name);
 
-    void setClientInfo();
-
     bool read_line(const int fd, std::string & line);
 
-
     void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port);
-
-
-
-//         this->qtRDPKeymap.clearCustomKeyCode();
-//         this->keyCustomDefinitions.clear();
-//
-//         std::ifstream iFileKeyData(this->MAIN_DIR + std::string(KEY_SETTING_PATH), std::ios::in);
-//         if(iFileKeyData) {
-//
-//             std::string ligne;
-//             std::string delimiter = " ";
-//
-//             while(getline(iFileKeyData, ligne)) {
-//
-//                 int pos(ligne.find(delimiter));
-//
-//                 if (strcmp(ligne.substr(0, pos).c_str(), "-") == 0) {
-//
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int qtKeyID  = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int scanCode = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int ASCII8   = std::stoi(ligne.substr(0, pos));
-//                     ligne = ligne.substr(pos + delimiter.length(), ligne.length());
-//                     pos = ligne.find(delimiter);
-//
-//                     int extended = std::stoi(ligne.substr(0, pos));
-//
-//                     this->qtRDPKeymap.setCustomKeyCode(qtKeyID, scanCode, ASCII8, extended);
-//                     this->keyCustomDefinitions.push_back({qtKeyID, scanCode, ASCII8, extended});
-//                 }
-//             }
-//
-//             iFileKeyData.close();
-//         }
-
-
-
 
     void set_remoteapp_cmd_line(const std::string & cmd);
 
@@ -402,7 +349,18 @@ public:
 
     void deleteCurrentProtile();
 
-    void setDefaultConfig();
-
     void writeClientInfo();
+
 };
+
+
+namespace ClientConfig {
+void setDefaultConfig(ClientRedemptionConfig & config);
+void setUserProfil(ClientRedemptionConfig & config);
+void setClientInfo(ClientRedemptionConfig & config);
+void setCustomKeyConfig(ClientRedemptionConfig & config);
+void setAccountData(ClientRedemptionConfig & config);
+void openWindowsData(ClientRedemptionConfig & config);
+void parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config);
+void set_config(int argc, char const* const argv[], ClientRedemptionConfig & config);
+}

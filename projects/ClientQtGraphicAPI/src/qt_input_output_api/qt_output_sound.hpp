@@ -124,17 +124,19 @@ public:
     }
 
     void play() override {
-        if (this->media->state() == Phonon::StoppedState) {
+        if (this->media) {
+            if (this->media->state() == Phonon::StoppedState) {
 
-            if (this->total_wav_files > this->current_wav_index) {
-                this->current_wav_index++;
+                if (this->total_wav_files > this->current_wav_index) {
+                    this->current_wav_index++;
 
-                std::string wav_file_name =  ":/DATA/sound_temp/sound" + std::to_string(this->current_wav_index) + ".wav";
-                LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
+                    std::string wav_file_name =  ":/DATA/sound_temp/sound" + std::to_string(this->current_wav_index) + ".wav";
+                    LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
-                Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
-                this->media->setCurrentSource(sources);
-                this->media->play();
+                    Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
+                    this->media->setCurrentSource(sources);
+                    this->media->play();
+                }
             }
         }
     }

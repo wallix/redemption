@@ -78,14 +78,13 @@ public:
     int cursorHotx;
     int cursorHoty;
 
-    QRect clip;
-
 
 
     QtScreen(WindowsData * win_data, ClientCallback * callback, ClientOutputGraphicAPI * client_graphic_api, QPixmap * cache, int w, int h)
     : QWidget()
     , win_data(win_data)
     , callback(callback)
+    , client_graphic_api(client_graphic_api)
     , _width(w)
     , _height(h)
     , _penColor(Qt::black)
@@ -93,8 +92,6 @@ public:
     , _connexionLasted(false)
     , cursorHotx(0)
     , cursorHoty(0)
-    , clip(-1, -1, 0, 0)
-    , client_graphic_api(client_graphic_api)
     {
         this->setAttribute(Qt::WA_DeleteOnClose);
         this->setFocusPolicy(Qt::StrongFocus);

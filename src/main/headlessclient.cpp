@@ -136,7 +136,8 @@ int main(int argc, char const** argv)
         REDEMPTION_DIAGNOSTIC_POP
     }
 
-    ClientRedemptionConfig config(const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 
     ClientRedemptionHeadless client( session_reactor, config);
 

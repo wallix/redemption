@@ -104,11 +104,6 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //----------------------------------
 
-//     void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override {
-//         ClientOutputGraphicAPI::set_drawn_client(controller, config);
-//
-//     }
-
     void show_screen() override {
         if (this->form) {
             this->form->hide();
@@ -176,10 +171,6 @@ public:
             this->screen = nullptr;
         }
     }
-
-//     void update_keylayout() override {
-//         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
-//     }
 
     void readError(std::string const & movie_path) {
         const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
@@ -280,8 +271,8 @@ public:
             this->remote_app_screen_map[id] = nullptr;
         }
 
-        std::map<uint32_t, RemoteAppQtScreen *>::iterator it = remote_app_screen_map.find(id);
-        remote_app_screen_map.erase (it);
+        std::map<uint32_t, RemoteAppQtScreen *>::iterator it = this->remote_app_screen_map.find(id);
+        this->remote_app_screen_map.erase (it);
     }
 
     void clear_remote_app_screen() override {
@@ -434,7 +425,6 @@ public:
     bool pre_load_movie(const std::string & movie_path, bool is_v2_wrm) override {
 
         long int endin_frame = 0;
-        bool res = false;
 
         long int movie_length = this->init_replay(movie_path, is_v2_wrm);
 
@@ -1391,26 +1381,6 @@ public:
     //      CONTROLLERS
     //------------------------
 
-//     bool connexionReleased() {
-//         bool conn_res = false;
-//         if (this->form) {
-//             this->form->setCursor(Qt::WaitCursor);
-//             this->config->user_name     = this->form->get_userNameField();
-//             this->config->target_IP     = this->form->get_IPField();
-//             this->config->user_password = this->form->get_PWDField();
-//             this->config->port          = this->form->get_portField();
-//
-//             this->config->is_full_capturing = true;
-//             this->config->full_capture_file_name = "/tmp/capture.dump";
-//
-//             if (!this->config->target_IP.empty()){
-//                 conn_res = this->controller->connect();
-//             }
-//             this->form->setCursor(Qt::ArrowCursor);
-//         }
-//         return conn_res;
-//     }
-
     void close() override {
 
         if (this->form != nullptr) {
@@ -1419,20 +1389,5 @@ public:
 
         this->controller->disconnect(false);
     }
-
-//     KeyCustomDefinition get_key_info(int key, std::string const& text) override {
-//         this->qtRDPKeymap.keyEvent(0, key, text);
-//         KeyCustomDefinition key_info(
-//             this->qtRDPKeymap.qKeyCode,
-//             this->qtRDPKeymap.scanCode,
-//             this->qtRDPKeymap.ascii,
-//             this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
-//             this->qtRDPKeymap.qKeyName
-//           );
-//
-//        // key_info.name = this->qtRDPKeymap.name;
-//
-//         return key_info;
-//     }
 
 };
