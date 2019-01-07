@@ -1093,6 +1093,22 @@ private:
 
         }   // send_to_mod_rail_channel
 
+        void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+                                   FrontAPI& front,
+                                   ServerTransportContext & stc,
+                                   AsynchronousTaskContainer & asynchronous_tasks) {
+
+            DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel(front, stc);
+
+            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+            channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+
+            if (out_asynchronous_task) {
+                asynchronous_tasks.add(std::move(out_asynchronous_task));
+            }
+        }
+
     } channels;
 
     /// shared with RdpNegociation
@@ -2328,7 +2344,7 @@ public:
             }
             else if (mod_channel.name == channel_names::drdynvc) {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
-                this->process_drdynvc_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, this->stc, this->asynchronous_tasks);
             }
             else {
                 this->process_unknown_channel_event(mod_channel, sec.payload, length, flags, chunk_size);
@@ -5681,21 +5697,6 @@ private:
         }
 
         this->channels.send_to_front_channel(this->front, channel.name, stream.get_current(), length, chunk_size, flags);
-    }
-
-    // TODO: this should move to channels
-    void process_drdynvc_event(const CHANNELS::ChannelDef & /*unused*/,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-
-        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->stc);
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
-
-        if (out_asynchronous_task) {
-            this->asynchronous_tasks.add(std::move(out_asynchronous_task));
-        }
     }
 
     bool disable_input_event_and_graphics_update(bool disable_input_event,
