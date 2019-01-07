@@ -1,10 +1,8 @@
 redemption (1.1.111%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Jan 2019 10:39:45 +0200
 
 redemption (1.1.109%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 04 Jan 2019 15:53:50 +0200
 
@@ -28,11 +26,9 @@ redemption (1.1.99%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.97%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-
  -- cgrosjean <cgrosjean at wallix.com>  Fri, 07 Dec 2018 18:06:15 +0200
 
 redemption (1.1.95%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
-
 
  -- cgrosjean <cgrosjean at wallix.com>  Thu, 06 Dec 2018 16:14:09 +0200
 
@@ -90,13 +86,13 @@ redemption (1.1.71%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.69%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * "rdp metrics tag 1.1.69"
+  * rdp metrics tag 1.1.69
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 17 Sep 2018 13:37:32 +0200
 
 redemption (1.1.67%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * "rdp metrics tag 1.1.65"
+  * rdp metrics tag 1.1.65
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 17 Sep 2018 10:31:15 +0200
 
@@ -108,19 +104,19 @@ redemption (1.1.65%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
 redemption (1.1.63%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * "rdp metrics tag 6.1"
+  * rdp metrics tag 6.1
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 12 Sep 2018 16:06:34 +0200
 
 redemption (1.1.62%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * "rdp metrics tag 6.1"
+  * rdp metrics tag 6.1
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 12 Sep 2018 16:06:00 +0200
 
 redemption (1.1.61%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
-  * "rdp metrics tag 6.1"
+  * rdp metrics tag 6.1
 
  -- cgrosjean <cgrosjean at wallix.com>  Wed, 12 Sep 2018 15:39:40 +0200
 
