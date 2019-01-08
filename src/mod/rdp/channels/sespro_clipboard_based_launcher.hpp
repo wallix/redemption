@@ -98,9 +98,9 @@ public:
         const char* alternate_shell,
         Params params,
         RDPVerbose verbose)
-    : mod(mod)
+    : params(params)
+    , mod(mod)
     , alternate_shell(alternate_shell)
-    , params(params)
     , session_reactor(session_reactor)
     , verbose(verbose)
     {
