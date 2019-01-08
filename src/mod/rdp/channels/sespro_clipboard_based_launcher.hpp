@@ -25,12 +25,21 @@
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
 #include "core/session_reactor.hpp"
-#include "mod/rdp/rdp_params.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
+    public:
+    struct Params {
+        std::chrono::milliseconds   clipboard_initialization_delay_ms{};
+        std::chrono::milliseconds   start_delay_ms{};
+        std::chrono::milliseconds   long_delay_ms{};
+        std::chrono::milliseconds   short_delay_ms{};
+    };
+
+    private:
     enum class State {
         START,
         DELAY,
@@ -39,6 +48,9 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
         STOP
     } state = State::START;
 
+    Params params;
+
+    private:
     mod_api& mod;
 
     const std::string alternate_shell;
@@ -56,8 +68,6 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
-
-    ModRDPParams::SessionProbeClipBoardBasedLauncher params;
 
     float   delay_coefficient = 1.0f;
 
@@ -86,7 +96,7 @@ public:
         SessionReactor& session_reactor,
         mod_api& mod,
         const char* alternate_shell,
-        ModRDPParams::SessionProbeClipBoardBasedLauncher params,
+        Params params,
         RDPVerbose verbose)
     : mod(mod)
     , alternate_shell(alternate_shell)

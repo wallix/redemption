@@ -181,13 +181,41 @@ private:
         
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
         const bool enable_session_probe;
+
+        const bool                        use_session_probe_to_launch_remote_program;
+        std::string                       session_probe_arguments;
+        bool                              session_probe_customize_executable_name;
+        const std::chrono::milliseconds   session_probe_launch_timeout;
+        const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
+        const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
+        const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
+        const std::chrono::milliseconds   session_probe_keepalive_timeout;
+        const SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout;
+        const bool                        session_probe_end_disconnected_session;
+        const std::chrono::milliseconds   session_probe_disconnected_application_limit;
+        const std::chrono::milliseconds   session_probe_disconnected_session_limit;
+        const std::chrono::milliseconds   session_probe_idle_session_limit;
+        const bool                        session_probe_enable_log;
+        const bool                        session_probe_enable_log_rotation;
+        SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
+        const bool                        session_probe_allow_multiple_handshake;
+        const bool                        session_probe_enable_crash_dump;
+        const uint32_t                    session_probe_handle_usage_limit;
+        const uint32_t                    session_probe_memory_usage_limit;
+        const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
+        const bool                        session_probe_childless_window_as_unidentified_input_field;
+        const bool                        session_probe_public_session;
+        std::string                       session_probe_target_informations;
+        const std::string                 session_probe_extra_system_processes;
+        const std::string                 session_probe_outbound_connection_monitoring_rules;
+        const std::string                 session_probe_process_monitoring_rules;
+        const std::string                 session_probe_windows_of_these_applications_as_unidentified_input_field;
+        
         const bool use_application_driver;
         const bool disable_file_system_log_syslog;
         const bool disable_file_system_log_wrm;
         std::string proxy_managed_drive_prefix;
 
-        std::string                       session_probe_arguments;
-        bool                              session_probe_customize_executable_name;
         // TODO: target_application only exists while in constructor, remove it from here soon, or use std::string
         const char *                      target_application;
         const char *                      primary_user_id;
@@ -195,44 +223,8 @@ private:
 
 
 
-        const std::chrono::milliseconds   session_probe_launch_timeout;
-        const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
-        const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
-        const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
-        const std::chrono::milliseconds   session_probe_keepalive_timeout;
-        const SessionProbeOnKeepaliveTimeout
-                                          session_probe_on_keepalive_timeout;
-        const bool                        session_probe_end_disconnected_session;
-        const std::chrono::milliseconds   session_probe_disconnected_application_limit;
-        const std::chrono::milliseconds   session_probe_disconnected_session_limit;
-        const std::chrono::milliseconds   session_probe_idle_session_limit;
         const bool                        mod_rdp_params_session_probe_use_clipboard_based_launcher;
         const bool                        session_probe_use_clipboard_based_launcher;
-        const bool                        session_probe_enable_log;
-        const bool                        session_probe_enable_log_rotation;
-
-        const bool                        use_session_probe_to_launch_remote_program;
-
-        ModRDPParams::SessionProbeClipBoardBasedLauncher session_probe_clipboard_based_launcher;
-
-        const bool                        session_probe_allow_multiple_handshake;
-
-        const bool                        session_probe_enable_crash_dump;
-
-        const uint32_t                    session_probe_handle_usage_limit;
-        const uint32_t                    session_probe_memory_usage_limit;
-
-        const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
-
-        const bool                        session_probe_childless_window_as_unidentified_input_field;
-
-        const bool                        session_probe_public_session;
-
-        std::string session_probe_target_informations;
-        const std::string session_probe_extra_system_processes;
-        const std::string session_probe_outbound_connection_monitoring_rules;
-        const std::string session_probe_process_monitoring_rules;
-        const std::string session_probe_windows_of_these_applications_as_unidentified_input_field;
 
         uint16_t    client_execute_flags = 0;
         std::string client_execute_exe_or_file;
@@ -316,18 +308,12 @@ private:
             , disable_clipboard_log_wrm(mod_rdp_params.disable_clipboard_log_wrm)
             , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
             , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
-//            , session_probe_launcher
+
             , enable_session_probe(mod_rdp_params.enable_session_probe)
-            , use_application_driver(mod_rdp_params.alternate_shell
-                && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
-            , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
-            , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
-            , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
+            , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
+
             , session_probe_arguments(mod_rdp_params.session_probe_arguments)
             , session_probe_customize_executable_name(mod_rdp_params.session_probe_customize_executable_name)
-            , target_application(mod_rdp_params.target_application)
-            , primary_user_id(mod_rdp_params.primary_user_id)
-            , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
             , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
             , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
             , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
@@ -338,15 +324,8 @@ private:
             , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
             , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
             , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
-            , mod_rdp_params_session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher)
-            , session_probe_use_clipboard_based_launcher(this->mod_rdp_params_session_probe_use_clipboard_based_launcher 
-                                                        && (!this->target_application || !(*this->target_application)) 
-                                                        && (!mod_rdp_params.use_client_provided_alternate_shell 
-                                                            || !mod_rdp_params.alternate_shell[0] 
-                                                            || mod_rdp_params.remote_program))
             , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
             , session_probe_enable_log_rotation(mod_rdp_params.session_probe_enable_log_rotation)
-            , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
             , session_probe_clipboard_based_launcher(mod_rdp_params.session_probe_clipboard_based_launcher)
             , session_probe_allow_multiple_handshake(mod_rdp_params.session_probe_allow_multiple_handshake)
             , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
@@ -359,6 +338,21 @@ private:
             , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
             , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
             , session_probe_windows_of_these_applications_as_unidentified_input_field(mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field)
+
+            , use_application_driver(mod_rdp_params.alternate_shell
+                && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
+            , disable_file_system_log_syslog(mod_rdp_params.disable_file_system_log_syslog)
+            , disable_file_system_log_wrm(mod_rdp_params.disable_file_system_log_wrm)
+            , proxy_managed_drive_prefix(mod_rdp_params.proxy_managed_drive_prefix)
+            , target_application(mod_rdp_params.target_application)
+            , primary_user_id(mod_rdp_params.primary_user_id)
+            , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
+            , mod_rdp_params_session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher)
+            , session_probe_use_clipboard_based_launcher(this->mod_rdp_params_session_probe_use_clipboard_based_launcher 
+                                                        && (!this->target_application || !(*this->target_application)) 
+                                                        && (!mod_rdp_params.use_client_provided_alternate_shell 
+                                                            || !mod_rdp_params.alternate_shell[0] 
+                                                            || mod_rdp_params.remote_program))
             , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
             , remote_program(mod_rdp_params.remote_program)
             , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)

@@ -27,6 +27,7 @@
 #include "mod/rdp/rdp_verbose.hpp"
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 
 #include <chrono>
 #include <string>
@@ -96,12 +97,7 @@ struct ModRDPParams
     bool                         session_probe_enable_log = false;
     bool                         session_probe_enable_log_rotation = true;
 
-    struct SessionProbeClipBoardBasedLauncher {
-        std::chrono::milliseconds   clipboard_initialization_delay_ms{};
-        std::chrono::milliseconds   start_delay_ms{};
-        std::chrono::milliseconds   long_delay_ms{};
-        std::chrono::milliseconds   short_delay_ms{};
-    } session_probe_clipboard_based_launcher;
+    struct SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
 
     bool                         session_probe_allow_multiple_handshake = false;
 
