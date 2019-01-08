@@ -164,7 +164,7 @@ constant OBJ_EXE_DEPENDENCIES :
     $(GCOV_NO_BUILD)
 ;
 
-constant EXE_DEPENDENCIES :
+EXE_DEPENDENCIES +=
     <library>app_path_exe.o
     <library>log.o
     $(OBJ_EXE_DEPENDENCIES)
