@@ -28,82 +28,98 @@
 #include "core/RDP/channels/rdpdr.hpp"
 
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
+// #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_disk_config.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"
 
 #include <unordered_map>
 
+#include "utils/sugar/bytes_view.hpp"
+#include "core/FSCC/FileInformation.hpp"
 
-// [MS-RDPEFS]: Rmote Desktop Protocol: File System Virtual Channel Extension
-//
-//
-// 1.3.1 Protocol Initialization
-//
-// The following figure shows the initial packet sequence that initializes the protocol. The sequence of messages complies with the following set of rules. The first packet exchange, Server Announce Request/Client Announce Reply, simply consists of the client and server sides of the protocol exchanging version information that tells each side to which version it is speaking. The client sends a Client Name Request after sending a Client Announce Reply message. The Client Name Request contains a friendly display name for the client machine.
-//
-// The next exchange, Server Core Capability Request/Client Core Capability Response, is used to exchange capabilities between the client and the server to ensure that each side records what kinds of packets are supported by the remote side.
-//
-// After sending its Server Core Capability Request message, the server also sends a Server Client ID Confirm message confirming the client ID that was exchanged in the Server Announce Request/Client Announce Reply sequence.
-//
-// The last initialization message sequence is initiated by the client with the Client Device List Announce Request. This packet contains information for each device that is redirected. The packet contains all redirected devices, including non–file system devices. For example, it includes the list of printers (as specified in [MS-RDPEPC]), ports (as specified in [MS-RDPESP]), and smart cards (as specified in [MS-RDPESC]). Each client device is initialized separately. The server sends a Server Device Announce Response message that indicates success or failure for that initialization.
-//
-// +-----------+                                                 +-----------+
-// | Server FS |                                                 | TS Client |
-// |  Driver   |                                                 |           |
-// +-----+-----+                                                 +-----+-----+
-//       |                                                             |
-//       |                                                             |
-//       +------------------Server Announce Request------------------> |
-//       |                                                             |
-//       | <-----------------Client Announce Reply---------------------+
-//       |                                                             |
-//       | <------------------Client name Request----------------------+
-//       |                                                             |
-//       +-----------------Server Capability Request-----------------> |
-//       |                                                             |
-//       +-----------------Server Client ID Confirm------------------> |
-//       |                                                             |
-//       | <------------Client Core Capability Response----------------+
-//       |                                                             |
-//       | <---------Client Dev ice List Announce Request--------------+
-//       |                                                             |
-//       +--------Server Device Announce Response (device #1)--------> |
-//       |                                                             |
-//       +--------Server Device Announce Response (device #2)--------> |
-//       |                                                             |
-//
-// Figure 1: Protocol initialization
-//
-// In general, there is no distinguishable difference between the initial connection of the protocol and subsequent reconnections. After every disconnection, the protocol is torn down and completely re-initialized on the next connection. However, there is one difference in the protocol initialization sequence upon reconnection: if a user is already logged on, the server sends a Server User Logged On message according to the rules specified in section 3.3.5.1.5.
-//
-//
-// 1.3.2 Drive Redirection
-//
-// Drives can be announced or deleted at any point in time after the connection has been established. For example, Drive redirection sequence shows the sequence for adding and removing a file system drive. The first message pair, Client Device List Announce Request/Server Device Announce Response, is optional. If the device has been announced already in the Client Device List Announce as part of the protocol initialization, this pair is not required. But if the device has been discovered on the client after the initial sequence, this pair of messages is used to announce the device to the server. The client announces only one drive at a time in this case.
-//
-// The next pair of messages describes a series of I/O request messages exchanged between the client and the server. This set of messages describes the actual file system functionality redirection. Finally, the Client Drive Device List Remove message announces to the server that the file system drive has been removed from the client, and that all I/O to that device will fail in the future.
-//
-// +-----------+                                                 +-----------+
-// | Server FS |                                                 | TS Client |
-// |  Driver   |                                                 |           |
-// +-----+-----+                                                 +-----+-----+
-//       |                                                             |
-//       |                                                             |
-//       | <------------Client Drive Divece List Announce--------------+
-//       |                                                             |
-//       +---------------Server Device Announce Response-------------> |
-//       |                                                             |
-//       +------------------Server Drive I/O Request-----------------> |
-//       |                                                             |
-//       | <---------------Client Device I/O Response------------------+
-//       |                                                             |
-//       | <-------------Client Drive Device List Remove---------------+
-//       |                                                             |
-//
-// Figure 2: Drive redirection sequence
+#include <vector>
+#include <string>
 
+
+constexpr long long WINDOWS_TICK = 10000000;
+constexpr long long SEC_TO_UNIX_EPOCH = 11644473600LL;
+
+class ClientIODiskAPI {
+
+
+public:
+    virtual ~ClientIODiskAPI() = default;
+
+    struct FileStat
+    {
+        uint64_t LastAccessTime = 0;
+        uint64_t LastWriteTime  = 0;
+        uint64_t CreationTime   = 0;
+        uint64_t ChangeTime     = 0;
+        uint32_t FileAttributes = 0;
+
+        int64_t  AllocationSize = 0;
+        int64_t  EndOfFile      = 0;
+        uint32_t NumberOfLinks  = 0;
+        uint8_t  DeletePending  = 0;
+        uint8_t  Directory      = 0;
+    };
+
+    struct FileStatvfs
+    {
+        uint64_t VolumeCreationTime             = 0;
+        array_view_const_char VolumeLabel       = ""_av;
+        array_view_const_char FileSystemName    = "ext4"_av;
+
+        uint32_t FileSystemAttributes           = fscc::NEW_FILE_ATTRIBUTES;
+        uint32_t SectorsPerAllocationUnit       = 8;
+
+        uint32_t BytesPerSector                 = 0;
+        uint32_t MaximumComponentNameLength     = 0;
+        uint64_t TotalAllocationUnits           = 0;
+        uint64_t CallerAvailableAllocationUnits = 0;
+        uint64_t AvailableAllocationUnits       = 0;
+        uint64_t ActualAvailableAllocationUnits = 0;
+    };
+
+    unsigned WindowsTickToUnixSeconds(long long windowsTicks) {
+        return unsigned((windowsTicks / WINDOWS_TICK) - SEC_TO_UNIX_EPOCH);
+    }
+
+    long long UnixSecondsToWindowsTick(unsigned unixSeconds) {
+        return ((unixSeconds + SEC_TO_UNIX_EPOCH) * WINDOWS_TICK);
+    }
+
+    virtual bool ifile_good(const char * new_path) = 0;
+
+    virtual bool ofile_good(const char * new_path) = 0;
+
+    virtual int get_file_size(const char * path) = 0;
+
+    virtual bool dir_good(const char * new_path) = 0;
+
+    virtual void marke_dir(const char * new_path) = 0;
+
+    virtual FileStat get_file_stat(const char * file_to_request) = 0;
+
+    virtual FileStatvfs get_file_statvfs(const char * file_to_request) = 0;
+
+    virtual void read_data(
+        std::string const& file_to_tread, int offset, bytes_view data) = 0;
+
+    virtual bool set_elem_from_dir(std::vector<std::string> & elem_list, const std::string & str_dir_path) = 0;
+
+    virtual int get_device(const char * file_path) = 0;
+
+    virtual uint32_t get_volume_serial_number(int device) = 0;
+
+    virtual bool write_file(const char * file_to_write, const char * data, int data_len) = 0;
+
+    virtual bool remove_file(const char * file_to_remove) = 0;
+
+    virtual bool rename_file(const char * file_to_rename,  const char * new_name) = 0;
+};
 
 
 class ClientRDPDRChannel {

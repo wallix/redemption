@@ -203,8 +203,6 @@ public:
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) {
 
-
-
         uint32_t win_id = cmd.header.WindowId();
 
         switch (win_id) {

@@ -55,10 +55,7 @@ public:
 
     virtual ~ClientOutputGraphicAPI() = default;
 
-//     virtual void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) {
-//         this->config = config;
-//         this->controller = controller;
-//     }
+    
 
     virtual void set_ErrorMsg(std::string const & movie_path) = 0;
 

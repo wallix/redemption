@@ -194,7 +194,7 @@ struct AccountData
 };
 
 
-class ClientRedemptionConfig
+struct ClientRedemptionConfig
 {
 
 public:

@@ -20,43 +20,8 @@
 
 
 #include "utils/log.hpp"
-#include "utils/fixed_random.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/netutils.hpp"
-#include "utils/sugar/algostring.hpp"
 
-#include "acl/auth_api.hpp"
-
-#include "core/RDP/RDPDrawable.hpp"
-#include "core/channel_list.hpp"
-#include "core/channel_names.hpp"
-
-#include "mod/internal/replay_mod.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
-#include "mod/vnc/new_mod_vnc.hpp"
-
-#include "transport/crypto_transport.hpp"
-#include "transport/recorder_transport.hpp"
-#include "transport/replay_transport.hpp"
-#include "transport/socket_transport.hpp"
-
-#include "capture/wrm_capture.hpp"
-
-#include "client_redemption/client_config/client_redemption_config.hpp"
-
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_input_output_api/client_socket_api.hpp"
-
-#include "client_redemption/client_redemption_api.hpp"
-
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-
-#include "configs/config.hpp"
-#include "front/execute_events.hpp"
-
-#include "core/session_reactor.hpp"
+// #include "core/session_reactor.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 
 #include "client_redemption/client_redemption.hpp"

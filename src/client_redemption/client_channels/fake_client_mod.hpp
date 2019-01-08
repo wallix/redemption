@@ -24,16 +24,12 @@
 
 
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
-// #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
-
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
+#include "client_redemption/client_channels/client_rdpdr_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"

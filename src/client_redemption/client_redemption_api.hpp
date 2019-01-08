@@ -26,7 +26,17 @@
 #include <string>
 #include <ctime>
 
+class ClientInputSocketAPI
+{
+    // TODO private
+public:
+    mod_api * _callback = nullptr;
 
+    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
+    virtual void disconnect() = 0;
+
+    virtual ~ClientInputSocketAPI() = default;
+};
 
 class ClientRedemptionAPI : public FrontAPI
 {

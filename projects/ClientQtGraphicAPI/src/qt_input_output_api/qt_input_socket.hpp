@@ -25,8 +25,6 @@
 
 #include "utils/log.hpp"
 #include "core/session_reactor.hpp"
-//#include "client_redemption/client_redemption_api.hpp"
-#include "client_redemption/client_input_output_api/client_socket_api.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
@@ -69,7 +67,7 @@ public:
     ~QtInputSocket() {
         this->disconnect();
     }
-    
+
     void disconnect() override {
         if (this->_sckListener != nullptr) {
             delete (this->_sckListener);

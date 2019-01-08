@@ -52,8 +52,6 @@
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-// #include "client_redemption/client_input_output_api/client_socket_api.hpp"
-
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
@@ -63,26 +61,7 @@
 #include "front/execute_events.hpp"
 #include "RAIL/client_execute.hpp"
 
-class ClientInputSocketAPI
-{
-    // TODO private
-public:
-    mod_api * _callback = nullptr;
-//     ClientRedemptionAPI * client;
-/*
-    ClientInputSocketAPI(ClientRedemptionAPI * client)
-      : client(client) {}*/
 
-//     // TODO API ?????
-//     void set_client(ClientRedemptionAPI * client) {
-//         this->client = client;
-//     }
-
-    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
-    virtual void disconnect() = 0;
-
-    virtual ~ClientInputSocketAPI() = default;
-};
 
 class ClientRedemption : public ClientRedemptionAPI
 {
