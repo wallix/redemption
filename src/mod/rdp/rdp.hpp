@@ -1355,25 +1355,28 @@ public:
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
-        char session_probe_window_title[32] = { 0 };
-        if (this->remote_program) {
-            uint32_t const r = this->gen.rand32();
-
-            snprintf(session_probe_window_title,
-                sizeof(session_probe_window_title),
-                "%X%X%X%X",
-                ((r & 0xFF000000) >> 24),
-                ((r & 0x00FF0000) >> 16),
-                ((r & 0x0000FF00) >> 8),
-                  r & 0x000000FF
-                );
-        }
-
         char program[512] = {};
         char directory[512] = {};
 
+
         if (this->remote_program) {
             if (this->channels.enable_session_probe) {
+
+
+//                this->channels.init_remote_program_with_session_probe();
+
+                char session_probe_window_title[32] = { 0 };
+                uint32_t const r = this->gen.rand32();
+
+                snprintf(session_probe_window_title,
+                    sizeof(session_probe_window_title),
+                    "%X%X%X%X",
+                    ((r & 0xFF000000) >> 24),
+                    ((r & 0x00FF0000) >> 16),
+                    ((r & 0x0000FF00) >> 8),
+                      r & 0x000000FF
+                    );
+
                 if (mod_rdp_params.target_application 
                 && (*mod_rdp_params.target_application)) {
                     std::string shell_arguments = get_alternate_shell_arguments(
@@ -1455,6 +1458,21 @@ public:
                 }
             }
             else { // ! this->channels.enable_session_probe
+
+//                this->channels.init_remote_program_without_session_probe();
+
+                char session_probe_window_title[32] = { 0 };
+                uint32_t const r = this->gen.rand32();
+
+                snprintf(session_probe_window_title,
+                    sizeof(session_probe_window_title),
+                    "%X%X%X%X",
+                    ((r & 0xFF000000) >> 24),
+                    ((r & 0x00FF0000) >> 16),
+                    ((r & 0x0000FF00) >> 8),
+                      r & 0x000000FF
+                    );
+
                 if (mod_rdp_params.target_application 
                 && (*mod_rdp_params.target_application)) {
                     std::string shell_arguments = get_alternate_shell_arguments(
@@ -1503,6 +1521,11 @@ public:
         }
         else { // ! this->remote_program
             if (this->channels.enable_session_probe) {
+
+//                this->channels.init_no_remote_program_with_session_probe();
+
+                char session_probe_window_title[32] = { 0 };
+
                 if (mod_rdp_params.target_application 
                 && (*mod_rdp_params.target_application)) {
                     std::string shell_arguments = get_alternate_shell_arguments(
@@ -1604,8 +1627,10 @@ public:
                 }
             } // ! this->enable_session_probe
             else  {
-                if (mod_rdp_params.target_application 
-                && (*mod_rdp_params.target_application)) {
+
+//                this->channels.init_no_remote_program_no_session_probe();
+
+                if (mod_rdp_params.target_application  && (*mod_rdp_params.target_application)) {
                     std::string shell_arguments = get_alternate_shell_arguments(
                         mod_rdp_params.shell_arguments,
                         get_alternate_shell_arguments::App{mod_rdp_params.target_application},
@@ -1624,8 +1649,9 @@ public:
                     directory[sizeof(directory) - 1] = 0;
                 }
                 else {
-                    if (mod_rdp_params.use_client_provided_alternate_shell
-                        && info.alternate_shell[0] && !info.remote_program
+                    if (mod_rdp_params.use_client_provided_alternate_shell 
+                    && info.alternate_shell[0] 
+                    && !info.remote_program
                     ) {
                         std::string alternate_shell = info.alternate_shell;
                         std::string working_dir = info.working_dir;
