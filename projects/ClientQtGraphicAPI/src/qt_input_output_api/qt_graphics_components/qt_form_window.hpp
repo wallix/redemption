@@ -988,7 +988,70 @@ public:
     bool is_option_open;
     bool is_closing;
 
+    std::vector<IconMovieData> icons_movie_data;
 
+    void set_icon_movie_data(ClientRedemptionConfig & config) {
+        this->icons_movie_data.clear();
+
+        auto extension_av = ".mwrm"_av;
+
+        if (DIR * dir = opendir(config.REPLAY_DIR.c_str())) {
+            try {
+                while (struct dirent * ent = readdir (dir)) {
+                    std::string current_name = ent->d_name;
+
+                    if (current_name.length() > extension_av.size()) {
+
+                        std::string end_string(current_name.substr(
+                            current_name.length()-extension_av.size(), current_name.length()));
+
+                        if (end_string == extension_av.data()) {
+                            std::string file_path = str_concat(config.REPLAY_DIR, '/', current_name);
+
+                            unique_fd fd(file_path, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+
+                            if(fd.is_open()){
+                                std::string file_name(current_name.substr(0, current_name.length()-extension_av.size()));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+                                long int movie_len = ClientConfig::get_movie_time_length(file_path.c_str());
+
+                                ClientConfig::read_line(fd.fd(), file_version);
+                                ClientConfig::read_line(fd.fd(), file_resolution);
+                                ClientConfig::read_line(fd.fd(), file_checksum);
+
+                                this->icons_movie_data.emplace_back(
+                                                std::move(file_name),
+                                                std::move(file_path),
+                                                std::move(file_version),
+                                                std::move(file_resolution),
+                                                std::move(file_checksum),
+                                                movie_len);
+
+                            } else {
+                                LOG(LOG_WARNING, "Can't open file \"%s\"", file_path);
+                            }
+                        }
+                    }
+                }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
+
+        std::sort(this->icons_movie_data.begin(), this->icons_movie_data.end(), [](const IconMovieData& first, const IconMovieData& second) {
+                return first.file_name < second.file_name;
+            });
+    }
+
+    std::vector<IconMovieData> const& get_icon_movie_data(ClientRedemptionConfig & config) {
+
+        this->set_icon_movie_data(config);
+
+        return this->icons_movie_data;
+    }
 
     QtForm(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic)
         : QWidget()
@@ -1002,7 +1065,7 @@ public:
         , tabs(this)
         , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
         , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
-        , replay_tab(config->get_icon_movie_data(), controllers, this, config->REPLAY_DIR)
+        , replay_tab(this->get_icon_movie_data(*config), controllers, this, config->REPLAY_DIR)
         , is_option_open(false)
         , is_closing(false)
     {
@@ -1048,7 +1111,7 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->config->windowsData.form_x = points.x()-1;
         this->config->windowsData.form_y = points.y()-39;
-        this->config->writeWindowsData();
+        ClientConfig::writeWindowsData(this->config->windowsData);
         this->is_closing = true;
 
         if (this->is_option_open) {
@@ -1104,7 +1167,7 @@ public:
     }
 
     void init_form() {
-        if (this->config->is_no_win_data()) {
+        if (this->config->windowsData.no_data) {
             QDesktopWidget* desktop = QApplication::desktop();
             this->config->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
             this->config->windowsData.form_y = (desktop->height()/2) - (this->_height/2);

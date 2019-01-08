@@ -246,8 +246,6 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
-        this->config.set_icon_movie_data();
-
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
 
@@ -277,6 +275,9 @@ public:
             std::cout << std::endl;
         }
     }
+
+
+
 
     virtual bool is_connected() override {
         return this->config.connected;
@@ -344,7 +345,7 @@ public:
             LOG(LOG_INFO, "Replay closed.");
 
         }
-        this->config.set_icon_movie_data();
+//         this->config.set_icon_movie_data();
     }
 
     virtual void set_error_msg(const std::string & error) {
@@ -539,9 +540,9 @@ public:
 
     virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
 
-        this->config.writeWindowsData();
-        this->config.writeCustomKeyConfig();
-        this->config.writeClientInfo();
+        ClientConfig::writeWindowsData(this->config.windowsData);
+        ClientConfig::writeCustomKeyConfig(this->config);
+        ClientConfig::writeClientInfo(this->config);
 
         this->config.port          = port;
         this->config.target_IP     = ip;
@@ -639,6 +640,8 @@ public:
             this->update_keylayout();
 
             this->config.connected = this->init_mod();
+
+            ClientConfig::writeAccoundData(ip, name, pwd, port, this->config);
         }
     }
 

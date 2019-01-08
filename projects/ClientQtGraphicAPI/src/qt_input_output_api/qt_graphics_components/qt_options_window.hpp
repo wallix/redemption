@@ -377,13 +377,10 @@ public:
                 extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
                 name = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->label.text().toStdString();
             }
-            this->config->add_key_custom_definition(qtKeyID, scanCode, ASCII8, extended, name);
+            this->config->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
         }
 
-        //this->config->update_keylayout();
-
-        this->config->writeCustomKeyConfig();
-        //this->config->writeClientInfo();
+        ClientConfig::writeCustomKeyConfig(*(this->config));
     }
 
     void keyPressEvent(QKeyEvent *e) override {
@@ -451,7 +448,7 @@ public Q_SLOTS:
 
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
-            this->config->deleteCurrentProtile();
+            ClientConfig::deleteCurrentProtile(*(this->config));
             this->profilComboBox.removeItem(this->config->current_user_profil);
             this->changeProfil(0);
         }
@@ -776,7 +773,14 @@ public:
         if (this->remoteappCheckBox.isChecked()) {
             this->config->modRDPParamsData.enable_shared_remoteapp = true;
             this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
-            this->config->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
+
+            const std::string cmd = this->remoteapp_cmd.text().toStdString();
+            this->config->rDPRemoteAppConfig.full_cmd_line = cmd;
+            int pos = cmd.find(' ');
+            this->config->rDPRemoteAppConfig.source_of_ExeOrFile = cmd.substr(0, pos);
+            this->config->rDPRemoteAppConfig.source_of_Arguments = cmd.substr(pos + 1);
+
+
             this->config->rDPRemoteAppConfig.source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
             this->config->modRDPParamsData.enable_shared_remoteapp = false;

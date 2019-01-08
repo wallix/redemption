@@ -29,75 +29,11 @@ ClientRedemptionConfig::ClientRedemptionConfig(RDPVerbose verbose, const std::st
             ? MAIN_DIR.substr(0, MAIN_DIR.size() - 1)
             : MAIN_DIR)
 , verbose(verbose)
-//, _recv_disconnect_ultimatum(false)
-, wab_diag_question(false)
-, quick_connection_test(true)
-, persist(false)
-, time_out_disconnection(5000)
-, keep_alive_freq(100)
-, windowsData(this->WINDOWS_CONF)
 {}
 
 
 
-void ClientRedemptionConfig::set_icon_movie_data()
-{
-    this->icons_movie_data.clear();
-
-    auto extension_av = ".mwrm"_av;
-
-    if (DIR * dir = opendir(this->REPLAY_DIR.c_str())) {
-        try {
-            while (struct dirent * ent = readdir (dir)) {
-                std::string current_name = ent->d_name;
-
-                if (current_name.length() > extension_av.size()) {
-
-                    std::string end_string(current_name.substr(
-                        current_name.length()-extension_av.size(), current_name.length()));
-
-                    if (end_string == extension_av.data()) {
-                        std::string file_path = str_concat(this->REPLAY_DIR, '/', current_name);
-
-                        unique_fd fd(file_path, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
-
-                        if(fd.is_open()){
-                            std::string file_name(current_name.substr(0, current_name.length()-extension_av.size()));
-                            std::string file_version;
-                            std::string file_resolution;
-                            std::string file_checksum;
-                            long int movie_len = this->get_movie_time_length(file_path.c_str());
-
-                            this->read_line(fd.fd(), file_version);
-                            this->read_line(fd.fd(), file_resolution);
-                            this->read_line(fd.fd(), file_checksum);
-
-                            this->icons_movie_data.emplace_back(
-                                std::move(file_name),
-                                std::move(file_path),
-                                std::move(file_version),
-                                std::move(file_resolution),
-                                std::move(file_checksum),
-                                movie_len);
-
-                        } else {
-                            LOG(LOG_WARNING, "Can't open file \"%s\"", file_path);
-                        }
-                    }
-                }
-            }
-        } catch (Error & e) {
-            LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
-        }
-        closedir (dir);
-    }
-
-    std::sort(this->icons_movie_data.begin(), this->icons_movie_data.end(), [](const IconMovieData& first, const IconMovieData& second) {
-            return first.file_name < second.file_name;
-        });
-}
-
-time_t ClientRedemptionConfig::get_movie_time_length(const char * mwrm_filename) {
+time_t ClientConfig::get_movie_time_length(const char * mwrm_filename) {
     // TODO RZ: Support encrypted recorded file.
 
     CryptoContext cctx;
@@ -126,15 +62,6 @@ time_t ClientRedemptionConfig::get_movie_time_length(const char * mwrm_filename)
     return stop_time - start_time;
 }
 
-std::vector<IconMovieData> const& ClientRedemptionConfig::get_icon_movie_data() {
-
-    this->set_icon_movie_data();
-
-    return this->icons_movie_data;
-}
-
-
-
 void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {
     unique_fd file = unique_fd(config.WINDOWS_CONF.c_str(), O_RDWR, S_IRWXU | S_IRWXG | S_IRWXO);
 
@@ -144,33 +71,41 @@ void ClientConfig::openWindowsData(ClientRedemptionConfig & config)  {
         std::string line;
         int pos = 0;
 
-        config.read_line(file.fd(), line);
+        read_line(file.fd(), line);
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.form_x = std::stoi(line);
 
-        config.read_line(file.fd(), line);
+        read_line(file.fd(), line);
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.form_y = std::stoi(line);
 
-        config.read_line(file.fd(), line);
+        read_line(file.fd(), line);
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.screen_x = std::stoi(line);
 
-        config.read_line(file.fd(), line);
+        read_line(file.fd(), line);
         pos = line.find(' ');
         line = line.substr(pos, line.length());
         config.windowsData.screen_y = std::stoi(line);
     }
 }
 
-void ClientRedemptionConfig::writeWindowsData()
+void ClientConfig::writeWindowsData(WindowsData & config)
 {
-    this->windowsData.writeWindowsData();
-}
+    unique_fd fd(config.config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    if (fd.is_open()) {
+        std::string info = str_concat(
+            "form_x ", std::to_string(config.form_x), "\n"
+            "form_y ", std::to_string(config.form_y), "\n"
+            "screen_x ", std::to_string(config.screen_x), "\n"
+            "screen_y ", std::to_string(config.screen_y), '\n');
 
+        ::write(fd.fd(), info.c_str(), info.length());
+    }
+}
 
 void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config)
 {
@@ -408,14 +343,14 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
 }
 
 
-void ClientRedemptionConfig::writeCustomKeyConfig()  {
-    const std::string KEY_SETTING_PATH(this->MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH);
+void ClientConfig::writeCustomKeyConfig(ClientRedemptionConfig & config)  {
+    const std::string KEY_SETTING_PATH(config.MAIN_DIR + CLIENT_REDEMPTION_KEY_SETTING_PATH);
     unique_fd fd = unique_fd(KEY_SETTING_PATH.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
     if(fd.is_open()) {
         std::string to_write = "Key Setting\n\n";
 
-        for (KeyCustomDefinition & key : this->keyCustomDefinitions) {
+        for (KeyCustomDefinition & key : config.keyCustomDefinitions) {
             if (key.qtKeyID != 0) {
                 str_append(
                     to_write,
@@ -434,13 +369,8 @@ void ClientRedemptionConfig::writeCustomKeyConfig()  {
 }
 
 
-void ClientRedemptionConfig::add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name)  {
-    this->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
-}
 
-
-
-bool ClientRedemptionConfig::read_line(const int fd, std::string & line) {
+bool ClientConfig::read_line(const int fd, std::string & line) {
     line = "";
     if (fd < 0) {
         return false;
@@ -483,7 +413,7 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
         int accountNB(0);
         std::string line;
 
-        while(config.read_line(fd.fd(), line)) {
+        while(read_line(fd.fd(), line)) {
             auto pos(line.find(' '));
             std::string info = line.substr(pos + 1);
 
@@ -531,67 +461,65 @@ void ClientConfig::setAccountData(ClientRedemptionConfig & config)  {
 
 
 
-void ClientRedemptionConfig::writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port)  {
-    if (this->connected) {
+
+void ClientConfig::writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port, ClientRedemptionConfig & config)  {
+    if (config.connected) {
         bool alreadySet = false;
 
         std::string title(ip + " - " + name);
 
-        for (int i = 0; i < this->_accountNB; i++) {
-            if (this->_accountData[i].title == title) {
+        for (int i = 0; i < config._accountNB; i++) {
+            if (config._accountData[i].title == title) {
                 alreadySet = true;
-                this->_last_target_index = i;
-                this->_accountData[i].pwd  = pwd;
-                this->_accountData[i].port = port;
-                this->_accountData[i].options_profil  = this->current_user_profil;
+                config._last_target_index = i;
+                config._accountData[i].pwd  = pwd;
+                config._accountData[i].port = port;
+                config._accountData[i].options_profil  = config.current_user_profil;
             }
         }
 
         if (!alreadySet) {
             AccountData new_account;
-            this->_accountData.push_back(new_account);
-            this->_accountData[this->_accountNB].title = title;
-            this->_accountData[this->_accountNB].IP    = ip;
-            this->_accountData[this->_accountNB].name  = name;
-            this->_accountData[this->_accountNB].pwd   = pwd;
-            this->_accountData[this->_accountNB].port  = port;
-            this->_accountData[this->_accountNB].options_profil  = this->current_user_profil;
-            this->_accountData[this->_accountNB].protocol = this->mod_state;
-            this->_accountNB++;
+            config._accountData.push_back(new_account);
+            config._accountData[config._accountNB].title = title;
+            config._accountData[config._accountNB].IP    = ip;
+            config._accountData[config._accountNB].name  = name;
+            config._accountData[config._accountNB].pwd   = pwd;
+            config._accountData[config._accountNB].port  = port;
+            config._accountData[config._accountNB].options_profil  = config.current_user_profil;
+            config._accountData[config._accountNB].protocol = config.mod_state;
+            config._accountNB++;
 
-//             if (this->_accountNB > MAX_ACCOUNT_DATA) {
-//                 this->_accountNB = MAX_ACCOUNT_DATA;
-//             }
-            this->_last_target_index = this->_accountNB;
+            config._last_target_index = config._accountNB;
         }
 
-        unique_fd file = unique_fd(this->USER_CONF_LOG.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+        unique_fd file = unique_fd(config.USER_CONF_LOG.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if(file.is_open()) {
 
             std::string to_write = str_concat(
-                (this->_save_password_account ? "save_pwd true\n" : "save_pwd false\n"),
+                (config._save_password_account ? "save_pwd true\n" : "save_pwd false\n"),
                 "last_target ",
-                std::to_string(this->_last_target_index),
+                std::to_string(config._last_target_index),
                 "\n\n");
 
-            for (int i = 0; i < this->_accountNB; i++) {
+            for (int i = 0; i < config._accountNB; i++) {
                 str_append(
                     to_write,
-                    "title ", this->_accountData[i].title, "\n"
-                    "IP "   , this->_accountData[i].IP   , "\n"
-                    "name " , this->_accountData[i].name , "\n"
-                    "protocol ", std::to_string(this->_accountData[i].protocol), '\n');
+                    "title ", config._accountData[i].title, "\n"
+                    "IP "   , config._accountData[i].IP   , "\n"
+                    "name " , config._accountData[i].name , "\n"
+                    "protocol ", std::to_string(config._accountData[i].protocol), '\n');
 
-                if (this->_save_password_account) {
-                    str_append(to_write, "pwd ", this->_accountData[i].pwd, "\n");
+                if (config._save_password_account) {
+                    str_append(to_write, "pwd ", config._accountData[i].pwd, "\n");
                 } else {
                     to_write += "pwd \n";
                 }
 
                 str_append(
                     to_write,
-                    "port ", std::to_string(this->_accountData[i].port), "\n"
-                    "options_profil ", std::to_string(this->_accountData[i].options_profil), "\n"
+                    "port ", std::to_string(config._accountData[i].port), "\n"
+                    "options_profil ", std::to_string(config._accountData[i].options_profil), "\n"
                     "\n");
             }
 
@@ -601,20 +529,8 @@ void ClientRedemptionConfig::writeAccoundData(const std::string& ip, const std::
 }
 
 
-
-void ClientRedemptionConfig::set_remoteapp_cmd_line(const std::string & cmd)  {
-    this->rDPRemoteAppConfig.full_cmd_line = cmd;
-    int pos = cmd.find(' ');
-    this->rDPRemoteAppConfig.source_of_ExeOrFile = cmd.substr(0, pos);
-    this->rDPRemoteAppConfig.source_of_Arguments = cmd.substr(pos + 1);
-}
-
-bool ClientRedemptionConfig::is_no_win_data()  {
-    return this->windowsData.no_data;
-}
-
-void ClientRedemptionConfig::deleteCurrentProtile()  {
-    unique_fd file_to_read = unique_fd(this->USER_CONF_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+void ClientConfig::deleteCurrentProtile(ClientRedemptionConfig & config)  {
+    unique_fd file_to_read = unique_fd(config.USER_CONF_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
     if(file_to_read.is_open()) {
 
         std::string new_file_content = "current_user_profil_id 0\n";
@@ -622,14 +538,14 @@ void ClientRedemptionConfig::deleteCurrentProtile()  {
 
         std::string line;
 
-        this->read_line(file_to_read.fd(), line);
+        ClientConfig::read_line(file_to_read.fd(), line);
 
-        while(this->read_line(file_to_read.fd(), line)) {
+        while(ClientConfig::read_line(file_to_read.fd(), line)) {
             if (ligne_to_jump == 0) {
                 int pos = line.find(' ');
                 std::string info = line.substr(pos + 1);
 
-                if (line.compare(0, pos, "id") == 0 && std::stoi(info) == this->current_user_profil) {
+                if (line.compare(0, pos, "id") == 0 && std::stoi(info) == config.current_user_profil) {
                     ligne_to_jump = 18;
                 } else {
                     str_append(new_file_content, line, '\n');
@@ -641,32 +557,32 @@ void ClientRedemptionConfig::deleteCurrentProtile()  {
 
         file_to_read.close();
 
-        unique_fd file_to_read = unique_fd(this->USER_CONF_PATH.c_str(), O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+        unique_fd file_to_read = unique_fd(config.USER_CONF_PATH.c_str(), O_WRONLY, S_IRWXU | S_IRWXG | S_IRWXO);
             ::write(file_to_read.fd(), new_file_content.c_str(), new_file_content.length());
     }
 }
 
 
 
-void ClientRedemptionConfig::writeClientInfo()  {
+void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
 
-    unique_fd file = unique_fd(this->USER_CONF_PATH.c_str(), O_WRONLY| O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    unique_fd file = unique_fd(config.USER_CONF_PATH.c_str(), O_WRONLY| O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
     if(file.is_open()) {
 
         std::string to_write = str_concat(
-            "current_user_profil_id ", std::to_string(this->current_user_profil), '\n');
+            "current_user_profil_id ", std::to_string(config.current_user_profil), '\n');
 
         bool not_reading_current_profil = true;
         std::string ligne;
-        while(this->read_line(file.fd(), ligne)) {
+        while(read_line(file.fd(), ligne)) {
             if (!ligne.empty()) {
                 std::size_t pos = ligne.find(' ');
 
                 if (ligne.compare(pos+1, std::string::npos, "id") == 0) {
                     to_write += '\n';
                     int read_id = std::stoi(ligne);
-                    not_reading_current_profil = !(read_id == this->current_user_profil);
+                    not_reading_current_profil = !(read_id == config.current_user_profil);
                 }
 
                 if (not_reading_current_profil) {
@@ -679,34 +595,36 @@ void ClientRedemptionConfig::writeClientInfo()  {
 
         str_append(
             to_write,
-            "\nid ", std::to_string(this->userProfils[this->current_user_profil].id), "\n"
-            "name ", this->userProfils[this->current_user_profil].name, "\n"
-            "keylayout ", std::to_string(this->info.keylayout), "\n"
-            "brush_cache_code ", std::to_string(this->info.brush_cache_code), "\n"
-            "bpp ", std::to_string(static_cast<int>(this->info.screen_info.bpp)), "\n"
-            "width ", std::to_string(this->rdp_width), "\n"
-            "height ", std::to_string(this->rdp_height), "\n"
-            "rdp5_performanceflags ", std::to_string(static_cast<int>(this->info.rdp5_performanceflags)), "\n"
-            "monitorCount ", std::to_string(this->info.cs_monitor.monitorCount), "\n"
-            "span ", std::to_string(this->is_spanning), "\n"
-            "record ", std::to_string(this->is_recording),"\n"
-            "tls ", std::to_string(this->modRDPParamsData.enable_tls), "\n"
-            "nla ", std::to_string(this->modRDPParamsData.enable_nla), "\n"
-            "sound ", std::to_string(this->modRDPParamsData.enable_sound), "\n"
-            "console_mode ", std::to_string(this->info.console_session), "\n"
-            "enable_shared_clipboard ", std::to_string(this->enable_shared_clipboard), "\n"
-            "enable_shared_virtual_disk ", std::to_string(this->modRDPParamsData.enable_shared_virtual_disk), "\n"
-            "enable_shared_remoteapp ", std::to_string(this->modRDPParamsData.enable_shared_remoteapp), "\n"
-            "share-dir ", this->SHARE_DIR, "\n"
-            "remote-exe ", this->rDPRemoteAppConfig.full_cmd_line, "\n"
-            "remote-dir ", this->rDPRemoteAppConfig.source_of_WorkingDir, "\n"
-            "vnc-applekeyboard ", std::to_string(this->modVNCParamsData.is_apple), "\n"
-            "mod ", std::to_string(static_cast<int>(this->mod_state)) , "\n"
+            "\nid ", std::to_string(config.userProfils[config.current_user_profil].id), "\n"
+            "name ", config.userProfils[config.current_user_profil].name, "\n"
+            "keylayout ", std::to_string(config.info.keylayout), "\n"
+            "brush_cache_code ", std::to_string(config.info.brush_cache_code), "\n"
+            "bpp ", std::to_string(static_cast<int>(config.info.screen_info.bpp)), "\n"
+            "width ", std::to_string(config.rdp_width), "\n"
+            "height ", std::to_string(config.rdp_height), "\n"
+            "rdp5_performanceflags ", std::to_string(static_cast<int>(config.info.rdp5_performanceflags)), "\n"
+            "monitorCount ", std::to_string(config.info.cs_monitor.monitorCount), "\n"
+            "span ", std::to_string(config.is_spanning), "\n"
+            "record ", std::to_string(config.is_recording),"\n"
+            "tls ", std::to_string(config.modRDPParamsData.enable_tls), "\n"
+            "nla ", std::to_string(config.modRDPParamsData.enable_nla), "\n"
+            "sound ", std::to_string(config.modRDPParamsData.enable_sound), "\n"
+            "console_mode ", std::to_string(config.info.console_session), "\n"
+            "enable_shared_clipboard ", std::to_string(config.enable_shared_clipboard), "\n"
+            "enable_shared_virtual_disk ", std::to_string(config.modRDPParamsData.enable_shared_virtual_disk), "\n"
+            "enable_shared_remoteapp ", std::to_string(config.modRDPParamsData.enable_shared_remoteapp), "\n"
+            "share-dir ", config.SHARE_DIR, "\n"
+            "remote-exe ", config.rDPRemoteAppConfig.full_cmd_line, "\n"
+            "remote-dir ", config.rDPRemoteAppConfig.source_of_WorkingDir, "\n"
+            "vnc-applekeyboard ", std::to_string(config.modVNCParamsData.is_apple), "\n"
+            "mod ", std::to_string(static_cast<int>(config.mod_state)) , "\n"
         );
 
         ::write(file.fd(), to_write.c_str(), to_write.length());
     }
 }
+
+
 
 void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
     //config.current_user_profil = 0;
@@ -792,7 +710,7 @@ void ClientConfig::setUserProfil(ClientRedemptionConfig & config)  {
     unique_fd fd = unique_fd(config.USER_CONF_PATH.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
     if(fd.is_open()) {
         std::string line;
-        config.read_line(fd.fd(), line);
+        read_line(fd.fd(), line);
         auto pos(line.find(' '));
         if (line.compare(0, pos, "current_user_profil_id") == 0) {
             config.current_user_profil = std::stoi(line.substr(pos + 1));
@@ -811,7 +729,7 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
         int read_id(-1);
         std::string line;
 
-        while(config.read_line(fd.fd(), line)) {
+        while(read_line(fd.fd(), line)) {
 
             auto pos(line.find(' '));
             std::string info = line.substr(pos + 1);
@@ -927,7 +845,7 @@ void ClientConfig::setCustomKeyConfig(ClientRedemptionConfig & config)  {
 
         std::string ligne;
 
-        while(config.read_line(fd.fd(), ligne)) {
+        while(read_line(fd.fd(), ligne)) {
 
             int pos(ligne.find(' '));
 
@@ -969,3 +887,4 @@ void ClientConfig::setCustomKeyConfig(ClientRedemptionConfig & config)  {
         }
     }
 }
+

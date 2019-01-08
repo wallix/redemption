@@ -152,7 +152,7 @@ public:
     void create_replay_screen() override {
         QPixmap * map = &(this->cache);
 
-        this->screen = new ReplayQtScreen(this->controller, this, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
+        this->screen = new ReplayQtScreen(this->controller, this, map, ClientConfig::get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
     }
 
     QWidget * get_static_qwidget() {
@@ -366,7 +366,7 @@ public:
 
                     if (!this->config->is_pre_loading) {
 
-                        this->screen = new ReplayQtScreen(this->controller, this, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
+                        this->screen = new ReplayQtScreen(this->controller, this, &(this->cache), ClientConfig::get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
 
                         this->screen->show();
                     }
@@ -409,7 +409,7 @@ public:
 
         if (is_v2_wrm) {
             this->balises.clear();
-            long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
+            long int movie_length = ClientConfig::get_movie_time_length(movie_path.c_str());
             this->form->hide();
 
             if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {

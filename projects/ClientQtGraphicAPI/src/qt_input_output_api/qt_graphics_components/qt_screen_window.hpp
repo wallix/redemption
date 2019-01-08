@@ -101,7 +101,7 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->win_data->screen_x = points.x()-1;            //-1;
         this->win_data->screen_y = points.y()-39;           //-39;
-        this->win_data->writeWindowsData();
+        ClientConfig::writeWindowsData(*(this->win_data));
 
         if (!this->_connexionLasted) {
             this->client_graphic_api->close();

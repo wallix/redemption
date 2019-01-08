@@ -53,6 +53,7 @@ public:
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
+
 };
 
 

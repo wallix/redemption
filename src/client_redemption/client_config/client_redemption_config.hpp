@@ -178,24 +178,7 @@ struct WindowsData
     int screen_y = 0;
 
     bool no_data = true;
-
-    WindowsData(std::string config_file_path)
-      : config_file_path(std::move(config_file_path))
-    {}
-
-    void writeWindowsData()
-    {
-        unique_fd fd(this->config_file_path.c_str(), O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        if (fd.is_open()) {
-            std::string info = str_concat(
-                "form_x ", std::to_string(this->form_x), "\n"
-                "form_y ", std::to_string(this->form_y), "\n"
-                "screen_x ", std::to_string(this->screen_x), "\n"
-                "screen_y ", std::to_string(this->screen_y), '\n');
-
-            ::write(fd.fd(), info.c_str(), info.length());
-        }
-    }
+    
 };
 
 struct AccountData
@@ -215,7 +198,7 @@ class ClientRedemptionConfig
 {
 
 public:
-    std::vector<IconMovieData> icons_movie_data;
+
 
     const std::string    MAIN_DIR/* = CLIENT_REDEMPTION_MAIN_PATH*/;
     const std::string    REPLAY_DIR     = MAIN_DIR + CLIENT_REDEMPTION_REPLAY_PATH;
@@ -253,19 +236,19 @@ public:
     RDPVerbose        verbose;
     //bool                _recv_disconnect_ultimatum;
     ClientInfo           info;
-    bool wab_diag_question;
+    bool wab_diag_question = false;
 
     RDPClipboardConfig rDPClipboardConfig;
     RDPDiskConfig      rDPDiskConfig;
     RDPSoundConfig     rDPSoundConfig;
     RDPRemoteAppConfig rDPRemoteAppConfig;
 
-    bool quick_connection_test;
+    bool quick_connection_test = false;
 
-    bool persist;
+    bool persist = false;
 
-    std::chrono::milliseconds time_out_disconnection;
-    int keep_alive_freq;
+    std::chrono::milliseconds time_out_disconnection = std::chrono::milliseconds(5000);
+    int keep_alive_freq = 100;
 
     WindowsData windowsData;
 
@@ -319,48 +302,28 @@ public:
 
     ClientRedemptionConfig(RDPVerbose verbose, const std::string &MAIN_DIR );
 
-//     ~ClientRedemptionConfig() = default;
-
-    void set_icon_movie_data();
-
-    time_t get_movie_time_length(const char * mwrm_filename);
-
-    std::vector<IconMovieData> const& get_icon_movie_data();
-
-//     void parse_options(int argc, char const* const argv[]);
-
-//     void openWindowsData();
-
-    void writeWindowsData();
-
-    void writeCustomKeyConfig();
-
-//     void setAccountData();
-
-    void add_key_custom_definition(int qtKeyID, int scanCode, const std::string & ASCII8, int extended, const std::string & name);
-
-    bool read_line(const int fd, std::string & line);
-
-    void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port);
-
-    void set_remoteapp_cmd_line(const std::string & cmd);
-
-    bool is_no_win_data();
-
-    void deleteCurrentProtile();
-
-    void writeClientInfo();
-
 };
 
 
 namespace ClientConfig {
+
 void setDefaultConfig(ClientRedemptionConfig & config);
 void setUserProfil(ClientRedemptionConfig & config);
 void setClientInfo(ClientRedemptionConfig & config);
 void setCustomKeyConfig(ClientRedemptionConfig & config);
 void setAccountData(ClientRedemptionConfig & config);
 void openWindowsData(ClientRedemptionConfig & config);
+
 void parse_options(int argc, char const* const argv[], ClientRedemptionConfig & config);
 void set_config(int argc, char const* const argv[], ClientRedemptionConfig & config);
+
+void writeWindowsData(WindowsData & config);
+void writeCustomKeyConfig(ClientRedemptionConfig & config);
+void writeClientInfo(ClientRedemptionConfig & config);
+void deleteCurrentProtile(ClientRedemptionConfig & config);
+void writeAccoundData(const std::string& ip, const std::string& name, const std::string& pwd, const int port, ClientRedemptionConfig & config);
+
+bool read_line(const int fd, std::string & line);
+time_t get_movie_time_length(const char * mwrm_filename);
+
 }
