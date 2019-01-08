@@ -170,7 +170,7 @@ struct RDPRemoteAppConfig
 
 struct WindowsData
 {
-    const std::string config_file_path;
+    std::string config_file_path;
 
     int form_x = 0;
     int form_y = 0;
@@ -178,7 +178,7 @@ struct WindowsData
     int screen_y = 0;
 
     bool no_data = true;
-    
+
 };
 
 struct AccountData
@@ -198,8 +198,6 @@ class ClientRedemptionConfig
 {
 
 public:
-
-
     const std::string    MAIN_DIR/* = CLIENT_REDEMPTION_MAIN_PATH*/;
     const std::string    REPLAY_DIR     = MAIN_DIR + CLIENT_REDEMPTION_REPLAY_PATH;
     const std::string    USER_CONF_LOG  = MAIN_DIR + CLIENT_REDEMPTION_LOGINS_PATH;
@@ -243,7 +241,7 @@ public:
     RDPSoundConfig     rDPSoundConfig;
     RDPRemoteAppConfig rDPRemoteAppConfig;
 
-    bool quick_connection_test = false;
+    bool quick_connection_test = true;
 
     bool persist = false;
 

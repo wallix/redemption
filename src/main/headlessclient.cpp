@@ -92,8 +92,6 @@ public:
             if (this->headless_socket.start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                 this->start_wab_session_time = tvtime();
-
-                this->config.writeAccoundData(ip, name, pwd, port);
             }
         }
     }

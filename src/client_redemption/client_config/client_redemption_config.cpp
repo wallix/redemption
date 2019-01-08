@@ -666,6 +666,7 @@ void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {
             &config.CB_TEMP_DIR,
             &config.DATA_CONF_DIR,
             &config.SOUND_TEMP_DIR
+//             &config.WINDOWS_CONF
         }) {
             if (!pstr->empty()) {
                 if (!file_exist(pstr->c_str())) {
@@ -719,6 +720,8 @@ void ClientConfig::setUserProfil(ClientRedemptionConfig & config)  {
 }
 
 void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
+    config.windowsData.config_file_path = config.WINDOWS_CONF;
+
     config.userProfils.clear();
     config.userProfils.emplace_back(0, "Default");
 
