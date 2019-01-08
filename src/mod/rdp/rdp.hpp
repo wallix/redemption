@@ -1369,8 +1369,6 @@ public:
                 );
         }
 
-        std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
-
         char program[512] = {};
         char directory[512] = {};
 
@@ -1404,6 +1402,7 @@ public:
                     }
 
                     this->channels.client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                    std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
                     this->channels.client_execute_arguments   = session_probe_arguments;
                     this->channels.client_execute_working_dir = "%TMP%";
                     this->channels.client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
@@ -1434,6 +1433,7 @@ public:
                         alternate_shell.erase(0, 2);
                     }
 
+                    std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
                     str_append(alternate_shell, ' ', session_probe_arguments);
 
                     strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
@@ -1471,6 +1471,7 @@ public:
                         this->channels.real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
 
                         this->channels.client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                        std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
                         this->channels.client_execute_arguments   = session_probe_arguments;
                         this->channels.client_execute_working_dir = "%TMP%";
                         this->channels.client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
@@ -1503,6 +1504,7 @@ public:
                         alternate_shell.erase(0, 2);
                     }
 
+                    std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
                     str_append(alternate_shell, ' ', session_probe_arguments);
 
                     strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
@@ -1530,6 +1532,7 @@ public:
                     alternate_shell.erase(0, 2);
                 }
 
+                std::string session_probe_arguments = this->channels.get_session_probe_arguments(session_probe_window_title);
                 str_append(alternate_shell, ' ', session_probe_arguments);
 
                 if (this->channels.session_probe_use_clipboard_based_launcher) {
