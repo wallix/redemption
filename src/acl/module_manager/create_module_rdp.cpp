@@ -137,10 +137,10 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.session_probe_exe_or_file           = ini.get<cfg::mod_rdp::session_probe_exe_or_file>();
     mod_rdp_params.session_probe_arguments             = ini.get<cfg::mod_rdp::session_probe_arguments>();
 
-    mod_rdp_params.session_probe_clipboard_based_launcher_clipboard_initialization_delay = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
-    mod_rdp_params.session_probe_clipboard_based_launcher_start_delay                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
-    mod_rdp_params.session_probe_clipboard_based_launcher_long_delay                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
-    mod_rdp_params.session_probe_clipboard_based_launcher_short_delay                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
+    mod_rdp_params.session_probe_clipboard_based_launcher.clipboard_initialization_delay_ms = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay>();
+    mod_rdp_params.session_probe_clipboard_based_launcher.start_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_start_delay>();
+    mod_rdp_params.session_probe_clipboard_based_launcher.long_delay_ms                     = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_long_delay>();
+    mod_rdp_params.session_probe_clipboard_based_launcher.short_delay_ms                    = ini.get<cfg::mod_rdp::session_probe_clipboard_based_launcher_short_delay>();
 
     mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = ini.get<cfg::mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check>();
 

@@ -15,7 +15,7 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
+  Author(s): Christophe Grosjean, Meng Tauth_rail_exec_an, Jennifer Inthavong
 
   Protocol layer for communication with ACL
   Updating context dictionnary from incoming acl traffic

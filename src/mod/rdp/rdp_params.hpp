@@ -96,10 +96,12 @@ struct ModRDPParams
     bool                         session_probe_enable_log = false;
     bool                         session_probe_enable_log_rotation = true;
 
-    std::chrono::milliseconds    session_probe_clipboard_based_launcher_clipboard_initialization_delay {};
-    std::chrono::milliseconds    session_probe_clipboard_based_launcher_start_delay {};
-    std::chrono::milliseconds    session_probe_clipboard_based_launcher_long_delay {};
-    std::chrono::milliseconds    session_probe_clipboard_based_launcher_short_delay {};
+    struct SessionProbeClipBoardBasedLauncher {
+        std::chrono::milliseconds   clipboard_initialization_delay_ms{};
+        std::chrono::milliseconds   start_delay_ms{};
+        std::chrono::milliseconds   long_delay_ms{};
+        std::chrono::milliseconds   short_delay_ms{};
+    } session_probe_clipboard_based_launcher;
 
     bool                         session_probe_allow_multiple_handshake = false;
 
@@ -295,10 +297,10 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_log_rotation);
 
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_clipboard_initialization_delay);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_start_delay);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_long_delay);
-        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher_short_delay);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.clipboard_initialization_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.start_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.long_delay_ms);
+        RDP_PARAMS_LOG("%u",     from_millisec,         session_probe_clipboard_based_launcher.short_delay_ms);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_allow_multiple_handshake);
 
