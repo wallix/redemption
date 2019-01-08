@@ -3168,14 +3168,17 @@ private:
                         ::linux_to_windows_newline_convert(
                             ::char_ptr_cast(this->clipboard_data_ctx.clipboard_data().data()),
                             this->clipboard_data_ctx.clipboard_data().size(),
-                            ::char_ptr_cast(out_stream.get_data()+8),
-                            out_stream.get_capacity()-8
-                        );
+                            ::char_ptr_cast(out_stream.get_data() + RDPECLIP::CliprdrHeader::size()),
+                            out_stream.get_capacity() - RDPECLIP::CliprdrHeader::size() -
+                                1   // Null character
+                        ) +
+                        1;  // Null character
+                    *(out_stream.get_data() + RDPECLIP::CliprdrHeader::size() + to_rdp_clipboard_data_length - 1) = '\x0';  // Null character
 
                     RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, to_rdp_clipboard_data_length);
                     const RDPECLIP::FormatDataResponsePDU format_data_response_pdu;
                     header.emit(out_stream);
-                    format_data_response_pdu.emit(out_stream, out_stream.get_data()+8, to_rdp_clipboard_data_length);
+                    format_data_response_pdu.emit(out_stream, out_stream.get_data() + RDPECLIP::CliprdrHeader::size(), to_rdp_clipboard_data_length);
                     this->send_clipboard_pdu_to_front(out_stream);
 
                     if (bool(this->verbose & VNCVerbose::clipboard)) {
