@@ -147,7 +147,7 @@
 
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
-"#   2: passwords and unidentified texts are masked\n"
+"#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section\n"
 "#   3: keyboard input are fully masked\n"
 "#_hidden\n"
 "#keyboard_input_masking_level = 2\n\n"

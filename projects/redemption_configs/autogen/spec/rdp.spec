@@ -55,7 +55,7 @@ use_session_probe_to_launch_remote_program = boolean(default=True)
 
 #   0: keyboard input are not masked
 #   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
+#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
 #   3: keyboard input are fully masked
 keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 

@@ -104,7 +104,7 @@ inline void config_type_definition(type_enumerations & e)
     e.enumeration_list("KeyboardInputMaskingLevel")
       .value("unmasked", "keyboard input are not masked")
       .value("password_only", "only passwords are masked")
-      .value("password_and_unidentified", "passwords and unidentified texts are masked")
+      .value("password_and_unidentified", "passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section")
       .value("fully_masked", "keyboard input are fully masked")
     ;
 

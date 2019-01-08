@@ -262,7 +262,7 @@ enum class KeyboardInputMaskingLevel {
     unmasked = 0,
     // only passwords are masked
     password_only = 1,
-    // passwords and unidentified texts are masked
+    // passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
     password_and_unidentified = 2,
     // keyboard input are fully masked
     fully_masked = 3,
