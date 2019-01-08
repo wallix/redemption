@@ -25,7 +25,8 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "client_redemption/client_input_output_api/client_sound_api.hpp"
+// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
+#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4

@@ -31,7 +31,6 @@
 #include "utils/fileutils.hpp"
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 
 #include <QtCore/QMimeData>
@@ -72,6 +71,20 @@ REDEMPTION_DIAGNOSTIC_POP
 
 public:
 
+    enum : int {
+        FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
+        IMAGE_BUFFER_TYPE                = 1,
+        TEXT_BUFFER_TYPE                 = 2
+    };
+
+    uint16_t    _bufferTypeID = 0;
+    int         _bufferTypeNameIndex = 0;
+    bool        _local_clipboard_stream = true;
+    size_t      _cliboard_data_length = 0;
+    int         _cItems = 0;
+
+    std::string tmp_path;
+
     enum : uint16_t {
           CF_QT_CLIENT_FILEGROUPDESCRIPTORW = 48025
         , CF_QT_CLIENT_FILECONTENTS         = 48026
@@ -107,7 +120,8 @@ public:
 
 
     QtInputOutputClipboard(ClientCLIPRDRChannel * channel, const std::string & path, QWidget * parent)
-        : QObject(parent), ClientIOClipboardAPI(path)
+        : QObject(parent), ClientIOClipboardAPI()
+        , tmp_path(path)
         , _clipboard(QApplication::clipboard())
         , channel(channel)
     {
@@ -125,6 +139,22 @@ public:
             oFile.write(reinterpret_cast<const char *>(data), data_len);
             oFile.close();
         }
+    }
+
+    void set_local_clipboard_stream(bool val) override {
+        this->_local_clipboard_stream = val;
+    }
+
+    uint16_t get_buffer_type_id() override {
+        return this->_bufferTypeID;
+    }
+
+    size_t get_cliboard_data_length() override {
+        return this->_cliboard_data_length;
+    }
+
+    int get_citems_number() override {
+        return this->_cItems;
     }
 
     void setClipboard_files(std::string const& name) override {  //std::vector<Front_RDP_Qt_API::CB_FilesList::CB_in_Files> items_list) {

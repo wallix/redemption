@@ -536,7 +536,7 @@ RED_AUTO_TEST_CASE(TestCLIPRDRChannelFileCopyFromClientToServer)
 
     // COPY from clipboard
     clip_io._bufferTypeID = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
-    clip_io._bufferTypeNameIndex = ClientIOClipboardAPI::FILEGROUPDESCRIPTORW_BUFFER_TYPE;
+    clip_io._bufferTypeNameIndex = FakeClientIOClipboard::FILEGROUPDESCRIPTORW_BUFFER_TYPE;
     clip_io.fileName = "filename.name";
     clip_io.size = sizeof(clip_data_total);
     clip_io._chunk = std::make_unique<uint8_t[]>(sizeof(clip_data_total));

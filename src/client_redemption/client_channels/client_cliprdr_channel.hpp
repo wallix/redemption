@@ -24,6 +24,10 @@
 #pragma once
 
 #include <unordered_map>
+#include "gdi/screen_info.hpp"
+#include "utils/image_data_view.hpp"
+
+#include <string>
 
 #include "utils/log.hpp"
 #include "utils/sugar/cast.hpp"
@@ -31,92 +35,46 @@
 #include "core/RDP/clipboard.hpp"
 
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/rdp_clipboard_config.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"
 
 
 
-// [MS-RDPECLIP]: Remote Desktop Protocol: CLIpboard Virtual Channel Extension
-//
-//
-// 1.3.2.1 Initialization Sequence
-//
-// The goal of the Initialization Sequence is to establish the client and the server capabilities, exchange settings, and synchronize the initial state of the client and server clipboards.
-//
-// +-----------+                                                 +-----------+
-// |  Client   |                                                 |  Server   |
-// |           |                                                 |           |
-// +-----+-----+                                                 +-----+-----+
-//       |                                                             |
-//       |                                                             |
-//       | <------------Server Clipboard Capabilities PDU--------------+
-//       |                                                             |
-//       | <-------------------Monitor Ready PDU-----------------------+
-//       |                                                             |
-//       +--------------Client Clipboard Capabilities PDU------------> |
-//       |                                                             |
-//       +------------------Temporary Directory PDU------------------> | (optional)
-//       |                                                             |
-//       +---------------------Format List PDU-----------------------> |
-//       |                                                             |
-//       | <----------------Format List Response PDU-------------------+
-//       |                                                             |
-//
-// Figure 1: Clipboard Redirection Initialization Sequence
-//
-//     The server sends a Clipboard Capabilities PDU to the client to advertise the capabilities that it supports.
-//
-//      The server sends a Monitor Ready PDU to the client.
-//
-//     Upon receiving the Monitor Ready PDU, the client transmits its capabilities to the server by using a Clipboard Capabilities PDU.
-//
-//     The client sends the Temporary Directory PDU to inform the server of a location on the client file system that can be used to deposit files being copied to the client. To make use of this location, the server has to be able to access it directly. At this point, the client and the server capability negotiation is complete.
-//
-//     The final stage of the Initialization Sequence involves synchronizing the Clipboard Formats on the server clipboard with the client. This is accomplished by effectively mimicking a copy operation on the client by forcing it to send a Format List PDU.
-//
-//     The server responds with a Format List Response PDU.
-//
-//
-// 1.3.2.2 Data Transfer Sequences
-//
-// The goal of the Data Transfer Sequences is to perform a copy or paste operation. The diagram that follows presents a possible data transfer sequence.
-//
-// +-----------+                                                 +-----------+
-// |  Shared   |                                                 |   Local   |
-// | Clipboard |                                                 | Clipboard |
-// |   Owner   |                                                 |   Owner   |
-// +-----+-----+                                                 +-----+-----+
-//       |                                                             |
-//       |                                                             |
-//       +------------------------Format List PDU--------------------> |
-//       |                                                             |
-//       | <-----------------Format List Response PDU------------------+
-//       |                                                             |
-//       | <------------Lock Clipboard Data PDU (Optional)-------------+
-//       |                                                             |
-//       | <-----------------Format Data Request PDU-------------------+
-//       |                                                             |
-//       +-------------------Format Data Response PDU----------------> |
-//       |                                                             |
-//       | <----------------File Contents Request PDU------------------+ (if file data)
-//       |                                                             |
-//       +-----------------File Contents Response PDU----------------> | (if file data)
-//       |                                                             |
-//       | <------------Unlock Clipboard Data PDU (Optional)-----------+
-//       |                                                             |
-//
-// Figure 2: Data transfer using the shared clipboard
-//
-//     The sequence of messages for a copy operation is the same for all format
-//     types, as specified in section 1.3.2.2.1.
-//
-//     However, the messages exchanged to transfer File Stream data during a
-//     paste operation differs from those used to transfer other format data,
-//     as specified in section 1.3.2.2.3.
+class ClientIOClipboardAPI
+{
+
+public:
+    virtual ~ClientIOClipboardAPI() = default;
+
+    // control state
+    virtual void emptyBuffer() = 0;
+    virtual void set_local_clipboard_stream(bool val) = 0;
+
+    //  set distant clipboard data
+    virtual void setClipboard_text(std::string const& str) = 0;
+    virtual void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) = 0;
+    virtual void setClipboard_files(std::string const& name) = 0;
+    virtual void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) = 0;
+
+    //  get local clipboard data
+    virtual uint16_t get_buffer_type_id() = 0;
+    virtual uint8_t * get_text() = 0;
+    virtual int get_citems_number() = 0;
+    virtual size_t get_cliboard_data_length() = 0;
+
+    virtual ConstImageDataView get_image() = 0;
+
+    // TODO should be `array_view_const_u8 (get_text + get_cliboard_data_length)`
+    // files data (file index to identify a file among a files group descriptor)
+    virtual std::string get_file_item_name(int index) = 0;
+
+    // TODO should be `array_view_const_char get_file_item_size(int index)`
+    virtual array_view_char get_file_item(int index) = 0;
 
 
+};
 
 class ClientCLIPRDRChannel
 {

@@ -22,17 +22,18 @@
 */
 
 
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+
 #include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 // #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_sound_api.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
+// #include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
 #include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
 
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
+#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
@@ -109,9 +110,22 @@ public:
     size_t size = 42;
     std::string fileName;
 
+    enum : int {
+        FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
+        IMAGE_BUFFER_TYPE                = 1,
+        TEXT_BUFFER_TYPE                 = 2
+    };
+
+    uint16_t    _bufferTypeID = 0;
+    int         _bufferTypeNameIndex = 0;
+    bool        _local_clipboard_stream = true;
+    size_t      _cliboard_data_length = 0;
+    int         _cItems = 0;
+
+    std::string tmp_path;
 
     FakeClientIOClipboard()
-      : ClientIOClipboardAPI("") {}
+      : ClientIOClipboardAPI() {}
 
     void emptyBuffer() override {}
 
@@ -135,6 +149,7 @@ public:
         (void) image_height;
         (void) bpp;
     }
+
     void setClipboard_files(std::string const& /*name*/) override {}
 
     void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
@@ -153,7 +168,20 @@ public:
     std::string get_file_item_name(int /*index*/) override {
         return this->fileName;
     }
+
+    void set_local_clipboard_stream(bool ) override {}
+    uint16_t get_buffer_type_id() override {return this->_bufferTypeID;}
+    int get_citems_number() override {return this->_cItems;}
+    size_t get_cliboard_data_length() override {return this->_cliboard_data_length;}
+    ConstImageDataView get_image() override {
+        return ConstImageDataView(
+            byte_ptr_cast(""),
+            0, 0, 0, ConstImageDataView::BitsPerPixel{},
+            ConstImageDataView::Storage::TopToBottom
+        );
+    }
 };
+
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
 
