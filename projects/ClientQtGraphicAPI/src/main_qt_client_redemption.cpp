@@ -127,6 +127,11 @@ public:
         this->qt_graphic.init_form();
     }
 
+    void close() override {
+        this->qt_graphic.close();
+        this->disconnect("", false);
+    }
+
     void update_keylayout() override {
         this->qt_rdp_keylayout.update_keylayout(this->config.info.keylayout);
 

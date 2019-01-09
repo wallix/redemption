@@ -81,8 +81,10 @@ public:
         this->cmd_launch_conn();
     }
 
-   ~ClientRedemptionHeadless() = default;
+    ~ClientRedemptionHeadless() = default;
 
+
+    void close() override {}
 
     virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         ClientRedemption::connect(ip, name, pwd, port);

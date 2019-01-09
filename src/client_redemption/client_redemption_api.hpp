@@ -53,6 +53,7 @@ public:
     virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
+    virtual void close() = 0;
     virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void update_keylayout() {}

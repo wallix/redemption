@@ -33,7 +33,56 @@
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 #include "client_redemption/mod_wrapper/client_channel_mod.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
+
+
+class ClientRemoteAppGraphicAPI : public gdi::GraphicApi
+{
+public:
+    ClientCallback * controller;
+    ClientRedemptionConfig * config;
+
+    const int screen_max_width;
+    const int screen_max_height;
+
+    ClientRedemptionAPI * client_replay;
+
+
+    ClientRemoteAppGraphicAPI(ClientCallback * controller, ClientRedemptionConfig * config, int max_width, int max_height)
+      : controller(controller)
+      , config(config)
+      , screen_max_width(max_width)
+      , screen_max_height(max_height)
+    {}
+
+    virtual ~ClientRemoteAppGraphicAPI() = default;
+
+
+    // remote app
+
+    virtual void create_remote_app_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/) {}
+
+    virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
+
+    virtual void set_screen_size(uint32_t  /*unused*/, int  x, int  y) = 0;
+
+    virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
+
+    virtual int get_visible_width(uint32_t  /*unused*/) {return 0;}
+
+    virtual int get_visible_height(uint32_t  /*unused*/) {return 0;}
+
+    virtual int get_mem_width(uint32_t  /*unused*/) {return 0;}
+
+    virtual int get_mem_height(uint32_t  /*unused*/) {return 0;}
+
+    virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
+
+    virtual void show_screen(uint32_t  /*unused*/) = 0;
+
+    virtual void clear_remote_app_screen() {}
+
+};
+
 
 
 // [MS-RDPERP]: Remote Desktop Protocol: Remote Programs Virtual Channel Extension
@@ -159,7 +208,7 @@ class ClientRemoteAppChannel {
 
     ClientCallback * callback;
     ClientChannelMod * channel_mod;
-    ClientOutputGraphicAPI * impl_graphic;
+    ClientRemoteAppGraphicAPI * impl_graphic;
 
     std::string source_of_ExeOrFile;
     std::string source_of_WorkingDir;
@@ -184,7 +233,7 @@ public:
       , channel_mod(channel_mod)
       {}
 
-    void set_api(ClientOutputGraphicAPI * impl_graphic) {
+    void set_api(ClientRemoteAppGraphicAPI * impl_graphic) {
         this->impl_graphic = impl_graphic;
     }
 

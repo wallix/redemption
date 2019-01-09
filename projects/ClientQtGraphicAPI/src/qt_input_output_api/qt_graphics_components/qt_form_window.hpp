@@ -25,21 +25,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
-
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
-
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
-
-
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
@@ -75,6 +69,7 @@
 #include <vector>
 
 
+
 class IconMovie :  public QWidget
 {
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -83,7 +78,6 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-//     ClientRedemptionConfig * config;
     ClientCallback * controllers;
 
     int _width;
@@ -103,7 +97,6 @@ public:
     IconMovie(ClientCallback * controllers, const IconMovieData & iconData,
         QWidget * parent)
       : QWidget(parent)
-//       , config(config)
       , controllers(controllers)
       , _width(385)
       , _height(60)
@@ -733,10 +726,15 @@ public:
             }
         }
     }
-
 };
 
 
+class FormApi
+{
+public:
+    virtual void options() = 0;
+    virtual ~FormApi() = default;
+};
 
 class QtFormTab : public FormTabAPI
 {
@@ -751,7 +749,9 @@ public:
     ClientRedemptionConfig * config;
     uint8_t protocol_type;
     ClientCallback * controllers;
-    ClientOutputGraphicAPI * graphic;
+//     ClientOutputGraphicAPI * graphic;
+
+    FormApi * form;
 
     const int            _width;
     const int            _height;
@@ -769,12 +769,14 @@ public:
     QtOptions * options;
 
 
-    QtFormTab(ClientRedemptionConfig * config, ClientCallback * controllers, uint8_t protocol_type, QWidget * parent, ClientOutputGraphicAPI * graphic)
+
+
+    QtFormTab(ClientRedemptionConfig * config, ClientCallback * controllers, uint8_t protocol_type, QWidget * parent, FormApi * form)
         : FormTabAPI(parent)
         , config(config)
         , protocol_type(protocol_type)
         , controllers(controllers)
-        , graphic(graphic)
+        , form(form)
         , _width(400)
         , _height(600)
         , grid_layout(this)
@@ -785,9 +787,9 @@ public:
         , _buttonOptions("Options", this)
     {
         if (protocol_type & ClientRedemptionConfig::MOD_RDP) {
-            this->options = new QtRDPOptions(config, this->controllers, this->graphic, this);
+            this->options = new QtRDPOptions(config, this->controllers, /*this->graphic,*/ this);
         } else {
-            this->options = new QtVNCOptions(config, this->controllers, this->graphic, this);
+            this->options = new QtVNCOptions(config, this->controllers, /*this->graphic,*/ this);
         }
 //         this->setMinimumHeight(360);
 //         this->setAccountData();
@@ -954,13 +956,13 @@ private Q_SLOTS:
     }
 
     void optionsReleased() {
-        this->graphic->open_options();
+        this->form->options();
     }
 };
 
 
 
-class QtForm : public QWidget
+class QtForm : public QWidget, public FormApi
 {
 
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -971,7 +973,6 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     ClientRedemptionConfig * config;
     ClientCallback * controllers;
-    ClientOutputGraphicAPI * graphic;
 
     const int _width;
     const int _height;
@@ -986,7 +987,6 @@ public:
     QtFormReplay       replay_tab;
 
     bool is_option_open;
-    bool is_closing;
 
     std::vector<IconMovieData> icons_movie_data;
 
@@ -1053,21 +1053,19 @@ public:
         return this->icons_movie_data;
     }
 
-    QtForm(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic)
+    QtForm(ClientRedemptionConfig * config, ClientCallback * controllers)
         : QWidget()
         , config(config)
         , controllers(controllers)
-        , graphic(graphic)
         , _width(460)
         , _height(375)
         , _long_height(690)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
-        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
+        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, this)
+        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, this)
         , replay_tab(this->get_icon_movie_data(*config), controllers, this, config->REPLAY_DIR)
         , is_option_open(false)
-        , is_closing(false)
     {
         this->setWindowTitle("ReDemPtion Client");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -1112,8 +1110,6 @@ public:
         this->config->windowsData.form_x = points.x()-1;
         this->config->windowsData.form_y = points.y()-39;
         ClientConfig::writeWindowsData(this->config->windowsData);
-        this->is_closing = true;
-
         if (this->is_option_open) {
             this->options();
         }
@@ -1175,7 +1171,7 @@ public:
         this->move(this->config->windowsData.form_x, this->config->windowsData.form_y);
     }
 
-    void options() {
+    void options() override {
         if (this->is_option_open) {
             this->RDP_tab.options->hide();
             this->RDP_tab._buttonOptions.setText("Options v");
