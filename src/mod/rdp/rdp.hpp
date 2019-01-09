@@ -240,17 +240,9 @@ private:
         std::string real_alternate_shell;
         std::string real_working_dir;
 
-        const bool remote_program;
-        const bool remote_program_enhanced;
-
-
         data_size_type max_clipboard_data = 0;
         data_size_type max_rdpdr_data     = 0;
         data_size_type max_drdynvc_data   = 0;
-
-        const bool enable_rdpdr_data_analysis;
-
-        const RDPVerbose verbose;
 
         std::unique_ptr<VirtualChannelDataSender>     clipboard_to_client_sender;
         std::unique_ptr<VirtualChannelDataSender>     clipboard_to_server_sender;
@@ -272,6 +264,9 @@ private:
         std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
         SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
+        const bool remote_program;
+        const bool remote_program_enhanced;
+
         std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_client_sender;
         std::unique_ptr<VirtualChannelDataSender>     remote_programs_to_server_sender;
 
@@ -284,6 +279,8 @@ private:
         RDPECLIP::CliprdrLogState cliprdrLogStatus;
         rdpdr::RdpDrStatus rdpdrLogStatus;
 
+        const bool enable_rdpdr_data_analysis;
+        const RDPVerbose verbose;
 
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message, Random & gen)
             : authorization_channels(
@@ -828,7 +825,6 @@ private:
                         const bool bogus_refresh_rect,
                         const bool allow_using_multiple_monitors, // TODO duplicate monitor_count ?
                         const uint32_t monitor_count,
-                        const bool remote_program,
                         GeneralCaps const & client_general_caps,
                         const char (& client_name)[128]
                     ) {
@@ -1192,9 +1188,6 @@ private:
     bool enable_multipatblt;
     bool enable_multiscrblt;
 
-    const bool remote_program;
-    const bool remote_program_enhanced;
-
     //uint64_t total_data_received;
 
     bool deactivation_reactivation_in_progress = false;
@@ -1317,8 +1310,6 @@ public:
         , enable_multiopaquerect(false)
         , enable_multipatblt(false)
         , enable_multiscrblt(false)
-        , remote_program(mod_rdp_params.remote_program)
-        , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
@@ -1359,7 +1350,7 @@ public:
         char directory[512] = {};
 
 
-        if (this->remote_program) {
+        if (this->channels.remote_program) {
             if (this->channels.enable_session_probe) {
 
 
@@ -1800,7 +1791,7 @@ public:
             if (this->first_scancode && !(device_flags & 0x8000) &&
                 (!this->channels.enable_session_probe ||
                  !this->channels.session_probe_launcher->is_keyboard_sequences_started() ||
-                 this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this,*this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->client_general_caps, this->client_name).has_been_launched())
+                 this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this,*this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name).has_been_launched())
                ) {
                 LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
 
@@ -3239,7 +3230,7 @@ public:
                 }
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
-                if (this->remote_program) {
+                if (this->channels.remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
@@ -4489,7 +4480,7 @@ public:
 
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
                     (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
-                    this->remote_program) {
+                    this->channels.remote_program) {
                     if ((0 != lei.ErrorNotificationType) ||
                         (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
                         (!this->remoteapp_bypass_legal_notice_delay.count())) {
@@ -5683,7 +5674,7 @@ private:
         InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
     ) {
         (void)session_probe_channel;
-        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->client_general_caps, this->client_name);
+        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
 
         std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -5746,7 +5737,7 @@ private:
             fsvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
 
             this->channels.file_system_drive_manager.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->client_general_caps, this->client_name);
+            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
             spvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
             this->channels.session_probe_virtual_channel_p = &spvc;
             if (!this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
@@ -5755,7 +5746,7 @@ private:
             this->channels.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
             this->channels.session_probe_launcher->set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
 
-            if (this->remote_program) {
+            if (this->channels.remote_program) {
                 RemoteProgramsVirtualChannel& rpvc = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
                 rpvc.set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
                 rpvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
@@ -5764,12 +5755,12 @@ private:
         }
         else // this->channels.this->session_probe_launcher)
         {
-            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->remote_program, this->client_general_caps, this->client_name);
+            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
             this->channels.session_probe_virtual_channel_p = &spvc;
             if (!this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
                 spvc.start_launch_timeout_timer();
             }
-            if (this->remote_program) {
+            if (this->channels.remote_program) {
                 RemoteProgramsVirtualChannel& rpvc =
                     this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
                 rpvc.set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
@@ -5799,7 +5790,7 @@ public:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
-        if (this->remote_program) {
+        if (this->channels.remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
@@ -5814,7 +5805,7 @@ public:
     // TODO: this should move to channels, but we need a jump relay as it comes through mod_api
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
             uint16_t exec_result) override {
-        if (this->remote_program) {
+        if (this->channels.remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
@@ -5827,7 +5818,7 @@ public:
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
         uint16_t exec_result, uint32_t raw_result) override {
-        if (this->remote_program) {
+        if (this->channels.remote_program) {
             RemoteProgramsVirtualChannel& rpvc =
                 this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
 
