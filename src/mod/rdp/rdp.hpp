@@ -1799,8 +1799,8 @@ public:
     }   // configure_extra_orders
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
-        if ((UP_AND_RUNNING == this->connection_finalization_state) &&
-            !this->input_event_disabled) {
+        if ((UP_AND_RUNNING == this->connection_finalization_state) 
+            && !this->input_event_disabled) {
 
             if (this->first_scancode && !(device_flags & 0x8000) &&
                 (!this->channels.enable_session_probe ||
@@ -1866,6 +1866,7 @@ public:
     }
 
 public:
+    // TODO: move to channels (and also remains here as it is mod API)
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
         InStream & chunk, size_t length, uint32_t flags
@@ -1909,6 +1910,7 @@ public:
 private:
 
 private:
+    // TODO: move to channels
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
         if (!this->channels.enable_rdpdr_data_analysis
@@ -1945,6 +1947,7 @@ private:
         channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
     }
 
+    // TODO: move to channels
     void send_to_mod_drdynvc_channel(const CHANNELS::ChannelDef */* rdpdr_channel*/,
                                      InStream & chunk, size_t length, uint32_t flags) {
 
@@ -1955,7 +1958,7 @@ private:
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
-
+    // TODO: move to channels
     void send_auth_channel_data(const char * string_data) override {
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -1972,6 +1975,7 @@ public:
     }
 
 private:
+    // TODO: move to channels (and also remains here as it is mod API)
     void send_checkout_channel_data(const char * string_data) override {
         CHANNELS::VirtualChannelPDU virtual_channel_pdu;
 
@@ -1990,6 +1994,7 @@ private:
           , stream_data.get_offset());
     }
 
+    // TODO: move to channels
     void send_to_channel(
         const CHANNELS::ChannelDef & channel,
         uint8_t const * chunk, std::size_t chunk_size,
