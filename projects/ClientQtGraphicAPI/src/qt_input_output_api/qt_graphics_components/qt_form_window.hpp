@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Clément Moroldo, Jonathan Poelen
-
 */
 
 #pragma once
@@ -318,15 +317,6 @@ private Q_SLOTS:
                                                 this->replay_default_dir.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
-
-//         auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
-//         int pos = str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin());
-//
-//         std::string const movie_name = (last_delimiter_it == str_movie_path.rend())
-//         ? str_movie_path
-//         : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
-//
-//         std::string const movie_dir = str_movie_path.substr(0, pos);
 
         this->controllers->replay(str_movie_path);
     }

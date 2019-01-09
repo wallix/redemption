@@ -23,13 +23,12 @@
 
 
 
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
 #include "client_redemption/client_channels/client_cliprdr_channel.hpp"
 #include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_channels/client_rdpdr_channel.hpp"
+#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
@@ -188,44 +187,44 @@ public:
 };
 
 
-class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
+class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI {
 
 public:
-    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientOutputGraphicAPI(controller, config, 0, 0) {}
+    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
 
-    void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
+//     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
+//
+//     void dropScreen() override {}
+//     void dropScreen(uint32_t /*unused*/) override {}
+//
+//     void show_screen() override {}
+//     void show_screen(uint32_t /*unused*/) override {}
+//
+//     void reset_cache(int w,  int h) override { (void)w; (void)h; }
+//
+//     void create_screen() override {}
+//     void create_replay_screen() override {}
+//
+//     void close() override {}
 
-    void dropScreen() override {}
-    void dropScreen(uint32_t /*unused*/) override {}
+//     void set_screen_size(int x, int y) override { (void)x; (void)y; }
+//     void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
 
-    void show_screen() override {}
-    void show_screen(uint32_t /*unused*/) override {}
-
-    void reset_cache(int w,  int h) override { (void)w; (void)h; }
-
-    void create_screen() override {}
-    void create_replay_screen() override {}
-
-    void close() override {}
-
-    void set_screen_size(int x, int y) override { (void)x; (void)y; }
-    void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
-
-    void update_screen() override {}
-
-    void init_form() override {}
+//     void update_screen() override {}
+//
+//     void init_form() override {}
 
 
     // TODO bpp -> gdi::Depth
-    FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
-    {
-        (void)width;
-        (void)height;
-        (void)bpp;
-        return FrontAPI::ResizeResult::done;
-    }
+//     FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
+//     {
+//         (void)width;
+//         (void)height;
+//         (void)bpp;
+//         return FrontAPI::ResizeResult::done;
+//     }
 
-    using ClientOutputGraphicAPI::draw;
+//     using ClientOutputGraphicAPI::draw;
 
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
@@ -319,10 +318,8 @@ public:
     FakeRDPChannelsMod fake_mod;
 
     FakeClient() = default;
-    // FakeClient(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
-    // {
-    //     this->mod = &(this->fake_mod);
-    // }
+
+    void close() override {}
 
     size_t get_total_stream_produced() {
         return this->fake_mod.index_in;

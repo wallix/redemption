@@ -96,7 +96,6 @@ public:
 
 
 
-
 class QtOptions : public QWidget
 {
 

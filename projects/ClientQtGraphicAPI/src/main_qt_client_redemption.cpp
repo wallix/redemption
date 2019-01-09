@@ -21,7 +21,6 @@
 
 #include "utils/log.hpp"
 
-// #include "core/session_reactor.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 
 #include "client_redemption/client_redemption.hpp"

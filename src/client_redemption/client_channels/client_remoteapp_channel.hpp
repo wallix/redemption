@@ -63,7 +63,7 @@ public:
 
     virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void set_screen_size(uint32_t  /*unused*/, int  x, int  y) = 0;
+    virtual void set_screen_size(uint32_t  /*unused*/, int , int ) {}
 
     virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
@@ -77,7 +77,7 @@ public:
 
     virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
 
-    virtual void show_screen(uint32_t  /*unused*/) = 0;
+    virtual void show_screen(uint32_t  /*unused*/) {}
 
     virtual void clear_remote_app_screen() {}
 
