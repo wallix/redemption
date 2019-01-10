@@ -237,26 +237,37 @@ void ClientRDPSNDChannel::receive(InStream & chunk) {
                 LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU");
             }
 
+            LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 1");
+
             if (this->impl_sound) {
+                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 2");
                 uint8_t data[] = {'\0'};
+                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 3");
                 this->impl_sound->setData(data, 1);
+                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 4");
                 this->impl_sound->play();
+                LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 5");
 //                 LOG(LOG_INFO, "ClientRDPSNDChannel::receive play!!!");
             }
+
+            LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 6");
 
             StaticOutStream<16> out_stream;
             rdpsnd::RDPSNDPDUHeader header(rdpsnd::SNDC_WAVECONFIRM, 4);
             header.emit(out_stream);
+            LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 7");
             rdpsnd::WaveConfirmPDU wc(this->last_wTimeStamp, this->last_cBlockNo);
             wc.emit(out_stream);
 
             InStream chunk_to_send(out_stream.get_bytes());
 
+            LOG(LOG_INFO, "SERVER >> RDPEA: Wave PDU 8");
+
             this->callback->send_to_mod_channel( channel_names::rdpsnd
-                                                    , chunk_to_send
-                                                    , out_stream.get_offset()
-                                                    , this->channel_flags
-                                                    );
+                                                , chunk_to_send
+                                                , out_stream.get_offset()
+                                                , this->channel_flags
+                                                );
             if (bool(this->verbose & RDPVerbose::rdpsnd)) {
                 LOG(LOG_INFO, "CLIENT >> RDPEA: Wave Confirm PDU");
             }

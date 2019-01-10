@@ -58,27 +58,16 @@ public:
 
 
     // remote app
-
     virtual void create_remote_app_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/, int  /*unused*/) {}
-
     virtual void move_screen(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
-
     virtual void set_screen_size(uint32_t  /*unused*/, int , int ) {}
-
     virtual void set_pixmap_shift(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
-
     virtual int get_visible_width(uint32_t  /*unused*/) {return 0;}
-
     virtual int get_visible_height(uint32_t  /*unused*/) {return 0;}
-
     virtual int get_mem_width(uint32_t  /*unused*/) {return 0;}
-
     virtual int get_mem_height(uint32_t  /*unused*/) {return 0;}
-
     virtual void set_mem_size(uint32_t  /*unused*/, int  /*unused*/, int  /*unused*/) {}
-
     virtual void show_screen(uint32_t  /*unused*/) {}
-
     virtual void clear_remote_app_screen() {}
 
 };

@@ -81,11 +81,7 @@ public:
       , q_key_code(0)
       , label("Press a Key", this)
       , key_not_assigned(true)
-      {
-//           qApp->installEventFilter(this);
-
-          //this->installEventFilter(this);
-      }
+      {}
 
     void set_key(int q_key_code, const std::string & q_key_name) {
         this->q_key_code = q_key_code;
@@ -111,7 +107,6 @@ public:
     };
     ClientRedemptionConfig * config;
     ClientCallback * controllers;
-//     ClientOutputGraphicAPI * graphic;
 
     const int            _width;
     const int            _height;
@@ -157,12 +152,10 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, /*ClientOutputGraphicAPI * graphic,*/ QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
         : QWidget(parent)
         , config(config)
-//         , _front(front)
         , controllers(controllers)
-//         , graphic(graphic)
         , _width(410)
         , _height(330)
 
@@ -546,8 +539,8 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers, /*ClientOutputGraphicAPI * graphic,*/ QWidget * parent)
-        : QtOptions(config, controllers, /*graphic,*/ parent)
+    QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers,  QWidget * parent)
+        : QtOptions(config, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
         , _labelTls("TLS :", this)
@@ -858,8 +851,8 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, /*ClientOutputGraphicAPI * graphic,*/ QWidget * parent)
-      : QtOptions(config, controllers, /*graphic,*/ parent)
+    QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, QWidget * parent)
+      : QtOptions(config, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
     {

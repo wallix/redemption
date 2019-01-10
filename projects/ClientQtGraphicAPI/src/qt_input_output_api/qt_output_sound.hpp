@@ -130,8 +130,9 @@ public:
 
                 if (this->total_wav_files > this->current_wav_index) {
                     this->current_wav_index++;
+                    std::string wav_file_name =  ":/DATA/sound_temp/sound";
+                    wav_file_name += std::to_string(this->current_wav_index) + ".wav";
 
-                    std::string wav_file_name =  ":/DATA/sound_temp/sound" + std::to_string(this->current_wav_index) + ".wav";
                     LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
                     Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));

@@ -114,6 +114,7 @@ int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, Client
 int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
+    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
     SessionReactor session_reactor;
 

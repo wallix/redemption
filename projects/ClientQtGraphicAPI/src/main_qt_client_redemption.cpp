@@ -65,7 +65,7 @@ public:
         this->qt_graphic.init_form();
 
         if (this->config.help_mode) {
-            this->qt_graphic.form->close();
+            this->qt_graphic.close();
         } else {
             this->cmd_launch_conn();
         }
@@ -318,9 +318,8 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = to_verbose_flags(0x0)/*RDPVerbose::rdpsnd*/;
+    RDPVerbose verbose = to_verbose_flags(0x0);
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
-
     ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 
     ClientRedemptionQt client_qt(session_reactor, config);

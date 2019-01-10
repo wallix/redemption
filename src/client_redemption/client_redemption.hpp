@@ -71,7 +71,6 @@ public:
 
 private:
     CryptoContext     cctx;
-
     std::unique_ptr<Transport> socket;
 
 public:
