@@ -980,6 +980,143 @@ private:
             assert(!out_asynchronous_task);
         }   // process_cliprdr_event
 
+
+        void process_auth_event(
+            const CHANNELS::ChannelDef & auth_channel,
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+            FrontAPI& front,
+            mod_api & mod_rdp,
+            ServerTransportContext & stc,
+            AsynchronousTaskContainer & asynchronous_tasks,
+            GeneralCaps const & client_general_caps,
+            const char (& client_name)[128],
+            AuthApi& authentifier
+           ) {
+            (void)length;
+            (void)chunk_size;
+            assert(stream.in_remain() == chunk_size);
+
+            if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+                (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+            {
+                LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
+                return;
+            }
+
+            std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+
+            this->auth_channel_flags  = flags;
+            this->auth_channel_chanid = auth_channel.chanid;
+
+            std::string              order;
+            std::vector<std::string> parameters;
+            ::parse_server_message(auth_channel_message.c_str(), order, parameters);
+
+            if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
+                const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
+                const bool disable_graphics_update = false;
+                mod_rdp.disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
+            }
+            else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
+                LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
+            }
+            else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
+                FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                rdpdr_channel.disable_session_probe_drive();
+            }
+            else {
+                LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
+
+                authentifier.set_auth_channel_target(auth_channel_message.c_str());
+            }
+        }
+
+        void process_checkout_event(
+            const CHANNELS::ChannelDef & checkout_channel,
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+            AuthApi& authentifier
+        ) {
+            (void)length;
+            (void)chunk_size;
+            assert(stream.in_remain() == chunk_size);
+
+            if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
+                (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
+            {
+                LOG(LOG_WARNING, "mod_rdp::process_checkout_event: Chunked Virtual Channel Data ignored!");
+                return;
+            }
+
+            {
+                const unsigned expected = 4;    // Version(2) + DataLength(2)
+                if (!stream.in_check_rem(expected)) {
+                    LOG( LOG_ERR
+                       , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
+                       , expected, stream.in_remain());
+                    throw Error(ERR_RDP_DATA_TRUNCATED);
+                }
+            }
+
+            uint16_t const version = stream.in_uint16_le();
+            uint16_t const data_length = stream.in_uint16_le();
+
+            LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
+
+            std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
+
+            this->checkout_channel_flags  = flags;
+            this->checkout_channel_chanid = checkout_channel.chanid;
+
+            LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
+
+    //        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
+            authentifier.set_pm_request(checkout_channel_message.c_str());
+        }
+
+
+        void process_session_probe_event(
+            const CHANNELS::ChannelDef & session_probe_channel,
+            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+            FrontAPI& front,
+            mod_api & mod_rdp,
+            rdp_api& rdp,
+            ServerTransportContext & stc,
+            AsynchronousTaskContainer & asynchronous_tasks,
+            SessionReactor& session_reactor,
+            GeneralCaps const & client_general_caps,
+            const char (& client_name)[128],
+            const bool allow_using_multiple_monitors,
+            const uint32_t monitor_count,
+            const bool bogus_refresh_rect,
+            const Translation::language_t & lang
+        ) {
+            (void)session_probe_channel;
+            SessionProbeVirtualChannel& channel = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks, session_reactor, mod_rdp, rdp, lang, bogus_refresh_rect, allow_using_multiple_monitors, monitor_count, client_general_caps, client_name);
+
+            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+            channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+
+            assert(!out_asynchronous_task);
+        }
+
+        void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
+                InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
+                FrontAPI& front,
+                ServerTransportContext & stc,
+                const ModRdpVariables & vars,
+                RailCaps const & client_rail_caps
+                ) {
+            (void)rail_channel;
+            RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+
+            std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+            channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
+
+            assert(!out_asynchronous_task);
+        }
+
         void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                                 FrontAPI& front,
                                 ServerTransportContext & stc) {
@@ -1381,8 +1518,7 @@ private:
                 }
             }
         }
-        
-        
+
     } channels;
 
     /// shared with RdpNegociation
@@ -1908,8 +2044,6 @@ public:
     }
 
 private:
-
-private:
     // TODO: move to channels
     void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
                                    InStream & chunk, size_t length, uint32_t flags) {
@@ -2394,14 +2528,20 @@ public:
 
             // If channel name is our virtual channel, then don't send data to front
             if (mod_channel.name == this->channels.auth_channel && this->channels.enable_auth_channel) {
-                this->process_auth_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
-                this->process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
-                this->process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size, 
+                    this->front, *this, *this, this->stc, 
+                    this->asynchronous_tasks, this->session_reactor, 
+                    this->client_general_caps, this->client_name, 
+                    this->allow_using_multiple_monitors, this->monitor_count, 
+                    this->bogus_refresh_rect, this->lang);
             }
+            
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
@@ -2409,7 +2549,9 @@ public:
             }
             else if (mod_channel.name == channel_names::rail) {
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
-                this->process_rail_event(mod_channel, sec.payload, length, flags, chunk_size);
+                this->channels.process_rail_event(mod_channel, sec.payload, length, flags, chunk_size, 
+                            this->front, this->stc, 
+                            this->vars, this->client_rail_caps);
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
@@ -5599,123 +5741,6 @@ private:
     //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
     //}
 
-    // TODO: this should move to channels
-    void process_auth_event(
-        const CHANNELS::ChannelDef & auth_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
-    ) {
-        (void)length;
-        (void)chunk_size;
-        assert(stream.in_remain() == chunk_size);
-
-        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
-            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
-        {
-            LOG(LOG_WARNING, "mod_rdp::process_auth_event: Chunked Virtual Channel Data ignored!");
-            return;
-        }
-
-        std::string auth_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
-
-        this->channels.auth_channel_flags  = flags;
-        this->channels.auth_channel_chanid = auth_channel.chanid;
-
-        std::string              order;
-        std::vector<std::string> parameters;
-        ::parse_server_message(auth_channel_message.c_str(), order, parameters);
-
-        if (!::strcasecmp(order.c_str(), "Input") && !parameters.empty()) {
-            const bool disable_input_event     = (::strcasecmp(parameters[0].c_str(), "Enable") != 0);
-            const bool disable_graphics_update = false;
-            this->disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
-        }
-        else if (!::strcasecmp(order.c_str(), "Log") && !parameters.empty()) {
-            LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
-        }
-        else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-            FileSystemVirtualChannel& rdpdr_channel = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
-            rdpdr_channel.disable_session_probe_drive();
-        }
-        else {
-            LOG(LOG_INFO, "Auth channel data=\"%s\"", auth_channel_message);
-
-            this->authentifier.set_auth_channel_target(
-                auth_channel_message.c_str());
-        }
-    }
-
-    // TODO: this should move to channels
-    void process_checkout_event(
-        const CHANNELS::ChannelDef & checkout_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
-    ) {
-        (void)length;
-        (void)chunk_size;
-        assert(stream.in_remain() == chunk_size);
-
-        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)) !=
-            (CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST))
-        {
-            LOG(LOG_WARNING, "mod_rdp::process_checkout_event: Chunked Virtual Channel Data ignored!");
-            return;
-        }
-
-        {
-            const unsigned expected = 4;    // Version(2) + DataLength(2)
-            if (!stream.in_check_rem(expected)) {
-                LOG( LOG_ERR
-                   , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
-                   , expected, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-        }
-
-        uint16_t const version = stream.in_uint16_le();
-        uint16_t const data_length = stream.in_uint16_le();
-
-        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Version=%u DataLength=%u", version, data_length);
-
-        std::string checkout_channel_message(char_ptr_cast(stream.get_current()), stream.in_remain());
-
-        this->channels.checkout_channel_flags  = flags;
-        this->channels.checkout_channel_chanid = checkout_channel.chanid;
-
-        LOG(LOG_INFO, "mod_rdp::process_checkout_event: Data=\"%s\"", checkout_channel_message);
-
-//        send_checkout_channel_data("{ \"response_code\": 0, \"response_message\": \"Succeeded.\" }");
-        this->authentifier.set_pm_request(checkout_channel_message.c_str());
-    }
-
-    // TODO: this should move to channels
-    void process_session_probe_event(
-        const CHANNELS::ChannelDef & session_probe_channel,
-        InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size
-    ) {
-        (void)session_probe_channel;
-        SessionProbeVirtualChannel& channel = this->channels.get_session_probe_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size,
-            out_asynchronous_task);
-
-        assert(!out_asynchronous_task);
-    }
-
-
-    // TODO: this should move to channels
-    void process_rail_event(const CHANNELS::ChannelDef & rail_channel,
-            InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size) {
-        (void)rail_channel;
-        RemoteProgramsVirtualChannel& channel = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-
-        std::unique_ptr<AsynchronousTask> out_asynchronous_task;
-
-        channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
-
-        assert(!out_asynchronous_task);
-    }
 
     bool disable_input_event_and_graphics_update(bool disable_input_event,
             bool disable_graphics_update) override {
