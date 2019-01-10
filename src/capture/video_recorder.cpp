@@ -20,18 +20,6 @@
 
 */
 
-#ifndef CODEC_FLAG_QSCALE
-#define CODEC_FLAG_QSCALE AV_CODEC_FLAG_QSCALE
-#endif
-
-#ifndef CODEC_FLAG_GLOBAL_HEADER
-#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
-#endif
-
-#ifndef AVFMT_RAWPICTURE
-#define AVFMT_RAWPICTURE AVFMT_NOFILE
-#endif
-
 // TODO: this should move to src/system as results are highly dependent on compilation system
 // maybe some external utility could detect the target/variant of library and could avoid
 // non determinist sizes in generated movies.
@@ -63,6 +51,18 @@ extern "C" {
     #include <libavformat/avformat.h>
     #include <libswscale/swscale.h>
 }
+
+#ifndef CODEC_FLAG_QSCALE
+#define CODEC_FLAG_QSCALE AV_CODEC_FLAG_QSCALE
+#endif
+
+#ifndef CODEC_FLAG_GLOBAL_HEADER
+#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
+#endif
+
+#ifndef AVFMT_RAWPICTURE
+#define AVFMT_RAWPICTURE AVFMT_NOFILE
+#endif
 
 #ifdef exit
 # undef exit
