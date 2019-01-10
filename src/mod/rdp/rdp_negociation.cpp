@@ -847,8 +847,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             // ------------------------------------------------------------
             GCC::UserData::CSCore cs_core;
 
-            Rect primary_monitor_rect =
-                this->cs_monitor.get_primary_monitor_rect();
+            Rect primary_monitor_rect = this->cs_monitor.get_primary_monitor_rect();
 
             cs_core.version = this->negociation_result.use_rdp5 ? 0x00080004 : 0x00080001;
             const bool single_monitor =

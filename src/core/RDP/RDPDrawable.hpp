@@ -166,6 +166,8 @@ public:
     void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(const RDPMemBlt & cmd_, Rect clip, const Bitmap & bmp) override;
     void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bmp) override;
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) override;
+
 
     /*
      *
