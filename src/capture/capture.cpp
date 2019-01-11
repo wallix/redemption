@@ -372,12 +372,19 @@ class SyslogKbd final : public gdi::KbdInputApi, public gdi::CaptureApi
     bool keyboard_input_mask_enabled = false;
     timeval last_snapshot;
 
+    bool keyboard_input_mask_hidden = false;
+    int hidden_masked_char_count = 0;
+
 private:
     void write_shadow_keys() {
         if (!this->kbd_stream.has_room(1)) {
             this->flush();
         }
-        this->kbd_stream.out_uint8('*');
+        if (this->keyboard_input_mask_hidden) {
+            this->hidden_masked_char_count++;
+        } else {
+            this->kbd_stream.out_uint8('*');
+        }
     }
 
     void write_keys(uint32_t uchar) {
@@ -431,7 +438,12 @@ public:
     }
 
     void flush() {
-        if (this->kbd_stream.get_offset()) {
+        if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
+            while (this->hidden_masked_char_count) {
+                this->kbd_stream.out_uint8('*');
+                this->hidden_masked_char_count--;
+            }
+            this->hidden_masked_char_count = 0;
             LOG(LOG_INFO, R"x(type="KBD input" data="%.*s")x",
                 int(this->kbd_stream.get_offset()),
                 char_ptr_cast(this->kbd_stream.get_data()));
@@ -476,6 +488,9 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
     bool is_probe_enabled_session = false;
     ReportMessageApi & report_message;
 
+    bool keyboard_input_mask_hidden = false;
+    int hidden_masked_char_count = 0;
+
     void copy_bytes(const_bytes_view bytes) {
         if (this->kbd_stream.tailroom() < bytes.size()) {
             this->flush();
@@ -487,7 +502,11 @@ class SessionLogKbd final : public gdi::KbdInputApi, public gdi::CaptureProbeApi
         if (!this->kbd_stream.has_room(1)) {
             this->flush();
         }
-        this->kbd_stream.out_uint8('*');
+        if (this->keyboard_input_mask_hidden) {
+            this->hidden_masked_char_count++;
+        } else {
+            this->kbd_stream.out_uint8('*');
+        }
     }
 
     void write_keys(uint32_t uchar) {
@@ -542,7 +561,13 @@ private:
 
 public:
     void flush() {
-        if (this->kbd_stream.get_offset()) {
+        if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
+            while (this->hidden_masked_char_count) {
+                this->kbd_stream.out_uint8('*');
+                this->hidden_masked_char_count--;
+            }
+            this->hidden_masked_char_count = 0;
+
             this->formatted_message.assign("KBD_INPUT", {
                 {"data", stream_to_avchar(this->kbd_stream)}
             });
@@ -1152,6 +1177,9 @@ class SessionMeta final : public gdi::KbdInputApi, public gdi::CaptureApi, publi
     const bool key_markers_hidden_state;
     const bool log_only_relevant_clipboard_activities;
 
+    bool keyboard_input_mask_hidden = false;
+    int hidden_masked_char_count = 0;
+
 public:
     explicit SessionMeta(const timeval & now, Transport & trans, bool key_markers_hidden_state, bool log_only_relevant_clipboard_activities)
     : kbd_stream{this->kbd_buffer + session_meta_kbd_prefix().size(), kbd_buffer_usable_char}
@@ -1234,7 +1262,11 @@ private:
         if (!this->kbd_stream.has_room(1)) {
             this->send_kbd();
         }
-        this->kbd_stream.out_uint8('*');
+        if (this->keyboard_input_mask_hidden) {
+            this->hidden_masked_char_count++;
+        } else {
+            this->kbd_stream.out_uint8('*');
+        }
     }
 
     void write_keys(uint32_t uchar) {
@@ -1322,7 +1354,12 @@ private:
     }
 
     void send_kbd() {
-        if (this->kbd_stream.get_offset()) {
+          if (this->kbd_stream.get_offset() || (!this->keyboard_input_mask_hidden && this->hidden_masked_char_count)) {
+            while (this->hidden_masked_char_count) {
+                this->kbd_stream.out_uint8('*');
+                this->hidden_masked_char_count--;
+            }
+            this->hidden_masked_char_count = 0;
             this->formatted_message.assign("KBD_INPUT", {
                 {"data", stream_to_avchar(this->kbd_stream)}
             });
