@@ -1068,7 +1068,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     cs_net.channelCount++;
                 }
 
-                if (bool(this->verbose & RDPVerbose::security)) {
+                if (bool(this->verbose & RDPVerbose::channels)) {
                     cs_net.log("Sending to server");
                 }
                 cs_net.emit(stream);

@@ -894,6 +894,7 @@ private:
 
             return *this->session_probe_virtual_channel;
         }
+
         inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
@@ -1662,6 +1663,25 @@ private:
             if (!mod_channel) {
                 return;
             }
+
+//            switch (front_channel_name) {
+//                case channel_names::cliprdr:
+//                    this->create_cliprdr_channel(chunk, length, flags, front, stc);
+//                    break;
+//                case channel_names::rail:
+//                    this->create_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
+//                    break;
+//                case channel_names::rdpdr:
+//                    this->create_mod_rdpdr_channel(mod_channel, chunk, length, flags, front, stc, asynchronous_tasks, 
+//                                    client_general_caps, client_name);
+//                    break;
+//                case channel_names::drdynvc:
+//                    break;
+//                    this->create_to_mod_drdynvc_channel(chunk, length, flags, front, stc);
+//                default:
+//                    this->create_channel_by_name(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+//            }
+
             if (bool(this->verbose & RDPVerbose::channels)) {
                 mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
             }
@@ -1689,6 +1709,82 @@ private:
                     this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
             }
         }
+    
+        // This function can be called several times. If a remaining session_probe is running on the
+        // target serveur, the session probe channels is already there before the session probe launcher is created
+        void do_enable_session_probe(
+            FrontAPI& front,
+            ServerTransportContext & stc,
+            mod_api & mod_rdp,
+            rdp_api& rdp,
+            AsynchronousTaskContainer & asynchronous_tasks,
+            SessionReactor& session_reactor,
+            GeneralCaps const & client_general_caps,
+            const ModRdpVariables & vars,
+            RailCaps const & client_rail_caps,
+            const char (& client_name)[128],
+            const bool allow_using_multiple_monitors,
+            const uint32_t monitor_count,
+            const bool bogus_refresh_rect,
+            const Translation::language_t & lang)
+        {
+            assert(this->enable_session_probe);
+            if (this->session_probe_launcher){
+                ClipboardVirtualChannel& cvc = this->get_clipboard_virtual_channel(front, stc);
+                cvc.set_session_probe_launcher(this->session_probe_launcher.get());
+
+                FileSystemVirtualChannel& fsvc = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
+
+                this->file_system_drive_manager.set_session_probe_launcher(this->session_probe_launcher.get());
+                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc, 
+                                                                asynchronous_tasks, session_reactor,
+                                                                mod_rdp, rdp, lang, 
+                                                                bogus_refresh_rect, 
+                                                                allow_using_multiple_monitors, 
+                                                                monitor_count, 
+                                                                client_general_caps,
+                                                                client_name);
+                spvc.set_session_probe_launcher(this->session_probe_launcher.get());
+                this->session_probe_virtual_channel_p = &spvc;
+                if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                    spvc.start_launch_timeout_timer();
+                }
+                this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
+                this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+
+                if (this->remote_program) {
+                    RemoteProgramsVirtualChannel& rpvc = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                    rpvc.set_session_probe_launcher(this->session_probe_launcher.get());
+                    this->session_probe_launcher->set_remote_programs_virtual_channel(&rpvc);
+                }
+            }
+            else // this->channels.this->session_probe_launcher)
+            {
+                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks, 
+                                                                                           session_reactor, 
+                                                                                           mod_rdp, 
+                                                                                           rdp, 
+                                                                                           lang, 
+                                                                                           bogus_refresh_rect, 
+                                                                                           allow_using_multiple_monitors, 
+                                                                                           monitor_count, 
+                                                                                           client_general_caps, 
+                                                                                           client_name);
+                this->session_probe_virtual_channel_p = &spvc;
+                if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                    spvc.start_launch_timeout_timer();
+                }
+                if (this->remote_program) {
+                    RemoteProgramsVirtualChannel& rpvc =
+                        this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+
+                }
+            }
+        }
+    
     
     } channels;
 
@@ -1959,6 +2055,18 @@ public:
         char program[512] = {};
         char directory[512] = {};
 
+        // TODO: to make init code clearer we would prefer to have to consecutive inits
+        // - one for remote_program initialisation
+        // - one for session probe initialisation
+        
+        // Something like:
+        
+        // if probe: init_session_probe(... session_reactor);
+        // if remote_prog: init_remote_program(... lang, font, identifier, program, directory);
+
+        // This could probably work like two consecutive filters
+        // one to prepare part of the context, the other used to prepare the remaining context.
+        // There should be a way to prepare some objects useful for the remaining work to do
 
         if (this->channels.remote_program) {
             if (this->channels.enable_session_probe) {
@@ -1989,8 +2097,7 @@ public:
         if (this->channels.enable_session_probe) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
-            this->disable_input_event_and_graphics_update(
-                disable_input_event, disable_graphics_update);
+            this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
 
         if (!this->end_session_reason.empty()
@@ -2109,16 +2216,25 @@ public:
         if ((UP_AND_RUNNING == this->connection_finalization_state) 
             && !this->input_event_disabled) {
 
-            if (this->first_scancode && !(device_flags & 0x8000) &&
-                (!this->channels.enable_session_probe ||
-                 !this->channels.session_probe_launcher->is_keyboard_sequences_started() ||
-                 this->channels.get_session_probe_virtual_channel(this->front, stc, this->asynchronous_tasks, this->session_reactor,*this,*this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name).has_been_launched())
-               ) {
-                LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
-
-                this->first_scancode = false;
-
-                this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+            if (this->first_scancode && !(device_flags & 0x8000)) {
+                if (this->channels.enable_session_probe) {
+                    auto & session_probe = this->channels.get_session_probe_virtual_channel(this->front, stc, 
+                                            this->asynchronous_tasks, this->session_reactor,
+                                            *this,*this, this->lang, this->bogus_refresh_rect, 
+                                            this->allow_using_multiple_monitors, this->monitor_count, 
+                                            this->client_general_caps, this->client_name);
+                    if (!this->channels.session_probe_launcher->is_keyboard_sequences_started()
+                        || session_probe.has_been_launched()) {
+                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+                        this->first_scancode = false;
+                        this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+                    }
+                }
+                else {
+                        LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
+                        this->first_scancode = false;
+                        this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
+                }
             }
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
@@ -2758,13 +2874,27 @@ public:
 
                             if (!this->already_upped_and_running) {
                                 if (this->channels.enable_session_probe) {
-                                    this->do_enable_session_probe();
+                                    this->channels.do_enable_session_probe(
+                                                this->front,
+                                                this->stc,
+                                                *this,
+                                                *this,
+                                                this->asynchronous_tasks,
+                                                this->session_reactor,
+                                                this->client_general_caps,
+                                                this->vars,
+                                                this->client_rail_caps,
+                                                this->client_name,
+                                                this->allow_using_multiple_monitors,
+                                                this->monitor_count,
+                                                this->bogus_refresh_rect,
+                                                this->lang);
                                 }
                                 this->already_upped_and_running = true;
                             }
 
-                            if (this->channels.enable_session_probe &&
-                                this->session_probe_enable_launch_mask) {
+                            if (this->channels.enable_session_probe 
+                            &&  this->session_probe_enable_launch_mask) {
                                 this->delayed_start_capture = true;
 
                                 LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
@@ -5805,52 +5935,6 @@ private:
         }
 
         return need_full_screen_update;
-    }
-
-    // TODO: move to channels
-    // TODO: pass stc ref as parameter
-    // This function can be called several times. If a remaining session_probe is running on the
-    // target serveur, the session probe channels is already there before the session probe launcher is created
-    void do_enable_session_probe() {
-        assert(this->channels.enable_session_probe);
-        if (this->channels.session_probe_launcher){
-            ClipboardVirtualChannel& cvc = this->channels.get_clipboard_virtual_channel(this->front, this->stc);
-            cvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-
-            FileSystemVirtualChannel& fsvc = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
-            fsvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-
-            this->channels.file_system_drive_manager.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
-            spvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-            this->channels.session_probe_virtual_channel_p = &spvc;
-            if (!this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-                spvc.start_launch_timeout_timer();
-            }
-            this->channels.session_probe_launcher->set_clipboard_virtual_channel(&cvc);
-            this->channels.session_probe_launcher->set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
-
-            if (this->channels.remote_program) {
-                RemoteProgramsVirtualChannel& rpvc = this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-                rpvc.set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
-                rpvc.set_session_probe_launcher(this->channels.session_probe_launcher.get());
-                this->channels.session_probe_launcher->set_remote_programs_virtual_channel(&rpvc);
-            }
-        }
-        else // this->channels.this->session_probe_launcher)
-        {
-            SessionProbeVirtualChannel& spvc = this->channels.get_session_probe_virtual_channel(front, this->stc, this->asynchronous_tasks, this->session_reactor,*this, *this, this->lang, this->bogus_refresh_rect, this->allow_using_multiple_monitors, this->monitor_count, this->client_general_caps, this->client_name);
-            this->channels.session_probe_virtual_channel_p = &spvc;
-            if (!this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-                spvc.start_launch_timeout_timer();
-            }
-            if (this->channels.remote_program) {
-                RemoteProgramsVirtualChannel& rpvc =
-                    this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-                rpvc.set_session_probe_virtual_channel(this->channels.session_probe_virtual_channel_p);
-
-            }
-        }
     }
 
 public:
