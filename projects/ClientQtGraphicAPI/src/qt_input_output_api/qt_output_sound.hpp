@@ -130,7 +130,7 @@ public:
 
                 if (this->total_wav_files > this->current_wav_index) {
                     this->current_wav_index++;
-                    std::string wav_file_name =  ":/DATA/sound_temp/sound";
+                    std::string wav_file_name = ":/DATA/sound_temp/sound";
                     wav_file_name += std::to_string(this->current_wav_index) + ".wav";
 
                     LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);

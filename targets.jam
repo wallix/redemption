@@ -954,25 +954,37 @@ test-run tests/client_mods/test_rdp_client_wab :
 test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_cliprdr_channel.cpp
 :
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
+  <library>png
   <library>snappy
+  <library>src/capture/file_to_graphic.o
   <library>src/client_redemption/client_channels/client_cliprdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>z
   <covfile>src/client_redemption/client_channels/client_cliprdr_channel.cpp
   <covfile>src/client_redemption/client_channels/client_cliprdr_channel.hpp
+  <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -980,25 +992,37 @@ test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
 :
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
+  <library>png
   <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/client_redemption/client_channels/client_cliprdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>z
   <covfile>src/client_redemption/client_channels/client_rdpdr_channel.cpp
   <covfile>src/client_redemption/client_channels/client_rdpdr_channel.hpp
+  <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1006,25 +1030,37 @@ test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
 test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
 :
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
+  <library>png
   <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/client_redemption/client_channels/client_cliprdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpdr_channel.o
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
+  <library>z
   <covfile>src/client_redemption/client_channels/client_rdpsnd_channel.cpp
   <covfile>src/client_redemption/client_channels/client_rdpsnd_channel.hpp
+  <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -1039,6 +1075,9 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   <library>png
   <library>snappy
   <library>src/capture/file_to_graphic.o
+  <library>src/client_redemption/client_channels/client_cliprdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
@@ -1066,25 +1105,38 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
 :
+  <library>app_path_test.o
   <library>boost_stacktrace
   <library>crypto
   <library>openssl
+  <library>png
   <library>snappy
+  <library>src/capture/file_to_graphic.o
+  <library>src/client_redemption/client_channels/client_cliprdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpdr_channel.o
+  <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/mppc.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
+  <library>src/keyboard/keymap2.o
+  <library>src/mod/internal/replay_mod.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
+  <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/netutils.o
+  <library>src/utils/png.o
+  <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/working_directory.o
+  <library>z
   <covfile>src/client_redemption/client_config/client_redemption_config.cpp
   <covfile>src/client_redemption/client_config/client_redemption_config.hpp
+  <define>ZLIB_CONST
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
