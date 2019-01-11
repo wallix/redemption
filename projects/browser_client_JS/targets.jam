@@ -259,6 +259,7 @@ exe-main rdpclient :
   src/utils/netutils.bc
   src/utils/png.bc
   src/utils/rle.bc
+  src/utils/set_exception_handler_pretty_message.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
   src/utils/utf.bc

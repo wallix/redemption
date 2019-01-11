@@ -78,13 +78,13 @@ namespace
                         SOL_SOCKET,
                         SO_SNDBUF,
                         &snd_buffer_size, sizeof(snd_buffer_size))){
-                    LOG(LOG_WARNING, "setsockopt failed with errno=%d", errno);
+                    LOG(LOG_WARNING, "setsockopt failed with errno = %d (%s)", errno, strerror(errno));
                     return false;
                 }
             }
         }
         else {
-            LOG(LOG_WARNING, "getsockopt failed with errno=%d", errno);
+            LOG(LOG_WARNING, "getsockopt failed with errno = %d (%s)", errno, strerror(errno));
             return false;
         }
 

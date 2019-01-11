@@ -30,6 +30,9 @@
 
 #include "acl/module_manager.hpp"
 
+#ifndef __EMSCRIPTEN__
+# include "mod/metrics_hmac.hpp"
+#endif
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,
@@ -46,6 +49,7 @@ void ModuleManager::create_mod_vnc(
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
 
+#ifndef __EMSCRIPTEN__
         struct ModVNCWithMetrics : public mod_vnc
         {
             std::unique_ptr<Metrics> metrics = nullptr;
@@ -85,6 +89,9 @@ void ModuleManager::create_mod_vnc(
 
             protocol_metrics = std::make_unique<VNCMetrics>(metrics.get());
         }
+#else
+        using ModVNCWithMetrics = mod_rdp;
+#endif
 
         auto new_mod = std::make_unique<ModWithSocket<ModVNCWithMetrics>>(
             *this,

@@ -41,20 +41,17 @@
 class ClientFront : public FrontAPI
 {
     bool verbose;
-    ClientInfo &info;
+    ScreenInfo& screen_info;
     CHANNELS::ChannelDefArray   cl;
-    bool is_capture_state_;
 
 public:
-    ClientFront(ClientInfo & info, bool verbose)
+    ClientFront(ScreenInfo& screen_info, bool verbose)
     : verbose(verbose)
-    , info(info)
-    , is_capture_state_(false)
+    , screen_info(screen_info)
     {}
 
     bool can_be_start_capture() override
     {
-        this->is_capture_state_ = true;
         return false;
     }
 
@@ -62,13 +59,6 @@ public:
     {
         return false;
     }
-
-    bool is_capture_state() const
-    {
-        return this->is_capture_state_;
-    }
-
-    void flush() { }
 
     void draw(RDPOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
     void draw(const RDPScrBlt & /*cmd*/, Rect /*clip*/) override { }
@@ -104,7 +94,9 @@ public:
 
 
     ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
-        this->info.screen_info.bpp = bpp;
+        this->screen_info.width = width;
+        this->screen_info.height = height;
+        this->screen_info.bpp = bpp;
         if (this->verbose) {
             LOG(LOG_INFO, "--------- ClientFront ------------------");
             LOG(LOG_INFO, "server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
@@ -206,7 +198,7 @@ inline int wait_for_screenshot(
     }
 }
 
-inline error_t run_test_client(
+inline int run_test_client(
     char const* type, SessionReactor& session_reactor, mod_api& mod, gdi::GraphicApi& gd,
     std::chrono::milliseconds inactivity_time, std::chrono::milliseconds max_time,
     std::string const& screen_output)
@@ -222,7 +214,7 @@ inline error_t run_test_client(
 
         File f(screen_output, "w");
         if (!f) {
-            LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output.c_str(), strerror(errno));
+            LOG(LOG_ERR, "%s CLIENT :: %s: %s", type, screen_output, strerror(errno));
             return ERR_RECORDER_FAILED_TO_OPEN_TARGET_FILE;
         }
 

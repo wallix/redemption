@@ -2488,7 +2488,6 @@ namespace MCS
 
     struct SendDataIndication_Recv
     {
-
         uint8_t type;
         uint16_t initiator;
         uint16_t channelId;

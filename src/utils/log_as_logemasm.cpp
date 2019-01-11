@@ -40,6 +40,7 @@ REDEMPTION_DIAGNOSTIC_POP
 
 #ifdef IN_IDE_PARSER
 # define EM_ASM(...)
+# define EM_JS(return_type, name, params, ...) return_type __em_js__##name params;
 #else
 # include <emscripten.h>
 #endif
@@ -55,7 +56,7 @@ namespace
 # ifndef NDEBUG
     bool previous_is_line_marker = false;
 
-    bool is_log_filename(int priority) noexcept
+    bool log_is_filename(int priority) noexcept
     {
         // see LOG_FILENAME
         if (priority != LOG_INFO && priority != LOG_DEBUG) {
@@ -68,18 +69,20 @@ namespace
         return false;
     }
 # else
-    constexpr bool is_log_filename(int /*priority*/) noexcept
+    constexpr bool log_is_filename(int /*priority*/) noexcept
     {
         return false;
     }
 # endif
 
-    bool is_enabled_log_print()
+    EM_JS(bool, js_is_loggable, (), {
+        return !ENVIRONMENT_IS_NODE || process.env["REDEMPTION_LOG_PRINT"] === "1";
+    });
+
+    bool is_loggable()
     {
-        static bool logprint = []{
-            auto s = std::getenv("REDEMPTION_LOG_PRINT");
-            return s && s[0] == '1';
-        }();
+        // return true;
+        static bool logprint = js_is_loggable();
         return logprint;
     }
 } // namespace
@@ -89,7 +92,7 @@ struct LOG__REDEMPTION__OSTREAM__BUFFERED::D
 {
     D()
     : oldbuf(std::cout.rdbuf(&sbuf))
-    , oldbuf_cerr(is_enabled_log_print() ? std::cerr.rdbuf(nullptr) : nullptr)
+    , oldbuf_cerr(is_loggable() ? std::cerr.rdbuf(nullptr) : nullptr)
     {
     }
 
@@ -154,7 +157,7 @@ void LOG__REDEMPTION__BUFFERED::clear()
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
-        if (is_log_filename(priority)) {
+        if (log_is_filename(priority)) {
             return ;
         }
         va_list ap;
@@ -172,7 +175,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         auto e = log_buf.find('-', p);
         log_buf.replace(p, e-p+2, "-");
     }
-    else if (is_enabled_log_print())
+    else if (is_loggable())
     {
         va_list ap;
         va_start(ap, format);
@@ -180,8 +183,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
         va_end(ap);
 
-        buffer[len] = '\n';
-        buffer[len+1] = 0;
+        buffer[len] = 0;
         EM_ASM({console.log(Pointer_stringify($0));}, buffer);
     }
 }
@@ -189,7 +191,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
 void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
-        if (is_log_filename(priority)) {
+        if (log_is_filename(priority)) {
             return ;
         }
         va_list ap;
@@ -202,7 +204,7 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
         va_end(ap);
         log_buf.back() = '\n';
     }
-    else if (is_enabled_log_print())
+    else if (is_loggable())
     {
         va_list ap;
         va_start(ap, format);
@@ -210,8 +212,7 @@ void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ..
         int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
         va_end(ap);
 
-        buffer[len] = '\n';
-        buffer[len+1] = 0;
+        buffer[len] = 0;
         EM_ASM({console.log(Pointer_stringify($0));}, buffer);
     }
 }
