@@ -163,6 +163,10 @@ private:
     };
 
     struct Channels {
+    
+#ifndef __EMSCRIPTEN__
+        RDPMetrics * metrics;
+#endif
         CHANNELS::ChannelDefArray mod_channel_list;
         const AuthorizationChannels authorization_channels;
         ReportMessageApi & report_message;
@@ -282,8 +286,13 @@ private:
         const bool enable_rdpdr_data_analysis;
         const RDPVerbose verbose;
 
-        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, ReportMessageApi & report_message, Random & gen)
-            : authorization_channels(
+        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose, 
+                ReportMessageApi & report_message, Random & gen, RDPMetrics * metrics)
+            :
+            #ifndef __EMSCRIPTEN__
+                metrics(metrics),
+            #endif
+                authorization_channels(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
                 mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
               )
@@ -885,7 +894,6 @@ private:
 
             return *this->session_probe_virtual_channel;
         }
-
         inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
@@ -1208,7 +1216,8 @@ private:
                 return;
             }
 
-            FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+            FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(
+                            front, stc, asynchronous_tasks, client_general_caps, client_name);
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
             channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
@@ -1519,6 +1528,168 @@ private:
             }
         }
 
+        void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
+                                       InStream & chunk, size_t length, uint32_t flags,
+                                       FrontAPI& front,
+                                       ServerTransportContext & stc,
+                                       AsynchronousTaskContainer & asynchronous_tasks,
+                                       GeneralCaps const & client_general_caps,
+                                       const char (& client_name)[128])
+        {
+            if (!this->enable_rdpdr_data_analysis
+            &&   this->authorization_channels.rdpdr_type_all_is_authorized()
+            &&  !this->file_system_drive_manager.has_managed_drive()) {
+
+                if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+                    if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
+                        LOG(LOG_INFO,
+                            "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
+                                "send Chunked Virtual Channel Data transparently.");
+                    }
+
+                    if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
+                        const bool send              = false;
+                        const bool from_or_to_client = false;
+                        uint32_t total_length = length;
+                        if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
+                            total_length = chunk.get_capacity() - chunk.get_offset();
+                        }
+                        ::msgdump_d(send, from_or_to_client, length, flags,
+                        chunk.get_data(), total_length);
+
+                        rdpdr::streamLog(chunk, this->rdpdrLogStatus);
+                    }
+                }
+
+                this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+                return;
+            }
+
+            FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(
+                                front, stc, asynchronous_tasks, 
+                                client_general_caps, client_name);
+
+            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        }
+
+        void send_to_mod_drdynvc_channel(InStream & chunk, size_t length, uint32_t flags,
+                                         FrontAPI& front,
+                                         ServerTransportContext & stc)
+        {
+
+            DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel(front, stc);
+
+            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        }
+    
+        void send_to_channel(
+            const CHANNELS::ChannelDef & channel,
+            uint8_t const * chunk, std::size_t chunk_size,
+            size_t length, uint32_t flags,
+            ServerTransportContext & stc)
+        {
+            if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
+                InStream clone(chunk, chunk_size);
+                rdpsnd::streamLogClient(clone, flags);
+            }
+
+            if (bool(this->verbose & RDPVerbose::channels)) {
+                LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
+                channel.log(-1u);
+            }
+
+            if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
+                flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
+            }
+
+            if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
+                CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+                virtual_channel_pdu.send_to_server(stc, channel.chanid, length, flags, chunk, chunk_size);
+            }
+            else {
+                uint8_t const * virtual_channel_data = chunk;
+                size_t          remaining_data_length = length;
+
+                auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
+                                                     size_t remaining_data_length,
+                                                     size_t virtual_channel_data_length) -> uint32_t {
+                    if (remaining_data_length == data_length) {
+                        return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
+                    }
+                    if (remaining_data_length == virtual_channel_data_length) {
+                        return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
+                    }
+
+                    return (flags & (~(CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)));
+                };
+
+                do {
+                    const size_t virtual_channel_data_length =
+                        std::min<size_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+                    CHANNELS::VirtualChannelPDU virtual_channel_pdu;
+
+                    LOG(LOG_INFO, "send to server");
+
+                    virtual_channel_pdu.send_to_server(stc, channel.chanid, length, get_channel_control_flags(
+                            flags, length, remaining_data_length, virtual_channel_data_length
+                        ), virtual_channel_data, virtual_channel_data_length);
+
+                    remaining_data_length -= virtual_channel_data_length;
+                    virtual_channel_data  += virtual_channel_data_length;
+                }
+                while (remaining_data_length);
+            }
+
+            if (bool(this->verbose & RDPVerbose::channels)) {
+                LOG(LOG_INFO, "mod_rdp::send_to_channel done");
+            }
+        }
+    
+        void send_to_mod_channel(
+            CHANNELS::ChannelNameId front_channel_name,
+            InStream & chunk, size_t length, uint32_t flags,
+            FrontAPI& front,
+            ServerTransportContext & stc,
+            AsynchronousTaskContainer & asynchronous_tasks,
+            GeneralCaps const & client_general_caps,
+            const ModRdpVariables & vars,
+            RailCaps const & client_rail_caps,
+            const char (& client_name)[128]
+        ) {
+            const CHANNELS::ChannelDef * mod_channel = this->mod_channel_list.get_by_name(front_channel_name);
+            if (!mod_channel) {
+                return;
+            }
+            if (bool(this->verbose & RDPVerbose::channels)) {
+                mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));
+            }
+
+            switch (front_channel_name) {
+                case channel_names::cliprdr:
+                    IF_ENABLE_METRICS(set_client_cliprdr_metrics(chunk.clone(), length, flags));
+                    this->send_to_mod_cliprdr_channel(chunk, length, flags, front, stc);
+                    break;
+                case channel_names::rail:
+                    IF_ENABLE_METRICS(client_rail_channel_data(length));
+                    this->send_to_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
+                    break;
+                case channel_names::rdpdr:
+                    IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
+                    this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags, front, stc, asynchronous_tasks, 
+                                    client_general_caps, client_name);
+                    break;
+                case channel_names::drdynvc:
+                    IF_ENABLE_METRICS(client_other_channel_data(length));
+                    this->send_to_mod_drdynvc_channel(chunk, length, flags, front, stc);
+                    break;
+                default:
+                    IF_ENABLE_METRICS(client_other_channel_data(length));
+                    this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
+            }
+        }
+    
     } channels;
 
     /// shared with RdpNegociation
@@ -1698,7 +1869,7 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message, gen)
+        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
@@ -2012,83 +2183,18 @@ public:
                 "mod_rdp::send_to_mod_channel: front_channel_channel=\"%s\"",
                 front_channel_name);
         }
-        const CHANNELS::ChannelDef * mod_channel = this->channels.mod_channel_list.get_by_name(front_channel_name);
-        if (!mod_channel) {
-            return;
-        }
-        if (bool(this->verbose & RDPVerbose::channels)) {
-            mod_channel->log(unsigned(mod_channel - &this->channels.mod_channel_list[0]));
-        }
-
-        switch (front_channel_name) {
-            case channel_names::cliprdr:
-                IF_ENABLE_METRICS(set_client_cliprdr_metrics(chunk.clone(), length, flags));
-                this->channels.send_to_mod_cliprdr_channel(chunk, length, flags, this->front, this->stc);
-                break;
-            case channel_names::rail:
-                IF_ENABLE_METRICS(client_rail_channel_data(length));
-                this->channels.send_to_mod_rail_channel(chunk, length, flags, this->front, this->stc, this->vars, this->client_rail_caps);
-                break;
-            case channel_names::rdpdr:
-                IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
-                this->send_to_mod_rdpdr_channel(mod_channel, chunk, length, flags);
-                break;
-            case channel_names::drdynvc:
-                IF_ENABLE_METRICS(client_other_channel_data(length));
-                this->send_to_mod_drdynvc_channel(mod_channel, chunk, length, flags);
-                break;
-            default:
-                IF_ENABLE_METRICS(client_other_channel_data(length));
-                this->send_to_channel(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
-        }
+        
+        this->channels.send_to_mod_channel(front_channel_name, chunk, length, flags,
+                    this->front, this->stc,
+                    this->asynchronous_tasks,
+                    this->client_general_caps,
+                    this->vars,
+                    this->client_rail_caps,
+                    this->client_name
+            );
     }
 
 private:
-    // TODO: move to channels
-    void send_to_mod_rdpdr_channel(const CHANNELS::ChannelDef * rdpdr_channel,
-                                   InStream & chunk, size_t length, uint32_t flags) {
-        if (!this->channels.enable_rdpdr_data_analysis
-        &&   this->channels.authorization_channels.rdpdr_type_all_is_authorized()
-        &&  !this->channels.file_system_drive_manager.has_managed_drive()) {
-
-            if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-                if (bool(this->verbose & (RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump))) {
-                    LOG(LOG_INFO,
-                        "mod_rdp::send_to_mod_rdpdr_channel: recv from Client, "
-                            "send Chunked Virtual Channel Data transparently.");
-                }
-
-                if (bool(this->verbose & RDPVerbose::rdpdr_dump)) {
-                    const bool send              = false;
-                    const bool from_or_to_client = false;
-                    uint32_t total_length = length;
-                    if (total_length > CHANNELS::CHANNEL_CHUNK_LENGTH) {
-                        total_length = chunk.get_capacity() - chunk.get_offset();
-                    }
-                    ::msgdump_d(send, from_or_to_client, length, flags,
-                    chunk.get_data(), total_length);
-
-                    rdpdr::streamLog(chunk, this->channels.rdpdrLogStatus);
-                }
-            }
-
-            this->send_to_channel(*rdpdr_channel, chunk.get_data(), chunk.get_capacity(), length, flags);
-            return;
-        }
-
-        FileSystemVirtualChannel& channel = this->channels.get_file_system_virtual_channel(this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
-
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-    }
-
-    // TODO: move to channels
-    void send_to_mod_drdynvc_channel(const CHANNELS::ChannelDef */* rdpdr_channel*/,
-                                     InStream & chunk, size_t length, uint32_t flags) {
-
-        DynamicChannelVirtualChannel& channel = this->channels.get_dynamic_channel_virtual_channel(this->front, this->stc);
-
-        channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-    }
 
 public:
     // Method used by session to transmit sesman answer for auth_channel
@@ -2126,72 +2232,6 @@ private:
           , this->channels.checkout_channel_flags
           , stream_data.get_data()
           , stream_data.get_offset());
-    }
-
-    // TODO: move to channels
-    void send_to_channel(
-        const CHANNELS::ChannelDef & channel,
-        uint8_t const * chunk, std::size_t chunk_size,
-        size_t length, uint32_t flags
-    ) {
-        if (channel.name == channel_names::rdpsnd && bool(this->verbose & RDPVerbose::rdpsnd)) {
-            InStream clone(chunk, chunk_size);
-            rdpsnd::streamLogClient(clone, flags);
-        }
-
-
-        if (bool(this->verbose & RDPVerbose::channels)) {
-            LOG( LOG_INFO, "mod_rdp::send_to_channel length=%zu chunk_size=%zu", length, chunk_size);
-            channel.log(-1u);
-        }
-
-        if (channel.flags & GCC::UserData::CSNet::CHANNEL_OPTION_SHOW_PROTOCOL) {
-            flags |= CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL;
-        }
-
-        if (chunk_size <= CHANNELS::CHANNEL_CHUNK_LENGTH) {
-            CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
-            virtual_channel_pdu.send_to_server(this->stc, channel.chanid, length, flags, chunk, chunk_size);
-        }
-        else {
-            uint8_t const * virtual_channel_data = chunk;
-            size_t          remaining_data_length = length;
-
-            auto get_channel_control_flags = [] (uint32_t flags, size_t data_length,
-                                                 size_t remaining_data_length,
-                                                 size_t virtual_channel_data_length) -> uint32_t {
-                if (remaining_data_length == data_length) {
-                    return (flags & (~CHANNELS::CHANNEL_FLAG_LAST));
-                }
-                if (remaining_data_length == virtual_channel_data_length) {
-                    return (flags & (~CHANNELS::CHANNEL_FLAG_FIRST));
-                }
-
-                return (flags & (~(CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST)));
-            };
-
-            do {
-                const size_t virtual_channel_data_length =
-                    std::min<size_t>(remaining_data_length, CHANNELS::CHANNEL_CHUNK_LENGTH);
-
-                CHANNELS::VirtualChannelPDU virtual_channel_pdu;
-
-                LOG(LOG_INFO, "send to server");
-
-                virtual_channel_pdu.send_to_server(this->stc, channel.chanid, length, get_channel_control_flags(
-                        flags, length, remaining_data_length, virtual_channel_data_length
-                    ), virtual_channel_data, virtual_channel_data_length);
-
-                remaining_data_length -= virtual_channel_data_length;
-                virtual_channel_data  += virtual_channel_data_length;
-            }
-            while (remaining_data_length);
-        }
-
-        if (bool(this->verbose & RDPVerbose::channels)) {
-            LOG(LOG_INFO, "mod_rdp::send_to_channel done");
-        }
     }
 
     template<class... WriterData>
