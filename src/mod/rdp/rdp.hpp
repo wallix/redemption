@@ -669,7 +669,7 @@ private:
             }
         }
 
-        std::string get_session_probe_arguments(const char * session_probe_window_title)
+        std::string get_session_probe_arguments_remote_program(const char * session_probe_window_title)
         {
             struct build_session_probe_arguments
             {
@@ -711,71 +711,125 @@ private:
 
             constexpr build_session_probe_arguments build_session_probe_arguments {};
 
-            if (this->enable_session_probe) {
-                // Executable file name of SP.
-                char exe_var_str[16] {};
-                if (this->session_probe_customize_executable_name) {
-                    ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
-                }
-
-                // Target informations
-                str_assign(this->session_probe_target_informations, this->target_application, ':');
-                if (!this->session_probe_public_session) {
-                    this->session_probe_target_informations += this->primary_user_id;
-                }
-
-                if (this->remote_program) {
-                    std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
-
-                    this->session_probe_arguments = build_session_probe_arguments(
-                        std::move(this->session_probe_arguments),
-                        build_session_probe_arguments::Exe{exe_var_str},
-                        build_session_probe_arguments::Title{title_param.c_str()},
-                        build_session_probe_arguments::Cookie{
-                            this->session_probe_target_informations.c_str()},
-                        build_session_probe_arguments::Cbspl{""}
-                    );
-                }   // if (this->remote_program)
-                else {
-                    if (this->mod_rdp_params_session_probe_use_clipboard_based_launcher
-                        && this->target_application && *this->target_application
-                    ) {
-                        assert(!this->session_probe_use_clipboard_based_launcher);
-
-                        LOG(LOG_WARNING,
-                            "mod_rdp: "
-                                "Clipboard based Session Probe launcher is not compatible with application. "
-                                "Falled back to using AlternateShell based launcher.");
-                    }
-
-                    char clipboard_based_launcher_cookie[32];
-                    {
-                        SslSha1 sha1;
-                        sha1.update(this->session_probe_target_informations);
-
-                        uint8_t sig[SslSha1::DIGEST_LENGTH];
-                        sha1.final(sig);
-
-                        snprintf(clipboard_based_launcher_cookie, sizeof(clipboard_based_launcher_cookie),
-                            "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                            sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9]);
-                    }
-
-                    this->session_probe_arguments = build_session_probe_arguments(
-                        std::move(this->session_probe_arguments),
-                        build_session_probe_arguments::Exe{exe_var_str},
-                        build_session_probe_arguments::Title{""},
-                        build_session_probe_arguments::Cookie{
-                            this->session_probe_use_clipboard_based_launcher
-                                ? ""
-                                : ((this->experimental_fix_too_long_cookie && (this->session_probe_target_informations.length() > 20))
-                                    ? clipboard_based_launcher_cookie
-                                        : this->session_probe_target_informations.c_str())},
-                        build_session_probe_arguments::Cbspl{
-                            this->session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""}
-                    );
-                }   // if (!this->remote_program)
+            // Executable file name of SP.
+            char exe_var_str[16] {};
+            if (this->session_probe_customize_executable_name) {
+                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
             }
+
+            // Target informations
+            str_assign(this->session_probe_target_informations, this->target_application, ':');
+            if (!this->session_probe_public_session) {
+                this->session_probe_target_informations += this->primary_user_id;
+            }
+
+            std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
+
+            this->session_probe_arguments = build_session_probe_arguments(
+                std::move(this->session_probe_arguments),
+                build_session_probe_arguments::Exe{exe_var_str},
+                build_session_probe_arguments::Title{title_param.c_str()},
+                build_session_probe_arguments::Cookie{
+                    this->session_probe_target_informations.c_str()},
+                build_session_probe_arguments::Cbspl{""}
+            );
+
+            return this->session_probe_arguments;
+        }
+
+
+        std::string get_session_probe_arguments_no_remote_program()
+        {
+            struct build_session_probe_arguments_no_remote_program
+            {
+                struct Exe { char const* s; };
+                struct Cookie { char const* s; };
+                struct Title { char const* s; };
+                struct Cbspl { char const* s; };
+
+                [[nodiscard]] std::string operator()(
+                    std::string probe_arguments,
+                    Exe exe,
+                    Title title,
+                    Cookie cookie,
+                    Cbspl cbspl
+                ) const
+                {
+                    auto replace = [&](char const* marker, char const* replacement){
+                        size_t pos = 0;
+                        auto const marker_len = strlen(marker);
+                        auto const replacement_len = strlen(replacement);
+                        while ((pos = probe_arguments.find(marker, pos)) != std::string::npos) {
+                            probe_arguments.replace(pos, marker_len, replacement);
+                            pos += replacement_len;
+                        }
+                    };
+
+                    std::string cookie_param = (cookie.s && *cookie.s)
+                      ? str_concat("/#", cookie.s, ' ')
+                      : std::string();
+
+                    replace("${EXE_VAR}", exe.s);
+                    replace("${TITLE_VAR} ", title.s);
+                    replace("/${COOKIE_VAR} ", cookie_param.c_str());
+                    replace("${CBSPL_VAR} ", cbspl.s);
+
+                    return probe_arguments;
+                }
+            };
+
+            constexpr build_session_probe_arguments_no_remote_program build_session_probe_arguments_no_remote_program {};
+
+            // Executable file name of SP.
+            char exe_var_str[16] {};
+            if (this->session_probe_customize_executable_name) {
+                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
+            }
+
+            // Target informations
+            str_assign(this->session_probe_target_informations, this->target_application, ':');
+            if (!this->session_probe_public_session) {
+                this->session_probe_target_informations += this->primary_user_id;
+            }
+
+            if (this->mod_rdp_params_session_probe_use_clipboard_based_launcher
+                && this->target_application && *this->target_application
+            ) {
+                assert(!this->session_probe_use_clipboard_based_launcher);
+
+                LOG(LOG_WARNING,
+                    "mod_rdp: "
+                        "Clipboard based Session Probe launcher is not compatible with application. "
+                        "Falled back to using AlternateShell based launcher.");
+            }
+
+            char clipboard_based_launcher_cookie[32];
+            {
+                SslSha1 sha1;
+                sha1.update(this->session_probe_target_informations);
+
+                uint8_t sig[SslSha1::DIGEST_LENGTH];
+                sha1.final(sig);
+
+                snprintf(clipboard_based_launcher_cookie, sizeof(clipboard_based_launcher_cookie),
+                    "%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+                    sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7], sig[8], sig[9]);
+            }
+
+            this->session_probe_arguments = build_session_probe_arguments_no_remote_program(
+                std::move(this->session_probe_arguments),
+                build_session_probe_arguments_no_remote_program::Exe{exe_var_str},
+                build_session_probe_arguments_no_remote_program::Title{""},
+                build_session_probe_arguments_no_remote_program::Cookie{
+                    this->session_probe_use_clipboard_based_launcher
+                        ? ""
+                        : ((this->experimental_fix_too_long_cookie && (this->session_probe_target_informations.length() > 20))
+                            ? clipboard_based_launcher_cookie
+                                : this->session_probe_target_informations.c_str())},
+                build_session_probe_arguments_no_remote_program::Cbspl{
+                    this->session_probe_use_clipboard_based_launcher ? "CD %TMP%&" : ""}
+            );
+
             return this->session_probe_arguments;
         }
 
@@ -1257,7 +1311,7 @@ private:
                 }
 
                 this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
-                std::string session_probe_arguments = this->get_session_probe_arguments(session_probe_window_title);
+                std::string session_probe_arguments = this->get_session_probe_arguments_remote_program(session_probe_window_title);
                 this->client_execute_arguments   = session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
@@ -1277,7 +1331,7 @@ private:
                         this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
 
                         this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
-                        std::string session_probe_arguments = this->get_session_probe_arguments(session_probe_window_title);
+                        std::string session_probe_arguments = this->get_session_probe_arguments_remote_program(session_probe_window_title);
                         this->client_execute_arguments   = session_probe_arguments;
                         this->client_execute_working_dir = "%TMP%";
                         this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
@@ -1366,8 +1420,6 @@ private:
                     char (&directory)[512],
                     SessionReactor& session_reactor)
         {
-            char session_probe_window_title[32] = { 0 };
-
             if (mod_rdp_params.target_application 
             && (*mod_rdp_params.target_application)) {
                 std::string shell_arguments = get_alternate_shell_arguments(
@@ -1391,7 +1443,7 @@ private:
                     alternate_shell.erase(0, 2);
                 }
 
-                std::string session_probe_arguments = this->get_session_probe_arguments(session_probe_window_title);
+                std::string session_probe_arguments = this->get_session_probe_arguments_no_remote_program();
                 str_append(alternate_shell, ' ', session_probe_arguments);
 
                 strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
@@ -1421,7 +1473,7 @@ private:
                         alternate_shell.erase(0, 2);
                     }
 
-                    std::string session_probe_arguments = this->get_session_probe_arguments(session_probe_window_title);
+                    std::string session_probe_arguments = this->get_session_probe_arguments_no_remote_program();
                     str_append(alternate_shell, ' ', session_probe_arguments);
 
                     strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
@@ -1441,7 +1493,7 @@ private:
                         alternate_shell.erase(0, 2);
                     }
 
-                    std::string session_probe_arguments = this->get_session_probe_arguments(session_probe_window_title);
+                    std::string session_probe_arguments = this->get_session_probe_arguments_no_remote_program();
                     str_append(alternate_shell, ' ', session_probe_arguments);
 
                     if (this->session_probe_use_clipboard_based_launcher) {
