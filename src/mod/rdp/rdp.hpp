@@ -599,110 +599,74 @@ private:
                 this->verbose);
         }
 
-        inline DynamicChannelVirtualChannel& get_dynamic_channel_virtual_channel(
-                    FrontAPI& front, ServerTransportContext & stc) {
-            if (!this->dynamic_channel_virtual_channel) {
-                assert(!this->dynamic_channel_to_client_sender
-                    && !this->dynamic_channel_to_server_sender);
 
-                this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
-                this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
+        void create_dynamic_channel_virtual_channel(FrontAPI& front, ServerTransportContext & stc) {
+            assert(!this->dynamic_channel_to_client_sender && !this->dynamic_channel_to_server_sender);
 
-                DynamicChannelVirtualChannel::Params dcvc_params(this->report_message);
+            this->dynamic_channel_to_client_sender = this->create_to_client_sender(channel_names::drdynvc, front);
+            this->dynamic_channel_to_server_sender = this->create_to_server_synchronous_sender(channel_names::drdynvc, stc);
 
-                dcvc_params.exchanged_data_limit = this->max_drdynvc_data;
-                dcvc_params.verbose              = this->verbose;
+            DynamicChannelVirtualChannel::Params dcvc_params(this->report_message);
 
-                this->dynamic_channel_virtual_channel =
-                    std::make_unique<DynamicChannelVirtualChannel>(
-                        this->dynamic_channel_to_client_sender.get(),
-                        this->dynamic_channel_to_server_sender.get(),
-                        dcvc_params);
-            }
+            dcvc_params.exchanged_data_limit = this->max_drdynvc_data;
+            dcvc_params.verbose              = this->verbose;
 
-            return *this->dynamic_channel_virtual_channel;
+            this->dynamic_channel_virtual_channel =
+                std::make_unique<DynamicChannelVirtualChannel>(
+                    this->dynamic_channel_to_client_sender.get(),
+                    this->dynamic_channel_to_server_sender.get(),
+                    dcvc_params);
         }
 
-        inline FileSystemVirtualChannel& get_file_system_virtual_channel(
+        inline void create_file_system_virtual_channel(
                     FrontAPI& front,
                     ServerTransportContext & stc,
                     AsynchronousTaskContainer & asynchronous_tasks,
                     GeneralCaps const & client_general_caps,
                     const char (& client_name)[128]) {
 
-            if (!this->file_system_virtual_channel) {
-                assert(!this->file_system_to_client_sender && !this->file_system_to_server_sender);
+            assert(!this->file_system_to_client_sender && !this->file_system_to_server_sender);
 
-                this->file_system_to_client_sender = (((client_general_caps.os_major != OSMAJORTYPE_IOS)
-                                                        || !this->bogus_ios_rdpdr_virtual_channel)
-                                                   ? this->create_to_client_sender(channel_names::rdpdr, front)
-                                                   : nullptr);
-                this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
+            this->file_system_to_client_sender = (((client_general_caps.os_major != OSMAJORTYPE_IOS)
+                                                    || !this->bogus_ios_rdpdr_virtual_channel)
+                                               ? this->create_to_client_sender(channel_names::rdpdr, front)
+                                               : nullptr);
+            this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
-                this->file_system_virtual_channel =
-                    std::make_unique<FileSystemVirtualChannel>(
-                        asynchronous_tasks.session_reactor,
-                        this->file_system_to_client_sender.get(),
-                        this->file_system_to_server_sender.get(),
-                        this->file_system_drive_manager,
-                        front,
-                        this->get_file_system_virtual_channel_params(client_name));
+            FileSystemVirtualChannel::Params fsvc_params(this->report_message);
 
-                if (this->file_system_to_server_sender) {
-                    if (this->enable_session_probe) {
-                        this->file_system_virtual_channel->enable_session_probe_drive();
-                    }
+            fsvc_params.exchanged_data_limit = this->max_rdpdr_data;
+            fsvc_params.verbose = this->verbose;
 
-                    if (this->use_application_driver) {
-                        this->file_system_virtual_channel->enable_session_probe_drive();
-                    }
+            fsvc_params.client_name = client_name;
+            fsvc_params.file_system_read_authorized = this->authorization_channels.rdpdr_drive_read_is_authorized();
+            fsvc_params.file_system_write_authorized = this->authorization_channels.rdpdr_drive_write_is_authorized();
+            fsvc_params.parallel_port_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL);
+            fsvc_params.print_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
+            fsvc_params.serial_port_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
+            fsvc_params.smart_card_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
+            // TODO: getpid() is global and execution dependent, replace by a constant because it will break tests
+            fsvc_params.random_number = ::getpid();
+
+            fsvc_params.dont_log_data_into_syslog = this->disable_file_system_log_syslog;
+            fsvc_params.dont_log_data_into_wrm = this->disable_file_system_log_wrm;
+
+            fsvc_params.proxy_managed_drive_prefix = this->proxy_managed_drive_prefix.c_str();
+
+            this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
+                    asynchronous_tasks.session_reactor,
+                    this->file_system_to_client_sender.get(),
+                    this->file_system_to_server_sender.get(),
+                    this->file_system_drive_manager,
+                    front,
+                    fsvc_params);
+
+            if (this->file_system_to_server_sender) {
+                if (this->enable_session_probe 
+                || this->use_application_driver) {
+                    this->file_system_virtual_channel->enable_session_probe_drive();
                 }
             }
-
-            return *this->file_system_virtual_channel;
-        }
-
-        const FileSystemVirtualChannel::Params
-            get_file_system_virtual_channel_params(const char (& client_name)[128]) const
-        {
-            FileSystemVirtualChannel::Params file_system_virtual_channel_params(this->report_message);
-
-            file_system_virtual_channel_params.exchanged_data_limit            =
-                this->max_rdpdr_data;
-            file_system_virtual_channel_params.verbose                         =
-                this->verbose;
-
-            file_system_virtual_channel_params.client_name                     =
-                client_name;
-            file_system_virtual_channel_params.file_system_read_authorized     =
-                this->authorization_channels.rdpdr_drive_read_is_authorized();
-            file_system_virtual_channel_params.file_system_write_authorized    =
-                this->authorization_channels.rdpdr_drive_write_is_authorized();
-            file_system_virtual_channel_params.parallel_port_authorized        =
-                this->authorization_channels.rdpdr_type_is_authorized(
-                    rdpdr::RDPDR_DTYP_PARALLEL);
-            file_system_virtual_channel_params.print_authorized                =
-                this->authorization_channels.rdpdr_type_is_authorized(
-                    rdpdr::RDPDR_DTYP_PRINT);
-            file_system_virtual_channel_params.serial_port_authorized          =
-                this->authorization_channels.rdpdr_type_is_authorized(
-                    rdpdr::RDPDR_DTYP_SERIAL);
-            file_system_virtual_channel_params.smart_card_authorized           =
-                this->authorization_channels.rdpdr_type_is_authorized(
-                    rdpdr::RDPDR_DTYP_SMARTCARD);
-            // TODO: getpid() is global and execution dependent, replace by a constant because it will break tests
-            file_system_virtual_channel_params.random_number                   =
-                ::getpid();
-
-            file_system_virtual_channel_params.dont_log_data_into_syslog       =
-                this->disable_file_system_log_syslog;
-            file_system_virtual_channel_params.dont_log_data_into_wrm          =
-                this->disable_file_system_log_wrm;
-
-            file_system_virtual_channel_params.proxy_managed_drive_prefix      =
-                this->proxy_managed_drive_prefix.c_str();
-
-            return file_system_virtual_channel_params;
         }
 
         std::string get_session_probe_arguments(const char * session_probe_window_title)
@@ -834,8 +798,11 @@ private:
                 this->session_probe_to_server_sender =
                     this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
-                FileSystemVirtualChannel& file_system_virtual_channel =
-                    this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                if (!this->file_system_virtual_channel) {
+                    this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                }
+
+                FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
 
                 SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
 
@@ -1025,7 +992,14 @@ private:
                 LOG(LOG_INFO, "WABLauncher: %s", parameters[0].c_str());
             }
             else if (!::strcasecmp(order.c_str(), "RemoveDrive") && parameters.empty()) {
-                FileSystemVirtualChannel& rdpdr_channel = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+
+                if (!this->file_system_virtual_channel) {
+                    this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                }
+
+                FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
+
+
                 rdpdr_channel.disable_session_probe_drive();
             }
             else {
@@ -1160,7 +1134,11 @@ private:
                                    ServerTransportContext & stc,
                                    AsynchronousTaskContainer & asynchronous_tasks) {
 
-            DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel(front, stc);
+            if (!this->dynamic_channel_virtual_channel) {
+                this->create_dynamic_channel_virtual_channel(front, stc);
+            }
+
+            DynamicChannelVirtualChannel& channel = *this->dynamic_channel_virtual_channel;
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -1216,8 +1194,11 @@ private:
                 return;
             }
 
-            FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(
-                            front, stc, asynchronous_tasks, client_general_caps, client_name);
+            if (!this->file_system_virtual_channel) {
+                this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+            }
+
+            FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
             channel.process_server_message(length, flags, stream.get_current(), chunk_size, out_asynchronous_task);
@@ -1565,9 +1546,11 @@ private:
                 return;
             }
 
-            FileSystemVirtualChannel& channel = this->get_file_system_virtual_channel(
-                                front, stc, asynchronous_tasks, 
-                                client_general_caps, client_name);
+            if (!this->file_system_virtual_channel) {
+                this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+            }
+
+            FileSystemVirtualChannel& channel = *this->file_system_virtual_channel;
 
             channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
         }
@@ -1577,7 +1560,11 @@ private:
                                          ServerTransportContext & stc)
         {
 
-            DynamicChannelVirtualChannel& channel = this->get_dynamic_channel_virtual_channel(front, stc);
+            if (!this->dynamic_channel_virtual_channel) {
+                this->create_dynamic_channel_virtual_channel(front, stc);
+            }
+
+            DynamicChannelVirtualChannel& channel = *this->dynamic_channel_virtual_channel;
 
             channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
         }
@@ -1735,7 +1722,12 @@ private:
                 ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
                 cvc.set_session_probe_launcher(this->session_probe_launcher.get());
 
-                FileSystemVirtualChannel& fsvc = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                if (!this->file_system_virtual_channel) {
+                    this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
+                }
+
+                FileSystemVirtualChannel& fsvc = *this->file_system_virtual_channel;
+
                 fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
 
                 this->file_system_drive_manager.set_session_probe_launcher(this->session_probe_launcher.get());
