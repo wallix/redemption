@@ -455,8 +455,13 @@ private:
             return std::unique_ptr<VirtualChannelDataSender>(std::move(to_client_sender));
         }
 
-        const ClipboardVirtualChannel::Params get_clipboard_virtual_channel_params() const
-        {
+        inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
+            assert(!this->clipboard_to_client_sender 
+                && !this->clipboard_to_server_sender);
+
+            this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
+            this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
+
             ClipboardVirtualChannel::Params cvc_params(this->report_message);
 
             cvc_params.exchanged_data_limit      = this->max_clipboard_data;
@@ -468,28 +473,14 @@ private:
             cvc_params.dont_log_data_into_wrm    = this->disable_clipboard_log_wrm;
             cvc_params.log_only_relevant_clipboard_activities = this->log_only_relevant_clipboard_activities;
 
-            return cvc_params;
+            this->clipboard_virtual_channel =
+                std::make_unique<ClipboardVirtualChannel>(
+                    this->clipboard_to_client_sender.get(),
+                    this->clipboard_to_server_sender.get(),
+                    front,
+                    cvc_params);
         }
 
-
-        inline ClipboardVirtualChannel& get_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
-            if (!this->clipboard_virtual_channel) {
-                assert(!this->clipboard_to_client_sender &&
-                    !this->clipboard_to_server_sender);
-
-                this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
-                this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
-
-                this->clipboard_virtual_channel =
-                    std::make_unique<ClipboardVirtualChannel>(
-                        this->clipboard_to_client_sender.get(),
-                        this->clipboard_to_server_sender.get(),
-                        front,
-                        this->get_clipboard_virtual_channel_params());
-                }
-
-            return *this->clipboard_virtual_channel;
-        }
 
         std::unique_ptr<VirtualChannelDataSender> create_to_server_synchronous_sender(CHANNELS::ChannelNameId channel_name, ServerTransportContext & stc)
         {
@@ -977,7 +968,11 @@ private:
             FrontAPI& front,
             ServerTransportContext & stc
         ) {
-            ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel(front, stc);
+            if (!this->clipboard_virtual_channel) {
+                this->create_clipboard_virtual_channel(front, stc);
+            }
+
+            ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 InStream clone = stream.clone();
@@ -1129,7 +1124,11 @@ private:
         void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
                                 FrontAPI& front,
                                 ServerTransportContext & stc) {
-            ClipboardVirtualChannel& channel = this->get_clipboard_virtual_channel(front, stc);
+
+            if (!this->clipboard_virtual_channel) {
+                this->create_clipboard_virtual_channel(front, stc);
+            }
+            ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 InStream clone = chunk.clone();
@@ -1730,7 +1729,10 @@ private:
         {
             assert(this->enable_session_probe);
             if (this->session_probe_launcher){
-                ClipboardVirtualChannel& cvc = this->get_clipboard_virtual_channel(front, stc);
+                if (!this->clipboard_virtual_channel) {
+                    this->create_clipboard_virtual_channel(front, stc);
+                }
+                ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
                 cvc.set_session_probe_launcher(this->session_probe_launcher.get());
 
                 FileSystemVirtualChannel& fsvc = this->get_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
