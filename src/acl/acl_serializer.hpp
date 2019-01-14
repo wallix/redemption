@@ -381,8 +381,7 @@ public:
 
     void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) override
     {
-        // TODO system time
-        time_t const time_now = time.tv_sec;                      //std::time(nullptr);
+        time_t const time_now = time.tv_sec;
         this->log_file.write_line(time_now, info);
 
         /* Log to SIEM (redirected syslog) */
@@ -431,13 +430,15 @@ public:
                 case ArcsightLogInfo::NONE: break;
 
                 case ArcsightLogInfo::SERVER_DST:
-                    extension += " suser=" + user + " duser=" + account;
-                    extension += " src=" + host + " dst=" + target_ip;
+                    str_append(extension,
+                        " suser=", user, " duser=", account,
+                        " src=", host, " dst=", target_ip);
                     break;
 
                 case ArcsightLogInfo::SERVER_SRC:
-                    extension += " suser=" + account + " duser=" + user;
-                    extension += " src=" + target_ip + " dst=" + host;
+                    str_append(extension,
+                        " suser=", account, " duser=", user,
+                        " src=", target_ip, " dst=", host);
                     break;
             }
             if (!asl_info.ApplicationProtocol.empty()) {
@@ -466,7 +467,7 @@ public:
                 this->arcsight_text_formating(extension, std::to_string(asl_info.fileSize));
             }
             if (asl_info.endTime) {
-                timeval time = {__time_t(asl_info.endTime),  0};
+                timeval time = {time_t(asl_info.endTime), 0};
                 extension += " end=";
                 this->arcsight_text_formating(extension, arcsight_gmdatetime(time));
             }

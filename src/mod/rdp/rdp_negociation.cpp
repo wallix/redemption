@@ -241,6 +241,7 @@ void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, c
 {
     this->message.assign(type.data, {{"description", description.data}});
 
+    // TODO system time
     this->report_message.log6(this->message.str(), arc_info, tvtime());
 
     if (bool(this->verbose & RDPVerbose::basic_trace)) {

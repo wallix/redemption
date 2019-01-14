@@ -104,18 +104,6 @@ inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Tr
 
 class ModuleManager : public MMIni
 {
-    struct IniAccounts {
-        char username[255]; // should use string
-        char password[255]; // should use string
-
-        IniAccounts()
-        {
-            this->username[0] = 0;
-            this->password[0] = 0;
-        }
-    } accounts;
-
-private:
     class ModOSD : public gdi::ProtectedGraphics, public mod_api
     {
         ModuleManager & mm;
@@ -461,6 +449,8 @@ private:
 
     SocketTransport * socket_transport = nullptr;
 
+    bool is_primary_connected = false;
+
 public:
     ModuleManager(SessionReactor& session_reactor, Front & front, Inifile & ini, Random & gen, TimeObj & timeobj)
         : MMIni(session_reactor, ini)
@@ -552,10 +542,19 @@ public:
         }
         this->old_target_module = target_module;
 
+        auto log_primary_connection = [this]{
+            if (!this->is_primary_connected) {
+                this->is_primary_connected = true;
+                LOG_PROXY_SIEM(LOG_INFO, "AUTHENTICATION_SUCCESS",
+                    R"(method="Password" user="%s")", this->ini.get<cfg::globals::auth_user>().c_str());
+            }
+        };
+
         switch (target_module)
         {
         case MODULE_INTERNAL_BOUNCER2:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'bouncer2_mod'");
+            log_primary_connection();
             this->set_mod(new Bouncer2Mod(
                 this->session_reactor,
                 this->front,
@@ -569,6 +568,7 @@ public:
             break;
         case MODULE_INTERNAL_TEST:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test'");
+            log_primary_connection();
             this->set_mod(new ReplayMod(
                 this->session_reactor,
                 this->front,
@@ -593,20 +593,20 @@ public:
             }
             break;
         case MODULE_INTERNAL_WIDGETTEST:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-                this->set_mod(new WidgetTestMod(
-                    this->session_reactor,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->load_font()
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
-            }
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+            log_primary_connection();
+            this->set_mod(new WidgetTestMod(
+                this->session_reactor,
+                this->front,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
+                this->load_font()
+            ));
+            LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             break;
         case MODULE_INTERNAL_CARD:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
+            log_primary_connection();
             this->set_mod(new TestCardMod(
                 this->session_reactor,
                 this->front,
@@ -623,7 +623,8 @@ public:
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
             }
-            {
+
+            log_primary_connection();
 
             this->set_mod(new SelectorMod(
                 this->ini,
@@ -643,7 +644,6 @@ public:
             //if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
             //}
-            }
             break;
         case MODULE_INTERNAL_CLOSE:
             {
@@ -701,6 +701,7 @@ public:
         case MODULE_INTERNAL_TARGET:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
+                log_primary_connection();
                 this->set_mod(new InteractiveTargetMod(
                     this->ini,
                     this->session_reactor,
@@ -723,6 +724,7 @@ public:
         case MODULE_INTERNAL_WIDGET_DIALOG:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
+                log_primary_connection();
                 const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = TR(trkeys::refused, language(this->ini));
                 const char * caption = "Information";
@@ -752,6 +754,7 @@ public:
         case MODULE_INTERNAL_WIDGET_MESSAGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
+                log_primary_connection();
                 const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = nullptr;
                 const char * caption = "Information";
@@ -780,6 +783,7 @@ public:
         case MODULE_INTERNAL_DIALOG_CHALLENGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Challenge'");
+                log_primary_connection();
                 const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * button = nullptr;
                 const char * caption = "Challenge";
@@ -816,6 +820,7 @@ public:
         case MODULE_INTERNAL_WAIT_INFO:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Wait Info Message'");
+                log_primary_connection();
                 const char * message = this->ini.get<cfg::context::message>().c_str();
                 const char * caption = TR(trkeys::information, language(this->ini));
                 bool showform = this->ini.get<cfg::context::showform>();
@@ -843,40 +848,42 @@ public:
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
             }
             break;
-        case MODULE_INTERNAL_WIDGET_LOGIN:
+        case MODULE_INTERNAL_WIDGET_LOGIN: {
+            char username[255]; // should use string
+            username[0] = 0;
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-            if (this->ini.is_asked<cfg::globals::target_user>()
-             || this->ini.is_asked<cfg::globals::target_device>()){
-                if (this->ini.is_asked<cfg::globals::auth_user>()){
-                    accounts.username[0] = 0;
+            if (!this->ini.is_asked<cfg::globals::auth_user>()){
+                if (this->ini.is_asked<cfg::globals::target_user>()
+                 || this->ini.is_asked<cfg::globals::target_device>()){
+                    strncpy(username,
+                            this->ini.get<cfg::globals::auth_user>().c_str(),
+                            sizeof(username));
                 }
                 else {
-                    strncpy(accounts.username,
-                            this->ini.get<cfg::globals::auth_user>().c_str(),
-                            sizeof(accounts.username));
-                    accounts.username[sizeof(accounts.username) - 1] = 0;
+                    // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
+                    snprintf( username, sizeof(username), "%s@%s:%s%s%s"
+                            , this->ini.get<cfg::globals::target_user>().c_str()
+                            , this->ini.get<cfg::globals::target_device>().c_str()
+                            , this->ini.get<cfg::context::target_protocol>().c_str()
+                            , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
+                            , this->ini.get<cfg::globals::auth_user>().c_str()
+                            );
                 }
+                username[sizeof(username) - 1] = 0;
             }
-            else if (this->ini.is_asked<cfg::globals::auth_user>()) {
-                accounts.username[0] = 0;
+
+            if (!this->ini.get<cfg::context::opt_message>().empty()) {
+                LOG_PROXY_SIEM(LOG_INFO, "AUTHENTICATION_FAILURE",
+                    R"(method="Password" user="%s")", username);
             }
-            else {
-                // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
-                snprintf( accounts.username, sizeof(accounts.username), "%s@%s:%s%s%s"
-                        , this->ini.get<cfg::globals::target_user>().c_str()
-                        , this->ini.get<cfg::globals::target_device>().c_str()
-                        , this->ini.get<cfg::context::target_protocol>().c_str()
-                        , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
-                        , this->ini.get<cfg::globals::auth_user>().c_str()
-                        );
-                utils::back(accounts.username) = '\0';
-            }
+
+            this->is_primary_connected = false;
 
             this->set_mod(new FlatLoginMod(
                 this->ini,
                 this->session_reactor,
-                accounts.username,
-                accounts.password,
+                username,
+                "", // password
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
@@ -892,6 +899,7 @@ public:
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
+        }
 
         case MODULE_XUP:
             {
@@ -899,6 +907,7 @@ public:
                 if (bool(this->verbose & Verbose::new_mod)) {
                     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
                 }
+                log_primary_connection();
 
                 unique_fd client_sck = this->connect_to_target_host(
                     report_message, trkeys::authentification_x_fail);
@@ -929,6 +938,7 @@ public:
             break;
 
         case MODULE_RDP:
+            log_primary_connection();
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
@@ -937,6 +947,7 @@ public:
             break;
 
         case MODULE_VNC:
+            log_primary_connection();
             this->create_mod_vnc(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
@@ -944,10 +955,8 @@ public:
             break;
 
         default:
-            {
-                LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
-                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-            }
+            LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
+            throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
     }
 

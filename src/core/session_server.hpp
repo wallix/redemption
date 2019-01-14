@@ -68,18 +68,12 @@ public:
         unsigned int sin_size = sizeof(u);
         memset(&u, 0, sin_size);
 
-        int sck = accept(incoming_sck, &u.s, &sin_size);
+        int const sck = accept(incoming_sck, &u.s, &sin_size);
         if (-1 == sck) {
             LOG(LOG_ERR, "Accept failed on socket %d (%s)", incoming_sck, strerror(errno));
             _exit(1);
         }
 
-        char source_ip[256];
-        utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
-        const int source_port = ntohs(u.s4.sin_port);
-        REDEMPTION_DIAGNOSTIC_POP
         /* start new process */
         const pid_t pid = forkable ? fork() : 0;
         switch (pid) {
@@ -91,6 +85,19 @@ public:
         // (that means the select() on ressources could be managed by that layer)
             {
                 close(incoming_sck);
+
+                char source_ip[256];
+                utils::strlcpy(source_ip, inet_ntoa(u.s4.sin_addr));
+                const bool source_is_localhost = (0 == strcmp(source_ip, "127.0.0.1"));
+                REDEMPTION_DIAGNOSTIC_PUSH
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wold-style-cast") // only to release
+                const int source_port = ntohs(u.s4.sin_port);
+                REDEMPTION_DIAGNOSTIC_POP
+
+                if (!source_is_localhost) {
+                    LOG_PROXY_SIEM(LOG_INFO, "INCOMING_CONNECTION",
+                        R"(src_ip="%s" src_port="%d")", source_ip, source_port);
+                }
 
                 Inifile ini;
 
@@ -127,15 +134,14 @@ public:
                     LOG(LOG_INFO, "fake_target_ip='%s'", target_ip);
                 }
 
-                if (0 != strcmp(source_ip, "127.0.0.1")){
+                if (!source_is_localhost){
                     // do not log early messages for localhost (to avoid tracing in watchdog)
                     LOG(LOG_INFO, "Redemption " VERSION);
                     LOG(LOG_INFO, "src=%s sport=%d dst=%s dport=%d", source_ip, source_port, target_ip, target_port);
                 }
 
                 char real_target_ip[256];
-                if (ini.get<cfg::globals::enable_transparent_mode>() &&
-                    (0 != strcmp(source_ip, "127.0.0.1"))) {
+                if (ini.get<cfg::globals::enable_transparent_mode>() && !source_is_localhost) {
                     int fd = open("/proc/net/ip_conntrack", O_RDONLY);
                     // source and dest are inverted because we get the information we want from reply path rule
                     int res = parse_ip_conntrack(fd, target_ip, source_ip, target_port, source_port, real_target_ip, sizeof(real_target_ip), 1);
@@ -179,7 +185,7 @@ public:
                     close(fd);
 
                     // Launch session
-                    if (0 != strcmp(source_ip, "127.0.0.1")){
+                    if (!source_is_localhost){
                         // do not log early messages for localhost (to avoid tracing in watchdog)
                         LOG(LOG_INFO,
                             "New session on %d (pid=%d) from %s to %s",
