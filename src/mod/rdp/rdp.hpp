@@ -669,75 +669,6 @@ private:
             }
         }
 
-        std::string get_session_probe_arguments_remote_program(const char * session_probe_window_title)
-        {
-            struct build_session_probe_arguments
-            {
-                struct Exe { char const* s; };
-                struct Cookie { char const* s; };
-                struct Title { char const* s; };
-                struct Cbspl { char const* s; };
-
-                [[nodiscard]] std::string operator()(
-                    std::string probe_arguments,
-                    Exe exe,
-                    Title title,
-                    Cookie cookie,
-                    Cbspl cbspl
-                ) const
-                {
-                    auto replace = [&](char const* marker, char const* replacement){
-                        size_t pos = 0;
-                        auto const marker_len = strlen(marker);
-                        auto const replacement_len = strlen(replacement);
-                        while ((pos = probe_arguments.find(marker, pos)) != std::string::npos) {
-                            probe_arguments.replace(pos, marker_len, replacement);
-                            pos += replacement_len;
-                        }
-                    };
-
-                    std::string cookie_param = (cookie.s && *cookie.s)
-                      ? str_concat("/#", cookie.s, ' ')
-                      : std::string();
-
-                    replace("${EXE_VAR}", exe.s);
-                    replace("${TITLE_VAR} ", title.s);
-                    replace("/${COOKIE_VAR} ", cookie_param.c_str());
-                    replace("${CBSPL_VAR} ", cbspl.s);
-
-                    return probe_arguments;
-                }
-            };
-
-            constexpr build_session_probe_arguments build_session_probe_arguments {};
-
-            // Executable file name of SP.
-            char exe_var_str[16] {};
-            if (this->session_probe_customize_executable_name) {
-                ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
-            }
-
-            // Target informations
-            str_assign(this->session_probe_target_informations, this->target_application, ':');
-            if (!this->session_probe_public_session) {
-                this->session_probe_target_informations += this->primary_user_id;
-            }
-
-            std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
-
-            this->session_probe_arguments = build_session_probe_arguments(
-                std::move(this->session_probe_arguments),
-                build_session_probe_arguments::Exe{exe_var_str},
-                build_session_probe_arguments::Title{title_param.c_str()},
-                build_session_probe_arguments::Cookie{
-                    this->session_probe_target_informations.c_str()},
-                build_session_probe_arguments::Cbspl{""}
-            );
-
-            return this->session_probe_arguments;
-        }
-
-
         std::string get_session_probe_arguments_no_remote_program()
         {
             struct build_session_probe_arguments_no_remote_program
@@ -1261,6 +1192,18 @@ private:
             }
         }
 
+
+        static void replace(std::string & text_with_tags, char const* marker, char const* replacement){
+            size_t pos = 0;
+            auto const marker_len = strlen(marker);
+            auto const replacement_len = strlen(replacement);
+            while ((pos = text_with_tags.find(marker, pos)) != std::string::npos) {
+                text_with_tags.replace(pos, marker_len, replacement);
+                pos += replacement_len;
+            }
+        };
+
+
         void init_remote_program_with_session_probe(
                         FrontAPI& front,
                         mod_api & mod_rdp,
@@ -1311,8 +1254,36 @@ private:
                 }
 
                 this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
-                std::string session_probe_arguments = this->get_session_probe_arguments_remote_program(session_probe_window_title);
-                this->client_execute_arguments   = session_probe_arguments;
+                
+                // Executable file name of SP.
+                char exe_var_str[16] {};
+                if (this->session_probe_customize_executable_name) {
+                    ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
+                }
+
+                // Target informations
+                str_assign(this->session_probe_target_informations, this->target_application, ':');
+                if (!this->session_probe_public_session) {
+                    this->session_probe_target_informations += this->primary_user_id;
+                }
+
+                std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
+
+                Channels::replace(this->session_probe_arguments, "${EXE_VAR}", exe_var_str);
+                Channels::replace(this->session_probe_arguments, "${TITLE_VAR} ", title_param.c_str());
+
+                std::string cookie_param = [](std::string s){
+                    if (s.size() == 0) {
+                        return std::string();
+                    }
+                    return str_concat("/#",s.c_str(), ' ');
+                }(this->session_probe_target_informations); 
+                
+                Channels::replace(this->session_probe_arguments, "/${COOKIE_VAR} ", cookie_param.c_str());
+                
+                Channels::replace(this->session_probe_arguments, "${CBSPL_VAR} ", "");
+
+                this->client_execute_arguments   = this->session_probe_arguments;
                 this->client_execute_working_dir = "%TMP%";
                 this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
 
@@ -1331,8 +1302,35 @@ private:
                         this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
 
                         this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
-                        std::string session_probe_arguments = this->get_session_probe_arguments_remote_program(session_probe_window_title);
-                        this->client_execute_arguments   = session_probe_arguments;
+
+                        // Executable file name of SP.
+                        char exe_var_str[16] {};
+                        if (this->session_probe_customize_executable_name) {
+                            ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
+                        }
+
+                        // Target informations
+                        str_assign(this->session_probe_target_informations, this->target_application, ':');
+                        if (!this->session_probe_public_session) {
+                            this->session_probe_target_informations += this->primary_user_id;
+                        }
+
+                        std::string title_param = str_concat("TITLE ", session_probe_window_title, '&');
+
+                        Channels::replace(this->session_probe_arguments, "${EXE_VAR}", exe_var_str);
+                        Channels::replace(this->session_probe_arguments, "${TITLE_VAR} ", title_param.c_str());
+
+                        std::string cookie_param = [](std::string s){
+                                if (s.size() == 0) {
+                                    return std::string();
+                                }
+                                return str_concat("/#",s.c_str(), ' ');
+                            }(this->session_probe_target_informations); 
+                        Channels::replace(this->session_probe_arguments, "/${COOKIE_VAR} ", cookie_param.c_str());
+
+                        Channels::replace(this->session_probe_arguments, "${CBSPL_VAR} ", "");
+
+                        this->client_execute_arguments   = this->session_probe_arguments;
                         this->client_execute_working_dir = "%TMP%";
                         this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
 
