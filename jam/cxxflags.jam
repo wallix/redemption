@@ -449,6 +449,7 @@ rule flags ( properties * )
     {
       if ! <cxx-stl-debug>off in $(properties)
       {
+
         # # Debug mode is currently not functional
         # flags +=
         #   <define>_LIBCPP_DEBUG=1
@@ -459,6 +460,7 @@ rule flags ( properties * )
         #     <define>_LIBCPP_DEBUG_USE_EXCEPTIONS
         #   ;
         # }
+
         if <cxx-stl-debug>allow_broken_abi in $(properties)
         {
           flags +=

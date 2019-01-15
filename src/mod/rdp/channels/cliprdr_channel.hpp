@@ -32,6 +32,7 @@
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #include <memory>
 
@@ -62,6 +63,8 @@ private:
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
     const bool proxy_managed;   // Has not client.
+    
+    unique_fd fd = invalid_fd();
 
 public:
     struct Params : public BaseVirtualChannel::Params {
@@ -284,6 +287,8 @@ public:
                 }
 
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
+                
+//                 this->fd = unique_fd("", O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
