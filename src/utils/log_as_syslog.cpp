@@ -39,14 +39,3 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
     REDEMPTION_DIAGNOSTIC_POP
     va_end(ap);
 }
-
-void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
-{
-    va_list ap;
-    va_start(ap, format);
-    REDEMPTION_DIAGNOSTIC_PUSH
-    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-    vsyslog(priority, format, ap);
-    REDEMPTION_DIAGNOSTIC_POP
-    va_end(ap);
-}

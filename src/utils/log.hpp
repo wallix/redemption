@@ -24,10 +24,6 @@
 
 #pragma once
 
-#define LOG_SIEM LOG__SIEM__REDEMPTION__INTERNAL__IMPL
-#define LOG_PROXY_SIEM(level, type, message, ...) \
-    LOG_SIEM(level, "[RDP Proxy] type=\"" type "\" pid=\"%d\" " message, getpid(), __VA_ARGS__)
-
 #ifdef LOGPRINT
 # error LOGPRINT is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=1 bjam`
 #endif
@@ -176,13 +172,16 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 #ifdef IN_IDE_PARSER
 # define LOG(priority, ...) ::compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
+# define LOG_SIEM(priority, ...) ::compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
+# define LOG_PROXY_SIEM(priority, type, ...) \
+    ::compiler_aux_::unused_variables(priority, "" type, __VA_ARGS__)
 # define LOG_UNCHECKED_FORMAT 1
 
 #else
 # ifdef NDEBUG
-#   define LOG_FILENAME(priority)
+#   define LOG_REDEMPTION_FILENAME(priority)
 # else
-#   define LOG_FILENAME(priority)                            \
+#   define LOG_REDEMPTION_FILENAME(priority)                 \
     REDEMPTION_DIAGNOSTIC_PUSH                               \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wunreachable-code") \
     if (priority != LOG_INFO && priority != LOG_DEBUG) {     \
@@ -196,13 +195,34 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 # define LOG(priority, ...) do {                                       \
     using ::log_value;                                                 \
-    LOG_FILENAME(priority)                                             \
+    LOG_REDEMPTION_FILENAME(priority)                                  \
     ::detail::LOGCHECK__REDEMPTION__INTERNAL((                         \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                      \
         ::detail::LOG__REDEMPTION__INTERNAL(priority, "%s (%d/%d) -- " \
-        LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),       \
+            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),   \
         1                                                              \
     ));                                                                \
+ } while (0)
+
+# define LOG_SIEM(priority, ...) do {                                \
+    using ::log_value;                                               \
+    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
+        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
+        ::detail::LOG__SIEM__REDEMPTION__INTERNAL(priority, ""       \
+            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
+        1                                                            \
+    ));                                                              \
+ } while (0)
+
+# define LOG_PROXY_SIEM(priority, type, ...) do {                    \
+    using ::log_value;                                               \
+    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
+        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
+        ::detail::LOG__PROXY__SIEM__REDEMPTION__INTERNAL(priority,   \
+            "[RDP Proxy] type=\"" type "\" spid=\"%s\" "             \
+            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
+        1                                                            \
+    ));                                                              \
  } while (0)
 
 namespace detail
@@ -247,11 +267,6 @@ struct LOG__REDEMPTION__BUFFERED
 };
 #endif
 
-#ifdef __GNUC__
-__attribute__ ((format (printf, 2, 3)))
-#endif
-void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
-
 namespace detail
 {
     template<class... Ts>
@@ -287,6 +302,32 @@ namespace detail
             prioritynames[priority],
             pid,
             pid,
+            REDEMPTION_LOG_VALUE(args)...
+        );
+    }
+
+    template<class... Ts>
+    void LOG__SIEM__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
+    {
+        using ::log_value;
+        LOG__REDEMPTION__INTERNAL__IMPL(
+            priority,
+            format,
+            REDEMPTION_LOG_VALUE(args)...
+        );
+    }
+
+    char const* get_log_proxy_psid() noexcept;
+    void set_log_proxy_psid(char const* spid) noexcept;
+
+    template<class... Ts>
+    void LOG__PROXY__SIEM__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
+    {
+        using ::log_value;
+        LOG__REDEMPTION__INTERNAL__IMPL(
+            priority,
+            format,
+            get_log_proxy_psid(),
             REDEMPTION_LOG_VALUE(args)...
         );
     }

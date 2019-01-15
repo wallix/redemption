@@ -60,7 +60,7 @@ void ModuleManager::create_mod_rdp(
     //}
 
     unique_fd client_sck = this->connect_to_target_host(
-        report_message, trkeys::authentification_rdp_fail);
+        report_message, trkeys::authentification_rdp_fail, "RDP");
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
