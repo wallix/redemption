@@ -106,16 +106,11 @@ public:
                 {
                     long long const sec = tvtime().tv_sec;
                     int const pid = getpid();
-                    char str[128];
-                    std::sprintf(str, "%lld%d", sec, pid);
-                    str[sizeof(str)-1] = '\0';
-                    detail::set_log_proxy_psid(str);
-                    ini.set_acl<cfg::context::psid>(str);
-                }
-
-                if (!source_is_localhost) {
-                    LOG_PROXY_SIEM(LOG_INFO, "INCOMING_CONNECTION",
-                        R"(src_ip="%s" src_port="%d")", source_ip, source_port);
+                    char psid[128];
+                    std::sprintf(psid, "%lld%d", sec, pid);
+                    psid[sizeof(psid)-1] = '\0';
+                    ini.set_acl<cfg::context::psid>(psid);
+                    detail::log_proxy_init(psid, source_ip, source_port);
                 }
 
                 union

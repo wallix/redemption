@@ -84,6 +84,7 @@ void MMIni::invoke_close_box(
         signal = BACK_EVENT_NONE;
     }
     else {
+        detail::log_proxy_logout(this->ini.get<cfg::context::auth_error_message>().c_str());
         signal = BACK_EVENT_STOP;
     }
 }

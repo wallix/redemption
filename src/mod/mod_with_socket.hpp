@@ -24,19 +24,8 @@
         ~ModWithSocket()
         {
             this->mm.socket_transport = nullptr;
-            if (this->mm.ini.template get<cfg::context::auth_error_message>().empty()) {
-                LOG_PROXY_SIEM(LOG_INFO, "TARGET_DISCONNECTION",
-                    R"(method="Password" user="%s" raison="%s")",
-                    this->mm.ini.template get<cfg::globals::auth_user>(),
-                    this->mm.ini.template get<cfg::context::auth_error_message>()
-                );
-            }
-            else {
-                LOG_PROXY_SIEM(LOG_INFO, "TARGET_DISCONNECTION",
-                    R"(method="Password" user="%s")",
-                    this->mm.ini.template get<cfg::globals::auth_user>()
-                );
-            }
+            detail::log_proxy_target_disconnection(
+                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
         }
 
         void display_osd_message(std::string const & message) override {

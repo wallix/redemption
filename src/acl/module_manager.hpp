@@ -518,6 +518,18 @@ public:
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
+        switch (target_module) {
+        case MODULE_INTERNAL_CLOSE:
+            detail::log_proxy_logout(this->ini.get<cfg::context::auth_error_message>().c_str());
+            break;
+        case MODULE_INTERNAL_WIDGET_LOGIN:
+            detail::log_proxy_logout();
+            break;
+        default:
+            detail::log_proxy_set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            break;
+        }
+
         this->connected = false;
 
         if (this->old_target_module != target_module) {
@@ -634,18 +646,6 @@ public:
             bool const back_to_selector = (target_module == MODULE_INTERNAL_CLOSE_BACK);
             LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close%s'",
                 back_to_selector ? "Back" : "");
-
-            if (!back_to_selector && this->ini.is_asked<cfg::globals::auth_user>()) {
-                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    LOG_PROXY_SIEM(LOG_INFO, "DISCONNECT", R"(user="%s")",
-                        this->ini.get<cfg::globals::auth_user>());
-                }
-                else {
-                    LOG_PROXY_SIEM(LOG_INFO, "DISCONNECT", R"(user="%s" reason="%s")",
-                        this->ini.get<cfg::globals::auth_user>(),
-                        this->ini.get<cfg::context::auth_error_message>());
-                }
-            }
 
             if (this->ini.get<cfg::context::auth_error_message>().empty()) {
                 this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
@@ -822,11 +822,7 @@ public:
             char username[255]; // should use string
             username[0] = 0;
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-            if (this->ini.is_asked<cfg::globals::auth_user>()){
-                LOG_PROXY_SIEM(LOG_INFO, "DISCONNECT", R"(user="%s" reason="Logout")",
-                    this->ini.get<cfg::globals::auth_user>());
-            }
-            else {
+            if (!this->ini.is_asked<cfg::globals::auth_user>()){
                 if (this->ini.is_asked<cfg::globals::target_user>()
                  || this->ini.is_asked<cfg::globals::target_device>()){
                     utils::strlcpy(
@@ -933,9 +929,8 @@ private:
     unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, char const * protocol)
     {
         auto throw_error = [this, &protocol, &report_message](char const* error_message, int id) {
-            LOG_PROXY_SIEM(LOG_INFO, "TARGET_CONNECTION_FAILED",
-                R"(user="%s" target="%s" host="%s" port="%d" reason="%s")",
-                this->ini.get<cfg::globals::auth_user>(),
+            LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
+                R"(target="%s" host="%s" port="%d" reason="%s")",
                 this->ini.get<cfg::context::real_target_device>(),
                 this->ini.get<cfg::context::target_host>(),
                 this->ini.get<cfg::context::target_port>(),
@@ -957,9 +952,8 @@ private:
             throw Error(ERR_SOCKET_CONNECT_FAILED);
         };
 
-        LOG_PROXY_SIEM(LOG_INFO, "TARGET_CONNECTION",
-            R"(user="%s" target="%s" host="%s" port="%d")",
-            this->ini.get<cfg::globals::auth_user>(),
+        LOG_PROXY_SIEM("TARGET_CONNECTION",
+            R"(target="%s" host="%s" port="%d")",
             this->ini.get<cfg::context::real_target_device>(),
             this->ini.get<cfg::context::target_host>(),
             this->ini.get<cfg::context::target_port>());

@@ -69,8 +69,7 @@ FlatLoginMod::FlatLoginMod(
     if (vars.get<cfg::globals::authentication_timeout>().count()) {
         this->timeout_timer = session_reactor.create_timer()
         .set_delay(vars.get<cfg::globals::authentication_timeout>())
-        .on_action([this](JLN_TIMER_CTX ctx){
-            this->vars.set_acl<cfg::globals::auth_user>("");
+        .on_action([](JLN_TIMER_CTX ctx){
             ctx.get_reactor().set_next_event(BACK_EVENT_STOP);
             return ctx.terminate();
         });
@@ -102,7 +101,6 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
         break;
     }
     case NOTIFY_CANCEL:
-        this->vars.set_acl<cfg::globals::auth_user>("");
         this->session_reactor.set_next_event(BACK_EVENT_STOP);
         break;
     case NOTIFY_PASTE: case NOTIFY_COPY: case NOTIFY_CUT:

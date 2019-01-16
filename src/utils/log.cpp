@@ -19,26 +19,102 @@ Author(s): Jonathan Poelen
 */
 
 #include "log.hpp"
+#include "utils/strutils.hpp"
+
+#include <cstring>
+
 
 namespace
 {
     static char log_proxy_psid[32] = "42";
+    static char log_proxy_username[256] = "";
 }
 
 namespace detail
 {
-    char const* get_log_proxy_psid() noexcept
+    void log_proxy_init(char const* psid, char const* source_ip, int source_port) noexcept
+    {
+        utils::strlcpy(log_proxy_psid, psid);
+        if (0 != strcmp(source_ip, "127.0.0.1")) {
+            LOG__REDEMPTION__INTERNAL__IMPL(
+                LOG_INFO,
+                R"([RDP Proxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
+                log_proxy_psid, source_ip, source_port
+            );
+        }
+    }
+
+    void log_proxy_set_user(char const* username) noexcept
+    {
+        utils::strlcpy(log_proxy_username, username);
+    }
+
+    void log_proxy_target_disconnection(char const* reason) noexcept
+    {
+        if (reason && *reason) {
+            LOG_PROXY_SIEM("TARGET_DISCONNECTION", R"(reason="%s")", reason);
+        }
+        else {
+            LOG_PROXY_SIEM("TARGET_DISCONNECTION", "");
+        }
+    }
+
+    void log_proxy_logout(char const* reason) noexcept
+    {
+        if (log_proxy_username[0]){
+            if (reason && *reason) {
+                LOG_PROXY_SIEM("LOGOUT", R"(reason="%s")", reason);
+            }
+            else {
+                LOG_PROXY_SIEM("LOGOUT", "");
+            }
+            detail::log_proxy_set_user("");
+        }
+    }
+
+    void log_proxy_disconnection(char const* reason) noexcept
+    {
+        if (reason && *reason) {
+            if (log_proxy_username[0]) {
+                LOG__REDEMPTION__INTERNAL__IMPL(
+                    LOG_INFO,
+                    R"([RDP Proxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
+                    log_proxy_psid, log_proxy_username, reason
+                );
+            }
+            else {
+                LOG__REDEMPTION__INTERNAL__IMPL(
+                    LOG_INFO,
+                    R"([RDP Proxy] psid="%s" type="DISCONNECT" reason="%s")",
+                    log_proxy_psid, reason
+                );
+            }
+        }
+        else {
+            if (log_proxy_username[0]) {
+                LOG__REDEMPTION__INTERNAL__IMPL(
+                    LOG_INFO,
+                    R"([RDP Proxy] psid="%s" user="%s" type="DISCONNECT")",
+                    log_proxy_psid, log_proxy_username
+                );
+            }
+            else {
+                LOG__REDEMPTION__INTERNAL__IMPL(
+                    LOG_INFO,
+                    R"([RDP Proxy] psid="%s" type="DISCONNECT")",
+                    log_proxy_psid
+                );
+            }
+        }
+    }
+
+    char const* log_proxy_get_psid() noexcept
     {
         return log_proxy_psid;
     }
 
-    void set_log_proxy_psid(char const* spid) noexcept
+    char const* log_proxy_get_user() noexcept
     {
-        char* s = log_proxy_psid;
-        char* e = s + sizeof(log_proxy_psid) - 1;
-        while (s != e && *spid) {
-            *s++ = *spid++;
-        }
-        *s = '\0';
+        return log_proxy_username;
     }
 }

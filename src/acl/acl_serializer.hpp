@@ -402,8 +402,7 @@ public:
             });
 
             LOG_SIEM(
-                LOG_INFO
-              , "[%s Session] %s %s"
+                "[%s Session] %s %s"
               , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
               , session_info.c_str()
               , info.c_str());
@@ -476,7 +475,7 @@ public:
                 this->arcsight_text_formating(extension, asl_info.fileName);
             }
 
-            LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
+            LOG_SIEM("%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
                 formted_date.c_str(),
                 "1",
                 "Wallix",
