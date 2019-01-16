@@ -1,3 +1,9 @@
+redemption (1.121%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * Put "Disable keyboard log" into "Connection Policy".
+
+ -- cgrosjean <cgrosjean at wallix.com>  Wed, 16 Jan 2019 16:28:50 +0200
+
 redemption (1.1.111%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
  -- cgrosjean <cgrosjean at wallix.com>  Mon, 07 Jan 2019 10:39:45 +0200
