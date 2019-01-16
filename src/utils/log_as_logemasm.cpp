@@ -188,33 +188,4 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
     }
 }
 
-void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
-{
-    if (enable_buf_log) {
-        if (log_is_filename(priority)) {
-            return ;
-        }
-        va_list ap;
-        va_start(ap, format);
-        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
-        va_end(ap);
-        log_buf.resize(log_buf.size() + sz);
-        va_start(ap, format);
-        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
-        va_end(ap);
-        log_buf.back() = '\n';
-    }
-    else if (is_loggable())
-    {
-        va_list ap;
-        va_start(ap, format);
-        char buffer[4096];
-        int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap);
-        va_end(ap);
-
-        buffer[len] = 0;
-        EM_ASM({console.log(Pointer_stringify($0));}, buffer);
-    }
-}
-
 REDEMPTION_DIAGNOSTIC_POP

@@ -24,6 +24,8 @@
         ~ModWithSocket()
         {
             this->mm.socket_transport = nullptr;
+            detail::log_proxy_target_disconnection(
+                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
         }
 
         void display_osd_message(std::string const & message) override {

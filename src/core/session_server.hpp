@@ -94,11 +94,6 @@ public:
                 const int source_port = ntohs(u.s4.sin_port);
                 REDEMPTION_DIAGNOSTIC_POP
 
-                if (!source_is_localhost) {
-                    LOG_PROXY_SIEM(LOG_INFO, "INCOMING_CONNECTION",
-                        R"(src_ip="%s" src_port="%d")", source_ip, source_port);
-                }
-
                 Inifile ini;
 
                 configuration_load(ini.configuration_holder(), this->config_filename);
@@ -106,6 +101,16 @@ public:
 
                 if (ini.get<cfg::debug::session>()){
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
+                }
+
+                {
+                    long long const sec = tvtime().tv_sec;
+                    int const pid = getpid();
+                    char psid[128];
+                    std::sprintf(psid, "%lld%d", sec, pid);
+                    psid[sizeof(psid)-1] = '\0';
+                    ini.set_acl<cfg::context::psid>(psid);
+                    detail::log_proxy_init(psid, source_ip, source_port);
                 }
 
                 union

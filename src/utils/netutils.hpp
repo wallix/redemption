@@ -32,9 +32,11 @@ class in_addr;
 
 bool try_again(int errnum);
 
-int resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
+/// std::expected
+/// \return nullptr if ok, view string if error
+char const* resolve_ipv4_address(const char* ip, in_addr & s4_sin_addr);
 
-unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/);
+unique_fd ip_connect(const char* ip, int port, int nbretry /* 3 */, int retry_delai_ms /*1000*/, char const** error_result = nullptr);
 
 // TODO int retry_delai_ms -> std::milliseconds
 unique_fd local_connect(const char* sck_name, int nbretry = 3, int retry_delai_ms = 1000);
