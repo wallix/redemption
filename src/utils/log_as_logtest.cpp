@@ -162,9 +162,11 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         log_buf.back() = '\n';
 
         // replace "priority (31905/31905) -- message" by "priority - message"
-        auto p = log_buf.find('(', log_buf.size() - sz + 5);
-        auto e = log_buf.find('-', p);
-        log_buf.replace(p, e-p+2, "-");
+        if (format[0] == '%' && format[1] == 's' && format[2] == ' ' && format[3] == '(') {
+            auto p = log_buf.find('(', log_buf.size() - sz + 5);
+            auto e = log_buf.find('-', p);
+            log_buf.replace(p, e-p+2, "-");
+        }
     }
     else if (is_loggable())
     {
