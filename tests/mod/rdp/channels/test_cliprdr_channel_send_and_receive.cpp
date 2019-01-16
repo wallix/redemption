@@ -477,51 +477,51 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelUnlockClipDataReceive)
     RED_CHECK_EQUAL(state.client_data.file_stream_data_inventory.empty(), true);
 }
 
-// RED_AUTO_TEST_CASE(TestCliprdrChannelFileContentsResponseReceive)
-// {
-//     ClipboardData state;
-//     const uint32_t streamID = 1;
-//     const uint32_t lindex = 2;
-//     const uint32_t position = 0;
-//     const uint32_t cbRequested = 4;
-//     const uint32_t clipDataId = 5;
-//     const uint32_t offset = 5;
-//
-//     const uint8_t data[5] = {0xaf, 0xaf, 0xaf, 0xaf, 0xaf};
-//
-//     state.client_data.set_file_contents_request_info_inventory(
-//         lindex,
-//         position,
-//         cbRequested,
-//         clipDataId,
-//         offset,
-//         streamID
-//       );
-//
-//     ClipboardSideData::file_contents_request_info& file_contents_request =
-//         state.client_data.file_contents_request_info_inventory[streamID];
-//
-//     ClipboardSideData::file_info_inventory_type & file_info_inventory =
-//                 state.client_data.file_stream_data_inventory[file_contents_request.clipDataId];
-//     file_info_inventory.push_back({
-//         "file_name",
-//         5,
-//         5,
-//         SslSha256() });
-//
-// //     ClipboardSideData::file_info_type & file_info = file_info_inventory[file_contents_request.lindex];
-//
-//     RDPECLIP::FileContentsResponseRange pdu(streamID);
-//     StaticOutStream<64> stream;
-//     pdu.emit(stream);
-//
-//     stream.out_copy_bytes(data, 5);
-//
-//     InStream chunk(stream.get_bytes());
-//
-//     const RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 9);
-//
-//     FileContentsResponseReceive receiver(state.client_data, header, CHANNELS::CHANNEL_FLAG_FIRST, chunk);
-//
-//     RED_CHECK_EQUAL(receiver.must_log_file_info_type, true);
-// }
+RED_AUTO_TEST_CASE(TestCliprdrChannelFileContentsResponseReceive)
+{
+    ClipboardData state;
+    const uint32_t streamID = 1;
+    const uint32_t lindex = 2;
+    const uint32_t position = 0;
+    const uint32_t cbRequested = 4;
+    const uint32_t clipDataId = 5;
+    const uint32_t offset = 5;
+
+    const uint8_t data[5] = {0xaf, 0xaf, 0xaf, 0xaf, 0xaf};
+
+    state.client_data.set_file_contents_request_info_inventory(
+        lindex,
+        position,
+        cbRequested,
+        clipDataId,
+        offset,
+        streamID
+      );
+
+    ClipboardSideData::file_contents_request_info& file_contents_request =
+        state.client_data.file_contents_request_info_inventory[streamID];
+
+    ClipboardSideData::file_info_inventory_type & file_info_inventory =
+                state.client_data.file_stream_data_inventory[file_contents_request.clipDataId];
+    file_info_inventory.push_back({
+        "file_name",
+        5,
+        5,
+        SslSha256() });
+
+    ClipboardSideData::file_info_type & file_info = file_info_inventory[file_contents_request.lindex];
+
+    RDPECLIP::FileContentsResponseRange pdu(streamID);
+    StaticOutStream<64> stream;
+    pdu.emit(stream);
+
+    stream.out_copy_bytes(data, 5);
+
+    InStream chunk(stream.get_bytes());
+
+    const RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 9);
+
+    FileContentsResponseReceive receiver(state.client_data, header, CHANNELS::CHANNEL_FLAG_FIRST, chunk);
+
+    RED_CHECK_EQUAL(receiver.must_log_file_info_type, true);
+}

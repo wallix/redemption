@@ -4125,6 +4125,19 @@ test-run tests/mod/rdp/channels/test_base_channel :
 :
   <covfile>src/mod/rdp/channels/base_channel.hpp
 ;
+test-run tests/mod/rdp/channels/test_channel_file :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_channel_file.cpp
+:
+  <library>boost_stacktrace
+  <library>src/core/error.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/strutils.o
+  <library>tests/includes/test_only/working_directory.o
+  <covfile>src/mod/rdp/channels/channel_file.hpp
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
 :
@@ -6009,6 +6022,8 @@ alias test_null : tests/mod/null/test_null ;
 alias test_null.coverage : tests/mod/null/test_null.coverage ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
 alias test_base_channel.coverage : tests/mod/rdp/channels/test_base_channel.coverage ;
+alias test_channel_file : tests/mod/rdp/channels/test_channel_file ;
+alias test_channel_file.coverage : tests/mod/rdp/channels/test_channel_file.coverage ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel.coverage : tests/mod/rdp/channels/test_cliprdr_channel.coverage ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
@@ -6529,6 +6544,7 @@ alias tests/mod/null.norec :
 ;
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
+  tests/mod/rdp/channels/test_channel_file
   tests/mod/rdp/channels/test_cliprdr_channel
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager

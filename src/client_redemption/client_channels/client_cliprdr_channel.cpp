@@ -121,7 +121,7 @@
 
 
     ClientCLIPRDRChannel::ClientCLIPRDRChannel(RDPVerbose verbose, ClientChannelMod * callback, RDPClipboardConfig const& config)
-      :  verbose(verbose)
+      : verbose(verbose)
       , clientIOClipboardAPI(nullptr)
       , callback(callback)
       , _waiting_for_data(false)
@@ -490,7 +490,6 @@
                     std::chrono::microseconds time = difftimeval(tvtime(), this->paste_data_request_time);
                     long duration = time.count();
                     LOG(LOG_INFO, "RDPECLIP::METAFILEPICT size=%ld octets  duration=%ld us", this->paste_data_len, duration);
-
                 }
             break;
 

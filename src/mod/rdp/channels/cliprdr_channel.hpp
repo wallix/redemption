@@ -32,11 +32,13 @@
 #include "utils/stream.hpp"
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
-#include "utils/sugar/unique_fd.hpp"
+#include "mod/rdp/channels/channel_file.hpp"
 
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
+
+
 
 
 
@@ -64,8 +66,10 @@ private:
 
     const bool proxy_managed;   // Has not client.
     
-    unique_fd fd = invalid_fd();
-
+    bool channel_filter_on = false;
+    
+    ChannelFile channel_file;
+    
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -97,7 +101,8 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
     , front(front)
-    , proxy_managed(to_client_sender_ == nullptr) {}
+    , proxy_managed(to_client_sender_ == nullptr) 
+    , channel_file("/tmp/") {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -250,6 +255,11 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->param_clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
+                } else if (this->channel_filter_on) {
+                    
+//                     clip_data.client_data.file_contents_request_info_inventory[receiver.streamID].lindex;
+//                     
+//                     this->channel_file.new_file();
                 }
                 send_message_to_server = this->param_clipboard_file_authorized;
             }

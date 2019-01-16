@@ -40,13 +40,9 @@ struct ClipboardSideData {
      struct file_contents_request_info
     {
         uint32_t lindex;
-
         uint64_t position;
-
         uint32_t cbRequested;
-
         uint32_t clipDataId;
-
         uint32_t offset;
     };
     using file_contents_request_info_inventory_type = std::map<uint32_t /*streamId*/, file_contents_request_info>;
@@ -54,11 +50,8 @@ struct ClipboardSideData {
     struct file_info_type
     {
         std::string file_name;
-
         uint64_t size;
-
         uint64_t sequential_access_offset;
-
         SslSha256 sha256;
     };
     using file_info_inventory_type = std::vector<file_info_type>;
@@ -82,7 +75,7 @@ struct ClipboardSideData {
       : provider_name(std::move(provider_name))
     {}
 
-     void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
+    void set_file_contents_request_info_inventory(uint32_t lindex, uint64_t position, uint32_t cbRequested, uint32_t clipDataId, uint32_t offset, uint32_t streamID) {
         this->file_contents_request_info_inventory[streamID] =
         {
             lindex,
@@ -168,6 +161,7 @@ struct FilecontentsRequestReceive {
 
     uint32_t dwFlags = 0;
     uint32_t streamID = 0;
+    uint32_t lindex = 0;
 
     FilecontentsRequestReceive(ClipboardSideData & clip_state, InStream& chunk, const RDPVerbose verbose, uint32_t dataLen) {
         LOG(LOG_INFO, "dataLen=%u FileContentsRequestPDU::minimum_size()=%zu", dataLen, RDPECLIP::FileContentsRequestPDU::minimum_size());
@@ -179,8 +173,9 @@ struct FilecontentsRequestReceive {
                 file_contents_request_pdu.log(LOG_INFO);
             }
 
-            this->dwFlags = file_contents_request_pdu.dwFlags();
+            this->dwFlags  = file_contents_request_pdu.dwFlags();
             this->streamID = file_contents_request_pdu.streamId();
+            this->lindex   = file_contents_request_pdu.lindex();
 
             if ((RDPECLIP::FILECONTENTS_RANGE == this->dwFlags) && file_contents_request_pdu.clipDataId()) {
 
