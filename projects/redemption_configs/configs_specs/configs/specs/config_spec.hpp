@@ -594,6 +594,8 @@ void config_spec_definition(Writer && W)
 
     W.section("context", [&]
     {
+        W.member(no_ini_no_gui, proxy_to_sesman, type_<std::string>(), "psid", desc{"Proxy session log id"});
+
         W.member(no_ini_no_gui, no_sesman, type_<std::string>(), "movie");
         W.sep();
         W.member(no_ini_no_gui, sesman_to_proxy, type_<unsigned>(), "opt_bitrate", sesman::name{"bitrate"}, set(40000));

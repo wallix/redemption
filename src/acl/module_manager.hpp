@@ -691,6 +691,8 @@ private:
         ~ModWithSocket()
         {
             this->mm.socket_transport = nullptr;
+            detail::log_proxy_target_disconnection(
+                this->mm.ini.template get<cfg::context::auth_error_message>().c_str());
         }
 
         void display_osd_message(std::string const & message) override {
@@ -887,6 +889,16 @@ public:
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
+        switch (target_module) {
+        case MODULE_INTERNAL_CLOSE:
+        case MODULE_INTERNAL_WIDGET_LOGIN:
+            detail::log_proxy_set_user("");
+            break;
+        default:
+            detail::log_proxy_set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            break;
+        }
+
         this->connected = false;
 
         if (this->old_target_module != target_module) {
@@ -1020,6 +1032,9 @@ public:
                     this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
                 }
                 LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
+                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
+                }
                 this->set_mod(new FlatWabCloseMod(
                     this->ini,
                     this->front,
@@ -1674,29 +1689,45 @@ public:
 private:
     unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
     {
-        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-        char ip_addr[256] {};
-        in_addr s4_sin_addr;
-        int status = resolve_ipv4_address(ip, s4_sin_addr);
-        if (status){
+        auto throw_error = [this, &report_message](char const* error_message, int id) {
+            LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
+                R"(target="%s" host="%s" port="%d" reason="%s")",
+                this->ini.get<cfg::globals::target_user>(),
+                this->ini.get<cfg::context::target_host>(),
+                this->ini.get<cfg::context::target_port>(),
+                error_message);
+
             report_message.log5("type=\"CONNECTION_FAILED\"");
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-            // TODO: actually this is DNS Failure or invalid address
-            LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
+
+            LOG(LOG_ERR, "%s", (id == 1)
+                ? "Failed to connect to remote TCP host (1)"
+                : "Failed to connect to remote TCP host (2)");
             throw Error(ERR_SOCKET_CONNECT_FAILED);
+        };
+
+        LOG_PROXY_SIEM("TARGET_CONNECTION",
+            R"(target="%s" host="%s" port="%d")",
+            this->ini.get<cfg::globals::target_user>(),
+            this->ini.get<cfg::context::target_host>(),
+            this->ini.get<cfg::context::target_port>());
+
+        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
+        char ip_addr[256] {};
+        in_addr s4_sin_addr;
+        if (auto error_message = resolve_ipv4_address(ip, s4_sin_addr)){
+            // TODO: actually this is DNS Failure or invalid address
+            throw_error(error_message, 1);
         }
 
         snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+        char const* error_message = nullptr;
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000, &error_message);
 
         if (!client_sck.is_open()){
-            report_message.log5("type=\"CONNECTION_FAILED\"");
-
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-            LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+            throw_error(error_message, 2);
         }
 
         this->ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(this->ini)));

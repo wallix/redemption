@@ -100,6 +100,16 @@ public:
                     LOG(LOG_INFO, "Setting new session socket to %d\n", sck);
                 }
 
+                {
+                    long long const sec = tvtime().tv_sec;
+                    int const pid = getpid();
+                    char psid[128];
+                    std::sprintf(psid, "%lld%d", sec, pid);
+                    psid[sizeof(psid)-1] = '\0';
+                    ini.set_acl<cfg::context::psid>(psid);
+                    detail::log_proxy_init(psid, source_ip, source_port);
+                }
+
                 union
                 {
                     struct sockaddr s;

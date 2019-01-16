@@ -273,6 +273,7 @@ namespace cfg {
     };
 
     struct context {
+        struct psid;
         struct movie;
         struct opt_bitrate;
         struct opt_framerate;
