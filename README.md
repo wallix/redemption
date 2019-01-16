@@ -19,11 +19,12 @@ Dependencies
 To compile ReDemPtion you need the following packages:
 - libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
 - libboost-test-dev (unit-test dependency)
+- zlib1g-dev
 - libssl-dev
 - libkrb5-dev
 - libgssglue-dev (unnecessary since Ubuntu 17.10)
 - libsnappy-dev
-- libpng12-dev
+- libpng-dev
 - libffmpeg-dev (see below)
 - g++ >= 7.2 or clang++ >= 5.0 or other C++17 compiler
 
