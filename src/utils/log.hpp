@@ -319,7 +319,6 @@ namespace detail
     void log_proxy_init(char const* psid, char const* source_ip, int source_port) noexcept;
     void log_proxy_set_user(char const* username) noexcept;
     void log_proxy_target_disconnection(char const* reason) noexcept;
-    void log_proxy_logout(char const* reason = nullptr) noexcept;
     void log_proxy_disconnection(char const* reason = nullptr) noexcept;
 
     char const* log_proxy_get_psid() noexcept;

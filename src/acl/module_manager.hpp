@@ -520,10 +520,8 @@ public:
 
         switch (target_module) {
         case MODULE_INTERNAL_CLOSE:
-            detail::log_proxy_logout(this->ini.get<cfg::context::auth_error_message>().c_str());
-            break;
         case MODULE_INTERNAL_WIDGET_LOGIN:
-            detail::log_proxy_logout();
+            detail::log_proxy_set_user("");
             break;
         default:
             detail::log_proxy_set_user(this->ini.get<cfg::globals::auth_user>().c_str());

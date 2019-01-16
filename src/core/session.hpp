@@ -466,8 +466,8 @@ public:
         if (!this->ini.is_asked<cfg::globals::host>()
         && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+            detail::log_proxy_disconnection(disconnection_message_error.c_str());
         }
-        detail::log_proxy_disconnection(disconnection_message_error.c_str());
         front.must_be_stop_capture();
     }
 

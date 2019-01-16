@@ -59,19 +59,6 @@ namespace detail
         }
     }
 
-    void log_proxy_logout(char const* reason) noexcept
-    {
-        if (log_proxy_username[0]){
-            if (reason && *reason) {
-                LOG_PROXY_SIEM("LOGOUT", R"(reason="%s")", reason);
-            }
-            else {
-                LOG_PROXY_SIEM("LOGOUT", "");
-            }
-            detail::log_proxy_set_user("");
-        }
-    }
-
     void log_proxy_disconnection(char const* reason) noexcept
     {
         if (reason && *reason) {
