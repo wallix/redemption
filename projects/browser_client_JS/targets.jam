@@ -58,6 +58,7 @@ exe-main headlessclient :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -170,6 +171,7 @@ exe-main rdpproxy :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/pattutils.bc
   src/utils/png.bc
@@ -187,6 +189,8 @@ exe-main rdpinichecker :
   projects/redemption_configs/redemption_src/configs/config.bc
   src/utils/cfgloader.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 :
   $(EXE_DEPENDENCIES_NO_SYSLOG)
 ;
@@ -204,6 +208,7 @@ exe-main proxy_recorder :
   src/transport/socket_transport.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -256,10 +261,10 @@ exe-main rdpclient :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/png.bc
   src/utils/rle.bc
-  src/utils/set_exception_handler_pretty_message.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
   src/utils/utf.bc
@@ -286,7 +291,9 @@ exe-main ppocr_extract_text :
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 
@@ -307,6 +314,7 @@ test-run tests/acl/test_acl_serializer :
   src/utils/cfgloader.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -331,6 +339,7 @@ test-run tests/acl/test_authentifier :
   src/utils/cfgloader.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -434,6 +443,7 @@ test-run tests/acl/test_module_manager :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/pattutils.bc
   src/utils/png.bc
@@ -459,7 +469,9 @@ test-run tests/capture/test_bogus_ocr :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/capture/test_bogus_ppocr :
@@ -474,7 +486,9 @@ test-run tests/capture/test_bogus_ppocr :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/capture/test_capture :
@@ -506,6 +520,7 @@ test-run tests/capture/test_capture :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -519,6 +534,8 @@ test-run tests/capture/test_cryptofile :
   $(REDEMPTION_TEST_PATH)/capture/test_cryptofile.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/capture/test_ocr :
   $(REDEMPTION_TEST_PATH)/capture/test_ocr.cpp
@@ -529,7 +546,9 @@ test-run tests/capture/test_ocr :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/capture/test_ppocr :
@@ -544,7 +563,9 @@ test-run tests/capture/test_ppocr :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/capture/test_video_capture :
@@ -562,6 +583,7 @@ test-run tests/capture/test_video_capture :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -584,6 +606,7 @@ test-run tests/capture/test_wrm_capture :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -596,7 +619,9 @@ test-run tests/capture/test_wrm_capture :
 test-run tests/capture/utils/test_match_finder :
   $(REDEMPTION_TEST_PATH)/capture/utils/test_match_finder.cpp
   src/capture/utils/match_finder.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
+  src/utils/strutils.bc
 ;
 test-run tests/client_mods/test_rdp_client_large_pointer :
   $(REDEMPTION_TEST_PATH)/client_mods/test_rdp_client_large_pointer.cpp
@@ -629,6 +654,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -658,7 +684,9 @@ test-run tests/client_mods/test_rdp_client_test_card :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -695,6 +723,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -734,6 +763,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -744,69 +774,15 @@ test-run tests/client_mods/test_rdp_client_wab :
 ;
 test-run tests/client_redemption/client_channels/test_client_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_cliprdr_channel.cpp
-  crypto.bc
-  openssl.bc
-  snappy.bc
-  src/client_redemption/client_channels/client_cliprdr_channel.bc
-  src/client_redemption/client_config/client_redemption_config.bc
-  src/core/RDP/mppc.bc
-  src/core/error.bc
-  src/core/font.bc
-  src/gdi/graphic_api.bc
-  src/transport/crypto_transport.bc
-  src/transport/mwrm_reader.bc
-  src/utils/fileutils.bc
-  src/utils/hexdump.bc
-  src/utils/netutils.bc
-  src/utils/strutils.bc
-  src/utils/utf.bc
-;
-test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
-  crypto.bc
-  openssl.bc
-  snappy.bc
-  src/client_redemption/client_channels/client_rdpdr_channel.bc
-  src/client_redemption/client_config/client_redemption_config.bc
-  src/core/RDP/mppc.bc
-  src/core/error.bc
-  src/core/font.bc
-  src/gdi/graphic_api.bc
-  src/transport/crypto_transport.bc
-  src/transport/mwrm_reader.bc
-  src/utils/fileutils.bc
-  src/utils/hexdump.bc
-  src/utils/netutils.bc
-  src/utils/strutils.bc
-  src/utils/utf.bc
-;
-test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
-  crypto.bc
-  openssl.bc
-  snappy.bc
-  src/client_redemption/client_channels/client_rdpsnd_channel.bc
-  src/client_redemption/client_config/client_redemption_config.bc
-  src/core/RDP/mppc.bc
-  src/core/error.bc
-  src/core/font.bc
-  src/gdi/graphic_api.bc
-  src/transport/crypto_transport.bc
-  src/transport/mwrm_reader.bc
-  src/utils/fileutils.bc
-  src/utils/hexdump.bc
-  src/utils/netutils.bc
-  src/utils/strutils.bc
-  src/utils/utf.bc
-;
-test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
-  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_remoteapp_channel.cpp
   app_path_test.bc
   crypto.bc
   openssl.bc
   png.bc
   snappy.bc
   src/capture/file_to_graphic.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
+  src/client_redemption/client_channels/client_rdpdr_channel.bc
+  src/client_redemption/client_channels/client_rdpsnd_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
@@ -819,6 +795,106 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
   src/utils/bitmap.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/netutils.bc
+  src/utils/png.bc
+  src/utils/rle.bc
+  src/utils/strutils.bc
+  src/utils/utf.bc
+  z.bc
+:
+  <define>ZLIB_CONST
+;
+test-run tests/client_redemption/client_channels/test_client_rdpdr_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpdr_channel.cpp
+  app_path_test.bc
+  crypto.bc
+  openssl.bc
+  png.bc
+  snappy.bc
+  src/capture/file_to_graphic.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
+  src/client_redemption/client_channels/client_rdpdr_channel.bc
+  src/client_redemption/client_channels/client_rdpsnd_channel.bc
+  src/client_redemption/client_config/client_redemption_config.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/graphic_api.bc
+  src/keyboard/keymap2.bc
+  src/mod/internal/replay_mod.bc
+  src/transport/crypto_transport.bc
+  src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
+  src/utils/fileutils.bc
+  src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/netutils.bc
+  src/utils/png.bc
+  src/utils/rle.bc
+  src/utils/strutils.bc
+  src/utils/utf.bc
+  z.bc
+:
+  <define>ZLIB_CONST
+;
+test-run tests/client_redemption/client_channels/test_client_rdpsnd_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_rdpsnd_channel.cpp
+  app_path_test.bc
+  crypto.bc
+  openssl.bc
+  png.bc
+  snappy.bc
+  src/capture/file_to_graphic.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
+  src/client_redemption/client_channels/client_rdpdr_channel.bc
+  src/client_redemption/client_channels/client_rdpsnd_channel.bc
+  src/client_redemption/client_config/client_redemption_config.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/graphic_api.bc
+  src/keyboard/keymap2.bc
+  src/mod/internal/replay_mod.bc
+  src/transport/crypto_transport.bc
+  src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
+  src/utils/fileutils.bc
+  src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/netutils.bc
+  src/utils/png.bc
+  src/utils/rle.bc
+  src/utils/strutils.bc
+  src/utils/utf.bc
+  z.bc
+:
+  <define>ZLIB_CONST
+;
+test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
+  $(REDEMPTION_TEST_PATH)/client_redemption/client_channels/test_client_remoteapp_channel.cpp
+  app_path_test.bc
+  crypto.bc
+  openssl.bc
+  png.bc
+  snappy.bc
+  src/capture/file_to_graphic.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
+  src/client_redemption/client_channels/client_rdpdr_channel.bc
+  src/client_redemption/client_channels/client_rdpsnd_channel.bc
+  src/client_redemption/client_config/client_redemption_config.bc
+  src/core/RDP/mppc.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/gdi/graphic_api.bc
+  src/keyboard/keymap2.bc
+  src/mod/internal/replay_mod.bc
+  src/transport/crypto_transport.bc
+  src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
+  src/utils/fileutils.bc
+  src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -830,27 +906,44 @@ test-run tests/client_redemption/client_channels/test_client_remoteapp_channel :
 ;
 test-run tests/client_redemption/client_config/test_client_redemption_config :
   $(REDEMPTION_TEST_PATH)/client_redemption/client_config/test_client_redemption_config.cpp
+  app_path_test.bc
   crypto.bc
   openssl.bc
+  png.bc
   snappy.bc
+  src/capture/file_to_graphic.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
+  src/client_redemption/client_channels/client_rdpdr_channel.bc
+  src/client_redemption/client_channels/client_rdpsnd_channel.bc
   src/client_redemption/client_config/client_redemption_config.bc
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
+  src/keyboard/keymap2.bc
+  src/mod/internal/replay_mod.bc
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
+  src/utils/bitmap.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
+  src/utils/png.bc
+  src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/working_directory.bc
+  z.bc
+:
+  <define>ZLIB_CONST
 ;
 test-run tests/core/FSCC/test_FileInformation :
   $(REDEMPTION_TEST_PATH)/core/FSCC/test_FileInformation.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/caches/test_bmpcache :
@@ -860,7 +953,9 @@ test-run tests/core/RDP/caches/test_bmpcache :
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/caches/test_bmpcachepersister :
@@ -869,6 +964,7 @@ test-run tests/core/RDP/caches/test_bmpcachepersister :
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -879,66 +975,94 @@ test-run tests/core/RDP/caches/test_brushcache :
 test-run tests/core/RDP/caches/test_glyphcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_glyphcache.cpp
   src/core/font.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/caches/test_pointercache :
   $(REDEMPTION_TEST_PATH)/core/RDP/caches/test_pointercache.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_activate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_activate.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_bitmapcachehostsupport :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcachehostsupport.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_bitmapcodecs :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bitmapcodecs.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_bmpcache2 :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_bmpcache2.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_bitmap :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_bitmap.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_bmpcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_bmpcache.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_brushcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_brushcache.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_font :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_font.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_glyphcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_glyphcache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_share :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_share.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_cap_sound :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_cap_sound.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_colcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_colcache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_common :
@@ -947,132 +1071,188 @@ test-run tests/core/RDP/capabilities/test_common :
 test-run tests/core/RDP/capabilities/test_compdesk :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_compdesk.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_control :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_control.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_drawgdiplus :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawgdiplus.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_drawninegridcache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_drawninegridcache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_frameacknowledge :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_frameacknowledge.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_general :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_general.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_input :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_input.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_largepointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_largepointer.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_multifragmentupdate :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_multifragmentupdate.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_offscreencache :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_offscreencache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_order :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_order.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_pointer :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_pointer.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_rail :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_rail.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_surfacecommands :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_surfacecommands.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_virchan :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_virchan.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/capabilities/test_window :
   $(REDEMPTION_TEST_PATH)/core/RDP/capabilities/test_window.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/channels/test_rdpdr :
   $(REDEMPTION_TEST_PATH)/core/RDP/channels/test_rdpdr.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_cluster :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_cluster.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_core :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_core.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_mcs_msgchannel :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_mcs_msgchannel.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_monitor :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_monitor_ex :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_monitor_ex.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_multitransport :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_multitransport.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_net :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_net.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_cs_security :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_cs_security.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_sc_core :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_core.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_sc_net :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_net.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/gcc/userdata/test_sc_sec1 :
   $(REDEMPTION_TEST_PATH)/core/RDP/gcc/userdata/test_sc_sec1.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/mppc/test_mppc_40 :
@@ -1080,6 +1260,8 @@ test-run tests/core/RDP/mppc/test_mppc_40 :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/mppc/test_mppc_50 :
@@ -1087,6 +1269,8 @@ test-run tests/core/RDP/mppc/test_mppc_50 :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/mppc/test_mppc_60 :
@@ -1094,6 +1278,8 @@ test-run tests/core/RDP/mppc/test_mppc_60 :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/mppc/test_mppc_61 :
@@ -1101,6 +1287,8 @@ test-run tests/core/RDP/mppc/test_mppc_61 :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/asn1/test_ber :
@@ -1110,12 +1298,16 @@ test-run tests/core/RDP/nla/asn1/test_ber :
 test-run tests/core/RDP/nla/kerberos/test_credentials :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_credentials.cpp
   krb5.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/core/RDP/nla/kerberos/test_kerberos :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/kerberos/test_kerberos.cpp
   gssapi_krb5.bc
   krb5.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm :
@@ -1123,11 +1315,15 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_avpair :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/ntlm/test_ntlm_avpair.cpp
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
@@ -1135,6 +1331,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_context :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message :
@@ -1145,6 +1343,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_authenticate :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
@@ -1152,6 +1352,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_challenge :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
@@ -1159,6 +1361,8 @@ test-run tests/core/RDP/nla/ntlm/test_ntlm_message_negotiate :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/test_credssp :
@@ -1166,6 +1370,8 @@ test-run tests/core/RDP/nla/test_credssp :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/test_nla :
@@ -1176,89 +1382,131 @@ test-run tests/core/RDP/nla/test_nla :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/nla/test_sspi :
   $(REDEMPTION_TEST_PATH)/core/RDP/nla/test_sspi.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_AlternateSecondaryWindowing :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_AlternateSecondaryWindowing.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersCommon :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersCommon.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryDestBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryDestBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseCB.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryEllipseSC.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryGlyphIndex.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryLineTo :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryLineTo.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMem3Blt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMemBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMemBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiDstBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiOpaqueRect.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiPatBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryMultiScrBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryOpaqueRect.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPatBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPatBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonCB.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolygonSC.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryPolyline :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryPolyline.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersPrimaryScrBlt :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersPrimaryScrBlt.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache :
@@ -1266,23 +1514,33 @@ test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBmpCache :
   crypto.bc
   src/core/error.bc
   src/utils/bitmap.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryBrushCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryBrushCache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryColorCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryColorCache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryFrameMarker.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache :
   $(REDEMPTION_TEST_PATH)/core/RDP/orders/test_RDPOrdersSecondaryGlyphCache.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_GraphicUpdatePDU :
@@ -1294,7 +1552,9 @@ test-run tests/core/RDP/test_GraphicUpdatePDU :
   src/gdi/graphic_api.bc
   src/utils/bitmap.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_PersistentKeyListPDU :
@@ -1312,6 +1572,7 @@ test-run tests/core/RDP/test_RDPDrawable :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -1325,7 +1586,9 @@ test-run tests/core/RDP/test_RDPSerializer :
   src/gdi/graphic_api.bc
   src/utils/bitmap.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_RefreshRectPDU :
@@ -1334,6 +1597,8 @@ test-run tests/core/RDP/test_RefreshRectPDU :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_SaveSessionInfoPDU :
@@ -1343,6 +1608,8 @@ test-run tests/core/RDP/test_ServerRedirection :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_ServerRedirection.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_autoreconnect :
@@ -1358,7 +1625,9 @@ test-run tests/core/RDP/test_bitmapupdate :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
 ;
@@ -1371,6 +1640,8 @@ test-run tests/core/RDP/test_clipboard :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_fastpath :
@@ -1379,12 +1650,16 @@ test-run tests/core/RDP/test_fastpath :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_gcc :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_gcc.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_lic :
@@ -1392,16 +1667,22 @@ test-run tests/core/RDP/test_lic :
   crypto.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_logon :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_logon.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_mcs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_mcs.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_mppc :
@@ -1409,6 +1690,8 @@ test-run tests/core/RDP/test_mppc :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_nego :
@@ -1420,6 +1703,8 @@ test-run tests/core/RDP/test_nego :
   src/core/RDP/nego.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/sugar/multisz.bc
   src/utils/utf.bc
 ;
@@ -1428,6 +1713,8 @@ test-run tests/core/RDP/test_non_null_terminated_utf16_from_utf8 :
 ;
 test-run tests/core/RDP/test_out_per_bstream :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_out_per_bstream.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_protocol :
@@ -1443,7 +1730,9 @@ test-run tests/core/RDP/test_rdp_pointer :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
 ;
@@ -1451,6 +1740,8 @@ test-run tests/core/RDP/test_remote_programs :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_remote_programs.cpp
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_rlgr :
@@ -1463,6 +1754,8 @@ test-run tests/core/RDP/test_sec :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_share :
@@ -1470,11 +1763,15 @@ test-run tests/core/RDP/test_share :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_slowpath :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_slowpath.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_tpdu_buffer :
@@ -1483,6 +1780,8 @@ test-run tests/core/RDP/test_tpdu_buffer :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDP/test_x224 :
@@ -1491,6 +1790,8 @@ test-run tests/core/RDP/test_x224 :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/RDPEA/test_audio_output :
@@ -1499,14 +1800,20 @@ test-run tests/core/RDPEA/test_audio_output :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/SMB2/test_MessageSyntax :
   $(REDEMPTION_TEST_PATH)/core/SMB2/test_MessageSyntax.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/WMF/test_MetaFileFormat :
   $(REDEMPTION_TEST_PATH)/core/WMF/test_MetaFileFormat.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/test_authid :
@@ -1515,6 +1822,8 @@ test-run tests/core/test_authid :
 test-run tests/core/test_buf64k :
   $(REDEMPTION_TEST_PATH)/core/test_buf64k.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/core/test_callback :
   $(REDEMPTION_TEST_PATH)/core/test_callback.cpp
@@ -1525,6 +1834,8 @@ test-run tests/core/test_channel_list :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/test_channel_names :
@@ -1534,12 +1845,16 @@ test-run tests/core/test_check_files :
   $(REDEMPTION_TEST_PATH)/core/test_check_files.cpp
   app_path_test.bc
   src/core/check_files.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/core/test_client_info :
   $(REDEMPTION_TEST_PATH)/core/test_client_info.cpp
   crypto.bc
   src/core/error.bc
   src/core/font.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/test_date_dir_from_filename :
@@ -1549,10 +1864,14 @@ test-run tests/core/test_date_dir_from_filename :
 test-run tests/core/test_error :
   $(REDEMPTION_TEST_PATH)/core/test_error.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/core/test_font :
   $(REDEMPTION_TEST_PATH)/core/test_font.cpp
   src/core/font.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/test_front_api :
@@ -1560,6 +1879,8 @@ test-run tests/core/test_front_api :
 ;
 test-run tests/core/test_listen :
   $(REDEMPTION_TEST_PATH)/core/test_listen.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/core/test_mainloop :
   $(REDEMPTION_TEST_PATH)/core/test_mainloop.cpp
@@ -1659,6 +1980,7 @@ test-run tests/core/test_mainloop :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/pattutils.bc
   src/utils/png.bc
@@ -1771,6 +2093,7 @@ test-run tests/core/test_session :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/pattutils.bc
   src/utils/png.bc
@@ -1787,6 +2110,8 @@ test-run tests/core/test_session_reactor :
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/core/test_session_server :
@@ -1886,6 +2211,7 @@ test-run tests/core/test_session_server :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/pattutils.bc
   src/utils/png.bc
@@ -1943,6 +2269,7 @@ test-run tests/front/test_front :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -1956,11 +2283,15 @@ test-run tests/gdi/test_graphic_api :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_api.cpp
   src/core/font.bc
   src/gdi/graphic_api.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
 ;
 test-run tests/gdi/test_graphic_cmd_color :
   $(REDEMPTION_TEST_PATH)/gdi/test_graphic_cmd_color.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/gdi/test_protected_graphics :
@@ -1978,6 +2309,7 @@ test-run tests/gdi/test_protected_graphics :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -1987,10 +2319,14 @@ test-run tests/gdi/test_protected_graphics :
 test-run tests/keyboard/test_keymap2 :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymap2.cpp
   src/keyboard/keymap2.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/keyboard/test_keymapSym :
   $(REDEMPTION_TEST_PATH)/keyboard/test_keymapSym.cpp
   src/keyboard/keymapSym.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/lib/test_do_recorder :
   $(REDEMPTION_TEST_PATH)/lib/test_do_recorder.cpp
@@ -2022,6 +2358,7 @@ test-run tests/lib/test_do_recorder :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -2034,6 +2371,7 @@ test-run tests/lib/test_iametrics :
   src/core/error.bc
   src/lib/iametrics.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   tests/includes/test_only/working_directory.bc
 ;
@@ -2046,6 +2384,7 @@ test-run tests/lib/test_scytale :
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/mod/internal/test_bouncer2_mod :
@@ -2066,7 +2405,9 @@ test-run tests/mod/internal/test_bouncer2_mod :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2091,7 +2432,9 @@ test-run tests/mod/internal/test_copy_paste :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2131,7 +2474,9 @@ test-run tests/mod/internal/test_flat_dialog_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2172,7 +2517,9 @@ test-run tests/mod/internal/test_flat_login_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2208,7 +2555,9 @@ test-run tests/mod/internal/test_flat_wab_close_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2245,7 +2594,9 @@ test-run tests/mod/internal/test_flat_wait_mod :
   src/utils/bitmap_from_file.bc
   src/utils/cfgloader.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/internal/test_interactive_target_mod :
@@ -2282,7 +2633,9 @@ test-run tests/mod/internal/test_interactive_target_mod :
   src/utils/cfgloader.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2302,6 +2655,8 @@ test-run tests/mod/internal/test_internal_mod :
   src/mod/internal/widget/screen.bc
   src/mod/internal/widget/tooltip.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/internal/test_replay_mod :
@@ -2321,6 +2676,7 @@ test-run tests/mod/internal/test_replay_mod :
   src/utils/bitmap.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -2360,7 +2716,9 @@ test-run tests/mod/internal/test_selector_mod :
   src/utils/bitmap_from_file.bc
   src/utils/cfgloader.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/internal/test_test_card_mod :
@@ -2382,7 +2740,9 @@ test-run tests/mod/internal/test_test_card_mod :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/internal/test_widget_test_mod :
@@ -2403,7 +2763,9 @@ test-run tests/mod/internal/test_widget_test_mod :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/front/fake_front.bc
@@ -2422,7 +2784,9 @@ test-run tests/mod/internal/widget/test_composite :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
 ;
@@ -2443,7 +2807,9 @@ test-run tests/mod/internal/widget/test_edit :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2468,7 +2834,9 @@ test-run tests/mod/internal/widget/test_edit_valid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2490,7 +2858,9 @@ test-run tests/mod/internal/widget/test_flat_button :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2520,7 +2890,9 @@ test-run tests/mod/internal/widget/test_flat_dialog :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2544,7 +2916,9 @@ test-run tests/mod/internal/widget/test_flat_form :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2571,7 +2945,9 @@ test-run tests/mod/internal/widget/test_flat_interactive_target :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2602,7 +2978,9 @@ test-run tests/mod/internal/widget/test_flat_login :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2630,7 +3008,9 @@ test-run tests/mod/internal/widget/test_flat_wab_close :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2657,7 +3037,9 @@ test-run tests/mod/internal/widget/test_flat_wait :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2679,7 +3061,9 @@ test-run tests/mod/internal/widget/test_grid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2703,7 +3087,9 @@ test-run tests/mod/internal/widget/test_group_box :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2726,7 +3112,9 @@ test-run tests/mod/internal/widget/test_image :
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2747,7 +3135,9 @@ test-run tests/mod/internal/widget/test_label :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2769,7 +3159,9 @@ test-run tests/mod/internal/widget/test_labelgrid :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2792,7 +3184,9 @@ test-run tests/mod/internal/widget/test_multiline :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2818,7 +3212,9 @@ test-run tests/mod/internal/widget/test_number_edit :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2841,7 +3237,9 @@ test-run tests/mod/internal/widget/test_password :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2863,7 +3261,9 @@ test-run tests/mod/internal/widget/test_screen :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2886,7 +3286,9 @@ test-run tests/mod/internal/widget/test_scroll :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2912,7 +3314,9 @@ test-run tests/mod/internal/widget/test_selector :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2936,7 +3340,9 @@ test-run tests/mod/internal/widget/test_tooltip :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2960,7 +3366,9 @@ test-run tests/mod/internal/widget/test_widget_rect :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/core/font.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2970,6 +3378,14 @@ test-run tests/mod/null/test_null :
 ;
 test-run tests/mod/rdp/channels/test_base_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_base_channel.cpp
+;
+test-run tests/mod/rdp/channels/test_channel_file :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_channel_file.cpp
+  src/core/error.bc
+  src/utils/fileutils.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
+  tests/includes/test_only/working_directory.bc
 ;
 test-run tests/mod/rdp/channels/test_cliprdr_channel :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_cliprdr_channel.cpp
@@ -2982,7 +3398,9 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/front/fake_front.bc
   tests/includes/test_only/gdi/test_graphic.bc
@@ -2993,11 +3411,15 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive :
   src/core/RDP/mppc.bc
   src/core/error.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/rdp/channels/test_rail_window_id_manager :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rail_window_id_manager.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_rdpdr_asynchronous_task.cpp
@@ -3008,6 +3430,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_asynchronous_task :
   src/gdi/graphic_api.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -3024,6 +3447,7 @@ test-run tests/mod/rdp/channels/test_rdpdr_channel :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -3047,6 +3471,7 @@ test-run tests/mod/rdp/channels/test_sespro_channel :
   src/gdi/screen_functions.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -3061,6 +3486,7 @@ test-run tests/mod/rdp/channels/test_sespro_clipboard_based_launcher :
   src/gdi/screen_functions.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -3070,6 +3496,8 @@ test-run tests/mod/rdp/channels/test_sespro_launcher :
 test-run tests/mod/rdp/channels/test_virtual_channel_data_sender :
   $(REDEMPTION_TEST_PATH)/mod/rdp/channels/test_virtual_channel_data_sender.cpp
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/mod/rdp/test_rdp :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp.cpp
@@ -3102,6 +3530,7 @@ test-run tests/mod/rdp/test_rdp :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
@@ -3118,6 +3547,7 @@ test-run tests/mod/rdp/test_rdp_metrics :
   src/core/font.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/working_directory.bc
@@ -3132,6 +3562,7 @@ test-run tests/mod/rdp/test_rdp_orders :
   src/utils/bitmap.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -3150,7 +3581,9 @@ test-run tests/mod/vnc/encoder/test_hextile :
   src/gdi/graphic_api.bc
   src/utils/bitmap.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/mod/vnc/encoder/test_zrle :
@@ -3163,7 +3596,9 @@ test-run tests/mod/vnc/encoder/test_zrle :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
   z.bc
@@ -3173,6 +3608,8 @@ test-run tests/mod/vnc/encoder/test_zrle :
 test-run tests/mod/vnc/test_newline_convert :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_newline_convert.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/mod/vnc/test_vnc :
   $(REDEMPTION_TEST_PATH)/mod/vnc/test_vnc.cpp
@@ -3200,6 +3637,7 @@ test-run tests/mod/vnc/test_vnc :
   src/utils/d3des.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -3212,6 +3650,7 @@ test-run tests/mod/vnc/test_vnc_metrics :
   crypto.bc
   src/core/error.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   tests/includes/test_only/working_directory.bc
 ;
@@ -3223,7 +3662,9 @@ test-run tests/mod/xup/test_xup :
   src/gdi/graphic_api.bc
   src/utils/bitmap.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/regex/test_regex :
@@ -3293,6 +3734,7 @@ test-run tests/server/test_mstsc_client :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -3345,6 +3787,7 @@ test-run tests/server/test_mstsc_client_rdp50bulk :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -3397,6 +3840,7 @@ test-run tests/server/test_rdesktop_client :
   src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/pattutils.bc
   src/utils/png.bc
   src/utils/rle.bc
@@ -3414,11 +3858,15 @@ test-run tests/system/linux/system/test_ssl_md4 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_md4.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/system/linux/system/test_ssl_md5 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_md5.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/system/linux/system/test_ssl_mod_exp :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_mod_exp.cpp
@@ -3432,16 +3880,22 @@ test-run tests/system/linux/system/test_ssl_sha1 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha1.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/system/linux/system/test_ssl_sha256 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha256.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/system/linux/system/test_ssl_sha512 :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_ssl_sha512.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/system/linux/system/test_tls_context :
   $(REDEMPTION_TEST_PATH)/system/linux/system/test_tls_context.cpp
@@ -3450,6 +3904,7 @@ test-run tests/system/linux/system/test_tls_context :
   openssl.bc
   src/core/error.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/transport/test_crypto_transport :
@@ -3460,11 +3915,14 @@ test-run tests/transport/test_crypto_transport :
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/transport/test_gzip_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_gzip_compression_transport.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   z.bc
 :
@@ -3473,6 +3931,8 @@ test-run tests/transport/test_gzip_compression_transport :
 test-run tests/transport/test_in_file_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_in_file_transport.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/transport/test_in_meta_sequence_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_in_meta_sequence_transport.cpp
@@ -3482,6 +3942,7 @@ test-run tests/transport/test_in_meta_sequence_transport :
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/transport/test_mwrm_reader :
@@ -3492,6 +3953,7 @@ test-run tests/transport/test_mwrm_reader :
   src/transport/crypto_transport.bc
   src/transport/mwrm_reader.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -3499,6 +3961,7 @@ test-run tests/transport/test_out_file_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_out_file_transport.cpp
   src/core/error.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/transport/test_recorder_transport :
@@ -3508,6 +3971,7 @@ test-run tests/transport/test_recorder_transport :
   src/transport/replay_transport.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/strutils.bc
   src/utils/utf.bc
 ;
@@ -3515,6 +3979,8 @@ test-run tests/transport/test_snappy_compression_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_snappy_compression_transport.cpp
   snappy.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/transport/test_socket_transport :
@@ -3526,17 +3992,22 @@ test-run tests/transport/test_socket_transport :
   src/transport/socket_transport.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/netutils.bc
   src/utils/strutils.bc
 ;
 test-run tests/transport/test_test_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_test_transport.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/transport/test_transport :
   $(REDEMPTION_TEST_PATH)/transport/test_transport.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/crypto/test_ssl_aes_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_aes_direct.cpp
@@ -3545,6 +4016,8 @@ test-run tests/utils/crypto/test_ssl_lib :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_lib.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/crypto/test_ssl_md4_direct :
@@ -3569,6 +4042,8 @@ test-run tests/utils/crypto/test_ssl_sign :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_sign.cpp
   crypto.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/sugar/numerics/test_safe_conversions :
   $(REDEMPTION_TEST_PATH)/utils/sugar/numerics/test_safe_conversions.cpp
@@ -3630,6 +4105,8 @@ test-run tests/utils/test_authorization_channels :
   src/core/error.bc
   src/utils/authorization_channels.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_bitfu :
@@ -3643,7 +4120,9 @@ test-run tests/utils/test_bitmap :
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
   src/utils/drawable.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_bitmap_data_allocator :
@@ -3656,7 +4135,9 @@ test-run tests/utils/test_bitmap_from_file :
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_bitmap_shrink :
@@ -3669,6 +4150,8 @@ test-run tests/utils/test_cfgloader :
   $(REDEMPTION_TEST_PATH)/utils/test_cfgloader.cpp
   src/utils/cfgloader.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_colors :
   $(REDEMPTION_TEST_PATH)/utils/test_colors.cpp
@@ -3677,6 +4160,8 @@ test-run tests/utils/test_compression_transport_builder :
   $(REDEMPTION_TEST_PATH)/utils/test_compression_transport_builder.cpp
   snappy.bc
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   z.bc
 :
@@ -3688,6 +4173,8 @@ test-run tests/utils/test_confdescriptor :
   src/utils/cfgloader.bc
   src/utils/confdescriptor.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_contiguous_sub_rect_f :
@@ -3699,6 +4186,8 @@ test-run tests/utils/test_d3des :
 ;
 test-run tests/utils/test_diffiehellman :
   $(REDEMPTION_TEST_PATH)/utils/test_diffiehellman.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_difftimeval :
   $(REDEMPTION_TEST_PATH)/utils/test_difftimeval.cpp
@@ -3713,8 +4202,10 @@ test-run tests/utils/test_drawable :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_ellipse :
@@ -3723,6 +4214,7 @@ test-run tests/utils/test_ellipse :
 test-run tests/utils/test_fileutils :
   $(REDEMPTION_TEST_PATH)/utils/test_fileutils.cpp
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/utils/test_genfstat :
@@ -3730,6 +4222,8 @@ test-run tests/utils/test_genfstat :
 ;
 test-run tests/utils/test_genrandom :
   $(REDEMPTION_TEST_PATH)/utils/test_genrandom.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_get_printable_password :
   $(REDEMPTION_TEST_PATH)/utils/test_get_printable_password.cpp
@@ -3737,6 +4231,8 @@ test-run tests/utils/test_get_printable_password :
 test-run tests/utils/test_id_manager :
   $(REDEMPTION_TEST_PATH)/utils/test_id_manager.cpp
   src/core/error.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_key_qvalue_pairs :
   $(REDEMPTION_TEST_PATH)/utils/test_key_qvalue_pairs.cpp
@@ -3748,14 +4244,19 @@ test-run tests/utils/test_load_theme :
   src/utils/fileutils.bc
   src/utils/hexdump.bc
   src/utils/load_theme.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/utils/test_log :
   $(REDEMPTION_TEST_PATH)/utils/test_log.cpp
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_netutils :
   $(REDEMPTION_TEST_PATH)/utils/test_netutils.cpp
+  src/utils/log.bc
   src/utils/netutils.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_outbound_connection_monitor_rules :
   $(REDEMPTION_TEST_PATH)/utils/test_outbound_connection_monitor_rules.cpp
@@ -3768,7 +4269,9 @@ test-run tests/utils/test_parse_server_message :
 ;
 test-run tests/utils/test_pattutils :
   $(REDEMPTION_TEST_PATH)/utils/test_pattutils.cpp
+  src/utils/log.bc
   src/utils/pattutils.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_png :
   $(REDEMPTION_TEST_PATH)/utils/test_png.cpp
@@ -3777,6 +4280,7 @@ test-run tests/utils/test_png :
   src/core/font.bc
   src/gdi/graphic_api.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/png.bc
   src/utils/strutils.bc
   src/utils/utf.bc
@@ -3788,6 +4292,7 @@ test-run tests/utils/test_recording_progress :
   $(REDEMPTION_TEST_PATH)/utils/test_recording_progress.cpp
   src/core/error.bc
   src/utils/fileutils.bc
+  src/utils/log.bc
   src/utils/strutils.bc
 ;
 test-run tests/utils/test_rect :
@@ -3796,6 +4301,8 @@ test-run tests/utils/test_rect :
 test-run tests/utils/test_redirection_info :
   $(REDEMPTION_TEST_PATH)/utils/test_redirection_info.cpp
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_region :
   $(REDEMPTION_TEST_PATH)/utils/test_region.cpp
@@ -3805,6 +4312,8 @@ test-run tests/utils/test_rle :
   crypto.bc
   src/core/error.bc
   src/utils/bitmap.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
 ;
 test-run tests/utils/test_stream :
@@ -3827,6 +4336,8 @@ test-run tests/utils/test_translation :
   projects/redemption_configs/redemption_src/configs/config.bc
   src/utils/cfgloader.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
+  src/utils/strutils.bc
 ;
 test-run tests/utils/test_utf :
   $(REDEMPTION_TEST_PATH)/utils/test_utf.cpp
@@ -3842,7 +4353,9 @@ test-run tests/utils/test_video_cropper :
   src/utils/bitmap.bc
   src/utils/drawable.bc
   src/utils/hexdump.bc
+  src/utils/log.bc
   src/utils/rle.bc
+  src/utils/strutils.bc
   src/utils/utf.bc
   tests/includes/test_only/gdi/test_graphic.bc
 ;
@@ -3965,6 +4478,7 @@ objjs src/utils/drawable.bc : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
 objjs src/utils/fileutils.bc : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/load_theme.bc : $(REDEMPTION_SRC_PATH)/utils/load_theme.cpp ;
+objjs src/utils/log.bc : $(REDEMPTION_SRC_PATH)/utils/log.cpp ;
 objjs src/utils/netutils.bc : $(REDEMPTION_SRC_PATH)/utils/netutils.cpp ;
 objjs src/utils/pattutils.bc : $(REDEMPTION_SRC_PATH)/utils/pattutils.cpp ;
 objjs src/utils/png.bc : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
@@ -4191,6 +4705,7 @@ alias test_widget : tests/mod/internal/widget/test_widget ;
 alias test_widget_rect : tests/mod/internal/widget/test_widget_rect ;
 alias test_null : tests/mod/null/test_null ;
 alias test_base_channel : tests/mod/rdp/channels/test_base_channel ;
+alias test_channel_file : tests/mod/rdp/channels/test_channel_file ;
 alias test_cliprdr_channel : tests/mod/rdp/channels/test_cliprdr_channel ;
 alias test_cliprdr_channel_send_and_receive : tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive ;
 alias test_rail_window_id_manager : tests/mod/rdp/channels/test_rail_window_id_manager ;
@@ -4590,6 +5105,7 @@ alias tests/mod/null.norec :
 ;
 alias tests/mod/rdp/channels.norec :
   tests/mod/rdp/channels/test_base_channel
+  tests/mod/rdp/channels/test_channel_file
   tests/mod/rdp/channels/test_cliprdr_channel
   tests/mod/rdp/channels/test_cliprdr_channel_send_and_receive
   tests/mod/rdp/channels/test_rail_window_id_manager
