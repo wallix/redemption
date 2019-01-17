@@ -41,6 +41,7 @@
 #include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/capabilities/rail.hpp"
+#include "core/RDP/capabilities/bitmapcodecs.hpp"
 #include "core/RDP/capabilities/window.hpp"
 #include "core/RDP/caches/glyphcache.hpp"
 #include "gdi/screen_info.hpp"
@@ -88,7 +89,7 @@ struct ClientInfo
     int rdp_compression = 0;
     int rdp_compression_type = 0;
     int rdp_autologin = 0;
-    int encryptionLevel; /* 1, 2, 3 = low, medium, high */
+    int encryptionLevel = 3; /* 1, 2, 3 = low, medium, high */
     bool has_sound_code = false; /* 1 = leave sound at server */
     int is_mce = 0;
     uint32_t rdp5_performanceflags = 0;
@@ -128,6 +129,7 @@ struct ClientInfo
     GlyphCacheCaps          glyph_cache_caps;
     RailCaps                rail_caps;
     WindowListCaps          window_list_caps;
+    BitmapCodecCaps			bitmap_codec_caps {false};
 
     ClientInfo() = default;
 

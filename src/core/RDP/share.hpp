@@ -466,7 +466,8 @@ enum {
     PDUTYPE2_ARC_STATUS_PDU              = 50, // Auto-Reconnect Status PDU
                                                // (section 2.2.4.1.1)
     PDUTYPE2_STATUS_INFO_PDU             = 54, // Status Info PDU (section 2.2.5.2)
-    PDUTYPE2_MONITOR_LAYOUT_PDU          = 55  // Monitor Layout PDU (section 2.2.12.1)
+    PDUTYPE2_MONITOR_LAYOUT_PDU          = 55, // Monitor Layout PDU (section 2.2.12.1)
+	PDUTYPE2_FRAME_ACKNOWLEDGE			 = 56  // TS_FRAME_ACKNOWLEDGE_PDU (section 2.2.3.1 of MS-RDPRFX)
 };
 
 // compressedType (1 byte): An 8-bit, unsigned integer. The compression type
