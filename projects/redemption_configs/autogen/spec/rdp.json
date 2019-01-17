@@ -448,6 +448,19 @@
           "description": "Warn that server certificate file checking failed."
         }
       ]
+    },
+    {
+      "name": "video",
+      "members": [
+        {
+          "name": "disable_keyboard_log",
+          "type": "bitset",
+          "min": 0,
+          "max": 3,
+          "default": 1,
+          "description": "Disable keyboard log:"
+        }
+      ]
     }
   ]
 }

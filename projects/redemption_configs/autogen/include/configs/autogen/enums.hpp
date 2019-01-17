@@ -87,6 +87,39 @@ operator << (std::basic_ostream<Ch, Tr> & os, ClipboardEncodingType e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class KeyboardLogFlagsCP : unsigned char
+{
+    none = 0,
+    // keyboard log in syslog
+    syslog = 1,
+    // keyboard log in recorded sessions
+    wrm = 2,
+};
+
+inline bool is_valid_enum_value(KeyboardLogFlagsCP e)
+{
+    return static_cast<unsigned long>(e) <= 3;
+}
+
+inline KeyboardLogFlagsCP operator | (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
+{ return static_cast<KeyboardLogFlagsCP>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline KeyboardLogFlagsCP operator & (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
+{ return static_cast<KeyboardLogFlagsCP>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline KeyboardLogFlagsCP operator ~ (KeyboardLogFlagsCP x)
+{ return static_cast<KeyboardLogFlagsCP>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(3)); }
+inline KeyboardLogFlagsCP operator + (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x | y; }
+inline KeyboardLogFlagsCP operator - (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x & ~y; }
+inline KeyboardLogFlagsCP & operator |= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x | y; }
+inline KeyboardLogFlagsCP & operator &= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x & y; }
+inline KeyboardLogFlagsCP & operator += (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x + y; }
+inline KeyboardLogFlagsCP & operator -= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x - y; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlagsCP e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 enum class KeyboardLogFlags : unsigned char
 {
     none = 0,

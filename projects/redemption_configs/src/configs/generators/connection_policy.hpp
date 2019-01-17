@@ -58,7 +58,7 @@ namespace json
 
         inline std::string stringize_bool(bool x)
         {
-            return bool(x) ? "true" : "false";
+            return x ? "true" : "false";
         }
 
         inline exprio stringize_bool(cpp::expr e)
@@ -282,7 +282,7 @@ namespace json
     std::enable_if_t<std::is_enum_v<E>>
     write_type(std::ostream& out, type_enumerations& enums, type_<T>, E const& x)
     {
-        static_assert(std::is_same<T, E>::value, "");
+        static_assert(std::is_same<T, E>::value, "incompatible enum type, used connpolicy::set(...)");
         using ll = long long;
         apply_enumeration_for<T>(enums, [&](auto const & e) {
             impl::write_enum_value(out, e, ll{static_cast<std::underlying_type_t<E>>(x)});
@@ -323,7 +323,7 @@ struct ConnectionPolicyWriterBase
     void evaluate_member(std::string const & section_name, Pack const& infos, type_enumerations& enums)
     {
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            auto type = get_type<spec::type_>(infos);
+            auto type = get_type<connpolicy::type_>(infos);
             auto& default_value = get_default<connpolicy::default_>(type, infos);
 
             std::string const& member_name = get_name<connpolicy::name>(infos);

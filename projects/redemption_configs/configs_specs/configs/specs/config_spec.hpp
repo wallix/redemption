@@ -104,6 +104,7 @@ void config_spec_definition(Writer && W)
 
     auto rdp_connpolicy = sesman::connection_policy{"rdp"};
     auto vnc_connpolicy = sesman::connection_policy{"vnc"};
+    auto allow_connpolicy_and_gui = connpolicy::allow_connpolicy_and_gui;
 
     W.section("globals", [&]
     {
@@ -483,7 +484,7 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_tmp_path", set(CPP_EXPR(app_path(AppPath::RecordTmp))));
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
 
-        W.member(ini_and_gui, no_sesman, L, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
+        W.member(ini_and_gui, allow_connpolicy_and_gui, rdp_connpolicy, L, type_<KeyboardLogFlags>{}, connpolicy::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog), connpolicy::set(KeyboardLogFlagsCP::syslog));
 
         W.member(ini_and_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
 

@@ -59,6 +59,9 @@ cp_spec = {
     u'server_cert_success_message': 'server_cert_success_message',
     u'server_cert_failure_message': 'server_cert_failure_message',
   },
+  'video': {
+    u'disable_keyboard_log': 'disable_keyboard_log',
+  },
   'vnc': {
     u'server_is_apple': 'server_is_apple',
     u'server_unix_alt': 'server_unix_alt',

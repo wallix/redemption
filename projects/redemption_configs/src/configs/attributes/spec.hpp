@@ -204,6 +204,15 @@ namespace connpolicy
 {
     struct name { std::string name; };
 
+    template<class T>
+    struct type_
+    {
+        ::cfg_attributes::type_<T> to_type() const
+        {
+            return {};
+        }
+    };
+
     struct section { char const* name; };
 
     template<class T>
@@ -220,6 +229,8 @@ namespace connpolicy
     template<std::size_t N>
     default_<std::string> set(char const (&x)[N])
     { return {{std::string(x+0, x+N-1)}}; }
+
+    constexpr struct allow_connpolicy_and_gui_t {} allow_connpolicy_and_gui {};
 
     namespace internal
     {

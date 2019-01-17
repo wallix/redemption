@@ -33,6 +33,8 @@ Edit `configs_specs/configs/specs/config_spec.hpp`
 - `iptables_in_gui`
 - `password_in_gui`
 
+Note: special parameter: `connpolicy::allow_connpolicy_and_gui`.
+
 
 
 ## Sesman (sesman::*)
@@ -80,7 +82,8 @@ Combination with `|`: `sesman::connection_policy{"rdp"} | advanced_in_connpolicy
 
 - `type_<cpp_type>()`: ini, sesman, connpolicy and cpp type
 - `spec::type_<cpp_type>()`: ini type
-- `sesman::type_<cpp_type>()`: sesman and connpolicy type
+- `sesman::type_<cpp_type>()`: connpolicy type
+- `connpolicy::type_<cpp_type>()`: sesman type
 - `cpp::type_<cpp_type>()`: cpp type
 
 Note: `W.member(type_<int>(), sesman::type_<bool>(), ...)` is ok.
@@ -126,6 +129,10 @@ Note: `W.member("fish", sesman::name{"netfish"}, ini::name{"superfish"}, ...)` i
 
 By default, initialized with `{}` (cf: `type value = {}`).
 
+
+## prefix
+
+- `prefix_value`: `prefix_value disable_prefix_val{"disable"}` in `const_spec.hpp`
 
 
 # Add/Modify enumeration type

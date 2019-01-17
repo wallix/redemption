@@ -376,8 +376,9 @@ public:
             !has_conn_policy || ((
                 is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>
              || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::hidden_in_gui)>
+             || is_convertible_v<Ts, decltype(cfg_attributes::connpolicy::allow_connpolicy_and_gui)>
             ) || ...),
-            "connection_policy only with no_ini_no_gui or hidden_in_gui");
+            "sesman::connection_policy only with:\n- spec::constants::no_ini_no_gui\n- spec::constants::hidden_in_gui\n- connpolicy::allow_connpolicy_and_gui");
 
         using infos_type = Infos<decltype(detail_::normalize_info_arg(args))...>;
         std::unique_ptr<infos_type> u(new infos_type{detail_::normalize_info_arg(args)...});

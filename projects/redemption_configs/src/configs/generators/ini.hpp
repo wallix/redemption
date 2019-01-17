@@ -114,7 +114,7 @@ namespace impl
 {
     inline std::string stringize_bool(bool x)
     {
-        return bool(x) ? "1" : "0";
+        return x ? "1" : "0";
     }
 
     inline auto stringize_bool(cpp::expr e)
