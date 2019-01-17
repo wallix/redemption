@@ -25,4 +25,4 @@
 
 #pragma once
 
-#define VERSION "1.1.107"
+#define VERSION "1.1.108-cspn"

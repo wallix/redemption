@@ -1,3 +1,9 @@
+redemption (1.1.108-cspn%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * 19037: RDP proxy log
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Jan 2019 15:55:13 +0200
+
 redemption (1.1.107%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Set DH size to 3072 bits for TLS.
