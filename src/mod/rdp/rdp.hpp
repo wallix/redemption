@@ -72,6 +72,8 @@
 #include "core/RDP/sec.hpp"
 #include "core/RDP/tpdu_buffer.hpp"
 #include "core/RDP/x224.hpp"
+#include "core/RDP/orders/remoteFx.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 #include "core/RDPEA/audio_output.hpp"
 
@@ -80,6 +82,7 @@
 #include "core/client_info.hpp"
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
+#include "mod/rdp/rdp_metrics.hpp"
 
 #ifndef __EMSCRIPTEN__
 # include "mod/rdp/rdp_metrics.hpp"
@@ -1804,6 +1807,7 @@ private:
     FrontAPI& front;
 
     rdp_orders orders;
+    RfxDecoder rfxDecoder;
 
     int share_id;
 
@@ -1845,6 +1849,11 @@ private:
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool enable_ninegrid_bitmap;
+    const bool enable_remotefx;
+    uint8_t remoteFx_codec_id;
+
+    uint32_t frameInProgress = false;
+    uint32_t currentFrameId = 0;
 
     bool delayed_start_capture = false;
 
@@ -1910,7 +1919,8 @@ private:
     bool clean_up_32_bpp_cursor;
     bool large_pointer_support;
 
-    StaticOutStream<65536> multifragment_update_data;
+    std::unique_ptr<uint8_t[]> multifragment_update_buffer;
+    OutStream multifragment_update_data;
 
     LargePointerCaps        client_large_pointer_caps;
     MultiFragmentUpdateCaps client_multi_fragment_update_caps;
@@ -1986,6 +1996,8 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
+    	, enable_remotefx(mod_rdp_params.enable_remotefx)
+    	, remoteFx_codec_id(0)
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
@@ -2011,6 +2023,8 @@ public:
         , beginning(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
+    	, multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
+    	, multifragment_update_data(multifragment_update_buffer.get(), 65536, 0)
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
         , client_general_caps(info.general_caps)
@@ -2436,7 +2450,7 @@ public:
                 case FU::BITMAP:      m = "BITMAP"; break;
                 case FU::PALETTE:     m = "PALETTE"; break;
                 case FU::SYNCHRONIZE: m = "SYNCHRONIZE"; break;
-                case FU::SURFCMDS:    m = "SYNCHRONIZE"; break;
+                case FU::SURFCMDS:    m = "SURFCMDS"; break;
                 case FU::PTR_NULL:    m = "PTR_NULL"; break;
                 case FU::PTR_DEFAULT: m = "PTR_DEFAULT"; break;
                 case FU::PTR_POSITION:m = "PTR_POSITION"; break;
@@ -2488,10 +2502,8 @@ public:
                 break;
 
             case FastPath::UpdateType::SURFCMDS:
-                LOG( LOG_ERR
-                , "mod::rdp: received unsupported fast-path PUD, updateCode = %s"
-                , "FastPath::UPDATETYPE_SURFCMDS");
-                throw Error(ERR_RDP_FASTPATH);
+                this->process_surface_command(stream, drawable);
+                break;
 
             case FastPath::UpdateType::PTR_NULL:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
@@ -2583,7 +2595,146 @@ public:
             }
         }
 
-        // TODO Chech all data in the PDU is consumed
+        // TODO Check that all data in the PDU have been consumed
+    }
+
+
+    // 2.2.9.1.2.1.10.1
+    // Surface Command (TS_SURFCMD)
+    // The TS_SURFCMD structure is used to specify the Surface Command type and to encapsulate the data
+    // for a Surface Command sent from a server to a client. All Surface Commands in section 2.2.9.2
+    // conform to this structure.
+    //
+    // +-------------------------+--------------------+
+    // |          cmdType        | cmdData (variable) |
+    // +-------------------------+--------------------+
+    // |                      ...                     |
+    // +----------------------------------------------+
+    //
+    // cmdType (2 bytes): A 16-bit unsigned integer. Surface Command type.
+    // +---------------------------+---------------------------------------+
+    // |           Value           |              Meaning                  |
+    // +---------------------------+---------------------------------------+
+    // | CMDTYPE_SET_SURFACE_BITS  | Indicates a Set Surface Bits Command  |
+    // |          0x0001           |     (section 2.2.9.2.1).              |
+    // +---------------------------+---------------------------------------+
+    // | CMDTYPE_FRAME_MARKER      | Indicates a Frame Marker Command      |
+    // |          0x0004           |     (section 2.2.9.2.3).              |
+    // +---------------------------+---------------------------------------+
+    // |CMDTYPE_STREAM_SURFACE_BITS|Indicates a Stream Surface Bits Command|
+    // |          0x0006           |     (section 2.2.9.2.2).              |
+    // +---------------------------+---------------------------------------+
+    //
+    // cmdData (variable): Variable-length data specific to the Surface Command.
+    //
+    enum {
+    	CMDTYPE_SET_SURFACE_BITS = 0x0001,
+		CMDTYPE_FRAME_MARKER = 0x0004,
+		CMDTYPE_STREAM_SURFACE_BITS = 0x0006
+    };
+
+
+    void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
+    	unsigned expected = 2;
+    	if (!stream.in_check_rem(expected)) {
+    		LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
+    		throw Error(ERR_RDP_DATA_TRUNCATED);
+    	}
+
+    	uint16_t cmdType = stream.in_uint16_le();
+
+    	switch(cmdType) {
+    	case CMDTYPE_SET_SURFACE_BITS:
+    	case CMDTYPE_STREAM_SURFACE_BITS: {
+    		RDPSetSurfaceCommand setSurface;
+
+    		setSurface.recv(stream);
+
+        	if (setSurface.codecId == this->remoteFx_codec_id) {
+        		InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+        		this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+        	}
+
+    		break;
+    	}
+    	case CMDTYPE_FRAME_MARKER: {
+    		// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+    		// The Frame Marker Command is used to group multiple surface commands so that these commands
+    		// can be processed and presented to the user as a single entity, a frame.
+    		//
+    		// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+    		// 		CMDTYPE_FRAME_MARKER (0x0004).
+    		// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+    		// +------------------------------+-------------------------------------+
+    		// |             Value            |         Meaning                     |
+    		// +------------------------------+-------------------------------------+
+    		// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+    		// |			0x0000			  |                                     |
+    		// +------------------------------+-------------------------------------+
+    		// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+    		// | 			0x0001            | frame.                              |
+    		// +------------------------------+-------------------------------------+
+    		//
+    		// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+    		//
+    		enum {
+    			SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+				SURFACECMD_FRAMEACTION_END = 0x0001
+    		};
+
+    		expected = 6;
+			if (!stream.in_check_rem(expected)) {
+	    		LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+	    		throw Error(ERR_RDP_DATA_TRUNCATED);
+			}
+
+        	uint16_t frameAction = stream.in_uint16_le();
+        	uint32_t frameId = stream.in_uint32_le();
+        	switch(frameAction) {
+        	case SURFACECMD_FRAMEACTION_BEGIN:
+        		LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%d lastFrame=0x%x)", this->frameInProgress, this->currentFrameId);
+        		if (this->frameInProgress) {
+        			// some servers don't send frame end markers, so send acks when we receive
+        			// a new frame and the previous one was not acked
+            		this->front.end_update();
+
+            		LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
+            		uint32_t localLastFrame = this->currentFrameId;
+            		this->send_pdu_type2(
+    					PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+    					[localLastFrame](StreamSize<32>, OutStream & ostream) {
+            				ostream.out_uint32_le(localLastFrame);
+    					}
+    				);
+        		}
+
+        		this->frameInProgress = true;
+        		this->currentFrameId = frameId;
+        		this->front.begin_update();
+        		break;
+        	case SURFACECMD_FRAMEACTION_END:
+        		LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
+        		this->frameInProgress = false;
+        		this->front.end_update();
+        		this->send_pdu_type2(
+					PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+					[frameId](StreamSize<32>, OutStream & ostream) {
+        				ostream.out_uint32_le(frameId);
+					}
+				);
+        		break;
+        	default:
+        		LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
+        		break;
+        	}
+
+    		break;
+    	}
+    	default:
+    		LOG(LOG_ERR, "unknown surface command %u", cmdType);
+    		break;
+    	}
+
     }
 
     void connected_slow_path(time_t now, gdi::GraphicApi & drawable, InStream & stream)
@@ -3589,6 +3740,36 @@ public:
                     confirm_active_pdu.emit_capability_set(ninegrid_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         ninegrid_caps.log("Sending to server");
+                    }
+                }
+
+                BitmapCodecCaps bitmap_codec_caps(true);
+
+                if (this->enable_remotefx && (this->remoteFx_codec_id != 1)) {
+                	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX, this->remoteFx_codec_id);
+
+                	FrameAcknowledgeCaps frameAck;
+                	frameAck.maxUnacknowledgedFrameCount = 2;
+                	confirm_active_pdu.emit_capability_set(frameAck);
+
+                	SurfaceCommandsCaps surfaceCommands;
+                	surfaceCommands.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
+                	confirm_active_pdu.emit_capability_set(surfaceCommands);
+
+                	MultiFragmentUpdateCaps fragCaps;
+                	fragCaps.MaxRequestSize = std::max(
+                			this->negociation_result.front_multifragment_maxsize,
+                			static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
+					);
+                	if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
+                		this->multifragment_update_buffer.reset(new uint8_t[fragCaps.MaxRequestSize]());
+                		this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), fragCaps.MaxRequestSize);
+                	}
+                	confirm_active_pdu.emit_capability_set(fragCaps);
+
+                	confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                    	bitmap_codec_caps.log("Sending to server");
                     }
                 }
 
@@ -4959,6 +5140,7 @@ public:
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         multifrag_caps.log("Receiving from server");
                     }
+                    this->negociation_result.front_multifragment_maxsize = multifrag_caps.MaxRequestSize;
                 }
                 break;
             case CAPSETTYPE_LARGE_POINTER:
@@ -5063,13 +5245,12 @@ public:
             case CAPSETTYPE_BITMAP_CODECS:
                 {
                     BitmapCodecCaps caps(false);
-                    LOG(LOG_INFO, "Dumping CAPSETTYPE_BITMAP_CODECS");
-                    hexdump_d(stream.get_current()-4, capset_length);
-                    stream.in_skip_bytes(capset_length-4);
-//                    caps.recv(stream, capset_length);
-//                    if (bool(this->verbose & RDPVerbose::capabilities)) {
-//                        caps.log("Receiving from server");
-//                    }
+                    caps.recv(stream, capset_length);
+                    if (bool(this->verbose & RDPVerbose::capabilities)) {
+                        caps.log("Receiving from server");
+                    }
+
+                    this->remoteFx_codec_id = caps.remoteFxCodecId;
                 }
                 break;
             case CAPSETTYPE_FRAME_ACKNOWLEDGE:
@@ -5764,11 +5945,11 @@ private:
             }
 
             // TODO CGR: check which sanity checks should be done
-                //            if (bufsize != bitmap.bmp_size){
-                //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
-                //                    bufsize, bitmap.bmp_size, width, height, bpp);
-                //            }
-                const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+			//            if (bufsize != bitmap.bmp_size){
+			//                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
+			//                    bufsize, bitmap.bmp_size, width, height, bpp);
+			//            }
+			const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
             Bitmap bitmap( this->orders.bpp
                          , checked_int(bmpdata.bits_per_pixel)
                          , &this->orders.global_palette

@@ -381,6 +381,7 @@ public:
                 mod_rdp_params.enable_new_pointer              = true;
                 mod_rdp_params.enable_glyph_cache              = true;
 //                 mod_rdp_params.enable_ninegrid_bitmap          = true;
+                mod_rdp_params.enable_remotefx 				   = this->config.enable_remotefx;
                 std::string allow_channels                     = "*";
                 mod_rdp_params.allow_channels                  = &allow_channels;
                 mod_rdp_params.deny_channels = nullptr;
@@ -1162,6 +1163,10 @@ public:
     }
 
     virtual void set_pointer(Pointer const &) override {}
+
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+		this->draw_impl(no_log{}, cmd, content);
+	}
 
     virtual ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
         if (bool(this->config.verbose & RDPVerbose::graphics)) {

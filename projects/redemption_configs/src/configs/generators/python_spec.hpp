@@ -130,7 +130,7 @@ namespace impl
     template<class T> static io_quoted2 quoted2(T const & s) { return s; }
     template<class T> static char const * quoted2(types::list<T> const &) { return ""; }
 
-    inline std::string stringize_bool(bool x) { return bool(x) ? "True" : "False"; }
+    inline std::string stringize_bool(bool x) { return x ? "True" : "False"; }
 
     inline exprio stringize_bool(cfg_attributes::cpp::expr e) { return {e.value}; }
 

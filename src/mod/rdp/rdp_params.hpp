@@ -73,6 +73,7 @@ struct ModRDPParams
     bool enable_session_probe = false;
     bool session_probe_enable_launch_mask = true;
     bool enable_ninegrid_bitmap = false;
+    bool enable_remotefx = true;
 
     bool disable_clipboard_log_syslog = false;
     bool disable_clipboard_log_wrm = false;
@@ -85,8 +86,7 @@ struct ModRDPParams
     bool                         session_probe_start_launch_timeout_timer_only_after_logon = true;
     SessionProbeOnLaunchFailure  session_probe_on_launch_failure = SessionProbeOnLaunchFailure::disconnect_user;
     std::chrono::milliseconds    session_probe_keepalive_timeout {};
-    SessionProbeOnKeepaliveTimeout
-                                 session_probe_on_keepalive_timeout = SessionProbeOnKeepaliveTimeout::disconnect_user;
+    SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout = SessionProbeOnKeepaliveTimeout::disconnect_user;
     bool                         session_probe_end_disconnected_session = false;
     bool                         session_probe_customize_executable_name = false;
     std::chrono::milliseconds    session_probe_disconnected_application_limit {};
@@ -275,6 +275,7 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_mem3blt);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
+        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_session_probe);
         RDP_PARAMS_LOG("%s",     yes_or_no,             session_probe_enable_launch_mask);
 

@@ -228,8 +228,8 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::option("enable-clipboard").help("Enable clipboard sharing")
         .action(cli::on_off_location(config.enable_shared_clipboard)),
 
-        cli::option("enable-nla").help("Entable NLA protocol")
-        .action(cli::on_off_location(config.modRDPParamsData.enable_nla)),
+        cli::option("enable-nla").help("Enable NLA protocol")
+        .action(cli::on_off_location(this->modRDPParamsData.enable_nla)),
 
         cli::option("enable-tls").help("Enable TLS protocol")
         .action(cli::on_off_location(config.modRDPParamsData.enable_tls)),
@@ -272,6 +272,9 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         .help("Set timeout to send keypress to keep the session alive")
         .action(cli::arg([&](int t){ config.keep_alive_freq = t; })),
 
+		cli::option("remotefx").help("enable remotefx")
+		.action(cli::on_off_location(config.info.enable_remotefx)),
+
 
         cli::helper("========= Client ========="),
 
@@ -281,12 +284,12 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         cli::option("height").help("Set screen height")
         .action(cli::arg_location(config.rdp_height)),
 
-        cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24)")
+        cli::option("bpp").help("Set bit per pixel (8, 15, 16, 24, 32)")
         .action(cli::arg("bit_per_pixel", [&config](int x) {
             config.info.screen_info.bpp = checked_int(x);
         })),
 
-        cli::option("keylaout").help("Set windows keylayout")
+        cli::option("keylayout").help("Set windows keylayout")
         .action(cli::arg_location(config.info.keylayout)),
 
         cli::option("enable-record").help("Enable session recording as .wrm movie")
@@ -298,10 +301,10 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
             config.persist = true;
         }),
 
-        cli::option("timeout").help("Set timeout response before to disconnect in milisecond")
-        .action(cli::arg("time", [&](long time) {
-            config.quick_connection_test = false;
-            config.time_out_disconnection = std::chrono::milliseconds(time);
+        cli::option("timeout").help("Set timeout response before to disconnect in millisecond")
+        .action(cli::arg("time", [&](long time){
+            quick_connection_test = false;
+            time_out_disconnection = std::chrono::milliseconds(time);
         })),
 
         cli::option("share-dir").help("Set directory path on local disk to share with your session.")
@@ -622,7 +625,6 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
         ::write(file.fd(), to_write.c_str(), to_write.length());
     }
 }
-
 
 
 void ClientConfig::setDefaultConfig(ClientRedemptionConfig & config)  {

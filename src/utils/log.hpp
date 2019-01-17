@@ -218,7 +218,7 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
     ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
         LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
         ::detail::LOG__PROXY__SIEM__REDEMPTION__INTERNAL(            \
-            "[RDP Proxy] spid=\"%s\" user=\"%s\" type=\"" type "\" " \
+            "[rdpproxy] spid=\"%s\" user=\"%s\" type=\"" type "\" "  \
             LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
         1                                                            \
     ));                                                              \

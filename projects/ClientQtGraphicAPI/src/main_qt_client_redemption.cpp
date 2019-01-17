@@ -307,6 +307,22 @@ public:
         (void) bmp;
     }
 
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+        LOG(LOG_INFO, "DEFAULT: RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
+                        cmd.width, cmd.height);
+
+        ClientRedemption::draw(cmd, content);
+
+		QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBA8888);
+#if 0
+		static int frameNo = 0;
+		frameNo++;
+		img.save(QString("/tmp/img%1.png").arg(frameNo), "PNG", 100);
+#endif
+
+		this->qt_graphic.painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+	}
+
 };
 
 

@@ -142,6 +142,8 @@ namespace
 
 RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
 : drawable(width, height)
+, save_mouse_x(0)
+, save_mouse_y(0)
 , mouse_cursor_pos_x(width / 2)
 , mouse_cursor_pos_y(height / 2)
 , mouse_cursor_hotspot_x(0)
@@ -349,6 +351,11 @@ void RDPDrawable::draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ct
         , u32rgb_to_color(this->drawable, color_ctx, cmd.fore_color)
     );
     this->last_update_index++;
+}
+
+void RDPDrawable::draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/)
+{
+	// TODO: implement me
 }
 
 /*

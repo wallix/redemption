@@ -1,3 +1,11 @@
+redemption (7.0.9%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * RDP proxy log
+  * Support of RDP KeepAlive
+  * Add options to ignore keyboard input in applications specified by administrator.
+
+ -- cgrosjean <cgrosjean at wallix.com>  Thu, 17 Jan 2019 15:07:14 +0200
+
 redemption (7.0.1%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Support of RDP keepalive (T.128 FlowPDU).

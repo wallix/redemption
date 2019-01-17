@@ -38,7 +38,7 @@ namespace detail
         if (0 != strcmp(source_ip, "127.0.0.1")) {
             LOG__REDEMPTION__INTERNAL__IMPL(
                 LOG_INFO,
-                R"([RDP Proxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
+                R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
                 log_proxy_psid, source_ip, source_port
             );
         }
@@ -65,14 +65,14 @@ namespace detail
             if (log_proxy_username[0]) {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
-                    R"([RDP Proxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
+                    R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
                     log_proxy_psid, log_proxy_username, reason
                 );
             }
             else {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
-                    R"([RDP Proxy] psid="%s" type="DISCONNECT" reason="%s")",
+                    R"([rdpproxy] psid="%s" type="DISCONNECT" reason="%s")",
                     log_proxy_psid, reason
                 );
             }
@@ -81,14 +81,14 @@ namespace detail
             if (log_proxy_username[0]) {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
-                    R"([RDP Proxy] psid="%s" user="%s" type="DISCONNECT")",
+                    R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT")",
                     log_proxy_psid, log_proxy_username
                 );
             }
             else {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
-                    R"([RDP Proxy] psid="%s" type="DISCONNECT")",
+                    R"([rdpproxy] psid="%s" type="DISCONNECT")",
                     log_proxy_psid
                 );
             }
