@@ -55,8 +55,6 @@ class GlyphCache;
 class RDPColCache;
 class RDPBrushCache;
 class RDPNineGrid;
-class RDPSetSurfaceCommand;
-class RDPSurfaceContent;
 
 namespace RDP {
     class RDPMultiPatBlt;
@@ -281,7 +279,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
-    virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const &content) = 0;
 
     // NOTE maybe in an other interface
     virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) = 0;
@@ -307,7 +304,7 @@ struct GraphicApi : private noncopyable
 };
 
 
-class NullGraphic : public GraphicApi
+class NullGraphic final : public GraphicApi
 {
 public:
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
@@ -332,7 +329,6 @@ public:
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {}
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
     void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
