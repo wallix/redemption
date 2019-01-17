@@ -343,7 +343,7 @@ struct PythonSpecWriterBase : ConfigSpecWriterBase<Inherit, AttributeName>
     std::enable_if_t<std::is_enum_v<E>>
     write_type(type_<T>, E const & x)
     {
-        static_assert(std::is_same<T, E>::value, "");
+//        static_assert(std::is_same<T, E>::value, "");
         apply_enumeration_for<T>(this->enums, [&x, this](auto const & e) {
             this->write_enum_value(e, static_cast<std::underlying_type_t<E>>(x));
         });

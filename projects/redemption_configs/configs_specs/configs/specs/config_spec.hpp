@@ -518,8 +518,6 @@ void config_spec_definition(Writer && W)
 
         W.member(ini_and_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{},  L, type_<KeyboardLogFlags>{}, sesman::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
 
-//        W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
-
 
 
         W.sep();

@@ -25,9 +25,8 @@ vault_transformation_rule = string(default='')
 #   0: none
 #   1: disable keyboard log in syslog
 #   2: disable keyboard log in recorded sessions
-#   4: disable keyboard log in recorded meta
 # (note: values can be added (everyone: 1+2+4=7, mute: 0))
-disable_keyboard_log = integer(min=0, max=7, default=1)
+disable_keyboard_log = integer(min=0, max=3, default=1)
 
 [session_log]
 

@@ -64,7 +64,7 @@ struct ConnectionPolicyWriterBase : python_spec_writer::PythonSpecWriterBase<Inh
     void do_member(std::string const & section_name, Pack const& infos)
     {
         if constexpr (is_convertible_v<Pack, connection_policy_t>) {
-            auto type = get_type<spec::type_>(infos);
+            auto type = get_type<sesman::type_>(infos);
             std::string const& member_name = get_name<connpolicy::name>(infos);
 
             this->write_description(type, infos);
