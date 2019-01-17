@@ -322,8 +322,7 @@ class Sesman():
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
         if DEBUG:
-            import pprint
-            Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
+            Logger().info(u'=> send_data (update) = %s' % data.keys())
 
 
         #if current language changed, send translations
@@ -347,8 +346,8 @@ class Sesman():
             _list.append(_pair)
 
         if DEBUG:
-           import pprint
-           Logger().info(u'send_data (on the wire)=%s' % (pprint.pformat(_list)))
+           Logger().info(u'send_data (on the wire) length = %s' %
+                         len(_list))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -406,12 +405,15 @@ class Sesman():
             except Exception, e:
                 if DEBUG:
                     import traceback
-                    Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
+                    Logger().info(
+                        u"Error while parsing received data %s" %
+                        traceback.format_exc(e)
+                    )
                 _status = False
 
             if DEBUG:
-                import pprint
-                Logger().info("received_data (on the wire) = %s" % (pprint.pformat(_data)))
+                Logger().info("received_data (on the wire) (%s) = %s" %
+                              (len(_data), _data.keys()))
 
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
@@ -921,9 +923,9 @@ class Sesman():
             notify, days = self.engine.password_expiration_date()
             if notify:
                 if days == 0:
-                    message = TR(u'Your password will expire soon. Please change it.')
+                    message = TR(u'Your Bastion password will expire soon. Please change it.')
                 else:
-                    message = TR(u'Your password will expire in %s days. Please change it.') % days
+                    message = TR(u'Your Bastion password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             if DEBUG:
