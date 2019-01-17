@@ -10,7 +10,7 @@ transformation_rule = string(default='')
 # Transformation to apply to find the correct account.
 # ${USER} will be replaced by the user's login.
 # ${DOMAIN} will be replaced by the user's domain (in case of LDAP mapping).
-# ${USER_DOMAIN} will be replaced by the user's login + \"@\" + user's domain (or just user's login if there's no domain).
+# ${USER_DOMAIN} will be replaced by the user's login + "@" + user's domain (or just user's login if there's no domain).
 # ${GROUP} will be replaced by the authorization's user group.
 # ${DEVICE} will be replaced by the device's name.
 # A regular expression is allowed to transform a variable, with the syntax: ${USER:/regex/replacement}, groups can be captured with parentheses and used with \1, \2, ...
