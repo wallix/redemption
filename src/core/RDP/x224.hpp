@@ -309,6 +309,7 @@ namespace X224
         PROTOCOL_RDP    = 0,
         PROTOCOL_TLS    = 1,
         PROTOCOL_HYBRID = 2,
+        PROTOCOL_RDSTLS = 4,
         PROTOCOL_HYBRID_EX = 8
     };
 
@@ -510,13 +511,15 @@ namespace X224
     // +-------------------------------+----------------------------------------------+
     // | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3).         |
     // +-------------------------------+----------------------------------------------+
-    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0 (section 5.4.5.1).                   |
+    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0, 1.1 or 1.2 (section 5.4.5.1).       |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000002 PROTOCOL_HYBRID    | Credential Security Support Provider protocol|
     // |                               | (CredSSP) (section 5.4.5.2). If this flag is |
     // |                               | set, then the PROTOCOL_SSL (0x00000001)      |
     // |                               | SHOULD also be set because Transport Layer   |
     // |                               | Security (TLS) is a subset of CredSSP.       |
+    // +-------------------------------+----------------------------------------------+
+    // | 0x00000004 PROTOCOL_RDSTLS    | RDSTLS protocol (section 5.4.5.3).           |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000008 PROTOCOL_HYBRID_EX | Credential Security Support Provider protocol|
     // |                               | (CredSSP) (section 5.4.5.2) coupled with the |
@@ -707,7 +710,7 @@ namespace X224
                         LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
                     }
                     if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS");
                     }
                     if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
                         LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
@@ -856,7 +859,7 @@ namespace X224
     // +-------------------------------+----------------------------------------------+
     // | 0x00000000 PROTOCOL_RDP       | Standard RDP Security (section 5.3)          |
     // +-------------------------------+----------------------------------------------+
-    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0 (section 5.4.5.1)                    |
+    // | 0x00000001 PROTOCOL_SSL       | TLS 1.0, 1.1 or 1.2 (section 5.4.5.1)                    |
     // +-------------------------------+----------------------------------------------+
     // | 0x00000002 PROTOCOL_HYBRID    | CredSSP (section 5.4.5.2)                    |
     // +-------------------------------+----------------------------------------------+
@@ -1041,7 +1044,7 @@ namespace X224
                             LOG(LOG_INFO, "CC Recv: PROTOCOL RDP");
                             break;
                         case X224::PROTOCOL_TLS:
-                            LOG(LOG_INFO, "CC Recv: PROTOCOL TLS 1.0");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL TLS");
                             break;
                         case X224::PROTOCOL_HYBRID:
                             LOG(LOG_INFO, "CC Recv: PROTOCOL HYBRID");
@@ -1139,7 +1142,7 @@ namespace X224
                         LOG(LOG_INFO, "CC Send: PROTOCOL RDP");
                     break;
                     case X224::PROTOCOL_TLS:
-                        LOG(LOG_INFO, "CC Send: PROTOCOL TLS 1.0");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL TLS");
                     break;
                     case X224::PROTOCOL_HYBRID:
                         LOG(LOG_INFO, "CC Send: PROTOCOL HYBRID");

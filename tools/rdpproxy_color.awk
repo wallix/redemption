@@ -1,6 +1,6 @@
 #!/usr/bin/awk  -OSf
-# colout '-po' '-ER' '^rdpproxy: (INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* -- (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '^rdpproxy: (\[RDP Session\]) ' 'd' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' 'd' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
-# gawk profile, created Tue Jun 26 18:54:24 2018
+# colout '-po' '-ER' '^rdpproxy: (INFO [^-]+-- [-=]{3,}>? )([^-=<]*)(.*)?' 'b' 'g' 'b' '--' '-ERci2' '^([a-zA-Z0-9_]+: )?((INFO)|(WARNING)|(ERR)|(NOTICE)|(DEBUG|EMERG|ALERT|CRIT)).* -- (error:)?([a-zA-Z0-9_]+:)?(.*)' 'n' 'n' 'b' 'Y' 'R' 'c' 'W' 'R' '+u' '+ru' '--' '-c' '(src/[^:]+|/[^:]+):([:0-9]+)' 'c' 'Y' '--' '-c' '(Assertion) `(.*)'\'' failed.' 'e7,o' 'R' '--' '^rdpproxy: (\[RDP )(Session|Proxy\]) ' '137' '--' '-cri5' '( type)="([^"]+)"|^([^=]+)="((\\"|[^"])+)"' 'lr' 'lm' 'lb' '243' '--' '-ER' '^(src/[^:]+|/[^:]+):([:0-9]+) ([^:]+)(.?)' 'c' 'Y' 'R' 'o' '--' '-ER' '^SUMMARY:' 'r' '--' '^    (#[0-9]+) [^ ]+ in (.+ )([^ :]+)(:[0-9]+)(:[0-9]+)?' 'r' 'm' 'c' 'Y' 'Y' '--' '^    (#[0-9]+) [^ ]+ in (.*) \(([^+]+)\+0x' 'r' 'm' 'n'
+# gawk profile, created Tue Jan 15 14:24:44 2019
 
 # BEGIN rule(s)
 
@@ -30,7 +30,7 @@ BEGIN {
 	colors5[0] = ";91"
 	colors5[1] = ";95"
 	colors5[2] = ";94"
-	colors5[3] = ";2"
+	colors5[3] = ";38;5;243"
 	nb_colors5 = 4
 	colors6[0] = ";36"
 	colors6[1] = ";33;1"
@@ -143,8 +143,8 @@ BEGIN {
 			s = s substr($0, p, RSTART + RLENGTH - p)
 		}
 		$0 = substr($0, RLENGTH + RSTART)
-	} else if (match($0, /^rdpproxy: (\[RDP Session\]) /, a)) {
-		c = ";2"
+	} else if (match($0, /^rdpproxy: (\[RDP )(Session|Proxy\]) /, a)) {
+		c = ";38;5;137"
 		n = length(a) / 3
 		if (n == 1) {
 			i = 0

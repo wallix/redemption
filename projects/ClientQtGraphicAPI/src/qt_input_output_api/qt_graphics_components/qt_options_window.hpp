@@ -29,7 +29,6 @@
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 #include "client_redemption/client_config/client_redemption_config.hpp"
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
 
@@ -82,11 +81,7 @@ public:
       , q_key_code(0)
       , label("Press a Key", this)
       , key_not_assigned(true)
-      {
-//           qApp->installEventFilter(this);
-
-          //this->installEventFilter(this);
-      }
+      {}
 
     void set_key(int q_key_code, const std::string & q_key_name) {
         this->q_key_code = q_key_code;
@@ -94,7 +89,6 @@ public:
         this->label.setText(q_key_name.c_str());
     }
 };
-
 
 
 
@@ -113,7 +107,6 @@ public:
     };
     ClientRedemptionConfig * config;
     ClientCallback * controllers;
-    ClientOutputGraphicAPI * graphic;
 
     const int            _width;
     const int            _height;
@@ -159,12 +152,10 @@ public:
 //     bool                 key_editting;
 
 
-    QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
+    QtOptions(ClientRedemptionConfig * config, ClientCallback * controllers, QWidget * parent)
         : QWidget(parent)
         , config(config)
-//         , _front(front)
         , controllers(controllers)
-        , graphic(graphic)
         , _width(410)
         , _height(330)
 
@@ -206,7 +197,7 @@ public:
 //         , key_editting(true)/**/
     {
         this->setFixedSize(this->_width, this->_height);
-        this->config->setClientInfo();
+        ClientConfig::setClientInfo(*this->config);
         this->_layout = new QGridLayout(this);
 
 
@@ -377,13 +368,10 @@ public:
                 extended = (static_cast<QComboBox*>(this->_tableKeySetting->cellWidget(i, 3))->currentIndex());
                 name = static_cast<QtKeyLabel*>(this->_tableKeySetting->cellWidget(i, 0))->label.text().toStdString();
             }
-            this->config->add_key_custom_definition(qtKeyID, scanCode, ASCII8, extended, name);
+            this->config->keyCustomDefinitions.emplace_back(qtKeyID, scanCode, ASCII8, extended, name);
         }
 
-        //this->config->update_keylayout();
-
-        this->config->writeCustomKeyConfig();
-        //this->config->writeClientInfo();
+        ClientConfig::writeCustomKeyConfig(*(this->config));
     }
 
     void keyPressEvent(QKeyEvent *e) override {
@@ -451,20 +439,20 @@ public Q_SLOTS:
 
     void deleteCurrentProtile() {
         if (this->profilComboBox.currentIndex() != 0) {
-            this->config->deleteCurrentProtile();
+            ClientConfig::deleteCurrentProtile(*(this->config));
             this->profilComboBox.removeItem(this->config->current_user_profil);
             this->changeProfil(0);
         }
     }
 
     void restoreConfig() {
-        this->config->setDefaultConfig();
+        ClientConfig::setDefaultConfig(*(this->config));
         this->setConfigValues();
     }
 
     void changeProfil(int index) {
         this->config->current_user_profil = this->profilComboBox.itemData(index).toInt();
-        this->config->setClientInfo();
+        ClientConfig::setClientInfo(*this->config);
         this->setConfigValues();
     }
 
@@ -551,8 +539,8 @@ public:
 
 
 
-    QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
-        : QtOptions(config, controllers, graphic, parent)
+    QtRDPOptions(ClientRedemptionConfig * config, ClientCallback * controllers,  QWidget * parent)
+        : QtOptions(config, controllers, parent)
         , _tlsBox(this)
         , _nlaBox(this)
         , _labelTls("TLS :", this)
@@ -776,7 +764,14 @@ public:
         if (this->remoteappCheckBox.isChecked()) {
             this->config->modRDPParamsData.enable_shared_remoteapp = true;
             this->config->mod_state = ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
-            this->config->set_remoteapp_cmd_line(this->remoteapp_cmd.text().toStdString());
+
+            const std::string cmd = this->remoteapp_cmd.text().toStdString();
+            this->config->rDPRemoteAppConfig.full_cmd_line = cmd;
+            int pos = cmd.find(' ');
+            this->config->rDPRemoteAppConfig.source_of_ExeOrFile = cmd.substr(0, pos);
+            this->config->rDPRemoteAppConfig.source_of_Arguments = cmd.substr(pos + 1);
+
+
             this->config->rDPRemoteAppConfig.source_of_WorkingDir = this->remoteapp_workin_dir.text().toStdString();
         } else {
             this->config->modRDPParamsData.enable_shared_remoteapp = false;
@@ -856,8 +851,8 @@ public:
     QLabel               keyboard_apple_compatibility_label;
 
 
-    QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic, QWidget * parent)
-      : QtOptions(config, controllers, graphic, parent)
+    QtVNCOptions(ClientRedemptionConfig* config, ClientCallback * controllers, QWidget * parent)
+      : QtOptions(config, controllers, parent)
         , keyboard_apple_compatibility_CB(this)
         , keyboard_apple_compatibility_label("Apple server keyboard :", this)
     {

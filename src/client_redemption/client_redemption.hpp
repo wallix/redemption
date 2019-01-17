@@ -52,8 +52,6 @@
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_input_output_api/client_socket_api.hpp"
-
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "client_redemption/mod_wrapper/client_callback.hpp"
@@ -73,7 +71,6 @@ public:
 
 private:
     CryptoContext     cctx;
-
     std::unique_ptr<Transport> socket;
 
 public:
@@ -246,8 +243,6 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
-        this->config.set_icon_movie_data();
-
         this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
 
@@ -277,6 +272,9 @@ public:
             std::cout << std::endl;
         }
     }
+
+
+
 
     virtual bool is_connected() override {
         return this->config.connected;
@@ -344,7 +342,7 @@ public:
             LOG(LOG_INFO, "Replay closed.");
 
         }
-        this->config.set_icon_movie_data();
+//         this->config.set_icon_movie_data();
     }
 
     virtual void set_error_msg(const std::string & error) {
@@ -539,9 +537,9 @@ public:
 
     virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
 
-        this->config.writeWindowsData();
-        this->config.writeCustomKeyConfig();
-        this->config.writeClientInfo();
+        ClientConfig::writeWindowsData(this->config.windowsData);
+        ClientConfig::writeCustomKeyConfig(this->config);
+        ClientConfig::writeClientInfo(this->config);
 
         this->config.port          = port;
         this->config.target_IP     = ip;
@@ -639,6 +637,8 @@ public:
             this->update_keylayout();
 
             this->config.connected = this->init_mod();
+
+            ClientConfig::writeAccoundData(ip, name, pwd, port, this->config);
         }
     }
 
@@ -774,7 +774,6 @@ public:
 
 
 
-
     virtual void print_wrm_graphic_stat(const std::string &) {
 
         for (uint8_t i = 0; i < WRMGraphicStat::COUNT_FIELD; i++) {
@@ -836,9 +835,9 @@ public:
     }
 
 
-    void instant_play_client(std::chrono::microseconds time) override {
-        this->replay_mod->instant_play_client(time);
-    }
+//     void instant_play_client(std::chrono::microseconds time) override {
+//         this->replay_mod->instant_play_client(time);
+//     }
 
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -89,9 +89,9 @@ FlatLoginMod::~FlatLoginMod()
 void FlatLoginMod::notify(Widget* sender, notify_event_t event)
 {
     switch (event) {
-    case NOTIFY_SUBMIT:
-        LOG(LOG_INFO, "asking for selector");
-        this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
+    case NOTIFY_SUBMIT: {
+        char const* username = this->login.login_edit.get_text();
+        this->vars.set_acl<cfg::globals::auth_user>(username);
         this->vars.ask<cfg::context::selector>();
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();
@@ -99,6 +99,7 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
         this->vars.set_acl<cfg::context::password>(this->login.password_edit.get_text());
         this->session_reactor.set_next_event(BACK_EVENT_NEXT);
         break;
+    }
     case NOTIFY_CANCEL:
         this->session_reactor.set_next_event(BACK_EVENT_STOP);
         break;

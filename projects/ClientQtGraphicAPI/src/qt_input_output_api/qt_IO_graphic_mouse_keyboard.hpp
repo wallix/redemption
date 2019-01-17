@@ -24,14 +24,10 @@
 
 #include "utils/log.hpp"
 
-
-
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
 #include "qt_graphics_components/qt_screen_window.hpp"
 #include "qt_graphics_components/qt_form_window.hpp"
-
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 #include <QtGui/QBitmap>
 #include <QtGui/QColor>
@@ -56,7 +52,7 @@
 
 
 
-class QtIOGraphicMouseKeyboard : public ClientOutputGraphicAPI
+class QtIOGraphicMouseKeyboard : public ClientRemoteAppGraphicAPI
 {
 
 public:
@@ -71,7 +67,7 @@ public:
     //     QPixmap            * trans_cache;;
     std::vector<QPixmap> balises;
 
-
+    bool is_pre_loading;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////
     //------------------------
@@ -79,13 +75,14 @@ public:
     //------------------------
 
     QtIOGraphicMouseKeyboard(ClientCallback * controller, ClientRedemptionConfig * config)
-      : ClientOutputGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
+      : ClientRemoteAppGraphicAPI(controller, config, QApplication::desktop()->width(), QApplication::desktop()->height())
       , mod_bpp(24)
       , form(nullptr)
       , screen(nullptr)
       , bar(nullptr)
+      , is_pre_loading(false)
     {
-        this->form = new QtForm(this->config, this->controller, this);
+        this->form = new QtForm(this->config, this->controller);
     }
 
     virtual void draw(const RDP::RAIL::NewOrExistingWindow & ) override {}
@@ -104,12 +101,7 @@ public:
     // MAIN WINDOW MANAGEMENT FUNCTIONS
     //----------------------------------
 
-//     void set_drawn_client(ClientCallback * controller, ClientRedemptionConfig * config) override {
-//         ClientOutputGraphicAPI::set_drawn_client(controller, config);
-//
-//     }
-
-    void show_screen() override {
+    void show_screen() {
         if (this->form) {
             this->form->hide();
             if (this->screen) {
@@ -118,19 +110,19 @@ public:
         }
     }
 
-    void set_screen_size(int x, int y) override {
+    void set_screen_size(int x, int y) {
         if (this->screen) {
             this->screen->setFixedSize(x, y);
         }
     }
 
-    void update_screen() override {
+    void update_screen() {
         if (this->screen) {
             this->screen->slotRepainMatch();
         }
     }
 
-    void reset_cache(const int w,  const int h) override {
+    void reset_cache(const int w,  const int h) {
 
         LOG(LOG_INFO, "reset_cache w=%d h=%d", w, h);
         if (w == 0 || h == 0) {
@@ -149,37 +141,27 @@ public:
         this->painter.fillRect(0, 0, w, h, Qt::black);
     }
 
-    void create_screen() override {
+    void create_screen() {
         QPixmap * map = &(this->cache);
-        this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, map, this->config->is_spanning, this->config->target_IP);
+        this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, map, this->config->is_spanning, this->config->target_IP);
     }
 
-    void create_replay_screen() override {
+    void create_replay_screen() {
         QPixmap * map = &(this->cache);
 
-        this->screen = new ReplayQtScreen(this->controller, this, map, this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
+        this->screen = new ReplayQtScreen(this->controller, map, ClientConfig::get_movie_time_length(this->config->_movie_full_path.c_str()), 0, &(this->config->windowsData), this->config->_movie_name);
     }
 
     QWidget * get_static_qwidget() {
         return this->form;
     }
 
-    void open_options() override {
-        if (this->form) {
-            this->form->options();
-        }
-    }
-
-    void dropScreen() override {
+    void dropScreen() {
         if (this->screen != nullptr) {
             this->screen->disconnection();
             this->screen = nullptr;
         }
     }
-
-//     void update_keylayout() override {
-//         this->qtRDPKeymap.setKeyboardLayout(this->config->info.keylayout);
-//     }
 
     void readError(std::string const & movie_path) {
         const std::string errorMsg("Cannot read movie \""+movie_path+ "\".");
@@ -191,13 +173,13 @@ public:
         }
     }
 
-    void set_ErrorMsg(std::string const & error_msg) override {
+    void set_ErrorMsg(std::string const & error_msg) {
         if (this->form) {
             this->form->set_ErrorMsg(error_msg);
         }
     }
 
-    void init_form() override {
+    void init_form() {
         if (this->form) {
             this->form->init_form();
             if (this->config->mod_state != ClientRedemptionConfig::MOD_RDP_REPLAY) {
@@ -221,7 +203,7 @@ public:
     void create_remote_app_screen(uint32_t id, int w, int h, int x, int y) override {
         LOG(LOG_INFO, "create_remote_app_screen 1");
         this->remote_app_screen_map.insert(std::pair<uint32_t, RemoteAppQtScreen *>(id, nullptr));
-        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&(this->config->windowsData), this->controller, this, w, h, x, y, &(this->cache));
+        this->remote_app_screen_map[id] = new RemoteAppQtScreen(&(this->config->windowsData), this->controller, w, h, x, y, &(this->cache));
         LOG(LOG_INFO, "create_remote_app_screen 2");
     }
 
@@ -274,15 +256,15 @@ public:
         this->remote_app_screen_map[id]->_height = h;
     }
 
-    void dropScreen(uint32_t id) override {
-        if (this->remote_app_screen_map[id] != nullptr) {
-            this->remote_app_screen_map[id]->disconnection();
-            this->remote_app_screen_map[id] = nullptr;
-        }
-
-        std::map<uint32_t, RemoteAppQtScreen *>::iterator it = remote_app_screen_map.find(id);
-        remote_app_screen_map.erase (it);
-    }
+//     void dropScreen(uint32_t id) override {
+//         if (this->remote_app_screen_map[id] != nullptr) {
+//             this->remote_app_screen_map[id]->disconnection();
+//             this->remote_app_screen_map[id] = nullptr;
+//         }
+//
+//         std::map<uint32_t, RemoteAppQtScreen *>::iterator it = this->remote_app_screen_map.find(id);
+//         this->remote_app_screen_map.erase (it);
+//     }
 
     void clear_remote_app_screen() override {
         for (std::map<uint32_t, RemoteAppQtScreen *>::iterator it=this->remote_app_screen_map.begin(); it!=this->remote_app_screen_map.end(); ++it) {
@@ -326,7 +308,7 @@ public:
         }
     }
 
-    FrontAPI::ResizeResult server_resize(const int width, const int height, const BitsPerPixel bpp) override {
+    FrontAPI::ResizeResult server_resize(const int width, const int height, const BitsPerPixel bpp) {
 
         if (width == 0 || height == 0) {
             return FrontAPI::ResizeResult::fail;
@@ -340,7 +322,7 @@ public:
                 }
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, &(this->cache), this->config->is_spanning, this->config->target_IP);
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -352,7 +334,7 @@ public:
                 this->config->modVNCParamsData.height = height;
                 this->dropScreen();
                 this->reset_cache(width, height);
-                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, this, &(this->cache), this->config->is_spanning, this->config->target_IP);
+                this->screen = new RDPQtScreen(&(this->config->windowsData), this->controller, &(this->cache), this->config->is_spanning, this->config->target_IP);
                 this->screen->show();
                     break;
 
@@ -375,7 +357,7 @@ public:
 
                     if (!this->config->is_pre_loading) {
 
-                        this->screen = new ReplayQtScreen(this->controller, this, &(this->cache), this->config->get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
+                        this->screen = new ReplayQtScreen(this->controller, &(this->cache), ClientConfig::get_movie_time_length(this->config->_movie_full_path.c_str()), current_time_movie, &(this->config->windowsData), this->config->_movie_name);
 
                         this->screen->show();
                     }
@@ -418,7 +400,7 @@ public:
 
         if (is_v2_wrm) {
             this->balises.clear();
-            long int movie_length = this->config->get_movie_time_length(movie_path.c_str());
+            long int movie_length = ClientConfig::get_movie_time_length(movie_path.c_str());
             this->form->hide();
 
             if (movie_length > ClientRedemptionConfig::BALISED_FRAME) {
@@ -431,10 +413,9 @@ public:
     }
 
 
-    bool pre_load_movie(const std::string & movie_path, bool is_v2_wrm) override {
+    bool pre_load_movie(const std::string & movie_path, bool is_v2_wrm) {
 
         long int endin_frame = 0;
-        bool res = false;
 
         long int movie_length = this->init_replay(movie_path, is_v2_wrm);
 
@@ -454,7 +435,7 @@ public:
         return (movie_length != 0);
     }
 
-    void stop_replay() override {
+    void stop_replay() {
         if (this->screen) {
             this->screen->stopRelease();
         }
@@ -742,7 +723,7 @@ public:
         }
     }
 
-    void draw_frame(int frame_index) override {
+    void draw_frame(int frame_index) {
         if (this->config->is_replaying) {
             this->painter.drawPixmap(QPoint(0, 0), this->balises[frame_index], QRect(0, 0, this->cache.width(), this->cache.height()));
         }
@@ -1383,7 +1364,7 @@ public:
         LOG(LOG_INFO, "DEFAULT: RDPNineGrid");
     }
 
-    using ClientOutputGraphicAPI::draw;
+//     using ClientOutputGraphicAPI::draw;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1391,48 +1372,13 @@ public:
     //      CONTROLLERS
     //------------------------
 
-//     bool connexionReleased() {
-//         bool conn_res = false;
-//         if (this->form) {
-//             this->form->setCursor(Qt::WaitCursor);
-//             this->config->user_name     = this->form->get_userNameField();
-//             this->config->target_IP     = this->form->get_IPField();
-//             this->config->user_password = this->form->get_PWDField();
-//             this->config->port          = this->form->get_portField();
-//
-//             this->config->is_full_capturing = true;
-//             this->config->full_capture_file_name = "/tmp/capture.dump";
-//
-//             if (!this->config->target_IP.empty()){
-//                 conn_res = this->controller->connect();
-//             }
-//             this->form->setCursor(Qt::ArrowCursor);
-//         }
-//         return conn_res;
-//     }
-
-    void close() override {
+    void close() {
 
         if (this->form != nullptr) {
             this->form->close();
         }
 
-        this->controller->disconnect(false);
+//         this->controller->disconnect(false);
     }
-
-//     KeyCustomDefinition get_key_info(int key, std::string const& text) override {
-//         this->qtRDPKeymap.keyEvent(0, key, text);
-//         KeyCustomDefinition key_info(
-//             this->qtRDPKeymap.qKeyCode,
-//             this->qtRDPKeymap.scanCode,
-//             this->qtRDPKeymap.ascii,
-//             this->qtRDPKeymap.flag &0x0100 ? 0x0100: 0,
-//             this->qtRDPKeymap.qKeyName
-//           );
-//
-//        // key_info.name = this->qtRDPKeymap.name;
-//
-//         return key_info;
-//     }
 
 };

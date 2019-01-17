@@ -24,7 +24,7 @@ constant LIB_DEPENDENCIES :
     # $(GCOV_NO_BUILD)
 ;
 
-constant EXE_DEPENDENCIES :
+EXE_DEPENDENCIES +=
     <library>app_path_exe.o
     <library>log.o
     $(GCOV_NO_BUILD)

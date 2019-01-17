@@ -92,6 +92,8 @@ public:
 
         std::unique_ptr<Acl> acl;
 
+        std::string disconnection_message_error;
+
         try {
             TimeSystem timeobj;
             ModuleManager mm(session_reactor, front, this->ini, rnd, timeobj);
@@ -449,12 +451,15 @@ public:
             front.disconnect();
         }
         catch (Error const& e) {
-            LOG(LOG_INFO, "Session::Session Init exception = %s!\n", e.errmsg());
+            disconnection_message_error = e.errmsg();
+            LOG(LOG_INFO, "Session::Session Init exception = %s!\n", disconnection_message_error);
         }
         catch (const std::exception & e) {
-            LOG(LOG_ERR, "Session::Session exception (3) = %s!\n", e.what());
+            disconnection_message_error = e.what();
+            LOG(LOG_ERR, "Session::Session exception (3) = %s!\n", disconnection_message_error);
         }
         catch(...) {
+            disconnection_message_error = "Exception in Session::Session";
             LOG(LOG_INFO, "Session::Session other exception in Init\n");
         }
         // silent message for localhost for watchdog
@@ -462,6 +467,7 @@ public:
         && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
             LOG(LOG_INFO, "Session::Client Session Disconnected\n");
         }
+        detail::log_proxy_disconnection(disconnection_message_error.c_str());
         front.must_be_stop_capture();
     }
 

@@ -76,7 +76,7 @@ constant CLIENT_REDEMPTION_MAIN_PATH : [ setvar CLIENT_REDEMPTION_MAIN_PATH : $(
 if $(qtversion) = 4
 {
     REDEMPTION_CXXFLAGS +=
-        <toolset>gcc:<cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
+        <cxxflags>-Wzero-as-null-pointer-constant&&-Wno-zero-as-null-pointer-constant
     ;
 }
 

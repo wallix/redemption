@@ -100,6 +100,7 @@
 
 ClientRDPDRChannel::ClientRDPDRChannel(RDPVerbose verbose, ClientChannelMod * callback,  RDPDiskConfig & config)
     : verbose(verbose)
+    , impl_io_disk(nullptr)
     , callback(callback)
     , ioCode1(config.ioCode1)
     , extendedPDU(config.extendedPDU)
@@ -133,7 +134,7 @@ void ClientRDPDRChannel::set_share_dir(const std::string & share_dir) {
 
 void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
 {
-    if (this->impl_io_disk == nullptr) {
+    if (!this->impl_io_disk) {
         return ;
     }
 
@@ -592,34 +593,31 @@ deviceIOResponse.emit(out_stream);
 void ClientRDPDRChannel::process_iorequest_create(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
     rdpdr::DeviceCreateRequest request;
     request.receive(chunk);
+    request.log();
 
     if (id == 0) {
-
         std::string new_path(this->share_dir + request.Path().data());
 
         if (this->impl_io_disk->ifile_good(new_path.c_str())) {
             id = this->get_file_id();
             this->paths.emplace(id, new_path);
         } else {
-//                                         LOG(LOG_INFO, "SERVER >> RDPDR: Device I/O Create Request 3");
             if (request.CreateDisposition() & smb2::FILE_CREATE) {
-
                 id = this->get_file_id();
                 this->paths.emplace(id, new_path);
-
                 if (request.CreateOptions() & smb2::FILE_DIRECTORY_FILE) {
-                    LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
+//                     LOG(LOG_WARNING, "new directory: \"%s\"", new_path);
                     this->impl_io_disk->marke_dir(new_path.c_str());
                 } else {
-                    //LOG(LOG_WARNING, "new file: \"%s\"", new_path);
+//                     LOG(LOG_WARNING, "new file: \"%s\"", new_path);
 
                     if (! ( this->impl_io_disk->ofile_good(new_path.c_str())) ) {
-                        LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
+//                         LOG(LOG_WARNING, "  Can't open create such file: \'%s\'.", new_path.c_str());
                         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                     }
                 }
             } else {
-                //LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
+                LOG(LOG_WARNING, "  Can't open such file or directory: \'%s\'.", new_path.c_str());
                 deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
             }
         }
@@ -777,10 +775,10 @@ void ClientRDPDRChannel::process_iorequest_close(rdpdr::DeviceIOResponse &  devi
     InStream chunk_to_send(out_stream.get_bytes());
 
     this->callback->send_to_mod_channel( channel_names::rdpdr
-                                        , chunk_to_send
-                                        , out_stream.get_offset()
-                                        , this->channel_flags
-                                        );
+                                       , chunk_to_send
+                                       , out_stream.get_offset()
+                                       , this->channel_flags
+                                       );
     if (bool(this->verbose & RDPVerbose::rdpdr)) {
         LOG(LOG_INFO, "CLIENT >> RDPDR: Device I/O Close Response");
     }

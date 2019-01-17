@@ -22,17 +22,13 @@
 */
 
 
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
-// #include "client_redemption/client_input_output_api/client_mouse_keyboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_sound_api.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
-#include "client_redemption/client_input_output_api/client_iodisk_api.hpp"
-
 
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_input_output_api/client_clipboard_api.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
+#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
+#include "client_redemption/client_channels/client_rdpdr_channel.hpp"
+#include "client_redemption/client_channels/client_remoteapp_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #include "core/RDP/clipboard.hpp"
@@ -109,9 +105,22 @@ public:
     size_t size = 42;
     std::string fileName;
 
+    enum : int {
+        FILEGROUPDESCRIPTORW_BUFFER_TYPE = 0,
+        IMAGE_BUFFER_TYPE                = 1,
+        TEXT_BUFFER_TYPE                 = 2
+    };
+
+    uint16_t    _bufferTypeID = 0;
+    int         _bufferTypeNameIndex = 0;
+    bool        _local_clipboard_stream = true;
+    size_t      _cliboard_data_length = 0;
+    int         _cItems = 0;
+
+    std::string tmp_path;
 
     FakeClientIOClipboard()
-      : ClientIOClipboardAPI("") {}
+      : ClientIOClipboardAPI() {}
 
     void emptyBuffer() override {}
 
@@ -135,6 +144,7 @@ public:
         (void) image_height;
         (void) bpp;
     }
+
     void setClipboard_files(std::string const& /*name*/) override {}
 
     void write_clipboard_temp_file(std::string const& fileName, const uint8_t * data, size_t data_len) override {
@@ -153,7 +163,20 @@ public:
     std::string get_file_item_name(int /*index*/) override {
         return this->fileName;
     }
+
+    void set_local_clipboard_stream(bool ) override {}
+    uint16_t get_buffer_type_id() override {return this->_bufferTypeID;}
+    int get_citems_number() override {return this->_cItems;}
+    size_t get_cliboard_data_length() override {return this->_cliboard_data_length;}
+    ConstImageDataView get_image() override {
+        return ConstImageDataView(
+            byte_ptr_cast(""),
+            0, 0, 0, ConstImageDataView::BitsPerPixel{},
+            ConstImageDataView::Storage::TopToBottom
+        );
+    }
 };
+
 
 class FakeClientOutPutSound : public ClientOutputSoundAPI {
 
@@ -164,44 +187,44 @@ public:
 };
 
 
-class FakeClientOutputGraphic : public ClientOutputGraphicAPI {
+class FakeClientOutputGraphic : public ClientRemoteAppGraphicAPI {
 
 public:
-    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientOutputGraphicAPI(controller, config, 0, 0) {}
+    FakeClientOutputGraphic(ClientCallback * controller, ClientRedemptionConfig * config) : ClientRemoteAppGraphicAPI(controller, config, 0, 0) {}
 
-    void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
+//     void set_ErrorMsg(std::string const & movie_path) override { (void)movie_path; }
+//
+//     void dropScreen() override {}
+//     void dropScreen(uint32_t /*unused*/) override {}
+//
+//     void show_screen() override {}
+//     void show_screen(uint32_t /*unused*/) override {}
+//
+//     void reset_cache(int w,  int h) override { (void)w; (void)h; }
+//
+//     void create_screen() override {}
+//     void create_replay_screen() override {}
+//
+//     void close() override {}
 
-    void dropScreen() override {}
-    void dropScreen(uint32_t /*unused*/) override {}
+//     void set_screen_size(int x, int y) override { (void)x; (void)y; }
+//     void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
 
-    void show_screen() override {}
-    void show_screen(uint32_t /*unused*/) override {}
-
-    void reset_cache(int w,  int h) override { (void)w; (void)h; }
-
-    void create_screen() override {}
-    void create_replay_screen() override {}
-
-    void close() override {}
-
-    void set_screen_size(int x, int y) override { (void)x; (void)y; }
-    void set_screen_size(uint32_t /*unused*/, int x, int y) override { (void)x; (void)y; }
-
-    void update_screen() override {}
-
-    void init_form() override {}
+//     void update_screen() override {}
+//
+//     void init_form() override {}
 
 
     // TODO bpp -> gdi::Depth
-    FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
-    {
-        (void)width;
-        (void)height;
-        (void)bpp;
-        return FrontAPI::ResizeResult::done;
-    }
+//     FrontAPI::ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override
+//     {
+//         (void)width;
+//         (void)height;
+//         (void)bpp;
+//         return FrontAPI::ResizeResult::done;
+//     }
 
-    using ClientOutputGraphicAPI::draw;
+//     using ClientOutputGraphicAPI::draw;
 
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
@@ -295,10 +318,8 @@ public:
     FakeRDPChannelsMod fake_mod;
 
     FakeClient() = default;
-    // FakeClient(SessionReactor& session_reactor, char const* argv[], int argc, RDPVerbose verbose)
-    // {
-    //     this->mod = &(this->fake_mod);
-    // }
+
+    void close() override {}
 
     size_t get_total_stream_produced() {
         return this->fake_mod.index_in;

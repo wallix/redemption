@@ -81,8 +81,10 @@ public:
         this->cmd_launch_conn();
     }
 
-   ~ClientRedemptionHeadless() = default;
+    ~ClientRedemptionHeadless() = default;
 
+
+    void close() override {}
 
     virtual void connect(const std::string& ip, const std::string& name, const std::string& pwd, const int port) override {
         ClientRedemption::connect(ip, name, pwd, port);
@@ -92,8 +94,6 @@ public:
             if (this->headless_socket.start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                 this->start_wab_session_time = tvtime();
-
-                this->config.writeAccoundData(ip, name, pwd, port);
             }
         }
     }
@@ -114,6 +114,7 @@ int run_mod(ClientRedemptionAPI & front, ClientRedemptionConfig & config, Client
 int main(int argc, char const** argv)
 {
     set_exception_handler_pretty_message();
+    openlog("rdpproxy", LOG_CONS | LOG_PERROR, LOG_USER);
 
     SessionReactor session_reactor;
 
@@ -136,7 +137,8 @@ int main(int argc, char const** argv)
         REDEMPTION_DIAGNOSTIC_POP
     }
 
-    ClientRedemptionConfig config(const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 
     ClientRedemptionHeadless client( session_reactor, config);
 

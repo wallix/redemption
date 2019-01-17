@@ -154,7 +154,9 @@ void SelectorMod::notify(Widget* widget, notify_event_t event)
 
         this->waiting_for_next_module = true;
         this->sesman_event.reset();
-    } break;
+
+        break;
+    }
     case NOTIFY_SUBMIT: {
         if (this->waiting_for_next_module) {
             LOG(LOG_INFO, "FlatSelector2Mod::notify: NOTIFY_SUBMIT - Waiting for next module.");

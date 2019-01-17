@@ -46,7 +46,7 @@ namespace
 # ifndef NDEBUG
     bool previous_is_line_marker = false;
 
-    bool is_log_filename(int priority) noexcept
+    bool log_is_filename(int priority) noexcept
     {
         // see LOG_FILENAME
         if (priority != LOG_INFO && priority != LOG_DEBUG) {
@@ -59,13 +59,13 @@ namespace
         return false;
     }
 # else
-    constexpr bool is_log_filename(int /*priority*/) noexcept
+    constexpr bool log_is_filename(int /*priority*/) noexcept
     {
         return false;
     }
 # endif
 
-    bool is_enabled_log_print()
+    bool is_loggable()
     {
         static bool logprint = []{
             auto s = std::getenv("REDEMPTION_LOG_PRINT");
@@ -80,7 +80,7 @@ struct LOG__REDEMPTION__OSTREAM__BUFFERED::D
 {
     D()
     : oldbuf(std::cout.rdbuf(&sbuf))
-    , oldbuf_cerr(is_enabled_log_print() ? std::cerr.rdbuf(nullptr) : nullptr)
+    , oldbuf_cerr(is_loggable() ? std::cerr.rdbuf(nullptr) : nullptr)
     {
     }
 
@@ -145,7 +145,7 @@ void LOG__REDEMPTION__BUFFERED::clear()
 void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
-        if (is_log_filename(priority)) {
+        if (log_is_filename(priority)) {
             return ;
         }
         va_list ap;
@@ -166,41 +166,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         auto e = log_buf.find('-', p);
         log_buf.replace(p, e-p+2, "-");
     }
-    else if (is_enabled_log_print())
-    {
-        (void)priority;
-        va_list ap;
-        va_start(ap, format);
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-        std::vprintf(format, ap); /*NOLINT*/
-        REDEMPTION_DIAGNOSTIC_POP
-        std::puts("");
-        std::fflush(stdout);
-        va_end(ap);
-    }
-}
-
-void LOG__SIEM__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
-{
-    if (enable_buf_log) {
-        if (is_log_filename(priority)) {
-            return ;
-        }
-        va_list ap;
-        REDEMPTION_DIAGNOSTIC_PUSH
-        REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
-        va_start(ap, format);
-        auto sz = std::vsnprintf(nullptr, 0, format, ap) + 1; /*NOLINT*/
-        va_end(ap);
-        log_buf.resize(log_buf.size() + sz);
-        va_start(ap, format);
-        std::vsnprintf(&log_buf[log_buf.size() - sz], sz, format, ap);
-        va_end(ap);
-        REDEMPTION_DIAGNOSTIC_POP
-        log_buf.back() = '\n';
-    }
-    else if (is_enabled_log_print())
+    else if (is_loggable())
     {
         (void)priority;
         va_list ap;

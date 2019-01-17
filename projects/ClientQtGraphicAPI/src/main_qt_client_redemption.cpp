@@ -20,43 +20,7 @@
 
 
 #include "utils/log.hpp"
-#include "utils/fixed_random.hpp"
-#include "utils/genrandom.hpp"
-#include "utils/genfstat.hpp"
-#include "utils/netutils.hpp"
-#include "utils/sugar/algostring.hpp"
 
-#include "acl/auth_api.hpp"
-
-#include "core/RDP/RDPDrawable.hpp"
-#include "core/channel_list.hpp"
-#include "core/channel_names.hpp"
-
-#include "mod/internal/replay_mod.hpp"
-#include "mod/rdp/new_mod_rdp.hpp"
-#include "mod/vnc/new_mod_vnc.hpp"
-
-#include "transport/crypto_transport.hpp"
-#include "transport/recorder_transport.hpp"
-#include "transport/replay_transport.hpp"
-#include "transport/socket_transport.hpp"
-
-#include "capture/wrm_capture.hpp"
-
-#include "client_redemption/client_config/client_redemption_config.hpp"
-
-#include "client_redemption/client_input_output_api/client_keymap_api.hpp"
-#include "client_redemption/client_input_output_api/client_socket_api.hpp"
-
-#include "client_redemption/client_redemption_api.hpp"
-
-#include "client_redemption/mod_wrapper/client_callback.hpp"
-#include "client_redemption/mod_wrapper/client_channel_mod.hpp"
-
-#include "configs/config.hpp"
-#include "front/execute_events.hpp"
-
-#include "core/session_reactor.hpp"
 #include "utils/set_exception_handler_pretty_message.hpp"
 
 #include "client_redemption/client_redemption.hpp"
@@ -75,9 +39,9 @@ class ClientRedemptionQt : public ClientRedemption
 
 private:
     QtIOGraphicMouseKeyboard qt_graphic;
-    QtOutputSound qt_sound;
-    QtInputSocket qt_socket_listener;
-    QtInputOutputClipboard qt_clipboard;
+    QtOutputSound * qt_sound;
+    QtInputSocket * qt_socket_listener;
+    QtInputOutputClipboard * qt_clipboard;
     QtClientRDPKeyLayout qt_rdp_keylayout;
     IODisk ioDisk;
 
@@ -86,12 +50,13 @@ public:
                        ClientRedemptionConfig & config)
             : ClientRedemption(session_reactor, config)
             , qt_graphic(&(this->_callback), &(this->config))
-            , qt_sound(this->config.SOUND_TEMP_DIR, qt_graphic.get_static_qwidget())
-            , qt_socket_listener(session_reactor, this, qt_graphic.get_static_qwidget())
-            , qt_clipboard(&(this->clientCLIPRDRChannel), this->config.CB_TEMP_DIR, qt_graphic.get_static_qwidget())
     {
-        this->clientRDPSNDChannel.set_api(&(this->qt_sound));
-        this->clientCLIPRDRChannel.set_api(&(this->qt_clipboard));
+        this->qt_sound = new QtOutputSound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
+        this->qt_socket_listener = new QtInputSocket(session_reactor, this, this->qt_graphic.get_static_qwidget());
+        this->qt_clipboard = new QtInputOutputClipboard(&(this->clientCLIPRDRChannel), this->config.CB_TEMP_DIR, this->qt_graphic.get_static_qwidget());
+
+        this->clientRDPSNDChannel.set_api(this->qt_sound);
+        this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
         this->clientRDPDRChannel.set_api(&(this->ioDisk));
         this->clientRemoteAppChannel.set_api(&(this->qt_graphic));
 
@@ -100,7 +65,7 @@ public:
         this->qt_graphic.init_form();
 
         if (this->config.help_mode) {
-            this->qt_graphic.form->close();
+            this->qt_graphic.close();
         } else {
             this->cmd_launch_conn();
         }
@@ -118,12 +83,12 @@ public:
 
             switch (this->config.mod_state) {
                 case ClientRedemptionConfig::MOD_RDP:
-                    this->config.info.screen_info.width = this->config.rdp_width;
+                    this->config.info.screen_info.width  = this->config.rdp_width;
                     this->config.info.screen_info.height = this->config.rdp_height;
                     break;
 
                 case ClientRedemptionConfig::MOD_VNC:
-                    this->config.info.screen_info.width = this->config.modVNCParamsData.width;
+                    this->config.info.screen_info.width  = this->config.modVNCParamsData.width;
                     this->config.info.screen_info.height = this->config.modVNCParamsData.height;
                     break;
 
@@ -143,24 +108,27 @@ public:
 
         if (this->config.connected) {
 
-            if (this->qt_socket_listener.start_to_listen(this->client_sck, this->_callback.get_mod())) {
+            if (this->qt_socket_listener->start_to_listen(this->client_sck, this->_callback.get_mod())) {
 
                 this->start_wab_session_time = tvtime();
 
                 if (this->config.mod_state != ClientRedemptionConfig::MOD_RDP_REMOTE_APP) {
                     this->qt_graphic.show_screen();
                 }
-
-                this->config.writeAccoundData(ip, name, pwd, port);
             }
         }
     }
 
     void disconnect(std::string const & error, bool pipe_broken) override {
         this->qt_graphic.dropScreen();
-        this->qt_socket_listener.disconnect();
+        this->qt_socket_listener->disconnect();
         ClientRedemption::disconnect(error, pipe_broken);
         this->qt_graphic.init_form();
+    }
+
+    void close() override {
+        this->qt_graphic.close();
+        this->disconnect("", false);
     }
 
     void update_keylayout() override {
@@ -224,7 +192,7 @@ public:
         ClientRedemption::print_wrm_graphic_stat(movie_path);
     }
 
-    virtual void instant_replay_client(int begin, int last_balised){
+    virtual void instant_replay_client(int begin, int last_balised) override {
         this->qt_graphic.draw_frame(last_balised);
         ClientRedemption::instant_replay_client(begin, last_balised);
         this->qt_graphic.update_screen();
@@ -350,8 +318,9 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = to_verbose_flags(0x0)/*RDPVerbose::rdpsnd*/;
-    ClientRedemptionConfig config(const_cast<const char**>(argv), argc, verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    RDPVerbose verbose = to_verbose_flags(0x0);
+    ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
+    ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 
     ClientRedemptionQt client_qt(session_reactor, config);
 

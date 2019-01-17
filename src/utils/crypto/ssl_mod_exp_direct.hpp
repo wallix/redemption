@@ -35,7 +35,7 @@ static inline size_t mod_exp_direct(
     uint8_t * out, size_t out_len,
     const uint8_t * inr, size_t in_len,
     const uint8_t * modulus, size_t modulus_size,
-    const uint8_t * exponent, size_t exponent_size
+    const uint8_t * exponent, size_t /*TODO exponent_size*/
 ) {
     assert(out_len >= modulus_size);
 

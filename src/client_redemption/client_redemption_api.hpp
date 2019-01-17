@@ -26,7 +26,17 @@
 #include <string>
 #include <ctime>
 
+class ClientInputSocketAPI
+{
+    // TODO private
+public:
+    mod_api * _callback = nullptr;
 
+    virtual bool start_to_listen(int client_sck, mod_api * mod) = 0;
+    virtual void disconnect() = 0;
+
+    virtual ~ClientInputSocketAPI() = default;
+};
 
 class ClientRedemptionAPI : public FrontAPI
 {
@@ -43,6 +53,7 @@ public:
     virtual void callback(bool /*is_timeout*/) {}
 
     // CONTROLLER
+    virtual void close() = 0;
     virtual void connect(const std::string& /*ip*/, const std::string& /*name*/, const std::string& /*pwd*/, const int /*port*/) {}
     virtual void disconnect(std::string const & /*unused*/, bool /*unused*/) {}
     virtual void update_keylayout() {}
@@ -53,6 +64,7 @@ public:
     virtual timeval reload_replay_mod(int /*unused*/, timeval /*unused*/) { return timeval{}; }
     virtual void delete_replay_mod() {}
     virtual void instant_play_client(std::chrono::microseconds /*time*/) {}
+
 };
 
 

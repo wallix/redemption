@@ -54,7 +54,6 @@ project redemption
     $(REDEMPTION_FFMPEG_FLAGS)
     $(REDEMPTION_BOOST_STACKTRACE_FLAGS)
 
-    <cxxflags>-fPIC
     <cxxflags>-fno-rtti
 
     # <cxx-lto>on

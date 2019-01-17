@@ -25,11 +25,21 @@
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
 #include "mod/rdp/channels/sespro_launcher.hpp"
+#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 #include "core/channel_names.hpp"
 #include "core/session_reactor.hpp"
 
 class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
+    public:
+    struct Params {
+        std::chrono::milliseconds   clipboard_initialization_delay_ms{};
+        std::chrono::milliseconds   start_delay_ms{};
+        std::chrono::milliseconds   long_delay_ms{};
+        std::chrono::milliseconds   short_delay_ms{};
+    };
+
+    private:
     enum class State {
         START,
         DELAY,
@@ -38,6 +48,9 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
         STOP
     } state = State::START;
 
+    Params params;
+
+    private:
     mod_api& mod;
 
     const std::string alternate_shell;
@@ -55,11 +68,6 @@ class SessionProbeClipboardBasedLauncher final : public SessionProbeLauncher {
 
     SessionProbeVirtualChannel* sesprob_channel = nullptr;
     ClipboardVirtualChannel*    cliprdr_channel = nullptr;
-
-    const std::chrono::milliseconds clipboard_initialization_delay;
-    const std::chrono::milliseconds start_delay;
-    const std::chrono::milliseconds long_delay;
-    const std::chrono::milliseconds short_delay;
 
     float   delay_coefficient = 1.0f;
 
@@ -88,20 +96,18 @@ public:
         SessionReactor& session_reactor,
         mod_api& mod,
         const char* alternate_shell,
-        std::chrono::milliseconds clipboard_initialization_delay_ms,
-        std::chrono::milliseconds start_delay_ms,
-        std::chrono::milliseconds long_delay_ms,
-        std::chrono::milliseconds short_delay_ms, RDPVerbose verbose)
-    : mod(mod)
+        Params params,
+        RDPVerbose verbose)
+    : params(params)
+    , mod(mod)
     , alternate_shell(alternate_shell)
-    , clipboard_initialization_delay(
-        std::max(clipboard_initialization_delay_ms, std::chrono::milliseconds(2000)))
-    , start_delay(start_delay_ms)
-    , long_delay(std::max(long_delay_ms, std::chrono::milliseconds(500)))
-    , short_delay(std::max(short_delay_ms, std::chrono::milliseconds(50)))
     , session_reactor(session_reactor)
     , verbose(verbose)
     {
+        this->params.clipboard_initialization_delay_ms = std::max(this->params.clipboard_initialization_delay_ms, std::chrono::milliseconds(2000));
+        this->params.long_delay_ms                     = std::max(this->params.long_delay_ms, std::chrono::milliseconds(500));
+        this->params.short_delay_ms                    = std::max(this->params.short_delay_ms, std::chrono::milliseconds(50));
+
         if (bool(this->verbose & RDPVerbose::sesprobe_launcher)) {
             LOG(LOG_INFO,
                 "SessionProbeClipboardBasedLauncher: "
@@ -109,8 +115,8 @@ public:
                     "start_delay_ms=%lld "
                     "long_delay_ms=%lld "
                     "short_delay_ms=%lld",
-                ms2ll(clipboard_initialization_delay_ms), ms2ll(start_delay_ms),
-                ms2ll(long_delay_ms), ms2ll(short_delay_ms));
+                ms2ll(this->params.clipboard_initialization_delay_ms), ms2ll(this->params.start_delay_ms),
+                ms2ll(this->params.long_delay_ms), ms2ll(this->params.short_delay_ms));
         }
     }
 
@@ -140,7 +146,7 @@ public:
 
         if (this->state == State::START) {
             this->event = this->session_reactor.create_timer()
-            .set_delay(this->clipboard_initialization_delay)
+            .set_delay(this->params.clipboard_initialization_delay_ms)
             .on_action(jln::one_shot([&]{ this->on_event(); }));
         }
 
@@ -394,7 +400,7 @@ public:
 
                 return ctx.set_delay(
                         self.to_microseconds(
-                                (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                                (decltype(wait_for_short_delay)::value ? self.params.short_delay_ms : self.params.long_delay_ms),
                                 self.delay_coefficient
                             )
                     ).next();
@@ -402,7 +408,7 @@ public:
         };
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
-        .set_delay(this->short_delay)
+        .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
@@ -458,11 +464,11 @@ public:
                                                  | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
                 }
 
-                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).next();
+                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).next();
             }),
-            "Wait format list responsd"_f
+            "Wait format list response"_f
                                 ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
-                return ctx.set_delay(self.to_microseconds(self.long_delay, self.delay_coefficient)).ready();
+                return ctx.set_delay(self.to_microseconds(self.params.long_delay_ms, self.delay_coefficient)).ready();
             })
 
         ));
@@ -494,12 +500,12 @@ public:
 
                 if (ctx.is_final_sequence()) {
                     self.state = State::WAIT;
-                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).at(0).ready();
+                    return ctx.set_delay(self.to_microseconds(self.params.short_delay_ms, self.delay_coefficient)).at(0).ready();
                 }
 
                 return ctx.set_delay(
                     self.to_microseconds(
-                        (decltype(wait_for_short_delay)::value ? self.short_delay : self.long_delay),
+                        (decltype(wait_for_short_delay)::value ? self.params.short_delay_ms : self.params.long_delay_ms),
                         self.delay_coefficient
                     )
                 ).next();
@@ -507,7 +513,7 @@ public:
         };
 
         this->event = this->session_reactor.create_timer(std::ref(*this))
-        .set_delay(this->short_delay)
+        .set_delay(this->params.short_delay_ms)
         .on_action(jln::sequencer(
             "Windows (down)"_f  (send_scancode(value<91>, value<SlowPath::KBDFLAGS_EXTENDED>, value<true>,  value<true> )),
             "r (down)"_f        (send_scancode(value<19>, value<0>,                           value<false>, value<true> )),
@@ -522,7 +528,7 @@ public:
             "Enter (down)"_f    ([](auto ctx, SessionProbeClipboardBasedLauncher& self) {
                 ++self.copy_paste_loop_counter;
                 if (!self.format_data_requested) {
-                    return ctx.set_delay(self.to_microseconds(self.short_delay, self.delay_coefficient)).exec_at(0);
+                    return ctx.set_delay(self.to_microseconds(self.params.short_delay_ms, self.delay_coefficient)).exec_at(0);
                 }
                 return jln::make_lambda<decltype(send_scancode)>()(value<28>, value<0>, value<true>, value<true>)(ctx, self);
             }),
@@ -537,7 +543,7 @@ public:
                 "SessionProbeClipboardBasedLauncher :=> on_server_format_list_response");
         }
 
-        if (this->start_delay.count()) {
+        if (this->params.start_delay_ms.count()) {
             if (!this->delay_executed) {
                 if (this->state != State::START) {
                     return (this->state < State::WAIT);
@@ -548,7 +554,7 @@ public:
                 make_delay_sequencer();
 
                 time_t const now = time(nullptr);
-                this->delay_end_time = (now + (this->start_delay.count() + 999) / 1000);
+                this->delay_end_time = (now + (this->params.start_delay_ms.count() + 999) / 1000);
 
                 this->delay_executed = true;
             }

@@ -143,7 +143,18 @@ public:
         this->client->connect(ip, name, pwd, port);
     }
 
-    void disconnect(/*time_t now, */bool pipe_broken) {
+    void close() {
+        if (this->get_mod() != nullptr) {
+            time_t now;
+            time(&now);
+
+            this->mod->disconnect(now);
+            this->mod = nullptr;
+        }
+        this->client->close();
+    }
+
+    void disconnect(bool pipe_broken) {
         if (this->get_mod() != nullptr) {
             if (!pipe_broken) {
                 time_t now;

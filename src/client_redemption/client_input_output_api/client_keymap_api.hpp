@@ -20,7 +20,6 @@
 
 #pragma once
 
-
 #include "client_redemption/client_config/client_redemption_config.hpp"
 
 
@@ -28,8 +27,6 @@
 class ClientKeyLayoutAPI {
 
 public:
-
-    ClientKeyLayoutAPI() = default;
 
     virtual ~ClientKeyLayoutAPI() = default;
 

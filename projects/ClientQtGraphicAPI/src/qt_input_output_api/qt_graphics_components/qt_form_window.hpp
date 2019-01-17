@@ -16,7 +16,6 @@
    Product name: redemption, a FLOSS RDP proxy
    Copyright (C) Wallix 2010-2013
    Author(s): Clément Moroldo, Jonathan Poelen
-
 */
 
 #pragma once
@@ -25,21 +24,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include "utils/log.hpp"
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/channel_list.hpp"
 
-
 #include "client_redemption/client_config/client_redemption_config.hpp"
 #include "client_redemption/mod_wrapper/client_callback.hpp"
 
-
 #include "../keymaps/qt_scancode_keymap.hpp"
 #include "qt_options_window.hpp"
-
-
-#include "client_redemption/client_input_output_api/client_graphic_api.hpp"
 
 #include <QtGui/QPainter>
 #include <QtGui/QKeyEvent>
@@ -75,6 +68,7 @@
 #include <vector>
 
 
+
 class IconMovie :  public QWidget
 {
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -83,7 +77,6 @@ Q_OBJECT
 REDEMPTION_DIAGNOSTIC_POP
 
 public:
-//     ClientRedemptionConfig * config;
     ClientCallback * controllers;
 
     int _width;
@@ -103,7 +96,6 @@ public:
     IconMovie(ClientCallback * controllers, const IconMovieData & iconData,
         QWidget * parent)
       : QWidget(parent)
-//       , config(config)
       , controllers(controllers)
       , _width(385)
       , _height(60)
@@ -325,15 +317,6 @@ private Q_SLOTS:
                                                 this->replay_default_dir.c_str(),
                                                 tr("Movie Files(*.mwrm)"));
         std::string str_movie_path(filePath.toStdString());
-
-//         auto const last_delimiter_it = std::find(str_movie_path.rbegin(), str_movie_path.rend(), '/');
-//         int pos = str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin());
-//
-//         std::string const movie_name = (last_delimiter_it == str_movie_path.rend())
-//         ? str_movie_path
-//         : str_movie_path.substr(str_movie_path.size() - (last_delimiter_it - str_movie_path.rbegin()));
-//
-//         std::string const movie_dir = str_movie_path.substr(0, pos);
 
         this->controllers->replay(str_movie_path);
     }
@@ -733,10 +716,15 @@ public:
             }
         }
     }
-
 };
 
 
+class FormApi
+{
+public:
+    virtual void options() = 0;
+    virtual ~FormApi() = default;
+};
 
 class QtFormTab : public FormTabAPI
 {
@@ -751,7 +739,9 @@ public:
     ClientRedemptionConfig * config;
     uint8_t protocol_type;
     ClientCallback * controllers;
-    ClientOutputGraphicAPI * graphic;
+//     ClientOutputGraphicAPI * graphic;
+
+    FormApi * form;
 
     const int            _width;
     const int            _height;
@@ -769,12 +759,14 @@ public:
     QtOptions * options;
 
 
-    QtFormTab(ClientRedemptionConfig * config, ClientCallback * controllers, uint8_t protocol_type, QWidget * parent, ClientOutputGraphicAPI * graphic)
+
+
+    QtFormTab(ClientRedemptionConfig * config, ClientCallback * controllers, uint8_t protocol_type, QWidget * parent, FormApi * form)
         : FormTabAPI(parent)
         , config(config)
         , protocol_type(protocol_type)
         , controllers(controllers)
-        , graphic(graphic)
+        , form(form)
         , _width(400)
         , _height(600)
         , grid_layout(this)
@@ -785,9 +777,9 @@ public:
         , _buttonOptions("Options", this)
     {
         if (protocol_type & ClientRedemptionConfig::MOD_RDP) {
-            this->options = new QtRDPOptions(config, this->controllers, this->graphic, this);
+            this->options = new QtRDPOptions(config, this->controllers, /*this->graphic,*/ this);
         } else {
-            this->options = new QtVNCOptions(config, this->controllers, this->graphic, this);
+            this->options = new QtVNCOptions(config, this->controllers, /*this->graphic,*/ this);
         }
 //         this->setMinimumHeight(360);
 //         this->setAccountData();
@@ -954,13 +946,13 @@ private Q_SLOTS:
     }
 
     void optionsReleased() {
-        this->graphic->open_options();
+        this->form->options();
     }
 };
 
 
 
-class QtForm : public QWidget
+class QtForm : public QWidget, public FormApi
 {
 
 REDEMPTION_DIAGNOSTIC_PUSH
@@ -971,7 +963,6 @@ REDEMPTION_DIAGNOSTIC_POP
 public:
     ClientRedemptionConfig * config;
     ClientCallback * controllers;
-    ClientOutputGraphicAPI * graphic;
 
     const int _width;
     const int _height;
@@ -986,25 +977,85 @@ public:
     QtFormReplay       replay_tab;
 
     bool is_option_open;
-    bool is_closing;
 
+    std::vector<IconMovieData> icons_movie_data;
 
+    void set_icon_movie_data(ClientRedemptionConfig & config) {
+        this->icons_movie_data.clear();
 
-    QtForm(ClientRedemptionConfig * config, ClientCallback * controllers, ClientOutputGraphicAPI * graphic)
+        auto extension_av = ".mwrm"_av;
+
+        if (DIR * dir = opendir(config.REPLAY_DIR.c_str())) {
+            try {
+                while (struct dirent * ent = readdir (dir)) {
+                    std::string current_name = ent->d_name;
+
+                    if (current_name.length() > extension_av.size()) {
+
+                        std::string end_string(current_name.substr(
+                            current_name.length()-extension_av.size(), current_name.length()));
+
+                        if (end_string == extension_av.data()) {
+                            std::string file_path = str_concat(config.REPLAY_DIR, '/', current_name);
+
+                            unique_fd fd(file_path, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+
+                            if(fd.is_open()){
+                                std::string file_name(current_name.substr(0, current_name.length()-extension_av.size()));
+                                std::string file_version;
+                                std::string file_resolution;
+                                std::string file_checksum;
+                                long int movie_len = ClientConfig::get_movie_time_length(file_path.c_str());
+
+                                ClientConfig::read_line(fd.fd(), file_version);
+                                ClientConfig::read_line(fd.fd(), file_resolution);
+                                ClientConfig::read_line(fd.fd(), file_checksum);
+
+                                this->icons_movie_data.emplace_back(
+                                                std::move(file_name),
+                                                std::move(file_path),
+                                                std::move(file_version),
+                                                std::move(file_resolution),
+                                                std::move(file_checksum),
+                                                movie_len);
+
+                            } else {
+                                LOG(LOG_WARNING, "Can't open file \"%s\"", file_path);
+                            }
+                        }
+                    }
+                }
+            } catch (Error & e) {
+                LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
+            }
+            closedir (dir);
+        }
+
+        std::sort(this->icons_movie_data.begin(), this->icons_movie_data.end(), [](const IconMovieData& first, const IconMovieData& second) {
+                return first.file_name < second.file_name;
+            });
+    }
+
+    std::vector<IconMovieData> const& get_icon_movie_data(ClientRedemptionConfig & config) {
+
+        this->set_icon_movie_data(config);
+
+        return this->icons_movie_data;
+    }
+
+    QtForm(ClientRedemptionConfig * config, ClientCallback * controllers)
         : QWidget()
         , config(config)
         , controllers(controllers)
-        , graphic(graphic)
         , _width(460)
         , _height(375)
         , _long_height(690)
         , main_layout(this)
         , tabs(this)
-        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, graphic)
-        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, graphic)
-        , replay_tab(config->get_icon_movie_data(), controllers, this, config->REPLAY_DIR)
+        , RDP_tab(config, controllers, ClientRedemptionConfig::MOD_RDP, this, this)
+        , VNC_tab(config, controllers, ClientRedemptionConfig::MOD_VNC, this, this)
+        , replay_tab(this->get_icon_movie_data(*config), controllers, this, config->REPLAY_DIR)
         , is_option_open(false)
-        , is_closing(false)
     {
         this->setWindowTitle("ReDemPtion Client");
         this->setAttribute(Qt::WA_DeleteOnClose);
@@ -1048,9 +1099,7 @@ public:
         QPoint points = this->mapToGlobal({0, 0});
         this->config->windowsData.form_x = points.x()-1;
         this->config->windowsData.form_y = points.y()-39;
-        this->config->writeWindowsData();
-        this->is_closing = true;
-
+        ClientConfig::writeWindowsData(this->config->windowsData);
         if (this->is_option_open) {
             this->options();
         }
@@ -1104,7 +1153,7 @@ public:
     }
 
     void init_form() {
-        if (this->config->is_no_win_data()) {
+        if (this->config->windowsData.no_data) {
             QDesktopWidget* desktop = QApplication::desktop();
             this->config->windowsData.form_x = (desktop->width()/2)  - (this->_width/2);
             this->config->windowsData.form_y = (desktop->height()/2) - (this->_height/2);
@@ -1112,7 +1161,7 @@ public:
         this->move(this->config->windowsData.form_x, this->config->windowsData.form_y);
     }
 
-    void options() {
+    void options() override {
         if (this->is_option_open) {
             this->RDP_tab.options->hide();
             this->RDP_tab._buttonOptions.setText("Options v");

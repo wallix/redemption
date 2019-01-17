@@ -52,6 +52,18 @@ extern "C" {
     #include <libswscale/swscale.h>
 }
 
+#ifndef CODEC_FLAG_QSCALE
+#define CODEC_FLAG_QSCALE AV_CODEC_FLAG_QSCALE
+#endif
+
+#ifndef CODEC_FLAG_GLOBAL_HEADER
+#define CODEC_FLAG_GLOBAL_HEADER AV_CODEC_FLAG_GLOBAL_HEADER
+#endif
+
+#ifndef AVFMT_RAWPICTURE
+#define AVFMT_RAWPICTURE AVFMT_NOFILE
+#endif
+
 #ifdef exit
 # undef exit
 #endif

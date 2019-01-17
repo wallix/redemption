@@ -25,7 +25,8 @@
 
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
-#include "client_redemption/client_input_output_api/client_sound_api.hpp"
+// #include "client_redemption/client_input_output_api/client_sound_api.hpp"
+#include "client_redemption/client_channels/client_rdpsnd_channel.hpp"
 #include "client_redemption/client_redemption_api.hpp"
 
 #if REDEMPTION_QT_VERSION == 4
@@ -124,17 +125,20 @@ public:
     }
 
     void play() override {
-        if (this->media->state() == Phonon::StoppedState) {
+        if (this->media) {
+            if (this->media->state() == Phonon::StoppedState) {
 
-            if (this->total_wav_files > this->current_wav_index) {
-                this->current_wav_index++;
+                if (this->total_wav_files > this->current_wav_index) {
+                    this->current_wav_index++;
+                    std::string wav_file_name = ":/DATA/sound_temp/sound";
+                    wav_file_name += std::to_string(this->current_wav_index) + ".wav";
 
-                std::string wav_file_name =  ":/DATA/sound_temp/sound" + std::to_string(this->current_wav_index) + ".wav";
-                LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
+                    LOG(LOG_INFO, "play wav: \"%s\"", wav_file_name);
 
-                Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
-                this->media->setCurrentSource(sources);
-                this->media->play();
+                    Phonon::MediaSource sources(QUrl(wav_file_name.c_str()));
+                    this->media->setCurrentSource(sources);
+                    this->media->play();
+                }
             }
         }
     }

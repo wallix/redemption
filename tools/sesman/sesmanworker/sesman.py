@@ -41,6 +41,29 @@ from .engine import APPREQ_REQUIRED, APPREQ_OPTIONAL
 from .engine import PASSWORD_VAULT, PASSWORD_INTERACTIVE, PASSWORD_MAPPING
 from .engine import TargetContext
 
+import syslog
+
+class RdpProxyLog(object):
+    def __init__(self):
+        syslog.openlog('rdpproxy')
+        self._context = '[RDP Proxy] '
+
+    def update_context(self, psid, user):
+        self._context = '[RDP Proxy] psid="%s" user="%s" ' % (psid, user)
+
+    def log(self, **kwargs):
+        syslog.syslog(syslog.LOG_INFO,
+            self._context + ' '.join(('%s="%s"' % (k, self.escape_bs_dq(v)))
+                                        for (k, v) in kwargs.items() if v)
+        )
+
+    @staticmethod
+    def escape_bs_dq(string):
+        if type(string) in (str, unicode):
+            return string.replace('\\', '\\\\').replace('"', '\\"')
+        return string
+
+
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
 def mundane(value):
     if value == MAGICASK:
@@ -729,7 +752,11 @@ class Sesman():
         if not _status:
             return None, TR(u"Invalid user, try again")
 
+        rdplog = RdpProxyLog()
+        rdplog.update_context(self.shared.get(u'psid'), wab_login)
         Logger().info(u"Continue with authentication (%s) -> %s" % (self.shared.get(u'login'), wab_login))
+
+        method = "Password"
 
         try:
             target_info = None
@@ -746,6 +773,7 @@ class Sesman():
                 target_info = target_info.encode('utf8')
             except Exception as e:
                 target_info = None
+
             #Check if X509 Authentication is active
             if self.engine.is_x509_connected(
                         wab_login,
@@ -753,6 +781,8 @@ class Sesman():
                         u"RDP",
                         target_info,
                         self.shared.get(u'ip_target')):
+                method = "X509"
+                rdplog.log(type="AUTHENTICATION_TRY", method=method)
                 # Prompt the user in proxy window
                 # Wait for confirmation from GUI (or timeout)
                 if not ((self.engine.is_x509_validated()
@@ -761,30 +791,40 @@ class Sesman():
                             self.shared.get(u'ip_client'),
                             self.shared.get(u'ip_target')
                         )):
+                    rdplog.log(type="AUTHENTICATION_FAILURE", method=method)
                     return False, TR(u"x509 browser authentication not validated by user")
             elif self.passthrough_mode:
                 # Passthrough Authentification
+                method = "Challenge"
+                rdplog.log(type="AUTHENTICATION_TRY", method=method)
                 if not self.engine.passthrough_authenticate(
                         wab_login,
                         self.shared.get(u'ip_client'),
                         self.shared.get(u'ip_target')):
+                    rdplog.log(type="AUTHENTICATION_FAILURE", method=method)
                     return False, TR(u"passthrough_auth_failed_wab %s") % wab_login
             else:
                 # PASSWORD based Authentication
-                if ((self.shared.get(u'password') == MAGICASK
-                     and not wab_login.startswith('_OTP_'))  # one-time pwd
+                is_magic_password = self.shared.get(u'password') == MAGICASK
+                is_otp = wab_login.startswith('_OTP_')
+                method = (is_otp and "OTP" or "Password")
+                rdplog.log(type="AUTHENTICATION_TRY", method=method)
+                if ((is_magic_password and not is_otp)  # one-time pwd
                     or not self.engine.password_authenticate(
                         wab_login,
                         self.shared.get(u'ip_client'),
                         rvalue(self.shared.get(u'password')),
                         self.shared.get(u'ip_target'))):
-                    if self.shared.get(u'password') == MAGICASK:
+                    if is_magic_password:
                         self.engine.reset_challenge()
+                    rdplog.log(type="AUTHENTICATION_FAILURE", method=method)
                     return None, TR(u"auth_failed_wab %s") % wab_login
 
             # At this point, User is authentified.
             if wab_login.startswith('_OTP_'):
+                method = "OTP"
                 real_wab_login = self.engine.get_username()
+                rdplog.update_context(self.shared.get(u'psid'), real_wab_login)
                 self.shared[u'login'] = self.shared.get(u'login').replace(wab_login,
                                                                           real_wab_login)
 
@@ -792,8 +832,10 @@ class Sesman():
             self.load_login_message()
             if self.engine.get_force_change_password():
                 self.send_data({u'rejected': TR(u'changepassword')})
+                rdplog.log(type="AUTHENTICATION_FAILURE", method=method)
                 return False, TR(u'changepassword')
 
+            rdplog.log(type="AUTHENTICATION_SUCCESS", method=method)
             Logger().info(u'lang=%s' % self.language)
 
         except Exception as e:
@@ -801,6 +843,7 @@ class Sesman():
                 import traceback
                 Logger().info("<<<%s>>>" % traceback.format_exc(e))
             _status, _error = None, TR(u'auth_failed_wab %s') % wab_login
+            rdplog.log(type="AUTHENTICATION_FAILURE", method=method)
 
         return _status, _error
 

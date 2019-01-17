@@ -43,6 +43,15 @@ project redjs
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
     # <cxx-lto>on
+
+    <cxxflags>"-s WASM=0"
+    <cxxflags>-g
+    <cxxflags>-g4
+    <cxxflags>--emit-symbol-map
+    # last `/` removed by bjam...
+    <cxxflags>"--source-map-base http://localhost:3389//"
+    <cxxflags>"-s DEMANGLE_SUPPORT=1"
+
     : default-build release
 ;
 
@@ -108,6 +117,10 @@ constant TEST_DEPENDENCIES :
 ;
 
 objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
+objjs log_test.js : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
+
+alias log_print.bc : log_test.bc ;
+alias log_print.o : log_test.bc ;
 
 objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
@@ -135,7 +148,7 @@ rule test-run ( name : objects + : requirements * )
 
 rule exe-main ( name : objects + : requirements * )
 {
-    exejs $(name).node : $(objects) : $(requirements) ;
+    exejs $(name).node : $(objects) log_test.bc : $(requirements) ;
     make $(name) : $(name).node : @exenode ;
 }
 
@@ -174,10 +187,77 @@ alias z.bc ;
 alias png.bc : libpng.bc z.bc ;
 alias ffmpeg.bc ;
 alias ppocr.bc ;
-alias program_options.bc ;
+
+objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
 
 include targets.jam ;
+
+objjs src/js_client.bc : src/js_client.cpp :
+    <include>$(REDEMPTION_TEST_PATH)/includes
+    <cxxflags>-fno-rtti&&-frtti
+;
+
+
+rule bindjs ( name : objs + : deps * )
+{
+    exe-main $(name) : $(objs) : $(deps) <cxxflags>--bind <cxxflags>-fno-rtti&&-frtti ;
+}
+
+bindjs jsclient :
+  src/js_client.bc
+  app_path_exe.bc
+  crypto.bc
+  gssapi_krb5.bc
+  krb5.bc
+  openssl.bc
+  png.bc
+  projects/redemption_configs/redemption_src/configs/config.bc
+  src/RAIL/client_execute.bc
+  src/core/RDP/RDPDrawable.bc
+  src/core/RDP/mppc.bc
+  src/core/RDP/nego.bc
+  src/core/error.bc
+  src/core/font.bc
+  src/core/set_server_redirection_target.bc
+  src/gdi/clip_from_cmd.bc
+  src/gdi/graphic_api.bc
+  src/gdi/protected_graphics.bc
+  src/gdi/screen_functions.bc
+  src/keyboard/keymap2.bc
+  src/keyboard/keymapSym.bc
+  src/mod/internal/widget/flat_button.bc
+  src/mod/internal/widget/label.bc
+  src/mod/rdp/new_mod_rdp.bc
+  src/mod/rdp/rdp.bc
+  src/mod/rdp/rdp_negociation.bc
+  src/transport/recorder_transport.bc
+  src/transport/socket_transport.bc
+  src/utils/authorization_channels.bc
+  src/utils/bitmap.bc
+  src/utils/bitmap_from_file.bc
+  src/utils/d3des.bc
+  src/utils/drawable.bc
+  src/utils/fileutils.bc
+  src/utils/hexdump.bc
+  src/utils/netutils.bc
+  src/utils/png.bc
+  src/utils/rle.bc
+  src/utils/strutils.bc
+  src/utils/sugar/multisz.bc
+  src/utils/utf.bc
+  z.bc
+
+  log_test.bc
+:
+  $(EXE_DEPENDENCIES_NO_SYSLOG)
+  <include>$(REDEMPTION_TEST_PATH)/includes
+
+    # <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
+    # <cxxflags>"--shell-file templates/penta_template.html"
+;
+
+
 
 # objjs test_rect.bc : $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp ;
 # test-run test_rect : test_rect.bc ;

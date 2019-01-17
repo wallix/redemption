@@ -77,12 +77,14 @@ void MMIni::invoke_close_box(
             LOG(LOG_INFO, "MMIni::invoke_close_box exception = %u!\n", e.id);
         }
     }
+
     this->remove_mod();
     if (this->ini.get<cfg::globals::enable_close_box>()) {
         this->new_mod(MODULE_INTERNAL_CLOSE, now, authentifier, report_message);
         signal = BACK_EVENT_NONE;
     }
     else {
+        detail::log_proxy_logout(this->ini.get<cfg::context::auth_error_message>().c_str());
         signal = BACK_EVENT_STOP;
     }
 }

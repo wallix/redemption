@@ -15,7 +15,7 @@
 
   Product name: redemption, a FLOSS RDP proxy
   Copyright (C) Wallix 2010
-  Author(s): Christophe Grosjean, Meng Tan, Jennifer Inthavong
+  Author(s): Christophe Grosjean, Meng Tauth_rail_exec_an, Jennifer Inthavong
 
   Protocol layer for communication with ACL
   Updating context dictionnary from incoming acl traffic
@@ -381,8 +381,7 @@ public:
 
     void log6(const std::string & info, const ArcsightLogInfo & asl_info, const timeval time) override
     {
-        // TODO system time
-        time_t const time_now = time.tv_sec;                      //std::time(nullptr);
+        time_t const time_now = time.tv_sec;
         this->log_file.write_line(time_now, info);
 
         /* Log to SIEM (redirected syslog) */
@@ -403,8 +402,7 @@ public:
             });
 
             LOG_SIEM(
-                LOG_INFO
-              , "[%s Session] %s %s"
+                "[%s Session] %s %s"
               , (this->session_type.empty() ? "Neutral" : this->session_type.c_str())
               , session_info.c_str()
               , info.c_str());
@@ -431,13 +429,15 @@ public:
                 case ArcsightLogInfo::NONE: break;
 
                 case ArcsightLogInfo::SERVER_DST:
-                    extension += " suser=" + user + " duser=" + account;
-                    extension += " src=" + host + " dst=" + target_ip;
+                    str_append(extension,
+                        " suser=", user, " duser=", account,
+                        " src=", host, " dst=", target_ip);
                     break;
 
                 case ArcsightLogInfo::SERVER_SRC:
-                    extension += " suser=" + account + " duser=" + user;
-                    extension += " src=" + target_ip + " dst=" + host;
+                    str_append(extension,
+                        " suser=", account, " duser=", user,
+                        " src=", target_ip, " dst=", host);
                     break;
             }
             if (!asl_info.ApplicationProtocol.empty()) {
@@ -466,7 +466,7 @@ public:
                 this->arcsight_text_formating(extension, std::to_string(asl_info.fileSize));
             }
             if (asl_info.endTime) {
-                timeval time = {__time_t(asl_info.endTime),  0};
+                timeval time = {time_t(asl_info.endTime), 0};
                 extension += " end=";
                 this->arcsight_text_formating(extension, arcsight_gmdatetime(time));
             }
@@ -475,7 +475,7 @@ public:
                 this->arcsight_text_formating(extension, asl_info.fileName);
             }
 
-            LOG_SIEM(LOG_INFO, "%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
+            LOG_SIEM("%s host message CEF:%s|%s|%s|%s|%d|%s|%d|WallixBastionUser=%s WallixBastionAccount=%s WallixBastionHost=%s WallixBastionTargetIP=%s WallixBastionSession_id=%s WallixBastionSessionType=%s%s",
                 formted_date.c_str(),
                 "1",
                 "Wallix",

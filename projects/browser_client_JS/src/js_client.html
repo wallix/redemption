@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script>
+    var Module = {
+      onRuntimeInitialized: function() {
+        let rdpclient = new Module.RdpClient(0xfffff)
+        let send_data = function() {
+            let out = rdpclient.get_data()
+            if (out.length) {
+                console.log("send " + out.length + " bytes")
+                socket.send(out)
+                rdpclient.clear_data()
+            }
+            else {
+                console.log("client.data is empty")
+            }
+        }
+
+        let socket = new WebSocket("ws://localhost:8080", "rdp-protocol")
+
+        socket.binaryType = 'arraybuffer';
+
+        socket.onopen = function(event) {
+            console.log("socket is open")
+            let timeout = rdpclient.next_timeout()
+            console.log("timeout:", timeout)
+            rdpclient.update()
+            send_data()
+        }
+
+        // Display messages received from the server
+        socket.onmessage = function(event) {
+            var bytearray = new Uint8Array(event.data)
+            var text = ""
+            console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+            for (let byte of bytearray) {
+                text += ":" + (byte+0x10000).toString(16).substr(-2)
+            }
+            console.log("Server Says: " + text)
+            rdpclient.update()
+            try {
+                rdpclient.next_message(event.data)
+            }
+            catch (e) {
+                stackTrace()
+                throw e
+            }
+            send_data()
+        }
+
+        // Display any errors that occur
+        socket.onerrro = function(event) {
+            console.log("Error: " + event.type)
+        }
+
+        socket.onclose = function(event) {
+            console.log("close: " + event.code + ": " + event.reason)
+            rdpclient.delete()
+        }
+      }
+    };
+  </script>
+  <script src="jsclient.js"></script>
+</head>
+<body>
+</body>
+</html>

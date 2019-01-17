@@ -241,6 +241,7 @@ void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, c
 {
     this->message.assign(type.data, {{"description", description.data}});
 
+    // TODO system time
     this->report_message.log6(this->message.str(), arc_info, tvtime());
 
     if (bool(this->verbose & RDPVerbose::basic_trace)) {
@@ -1068,7 +1069,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     cs_net.channelCount++;
                 }
 
-                if (bool(this->verbose & RDPVerbose::security)) {
+                if (bool(this->verbose & RDPVerbose::channels)) {
                     cs_net.log("Sending to server");
                 }
                 cs_net.emit(stream);

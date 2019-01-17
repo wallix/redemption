@@ -104,18 +104,6 @@ inline void add_time_before_closing(std::string & msg, uint32_t elapsed_time, Tr
 
 class ModuleManager : public MMIni
 {
-    struct IniAccounts {
-        char username[255]; // should use string
-        char password[255]; // should use string
-
-        IniAccounts()
-        {
-            this->username[0] = 0;
-            this->password[0] = 0;
-        }
-    } accounts;
-
-private:
     class ModOSD : public gdi::ProtectedGraphics, public mod_api
     {
         ModuleManager & mm;
@@ -530,6 +518,18 @@ public:
 
         this->client_execute.enable_remote_program(this->front.client_info.remote_program);
 
+        switch (target_module) {
+        case MODULE_INTERNAL_CLOSE:
+            detail::log_proxy_logout(this->ini.get<cfg::context::auth_error_message>().c_str());
+            break;
+        case MODULE_INTERNAL_WIDGET_LOGIN:
+            detail::log_proxy_logout();
+            break;
+        default:
+            detail::log_proxy_set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            break;
+        }
+
         this->connected = false;
 
         if (this->old_target_module != target_module) {
@@ -593,17 +593,15 @@ public:
             }
             break;
         case MODULE_INTERNAL_WIDGETTEST:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
-                this->set_mod(new WidgetTestMod(
-                    this->session_reactor,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->load_font()
-                ));
-                LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
-            }
+            LOG(LOG_INFO, "ModuleManager::Creation of internal module 'widgettest'");
+            this->set_mod(new WidgetTestMod(
+                this->session_reactor,
+                this->front,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
+                this->load_font()
+            ));
+            LOG(LOG_INFO, "ModuleManager::internal module 'widgettest' ready");
             break;
         case MODULE_INTERNAL_CARD:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'test_card'");
@@ -623,7 +621,6 @@ public:
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
             }
-            {
 
             this->set_mod(new SelectorMod(
                 this->ini,
@@ -643,61 +640,39 @@ public:
             //if (bool(this->verbose & Verbose::new_mod)) {
                 LOG(LOG_INFO, "ModuleManager::internal module 'selector' ready");
             //}
-            }
             break;
         case MODULE_INTERNAL_CLOSE:
-            {
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close'");
-                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
-                }
-                this->set_mod(new FlatWabCloseMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->front,
+        case MODULE_INTERNAL_CLOSE_BACK: {
+            bool const back_to_selector = (target_module == MODULE_INTERNAL_CLOSE_BACK);
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::Close%s'",
+                back_to_selector ? "Back" : "");
+
+            if (this->ini.get<cfg::context::auth_error_message>().empty()) {
+                this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
+            }
+
+            this->set_mod(new FlatWabCloseMod(
+                this->ini,
+                this->session_reactor,
+                this->front,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
+                this->client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
-                    )),
-                    now,
-                    this->client_execute,
-                    this->load_font(),
-                    this->load_theme(),
-                    true
-                ));
-            }
-            LOG(LOG_INFO, "ModuleManager::internal module Close ready");
+                    this->front.client_info.cs_monitor
+                )),
+                now,
+                this->client_execute,
+                this->load_font(),
+                this->load_theme(),
+                true,
+                back_to_selector
+            ));
+            LOG(LOG_INFO, "ModuleManager::internal module Close%s ready",
+                back_to_selector ? " Back" : "");
             break;
-        case MODULE_INTERNAL_CLOSE_BACK:
-            {
-                if (this->ini.get<cfg::context::auth_error_message>().empty()) {
-                    this->ini.set<cfg::context::auth_error_message>(TR(trkeys::connection_ended, language(this->ini)));
-                }
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'INTERNAL::CloseBack'");
-                this->set_mod(new FlatWabCloseMod(
-                    this->ini,
-                    this->session_reactor,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
-                        this->front.client_info.screen_info.width,
-                        this->front.client_info.screen_info.height,
-                        this->front.client_info.cs_monitor
-                    )),
-                    now,
-                    this->client_execute,
-                    this->load_font(),
-                    this->load_theme(),
-                    true,
-                    true
-                ));
-            }
-            LOG(LOG_INFO, "ModuleManager::internal module Close Back ready");
-            break;
+        }
         case MODULE_INTERNAL_TARGET:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Interactive Target'");
@@ -843,40 +818,37 @@ public:
                 LOG(LOG_INFO, "ModuleManager::internal module 'Wait Info Message' ready");
             }
             break;
-        case MODULE_INTERNAL_WIDGET_LOGIN:
+        case MODULE_INTERNAL_WIDGET_LOGIN: {
+            char username[255]; // should use string
+            username[0] = 0;
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Login'");
-            if (this->ini.is_asked<cfg::globals::target_user>()
-             || this->ini.is_asked<cfg::globals::target_device>()){
-                if (this->ini.is_asked<cfg::globals::auth_user>()){
-                    accounts.username[0] = 0;
+            if (!this->ini.is_asked<cfg::globals::auth_user>()){
+                if (this->ini.is_asked<cfg::globals::target_user>()
+                 || this->ini.is_asked<cfg::globals::target_device>()){
+                    utils::strlcpy(
+                        username,
+                        this->ini.get<cfg::globals::auth_user>().c_str(),
+                        sizeof(username));
                 }
                 else {
-                    strncpy(accounts.username,
-                            this->ini.get<cfg::globals::auth_user>().c_str(),
-                            sizeof(accounts.username));
-                    accounts.username[sizeof(accounts.username) - 1] = 0;
+                    // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
+                    snprintf( username, sizeof(username), "%s@%s:%s%s%s"
+                            , this->ini.get<cfg::globals::target_user>().c_str()
+                            , this->ini.get<cfg::globals::target_device>().c_str()
+                            , this->ini.get<cfg::context::target_protocol>().c_str()
+                            , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
+                            , this->ini.get<cfg::globals::auth_user>().c_str()
+                            );
                 }
-            }
-            else if (this->ini.is_asked<cfg::globals::auth_user>()) {
-                accounts.username[0] = 0;
-            }
-            else {
-                // TODO check this! Assembling parts to get user login with target is not obvious method used below il likely to show @: if target fields are empty
-                snprintf( accounts.username, sizeof(accounts.username), "%s@%s:%s%s%s"
-                        , this->ini.get<cfg::globals::target_user>().c_str()
-                        , this->ini.get<cfg::globals::target_device>().c_str()
-                        , this->ini.get<cfg::context::target_protocol>().c_str()
-                        , (!this->ini.get<cfg::context::target_protocol>().empty() ? ":" : "")
-                        , this->ini.get<cfg::globals::auth_user>().c_str()
-                        );
-                utils::back(accounts.username) = '\0';
+
+                username[sizeof(username) - 1] = 0;
             }
 
             this->set_mod(new FlatLoginMod(
                 this->ini,
                 this->session_reactor,
-                accounts.username,
-                accounts.password,
+                username,
+                "", // password
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
@@ -892,41 +864,41 @@ public:
             ));
             LOG(LOG_INFO, "ModuleManager::internal module Login ready");
             break;
+        }
 
-        case MODULE_XUP:
-            {
-                const char * name = "XUP Target";
-                if (bool(this->verbose & Verbose::new_mod)) {
-                    LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
-                }
-
-                unique_fd client_sck = this->connect_to_target_host(
-                    report_message, trkeys::authentification_x_fail);
-
-                this->set_mod(new ModWithSocket<xup_mod>(
-                    *this,
-                    authentifier,
-                    name,
-                    std::move(client_sck),
-                    this->ini.get<cfg::debug::mod_xup>(),
-                    nullptr,
-                    sock_mod_barrier(),
-                    this->session_reactor,
-                    this->front,
-                    this->front.client_info.screen_info.width,
-                    this->front.client_info.screen_info.height,
-                    this->ini.get<cfg::context::opt_width>(),
-                    this->ini.get<cfg::context::opt_height>(),
-                    // TODO use safe_int
-                    checked_int(this->ini.get<cfg::context::opt_bpp>())
-                    // TODO: shouldn't alls mods have access to sesman authentifier ?
-                ));
-
-                this->ini.get_ref<cfg::context::auth_error_message>().clear();
-                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
-                this->connected = true;
+        case MODULE_XUP: {
+            const char * name = "XUP Target";
+            if (bool(this->verbose & Verbose::new_mod)) {
+                LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP'\n");
             }
+
+            unique_fd client_sck = this->connect_to_target_host(
+                report_message, trkeys::authentification_x_fail, "XUP");
+
+            this->set_mod(new ModWithSocket<xup_mod>(
+                *this,
+                authentifier,
+                name,
+                std::move(client_sck),
+                this->ini.get<cfg::debug::mod_xup>(),
+                nullptr,
+                sock_mod_barrier(),
+                this->session_reactor,
+                this->front,
+                this->front.client_info.screen_info.width,
+                this->front.client_info.screen_info.height,
+                this->ini.get<cfg::context::opt_width>(),
+                this->ini.get<cfg::context::opt_height>(),
+                // TODO use safe_int
+                checked_int(this->ini.get<cfg::context::opt_bpp>())
+                // TODO: shouldn't alls mods have access to sesman authentifier ?
+            ));
+
+            this->ini.get_ref<cfg::context::auth_error_message>().clear();
+            LOG(LOG_INFO, "ModuleManager::Creation of new mod 'XUP' suceeded\n");
+            this->connected = true;
             break;
+        }
 
         case MODULE_RDP:
             this->create_mod_rdp(
@@ -944,10 +916,8 @@ public:
             break;
 
         default:
-            {
-                LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
-                throw Error(ERR_SESSION_UNKNOWN_BACKEND);
-            }
+            LOG(LOG_INFO, "ModuleManager::Unknown backend exception");
+            throw Error(ERR_SESSION_UNKNOWN_BACKEND);
         }
     }
 
@@ -956,45 +926,53 @@ public:
     }
 
 private:
-    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail)
+    unique_fd connect_to_target_host(ReportMessageApi& report_message, trkeys::TrKey const& authentification_fail, char const * protocol)
     {
-        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
-        char ip_addr[256] {};
-        in_addr s4_sin_addr;
-        int status = resolve_ipv4_address(ip, s4_sin_addr);
-        if (status){
+        auto throw_error = [this, &protocol, &report_message](char const* error_message, int id) {
+            LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
+                R"(target="%s" host="%s" port="%d" reason="%s")",
+                this->ini.get<cfg::context::real_target_device>(),
+                this->ini.get<cfg::context::target_host>(),
+                this->ini.get<cfg::context::target_port>(),
+                error_message);
 
             ArcsightLogInfo arc_info;
             arc_info.name = "CONNECTION";
             arc_info.signatureID = ArcsightLogInfo::CONNECTION;
-            arc_info.ApplicationProtocol = "xup";
+            arc_info.ApplicationProtocol = protocol;
             arc_info.WallixBastionStatus = "FAIL";
             arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
             report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, this->session_reactor.get_current_time());
 
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-            // TODO: actually this is DNS Failure or invalid address
-            LOG(LOG_ERR, "Failed to connect to remote TCP host (1)");
+
+            LOG(LOG_ERR, "%s", (id == 1)
+                ? "Failed to connect to remote TCP host (1)"
+                : "Failed to connect to remote TCP host (2)");
             throw Error(ERR_SOCKET_CONNECT_FAILED);
+        };
+
+        LOG_PROXY_SIEM("TARGET_CONNECTION",
+            R"(target="%s" host="%s" port="%d")",
+            this->ini.get<cfg::context::real_target_device>(),
+            this->ini.get<cfg::context::target_host>(),
+            this->ini.get<cfg::context::target_port>());
+
+        const char * ip = this->ini.get<cfg::context::target_host>().c_str();
+        char ip_addr[256] {};
+        in_addr s4_sin_addr;
+        if (auto error_message = resolve_ipv4_address(ip, s4_sin_addr)) {
+            // TODO: actually this is DNS Failure or invalid address
+            throw_error(error_message, 1);
         }
 
         snprintf(ip_addr, sizeof(ip_addr), "%s", inet_ntoa(s4_sin_addr));
 
-        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000);
+        char const* error_message = nullptr;
+        unique_fd client_sck = ip_connect(ip, this->ini.get<cfg::context::target_port>(), 3, 1000, &error_message);
 
-        if (!client_sck.is_open()){
-
-            ArcsightLogInfo arc_info;
-            arc_info.name = "CONNECTION";
-            arc_info.signatureID = ArcsightLogInfo::CONNECTION;
-            arc_info.ApplicationProtocol = "xup";
-            arc_info.WallixBastionStatus = "FAIL";
-            arc_info.direction_flag = ArcsightLogInfo::SERVER_DST;
-            report_message.log6("type=\"CONNECTION_FAILED\"", arc_info, this->session_reactor.get_current_time());
-
-            this->ini.set<cfg::context::auth_error_message>(TR(trkeys::target_fail, language(this->ini)));
-            LOG(LOG_ERR, "Failed to connect to remote TCP host (2)");
-            throw Error(ERR_SOCKET_CONNECT_FAILED);
+        if (!client_sck.is_open()) {
+            throw_error(error_message, 2);
         }
 
         this->ini.set<cfg::context::auth_error_message>(TR(authentification_fail, language(this->ini)));

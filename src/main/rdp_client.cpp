@@ -143,7 +143,7 @@ int main(int argc, char** argv)
 
     SSL_library_init();
 
-    ClientFront front(client_info, verbose);
+    ClientFront front(client_info.screen_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
     TimeSystem system_timeobj;
@@ -260,7 +260,7 @@ int main(int argc, char** argv)
         });
     };
 
-    error_t eid = run_rdp();
+    int eid = run_rdp();
 
     if (ERR_RDP_SERVER_REDIR != eid) {
         return eid  ? 1 : 0;
