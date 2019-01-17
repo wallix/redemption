@@ -96,6 +96,8 @@ struct ClipboardSideData {
 struct ClipboardData {
     using format_name_inventory_type = std::map<uint32_t, std::string>;
 
+    std::vector<RDPECLIP::FileDescriptor> file_descr_list;
+
     ClipboardSideData server_data;
     ClipboardSideData client_data;
 
@@ -355,8 +357,9 @@ struct ClientFormatDataResponseReceive {
 
     std::string  data_to_dump;
 
+    std::vector<RDPECLIP::FileDescriptor> files_descriptors;
+
     ClientFormatDataResponseReceive(ClipboardSideData & clip_side_data, ClipboardData & clip_data, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t flags, const RDPVerbose verbose) {
-        std::vector<RDPECLIP::FileDescriptor> fds;
 
         if (clip_side_data.file_list_format_id && (clip_data.requestedFormatId == clip_side_data.file_list_format_id)) {
             if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -397,7 +400,7 @@ struct ClientFormatDataResponseReceive {
                         fd.log(LOG_INFO);
                     }
 
-                    fds.push_back(fd);
+                    this->files_descriptors.push_back(fd);
 
                     clip_side_data.file_descriptor_stream.rewind();
                 }
@@ -412,7 +415,7 @@ struct ClientFormatDataResponseReceive {
                     fd.log(LOG_INFO);
                 }
 
-                fds.push_back(fd);
+                this->files_descriptors.push_back(fd);
             }
 
             if (chunk.in_remain()) {
@@ -428,7 +431,7 @@ struct ClientFormatDataResponseReceive {
                 clip_data.requestedFormatId  = 0;
             }
 
-            for (RDPECLIP::FileDescriptor const& fd : fds) {
+            for (RDPECLIP::FileDescriptor const& fd : this->files_descriptors) {
 //                 const bool from_remote_session = false;
                 clip_side_data.update_file_contents_request_inventory(fd);
             }

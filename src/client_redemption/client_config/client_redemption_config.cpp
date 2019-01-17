@@ -28,8 +28,7 @@ ClientRedemptionConfig::ClientRedemptionConfig(RDPVerbose verbose, const std::st
             : (MAIN_DIR.back() == '/')
             ? MAIN_DIR.substr(0, MAIN_DIR.size() - 1)
             : MAIN_DIR)
-, verbose(verbose)
-{}
+, verbose(verbose) {}
 
 
 

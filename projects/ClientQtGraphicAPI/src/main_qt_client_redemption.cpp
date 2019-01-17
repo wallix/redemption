@@ -318,7 +318,7 @@ int main(int argc, char** argv)
 
     QApplication app(argc, argv);
 
-    RDPVerbose verbose = to_verbose_flags(0x0);
+    RDPVerbose verbose = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;   //to_verbose_flags(0x0);
     ClientRedemptionConfig config(verbose, CLIENT_REDEMPTION_MAIN_PATH);
     ClientConfig::set_config(argc, const_cast<const char**>(argv), config);
 

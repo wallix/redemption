@@ -25,30 +25,30 @@
 
 
 class ChannelFile {
-    
+
 private:
     const std::string dir_path;
     unique_fd fd;
     size_t total_file_size;
     size_t current_file_size ;
-    
+
     bool validated;
-    
+
 public:
-    ChannelFile(const std::string & dir_path) 
+    ChannelFile(const std::string & dir_path)
     : dir_path(dir_path)
     , fd(invalid_fd())
     , total_file_size(0)
     ,current_file_size(0)
     , validated(false)
     {}
-    
-    void set_total_file_size(const size_t total_file_size) {
+
+//     void set_total_file_size() {
+//         this->total_file_size = total_file_size;
+//     }
+
+    void new_file(const std::string & filename, const size_t total_file_size) {
         this->total_file_size = total_file_size;
-    }
-    
-    void new_file(const std::string & filename) {
-        this->total_file_size = 0;
         this->current_file_size = 0;
         this->fd.close();
         std::string file_path = this->dir_path + filename;
@@ -62,13 +62,13 @@ public:
             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
         }
     }
-    
+
     void set_data(const uint8_t * data, const size_t data_size) {
         if (this->fd.is_open()) {
             if ((this->current_file_size + data_size) <= this->total_file_size) {
-            
+
                 int written_data_size = ::write(this->fd.fd(), data, data_size);
-                
+
                 if (written_data_size == -1 && int(data_size) == written_data_size) {
                     LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
                 } else {
@@ -80,13 +80,13 @@ public:
             }
         }
     }
-    
+
     bool is_complete() {
         return this->total_file_size == this->current_file_size;
     }
-    
+
     ~ChannelFile() {
         this->fd.close();
     }
-    
+
 };

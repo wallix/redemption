@@ -36,15 +36,15 @@ RED_AUTO_TEST_CASE(TestChannelFileCtr)
     ChannelFile file(wd.dirname());
 
     auto const file1 = wd.add_file("new_file1.txt");
-    file.new_file("new_file1.txt");
+    file.new_file("new_file1.txt", 0);
 
     auto const file2 = wd.add_file("new_file2.txt");
-    file.new_file("new_file2.txt");
+    file.new_file("new_file2.txt", 0);
 
     RED_CHECK_WORKSPACE(wd);
 }
 
-    
+
 
 RED_AUTO_TEST_CASE(TestChannelFileWrite)
 {
@@ -53,17 +53,17 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     ChannelFile file(wd.dirname());
 
     auto const file1 = wd.add_file("new_file1.txt");
-    file.new_file("new_file1.txt");
-    RED_CHECK_WORKSPACE(wd);
-    RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_total_file_size(12);
-    RED_CHECK_EQUAL(file.is_complete(), false);
-    
+
     const char * word1 = "hello ";
     const char * word2 = "world!";
     const char * word3 = "again";
     const char * word4 = "goodbye ";
-    
+
+    file.new_file("new_file1.txt", 12);
+    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_EQUAL(file.is_complete(), false);
+
+
     file.set_data(reinterpret_cast<const uint8_t *>(word1), 6);
     RED_CHECK_EQUAL(file.is_complete(), false);
     file.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
@@ -74,12 +74,10 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
 
     auto const file2 = wd.add_file("new_file2.txt");
-    file.new_file("new_file2.txt");
+    file.new_file("new_file2.txt", 14);
     RED_CHECK_WORKSPACE(wd);
-    RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_total_file_size(14);
     RED_CHECK_EQUAL(file.is_complete(), false);
-    
+
     file.set_data(reinterpret_cast<const uint8_t *>(word4), 8);
     RED_CHECK_EQUAL(file.is_complete(), false);
     file.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
@@ -88,9 +86,9 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     RED_CHECK_EQUAL(file.is_complete(), true);
 
     RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
-    
+
     RED_CHECK_EQUAL(get_file_contents(file2), "goodbye world!");
-    
+
     RED_CHECK_WORKSPACE(wd);
 
 }

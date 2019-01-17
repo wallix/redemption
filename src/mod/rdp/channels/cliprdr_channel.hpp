@@ -40,8 +40,6 @@
 
 
 
-
-
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {
 private:
@@ -65,11 +63,11 @@ private:
     SessionProbeLauncher* format_data_request_notifier     = nullptr;
 
     const bool proxy_managed;   // Has not client.
-    
-    bool channel_filter_on = false;
-    
+
+    bool channel_filter_on;
+
     ChannelFile channel_file;
-    
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -89,7 +87,7 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        FrontAPI& front,
+        FrontAPI& front, const bool channel_filter_on,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -101,7 +99,8 @@ public:
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
     , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
     , front(front)
-    , proxy_managed(to_client_sender_ == nullptr) 
+    , proxy_managed(to_client_sender_ == nullptr)
+    , channel_filter_on(channel_filter_on)
     , channel_file("/tmp/") {}
 
 protected:
@@ -145,6 +144,8 @@ public:
         InStream& chunk, const RDPECLIP::CliprdrHeader & in_header)
     {
         (void)total_length;
+
+        this->clip_data.file_descr_list.clear();
 
         ClientFormatListReceive receiver(this->clip_data.client_data.use_long_format_names,
                                          this->clip_data.server_data.use_long_format_names,
@@ -256,10 +257,9 @@ public:
                 if (!this->param_clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (this->channel_filter_on) {
-                    
-//                     clip_data.client_data.file_contents_request_info_inventory[receiver.streamID].lindex;
-//                     
-//                     this->channel_file.new_file();
+
+                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+                    this->channel_file.new_file(desc.file_name, desc.file_size());
                 }
                 send_message_to_server = this->param_clipboard_file_authorized;
             }
@@ -280,6 +280,11 @@ public:
 
                         const bool is_from_remote_session = false;
                         this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+
+
+                        for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
+                            this->clip_data.file_descr_list.push_back(file);
+                        }
                     }
 
                     send_message_to_server = true;
@@ -297,9 +302,10 @@ public:
                 }
 
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
-                
-//                 this->fd = unique_fd("", O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
 
+                if (this->channel_filter_on) {
+                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
                     this->log_file_info(receive.file_info, from_remote_session);
@@ -414,6 +420,8 @@ public:
         (void)total_length;
         (void)flags;
 
+        this->clip_data.file_descr_list.clear();
+
         if (!this->param_clipboard_down_authorized &&
             !this->param_clipboard_up_authorized) {
             LOG(LOG_WARNING,
@@ -504,6 +512,11 @@ public:
                 }
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
+                if (this->channel_filter_on) {
+                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+                    this->channel_file.new_file(desc.file_name, desc.file_size());
+                }
+
                 if (!this->param_clipboard_file_authorized) {
                     ServerFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 }
@@ -523,6 +536,10 @@ public:
                 }
 
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
+
+                if (this->channel_filter_on) {
+                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                }
 
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = true;

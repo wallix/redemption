@@ -593,7 +593,7 @@ deviceIOResponse.emit(out_stream);
 void ClientRDPDRChannel::process_iorequest_create(InStream & chunk, rdpdr::DeviceIOResponse &  deviceIOResponse, OutStream & out_stream, uint32_t id) {
     rdpdr::DeviceCreateRequest request;
     request.receive(chunk);
-    request.log();
+//     request.log();
 
     if (id == 0) {
         std::string new_path(this->share_dir + request.Path().data());
