@@ -90,8 +90,7 @@ void FlatLoginMod::notify(Widget* sender, notify_event_t event)
 {
     switch (event) {
     case NOTIFY_SUBMIT: {
-        char const* username = this->login.login_edit.get_text();
-        this->vars.set_acl<cfg::globals::auth_user>(username);
+        this->vars.set_acl<cfg::globals::auth_user>(this->login.login_edit.get_text());
         this->vars.ask<cfg::context::selector>();
         this->vars.ask<cfg::globals::target_user>();
         this->vars.ask<cfg::globals::target_device>();

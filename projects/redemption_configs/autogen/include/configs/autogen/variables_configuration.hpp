@@ -3353,6 +3353,7 @@ namespace cfg {
         type value{};
     };
 
+    /// Proxy session log id <br/>
     /// type: std::string <br/>
     /// sesman <- proxy <br/>
     /// value{} <br/>

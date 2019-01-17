@@ -809,8 +809,9 @@ class Sesman():
                 # PASSWORD based Authentication
                 is_magic_password = self.shared.get(u'password') == MAGICASK
                 is_otp = wab_login.startswith('_OTP_')
-                is_challenge = bool(self.engine.get_challenge())
-                method = ((is_otp and "OTP") or (is_challenge and "Challenge") or "Password")
+                method = ((is_otp and "OTP") or
+                          (self.engine.get_challenge() and "Challenge") or
+                          "Password")
                 self.rdplog.log(type="AUTHENTICATION_TRY", method=method)
                 if ((is_magic_password and not is_otp)  # one-time pwd
                     or not self.engine.password_authenticate(
