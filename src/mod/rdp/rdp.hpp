@@ -269,7 +269,6 @@ private:
         std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
         std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
-        SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
         const bool remote_program;
         const bool remote_program_enhanced;
@@ -673,7 +672,7 @@ private:
             }
         }
 
-        inline SessionProbeVirtualChannel& get_session_probe_virtual_channel(
+        inline void create_session_probe_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
                         AsynchronousTaskContainer & asynchronous_tasks,
@@ -686,65 +685,61 @@ private:
                         GeneralCaps const & client_general_caps,
                         const char (& client_name)[128]
                     ) {
-            if (!this->session_probe_virtual_channel) {
-                assert(!this->session_probe_to_server_sender);
+            assert(!this->session_probe_to_server_sender);
 
-                this->session_probe_to_server_sender =
-                    this->create_to_server_synchronous_sender(channel_names::sespro, stc);
+            this->session_probe_to_server_sender =
+                this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
-                if (!this->file_system_virtual_channel) {
-                    this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
-                }
-
-                FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
-
-                SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
-
-                sp_vc_params.front_width = stc.negociation_result.front_width;
-                sp_vc_params.front_height = stc.negociation_result.front_height;
-                sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
-                sp_vc_params.verbose  = this->verbose;
-                sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
-                sp_vc_params.real_working_dir = this->real_working_dir.c_str();
-                sp_vc_params.lang = lang;
-                sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && allow_using_multiple_monitors && (monitor_count > 1));
-                sp_vc_params.show_maximized = (!remote_program);
-                sp_vc_params.target_informations = this->session_probe_target_informations.c_str();
-
-                sp_vc_params.session_probe_launch_timeout = this->session_probe_launch_timeout;
-                sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe_launch_fallback_timeout;
-                sp_vc_params.session_probe_keepalive_timeout = this->session_probe_keepalive_timeout;
-                sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe_on_keepalive_timeout;
-                sp_vc_params.session_probe_on_launch_failure = this->session_probe_on_launch_failure;
-                sp_vc_params.session_probe_end_disconnected_session = this->session_probe_end_disconnected_session;
-                sp_vc_params.session_probe_disconnected_application_limit = this->session_probe_disconnected_application_limit;
-                sp_vc_params.session_probe_disconnected_session_limit = this->session_probe_disconnected_session_limit;
-                sp_vc_params.session_probe_idle_session_limit =  this->session_probe_idle_session_limit;
-                sp_vc_params.session_probe_enable_log = this->session_probe_enable_log;
-                sp_vc_params.session_probe_enable_log_rotation = this->session_probe_enable_log_rotation;
-                sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe_allow_multiple_handshake;
-                sp_vc_params.session_probe_enable_crash_dump = this->session_probe_enable_crash_dump;
-                sp_vc_params.session_probe_handle_usage_limit = this->session_probe_handle_usage_limit;
-                sp_vc_params.session_probe_memory_usage_limit = this->session_probe_memory_usage_limit;
-                sp_vc_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
-                sp_vc_params.session_probe_childless_window_as_unidentified_input_field = this->session_probe_childless_window_as_unidentified_input_field;
-                sp_vc_params.session_probe_extra_system_processes = this->session_probe_extra_system_processes.c_str();
-                sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe_outbound_connection_monitoring_rules.c_str();
-                sp_vc_params.session_probe_process_monitoring_rules = this->session_probe_process_monitoring_rules.c_str();
-                sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
-
-                this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-                        session_reactor,
-                        this->session_probe_to_server_sender.get(),
-                        front,
-                        mod,
-                        rdp,
-                        file_system_virtual_channel,
-                        this->gen,
-                        sp_vc_params);
+            if (!this->file_system_virtual_channel) {
+                this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
             }
 
-            return *this->session_probe_virtual_channel;
+            FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
+
+            SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
+
+            sp_vc_params.front_width = stc.negociation_result.front_width;
+            sp_vc_params.front_height = stc.negociation_result.front_height;
+            sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
+            sp_vc_params.verbose  = this->verbose;
+            sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
+            sp_vc_params.real_working_dir = this->real_working_dir.c_str();
+            sp_vc_params.lang = lang;
+            sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && allow_using_multiple_monitors && (monitor_count > 1));
+            sp_vc_params.show_maximized = (!remote_program);
+            sp_vc_params.target_informations = this->session_probe_target_informations.c_str();
+
+            sp_vc_params.session_probe_launch_timeout = this->session_probe_launch_timeout;
+            sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe_launch_fallback_timeout;
+            sp_vc_params.session_probe_keepalive_timeout = this->session_probe_keepalive_timeout;
+            sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe_on_keepalive_timeout;
+            sp_vc_params.session_probe_on_launch_failure = this->session_probe_on_launch_failure;
+            sp_vc_params.session_probe_end_disconnected_session = this->session_probe_end_disconnected_session;
+            sp_vc_params.session_probe_disconnected_application_limit = this->session_probe_disconnected_application_limit;
+            sp_vc_params.session_probe_disconnected_session_limit = this->session_probe_disconnected_session_limit;
+            sp_vc_params.session_probe_idle_session_limit =  this->session_probe_idle_session_limit;
+            sp_vc_params.session_probe_enable_log = this->session_probe_enable_log;
+            sp_vc_params.session_probe_enable_log_rotation = this->session_probe_enable_log_rotation;
+            sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe_allow_multiple_handshake;
+            sp_vc_params.session_probe_enable_crash_dump = this->session_probe_enable_crash_dump;
+            sp_vc_params.session_probe_handle_usage_limit = this->session_probe_handle_usage_limit;
+            sp_vc_params.session_probe_memory_usage_limit = this->session_probe_memory_usage_limit;
+            sp_vc_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
+            sp_vc_params.session_probe_childless_window_as_unidentified_input_field = this->session_probe_childless_window_as_unidentified_input_field;
+            sp_vc_params.session_probe_extra_system_processes = this->session_probe_extra_system_processes.c_str();
+            sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe_outbound_connection_monitoring_rules.c_str();
+            sp_vc_params.session_probe_process_monitoring_rules = this->session_probe_process_monitoring_rules.c_str();
+            sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
+
+            this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
+                    session_reactor,
+                    this->session_probe_to_server_sender.get(),
+                    front,
+                    mod,
+                    rdp,
+                    file_system_virtual_channel,
+                    this->gen,
+                    sp_vc_params);
         }
 
         inline void create_remote_programs_virtual_channel(
@@ -971,7 +966,20 @@ private:
             const Translation::language_t & lang
         ) {
             (void)session_probe_channel;
-            SessionProbeVirtualChannel& channel = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks, session_reactor, mod_rdp, rdp, lang, bogus_refresh_rect, allow_using_multiple_monitors, monitor_count, client_general_caps, client_name);
+            if (!this->session_probe_virtual_channel) {
+                this->create_session_probe_virtual_channel(
+                        front, stc, 
+                        asynchronous_tasks, session_reactor, 
+                        mod_rdp, rdp,
+                        lang,
+                        bogus_refresh_rect,
+                        allow_using_multiple_monitors,
+                        monitor_count,
+                        client_general_caps,
+                        client_name);
+            }
+
+            SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -1747,21 +1755,26 @@ private:
                 fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
 
                 this->file_system_drive_manager.set_session_probe_launcher(this->session_probe_launcher.get());
-                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc,
-                                                                asynchronous_tasks, session_reactor,
-                                                                mod_rdp, rdp, lang,
-                                                                bogus_refresh_rect,
-                                                                allow_using_multiple_monitors,
-                                                                monitor_count,
-                                                                client_general_caps,
-                                                                client_name);
-                spvc.set_session_probe_launcher(this->session_probe_launcher.get());
-                this->session_probe_virtual_channel_p = &spvc;
+
+                if (!this->session_probe_virtual_channel) {
+                    this->create_session_probe_virtual_channel(
+                            front, stc, 
+                            asynchronous_tasks, session_reactor, 
+                            mod_rdp, rdp,
+                            lang,
+                            bogus_refresh_rect,
+                            allow_using_multiple_monitors,
+                            monitor_count,
+                            client_general_caps,
+                            client_name);
+                }
+
+                this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe_launcher.get());
                 if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                    spvc.start_launch_timeout_timer();
+                    this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
-                this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
                 if (this->remote_program) {
                 
@@ -1770,26 +1783,28 @@ private:
                     }
 
                     RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
-                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
                     rpvc.set_session_probe_launcher(this->session_probe_launcher.get());
                     this->session_probe_launcher->set_remote_programs_virtual_channel(&rpvc);
                 }
             }
-            else // this->channels.this->session_probe_launcher)
+            else // this->session_probe_launcher)
             {
-                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks,
-                                                                                           session_reactor,
-                                                                                           mod_rdp,
-                                                                                           rdp,
-                                                                                           lang,
-                                                                                           bogus_refresh_rect,
-                                                                                           allow_using_multiple_monitors,
-                                                                                           monitor_count,
-                                                                                           client_general_caps,
-                                                                                           client_name);
-                this->session_probe_virtual_channel_p = &spvc;
+                if (!this->session_probe_virtual_channel) {
+                    this->create_session_probe_virtual_channel(
+                            front, stc, 
+                            asynchronous_tasks, session_reactor, 
+                            mod_rdp, rdp,
+                            lang,
+                            bogus_refresh_rect,
+                            allow_using_multiple_monitors,
+                            monitor_count,
+                            client_general_caps,
+                            client_name);
+                }
+
                 if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                    spvc.start_launch_timeout_timer();
+                    this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 if (this->remote_program) {
                     if (!this->remote_programs_virtual_channel) {
@@ -1797,7 +1812,7 @@ private:
                     }
 
                     RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
-                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
                 }
             }
         }
@@ -2306,13 +2321,22 @@ public:
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
                 if (this->channels.enable_session_probe) {
-                    auto & session_probe = this->channels.get_session_probe_virtual_channel(this->front, stc,
-                                            this->asynchronous_tasks, this->session_reactor,
-                                            *this,*this, this->lang, this->bogus_refresh_rect,
-                                            this->allow_using_multiple_monitors, this->monitor_count,
-                                            this->client_general_caps, this->client_name);
+                
+                    if (!this->channels.session_probe_virtual_channel) {
+                        this->channels.create_session_probe_virtual_channel(
+                                this->front, this->stc, 
+                                this->asynchronous_tasks, this->session_reactor, 
+                                *this, *this,
+                                this->lang,
+                                this->bogus_refresh_rect,
+                                this->allow_using_multiple_monitors,
+                                this->monitor_count,
+                                this->client_general_caps,
+                                this->client_name);
+                    }
+
                     if (!this->channels.session_probe_launcher->is_keyboard_sequences_started()
-                        || session_probe.has_been_launched()) {
+                        || this->channels.session_probe_virtual_channel->has_been_launched()) {
                         LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
@@ -2847,8 +2871,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            if ((!this->channels.session_probe_virtual_channel_p
-                || !this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required())
+            if ((!this->channels.session_probe_virtual_channel
+                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
@@ -3417,8 +3441,8 @@ public:
                     throw;
                 }
 
-                if (this->channels.session_probe_virtual_channel_p &&
-                    this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                if (this->channels.session_probe_virtual_channel
+                &&  this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
                 this->front.must_be_stop_capture();
@@ -4964,9 +4988,9 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
-        if (this->channels.session_probe_virtual_channel_p &&
-            this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-            this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
+        if (this->channels.session_probe_virtual_channel
+        && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
@@ -5027,9 +5051,9 @@ public:
                     disable_input_event, disable_graphics_update);
             }
 
-            if (this->channels.session_probe_virtual_channel_p &&
-                this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-                this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
+            if (this->channels.session_probe_virtual_channel
+            && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
         }
         break;
