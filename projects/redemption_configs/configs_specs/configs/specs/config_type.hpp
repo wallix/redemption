@@ -62,6 +62,12 @@ inline void config_type_definition(type_enumerations & e)
       .value("meta", "keyboard log in recorded meta")
     ;
 
+    e.enumeration_flags("KeyboardLogFlagsCP")
+      .value("none")
+      .value("syslog", "keyboard log in syslog")
+      .value("wrm", "keyboard log in recorded sessions")
+    ;
+
     e.enumeration_flags("ClipboardLogFlags")
       .value("none")
       .value("syslog", "clipboard log in syslog")

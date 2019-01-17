@@ -375,8 +375,9 @@ public:
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
+        constexpr bool has_ini_and_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::authorize_ini_and_connpolicy> || ...);
         static_assert(
-            !has_conn_policy || ((
+            has_ini_and_conn_policy || !has_conn_policy || ((
                 is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>
              || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::hidden_in_gui)>
             ) || ...),

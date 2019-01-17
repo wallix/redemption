@@ -19,6 +19,24 @@ transformation_rule = string(default='')
 vault_transformation_rule = string(default='')
 
 
+[video]
+
+# Disable keyboard log:
+#   0: none
+#   1: disable keyboard log in syslog
+#   2: disable keyboard log in recorded sessions
+#   4: disable keyboard log in recorded meta
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+disable_keyboard_log = integer(min=0, max=7, default=1)
+
+[session_log]
+
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
+#   3: keyboard input are fully masked
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
+
 [rdp]
 
 # NLA authentication in secondary target.
@@ -50,14 +68,6 @@ remote_programs_disconnect_message_delay = integer(min=0, default=3000)
 
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
-
-[session_log]
-
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
-#   3: keyboard input are fully masked
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [server_cert]
 

@@ -291,6 +291,10 @@ namespace sesman
         inline internal::sesman_io_t<internal::io::rw>                sesman_rw{};
     }
 
+    class authorize_ini_and_connpolicy
+    {
+    };
+
     struct connection_policy
     {
         char const* file;

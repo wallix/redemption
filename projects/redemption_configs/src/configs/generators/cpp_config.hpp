@@ -163,15 +163,9 @@ struct CppConfigWriterBase : ConfigSpecWriterBase<Inherit, cpp::name>
 
         // write type
         if (bool(properties) || is_convertible_v<Pack, spec_attr_t>) {
-            auto type_sesman = get_type<sesman::type_>(infos);
             auto type_spec = get_type<spec::type_>(infos);
-            static_assert(
-                std::is_same_v<decltype(type_spec), decltype(type_sesman)>
-             || is_convertible_v<Pack, sesman_io_t> != is_convertible_v<Pack, spec_attr_t>,
-                "different type for sesman and spec isn't supported (go code :D)"
-            );
             this->tab(); this->out() << "    using sesman_and_spec_type = ";
-            this->inherit().write_type_spec(type_sesman);
+            this->inherit().write_type_spec(type_spec);
             this->out() << ";\n";
             this->tab(); this->out() << "    using mapped_type = sesman_and_spec_type;\n";
         }

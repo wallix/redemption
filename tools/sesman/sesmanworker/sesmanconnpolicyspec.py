@@ -2,6 +2,12 @@
 # -*- coding: utf-8 -*-
 
 cp_spec = {
+  'video': {
+    u'disable_keyboard_log': 'disable_keyboard_log',
+  },
+  'session_log': {
+    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
+  },
   'rdp': {
     u'enable_nla': 'enable_nla',
     u'enable_kerberos': 'enable_kerberos',
@@ -12,9 +18,6 @@ cp_spec = {
     u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
     u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
     u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
-  },
-  'session_log': {
-    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
   },
   'server_cert': {
     u'server_cert_store': 'server_cert_store',

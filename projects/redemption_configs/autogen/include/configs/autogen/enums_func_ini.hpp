@@ -119,6 +119,22 @@ inline parse_error parse(KeyboardLogFlags & x, spec_type<KeyboardLogFlags> /*typ
     return parse_enum_u(x, value, std::integral_constant<unsigned long, 7>());
 }
 
+template<> struct zstr_buffer_traits<KeyboardLogFlagsCP> : zstr_buffer_traits<unsigned long> {};
+
+inline array_view_const_char assign_zbuf_from_cfg(
+    zstr_buffer_from<KeyboardLogFlagsCP> & buf,
+    cfg_s_type<KeyboardLogFlagsCP> /*type*/,
+    KeyboardLogFlagsCP x
+) {
+    int sz = snprintf(buf.get(), buf.size(), "%lu", static_cast<unsigned long>(x));
+    return array_view_const_char(buf.get(), sz);
+}
+
+inline parse_error parse(KeyboardLogFlagsCP & x, spec_type<KeyboardLogFlagsCP> /*type*/, array_view_const_char value)
+{
+    return parse_enum_u(x, value, std::integral_constant<unsigned long, 3>());
+}
+
 template<> struct zstr_buffer_traits<ClipboardLogFlags> : zstr_buffer_traits<unsigned long> {};
 
 inline array_view_const_char assign_zbuf_from_cfg(
