@@ -46,10 +46,10 @@ import syslog
 class RdpProxyLog(object):
     def __init__(self):
         syslog.openlog('rdpproxy')
-        self._context = '[RDP Proxy] '
+        self._context = '[rdpproxy] '
 
     def update_context(self, psid, user):
-        self._context = '[RDP Proxy] psid="%s" user="%s" ' % (psid, user)
+        self._context = '[rdpproxy] psid="%s" user="%s" ' % (psid, user)
 
     def log(self, **kwargs):
         syslog.syslog(syslog.LOG_INFO,
