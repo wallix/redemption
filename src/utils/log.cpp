@@ -55,7 +55,7 @@ namespace detail
             LOG_PROXY_SIEM("TARGET_DISCONNECTION", R"(reason="%s")", reason);
         }
         else {
-            LOG_PROXY_SIEM("TARGET_DISCONNECTION", "");
+            LOG_PROXY_SIEM("TARGET_DISCONNECTION", "%s", "");
         }
     }
 
