@@ -304,7 +304,8 @@ public:
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
                 if (this->channel_filter_on) {
-                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    InStream channel_file_stream = chunk.clone();
+                    this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
@@ -538,7 +539,8 @@ public:
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
                 if (this->channel_filter_on) {
-                    this->channel_file.set_data(chunk.get_current(), chunk.in_remain());
+                    InStream channel_file_stream = chunk.clone();
+                    this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }
 
                 if (receive.must_log_file_info_type) {

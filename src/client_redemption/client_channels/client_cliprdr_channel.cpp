@@ -521,14 +521,16 @@
 
                     RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
 
-                    RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest+1
-                                                                        , cb_filesList.lindexToRequest
-                                                                        , RDPECLIP::FILECONTENTS_SIZE
-                                                                        , 0
-                                                                        , 0
-                                                                        , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED
-                                                                        , 0
-                                                                        , true);
+                    RDPECLIP::FileContentsRequestPDU fileContentsRequest(
+                                  cb_filesList.streamIDToRequest+1
+                                , cb_filesList.lindexToRequest
+                                , RDPECLIP::FILECONTENTS_SIZE
+                                , 0
+                                , 0
+                                , RDPECLIP::FILECONTENTS_SIZE_CB_REQUESTED
+                                , 0
+                                , true);
+
                     StaticOutStream<64> out_streamRequest;
                     fileContentsRequestHeader.emit(out_streamRequest);
                     fileContentsRequest.emit(out_streamRequest);
@@ -569,14 +571,16 @@
                         StaticOutStream<64> out_streamRequest;
                         RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
 
-                        RDPECLIP::FileContentsRequestPDU fileContentsRequest( cb_filesList.streamIDToRequest
-                                                                            , cb_filesList.lindexToRequest
-                                                                            , this->file_content_flag
-                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size
-                                                                            , cb_filesList.itemslist[cb_filesList.lindexToRequest].size >> 32
-                                                                            , 0
-                                                                            , 0
-                                                                            , true);
+                        RDPECLIP::FileContentsRequestPDU fileContentsRequest(
+                                      cb_filesList.streamIDToRequest
+                                    , cb_filesList.lindexToRequest
+                                    , this->file_content_flag
+                                    , 0
+                                    , 0
+                                    , 0xffffffff
+                                    , 0
+                                    , true);
+
                         fileContentsRequestHeader.emit(out_streamRequest);
                         fileContentsRequest.emit(out_streamRequest);
                         const uint32_t total_length_FormatContentRequestPDU = out_streamRequest.get_offset();
