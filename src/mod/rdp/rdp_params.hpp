@@ -73,7 +73,7 @@ struct ModRDPParams
     bool enable_session_probe = false;
     bool session_probe_enable_launch_mask = true;
     bool enable_ninegrid_bitmap = false;
-    bool enable_remotefx = true;
+    bool enable_remotefx = false;
 
     bool disable_clipboard_log_syslog = false;
     bool disable_clipboard_log_wrm = false;
