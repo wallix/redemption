@@ -72,26 +72,28 @@ public:
 
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override;
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override;
-    void draw(const RDP::RAIL::WindowIcon                     & cmd) override;
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) override;
+    void draw(const RDP::RAIL::WindowIcon                     & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::CachedIcon                     & cmd) override;
+    void draw(const RDP::RAIL::CachedIcon                     & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::DeletedWindow                  & cmd) override;
+    void draw(const RDP::RAIL::DeletedWindow                  & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & cmd) override;
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::DeletedNotificationIcons       & cmd) override;
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & cmd) override;
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*cmd*/) override;
 
-    void draw(const RDP::RAIL::NonMonitoredDesktop            & cmd) override;
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*cmd*/) override;
 
-    void draw(RDPColCache   const & cmd) override;
+    void draw(RDPColCache   const & /*cmd*/) override;
 
-    void draw(RDPBrushCache const & cmd) override;
+    void draw(RDPBrushCache const & /*cmd*/) override;
 
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
+
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }

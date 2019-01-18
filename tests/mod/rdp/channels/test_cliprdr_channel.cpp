@@ -399,41 +399,41 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 }
 
 
-RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
-    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
-    FakeFront front(screen_info);
-
-    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-
-    NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
-
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
-
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
-
-    #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-
-    TestToClientSender to_client_sender(t);
-    TestToServerSender to_server_sender(t);
-
-    ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, true,
-        clipboard_virtual_channel_params);
-
-    WorkingDirectory wd("");
-    auto const file1 = wd.add_file("new_file1.txt");
-
-
-
-    RED_CHECK_WORKSPACE(wd);
-}
+// RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
+//     ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+//     FakeFront front(screen_info);
+//
+//     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+//
+//     NullReportMessage report_message;
+//     ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+//
+//     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
+//     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+//
+//     clipboard_virtual_channel_params.clipboard_down_authorized = true;
+//     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+//     clipboard_virtual_channel_params.clipboard_file_authorized = true;
+//
+//     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+//     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+//
+//     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+//
+//     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
+//     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+//
+//     TestToClientSender to_client_sender(t);
+//     TestToServerSender to_server_sender(t);
+//
+//     ClipboardVirtualChannel clipboard_virtual_channel(
+//         &to_client_sender, &to_server_sender, front, true,
+//         clipboard_virtual_channel_params);
+//
+//     WorkingDirectory wd("");
+//     auto const file1 = wd.add_file("new_file1.txt");
+//
+//
+//
+//     RED_CHECK_WORKSPACE(wd);
+// }
