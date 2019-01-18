@@ -24,11 +24,8 @@ exe headlessclient :
   <library>src/client_redemption/client_channels/client_rdpsnd_channel.o
   <library>src/client_redemption/client_config/client_redemption_config.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -66,7 +63,6 @@ exe headlessclient :
   <library>src/utils/log.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/set_exception_handler_pretty_message.o
   <library>src/utils/strutils.o
@@ -107,11 +103,8 @@ exe rdpproxy :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/check_files.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
@@ -188,7 +181,6 @@ exe rdpproxy :
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -250,11 +242,8 @@ exe rdpclient :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
@@ -289,7 +278,6 @@ exe rdpclient :
   <library>src/utils/log.o
   <library>src/utils/netutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -518,11 +506,8 @@ test-run tests/acl/test_module_manager :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -596,7 +581,6 @@ test-run tests/acl/test_module_manager :
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -840,11 +824,8 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -865,7 +846,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -925,11 +905,8 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -950,7 +927,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -975,11 +951,8 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -1000,7 +973,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2463,24 +2435,6 @@ test-run tests/core/RDP/test_remote_programs :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
-test-run tests/core/RDP/test_remotefx :
-  $(REDEMPTION_TEST_PATH)/core/RDP/test_remotefx.cpp
-:
-  <library>boost_stacktrace
-  <library>src/core/RDP/dwt.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
-  <library>src/core/error.o
-  <library>src/core/font.o
-  <library>src/gdi/graphic_api.o
-  <library>src/utils/log.o
-  <library>src/utils/primitives/primitives.o
-  <library>src/utils/strutils.o
-  <library>src/utils/utf.o
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
-;
 test-run tests/core/RDP/test_rlgr :
   $(REDEMPTION_TEST_PATH)/core/RDP/test_rlgr.cpp
 :
@@ -2733,11 +2687,8 @@ test-run tests/core/test_mainloop :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2813,7 +2764,6 @@ test-run tests/core/test_mainloop :
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2862,11 +2812,8 @@ test-run tests/core/test_session :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2941,7 +2888,6 @@ test-run tests/core/test_session :
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -2995,11 +2941,8 @@ test-run tests/core/test_session_server :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3074,7 +3017,6 @@ test-run tests/core/test_session_server :
   <library>src/utils/netutils.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -3109,11 +3051,8 @@ test-run tests/front/test_front :
   <library>src/capture/video_capture.o
   <library>src/capture/video_recorder.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -3140,7 +3079,6 @@ test-run tests/front/test_front :
   <library>src/utils/log.o
   <library>src/utils/pattutils.o
   <library>src/utils/png.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -4731,11 +4669,8 @@ test-run tests/mod/rdp/test_rdp :
   <library>projects/redemption_configs/redemption_src/configs/config.o
   <library>src/RAIL/client_execute.o
   <library>src/core/RDP/RDPDrawable.o
-  <library>src/core/RDP/dwt.o
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
-  <library>src/core/RDP/orders/remoteFx.o
-  <library>src/core/RDP/rlgr.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4756,7 +4691,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log.o
-  <library>src/utils/primitives/primitives.o
   <library>src/utils/rle.o
   <library>src/utils/strutils.o
   <library>src/utils/sugar/multisz.o
@@ -6032,7 +5966,10 @@ obj src/core/RDP/RDPDrawable.o : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp
 obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
+<<<<<<< HEAD
 obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
+=======
+>>>>>>> 8c8f94207599b495c58e5888d9a28461f6dbfdee
 obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
@@ -6395,7 +6332,6 @@ alias test_rdp_pointer : tests/core/RDP/test_rdp_pointer ;
 alias test_rdp_pointer.coverage : tests/core/RDP/test_rdp_pointer.coverage ;
 alias test_remote_programs : tests/core/RDP/test_remote_programs ;
 alias test_remote_programs.coverage : tests/core/RDP/test_remote_programs.coverage ;
-alias test_remotefx : tests/core/RDP/test_remotefx ;
 alias test_rlgr : tests/core/RDP/test_rlgr ;
 alias test_rlgr.coverage : tests/core/RDP/test_rlgr.coverage ;
 alias test_sec : tests/core/RDP/test_sec ;
@@ -6967,7 +6903,6 @@ alias tests/core/RDP.norec :
   tests/core/RDP/test_protocol
   tests/core/RDP/test_rdp_pointer
   tests/core/RDP/test_remote_programs
-  tests/core/RDP/test_remotefx
   tests/core/RDP/test_rlgr
   tests/core/RDP/test_sec
   tests/core/RDP/test_share

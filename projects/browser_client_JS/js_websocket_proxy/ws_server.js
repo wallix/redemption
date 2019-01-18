@@ -87,7 +87,11 @@ wsServer.on('request', function(request) {
             }
             else if (message.type === 'binary') {
                 // For RDP proxying we should only receive binary messages
-                console.log('Received Binary Message of ' + message.binaryData.length + ' bytes ' + message.binaryData);
+                var text = "";
+                for (var i = 0 ; i < message.binaryData.length ; ++i){
+                    text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);
+                }
+                console.log('Received Binary Message of ' + message.binaryData.length + ' bytes ' + text);
                 var text = "";
                 for (var i = 0 ; i < message.binaryData.length ; ++i){
                     text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);

@@ -38,6 +38,7 @@ REDEMPTION_DIAGNOSTIC_POP
 #include <cstdio>
 #include <cstdlib>
 
+#include "redemption_emscripten.hpp"
 #ifdef IN_IDE_PARSER
 # define EM_ASM(...)
 # define EM_JS(return_type, name, params, ...) return_type __em_js__##name params;
@@ -77,7 +78,7 @@ namespace
 
     EM_JS(bool, js_is_loggable, (), {
         return !ENVIRONMENT_IS_NODE || process.env["REDEMPTION_LOG_PRINT"] === "1";
-    });
+    })
 
     bool is_loggable()
     {
@@ -171,9 +172,11 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         log_buf.back() = '\n';
 
         // replace "priority (31905/31905) -- message" by "priority - message"
-        auto p = log_buf.find('(', log_buf.size() - sz + 5);
-        auto e = log_buf.find('-', p);
-        log_buf.replace(p, e-p+2, "-");
+        if (format[0] == '%' && format[1] == 's' && format[2] == ' ' && format[3] == '(') {
+            auto p = log_buf.find('(', log_buf.size() - sz + 5);
+            auto e = log_buf.find('-', p);
+            log_buf.replace(p, e-p+2, "-");
+        }
     }
     else if (is_loggable())
     {

@@ -93,7 +93,6 @@ public:
 
     void draw(RDPNineGrid const & , Rect , gdi::ColorCtx , Bitmap const & ) override {}
 
-    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
     bool can_be_start_capture() override { return false; }
     bool must_be_stop_capture() override { return false; }

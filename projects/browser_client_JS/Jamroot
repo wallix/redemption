@@ -33,6 +33,7 @@ project redjs
 
     <cxxflags>-fno-rtti
     <cxxflags>"-isystem system_include"
+    <include>src
 
     # https://github.com/kripken/emscripten/blob/master/src/settings.js
     # DISABLE_EXCEPTION_CATCHING = 0 - generate code to actually catch exceptions
@@ -232,7 +233,6 @@ bindjs jsclient :
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/transport/recorder_transport.bc
-  src/transport/socket_transport.bc
   src/utils/authorization_channels.bc
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc

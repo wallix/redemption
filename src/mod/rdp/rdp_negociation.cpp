@@ -557,8 +557,8 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                             this->server_public_key_len = sc_sec1.proprietaryCertificate.RSAPK.keylen - SEC_PADDING_SIZE;
 
                         }
-                        #ifndef __EMSCRIPTEN__
                         else {
+#ifndef __EMSCRIPTEN__
                             // LOG(LOG_INFO, "================= SC_SECURITY CERT_CHAIN_X509");
                             uint32_t const certcount = sc_sec1.x509.certCount;
                             if (certcount < 2){
@@ -658,9 +658,11 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                             reverseit(exponent, len_e);
                             reverseit(modulus, len_n);
                             RSA_free(server_public_key);
-
+#else
+                            LOG(LOG_ERR, "SCSecurity CERT_CHAIN_X509 not implemented");
+                            throw Error(ERR_SEC);
+#endif // __EMSCRIPTEN__
                         }
-                        #endif // __EMSCRIPTEN__
 
                         /* Generate a client random, and determine encryption keys */
                         this->gen.random(this->client_random, SEC_RANDOM_SIZE);
@@ -847,7 +849,8 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
             // ------------------------------------------------------------
             GCC::UserData::CSCore cs_core;
 
-            Rect primary_monitor_rect = this->cs_monitor.get_primary_monitor_rect();
+            Rect primary_monitor_rect =
+                this->cs_monitor.get_primary_monitor_rect();
 
             cs_core.version = this->negociation_result.use_rdp5 ? 0x00080004 : 0x00080001;
             const bool single_monitor =

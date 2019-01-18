@@ -26,18 +26,16 @@
 #include "core/set_server_redirection_target.hpp"
 #include "front/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
-// #include "transport/socket_transport.hpp"
 #include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/hexdump.hpp"
 #include "utils/theme.hpp"
 
-// #include <iostream>
 #include <memory>
 #include <string>
 
-#include <emscripten/bind.h>
+#include "red_emscripten/bind.hpp"
 
 
 constexpr int FD_TRANS = 42;
@@ -97,13 +95,20 @@ struct BrowserTransport : Transport
 
     void do_send(const uint8_t * buffer, size_t len) override
     {
-        LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes", len);
+        LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
         // hexdump(buffer, len);
         out_buffers.insert(out_buffers.end(), buffer, buffer + len);
     }
 
     int get_fd() const override { return FD_TRANS; }
 };
+
+#ifndef JS_CLIENT_USERNAME
+# define JS_CLIENT_USERNAME "x"
+#endif
+#ifndef JS_CLIENT_PASSWORD
+# define JS_CLIENT_PASSWORD "x"
+#endif
 
 struct RdpClient
 {
@@ -114,8 +119,8 @@ struct RdpClient
 
     std::string screen_output;
 
-    std::string username;
-    std::string password;
+    std::string username = JS_CLIENT_USERNAME;
+    std::string password = JS_CLIENT_PASSWORD;
 
     BrowserTransport browser_trans;
 
