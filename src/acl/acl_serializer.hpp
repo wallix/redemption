@@ -42,6 +42,7 @@
 #include "utils/get_printable_password.hpp"
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/log.hpp"
+#include "utils/log_siem.hpp"
 #include "utils/stream.hpp"
 #include "utils/translation.hpp"
 #include "utils/verbose_flags.hpp"

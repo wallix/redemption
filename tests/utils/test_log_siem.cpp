@@ -19,14 +19,30 @@
 
 */
 
-#define RED_TEST_MODULE TestLog
+#define RED_TEST_MODULE TestLogSiem
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "utils/log.hpp"
+#include "utils/log_siem.hpp"
 
-RED_AUTO_TEST_CASE(TestLog)
+RED_AUTO_TEST_CASE(TestLogSiem)
 {
     LOG__REDEMPTION__BUFFERED log_buf;
-    LOG(LOG_INFO, "test %s", "1");
-    RED_CHECK(log_buf.buf() == "INFO -- test 1\n");
+    LOG_SIEM("test %s", "1");
+    RED_CHECK(log_buf.buf() == "test 1\n");
+}
+
+RED_AUTO_TEST_CASE(TestLogProxySiem)
+{
+    LOG__REDEMPTION__BUFFERED log_buf;
+    LOG_PROXY_SIEM("CAT", "test %s", "1");
+    log_proxy::init("L33t", "universe", 1234);
+    LOG_PROXY_SIEM("TAC", "test 2");
+    log_proxy::set_user("Banana");
+    LOG_PROXY_SIEM("ACT", "test 3");
+    RED_CHECK_MEM(log_buf.buf(),
+        R"([rdpproxy] psid="42" user="" type="CAT" test 1)""\n"
+        R"([rdpproxy] psid="L33t" type="INCOMING_CONNECTION" src_ip="universe" src_port="1234")""\n"
+        R"([rdpproxy] psid="L33t" user="" type="TAC" test 2)""\n"
+        R"([rdpproxy] psid="L33t" user="Banana" type="ACT" test 3)""\n"_av
+    );
 }

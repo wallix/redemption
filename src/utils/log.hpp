@@ -21,15 +21,7 @@
    log file including syslog
 */
 
-
 #pragma once
-
-#ifdef LOGPRINT
-# error LOGPRINT is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=1 bjam`
-#endif
-#ifdef LOGNULL
-# error LOGNULL is deprecated. Used REDEMPTION_LOG_PRINT environment variable instead. Ex: `REDEMPTION_LOG_PRINT=0 bjam`. By default REDEMPTION_LOG_PRINT = 0
-#endif
 
 #include <sys/types.h> // getpid
 #include <unistd.h> // getpid
@@ -172,8 +164,6 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
 
 #ifdef IN_IDE_PARSER
 # define LOG(priority, ...) ::compiler_aux_::unused_variables(priority, "" __VA_ARGS__)
-# define LOG_SIEM(...) ::compiler_aux_::unused_variables("" __VA_ARGS__)
-# define LOG_PROXY_SIEM(type, ...) ::compiler_aux_::unused_variables("" type, "" __VA_ARGS__)
 # define LOG_UNCHECKED_FORMAT 1
 
 #else
@@ -201,27 +191,6 @@ log_array_02x_format(uint8_t const (&d)[n]) noexcept
             LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)),   \
         1                                                              \
     ));                                                                \
- } while (0)
-
-# define LOG_SIEM(...) do {                                          \
-    using ::log_value;                                               \
-    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
-        ::detail::LOG__SIEM__REDEMPTION__INTERNAL(""                 \
-            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
-        1                                                            \
-    ));                                                              \
- } while (0)
-
-# define LOG_PROXY_SIEM(type, ...) do {                              \
-    using ::log_value;                                               \
-    ::detail::LOGCHECK__REDEMPTION__INTERNAL((                       \
-        LOG_REDEMPTION_FORMAT_CHECK(__VA_ARGS__),                    \
-        ::detail::LOG__PROXY__SIEM__REDEMPTION__INTERNAL(            \
-            "[rdpproxy] spid=\"%s\" user=\"%s\" type=\"" type "\" "  \
-            LOG_REDEMPTION_VARIADIC_TO_LOG_PARAMETERS(__VA_ARGS__)), \
-        1                                                            \
-    ));                                                              \
  } while (0)
 
 namespace detail
@@ -301,38 +270,6 @@ namespace detail
             prioritynames[priority],
             pid,
             pid,
-            REDEMPTION_LOG_VALUE(args)...
-        );
-    }
-
-    template<class... Ts>
-    void LOG__SIEM__REDEMPTION__INTERNAL(char const * format, Ts const & ... args)
-    {
-        using ::log_value;
-        LOG__REDEMPTION__INTERNAL__IMPL(
-            LOG_INFO,
-            format,
-            REDEMPTION_LOG_VALUE(args)...
-        );
-    }
-
-    void log_proxy_init(char const* psid, char const* source_ip, int source_port) noexcept;
-    void log_proxy_set_user(char const* username) noexcept;
-    void log_proxy_target_disconnection(char const* reason) noexcept;
-    void log_proxy_disconnection(char const* reason = nullptr) noexcept;
-
-    char const* log_proxy_get_psid() noexcept;
-    char const* log_proxy_get_user() noexcept;
-
-    template<class... Ts>
-    void LOG__PROXY__SIEM__REDEMPTION__INTERNAL(char const * format, Ts const & ... args)
-    {
-        using ::log_value;
-        LOG__REDEMPTION__INTERNAL__IMPL(
-            LOG_INFO,
-            format,
-            log_proxy_get_psid(),
-            log_proxy_get_user(),
             REDEMPTION_LOG_VALUE(args)...
         );
     }

@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "log.hpp"
+#include "log_siem.hpp"
 #include "utils/strutils.hpp"
 
 #include <cstring>
@@ -26,30 +26,30 @@ Author(s): Jonathan Poelen
 
 namespace
 {
-    static char log_proxy_psid[32] = "42";
-    static char log_proxy_username[256] = "";
+    static char g_psid[32] = "42";
+    static char g_username[256] = "";
 }
 
-namespace detail
+namespace log_proxy
 {
-    void log_proxy_init(char const* psid, char const* source_ip, int source_port) noexcept
+    void init(char const* psid, char const* source_ip, int source_port) noexcept
     {
-        utils::strlcpy(log_proxy_psid, psid);
+        utils::strlcpy(g_psid, psid);
         if (0 != strcmp(source_ip, "127.0.0.1")) {
             LOG__REDEMPTION__INTERNAL__IMPL(
                 LOG_INFO,
                 R"([rdpproxy] psid="%s" type="INCOMING_CONNECTION" src_ip="%s" src_port="%d")",
-                log_proxy_psid, source_ip, source_port
+                g_psid, source_ip, source_port
             );
         }
     }
 
-    void log_proxy_set_user(char const* username) noexcept
+    void set_user(char const* username) noexcept
     {
-        utils::strlcpy(log_proxy_username, username);
+        utils::strlcpy(g_username, username);
     }
 
-    void log_proxy_target_disconnection(char const* reason) noexcept
+    void target_disconnection(char const* reason) noexcept
     {
         if (reason && *reason) {
             LOG_PROXY_SIEM("TARGET_DISCONNECTION", R"(reason="%s")", reason);
@@ -59,49 +59,49 @@ namespace detail
         }
     }
 
-    void log_proxy_disconnection(char const* reason) noexcept
+    void disconnection(char const* reason) noexcept
     {
         if (reason && *reason) {
-            if (log_proxy_username[0]) {
+            if (g_username[0]) {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT" reason="%s")",
-                    log_proxy_psid, log_proxy_username, reason
+                    g_psid, g_username, reason
                 );
             }
             else {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" type="DISCONNECT" reason="%s")",
-                    log_proxy_psid, reason
+                    g_psid, reason
                 );
             }
         }
         else {
-            if (log_proxy_username[0]) {
+            if (g_username[0]) {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" user="%s" type="DISCONNECT")",
-                    log_proxy_psid, log_proxy_username
+                    g_psid, g_username
                 );
             }
             else {
                 LOG__REDEMPTION__INTERNAL__IMPL(
                     LOG_INFO,
                     R"([rdpproxy] psid="%s" type="DISCONNECT")",
-                    log_proxy_psid
+                    g_psid
                 );
             }
         }
     }
 
-    char const* log_proxy_get_psid() noexcept
+    char const* get_psid() noexcept
     {
-        return log_proxy_psid;
+        return g_psid;
     }
 
-    char const* log_proxy_get_user() noexcept
+    char const* get_user() noexcept
     {
-        return log_proxy_username;
+        return g_username;
     }
-}
+} // namespace log_proxy
