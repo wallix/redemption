@@ -128,6 +128,11 @@ void FakeFront::draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx c
     d->gd->draw(cmd, clip, color_ctx, gly_cache);
 }
 
+void FakeFront::draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content)
+{
+    d->gd->draw(cmd, content);
+}
+
 void FakeFront::draw(const RDP::RAIL::NewOrExistingWindow            & cmd)
 {
     d->gd->draw(cmd);

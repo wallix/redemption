@@ -229,7 +229,7 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         .action(cli::on_off_location(config.enable_shared_clipboard)),
 
         cli::option("enable-nla").help("Enable NLA protocol")
-        .action(cli::on_off_location(this->modRDPParamsData.enable_nla)),
+        .action(cli::on_off_location(config.modRDPParamsData.enable_nla)),
 
         cli::option("enable-tls").help("Enable TLS protocol")
         .action(cli::on_off_location(config.modRDPParamsData.enable_tls)),
@@ -273,7 +273,7 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
         .action(cli::arg([&](int t){ config.keep_alive_freq = t; })),
 
 		cli::option("remotefx").help("enable remotefx")
-		.action(cli::on_off_location(config.info.enable_remotefx)),
+		.action(cli::on_off_location(config.enable_remotefx)),
 
 
         cli::helper("========= Client ========="),
@@ -303,8 +303,8 @@ void ClientConfig::parse_options(int argc, char const* const argv[], ClientRedem
 
         cli::option("timeout").help("Set timeout response before to disconnect in millisecond")
         .action(cli::arg("time", [&](long time){
-            quick_connection_test = false;
-            time_out_disconnection = std::chrono::milliseconds(time);
+            config.quick_connection_test = false;
+            config.time_out_disconnection = std::chrono::milliseconds(time);
         })),
 
         cli::option("share-dir").help("Set directory path on local disk to share with your session.")
