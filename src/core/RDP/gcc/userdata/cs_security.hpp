@@ -94,8 +94,7 @@ struct CSSecurity {
     uint32_t encryptionMethods = _40BIT_ENCRYPTION_FLAG | _128BIT_ENCRYPTION_FLAG;
     uint32_t extEncryptionMethods{0};
 
-    CSSecurity()
-    = default;
+    CSSecurity() = default;
 
     void emit(OutStream & stream) const
     {
