@@ -29,6 +29,8 @@
 #include "utils/stream.hpp"
 #include "core/RDP/capabilities/common.hpp"
 
+#include <vector>
+#include <variant>
 #include <memory>
 #include <cstring>
 
@@ -258,17 +260,6 @@ enum {
      };
 
 
-struct CodecGenCaps {
-    // Super class for Codecs (REMOTEFX & NSCODEC)
-    CodecGenCaps() = default;
-
-    virtual ~CodecGenCaps() = default;
-
-    virtual void emit(OutStream & out) const = 0;
-    virtual void recv(InStream & stream, uint16_t len) = 0;
-    virtual size_t computeSize() const = 0;
-};
-
 // 2.2.1  NSCodec Capability Set (TS_NSCODEC_CAPABILITYSET)
 // ========================================================
 // The TS_NSCODEC_CAPABILITYSET structure advertises properties of the NSCodec Bitmap
@@ -294,21 +285,23 @@ struct CodecGenCaps {
 //    Color Loss Level ([MS-RDPEGDI] section 3.1.9.1.4). This value MUST be between 1 and 7
 //    (inclusive).
 
-struct NSCodecCaps : public CodecGenCaps {
-
+struct NSCodecCaps
+{
     uint8_t fAllowDynamicFidelity{0}; // true/false
     uint8_t fAllowSubsampling{0};     // true/false
     uint8_t colorLossLevel{1};        // Between 1 and 7
 
     NSCodecCaps() = default;
 
-    void emit(OutStream & out) const override {
+    void emit(OutStream & out) const
+    {
         out.out_uint8(this->fAllowDynamicFidelity);
         out.out_uint8(this->fAllowSubsampling);
         out.out_uint8(this->colorLossLevel);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         size_t expected = 3;
         if (len < 3) {
             LOG(LOG_ERR, "Truncated NSCodecCaps, needs=%zu remains=%u", expected, len);
@@ -320,36 +313,41 @@ struct NSCodecCaps : public CodecGenCaps {
         this->colorLossLevel = stream.in_uint8();
     }
 
-    size_t computeSize() const override {
+    size_t computeSize() const
+    {
         return 3;
     }
 };
 
 
-struct RFXSrvrCaps : public CodecGenCaps {
-
-    std::unique_ptr<uint8_t[]> reserved;
+struct RFXSrvrCaps
+{
+    // std::unique_ptr<uint8_t[]> reserved;
 
     RFXSrvrCaps() = default;
 
-    void setReserved(uint16_t len) {
-        this->reserved = std::make_unique<uint8_t[]>(len);
-        memset(this->reserved.get(), 0xff, len);
+    // void setReserved(uint16_t len) {
+    //     this->reserved = std::make_unique<uint8_t[]>(len);
+    //     memset(this->reserved.get(), 0xff, len);
+    // }
+
+    void emit(OutStream & /*out_stream*/) const
+    {
     }
 
-    void emit(OutStream & /*out_stream*/) const override {
-    }
-
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         stream.in_skip_bytes(len);
     }
 
-    size_t computeSize() const override {
+    size_t computeSize() const
+    {
         return 0;
     }
 };
 
-struct RFXICap {
+struct RFXICap
+{
 	enum {
 	   CT_TILE_64X64 = 0x40
 	};
@@ -371,7 +369,6 @@ struct RFXICap {
             LOG(LOG_ERR, "Truncated RFXICap, needs=7 remains=%u", len);
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
-
 
         this->version = stream.in_uint16_le();
         if (this->version != CLW_VERSION_1_0) {
@@ -444,23 +441,21 @@ struct RFXICap {
 //    structures. Each structure MUST be packed on byte boundaries. The size of each
 //    TS_RFX_ICAP structure within the array is specified in the icapLen field.
 
-struct RFXCapset {
-
+struct RFXCapset
+{
     uint16_t blockType{CBY_CAPSET}; // MUST be set to CBY_CAPSET (0xCBC1)
-    uint32_t blockLen{0};           // total length in bytes of the fields of that structure
+    uint32_t blockLen{13 + 8};      // total length in bytes of the fields of that structure
     uint8_t  codecId{1};            // MUST be set to 0x01
     uint16_t capsetType{CLY_CAPSET};// MUST be set to CLY_CAPSET (0xCFC0)
-    uint16_t numIcaps{0};           // number of elements in icapsData array
+    uint16_t numIcaps{1};           // number of elements in icapsData array
     uint16_t icapLen{8};            // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
 
-    std::unique_ptr<RFXICap[]> icapsData;
+private:
+    // numIcaps == icapsData.size()
+    std::vector<RFXICap> icapsData{RFXICap{}};
 
-    RFXCapset()
-    : numIcaps(1)
-    , icapsData(std::make_unique<RFXICap[]>(this->numIcaps))
-    {
-        this->blockLen = 13 + 8;
-    }
+public:
+    RFXCapset() = default;
 
     void emit(OutStream & out) const {
         out.out_uint16_le(this->blockType);
@@ -470,10 +465,8 @@ struct RFXCapset {
         out.out_uint16_le(this->numIcaps);
         out.out_uint16_le(this->icapLen);
 
-        if (this->icapsData) {
-            for (int i = 0; i < this->numIcaps; i++) {
-                this->icapsData[i].emit(out);
-            }
+        for (auto& icap : this->icapsData) {
+            icap.emit(out);
         }
     }
 
@@ -498,7 +491,8 @@ struct RFXCapset {
         this->icapLen = stream.in_uint16_le();
 
         if (this->numIcaps){
-            icapsData = std::make_unique<RFXICap[]>(numIcaps);
+            this->icapsData.clear();
+            this->icapsData.resize(numIcaps);
         }
 
         unsigned expected = this->numIcaps * this->icapLen;
@@ -507,8 +501,8 @@ struct RFXCapset {
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        for (int i = 0; i < this->numIcaps; i++) {
-            this->icapsData[i].recv(stream, this->icapLen);
+        for (auto& icap : this->icapsData) {
+            icap.recv(stream, this->icapLen);
         }
     }
 
@@ -517,27 +511,21 @@ struct RFXCapset {
     }
 };
 
-struct RFXCaps {
-
+struct RFXCaps
+{
     uint16_t blockType{CBY_CAPS}; // MUST be set to CBY_CAPS (0xCBC0)
     uint32_t blockLen{8};         // MUST be set to 0x0008
     uint16_t numCapsets{1};       // MUST be set to 0x0001
 
-    std::unique_ptr<RFXCapset> capsetsData{nullptr};
+    RFXCapset capsetsData{};
 
-    RFXCaps()
-    : blockType(CBY_CAPS)
-    , blockLen(8)
-    , numCapsets(1)
-    , capsetsData(std::make_unique<RFXCapset>())
-    {
-    }
+    RFXCaps() = default;
 
     void emit(OutStream & out) const {
         out.out_uint16_le(this->blockType);
         out.out_uint32_le(this->blockLen);
         out.out_uint16_le(this->numCapsets);
-        capsetsData->emit(out);
+        this->capsetsData.emit(out);
     }
 
     void recv(InStream & stream, uint16_t len) {
@@ -565,37 +553,35 @@ struct RFXCaps {
     }
 
     size_t computeSize() const {
-        return 8 + this->capsetsData->computeSize();
+        return 8 + this->capsetsData.computeSize();
     }
 };
 
-struct RFXClntCaps : public CodecGenCaps {
+struct RFXClntCaps
+{
+    uint32_t length;
+    uint32_t captureFlags{CARDP_CAPS_CAPTURE_NON_CAC};
+    uint32_t capsLength;
 
-    uint32_t length{0};
-    uint32_t captureFlags{0};
-    uint32_t capsLength{0};
-
-    std::unique_ptr<RFXCaps> capsData{nullptr};
+    RFXCaps capsData {};
 
     RFXClntCaps()
-    : captureFlags(CARDP_CAPS_CAPTURE_NON_CAC)
-    , capsData(std::make_unique<RFXCaps>())
     {
-         this->capsLength = capsData->computeSize();
+         this->capsLength = this->capsData.computeSize();
          this->length = 12 + this->capsLength;
     }
 
-    void emit(OutStream & out) const override {
+    void emit(OutStream & out) const
+    {
         out.out_uint32_le(this->length);
         out.out_uint32_le(this->captureFlags);
         out.out_uint32_le(this->capsLength);
 
-        if (capsData){
-            this->capsData->emit(out);
-        }
+        this->capsData.emit(out);
     }
 
-    void recv(InStream & stream, uint16_t len) override {
+    void recv(InStream & stream, uint16_t len)
+    {
         if (len < 12) {
             LOG(LOG_ERR, "Truncated RFXClntCaps, need=%u remains=%zu", this->capsLength, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
@@ -610,16 +596,16 @@ struct RFXClntCaps : public CodecGenCaps {
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        if (capsLength) {
-            this->capsData = std::make_unique<RFXCaps>();
-            this->capsData->recv(stream, this->capsLength);
+        if (this->capsLength) {
+            this->capsData = RFXCaps{};
+            this->capsData.recv(stream, this->capsLength);
         }
     }
 
-    size_t computeSize() const override {
-        return length;
+    size_t computeSize() const
+    {
+        return this->length;
     }
-
 };
 
 // TODO enum class
@@ -630,30 +616,58 @@ enum BitmapCodecType {
     CODEC_UNKNOWN
 };
 
-struct BitmapCodec {
-
-    uint8_t  codecGUID[16];
+struct BitmapCodec
+{
+    uint8_t  codecGUID[16] {}; // 16 bits array filled with fixed lists of values
     uint8_t  codecID{0};  // CS : a bitmap data identifier code
                           // SC :
                           //    - if codecGUID == CODEC_GUID_NSCODEC, MUST be set to 1
     uint16_t codecPropertiesLength{0}; // size in bytes of the next field
 
     BitmapCodecType codecType{CODEC_UNKNOWN};
-    std::unique_ptr<CodecGenCaps> codecProperties{nullptr};
 
-    BitmapCodec()
+    struct RFXNoCaps
     {
-        memset(this->codecGUID, 0, 16); // 16 bits array filled with fixed lists of values
-    }
+        void emit(OutStream & /*out*/) const {}
+        void recv(InStream & /*stream*/, uint16_t /*len*/) {}
+        size_t computeSize() const { return 0; }
+    };
 
-    void setCodecGUID(uint8_t codecGUID, bool client) {
+    struct CodecProperties
+    {
+        void emit(OutStream & out) const
+        {
+            auto f = [&](auto& caps) -> void { caps.emit(out); };
+            std::visit(f, this->interface);
+        }
 
+        void recv(InStream & stream, uint16_t len)
+        {
+            auto f = [&](auto& caps) -> void { caps.recv(stream, len); };
+            std::visit(f, this->interface);
+        }
+
+        size_t computeSize() const
+        {
+            auto f = [](auto& caps) -> size_t { return caps.computeSize(); };
+            return std::visit(f, this->interface);
+        }
+
+        std::variant<RFXNoCaps, RFXClntCaps, RFXSrvrCaps, NSCodecCaps> interface;
+    };
+
+    CodecProperties codecProperties;
+
+    BitmapCodec() = default;
+
+    void setCodecGUID(uint8_t codecGUID, bool client)
+    {
         switch(codecGUID) {
         case CODEC_GUID_NSCODEC:
             memcpy(this->codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16);
             this->codecID = 1;
             this->codecType = CODEC_NS;
-            this->codecProperties = nullptr;
+            this->codecProperties.interface = RFXNoCaps{};
             break;
         case CODEC_GUID_REMOTEFX:
         case CODEC_GUID_IMAGE_REMOTEFX:
@@ -665,31 +679,25 @@ struct BitmapCodec {
             }
 
             if (client) {
-                this->codecProperties = std::make_unique<RFXClntCaps>();
+                this->codecProperties.interface = RFXClntCaps();
             }
             else {
-                this->codecProperties = std::make_unique<RFXSrvrCaps>();
+                this->codecProperties.interface = RFXSrvrCaps();
             }
             this->codecType = CODEC_REMOTEFX;
             break;
         default:
             memset(this->codecGUID, 0, 16);
             this->codecType = CODEC_UNKNOWN;
-            this->codecProperties = nullptr;
+            this->codecProperties.interface = RFXNoCaps{};
             break;
         }
 
-        if (this->codecProperties) {
-            this->codecPropertiesLength = this->codecProperties->computeSize();
-        }
+        this->codecPropertiesLength = this->codecProperties.computeSize();
     }
 
     size_t computeSize() const {
-        size_t ret = 19;
-        if (this->codecProperties) {
-            ret += this->codecProperties->computeSize();
-        }
-        return ret;
+        return 19u + this->codecProperties.computeSize();
     }
 
     void recv(InStream & stream, uint16_t & len, bool clientMode) {
@@ -712,19 +720,19 @@ struct BitmapCodec {
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */
-            this->codecProperties = std::make_unique<NSCodecCaps>();
+            this->codecProperties.interface = NSCodecCaps();
             this->codecType = CODEC_NS;
-            this->codecProperties->recv(stream, this->codecPropertiesLength);
+            this->codecProperties.recv(stream, this->codecPropertiesLength);
         } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0)
                || (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
             /* CODEC_GUID_REMOTEFX or CODEC_GUID_IMAGE_REMOTEFX */
             if (clientMode){
-                this->codecProperties = std::make_unique<RFXClntCaps>();
+                this->codecProperties.interface = RFXClntCaps();
             }
             else {
-                this->codecProperties = std::make_unique<RFXSrvrCaps>();
+                this->codecProperties.interface = RFXSrvrCaps();
             }
-            this->codecProperties->recv(stream, this->codecPropertiesLength);
+            this->codecProperties.recv(stream, this->codecPropertiesLength);
             this->codecType = CODEC_REMOTEFX;
         } else if (memcmp(codecGUID, "\xA6\x51\x43\x9C\x35\x35\xAE\x42\x91\x0C\xCD\xFC\xE5\x76\x0B\x58", 16) == 0) {
             /* CODEC_GUID_IGNORE */
@@ -741,9 +749,7 @@ struct BitmapCodec {
         out.out_copy_bytes(this->codecGUID, 16);
         out.out_uint8(this->codecID);
         out.out_uint16_le(this->codecPropertiesLength);
-        if (this->codecProperties) {
-            this->codecProperties->emit(out);
-        }
+        this->codecProperties.emit(out);
     }
 };
 
@@ -752,7 +758,7 @@ struct BitmapCodecs {
 
     uint8_t bitmapCodecCount{0};
 
-    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE];
+    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE] {};
 
     BitmapCodecs() = default;
 };

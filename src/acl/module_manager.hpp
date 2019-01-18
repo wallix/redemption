@@ -119,6 +119,7 @@ class ModuleManager : public MMIni
         explicit ModOSD(ModuleManager & mm)
         : gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
+        , bogus_refresh_rect_ex(false)
         {}
 
         bool is_input_owner() const { return this->is_disable_by_input; }

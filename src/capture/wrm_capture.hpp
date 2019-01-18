@@ -642,6 +642,10 @@ public:
 
     void draw(RDPNineGrid const & /*cmd*/, Rect /*rect*/, gdi::ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
 
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const &/*content*/) override {
+    	// TODO
+    }
+
 
     // XXXXXXXXXXXXXX
     void set_pointer(Pointer const & ptr) override {

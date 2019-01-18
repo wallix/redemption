@@ -31,6 +31,7 @@ struct RdpNegociationResult
 {
     uint16_t front_width = 0;
     uint16_t front_height = 0;
+    uint32_t front_multifragment_maxsize = 0;
     bool use_rdp5 = true;
     uint16_t userid = 0;
     int encryptionLevel = 0;

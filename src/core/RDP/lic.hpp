@@ -3077,7 +3077,7 @@ namespace LIC
             this->validClientMessage.wBlobType = stream.in_uint16_le();
             this->validClientMessage.wBlobLen = stream.in_uint16_le();
 
-            if (this->validClientMessage.dwStateTransition != 2) {
+            if (this->validClientMessage.dwStateTransition != ST_NO_TRANSITION) {
                 LOG(LOG_ERR, "Unexpected dwStateTransition in Licence ErrorAlert_Recv expected ST_NO_TRANSITION, got %u",
                     this->validClientMessage.dwStateTransition);
             }
@@ -3096,7 +3096,7 @@ namespace LIC
             }
 
             // wBlobType in Licence ErrorAlert_Recv is not 4 on windows 2000 or Windows XP... (content looks like garbage)
-            if ((this->validClientMessage.dwStateTransition != 2)
+            if ((this->validClientMessage.dwStateTransition != ST_NO_TRANSITION)
 //            || (this->validClientMessage.wBlobType != 4)
             || (this->validClientMessage.wBlobLen != 0)
             || stream.in_remain()){

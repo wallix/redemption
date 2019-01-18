@@ -267,6 +267,7 @@ public:
     uint8_t mod_state = MOD_RDP;
 
     bool enable_shared_clipboard = true;
+    bool enable_remotefx = false;
 
     bool                 is_pre_loading = false;
     bool                 is_recording = false;

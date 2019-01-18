@@ -55,6 +55,8 @@ class GlyphCache;
 class RDPColCache;
 class RDPBrushCache;
 class RDPNineGrid;
+class RDPSetSurfaceCommand;
+class RDPSurfaceContent;
 
 namespace RDP {
     class RDPMultiPatBlt;
@@ -259,7 +261,6 @@ struct GraphicApi : private noncopyable
     virtual void set_palette(BGRPalette   const & /*unused*/) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
-    virtual void draw(RDPNineGrid const & , Rect , ColorCtx , Bitmap const & ) = 0;
     virtual void draw(RDPDestBlt          const & cmd, Rect clip) = 0;
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
@@ -278,7 +279,9 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
+    virtual void draw(RDPNineGrid         const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
+    virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) = 0;
 
     // NOTE maybe in an other interface
     virtual void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) = 0;
@@ -304,12 +307,10 @@ struct GraphicApi : private noncopyable
 };
 
 
-class NullGraphic final : public GraphicApi
+class NullGraphic : public GraphicApi
 {
 public:
     void draw(RDP::FrameMarker    const & /*cmd*/) override {}
-
-    void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
 
     void draw(RDPDestBlt          const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMultiDstBlt      const & /*cmd*/, Rect /*clip*/) override {}
@@ -328,7 +329,9 @@ public:
     void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
+    void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
     void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
