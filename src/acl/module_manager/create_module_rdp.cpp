@@ -38,8 +38,9 @@
 
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
-    Inifile& ini, FrontAPI& front, ClientInfo& client_info, ClientExecute& client_execute,
-    Keymap2::KeyFlags key_flags, std::array<uint8_t, 28>& server_auto_reconnect_packet)
+    Inifile& ini, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
+    ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+    std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
 
