@@ -1,3 +1,9 @@
+redemption (1.1.117-cspn%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+  * 19037: fix type in proxy log
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 18 Jan 2019 16:49:03 +0200
+
 redemption (1.1.108-cspn%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * 19037: RDP proxy log
