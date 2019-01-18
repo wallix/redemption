@@ -384,6 +384,11 @@ public:
         });
     }
 
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {
+    	// TODO: implement me
+    }
+
+
 protected:
     void emit_bmp_cache(uint8_t cache_id, uint16_t cache_idx, bool in_wait_list)
     {

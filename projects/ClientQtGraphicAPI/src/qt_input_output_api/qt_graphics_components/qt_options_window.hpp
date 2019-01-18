@@ -496,6 +496,8 @@ public:
 
     QComboBox   _bppComboBox;
     QComboBox   _resolutionComboBox;
+    QCheckBox   _remoteFxCheckBox;
+    QComboBox	_networkComboBox;
     QCheckBox   _spanCheckBox;
     QCheckBox   _wallpapperCheckBox;
     QCheckBox   windowdragCheckBox;
@@ -507,6 +509,8 @@ public:
 
     QLabel               _labelBpp;
     QLabel               _labelResolution;
+    QLabel               _labelRemoteFx;
+    QLabel				 _labelNetwork;
     QLabel               _labelSpan;
     QLabel               _labelWallpaper;
     QLabel   windowdragLabel;
@@ -549,6 +553,8 @@ public:
         , _layoutView(nullptr)
         , _bppComboBox(this)
         , _resolutionComboBox(this)
+    	, _remoteFxCheckBox(this)
+    	, _networkComboBox(this)
         , _spanCheckBox(this)
         , _wallpapperCheckBox(this)
         , windowdragCheckBox(this)
@@ -559,6 +565,8 @@ public:
         , desktopCompositionCheckBox( this)
         , _labelBpp("Color depth :", this)
         , _labelResolution("Resolution :", this)
+    	, _labelRemoteFx("Enable remoteFx :", this)
+    	, _labelNetwork("Network :", this)
         , _labelSpan("Span screen :", this)
         , _labelWallpaper("Enable wallaper :", this)
         , windowdragLabel("Enable windowdrag :", this)
@@ -638,6 +646,7 @@ public:
         this->_bppComboBox.addItem("15", 15);
         this->_bppComboBox.addItem("16", 16);
         this->_bppComboBox.addItem("24", 24);
+        this->_bppComboBox.addItem("32", 32);
         this->_bppComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelBpp), &(this->_bppComboBox));
 
@@ -648,6 +657,18 @@ public:
         this->_resolutionComboBox.addItem("1920 * 1080", 1920);
         this->_resolutionComboBox.setStyleSheet("combobox-popup: 0;");
         this->_layoutView->addRow(&(this->_labelResolution), &(this->_resolutionComboBox));
+
+        this->_remoteFxCheckBox.setCheckState(Qt::Checked);
+        this->_layoutView->addRow(&(this->_labelRemoteFx), &(this->_remoteFxCheckBox));
+
+        this->_networkComboBox.addItem("Modem", 0x01);
+        this->_networkComboBox.addItem("Broadband low", 0x02);
+        this->_networkComboBox.addItem("Satellite", 0x03);
+        this->_networkComboBox.addItem("Broadband high", 0x04);
+        this->_networkComboBox.addItem("Wan", 0x05);
+        this->_networkComboBox.addItem("LAN", 0x06);
+        this->_networkComboBox.addItem("Auto detect", 0x07);
+        this->_layoutView->addRow(&(this->_labelNetwork), &(this->_networkComboBox));
 
         this->_spanCheckBox.setCheckState(Qt::Unchecked);
         this->_layoutView->addRow(&(this->_labelSpan), &(this->_spanCheckBox));
@@ -700,6 +721,8 @@ public:
         if ( indexResolution != -1 ) {
             this->_resolutionComboBox.setCurrentIndex(indexResolution);
         }
+
+        this->_remoteFxCheckBox.setChecked(this->config->enable_remotefx);
         this->_spanCheckBox.setChecked(this->config->is_spanning);
         if (this->config->info.rdp5_performanceflags & PERF_DISABLE_WALLPAPER) {
             this->_wallpapperCheckBox.setCheckState(Qt::Checked);
@@ -785,6 +808,7 @@ public:
         int pos(resolution.find(delimiter));
         this->config->rdp_width  = std::stoi(resolution.substr(0, pos));
         this->config->rdp_height = std::stoi(resolution.substr(pos + delimiter.length(), resolution.length()));
+        this->config->enable_remotefx = this->_remoteFxCheckBox.isChecked();
         this->config->is_spanning = this->_spanCheckBox.isChecked();
         this->config->info.rdp5_performanceflags = 0;
         if (this->_wallpapperCheckBox.isChecked()) {

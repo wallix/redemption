@@ -372,7 +372,6 @@ struct RFXICap {
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-
         this->version = stream.in_uint16_le();
         if (this->version != CLW_VERSION_1_0) {
             LOG(LOG_ERR, "RFXICap expecting version=1.0");
@@ -752,7 +751,7 @@ struct BitmapCodecs {
 
     uint8_t bitmapCodecCount{0};
 
-    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE];
+    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE] {};
 
     BitmapCodecs() = default;
 };

@@ -31,7 +31,7 @@ class ClientCallback
 {
 private:
     Keymap2           keymap;
-    StaticOutStream<256> decoded_data;    // currently not initialised
+    StaticOutStream<256> decoded_data;    // currently not initialized
     int                  _timer;
 
     mod_api            * mod = nullptr;

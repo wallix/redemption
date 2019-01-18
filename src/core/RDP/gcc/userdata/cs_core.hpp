@@ -28,6 +28,7 @@
 
 #pragma once
 
+#include <iterator>
 #include "core/RDP/gcc/data_block_type.hpp"
 #include "utils/log.hpp"
 #include "utils/stream.hpp"
@@ -326,6 +327,15 @@ enum {
 //  CONNECTION_TYPE_WAN 0x05 : WAN (10 Mbps or higher with high latency)
 //  CONNECTION_TYPE_LAN 0x06 : LAN (10 Mbps or higher)
 
+enum {
+	CONNECTION_TYPE_MODEM = 0x01,
+	CONNECTION_TYPE_BROADBAND_LOW = 0x02,
+	CONNECTION_TYPE_SATELLITE = 0x03,
+	CONNECTION_TYPE_BROADBAND_HIGH = 0x04,
+	CONNECTION_TYPE_WAN = 0x05,
+	CONNECTION_TYPE_LAN = 0x06
+};
+
 // If this field is present, all of the preceding fields MUST also be
 // present. If this field is not present, all of the subsequent fields
 // MUST NOT be present.
@@ -351,8 +361,8 @@ struct CSCore {
     uint16_t userDataType{CS_CORE};
     uint16_t length{216};            // default: everything including serverSelectedProtocol
     uint32_t version{0x00080001};    // RDP version. 1 == RDP4, 4 == RDP5
-    uint16_t desktopWidth;
-    uint16_t desktopHeight;
+    uint16_t desktopWidth{0};
+    uint16_t desktopHeight{0};
     uint16_t colorDepth{0xca01};
     uint16_t SASSequence{0xaa03};
     uint32_t keyboardLayout{0x040c}; // default to French
@@ -368,9 +378,9 @@ struct CSCore {
     uint32_t serialNumber{0};
     uint16_t highColorDepth{0};
     uint16_t supportedColorDepths{7};
-    uint16_t earlyCapabilityFlags{1};
+    uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU};
     uint8_t  clientDigProductId[64];
-    uint8_t  connectionType{0};
+    uint8_t  connectionType{CONNECTION_TYPE_WAN};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
 
@@ -469,7 +479,7 @@ struct CSCore {
         this->emit_optional(stream);
     }
 
-    private:
+private:
     void emit_optional(OutStream & stream) const
     {
         if (this->length < 134) { return; }
@@ -494,7 +504,18 @@ struct CSCore {
         stream.out_uint32_le(this->serverSelectedProtocol);
     }
 
-    public:
+    const char *connectionTypeString(uint8_t type) const {
+    	static const char *types[] = {
+			"<unknown>", "MODEM", "BROADBAND_LOW",
+			"SATELLITE", "BROADBAND_HIGH", "WAN", "LAN"
+    	};
+
+    	if (type >= std::size(types))
+    		return "<unknown(greater than 6)>";
+    	return types[type];
+    }
+
+public:
     void log(const char * msg) const
     {
         // --------------------- Base Fields ---------------------------------------
@@ -571,22 +592,22 @@ struct CSCore {
             (this->supportedColorDepths & 8) ? "32":"");
         if (this->length < 146) { return; }
         LOG(LOG_INFO, "cs_core::earlyCapabilityFlags  = [%04x]", this->earlyCapabilityFlags);
-        if (this->earlyCapabilityFlags & 0x0001){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_ERRINFO_PDU");
         }
-        if (this->earlyCapabilityFlags & 0x0002){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_WANT_32BPP_SESSION");
         }
-        if (this->earlyCapabilityFlags & 0x0004){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_STATUSINFO_PDU");
         }
-        if (this->earlyCapabilityFlags & 0x0008){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_STRONG_ASYMMETRIC_KEYS");
         }
-        if (this->earlyCapabilityFlags & 0x00020){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_VALID_CONNECTION_TYPE");
         }
-        if (this->earlyCapabilityFlags & 0x00040){
+        if (this->earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU){
             LOG(LOG_INFO, "cs_core::earlyCapabilityFlags:RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU");
         }
         if (this->earlyCapabilityFlags & 0xFF10){
@@ -595,7 +616,7 @@ struct CSCore {
         if (this->length < 210) { return; }
         LOG(LOG_INFO, "cs_core::clientDigProductId=[%s]", log_array_02x_format(this->clientDigProductId));
         if (this->length < 211) { return; }
-        LOG(LOG_INFO, "cs_core::connectionType = %u", this->connectionType);
+        LOG(LOG_INFO, "cs_core::connectionType = %s", this->connectionTypeString(this->connectionType));
         if (this->length < 212) { return; }
         LOG(LOG_INFO, "cs_core::pad1octet = %u", this->pad1octet);
         if (this->length < 216) { return; }

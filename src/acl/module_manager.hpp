@@ -119,6 +119,7 @@ class ModuleManager : public MMIni
         explicit ModOSD(ModuleManager & mm)
         : gdi::ProtectedGraphics(mm.front, Rect{})
         , mm(mm)
+        , bogus_refresh_rect_ex(false)
         {}
 
         bool is_input_owner() const { return this->is_disable_by_input; }
@@ -981,7 +982,7 @@ private:
 
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
-        Inifile& ini, FrontAPI& front, ClientInfo client_info,
+        Inifile& ini, FrontAPI& front, ClientInfo& client_info,
         ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
         std::array<uint8_t, 28>& server_auto_reconnect_packet);
 

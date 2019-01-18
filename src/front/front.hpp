@@ -643,6 +643,7 @@ public:
     void draw(RDPGlyphIndex       const & cmd, Rect clip, gdi::ColorCtx color_ctx, GlyphCache const & gly_cache) override { this->draw_impl(cmd, clip, color_ctx, gly_cache); }
 
     void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const &  /*unused*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override { }
 
     void draw(const RDP::RAIL::NewOrExistingWindow            & cmd) override { this->draw_impl(cmd); }
     void draw(const RDP::RAIL::WindowIcon                     & cmd) override { this->draw_impl(cmd); }
@@ -3286,6 +3287,7 @@ private:
                 }
                 break;
             case CAPSETTYPE_BITMAP_CODECS: /* 29 */
+            	this->client_info.bitmap_codec_caps.recv(stream, capset_length);
                 if (bool(this->verbose)) {
                     LOG(LOG_INFO, "Front::process_confirm_active: Receiving from client CAPSETTYPE_BITMAP_CODECS");
                 }

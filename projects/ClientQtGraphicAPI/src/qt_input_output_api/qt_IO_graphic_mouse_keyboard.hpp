@@ -23,6 +23,7 @@
 #pragma once
 
 #include "utils/log.hpp"
+#include "core/RDP/orders/RDPSurfaceCommands.hpp"
 
 #include "qt_graphics_components/qt_progress_bar_window.hpp"
 #include "qt_graphics_components/qt_options_window.hpp"
@@ -572,7 +573,7 @@ public:
     }
 
     template<class Op>
-    void draw_memblt_op(const Rect & drect, const Bitmap & bitmap) {
+    void draw_memblt_op(const Rect & /*drect*/, const Bitmap & /*bitmap*/) {
 
 //         LOG(LOG_INFO, "draw_memblt_op bitmap.cx()=%u this->cache.width()=%d drect.x=%u drect.cx=%u", bitmap.cx(), this->cache.width(), drect.x, drect.cx);
 //         LOG(LOG_INFO, "draw_memblt_op bitmap.cy()=%u this->cache.height()=%d drect.y=%u drect.cy=%u", bitmap.cy(), this->cache.height(), drect.y, drect.cy);
@@ -1365,6 +1366,12 @@ public:
     }
 
 //     using ClientOutputGraphicAPI::draw;
+    void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
+    	LOG(LOG_INFO, "DEFAULT: RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
+    			cmd.width, cmd.height);
+    	QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBA8888);
+    	this->painter.drawImage(QPoint(cmd.destRect.x, cmd.destRect.y), img);
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
