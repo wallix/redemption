@@ -577,7 +577,7 @@
                                     , this->file_content_flag
                                     , 0
                                     , 0
-                                    , 0xffffffff
+                                    , 0x0000ffff
                                     , 0
                                     , true);
 
