@@ -53,7 +53,6 @@ public:
         this->current_file_size = 0;
         this->fd.close();
         std::string file_path = this->dir_path + filename;
-        LOG(LOG_INFO, "ChannelFile::new_file this->dir_path=%s filename=%s total_file_size=%zu !!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->dir_path, filename, total_file_size);
         std::ifstream file(file_path.c_str());
         if (!file.good()) {
             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -66,23 +65,24 @@ public:
     }
 
     void set_data(const uint8_t * data, const size_t data_size) {
+        LOG(LOG_INFO, "ChannelFile::set_data ");
         if (this->fd.is_open()) {
-            if ((this->current_file_size + data_size) <= this->total_file_size) {
+            size_t new_size = this->current_file_size + data_size;
+            size_t over_data_len = 0;
+            if (new_size > this->total_file_size) {
+                over_data_len = new_size - this->total_file_size;
+            }
+            int written_data_size = ::write(this->fd.fd(), data, (data_size - over_data_len));
 
-                LOG(LOG_INFO, "ChannelFile::set_data data=%s data_size=%zu !!!!!!!!!!!!!!!!!!!!!!!!!!!!", reinterpret_cast<const char*>(data), data_size);
-
-                int written_data_size = ::write(this->fd.fd(), data, data_size);
-
-                if (written_data_size == -1 && int(data_size) == written_data_size) {
-                    LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
-                } else {
-                    this->current_file_size += data_size;
-                    if ( this->current_file_size == this->total_file_size) {
-                        this->fd.close();
-                    }
+            if (written_data_size == -1 && (int(data_size) == written_data_size)) {
+                LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
+            } else {
+                this->current_file_size += data_size;
+                if ( this->current_file_size == this->total_file_size) {
+                    this->fd.close();
                 }
             }
-        }
+    }
     }
 
     bool is_complete() {

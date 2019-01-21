@@ -304,7 +304,7 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
-                if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }
@@ -543,7 +543,8 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
-                if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+                if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
+
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }

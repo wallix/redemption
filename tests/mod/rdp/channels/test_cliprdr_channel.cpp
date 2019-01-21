@@ -856,7 +856,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
             20,
             out_asynchronous_task);
 
-//     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
+    RED_CHECK_EQUAL(get_file_contents(file_test), "test");
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: clipDataId=1
