@@ -4220,6 +4220,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/rle.o
+  <library>src/utils/strutils.o
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
