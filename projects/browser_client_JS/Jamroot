@@ -239,6 +239,7 @@ bindjs jsclient :
   src/utils/authorization_channels.bc
   src/utils/bitmap.bc
   src/utils/bitmap_from_file.bc
+  src/utils/crypto/ssl_mod_exp_direct.bc
   src/utils/d3des.bc
   src/utils/drawable.bc
   src/utils/fileutils.bc

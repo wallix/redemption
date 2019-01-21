@@ -5059,6 +5059,13 @@ test-run tests/utils/crypto/test_ssl_md5_direct :
 :
   <covfile>src/utils/crypto/ssl_md5_direct.hpp
 ;
+test-run tests/utils/crypto/test_ssl_mod_exp_direct :
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_mod_exp_direct.cpp
+:
+  <library>src/utils/crypto/ssl_mod_exp_direct.o
+  <covfile>src/utils/crypto/ssl_mod_exp_direct.cpp
+  <covfile>src/utils/crypto/ssl_mod_exp_direct.hpp
+;
 test-run tests/utils/crypto/test_ssl_rc4_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_rc4_direct.cpp
 :
@@ -5674,6 +5681,7 @@ obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 obj src/utils/confdescriptor.o : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
+obj src/utils/crypto/ssl_mod_exp_direct.o : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 obj src/utils/d3des.o : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 obj src/utils/drawable.o : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
 obj src/utils/fileutils.o : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
@@ -6219,6 +6227,8 @@ alias test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct ;
 alias test_ssl_md4_direct.coverage : tests/utils/crypto/test_ssl_md4_direct.coverage ;
 alias test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct ;
 alias test_ssl_md5_direct.coverage : tests/utils/crypto/test_ssl_md5_direct.coverage ;
+alias test_ssl_mod_exp_direct : tests/utils/crypto/test_ssl_mod_exp_direct ;
+alias test_ssl_mod_exp_direct.coverage : tests/utils/crypto/test_ssl_mod_exp_direct.coverage ;
 alias test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct ;
 alias test_ssl_rc4_direct.coverage : tests/utils/crypto/test_ssl_rc4_direct.coverage ;
 alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
@@ -6710,6 +6720,7 @@ alias tests/utils/crypto.norec :
   tests/utils/crypto/test_ssl_lib
   tests/utils/crypto/test_ssl_md4_direct
   tests/utils/crypto/test_ssl_md5_direct
+  tests/utils/crypto/test_ssl_mod_exp_direct
   tests/utils/crypto/test_ssl_rc4_direct
   tests/utils/crypto/test_ssl_sha1_direct
   tests/utils/crypto/test_ssl_sha256_direct

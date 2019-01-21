@@ -17,7 +17,7 @@ includes = set((
 ))
 
 disable_tests = set((
-    'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
+    # 'tests/utils/crypto/test_ssl_mod_exp_direct.cpp',
     'tests/test_meta_protocol2.cpp',
 ))
 

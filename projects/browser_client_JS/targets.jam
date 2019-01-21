@@ -3681,6 +3681,10 @@ test-run tests/utils/crypto/test_ssl_md4_direct :
 test-run tests/utils/crypto/test_ssl_md5_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_md5_direct.cpp
 ;
+test-run tests/utils/crypto/test_ssl_mod_exp_direct :
+  $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_mod_exp_direct.cpp
+  src/utils/crypto/ssl_mod_exp_direct.bc
+;
 test-run tests/utils/crypto/test_ssl_rc4_direct :
   $(REDEMPTION_TEST_PATH)/utils/crypto/test_ssl_rc4_direct.cpp
 ;
@@ -4094,6 +4098,7 @@ objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/bitmap_from_file.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/confdescriptor.bc : $(REDEMPTION_SRC_PATH)/utils/confdescriptor.cpp ;
+objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
 objjs src/utils/d3des.bc : $(REDEMPTION_SRC_PATH)/utils/d3des.cpp ;
 objjs src/utils/drawable.bc : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
 objjs src/utils/fileutils.bc : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
@@ -4385,6 +4390,7 @@ alias test_ssl_aes_direct : tests/utils/crypto/test_ssl_aes_direct ;
 alias test_ssl_lib : tests/utils/crypto/test_ssl_lib ;
 alias test_ssl_md4_direct : tests/utils/crypto/test_ssl_md4_direct ;
 alias test_ssl_md5_direct : tests/utils/crypto/test_ssl_md5_direct ;
+alias test_ssl_mod_exp_direct : tests/utils/crypto/test_ssl_mod_exp_direct ;
 alias test_ssl_rc4_direct : tests/utils/crypto/test_ssl_rc4_direct ;
 alias test_ssl_sha1_direct : tests/utils/crypto/test_ssl_sha1_direct ;
 alias test_ssl_sha256_direct : tests/utils/crypto/test_ssl_sha256_direct ;
@@ -4807,6 +4813,7 @@ alias tests/utils/crypto.norec :
   tests/utils/crypto/test_ssl_lib
   tests/utils/crypto/test_ssl_md4_direct
   tests/utils/crypto/test_ssl_md5_direct
+  tests/utils/crypto/test_ssl_mod_exp_direct
   tests/utils/crypto/test_ssl_rc4_direct
   tests/utils/crypto/test_ssl_sha1_direct
   tests/utils/crypto/test_ssl_sha256_direct

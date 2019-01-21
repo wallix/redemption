@@ -19,10 +19,24 @@
 
 */
 
-#pragma once
+#include "utils/crypto/ssl_mod_exp_direct.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <cassert>
 #include <cstddef>
-#include <cstdint>
+
+#ifdef __EMSCRIPTEN__
+// because _mm_getcsr() and _MM_FLUSH_ZERO_ON not implemented
+# include "cxx/diagnostic.hpp"
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-id-macro")
+# ifdef __SSE2__
+#  undef __SSE2__
+# endif
+REDEMPTION_DIAGNOSTIC_POP
+#endif
+#include <boost/multiprecision/cpp_int.hpp>
 
 /**
  * \pre  \a out_len >= \a modulus_size
@@ -33,4 +47,28 @@ std::size_t mod_exp_direct(
     const uint8_t * inr, std::size_t in_len,
     const uint8_t * modulus, std::size_t modulus_size,
     const uint8_t * exponent, std::size_t exponent_size
-);
+) {
+    assert(out_len >= modulus_size);
+
+    using int_type = boost::multiprecision::cpp_int;
+
+    auto b256_to_bigint = [](uint8_t const * s, size_t n) {
+        int_type i;
+        boost::multiprecision::import_bits(i, s, s+n);
+        return i;
+    };
+
+    int_type base = b256_to_bigint(inr, in_len);
+    int_type exp = b256_to_bigint(exponent, exponent_size);
+    int_type m = b256_to_bigint(modulus, modulus_size);
+
+    int_type r = boost::multiprecision::powm(base, exp, m);
+
+    auto it = boost::multiprecision::export_bits(r, out, 8);
+    auto r_len = static_cast<size_t>(it - out);
+    *it = 0;
+    if (r_len == 1 && *out == 0) {
+        r_len = 0;
+    }
+    return r_len;
+}
