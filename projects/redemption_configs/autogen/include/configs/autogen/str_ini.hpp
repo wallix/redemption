@@ -628,7 +628,7 @@
 "#server_is_apple = 0\n\n"
 
 "#_hidden\n"
-"#server_unix_alt = 0\n\n"
+"#server_unix_alt = 1\n\n"
 
 "[mod_replay]\n\n"
 

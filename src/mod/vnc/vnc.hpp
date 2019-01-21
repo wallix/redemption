@@ -978,10 +978,9 @@ public:
               || key == ']'
               || key == '}'
         )) {
-
-                          this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
-                          this->send_keyevent(downflag, key);
-                          this->send_keyevent(KeymapSym::KBDFLAGS_DOWN, 0xffe9);
+                this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
+                this->send_keyevent(downflag, key);
+                this->send_keyevent(KeymapSym::KBDFLAGS_DOWN, 0xffe9);
             } else
             if (this->left_ctrl_pressed) {
                 if (key == 0xfe03) {

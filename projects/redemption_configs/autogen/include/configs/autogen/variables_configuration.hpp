@@ -2343,7 +2343,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
-    /// value{false} <br/>
+    /// value{true} <br/>
     struct mod_vnc::server_unix_alt {
         static constexpr bool is_sesman_to_proxy = true;
         static constexpr bool is_proxy_to_sesman = false;
@@ -2355,7 +2355,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{false};
+        type value{true};
     };
 
     /// 0 - Wait for Escape, 1 - End session <br/>

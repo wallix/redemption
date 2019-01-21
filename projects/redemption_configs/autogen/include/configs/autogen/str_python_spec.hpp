@@ -628,7 +628,7 @@
 "server_is_apple = boolean(default=False)\n\n"
 
 "#_hidden\n"
-"server_unix_alt = boolean(default=False)\n\n"
+"server_unix_alt = boolean(default=True)\n\n"
 
 "[mod_replay]\n\n"
 
