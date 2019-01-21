@@ -363,6 +363,10 @@ private:
     const uint32_t                    session_probe_handle_usage_limit;
     const uint32_t                    session_probe_memory_usage_limit;
 
+    const bool                        session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
+    const bool                        session_probe_childless_window_as_unidentified_input_field;
+
     const bool                        session_probe_public_session;
 
     const bool                        bogus_ios_rdpdr_virtual_channel;
@@ -382,6 +386,7 @@ private:
     const std::string session_probe_extra_system_processes;
     const std::string session_probe_outbound_connection_monitoring_rules;
     const std::string session_probe_process_monitoring_rules;
+    const std::string session_probe_windows_of_these_applications_as_unidentified_input_field;
 
     size_t recv_bmp_update;
 
@@ -787,6 +792,8 @@ public:
         , session_probe_enable_crash_dump(mod_rdp_params.session_probe_enable_crash_dump)
         , session_probe_handle_usage_limit(mod_rdp_params.session_probe_handle_usage_limit)
         , session_probe_memory_usage_limit(mod_rdp_params.session_probe_memory_usage_limit)
+        , session_probe_ignore_ui_less_processes_during_end_of_session_check(mod_rdp_params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
+        , session_probe_childless_window_as_unidentified_input_field(mod_rdp_params.session_probe_childless_window_as_unidentified_input_field)
         , session_probe_public_session(mod_rdp_params.session_probe_public_session)
         , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
         , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
@@ -797,6 +804,7 @@ public:
         , session_probe_extra_system_processes(mod_rdp_params.session_probe_extra_system_processes)
         , session_probe_outbound_connection_monitoring_rules(mod_rdp_params.session_probe_outbound_connection_monitoring_rules)
         , session_probe_process_monitoring_rules(mod_rdp_params.session_probe_process_monitoring_rules)
+        , session_probe_windows_of_these_applications_as_unidentified_input_field(mod_rdp_params.session_probe_windows_of_these_applications_as_unidentified_input_field)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
@@ -1353,6 +1361,12 @@ private:
         session_probe_virtual_channel_params.session_probe_memory_usage_limit        =
             this->session_probe_memory_usage_limit;
 
+        session_probe_virtual_channel_params.session_probe_ignore_ui_less_processes_during_end_of_session_check =
+            this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
+        session_probe_virtual_channel_params.session_probe_childless_window_as_unidentified_input_field =
+            this->session_probe_childless_window_as_unidentified_input_field;
+
         session_probe_virtual_channel_params.real_alternate_shell                   =
             this->real_alternate_shell.c_str();
         session_probe_virtual_channel_params.real_working_dir                       =
@@ -1366,6 +1380,9 @@ private:
 
         session_probe_virtual_channel_params.session_probe_process_monitoring_rules =
             this->session_probe_process_monitoring_rules.c_str();
+
+        session_probe_virtual_channel_params.session_probe_windows_of_these_applications_as_unidentified_input_field   =
+            this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
 
         session_probe_virtual_channel_params.lang                                   =
             this->lang;

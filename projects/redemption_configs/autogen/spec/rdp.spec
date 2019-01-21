@@ -19,6 +19,23 @@ transformation_rule = string(default='')
 vault_transformation_rule = string(default='')
 
 
+[video]
+
+# Disable keyboard log:
+#   0: none
+#   1: disable keyboard log in syslog
+#   2: disable keyboard log in recorded sessions
+# (note: values can be added (everyone: 1+2+4=7, mute: 0))
+disable_keyboard_log = integer(min=0, max=3, default=1)
+
+[session_log]
+
+#   0: keyboard input are not masked
+#   1: only passwords are masked
+#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
+#   3: keyboard input are fully masked
+keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
+
 [rdp]
 
 # NLA authentication in secondary target.
@@ -50,14 +67,6 @@ remote_programs_disconnect_message_delay = integer(min=0, default=3000)
 
 # Use Session Probe to launch Remote Program as much as possible.
 use_session_probe_to_launch_remote_program = boolean(default=True)
-
-[session_log]
-
-#   0: keyboard input are not masked
-#   1: only passwords are masked
-#   2: passwords and unidentified texts are masked
-#   3: keyboard input are fully masked
-keyboard_input_masking_level = option(0, 1, 2, 3, default=2)
 
 [server_cert]
 
@@ -117,7 +126,7 @@ inactivity_timeout = integer(min=0, default=0)
 
 [session_probe]
 
-enable_session_probe = boolean(default=False)
+enable_session_probe = boolean(default=True)
 
 # Minimum supported server : Windows Server 2008.
 # Clipboard redirection should be remain enabled on Terminal Server.
@@ -209,6 +218,12 @@ handle_usage_limit = integer(min=0, max=1000, default=0)
 #_advanced
 memory_usage_limit = integer(min=0, max=200000000, default=0)
 
+#_advanced
+ignore_ui_less_processes_during_end_of_session_check = boolean(default=True)
+
+#_advanced
+childless_window_as_unidentified_input_field = boolean(default=True)
+
 # If enabled, disconnected session can be recovered by a different primary user.
 public_session = boolean(default=False)
 
@@ -224,4 +239,7 @@ process_monitoring_rules = string(default='')
 
 # Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)
 extra_system_processes = string(default='')
+
+# Comma-separated processes (Ex.: chrome.exe,ngf.exe)
+windows_of_these_applications_as_unidentified_input_field = string(default='')
 

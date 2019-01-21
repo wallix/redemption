@@ -101,6 +101,18 @@ template<class T, class Pack>
 auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
 { return detail_::get_default<T>(t, &infos); }
 
+template<template<class> class Default, class T, class Pack>
+auto const & get_default(cfg_attributes::type_<T> t, Pack const & infos)
+{
+    if constexpr (is_t_convertible_v<Pack, Default>) {
+        (void)t;
+        return get_t_elem<Default>(infos).value;
+    }
+    else {
+        return detail_::get_default<T>(t, &infos);
+    }
+}
+
 
 template<class T, class Pack, class D>
 decltype(auto) value_or(Pack const& pack, D&& default_)
@@ -363,8 +375,9 @@ public:
         static_assert((std::is_same_v<Ts, cfg_attributes::spec::log_policy> || ...),
             "spec::log_policy is missing");
         constexpr bool has_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::connection_policy> || ...);
+        constexpr bool has_ini_and_conn_policy = (is_convertible_v<Ts, cfg_attributes::sesman::authorize_ini_and_connpolicy> || ...);
         static_assert(
-            !has_conn_policy || ((
+            has_ini_and_conn_policy || !has_conn_policy || ((
                 is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::no_ini_no_gui)>
              || is_convertible_v<Ts, decltype(cfg_attributes::spec::constants::hidden_in_gui)>
             ) || ...),

@@ -2,6 +2,12 @@
 # -*- coding: utf-8 -*-
 
 cp_spec = {
+  'video': {
+    u'disable_keyboard_log': 'disable_keyboard_log',
+  },
+  'session_log': {
+    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
+  },
   'rdp': {
     u'enable_nla': 'enable_nla',
     u'enable_kerberos': 'enable_kerberos',
@@ -12,9 +18,6 @@ cp_spec = {
     u'use_native_remoteapp_capability': 'use_native_remoteapp_capability',
     u'rail_disconnect_message_delay': 'remote_programs_disconnect_message_delay',
     u'use_session_probe_to_launch_remote_program': 'use_session_probe_to_launch_remote_program',
-  },
-  'session_log': {
-    u'keyboard_input_masking_level': 'keyboard_input_masking_level',
   },
   'server_cert': {
     u'server_cert_store': 'server_cert_store',
@@ -51,10 +54,13 @@ cp_spec = {
     u'session_probe_enable_crash_dump': 'enable_crash_dump',
     u'session_probe_handle_usage_limit': 'handle_usage_limit',
     u'session_probe_memory_usage_limit': 'memory_usage_limit',
+    u'session_probe_ignore_ui_less_processes_during_end_of_session_check': 'ignore_ui_less_processes_during_end_of_session_check',
+    u'session_probe_childless_window_as_unidentified_input_field': 'childless_window_as_unidentified_input_field',
     u'session_probe_public_session': 'public_session',
     u'session_probe_outbound_connection_monitoring_rules': 'outbound_connection_monitoring_rules',
     u'session_probe_process_monitoring_rules': 'process_monitoring_rules',
     u'session_probe_extra_system_processes': 'extra_system_processes',
+    u'session_probe_windows_of_these_applications_as_unidentified_input_field': 'windows_of_these_applications_as_unidentified_input_field',
 },
   'vnc': {
     u'server_is_apple': 'server_is_apple',

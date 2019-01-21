@@ -132,16 +132,22 @@
 "#_advanced\n"
 "#experimental_support_resize_session_during_recording = 0\n\n"
 
+"# Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+"# !!!May cause FreeRDP-based client to CRASH!!!\n"
+"# Set to 0 to disable this feature.\n"
+"# (is in millisecond)\n"
+"#rdp_keepalive_connection_interval = 0\n\n"
+
 "[session_log]\n\n"
 
 "#enable_session_log = 1\n\n"
 
-"#_advanced\n"
+"#_hidden\n"
 "#log_path = \n\n"
 
 "#   0: keyboard input are not masked\n"
 "#   1: only passwords are masked\n"
-"#   2: passwords and unidentified texts are masked\n"
+"#   2: passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section\n"
 "#   3: keyboard input are fully masked\n"
 "#_hidden\n"
 "#keyboard_input_masking_level = 2\n\n"
@@ -467,6 +473,12 @@
 
 "#_hidden\n"
 "#session_probe_memory_usage_limit = 0\n\n"
+
+"#_hidden\n"
+"#session_probe_ignore_ui_less_processes_during_end_of_session_check = 1\n\n"
+
+"#_hidden\n"
+"#session_probe_childless_window_as_unidentified_input_field = 1\n\n"
 
 "# If enabled, disconnected session can be recovered by a different primary user.\n"
 "#_hidden\n"

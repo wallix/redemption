@@ -271,6 +271,10 @@ public:
             LOG(LOG_INFO, "NTLM_SSPI::DecryptMessage");
         }
 
+        if (data_in.size() < cbMaxSignature) {
+            return SEC_E_INVALID_TOKEN;
+        }
+
         // data_in [signature][data_buffer]
 
         auto data_buffer = data_in.array_from_offset(cbMaxSignature);

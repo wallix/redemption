@@ -117,6 +117,38 @@ operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlags e)
 { return os << static_cast<unsigned long>(e); }
 
 
+enum class KeyboardLogFlagsCP {
+    none = 0,
+    // keyboard log in syslog
+    syslog = 1,
+    // keyboard log in recorded sessions
+    wrm = 2,
+};
+
+inline bool is_valid_enum_value(KeyboardLogFlagsCP e)
+{
+    return static_cast<unsigned long>(e) <= 3;
+}
+
+inline KeyboardLogFlagsCP operator | (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
+{ return static_cast<KeyboardLogFlagsCP>(static_cast<unsigned long>(x) | static_cast<unsigned long>(y)); }
+inline KeyboardLogFlagsCP operator & (KeyboardLogFlagsCP x, KeyboardLogFlagsCP y)
+{ return static_cast<KeyboardLogFlagsCP>(static_cast<unsigned long>(x) & static_cast<unsigned long>(y)); }
+inline KeyboardLogFlagsCP operator ~ (KeyboardLogFlagsCP x)
+{ return static_cast<KeyboardLogFlagsCP>(~static_cast<unsigned long>(x) & static_cast<unsigned long>(3)); }
+inline KeyboardLogFlagsCP operator + (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x | y; }
+inline KeyboardLogFlagsCP operator - (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x & ~y; }
+inline KeyboardLogFlagsCP & operator |= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x | y; }
+inline KeyboardLogFlagsCP & operator &= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x & y; }
+inline KeyboardLogFlagsCP & operator += (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x + y; }
+inline KeyboardLogFlagsCP & operator -= (KeyboardLogFlagsCP & x, KeyboardLogFlagsCP y) { return x = x - y; }
+
+template<class Ch, class Tr>
+std::basic_ostream<Ch, Tr> &
+operator << (std::basic_ostream<Ch, Tr> & os, KeyboardLogFlagsCP e)
+{ return os << static_cast<unsigned long>(e); }
+
+
 enum class ClipboardLogFlags {
     none = 0,
     // clipboard log in syslog
@@ -262,7 +294,7 @@ enum class KeyboardInputMaskingLevel {
     unmasked = 0,
     // only passwords are masked
     password_only = 1,
-    // passwords and unidentified texts are masked
+    // passwords and unidentified texts are masked. See also childless_window_as_unidentified_input_field and windows_of_these_applications_as_unidentified_input_field in session_probe section
     password_and_unidentified = 2,
     // keyboard input are fully masked
     fully_masked = 3,

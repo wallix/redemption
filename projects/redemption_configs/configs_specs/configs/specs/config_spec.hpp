@@ -185,12 +185,19 @@ void config_spec_definition(Writer && W)
         W.sep();
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_support_resize_session_during_recording",set(false));
+        W.sep();
+
+        W.member(ini_and_gui, no_sesman, L, type_<std::chrono::milliseconds>(), "rdp_keepalive_connection_interval", desc{
+            "Prevent Remote Desktop session timeouts due to idle tcp sessions by sending periodically keep alive packet to client.\n"
+            "!!!May cause FreeRDP-based client to CRASH!!!\n"
+            "Set to 0 to disable this feature."
+        }, set(0));
     });
 
     W.section("session_log", [&]
     {
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_session_log", set(true));
-        W.member(advanced_in_gui, sesman_to_proxy, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
+        W.member(hidden_in_gui, sesman_to_proxy, L, type_<std::string>(), "log_path", sesman::name{"session_log_path"});
         W.sep();
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<KeyboardInputMaskingLevel>(), "keyboard_input_masking_level", set(KeyboardInputMaskingLevel::password_and_unidentified));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "hide_non_printable_kbd_input", set(false));
@@ -320,7 +327,7 @@ void config_spec_definition(Writer && W)
         W.sep();
         W.member(hidden_in_gui, rdp_connpolicy, L, type_<bool>(), "use_native_remoteapp_capability", desc{"As far as possible, use native RemoteApp capability"}, set(true));
         W.sep();
-        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false));
+        W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "enable_session_probe", sesman::name{"session_probe"}, set(false), connpolicy::set(true));
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), "session_probe_use_smart_launcher", cpp::name{"session_probe_use_clipboard_based_launcher"}, connpolicy::name{"use_smart_launcher"}, desc{
             "Minimum supported server : Windows Server 2008.\n"
             "Clipboard redirection should be remain enabled on Terminal Server."
@@ -379,6 +386,12 @@ void config_spec_definition(Writer && W)
 
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 1000>>(), "session_probe_handle_usage_limit", connpolicy::name{"handle_usage_limit"}, set(0));
         W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<types::range<types::u32, 0, 200'000'000>>(), "session_probe_memory_usage_limit", connpolicy::name{"memory_usage_limit"}, set(0));
+        W.sep();
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_ignore_ui_less_processes_during_end_of_session_check", connpolicy::name{"ignore_ui_less_processes_during_end_of_session_check"}, set(true));
+        W.sep();
+
+        W.member(hidden_in_gui, rdp_connpolicy | advanced_in_connpolicy, co_probe, L, type_<bool>(), "session_probe_childless_window_as_unidentified_input_field", connpolicy::name{"childless_window_as_unidentified_input_field"}, set(true));
         W.sep();
 
         W.member(hidden_in_gui, rdp_connpolicy, co_probe, L, type_<bool>(), connpolicy::name{"public_session"}, "session_probe_public_session", desc{"If enabled, disconnected session can be recovered by a different primary user."}, set(false));
@@ -501,7 +514,12 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "record_path", set(CPP_EXPR(app_path(AppPath::Record))));
         W.sep();
 
-        W.member(ini_and_gui, no_sesman, L, type_<KeyboardLogFlags>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
+
+
+        W.member(ini_and_gui, rdp_connpolicy, sesman::authorize_ini_and_connpolicy{},  L, type_<KeyboardLogFlags>{}, sesman::type_<KeyboardLogFlagsCP>{}, "disable_keyboard_log", desc{"Disable keyboard log:"}, disable_prefix_val, set(KeyboardLogFlags::syslog));
+
+
+
         W.sep();
         W.member(ini_and_gui, no_sesman, L, type_<ClipboardLogFlags>(), "disable_clipboard_log", desc{"Disable clipboard log:"}, disable_prefix_val, set(ClipboardLogFlags::syslog));
         W.sep();
@@ -694,6 +712,10 @@ void config_spec_definition(Writer && W)
         });
         W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), "session_probe_extra_system_processes", connpolicy::name{"extra_system_processes"}, desc{"Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe)"});
         W.sep();
+
+        W.member(no_ini_no_gui, rdp_connpolicy, co_probe, L, type_<std::string>(), "session_probe_windows_of_these_applications_as_unidentified_input_field", connpolicy::name{"windows_of_these_applications_as_unidentified_input_field"}, desc{"Comma-separated processes (Ex.: chrome.exe,ngf.exe)"});
+        W.sep();
+
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "disconnect_reason");
         W.member(no_ini_no_gui, proxy_to_sesman, L, type_<bool>(), "disconnect_reason_ack", set(false));
         W.sep();

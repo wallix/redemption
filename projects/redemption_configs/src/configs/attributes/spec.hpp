@@ -206,6 +206,21 @@ namespace connpolicy
 
     struct section { char const* name; };
 
+    template<class T>
+    struct default_
+    {
+        using type = T;
+        T value;
+    };
+
+    template<class T>
+    default_<T> set(T const & x)
+    { return {x}; }
+
+    template<std::size_t N>
+    default_<std::string> set(char const (&x)[N])
+    { return {{std::string(x+0, x+N-1)}}; }
+
     namespace internal
     {
         enum class attr {
@@ -275,6 +290,10 @@ namespace sesman
         inline internal::sesman_io_t<internal::io::sesman_to_proxy>   sesman_to_proxy{};
         inline internal::sesman_io_t<internal::io::rw>                sesman_rw{};
     }
+
+    class authorize_ini_and_connpolicy
+    {
+    };
 
     struct connection_policy
     {

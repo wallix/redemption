@@ -46,8 +46,14 @@ enum {
     INVALID_RECONNECTION_COOKIE = 0xFFFFFFFF
 };
 
+// Proxy Options
 enum {
     OPTION_DELAY_DISABLED_LAUNCH_MASK = 0x00000001
+};
+
+// Session Probe Options
+enum {
+    OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK = 0x00000001
 };
 
 class ExtraSystemProcesses
@@ -331,6 +337,10 @@ private:
     const uint32_t param_handle_usage_limit;
     const uint32_t param_memory_usage_limit;
 
+    const bool param_session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
+    const bool param_session_probe_childless_window_as_unidentified_input_field;
+
     FrontAPI& front;
 
     mod_api& mod;
@@ -341,6 +351,7 @@ private:
     ExtraSystemProcesses           extra_system_processes;
     OutboundConnectionMonitorRules outbound_connection_monitor_rules;
     ProcessMonitorRules            process_monitor_rules;
+    ExtraSystemProcesses           windows_of_these_applications_as_unidentified_input_field;
 
     bool disconnection_reconnection_required = false; // Cause => Authenticated user changed.
 
@@ -402,12 +413,18 @@ public:
 
         uninit_checked<const char*> session_probe_process_monitoring_rules;
 
+        uninit_checked<const char*> session_probe_windows_of_these_applications_as_unidentified_input_field;
+
         uninit_checked<bool> session_probe_allow_multiple_handshake;
 
         uninit_checked<bool> session_probe_enable_crash_dump;
 
         uninit_checked<uint32_t> session_probe_handle_usage_limit;
         uninit_checked<uint32_t> session_probe_memory_usage_limit;
+
+        uninit_checked<bool> session_probe_ignore_ui_less_processes_during_end_of_session_check;
+
+        uninit_checked<bool> session_probe_childless_window_as_unidentified_input_field;
 
         uninit_checked<Translation::language_t> lang;
 
@@ -466,6 +483,8 @@ public:
     , param_enable_crash_dump(params.session_probe_enable_crash_dump)
     , param_handle_usage_limit(params.session_probe_handle_usage_limit)
     , param_memory_usage_limit(params.session_probe_memory_usage_limit)
+    , param_session_probe_ignore_ui_less_processes_during_end_of_session_check(params.session_probe_ignore_ui_less_processes_during_end_of_session_check)
+    , param_session_probe_childless_window_as_unidentified_input_field(params.session_probe_childless_window_as_unidentified_input_field)
     , front(front)
     , mod(mod)
     , rdp(rdp)
@@ -475,6 +494,7 @@ public:
           params.session_probe_outbound_connection_monitoring_rules)
     , process_monitor_rules(
           params.session_probe_process_monitoring_rules)
+    , windows_of_these_applications_as_unidentified_input_field(params.session_probe_windows_of_these_applications_as_unidentified_input_field)
     , gen(gen)
     , session_reactor(session_reactor)
     {
@@ -488,6 +508,11 @@ public:
                 ms2ll(this->session_probe_effective_launch_timeout),
                 static_cast<int>(this->param_session_probe_on_launch_failure));
         }
+
+        this->front.session_probe_started(false);
+        this->front.set_focus_on_password_textbox(false);
+        this->front.set_focus_on_unidentified_input_field(false);
+        this->front.set_consent_ui_visible(false);
     }
 
     bool has_been_launched() const {
@@ -855,8 +880,48 @@ public:
                 }
 
                 send_client_message([](OutStream & out_s) {
-                        const char cstr[] = "Version=" "1" "\x01" "3";
+                        const char cstr[] = "Version=" "1" "\x01" "4";
                         out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                    });
+
+                {
+                    uint32_t options = 0;
+
+                    if (this->param_session_probe_ignore_ui_less_processes_during_end_of_session_check) {
+                        options |= OPTION_IGNORE_UI_LESS_PROCESSES_DURING_END_OF_SESSION_CHECK;
+                    }
+
+                    if (options)
+                    {
+                        send_client_message([this, options](OutStream & out_s) {
+                                {
+                                    const char cstr[] = "Options=";
+                                    out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                                }
+
+                                {
+                                    char cstr[128];
+                                    int len = std::snprintf(cstr, sizeof(cstr), "%u", options);
+                                    out_s.out_copy_bytes(cstr, size_t(len));
+                                }
+                            });
+                    }
+                }
+
+                send_client_message([this](OutStream & out_s) {
+                        {
+                            const char cstr[] = "ChildlessWindowAsUnidentifiedInputField=";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
+
+                        if (this->param_session_probe_childless_window_as_unidentified_input_field) {
+                            const char cstr[] = "Yes";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
+                        else {
+                            const char cstr[] = "No";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
                     });
 
                 send_client_message([](OutStream & out_s) {
@@ -1184,6 +1249,44 @@ public:
                         }
                     });
             }
+
+            else if (!::strcasecmp(parameters_[0].c_str(), "Get windows of application as unidentified input field") &&
+                     (2 <= parameters_.size())) {
+                const unsigned int app_index =
+                    ::strtoul(parameters_[1].c_str(), nullptr, 10);
+
+                // WindowsOfApplicationAsUnidentifiedInputField=AppIndex\x01ErrorCode[\x01AppName]
+                // ErrorCode : 0 on success. -1 if an error occurred.
+
+
+                send_client_message([this, app_index](OutStream & out_s) {
+                        {
+                            const char cstr[] = "WindowsOfApplicationAsUnidentifiedInputField=";
+                            out_s.out_copy_bytes(cstr, sizeof(cstr) - 1u);
+                        }
+
+                        std::string name;
+
+                        const bool result =
+                            this->windows_of_these_applications_as_unidentified_input_field.get(app_index, name);
+
+                        {
+                            const int error_code = (result ? 0 : -1);
+                            char cstr[128];
+                            std::snprintf(cstr, sizeof(cstr), "%u" "\x01" "%d",
+                                app_index, error_code);
+                            out_s.out_copy_bytes(cstr, strlen(cstr));
+                        }
+
+                        if (result) {
+                            char cstr[1024];
+                            std::snprintf(cstr, sizeof(cstr), "\x01" "%s",
+                                name.c_str());
+                            out_s.out_copy_bytes(cstr, strlen(cstr));
+                        }
+                    });
+            }
+
             else {
                 LOG(LOG_INFO,
                     "SessionProbeVirtualChannel::process_server_message: "
@@ -1351,6 +1454,32 @@ public:
 
                     if (parameters_.size() == 1) {
                         this->front.set_focus_on_password_textbox(
+                            !::strcasecmp(parameters_[0].c_str(), "yes"));
+                    }
+                    else {
+                        message_format_invalid = true;
+                    }
+                }
+                else if (!::strcasecmp(order_.c_str(), "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS")) {
+                    auto info = key_qvalue_pairs({
+                        {"type",   "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS"},
+                        {"status", parameters_[0]},
+                    });
+
+                    ArcsightLogInfo arc_info;
+                    arc_info.name = "UNIDENTIFIED_INPUT_FIELD_GET_FOCUS";
+                    arc_info.WallixBastionStatus = parameters_[0];
+                    arc_info.ApplicationProtocol = "rdp";
+                    arc_info.direction_flag = ArcsightLogInfo::SERVER_SRC;
+
+                    this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
+
+                    if (bool(this->verbose & RDPVerbose::sesprobe)) {
+                        LOG(LOG_INFO, "%s", info);
+                    }
+
+                    if (parameters_.size() == 1) {
+                        this->front.set_focus_on_unidentified_input_field(
                             !::strcasecmp(parameters_[0].c_str(), "yes"));
                     }
                     else {
