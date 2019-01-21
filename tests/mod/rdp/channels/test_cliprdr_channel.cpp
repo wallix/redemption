@@ -22,6 +22,9 @@
 #define RED_TEST_MODULE TestCLIPRDRChannel
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
+#include "test_only/get_file_contents.hpp"
+#include "test_only/working_directory.hpp"
+
 #include "core/RDP/clipboard.hpp"
 #include "test_only/transport/test_transport.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
@@ -60,7 +63,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -95,7 +98,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -130,7 +133,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -165,7 +168,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     TestToServerSender to_server_sender(t);
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -202,7 +205,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -262,7 +265,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, false,
+        &to_client_sender, &to_server_sender, front, false, "",
         clipboard_virtual_channel_params);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -399,41 +402,76 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 }
 
 
-// RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
-//     ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
-//     FakeFront front(screen_info);
-//
-//     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
-//
-//     NullReportMessage report_message;
-//     ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
-//
-//     clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-//     clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
-//
-//     clipboard_virtual_channel_params.clipboard_down_authorized = true;
-//     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-//     clipboard_virtual_channel_params.clipboard_file_authorized = true;
-//
-//     clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-//     clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-//
-//     clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
-//
-//     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-//     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-//
-//     TestToClientSender to_client_sender(t);
-//     TestToServerSender to_server_sender(t);
-//
-//     ClipboardVirtualChannel clipboard_virtual_channel(
-//         &to_client_sender, &to_server_sender, front, true,
-//         clipboard_virtual_channel_params);
-//
-//     WorkingDirectory wd("");
+RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
+
+    int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
+
+    NullReportMessage report_message;
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+
+    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
+    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
+
+    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
+    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
+
+    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+
+    NullSender to_client_sender;
+    NullSender to_server_sender;
+
+    ClipboardVirtualChannel clipboard_virtual_channel(
+        &to_client_sender, &to_server_sender, front, true, "/tmp/test_cliprdr_channel_file/",
+        clipboard_virtual_channel_params);
+
+    std::unique_ptr<AsynchronousTask> out_asynchronous_task;
+
+    WorkingDirectory wd("test_cliprdr_channel_file");
 //     auto const file1 = wd.add_file("new_file1.txt");
-//
-//
-//
-//     RED_CHECK_WORKSPACE(wd);
-// }
+
+//     INFO (4749/4749) --      CliprdrHeader: MsgType=0x2(2 bytes):CB_FORMAT_LIST MsgFlags=0x0(2 bytes):CB_RESPONSE__NONE_ DataLen=122Byte(s)(4 bytes)
+// INFO (4749/4749) -- FormatListPDU: {formatId=<unknown>(49280) formatName="FileGroupDescriptorW"} {formatId=<unknown>(49282) formatName="FileContents"} {formatId=<unknown>(49309) formatName="Preferred DropEffect"}
+// INFO (4749/4749) -- ClipboardVirtualChannel::process_server_message: total_length=134 flags=0x00000003 chunk_data_length=134
+// INFO (4749/4749) -- Recv done on channel (134) n bytes
+// INFO (4749/4749) -- \x00\x00\x00\x01
+// INFO (4749/4749) -- \x00\x00\x00\x86
+// INFO (4749/4749) -- \x00\x00\x00\x03
+// INFO (4749/4749) -- \x00\x00\x00\x86
+// INFO (4749/4749) -- /* 0000 */ "\x02\x00\x00\x00\x7a\x00\x00\x00\x80\xc0\x00\x00\x46\x00\x69\x00" // ....z.......F.i.
+// INFO (4749/4749) -- /* 0010 */ "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" // l.e.G.r.o.u.p.D.
+// INFO (4749/4749) -- /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
+// INFO (4749/4749) -- /* 0030 */ "\x72\x00\x57\x00\x00\x00\x82\xc0\x00\x00\x46\x00\x69\x00\x6c\x00" // r.W.......F.i.l.
+// INFO (4749/4749) -- /* 0040 */ "\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00\x74\x00" // e.C.o.n.t.e.n.t.
+// INFO (4749/4749) -- /* 0050 */ "\x73\x00\x00\x00\x9d\xc0\x00\x00\x50\x00\x72\x00\x65\x00\x66\x00" // s.......P.r.e.f.
+// INFO (4749/4749) -- /* 0060 */ "\x65\x00\x72\x00\x72\x00\x65\x00\x64\x00\x20\x00\x44\x00\x72\x00" // e.r.r.e.d. .D.r.
+// INFO (4749/4749) -- /* 0070 */ "\x6f\x00\x70\x00\x45\x00\x66\x00\x66\x00\x65\x00\x63\x00\x74\x00" // o.p.E.f.f.e.c.t.
+// INFO (4749/4749) -- /* 0080 */ "\x00\x00\x00\x00\x00\x00"                                         // ......
+// INFO (4749/4749) -- Dump done on channel (134) n bytes
+
+//     clipboard_virtual_channel.process_server_message(
+//             134,
+//               CHANNELS::CHANNEL_FLAG_FIRST
+//             | CHANNELS::CHANNEL_FLAG_LAST
+//             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+//             byte_ptr_cast(
+//     /* 0000 */ "\x02\x00\x00\x00\x7a\x00\x00\x00\x80\xc0\x00\x00\x46\x00\x69\x00" // ....z.......F.i.
+//     /* 0010 */ "\x6c\x00\x65\x00\x47\x00\x72\x00\x6f\x00\x75\x00\x70\x00\x44\x00" // l.e.G.r.o.u.p.D.
+//     /* 0020 */ "\x65\x00\x73\x00\x63\x00\x72\x00\x69\x00\x70\x00\x74\x00\x6f\x00" // e.s.c.r.i.p.t.o.
+//     /* 0030 */ "\x72\x00\x57\x00\x00\x00\x82\xc0\x00\x00\x46\x00\x69\x00\x6c\x00" // r.W.......F.i.l.
+//     /* 0040 */ "\x65\x00\x43\x00\x6f\x00\x6e\x00\x74\x00\x65\x00\x6e\x00\x74\x00" // e.C.o.n.t.e.n.t.
+//     /* 0050 */ "\x73\x00\x00\x00\x9d\xc0\x00\x00\x50\x00\x72\x00\x65\x00\x66\x00" // s.......P.r.e.f.
+//     /* 0060 */ "\x65\x00\x72\x00\x72\x00\x65\x00\x64\x00\x20\x00\x44\x00\x72\x00" // e.r.r.e.d. .D.r.
+//     /* 0070 */ "\x6f\x00\x70\x00\x45\x00\x66\x00\x66\x00\x65\x00\x63\x00\x74\x00" // o.p.E.f.f.e.c.t.
+//     /* 0080 */ "\x00\x00\x00\x00\x00\x00"
+//                 ),
+//             134,
+//             out_asynchronous_task);
+
+    RED_CHECK_WORKSPACE(wd);
+}

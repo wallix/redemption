@@ -4569,6 +4569,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/gdi/graphic_api.o
   <library>src/utils/bitmap.o
   <library>src/utils/drawable.o
+  <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
   <library>src/utils/log.o
   <library>src/utils/rle.o
@@ -4576,6 +4577,7 @@ test-run tests/mod/rdp/channels/test_cliprdr_channel :
   <library>src/utils/utf.o
   <library>tests/includes/test_only/front/fake_front.o
   <library>tests/includes/test_only/gdi/test_graphic.o
+  <library>tests/includes/test_only/working_directory.o
   <covfile>src/mod/rdp/channels/cliprdr_channel.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl

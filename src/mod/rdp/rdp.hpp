@@ -483,6 +483,7 @@ private:
                     this->clipboard_to_server_sender.get(),
                     front,
                     false,
+                    "",
                     cvc_params);
         }
 

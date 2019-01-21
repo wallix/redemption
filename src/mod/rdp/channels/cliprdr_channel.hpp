@@ -87,7 +87,9 @@ public:
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
-        FrontAPI& front, const bool channel_filter_on,
+        FrontAPI& front,
+        const bool channel_filter_on,
+        const std::string & cliprdr_channel_files_directory,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -101,7 +103,7 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
-    , channel_file("/tmp/") {}
+    , channel_file(cliprdr_channel_files_directory) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
