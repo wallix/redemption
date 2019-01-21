@@ -380,7 +380,7 @@ struct CSCore {
     uint16_t supportedColorDepths{7};
     uint16_t earlyCapabilityFlags{RNS_UD_CS_SUPPORT_ERRINFO_PDU};
     uint8_t  clientDigProductId[64];
-    uint8_t  connectionType{CONNECTION_TYPE_WAN};
+    uint8_t  connectionType{0};
     uint8_t  pad1octet{0};
     uint32_t serverSelectedProtocol{0};
 

@@ -333,6 +333,7 @@ RdpNegociation::RdpNegociation(
     , trans(trans)
     , password_printing_mode(mod_rdp_params.password_printing_mode)
     , enable_session_probe(mod_rdp_params.enable_session_probe)
+    , enable_remotefx(mod_rdp_params.enable_remotefx)
     , rdp_compression(mod_rdp_params.rdp_compression)
     , session_probe_use_clipboard_based_launcher(
         mod_rdp_params.session_probe_use_clipboard_based_launcher
@@ -848,6 +849,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
         [this, &hostname](StreamSize<65536-1024>, OutStream & stream) {
             // ------------------------------------------------------------
             GCC::UserData::CSCore cs_core;
+
+            if (this->enable_remotefx) {
+                cs_core.connectionType = GCC::UserData::CONNECTION_TYPE_WAN;
+            }
 
             Rect primary_monitor_rect = this->cs_monitor.get_primary_monitor_rect();
 

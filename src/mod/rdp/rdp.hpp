@@ -269,7 +269,6 @@ private:
         std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
         std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
-        SessionProbeVirtualChannel * session_probe_virtual_channel_p = nullptr;
 
         const bool remote_program;
         const bool remote_program_enhanced;
@@ -407,8 +406,7 @@ private:
                 return nullptr;
             }
 
-            const CHANNELS::ChannelDefArray& front_channel_list =
-                front.get_channel_list();
+            const CHANNELS::ChannelDefArray& front_channel_list = front.get_channel_list();
 
             const CHANNELS::ChannelDef* channel = front_channel_list.get_by_name(channel_name);
             if (!channel)
@@ -675,7 +673,7 @@ private:
             }
         }
 
-        inline SessionProbeVirtualChannel& get_session_probe_virtual_channel(
+        inline void create_session_probe_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
                         AsynchronousTaskContainer & asynchronous_tasks,
@@ -688,66 +686,125 @@ private:
                         GeneralCaps const & client_general_caps,
                         const char (& client_name)[128]
                     ) {
-            if (!this->session_probe_virtual_channel) {
-                assert(!this->session_probe_to_server_sender);
+            assert(!this->session_probe_to_server_sender);
 
-                this->session_probe_to_server_sender =
-                    this->create_to_server_synchronous_sender(channel_names::sespro, stc);
+            this->session_probe_to_server_sender =
+                this->create_to_server_synchronous_sender(channel_names::sespro, stc);
 
-                if (!this->file_system_virtual_channel) {
-                    this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
-                }
-
-                FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
-
-                SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
-
-                sp_vc_params.front_width = stc.negociation_result.front_width;
-                sp_vc_params.front_height = stc.negociation_result.front_height;
-                sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
-                sp_vc_params.verbose  = this->verbose;
-                sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
-                sp_vc_params.real_working_dir = this->real_working_dir.c_str();
-                sp_vc_params.lang = lang;
-                sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && allow_using_multiple_monitors && (monitor_count > 1));
-                sp_vc_params.show_maximized = (!remote_program);
-                sp_vc_params.target_informations = this->session_probe_target_informations.c_str();
-
-                sp_vc_params.session_probe_launch_timeout = this->session_probe_launch_timeout;
-                sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe_launch_fallback_timeout;
-                sp_vc_params.session_probe_keepalive_timeout = this->session_probe_keepalive_timeout;
-                sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe_on_keepalive_timeout;
-                sp_vc_params.session_probe_on_launch_failure = this->session_probe_on_launch_failure;
-                sp_vc_params.session_probe_end_disconnected_session = this->session_probe_end_disconnected_session;
-                sp_vc_params.session_probe_disconnected_application_limit = this->session_probe_disconnected_application_limit;
-                sp_vc_params.session_probe_disconnected_session_limit = this->session_probe_disconnected_session_limit;
-                sp_vc_params.session_probe_idle_session_limit =  this->session_probe_idle_session_limit;
-                sp_vc_params.session_probe_enable_log = this->session_probe_enable_log;
-                sp_vc_params.session_probe_enable_log_rotation = this->session_probe_enable_log_rotation;
-                sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe_allow_multiple_handshake;
-                sp_vc_params.session_probe_enable_crash_dump = this->session_probe_enable_crash_dump;
-                sp_vc_params.session_probe_handle_usage_limit = this->session_probe_handle_usage_limit;
-                sp_vc_params.session_probe_memory_usage_limit = this->session_probe_memory_usage_limit;
-                sp_vc_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
-                sp_vc_params.session_probe_childless_window_as_unidentified_input_field = this->session_probe_childless_window_as_unidentified_input_field;
-                sp_vc_params.session_probe_extra_system_processes = this->session_probe_extra_system_processes.c_str();
-                sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe_outbound_connection_monitoring_rules.c_str();
-                sp_vc_params.session_probe_process_monitoring_rules = this->session_probe_process_monitoring_rules.c_str();
-                sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
-
-                this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
-                        session_reactor,
-                        this->session_probe_to_server_sender.get(),
-                        front,
-                        mod,
-                        rdp,
-                        file_system_virtual_channel,
-                        this->gen,
-                        sp_vc_params);
+            if (!this->file_system_virtual_channel) {
+                this->create_file_system_virtual_channel(front, stc, asynchronous_tasks, client_general_caps, client_name);
             }
 
-            return *this->session_probe_virtual_channel;
+            FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
+
+            SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
+
+            sp_vc_params.front_width = stc.negociation_result.front_width;
+            sp_vc_params.front_height = stc.negociation_result.front_height;
+            sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
+            sp_vc_params.verbose  = this->verbose;
+            sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
+            sp_vc_params.real_working_dir = this->real_working_dir.c_str();
+            sp_vc_params.lang = lang;
+            sp_vc_params.bogus_refresh_rect_ex = (bogus_refresh_rect && allow_using_multiple_monitors && (monitor_count > 1));
+            sp_vc_params.show_maximized = (!remote_program);
+            sp_vc_params.target_informations = this->session_probe_target_informations.c_str();
+
+            sp_vc_params.session_probe_launch_timeout = this->session_probe_launch_timeout;
+            sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe_launch_fallback_timeout;
+            sp_vc_params.session_probe_keepalive_timeout = this->session_probe_keepalive_timeout;
+            sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe_on_keepalive_timeout;
+            sp_vc_params.session_probe_on_launch_failure = this->session_probe_on_launch_failure;
+            sp_vc_params.session_probe_end_disconnected_session = this->session_probe_end_disconnected_session;
+            sp_vc_params.session_probe_disconnected_application_limit = this->session_probe_disconnected_application_limit;
+            sp_vc_params.session_probe_disconnected_session_limit = this->session_probe_disconnected_session_limit;
+            sp_vc_params.session_probe_idle_session_limit =  this->session_probe_idle_session_limit;
+            sp_vc_params.session_probe_enable_log = this->session_probe_enable_log;
+            sp_vc_params.session_probe_enable_log_rotation = this->session_probe_enable_log_rotation;
+            sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe_allow_multiple_handshake;
+            sp_vc_params.session_probe_enable_crash_dump = this->session_probe_enable_crash_dump;
+            sp_vc_params.session_probe_handle_usage_limit = this->session_probe_handle_usage_limit;
+            sp_vc_params.session_probe_memory_usage_limit = this->session_probe_memory_usage_limit;
+            sp_vc_params.session_probe_ignore_ui_less_processes_during_end_of_session_check = this->session_probe_ignore_ui_less_processes_during_end_of_session_check;
+            sp_vc_params.session_probe_childless_window_as_unidentified_input_field = this->session_probe_childless_window_as_unidentified_input_field;
+            sp_vc_params.session_probe_extra_system_processes = this->session_probe_extra_system_processes.c_str();
+            sp_vc_params.session_probe_outbound_connection_monitoring_rules = this->session_probe_outbound_connection_monitoring_rules.c_str();
+            sp_vc_params.session_probe_process_monitoring_rules = this->session_probe_process_monitoring_rules.c_str();
+            sp_vc_params.session_probe_windows_of_these_applications_as_unidentified_input_field = this->session_probe_windows_of_these_applications_as_unidentified_input_field.c_str();
+
+            this->session_probe_virtual_channel = std::make_unique<SessionProbeVirtualChannel>(
+                    session_reactor,
+                    this->session_probe_to_server_sender.get(),
+                    front,
+                    mod,
+                    rdp,
+                    file_system_virtual_channel,
+                    this->gen,
+                    sp_vc_params);
         }
+
+        inline void create_remote_programs_virtual_channel(
+                        FrontAPI& front,
+                        ServerTransportContext & stc,
+                        const ModRdpVariables & vars,
+                        RailCaps const & client_rail_caps) {
+            assert(!this->remote_programs_to_client_sender &&
+                !this->remote_programs_to_server_sender);
+
+            this->remote_programs_to_client_sender =
+                this->create_to_client_sender(channel_names::rail, front);
+            this->remote_programs_to_server_sender =
+                this->create_to_server_synchronous_sender(channel_names::rail, stc);
+
+            RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
+
+            remote_programs_virtual_channel_params.exchanged_data_limit               =
+                0;
+            remote_programs_virtual_channel_params.verbose                            =
+                this->verbose;
+
+            remote_programs_virtual_channel_params.client_execute_flags               =
+                this->client_execute_flags;
+            remote_programs_virtual_channel_params.client_execute_exe_or_file         =
+                this->client_execute_exe_or_file.c_str();
+            remote_programs_virtual_channel_params.client_execute_working_dir         =
+                this->client_execute_working_dir.c_str();
+            remote_programs_virtual_channel_params.client_execute_arguments           =
+                this->client_execute_arguments.c_str();
+
+            remote_programs_virtual_channel_params.client_execute_flags_2             =
+                this->real_client_execute_flags;
+            remote_programs_virtual_channel_params.client_execute_exe_or_file_2       =
+                this->real_client_execute_exe_or_file.c_str();
+            remote_programs_virtual_channel_params.client_execute_working_dir_2       =
+                this->real_client_execute_working_dir.c_str();
+            remote_programs_virtual_channel_params.client_execute_arguments_2         =
+                this->real_client_execute_arguments.c_str();
+
+            remote_programs_virtual_channel_params.rail_session_manager               =
+                this->remote_programs_session_manager.get();
+
+            remote_programs_virtual_channel_params.should_ignore_first_client_execute =
+                this->should_ignore_first_client_execute;
+
+            remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
+                this->use_session_probe_to_launch_remote_program;
+
+            remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
+                (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
+            remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
+                this->remote_program_enhanced;
+
+
+            this->remote_programs_virtual_channel =
+                std::make_unique<RemoteProgramsVirtualChannel>(
+                    this->remote_programs_to_client_sender.get(),
+                    this->remote_programs_to_server_sender.get(),
+                    front,
+                    vars,
+                    remote_programs_virtual_channel_params);
+        }
+
 
         inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
                         FrontAPI& front,
@@ -755,61 +812,7 @@ private:
                         const ModRdpVariables & vars,
                         RailCaps const & client_rail_caps) {
             if (!this->remote_programs_virtual_channel) {
-                assert(!this->remote_programs_to_client_sender &&
-                    !this->remote_programs_to_server_sender);
-
-                this->remote_programs_to_client_sender =
-                    this->create_to_client_sender(channel_names::rail, front);
-                this->remote_programs_to_server_sender =
-                    this->create_to_server_synchronous_sender(channel_names::rail, stc);
-
-                RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
-
-                remote_programs_virtual_channel_params.exchanged_data_limit               =
-                    0;
-                remote_programs_virtual_channel_params.verbose                            =
-                    this->verbose;
-
-                remote_programs_virtual_channel_params.client_execute_flags               =
-                    this->client_execute_flags;
-                remote_programs_virtual_channel_params.client_execute_exe_or_file         =
-                    this->client_execute_exe_or_file.c_str();
-                remote_programs_virtual_channel_params.client_execute_working_dir         =
-                    this->client_execute_working_dir.c_str();
-                remote_programs_virtual_channel_params.client_execute_arguments           =
-                    this->client_execute_arguments.c_str();
-
-                remote_programs_virtual_channel_params.client_execute_flags_2             =
-                    this->real_client_execute_flags;
-                remote_programs_virtual_channel_params.client_execute_exe_or_file_2       =
-                    this->real_client_execute_exe_or_file.c_str();
-                remote_programs_virtual_channel_params.client_execute_working_dir_2       =
-                    this->real_client_execute_working_dir.c_str();
-                remote_programs_virtual_channel_params.client_execute_arguments_2         =
-                    this->real_client_execute_arguments.c_str();
-
-                remote_programs_virtual_channel_params.rail_session_manager               =
-                    this->remote_programs_session_manager.get();
-
-                remote_programs_virtual_channel_params.should_ignore_first_client_execute =
-                    this->should_ignore_first_client_execute;
-
-                remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
-                    this->use_session_probe_to_launch_remote_program;
-
-                remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
-                    (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
-                remote_programs_virtual_channel_params.client_supports_enhanced_remoteapp =
-                    this->remote_program_enhanced;
-
-
-                this->remote_programs_virtual_channel =
-                    std::make_unique<RemoteProgramsVirtualChannel>(
-                        this->remote_programs_to_client_sender.get(),
-                        this->remote_programs_to_server_sender.get(),
-                        front,
-                        vars,
-                        remote_programs_virtual_channel_params);
+                this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
             }
 
             return *this->remote_programs_virtual_channel;
@@ -964,7 +967,20 @@ private:
             const Translation::language_t & lang
         ) {
             (void)session_probe_channel;
-            SessionProbeVirtualChannel& channel = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks, session_reactor, mod_rdp, rdp, lang, bogus_refresh_rect, allow_using_multiple_monitors, monitor_count, client_general_caps, client_name);
+            if (!this->session_probe_virtual_channel) {
+                this->create_session_probe_virtual_channel(
+                        front, stc, 
+                        asynchronous_tasks, session_reactor, 
+                        mod_rdp, rdp,
+                        lang,
+                        bogus_refresh_rect,
+                        allow_using_multiple_monitors,
+                        monitor_count,
+                        client_general_caps,
+                        client_name);
+            }
+
+            SessionProbeVirtualChannel& channel = *this->session_probe_virtual_channel;
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -981,7 +997,12 @@ private:
                 RailCaps const & client_rail_caps
                 ) {
             (void)rail_channel;
-            RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+            
+            if (!this->remote_programs_virtual_channel) {
+                this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+            }
+
+            RemoteProgramsVirtualChannel& channel = *this->remote_programs_virtual_channel;
 
             std::unique_ptr<AsynchronousTask> out_asynchronous_task;
 
@@ -1018,7 +1039,13 @@ private:
                         ServerTransportContext & stc,
                         const ModRdpVariables & vars,
                         RailCaps const & client_rail_caps) {
-            RemoteProgramsVirtualChannel& channel = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+
+            if (!this->remote_programs_virtual_channel) {
+                this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+            }
+
+            RemoteProgramsVirtualChannel& channel = *this->remote_programs_virtual_channel;
+
 
             channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
@@ -1729,51 +1756,125 @@ private:
                 fsvc.set_session_probe_launcher(this->session_probe_launcher.get());
 
                 this->file_system_drive_manager.set_session_probe_launcher(this->session_probe_launcher.get());
-                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc,
-                                                                asynchronous_tasks, session_reactor,
-                                                                mod_rdp, rdp, lang,
-                                                                bogus_refresh_rect,
-                                                                allow_using_multiple_monitors,
-                                                                monitor_count,
-                                                                client_general_caps,
-                                                                client_name);
-                spvc.set_session_probe_launcher(this->session_probe_launcher.get());
-                this->session_probe_virtual_channel_p = &spvc;
+
+                if (!this->session_probe_virtual_channel) {
+                    this->create_session_probe_virtual_channel(
+                            front, stc, 
+                            asynchronous_tasks, session_reactor, 
+                            mod_rdp, rdp,
+                            lang,
+                            bogus_refresh_rect,
+                            allow_using_multiple_monitors,
+                            monitor_count,
+                            client_general_caps,
+                            client_name);
+                }
+
+                this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe_launcher.get());
                 if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                    spvc.start_launch_timeout_timer();
+                    this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
-                this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
                 if (this->remote_program) {
-                    RemoteProgramsVirtualChannel& rpvc = this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
-                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                
+                    if (!this->remote_programs_virtual_channel) {
+                        this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                    }
+
+                    RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
                     rpvc.set_session_probe_launcher(this->session_probe_launcher.get());
                     this->session_probe_launcher->set_remote_programs_virtual_channel(&rpvc);
                 }
             }
-            else // this->channels.this->session_probe_launcher)
+            else // this->session_probe_launcher)
             {
-                SessionProbeVirtualChannel& spvc = this->get_session_probe_virtual_channel(front, stc, asynchronous_tasks,
-                                                                                           session_reactor,
-                                                                                           mod_rdp,
-                                                                                           rdp,
-                                                                                           lang,
-                                                                                           bogus_refresh_rect,
-                                                                                           allow_using_multiple_monitors,
-                                                                                           monitor_count,
-                                                                                           client_general_caps,
-                                                                                           client_name);
-                this->session_probe_virtual_channel_p = &spvc;
+                if (!this->session_probe_virtual_channel) {
+                    this->create_session_probe_virtual_channel(
+                            front, stc, 
+                            asynchronous_tasks, session_reactor, 
+                            mod_rdp, rdp,
+                            lang,
+                            bogus_refresh_rect,
+                            allow_using_multiple_monitors,
+                            monitor_count,
+                            client_general_caps,
+                            client_name);
+                }
+
                 if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
-                    spvc.start_launch_timeout_timer();
+                    this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 if (this->remote_program) {
-                    RemoteProgramsVirtualChannel& rpvc =
-                        this->get_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
-                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel_p);
+                    if (!this->remote_programs_virtual_channel) {
+                        this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                    }
 
+                    RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
+                    rpvc.set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
                 }
+            }
+        }
+
+        void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
+                const char* exe_or_file, const char* working_dir,
+                const char* arguments, const char* account, const char* password,
+                FrontAPI& front,
+                ServerTransportContext & stc,
+                const ModRdpVariables & vars,
+                RailCaps const & client_rail_caps
+            ) {
+            if (this->remote_program) {
+                if (!this->remote_programs_virtual_channel) {
+                    this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                }
+                
+                RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
+
+                rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,  working_dir, arguments, account, password);
+            }
+            else {
+                LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+            }
+        }
+
+        void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file, uint16_t exec_result,
+                FrontAPI& front,
+                ServerTransportContext & stc,
+                const ModRdpVariables & vars,
+                RailCaps const & client_rail_caps
+            ) {
+            if (this->remote_program) {
+                if (!this->remote_programs_virtual_channel) {
+                    this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                }
+                
+                RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
+
+                rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
+            }
+            else {
+                LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
+            }
+        }
+
+        void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result,
+                FrontAPI& front,
+                ServerTransportContext & stc,
+                const ModRdpVariables & vars,
+                RailCaps const & client_rail_caps
+            ) {
+            if (this->remote_program) {
+                if (!this->remote_programs_virtual_channel) {
+                    this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
+                }
+                RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
+                rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
+            }
+            else {
+                LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
             }
         }
 
@@ -1998,8 +2099,8 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
-    	, enable_remotefx(mod_rdp_params.enable_remotefx)
-    	, remoteFx_codec_id(0)
+        , enable_remotefx(mod_rdp_params.enable_remotefx)
+        , remoteFx_codec_id(0)
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
@@ -2025,8 +2126,8 @@ public:
         , beginning(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
-    	, multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
-    	, multifragment_update_data(multifragment_update_buffer.get(), 65536, 0)
+        , multifragment_update_buffer(std::make_unique<uint8_t[]>(65536))
+        , multifragment_update_data(multifragment_update_buffer.get(), 65536, 0)
         , client_large_pointer_caps(info.large_pointer_caps)
         , client_multi_fragment_update_caps(info.multi_fragment_update_caps)
         , client_general_caps(info.general_caps)
@@ -2221,13 +2322,22 @@ public:
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
                 if (this->channels.enable_session_probe) {
-                    auto & session_probe = this->channels.get_session_probe_virtual_channel(this->front, stc,
-                                            this->asynchronous_tasks, this->session_reactor,
-                                            *this,*this, this->lang, this->bogus_refresh_rect,
-                                            this->allow_using_multiple_monitors, this->monitor_count,
-                                            this->client_general_caps, this->client_name);
+                
+                    if (!this->channels.session_probe_virtual_channel) {
+                        this->channels.create_session_probe_virtual_channel(
+                                this->front, this->stc, 
+                                this->asynchronous_tasks, this->session_reactor, 
+                                *this, *this,
+                                this->lang,
+                                this->bogus_refresh_rect,
+                                this->allow_using_multiple_monitors,
+                                this->monitor_count,
+                                this->client_general_caps,
+                                this->client_name);
+                    }
+
                     if (!this->channels.session_probe_launcher->is_keyboard_sequences_started()
-                        || session_probe.has_been_launched()) {
+                        || this->channels.session_probe_virtual_channel->has_been_launched()) {
                         LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
@@ -2630,112 +2740,112 @@ public:
     // cmdData (variable): Variable-length data specific to the Surface Command.
     //
     enum {
-    	CMDTYPE_SET_SURFACE_BITS = 0x0001,
-		CMDTYPE_FRAME_MARKER = 0x0004,
-		CMDTYPE_STREAM_SURFACE_BITS = 0x0006
+        CMDTYPE_SET_SURFACE_BITS = 0x0001,
+        CMDTYPE_FRAME_MARKER = 0x0004,
+        CMDTYPE_STREAM_SURFACE_BITS = 0x0006
     };
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-    	unsigned expected = 2;
-    	if (!stream.in_check_rem(expected)) {
-    		LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
-    		throw Error(ERR_RDP_DATA_TRUNCATED);
-    	}
+        unsigned expected = 2;
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
 
-    	uint16_t cmdType = stream.in_uint16_le();
+        uint16_t cmdType = stream.in_uint16_le();
 
-    	switch(cmdType) {
-    	case CMDTYPE_SET_SURFACE_BITS:
-    	case CMDTYPE_STREAM_SURFACE_BITS: {
-    		RDPSetSurfaceCommand setSurface;
+        switch(cmdType) {
+        case CMDTYPE_SET_SURFACE_BITS:
+        case CMDTYPE_STREAM_SURFACE_BITS: {
+            RDPSetSurfaceCommand setSurface;
 
-    		setSurface.recv(stream);
+            setSurface.recv(stream);
 
-        	if (setSurface.codecId == this->remoteFx_codec_id) {
-        		InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
-        		this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
-        	}
+            if (setSurface.codecId == this->remoteFx_codec_id) {
+                InStream remoteFxStream(stream.get_current(), setSurface.bitmapDataLength);
+                this->rfxDecoder.recv(remoteFxStream, setSurface, drawable);
+            }
 
-    		break;
-    	}
-    	case CMDTYPE_FRAME_MARKER: {
-    		// 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
-    		// The Frame Marker Command is used to group multiple surface commands so that these commands
-    		// can be processed and presented to the user as a single entity, a frame.
-    		//
-    		// cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
-    		// 		CMDTYPE_FRAME_MARKER (0x0004).
-    		// frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
-    		// +------------------------------+-------------------------------------+
-    		// |             Value            |         Meaning                     |
-    		// +------------------------------+-------------------------------------+
-    		// | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
-    		// |			0x0000			  |                                     |
-    		// +------------------------------+-------------------------------------+
-    		// | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
-    		// | 			0x0001            | frame.                              |
-    		// +------------------------------+-------------------------------------+
-    		//
-    		// frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
-    		//
-    		enum {
-    			SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
-				SURFACECMD_FRAMEACTION_END = 0x0001
-    		};
+            break;
+        }
+        case CMDTYPE_FRAME_MARKER: {
+            // 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER)
+            // The Frame Marker Command is used to group multiple surface commands so that these commands
+            // can be processed and presented to the user as a single entity, a frame.
+            //
+            // cmdType (2 bytes): A 16-bit, unsigned integer. Surface Command type. This field MUST be set to
+            //         CMDTYPE_FRAME_MARKER (0x0004).
+            // frameAction (2 bytes): A 16-bit, unsigned integer. Identifies the beginning and end of a frame.
+            // +------------------------------+-------------------------------------+
+            // |             Value            |         Meaning                     |
+            // +------------------------------+-------------------------------------+
+            // | SURFACECMD_FRAMEACTION_BEGIN | Indicates the start of a new frame. |
+            // |            0x0000              |                                     |
+            // +------------------------------+-------------------------------------+
+            // | SURFACECMD_FRAMEACTION_END   | Indicates the end of the current    |
+            // |             0x0001            | frame.                              |
+            // +------------------------------+-------------------------------------+
+            //
+            // frameId (4 bytes): A 32-bit, unsigned integer. The ID identifying the frame.
+            //
+            enum {
+                SURFACECMD_FRAMEACTION_BEGIN = 0x0000,
+                SURFACECMD_FRAMEACTION_END = 0x0001
+            };
 
-    		expected = 6;
-			if (!stream.in_check_rem(expected)) {
-	    		LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
-	    		throw Error(ERR_RDP_DATA_TRUNCATED);
-			}
+            expected = 6;
+            if (!stream.in_check_rem(expected)) {
+                LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
+                throw Error(ERR_RDP_DATA_TRUNCATED);
+            }
 
-        	uint16_t frameAction = stream.in_uint16_le();
-        	uint32_t frameId = stream.in_uint32_le();
-        	switch(frameAction) {
-        	case SURFACECMD_FRAMEACTION_BEGIN:
-        		LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%d lastFrame=0x%x)", this->frameInProgress, this->currentFrameId);
-        		if (this->frameInProgress) {
-        			// some servers don't send frame end markers, so send acks when we receive
-        			// a new frame and the previous one was not acked
-            		this->front.end_update();
+            uint16_t frameAction = stream.in_uint16_le();
+            uint32_t frameId = stream.in_uint32_le();
+            switch(frameAction) {
+            case SURFACECMD_FRAMEACTION_BEGIN:
+                LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%d lastFrame=0x%x)", this->frameInProgress, this->currentFrameId);
+                if (this->frameInProgress) {
+                    // some servers don't send frame end markers, so send acks when we receive
+                    // a new frame and the previous one was not acked
+                    this->front.end_update();
 
-            		LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
-            		uint32_t localLastFrame = this->currentFrameId;
-            		this->send_pdu_type2(
-    					PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-    					[localLastFrame](StreamSize<32>, OutStream & ostream) {
-            				ostream.out_uint32_le(localLastFrame);
-    					}
-    				);
-        		}
+                    LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
+                    uint32_t localLastFrame = this->currentFrameId;
+                    this->send_pdu_type2(
+                        PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+                        [localLastFrame](StreamSize<32>, OutStream & ostream) {
+                            ostream.out_uint32_le(localLastFrame);
+                        }
+                    );
+                }
 
-        		this->frameInProgress = true;
-        		this->currentFrameId = frameId;
-        		this->front.begin_update();
-        		break;
-        	case SURFACECMD_FRAMEACTION_END:
-        		LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
-        		this->frameInProgress = false;
-        		this->front.end_update();
-        		this->send_pdu_type2(
-					PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-					[frameId](StreamSize<32>, OutStream & ostream) {
-        				ostream.out_uint32_le(frameId);
-					}
-				);
-        		break;
-        	default:
-        		LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
-        		break;
-        	}
+                this->frameInProgress = true;
+                this->currentFrameId = frameId;
+                this->front.begin_update();
+                break;
+            case SURFACECMD_FRAMEACTION_END:
+                LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
+                this->frameInProgress = false;
+                this->front.end_update();
+                this->send_pdu_type2(
+                    PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
+                    [frameId](StreamSize<32>, OutStream & ostream) {
+                        ostream.out_uint32_le(frameId);
+                    }
+                );
+                break;
+            default:
+                LOG(LOG_ERR, "unknown frame marker action %u", frameAction);
+                break;
+            }
 
-    		break;
-    	}
-    	default:
-    		LOG(LOG_ERR, "unknown surface command %u", cmdType);
-    		break;
-    	}
+            break;
+        }
+        default:
+            LOG(LOG_ERR, "unknown surface command %u", cmdType);
+            break;
+        }
 
     }
 
@@ -2762,8 +2872,8 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
-            if ((!this->channels.session_probe_virtual_channel_p
-                || !this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required())
+            if ((!this->channels.session_probe_virtual_channel
+                || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
@@ -3332,8 +3442,8 @@ public:
                     throw;
                 }
 
-                if (this->channels.session_probe_virtual_channel_p &&
-                    this->channels.session_probe_virtual_channel_p->is_disconnection_reconnection_required()) {
+                if (this->channels.session_probe_virtual_channel
+                &&  this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
                 this->front.must_be_stop_capture();
@@ -3748,30 +3858,30 @@ public:
                 BitmapCodecCaps bitmap_codec_caps(true);
 
                 if (this->enable_remotefx && (this->remoteFx_codec_id != 1)) {
-                	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX, this->remoteFx_codec_id);
+                    bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX, this->remoteFx_codec_id);
 
-                	FrameAcknowledgeCaps frameAck;
-                	frameAck.maxUnacknowledgedFrameCount = 2;
-                	confirm_active_pdu.emit_capability_set(frameAck);
+                    FrameAcknowledgeCaps frameAck;
+                    frameAck.maxUnacknowledgedFrameCount = 2;
+                    confirm_active_pdu.emit_capability_set(frameAck);
 
-                	SurfaceCommandsCaps surfaceCommands;
-                	surfaceCommands.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
-                	confirm_active_pdu.emit_capability_set(surfaceCommands);
+                    SurfaceCommandsCaps surfaceCommands;
+                    surfaceCommands.cmdFlags = SURFCMDS_SETSURFACEBITS | SURFCMDS_FRAMEMARKER | SURFCMDS_STREAMSURFACEBITS;
+                    confirm_active_pdu.emit_capability_set(surfaceCommands);
 
-                	MultiFragmentUpdateCaps fragCaps;
-                	fragCaps.MaxRequestSize = std::max(
-                			this->negociation_result.front_multifragment_maxsize,
-                			static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
-					);
-                	if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
-                		this->multifragment_update_buffer.reset(new uint8_t[fragCaps.MaxRequestSize]());
-                		this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), fragCaps.MaxRequestSize);
-                	}
-                	confirm_active_pdu.emit_capability_set(fragCaps);
+                    MultiFragmentUpdateCaps fragCaps;
+                    fragCaps.MaxRequestSize = std::max(
+                            this->negociation_result.front_multifragment_maxsize,
+                            static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
+                    );
+                    if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
+                        this->multifragment_update_buffer.reset(new uint8_t[fragCaps.MaxRequestSize]());
+                        this->multifragment_update_data = OutStream(this->multifragment_update_buffer.get(), fragCaps.MaxRequestSize);
+                    }
+                    confirm_active_pdu.emit_capability_set(fragCaps);
 
-                	confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
+                    confirm_active_pdu.emit_capability_set(bitmap_codec_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    	bitmap_codec_caps.log("Sending to server");
+                        bitmap_codec_caps.log("Sending to server");
                     }
                 }
 
@@ -4879,9 +4989,9 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
-        if (this->channels.session_probe_virtual_channel_p &&
-            this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-            this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
+        if (this->channels.session_probe_virtual_channel
+        && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+            this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
@@ -4942,9 +5052,9 @@ public:
                     disable_input_event, disable_graphics_update);
             }
 
-            if (this->channels.session_probe_virtual_channel_p &&
-                this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
-                this->channels.session_probe_virtual_channel_p->start_launch_timeout_timer();
+            if (this->channels.session_probe_virtual_channel
+            && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+                this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
         }
         break;
@@ -5947,11 +6057,11 @@ private:
             }
 
             // TODO CGR: check which sanity checks should be done
-			//            if (bufsize != bitmap.bmp_size){
-			//                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
-			//                    bufsize, bitmap.bmp_size, width, height, bpp);
-			//            }
-			const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
+            //            if (bufsize != bitmap.bmp_size){
+            //                LOG(LOG_WARNING, "Unexpected bufsize in bitmap received [%u != %u] width=%u height=%u bpp=%u",
+            //                    bufsize, bitmap.bmp_size, width, height, bpp);
+            //            }
+            const uint8_t * data = stream.in_uint8p(bmpdata.bitmap_size());
             Bitmap bitmap( this->orders.bpp
                          , checked_int(bmpdata.bits_per_pixel)
                          , &this->orders.global_palette
@@ -6128,43 +6238,19 @@ public:
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
-        if (this->channels.remote_program) {
-            RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-
-            rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
-                working_dir, arguments, account, password);
-        }
-        else {
-            LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
-        }
+        this->channels.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
+                                working_dir, arguments, account, password,
+                                this->front, this->stc, this->vars, this->client_rail_caps);
     }
 
-    // TODO: this should move to channels, but we need a jump relay as it comes through mod_api
-    void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file,
-            uint16_t exec_result) override {
-        if (this->channels.remote_program) {
-            RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-
-            rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
-        }
-        else {
-            LOG(LOG_WARNING, "mod_rdp::auth_rail_exec(): Current session has no Remote Program Virtual Channel");
-        }
+    void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file, uint16_t exec_result) override {
+        this->channels.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result,
+                                    this->front, this->stc, this->vars, this->client_rail_caps);
     }
 
-    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file,
-        uint16_t exec_result, uint32_t raw_result) override {
-        if (this->channels.remote_program) {
-            RemoteProgramsVirtualChannel& rpvc =
-                this->channels.get_remote_programs_virtual_channel(this->front, this->stc, this->vars, this->client_rail_caps);
-
-            rpvc.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result);
-        }
-        else {
-            LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
-        }
+    void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
+        this->channels.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result, 
+                                               this->front, this->stc, this->vars, this->client_rail_caps);
     }
 
     void sespro_ending_in_progress() override

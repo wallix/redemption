@@ -59,6 +59,7 @@
 #include "utils/sugar/scope_exit.hpp"
 #include "utils/sugar/update_lock.hpp"
 #include "utils/translation.hpp"
+#include "utils/log_siem.hpp"
 
 
 #include <sys/socket.h>
@@ -522,10 +523,10 @@ public:
         switch (target_module) {
         case MODULE_INTERNAL_CLOSE:
         case MODULE_INTERNAL_WIDGET_LOGIN:
-            detail::log_proxy_set_user("");
+            log_proxy::set_user("");
             break;
         default:
-            detail::log_proxy_set_user(this->ini.get<cfg::globals::auth_user>().c_str());
+            log_proxy::set_user(this->ini.get<cfg::globals::auth_user>().c_str());
             break;
         }
 

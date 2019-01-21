@@ -165,7 +165,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         if (format[0] == '%' && format[1] == 's' && format[2] == ' ' && format[3] == '(') {
             auto p = log_buf.find('(', log_buf.size() - sz + 5);
             auto e = log_buf.find('-', p);
-            log_buf.replace(p, e-p+2, "-");
+            log_buf.erase(p, e-p);
         }
     }
     else if (is_loggable())

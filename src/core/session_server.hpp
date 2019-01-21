@@ -27,6 +27,8 @@
 #include "main/version.hpp"
 #include "utils/netutils.hpp"
 #include "utils/strutils.hpp"
+#include "utils/log_siem.hpp"
+
 
 class SessionServer : public Server
 {
@@ -110,7 +112,7 @@ public:
                     std::sprintf(psid, "%lld%d", sec, pid);
                     psid[sizeof(psid)-1] = '\0';
                     ini.set_acl<cfg::context::psid>(psid);
-                    detail::log_proxy_init(psid, source_ip, source_port);
+                    log_proxy::init(psid, source_ip, source_port);
                 }
 
                 union
