@@ -966,18 +966,18 @@ public:
         int key = this->keymapSym.get_sym();
 
         if (key > 0) {
-            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed() &&
-                        (key == 0x23 // #
-                        || key == 0x7b                     // {
-                         || key == 0x5b                    // [
-                          || key == 0x7c                   // |
-                           || key == 0x60                  // `
-                            || key == 0x5c                 // \
-                             || key == 0x5e                // ^
-                              || key == 0x40               // @
-                               || key == 0x5d              // ]
-                                || key == 0x7d             // }
-                      )) {
+            if (this->remove_server_alt_state_for_char && this->keymapSym.is_alt_pressed()
+            && (key == '#'
+              || key == '{'
+              || key == '['
+              || key == '|'
+              || key == '`'
+              || key == '\\'
+              || key == '^'
+              || key == '@'
+              || key == ']'
+              || key == '}'
+        )) {
 
                           this->send_keyevent(KeymapSym::KBDFLAGS_RELEASE, 0xffe9);
                           this->send_keyevent(downflag, key);
