@@ -65,7 +65,7 @@ public:
     }
 
     void set_data(const uint8_t * data, const size_t data_size) {
-        LOG(LOG_INFO, "ChannelFile::set_data ");
+
         if (this->fd.is_open()) {
             size_t new_size = this->current_file_size + data_size;
             size_t over_data_len = 0;

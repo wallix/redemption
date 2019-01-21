@@ -31,6 +31,7 @@
 #include "utils/key_qvalue_pairs.hpp"
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
+#include "mod/rdp/channels/channel_file.hpp"
 
 #include <deque>
 
@@ -207,6 +208,8 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         FileSystemVirtualChannel& file_system_virtual_channel;
 
+//         ChannelFile channel_file;
+
         const RDPVerbose verbose;
 
     public:
@@ -222,6 +225,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             bool serial_port_authorized,
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
+
             RDPVerbose verbose)
         : file_system_drive_manager(file_system_drive_manager)
         , user_logged_on(user_logged_on)
