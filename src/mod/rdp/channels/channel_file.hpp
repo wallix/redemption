@@ -48,10 +48,12 @@ public:
 //     }
 
     void new_file(const std::string & filename, const size_t total_file_size) {
+
         this->total_file_size = total_file_size;
         this->current_file_size = 0;
         this->fd.close();
         std::string file_path = this->dir_path + filename;
+        LOG(LOG_INFO, "ChannelFile::new_file this->dir_path=%s filename=%s total_file_size=%zu !!!!!!!!!!!!!!!!!!!!!!!!!!!!", this->dir_path, filename, total_file_size);
         std::ifstream file(file_path.c_str());
         if (!file.good()) {
             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);

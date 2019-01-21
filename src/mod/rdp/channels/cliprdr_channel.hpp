@@ -411,6 +411,10 @@ public:
             this->verbose
         );
 
+        for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
+            this->clip_data.file_descr_list.push_back(file);
+        }
+
         const bool is_from_remote_session = true;
         this->log_siem_info(flags, in_header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 

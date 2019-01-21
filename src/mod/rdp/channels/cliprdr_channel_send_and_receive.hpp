@@ -495,7 +495,7 @@ struct ServerFormatDataResponseReceive {
 
     std::string  data_to_dump;
 
-    std::vector<RDPECLIP::FileDescriptor> fds;
+    std::vector<RDPECLIP::FileDescriptor> files_descriptors;
 
     ServerFormatDataResponseReceive(const uint32_t requestedFormatId, InStream & chunk, const RDPECLIP::CliprdrHeader & in_header, bool param_dont_log_data_into_syslog, const uint32_t server_file_list_format_id, const uint32_t flags, OutStream & file_descriptor_stream, const RDPVerbose verbose) {
 
@@ -539,7 +539,7 @@ struct ServerFormatDataResponseReceive {
                         fd.log(LOG_INFO);
                     }
 
-                    this->fds.push_back(fd);
+                    this->files_descriptors.push_back(fd);
 
                     file_descriptor_stream.rewind();
                 }
@@ -554,7 +554,7 @@ struct ServerFormatDataResponseReceive {
                     fd.log(LOG_INFO);
                 }
 
-                this->fds.push_back(fd);
+                this->files_descriptors.push_back(fd);
             }
 
             if (chunk.in_remain()) {
