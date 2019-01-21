@@ -429,7 +429,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
     NullSender to_server_sender;
 
     ClipboardVirtualChannel clipboard_virtual_channel(
-        &to_client_sender, &to_server_sender, front, true, "/tmp/test_cliprdr_channel_file/",
+        &to_client_sender, &to_server_sender, front, true, wd.dirname(),
         clipboard_virtual_channel_params);
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -762,7 +762,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
             608,
             out_asynchronous_task);
 
-//     auto const file1 = wd.add_file("test.txt");
+    auto const file_test = wd.add_file("test.txt");
 
 // INFO (4749/4749) -- FileContentsRequestPDU: streamId=1(4 bytes) lindex=0(4 bytes) dwFlags=1(4 bytes) nPositionLow=0(4 bytes) nPositionHigh=0(4 bytes) cbRequested=8(4 bytes) clipDataId=0
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: total_length=36 flags=0x00000013 chunk_data_length=36
@@ -799,17 +799,74 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFileRecording) {
 // INFO (4749/4749) -- /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00"                                 // ........
 // INFO (4749/4749) -- Dump done on channel (24) n bytes
 
-//         clipboard_virtual_channel.process_server_message(
-//             24,
-//               CHANNELS::CHANNEL_FLAG_FIRST
-//             | CHANNELS::CHANNEL_FLAG_LAST
-//             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-//             byte_ptr_cast(
-//         /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00" // ................
-//         /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00"                                 // ........
-//                 ),
-//             24,
-//             out_asynchronous_task);
+        clipboard_virtual_channel.process_server_message(
+            24,
+              CHANNELS::CHANNEL_FLAG_FIRST
+            | CHANNELS::CHANNEL_FLAG_LAST
+            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            byte_ptr_cast(
+        /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x04\x00\x00\x00" // ................
+        /* 0010 */ "\x00\x00\x00\x00\x00\x00\x00\x00"                                 // ........
+                ),
+            24,
+            out_asynchronous_task);
+
+// INFO (4749/4749) -- FileContentsRequestPDU: streamId=1(4 bytes) lindex=0(4 bytes) dwFlags=2(4 bytes) nPositionLow=0(4 bytes) nPositionHigh=0(4 bytes) cbRequested=65535(4 bytes) clipDataId=0
+// INFO (4749/4749) -- Sending on channel (36) n bytes
+// INFO (4749/4749) -- \x00\x00\x00\x01
+// INFO (4749/4749) -- \x0\x0\x0\x24
+// INFO (4749/4749) -- \x0\x0\x0\x13
+// INFO (4749/4749) -- \x0\x0\x0\x24
+// INFO (4749/4749) -- /* 0000 */ "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" // ................
+// INFO (4749/4749) -- /* 0010 */ "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00" // ................
+// INFO (4749/4749) -- /* 0020 */ "\x00\x00\x00\x00"                                                 // ....
+// INFO (4749/4749) -- Sent dumped on channel (36) n bytes
+
+        clipboard_virtual_channel.process_client_message(
+            36,
+              CHANNELS::CHANNEL_FLAG_FIRST
+            | CHANNELS::CHANNEL_FLAG_LAST
+            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            byte_ptr_cast(
+    /* 0000 */ "\x08\x00\x00\x00\x1c\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00" // ................
+    /* 0010 */ "\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00" // ................
+    /* 0020 */ "\x00\x00\x00\x00"                                                 // ....
+                ),
+            36);
+
+// INFO (4749/4749) -- ClipboardVirtualChannel::process_server_message: File Contents Response PDU
+// INFO (4749/4749) -- Sending on channel (20) n bytes
+// INFO (4749/4749) -- \x00\x00\x00\x00
+// INFO (4749/4749) -- \x0\x0\x0\x14
+// INFO (4749/4749) -- \x0\x0\x0\x3
+// INFO (4749/4749) -- \x0\x0\x0\x14
+// INFO (4749/4749) -- /* 0000 */ "\x09\x00\x01\x00\x08\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
+// INFO (4749/4749) -- /* 0010 */ "\x00\x00\x00\x00"                                                 // ....
+// INFO (4749/4749) -- Sent dumped on channel (20) n bytes
+
+        clipboard_virtual_channel.process_server_message(
+            20,
+              CHANNELS::CHANNEL_FLAG_FIRST
+            | CHANNELS::CHANNEL_FLAG_LAST
+            | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+            byte_ptr_cast(
+        /* 0000 */ "\x09\x00\x01\x00\x08\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
+        /* 0010 */ "\x00\x00\x00\x00"                                                 // ....
+                ),
+            20,
+            out_asynchronous_task);
+
+//     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
+
+// INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
+// INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: clipDataId=1
+// INFO (4749/4749) -- Sending on channel (12) n bytes
+// INFO (4749/4749) -- \x00\x00\x00\x01
+// INFO (4749/4749) -- \x0\x0\x0\xc
+// INFO (4749/4749) -- \x0\x0\x0\x13
+// INFO (4749/4749) -- \x0\x0\x0\xc
+// INFO (4749/4749) -- /* 0000 */ "\x0b\x00\x00\x00\x04\x00\x00\x00\x01\x00\x00\x00"                 // ............
+// INFO (4749/4749) -- Sent dumped on channel (12) n bytes
 
     RED_CHECK_WORKSPACE(wd);
 }

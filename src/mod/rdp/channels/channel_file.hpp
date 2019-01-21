@@ -69,6 +69,8 @@ public:
         if (this->fd.is_open()) {
             if ((this->current_file_size + data_size) <= this->total_file_size) {
 
+                LOG(LOG_INFO, "ChannelFile::set_data data=%s data_size=%zu !!!!!!!!!!!!!!!!!!!!!!!!!!!!", reinterpret_cast<const char*>(data), data_size);
+
                 int written_data_size = ::write(this->fd.fd(), data, data_size);
 
                 if (written_data_size == -1 && int(data_size) == written_data_size) {

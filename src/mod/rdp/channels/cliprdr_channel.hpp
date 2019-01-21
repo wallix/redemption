@@ -258,8 +258,7 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->param_clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
-                } else if (this->channel_filter_on) {
-
+                } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
                     this->channel_file.new_file(desc.file_name, desc.file_size());
                 }
@@ -305,7 +304,7 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.client_data, header, flags, chunk);
 
-                if (this->channel_filter_on) {
+                if (this->channel_filter_on && (this->clip_data.client_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }
@@ -519,7 +518,7 @@ public:
                 }
                 FilecontentsRequestReceive receiver(this->clip_data.server_data, chunk, this->verbose, header.dataLen());
 
-                if (this->channel_filter_on) {
+                if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
                     this->channel_file.new_file(desc.file_name, desc.file_size());
                 }
@@ -544,7 +543,7 @@ public:
 
                 FileContentsResponseReceive receive(this->clip_data.server_data, header, flags, chunk);
 
-                if (this->channel_filter_on) {
+                if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
                 }

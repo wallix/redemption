@@ -71,6 +71,8 @@ struct ClipboardSideData {
 
     std::string provider_name;
 
+    uint32_t last_dwFlags = RDPECLIP::FILECONTENTS_SIZE;
+
     ClipboardSideData(std::string provider_name)
       : provider_name(std::move(provider_name))
     {}
@@ -102,6 +104,8 @@ struct ClipboardData {
     ClipboardSideData client_data;
 
     uint32_t requestedFormatId = 0;
+
+
 
     format_name_inventory_type format_name_inventory;
 
@@ -176,6 +180,7 @@ struct FilecontentsRequestReceive {
             }
 
             this->dwFlags  = file_contents_request_pdu.dwFlags();
+            clip_state.last_dwFlags = this->dwFlags;
             this->streamID = file_contents_request_pdu.streamId();
             this->lindex   = file_contents_request_pdu.lindex();
 
