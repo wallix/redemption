@@ -65,22 +65,20 @@ struct BrowserTransport : Transport
 
         auto remaining = len;
 
-        while (len) {
+        while (remaining) {
             auto& s = in_buffers.front();
-            auto s_len = s.size() - current_pos;
-            if (s_len <= remaining) {
-                memcpy(data, s.data() + current_pos, s_len);
-                remaining -= s_len;
-                data += s_len;
-                current_pos += s_len;
-                if (s_len != remaining) {
-                    current_pos = 0;
-                    in_buffers.erase(in_buffers.begin());
+            auto const s_len = s.size() - current_pos;
+            auto const min_len = std::min(s_len, remaining);
+            memcpy(data, s.data() + current_pos, min_len);
+            current_pos += min_len;
+            remaining -= min_len;
+            data += min_len;
+            if (min_len == s_len) {
+                current_pos = 0;
+                in_buffers.erase(in_buffers.begin());
+                if (in_buffers.empty()) {
+                    break;
                 }
-            }
-
-            if (in_buffers.empty()) {
-                break;
             }
         }
 

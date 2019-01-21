@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <script>
     var Module = {
+      TOTAL_MEMORY: 268435456, // 16**7
       onRuntimeInitialized: function() {
-        let rdpclient = new Module.RdpClient(0xfffffff)
+        let rdpclient = new Module.RdpClient(0xff)
         let send_data = function() {
             let out = rdpclient.get_data()
             if (out.length) {
