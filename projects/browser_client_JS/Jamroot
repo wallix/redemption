@@ -216,8 +216,11 @@ bindjs jsclient :
   projects/redemption_configs/redemption_src/configs/config.bc
   src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
+  src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
+  src/core/RDP/orders/remoteFx.bc
+  src/core/RDP/rlgr.bc
   src/core/error.bc
   src/core/font.bc
   src/core/set_server_redirection_target.bc
@@ -242,6 +245,7 @@ bindjs jsclient :
   src/utils/hexdump.bc
   src/utils/netutils.bc
   src/utils/png.bc
+  src/utils/primitives/primitives.bc
   src/utils/rle.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc

@@ -535,7 +535,6 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
                         LOG(LOG_INFO, "No encryption");
                     }
                     else {
-
                         uint8_t serverRandom[SEC_RANDOM_SIZE] = {};
                         uint8_t modulus[SEC_MAX_MODULUS_SIZE] = {};
                         uint8_t exponent[SEC_EXPONENT_SIZE] = {};
@@ -704,9 +703,9 @@ bool RdpNegociation::basic_settings_exchange(InStream & x224_data)
 //                                            static_cast<unsigned>(sizeof(this->client_crypt_random)));
 
                         SEC::KeyBlock key_block(this->client_random, serverRandom);
-                        memcpy(encrypt.sign_key, key_block.blob0, 16);
+                        memcpy(this->encrypt.sign_key, key_block.blob0, 16);
                         if (sc_sec1.encryptionMethod == 1){
-                            ssl.sec_make_40bit(encrypt.sign_key);
+                            ssl.sec_make_40bit(this->encrypt.sign_key);
                         }
                         this->decrypt.generate_key(key_block.key1, sc_sec1.encryptionMethod);
                         this->encrypt.generate_key(key_block.key2, sc_sec1.encryptionMethod);

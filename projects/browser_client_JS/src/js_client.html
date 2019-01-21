@@ -5,7 +5,7 @@
   <script>
     var Module = {
       onRuntimeInitialized: function() {
-        let rdpclient = new Module.RdpClient(0xfffff)
+        let rdpclient = new Module.RdpClient(0xfffffff)
         let send_data = function() {
             let out = rdpclient.get_data()
             if (out.length) {
@@ -32,8 +32,8 @@
 
         // Display messages received from the server
         socket.onmessage = function(event) {
-            var bytearray = new Uint8Array(event.data)
-            var text = ""
+            let bytearray = new Uint8Array(event.data)
+            let text = ""
             console.log('Received Binary Message of ' + bytearray.length + ' bytes')
             for (let byte of bytearray) {
                 text += ":" + (byte+0x10000).toString(16).substr(-2)

@@ -38,13 +38,7 @@ REDEMPTION_DIAGNOSTIC_POP
 #include <cstdio>
 #include <cstdlib>
 
-#include "redemption_emscripten.hpp"
-#ifdef IN_IDE_PARSER
-# define EM_ASM(...)
-# define EM_JS(return_type, name, params, ...) return_type __em_js__##name params;
-#else
-# include <emscripten.h>
-#endif
+#include "red_emscripten/emscripten.hpp"
 
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wdollar-in-identifier-extension")
@@ -76,7 +70,7 @@ namespace
     }
 # endif
 
-    EM_JS(bool, js_is_loggable, (), {
+    RED_EM_JS(bool, js_is_loggable, (), {
         return !ENVIRONMENT_IS_NODE || process.env["REDEMPTION_LOG_PRINT"] === "1";
     })
 
@@ -187,7 +181,7 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
         va_end(ap);
 
         buffer[len] = 0;
-        EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+        RED_EM_ASM({console.log(Pointer_stringify($0));}, buffer);
     }
 }
 

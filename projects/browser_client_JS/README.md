@@ -54,3 +54,17 @@ em++ file.cpp -o file.html
 ```bash
 ln -s /usr/include/boost system_include/
 ```
+
+## Test
+
+```
+ln -s /usr/include/boost system_include/
+source $EMSDK_PATH/emsdk_set_env.sh
+bjam -j7 toolset=clang "cxxflags=-fcolor-diagnostics -s USE_ZLIB=1 -s USE_LIBPNG=1" debug jsclient
+cd bin/clang.../debug
+ln -s ../../../src/js_client.html rdpclient.html
+python -m SimpleHTTPServer 7542 &
+node ../../../js_websocket_proxy/ws_server.js &
+# run proxy, with nla and tls disabled
+# open http://localhost:7542/rdpclient.html
+```

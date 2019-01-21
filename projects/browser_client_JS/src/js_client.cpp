@@ -176,7 +176,7 @@ struct RdpClient
         );
 
         mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = true;
+        mod_rdp_params.enable_tls                 = false;
         mod_rdp_params.enable_nla                 = false;
         mod_rdp_params.enable_fastpath            = true;
         mod_rdp_params.enable_mem3blt             = true;
