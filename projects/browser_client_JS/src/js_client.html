@@ -2,69 +2,106 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <script>
-    var Module = {
-      TOTAL_MEMORY: 268435456, // 16**7
-      onRuntimeInitialized: function() {
-        let rdpclient = new Module.RdpClient(0xff)
-        let send_data = function() {
-            let out = rdpclient.get_data()
-            if (out.length) {
-                console.log("send " + out.length + " bytes")
-                socket.send(out)
-                rdpclient.clear_data()
-            }
-            else {
-                console.log("client.data is empty")
-            }
-        }
-
-        let socket = new WebSocket("ws://localhost:8080", "rdp-protocol")
-
-        socket.binaryType = 'arraybuffer';
-
-        socket.onopen = function(event) {
-            console.log("socket is open")
-            let timeout = rdpclient.next_timeout()
-            console.log("timeout:", timeout)
-            rdpclient.update()
-            send_data()
-        }
-
-        // Display messages received from the server
-        socket.onmessage = function(event) {
-            let bytearray = new Uint8Array(event.data)
-            let text = ""
-            console.log('Received Binary Message of ' + bytearray.length + ' bytes')
-            for (let byte of bytearray) {
-                text += ":" + (byte+0x10000).toString(16).substr(-2)
-            }
-            console.log("Server Says: " + text)
-            rdpclient.update()
-            try {
-                rdpclient.next_message(event.data)
-            }
-            catch (e) {
-                stackTrace()
-                throw e
-            }
-            send_data()
-        }
-
-        // Display any errors that occur
-        socket.onerrro = function(event) {
-            console.log("Error: " + event.type)
-        }
-
-        socket.onclose = function(event) {
-            console.log("close: " + event.code + ": " + event.reason)
-            rdpclient.delete()
-        }
-      }
-    };
-  </script>
-  <script src="jsclient.js"></script>
 </head>
 <body>
+
+<canvas id="canvas" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById('canvas').getContext('2d')
+
+function imageFromBitmap24(idata, w, h, line_size)
+{
+  const u8data = HEAPU8.subarray(idata, idata + line_size * 3 * h - 1)
+  const len = w*h*4
+  const arr = new Uint8ClampedArray(len)
+  const step = line_size + w*3
+  let si = line_size * (h-1)
+  let di = 0
+
+  while (di < len) {
+    for (let endi = di+w*4; di < endi; si+=3) {
+      arr[di++] = u8data[si+2]
+      arr[di++] = u8data[si+1]
+      arr[di++] = u8data[si]
+      arr[di++] = 255
+    }
+    si -= step
+  }
+
+  return new ImageData(arr, w, h)
+}
+
+function drawImage24(idata, w, h, line_size, dx, dy, dw, dh)
+{
+    let image = imageFromBitmap24(idata, w, h, line_size)
+    // console.log(image, dx, dy, dw, dh)
+    canvas.putImageData(image, dx, dy, 0, 0, dw, dh)
+}
+
+var Module = {
+  TOTAL_MEMORY: 268435456, // 16**7
+  onRuntimeInitialized: function() {
+    const rdpclient = new Module.RdpClient(0xff)
+    const send_data = function() {
+        const out = rdpclient.get_data()
+        if (out.length) {
+            console.log("send " + out.length + " bytes")
+            socket.send(out)
+            rdpclient.clear_data()
+        }
+        else {
+            console.log("client.data is empty")
+        }
+    }
+
+    canvas.fillStyle = 0xffff00
+    canvas.fillRect(0,0,800,600)
+
+    const socket = new WebSocket("ws://localhost:8080", "rdp-protocol")
+
+    socket.binaryType = 'arraybuffer';
+
+    socket.onopen = function(event) {
+        console.log("socket is open")
+        const timeout = rdpclient.next_timeout()
+        console.log("timeout:", timeout)
+        rdpclient.update()
+        send_data()
+    }
+
+    // Display messages received from the server
+    socket.onmessage = function(event) {
+        const bytearray = new Uint8Array(event.data)
+        let text = ""
+        console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+        for (let byte of bytearray) {
+            text += ":" + (byte+0x10000).toString(16).substr(-2)
+        }
+        console.log("Server Says: " + text)
+        rdpclient.update()
+        try {
+            rdpclient.next_message(event.data)
+        }
+        catch (e) {
+            stackTrace()
+            throw e
+        }
+        send_data()
+    }
+
+    // Display any errors that occur
+    socket.onerrro = function(event) {
+        console.log("Error: " + event.type)
+    }
+
+    socket.onclose = function(event) {
+        console.log("close: " + event.code + ": " + event.reason)
+        rdpclient.delete()
+    }
+  }
+};
+</script>
+<script src="jsclient.js"></script>
+
 </body>
 </html>

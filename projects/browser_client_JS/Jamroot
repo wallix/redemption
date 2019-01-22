@@ -53,6 +53,8 @@ project redjs
     <cxxflags>"--source-map-base http://localhost:3389//"
     <cxxflags>"-s DEMANGLE_SUPPORT=1"
 
+    <cxxflags>-Wno-dollar-in-identifier-extension
+
     : default-build release
 ;
 

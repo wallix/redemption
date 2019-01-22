@@ -64,19 +64,19 @@ wsServer.on('request', function(request) {
         console.log('Client >> Proxy websocket : process pid : ' + process.pid);
 
         tcpclient.on('data', function(data) {
-                console.log('tcpclient data event (RDP Server) ' + data.length);
-                var text = "";
-                for (var i = 0 ; i < data.length ; ++i){
-                    text += ":" + (data.charCodeAt(i)+0x10000).toString(16).substr(-2);
-                }
-                console.log("RDP Server Says : "+text);
-                var buf = new Buffer(data,'binary')
-                var text2 = "";
-                for (var i = 0 ; i < buf.length ; ++i){
-                    text2 += ":" + (buf[i]+0x10000).toString(16).substr(-2);
-                }
-                console.log("RDP Server Says : "+text2);
-                wssocket.sendBytes(buf);
+            console.log('tcpclient data event (RDP Server) ' + data.length);
+            // var text = "";
+            // for (var i = 0 ; i < data.length ; ++i){
+            //     text += ":" + (data.charCodeAt(i)+0x10000).toString(16).substr(-2);
+            // }
+            // console.log("RDP Server Says : "+text);
+            var buf = new Buffer(data,'binary')
+            // var text2 = "";
+            // for (var i = 0 ; i < buf.length ; ++i){
+            //     text2 += ":" + (buf[i]+0x10000).toString(16).substr(-2);
+            // }
+            // console.log("RDP Server Says : "+text2);
+            wssocket.sendBytes(buf);
         });
 
         wssocket.on('message', function(message) {
@@ -87,32 +87,40 @@ wsServer.on('request', function(request) {
             }
             else if (message.type === 'binary') {
                 // For RDP proxying we should only receive binary messages
-                var text = "";
-                for (var i = 0 ; i < message.binaryData.length ; ++i){
-                    text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);
-                }
-                console.log('Received Binary Message of ' + message.binaryData.length + ' bytes ' + text);
-                var text = "";
-                for (var i = 0 ; i < message.binaryData.length ; ++i){
-                    text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);
-                }
-                console.log("Browser Says : "+text);
+                // var text = "";
+                // for (var i = 0 ; i < message.binaryData.length ; ++i){
+                //     text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);
+                // }
+                // console.log('Received Binary Message of ' + message.binaryData.length + ' bytes ' + text);
+                // var text = "";
+                // for (var i = 0 ; i < message.binaryData.length ; ++i){
+                //     text += ":" + (message.binaryData[i]+0x10000).toString(16).substr(-2);
+                // }
+                // console.log("Browser Says : "+text);
                 
                 tcpclient.write(message.binaryData, message.binaryData.length);
             }
             console.log('Message forwarded to tcpclient');
         });
+
         wssocket.on('close', function(reasonCode, description) {
             console.log((new Date()) + ' Peer ' + wssocket.remoteAddress + ' disconnected.');
+            tcpclient.end('wssocket close: ' + description)
         });
 
         wssocket.on('error', function(message) {
-            console.log('Error on wssocket:' + message);
+            console.log('Error on wssocket:' + message)
+            tcpclient.end('wssocket error')
         });
 
-        tcpclient.on('error', function(message) {
-            console.log('Error on tcpclient: ' + message);
-        });
+        // tcpclient.on('error', function(message) {
+        //     console.log('Error on tcpclient: ' + message)
+        // })
+        //
+        // tcpclient.on('close', function(reasonCode, description) {
+        //     console.log('Close on tcpclient: ' + reasonCode + ': ' + description)
+        // })
+
         console.log('Connection ready');
     });
 });
