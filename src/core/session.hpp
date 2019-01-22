@@ -189,7 +189,30 @@ public:
                     this->write_performance_log(now);
                 }
 
-                auto check_exception = [this, &session_reactor, &authentifier, &acl, &signal, &mm](Error const& e) {
+                auto check_exception = [&](Error const& e) {
+                    auto invoke_close_box = [&]{
+                        time_t now = time(nullptr);
+                        signal = BackEvent_t(session_reactor.signal);
+
+                        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
+
+                        auto const enable_close_box
+                            = this->ini.get<cfg::globals::enable_close_box>();
+                        this->ini.set<cfg::globals::enable_close_box>(
+                            enable_close_box && front.up_and_running);
+
+                        mm.invoke_close_box(
+                            auth_error_message,
+                            signal, now, authentifier, authentifier);
+                        session_reactor.signal = signal;
+
+                        this->ini.set<cfg::globals::enable_close_box>(enable_close_box);
+
+                        if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                            run_session = false;
+                        }
+                    };
+
                     if ((e.id == ERR_SESSION_PROBE_LAUNCH) ||
                         (e.id == ERR_SESSION_PROBE_ASBL_FSVC_UNAVAILABLE) ||
                         (e.id == ERR_SESSION_PROBE_ASBL_MAYBE_SOMETHING_BLOCKS) ||
@@ -214,15 +237,7 @@ public:
                         }
                         else {
                             LOG(LOG_ERR, "Session::Session exception (1) = %s\n", e.errmsg());
-                            time_t now = time(nullptr);
-                            signal = BackEvent_t(session_reactor.signal);
-
-                            const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
-
-                            mm.invoke_close_box(
-                                auth_error_message,
-                                signal, now, authentifier, authentifier);
-                            session_reactor.signal = signal;
+                            invoke_close_box();
                         }
                     }
                     else if ((e.id == ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION) ||
@@ -245,15 +260,7 @@ public:
                     }
                     else {
                         LOG(LOG_ERR, "Session::Session exception (2) = %s\n", e.errmsg());
-                        time_t now = time(nullptr);
-                        signal = BackEvent_t(session_reactor.signal);
-
-                        const char * auth_error_message = ((ERR_RAIL_LOGON_FAILED_OR_WARNING == e.id) ? nullptr : local_err_msg(e, language(this->ini)));
-
-                        mm.invoke_close_box(
-                            auth_error_message,
-                            signal, now, authentifier, authentifier);
-                        session_reactor.signal = signal;
+                        invoke_close_box();
                     }
                 };
 
@@ -443,8 +450,11 @@ public:
                         local_err_msg(e, language(this->ini)),
                         signal, now, authentifier, authentifier);
                     session_reactor.signal = signal;
-                };
 
+                    if (BackEvent_t(session_reactor.signal) == BACK_EVENT_STOP) {
+                        run_session = false;
+                    }
+                }
             }
             if (mm.get_mod()) {
                 mm.get_mod()->disconnect(time(nullptr));

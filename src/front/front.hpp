@@ -609,7 +609,7 @@ private:
     SessionReactor::TimerPtr handshake_timeout;
     SessionReactor::CallbackEventPtr incoming_event;
     SessionReactor::TimerPtr capture_timer;
-     SessionReactor::TimerPtr flow_control_timer;
+    SessionReactor::TimerPtr flow_control_timer;
 
 public:
     bool ignore_rdesktop_bogus_clip = false;
@@ -699,7 +699,7 @@ public:
         if (this->ini.get<cfg::globals::handshake_timeout>().count()) {
             this->handshake_timeout = session_reactor.create_timer()
             .set_delay(this->ini.get<cfg::globals::handshake_timeout>())
-            .on_action([](auto ctx){
+            .on_action([](JLN_TIMER_CTX ctx){
                 LOG(LOG_ERR, "Front::incoming: RDP handshake timeout reached!");
                 throw Error(ERR_RDP_HANDSHAKE_TIMEOUT);
                 return ctx.ready();
