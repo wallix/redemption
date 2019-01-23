@@ -21,6 +21,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: login <br/>
     /// value{} <br/>
     struct globals::auth_user {
         static constexpr bool is_sesman_to_proxy = true;
@@ -37,6 +38,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: ip_client <br/>
     /// value{} <br/>
     struct globals::host {
         static constexpr bool is_sesman_to_proxy = true;
@@ -53,6 +55,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: ip_target <br/>
     /// value{} <br/>
     struct globals::target {
         static constexpr bool is_sesman_to_proxy = true;
@@ -117,6 +120,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: target_login <br/>
     /// value{} <br/>
     struct globals::target_user {
         static constexpr bool is_sesman_to_proxy = true;
@@ -294,6 +298,7 @@ namespace cfg {
     /// If value is 0, global value (session_timeout) is used. <br/>
     /// type: std::chrono::seconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session::inactivity_timeout] <br/>
     /// value{0} <br/>
     struct globals::inactivity_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -443,6 +448,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: rec_path <br/>
     /// value{} <br/>
     struct globals::movie_path {
         static constexpr bool is_sesman_to_proxy = true;
@@ -702,6 +708,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_log_path <br/>
     /// value{} <br/>
     struct session_log::log_path {
         static constexpr bool is_sesman_to_proxy = true;
@@ -718,6 +725,7 @@ namespace cfg {
     };
     /// type: KeyboardInputMaskingLevel <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value = static_cast<type>(2) <br/>
     struct session_log::keyboard_input_masking_level {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1164,6 +1172,7 @@ namespace cfg {
     /// NLA authentication in secondary target. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{true} <br/>
     struct mod_rdp::enable_nla {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1182,6 +1191,7 @@ namespace cfg {
     /// (if enable_nla is disabled, this value is ignored). <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{false} <br/>
     struct mod_rdp::enable_kerberos {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1278,6 +1288,8 @@ namespace cfg {
     /// Enables Server Redirection Support. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: server_redirection <br/>
+    /// connpolicy -> proxy    [name: mod_rdp::server_redirection] <br/>
     /// value{false} <br/>
     struct mod_rdp::server_redirection_support {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1306,6 +1318,7 @@ namespace cfg {
     /// Load balancing information <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{} <br/>
     struct mod_rdp::load_balance_info {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1323,6 +1336,7 @@ namespace cfg {
     /// Needed to connect with VirtualBox, based on bogus TS_UD_SC_NET data block. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: rdp_bogus_sc_net_size <br/>
     /// value{true} <br/>
     struct mod_rdp::bogus_sc_net_size {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1446,6 +1460,7 @@ namespace cfg {
     /// As far as possible, use client-provided initial program (Alternate Shell) <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{false} <br/>
     struct mod_rdp::use_client_provided_alternate_shell {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1463,6 +1478,7 @@ namespace cfg {
     /// As far as possible, use client-provided remote program (RemoteApp) <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{false} <br/>
     struct mod_rdp::use_client_provided_remoteapp {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1480,6 +1496,7 @@ namespace cfg {
     /// As far as possible, use native RemoteApp capability <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{true} <br/>
     struct mod_rdp::use_native_remoteapp_capability {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1496,6 +1513,8 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_probe <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_session_probe] <br/>
     /// value{false} <br/>
     struct mod_rdp::enable_session_probe {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1514,6 +1533,7 @@ namespace cfg {
     /// Clipboard redirection should be remain enabled on Terminal Server. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::use_smart_launcher] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_use_clipboard_based_launcher {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1530,6 +1550,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_launch_mask] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_enable_launch_mask {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1546,6 +1567,7 @@ namespace cfg {
     };
     /// type: SessionProbeOnLaunchFailure <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::on_launch_failure] <br/>
     /// value = static_cast<type>(2) <br/>
     struct mod_rdp::session_probe_on_launch_failure {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1564,6 +1586,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::launch_timeout] <br/>
     /// value{40000} <br/>
     struct mod_rdp::session_probe_launch_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1582,6 +1605,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::launch_fallback_timeout] <br/>
     /// value{10000} <br/>
     struct mod_rdp::session_probe_launch_fallback_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1599,6 +1623,7 @@ namespace cfg {
     /// Minimum supported server : Windows Server 2008. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::start_launch_timeout_timer_only_after_logon] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_start_launch_timeout_timer_only_after_logon {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1615,6 +1640,7 @@ namespace cfg {
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::keepalive_timeout] <br/>
     /// value{5000} <br/>
     struct mod_rdp::session_probe_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1631,6 +1657,7 @@ namespace cfg {
     };
     /// type: SessionProbeOnKeepaliveTimeout <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::on_keepalive_timeout] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::session_probe_on_keepalive_timeout {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1649,6 +1676,7 @@ namespace cfg {
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::end_disconnected_session] <br/>
     /// value{false} <br/>
     struct mod_rdp::session_probe_end_disconnected_session {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1677,6 +1705,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_log] <br/>
     /// value{false} <br/>
     struct mod_rdp::session_probe_enable_log {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1693,6 +1722,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_log_rotation] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_enable_log_rotation {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1711,6 +1741,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::disconnected_application_limit] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_disconnected_application_limit {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1729,6 +1760,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::disconnected_session_limit] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_disconnected_session_limit {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1747,6 +1779,7 @@ namespace cfg {
     /// 0 to disable timeout. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::idle_session_limit] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_idle_session_limit {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1787,6 +1820,8 @@ namespace cfg {
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_probe_smart_launcher_clipboard_initialization_delay <br/>
+    /// connpolicy -> proxy    [name: session_probe::smart_launcher_clipboard_initialization_delay] <br/>
     /// value{2000} <br/>
     struct mod_rdp::session_probe_clipboard_based_launcher_clipboard_initialization_delay {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1803,6 +1838,8 @@ namespace cfg {
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_probe_smart_launcher_start_delay <br/>
+    /// connpolicy -> proxy    [name: session_probe::smart_launcher_start_delay] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_clipboard_based_launcher_start_delay {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1819,6 +1856,8 @@ namespace cfg {
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_probe_smart_launcher_long_delay <br/>
+    /// connpolicy -> proxy    [name: session_probe::smart_launcher_long_delay] <br/>
     /// value{500} <br/>
     struct mod_rdp::session_probe_clipboard_based_launcher_long_delay {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1835,6 +1874,8 @@ namespace cfg {
     };
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: session_probe_smart_launcher_short_delay <br/>
+    /// connpolicy -> proxy    [name: session_probe::smart_launcher_short_delay] <br/>
     /// value{50} <br/>
     struct mod_rdp::session_probe_clipboard_based_launcher_short_delay {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1863,6 +1904,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::enable_crash_dump] <br/>
     /// value{false} <br/>
     struct mod_rdp::session_probe_enable_crash_dump {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1879,6 +1921,7 @@ namespace cfg {
     };
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::handle_usage_limit] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_handle_usage_limit {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1895,6 +1938,7 @@ namespace cfg {
     };
     /// type: uint32_t <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::memory_usage_limit] <br/>
     /// value{0} <br/>
     struct mod_rdp::session_probe_memory_usage_limit {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1911,6 +1955,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::ignore_ui_less_processes_during_end_of_session_check] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_ignore_ui_less_processes_during_end_of_session_check {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1927,6 +1972,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::childless_window_as_unidentified_input_field] <br/>
     /// value{true} <br/>
     struct mod_rdp::session_probe_childless_window_as_unidentified_input_field {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1944,6 +1990,7 @@ namespace cfg {
     /// If enabled, disconnected session can be recovered by a different primary user. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::public_session] <br/>
     /// value{false} <br/>
     struct mod_rdp::session_probe_public_session {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1961,6 +2008,7 @@ namespace cfg {
     /// Keep known server certificates on WAB <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_cert_store] <br/>
     /// value{true} <br/>
     struct mod_rdp::server_cert_store {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1977,6 +2025,7 @@ namespace cfg {
     };
     /// type: ServerCertCheck <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_cert_check] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_cert_check {
         static constexpr bool is_sesman_to_proxy = true;
@@ -1994,6 +2043,7 @@ namespace cfg {
     /// Warn if check allow connexion to server. <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_access_allowed_message] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_access_allowed_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2011,6 +2061,7 @@ namespace cfg {
     /// Warn that new server certificate file was created. <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_cert_create_message] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_cert_create_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2028,6 +2079,7 @@ namespace cfg {
     /// Warn that server certificate file was successfully checked. <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_cert_success_message] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_cert_success_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2045,6 +2097,7 @@ namespace cfg {
     /// Warn that server certificate file checking failed. <br/>
     /// type: ServerNotification <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: server_cert::server_cert_failure_message] <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_rdp::server_cert_failure_message {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2319,6 +2372,7 @@ namespace cfg {
     /// VNC server clipboard data encoding type. <br/>
     /// type: ClipboardEncodingType <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: vnc_server_clipboard_encoding_type <br/>
     /// value = static_cast<type>(1) <br/>
     struct mod_vnc::server_clipboard_encoding_type {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2335,6 +2389,7 @@ namespace cfg {
     };
     /// type: VncBogusClipboardInfiniteLoop <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: vnc_bogus_clipboard_infinite_loop <br/>
     /// value = static_cast<type>(0) <br/>
     struct mod_vnc::bogus_clipboard_infinite_loop {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2351,6 +2406,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{false} <br/>
     struct mod_vnc::server_is_apple {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2367,6 +2423,7 @@ namespace cfg {
     };
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value{false} <br/>
     struct mod_vnc::server_unix_alt {
         static constexpr bool is_sesman_to_proxy = true;
@@ -2604,6 +2661,7 @@ namespace cfg {
     /// Disable keyboard log: <br/>
     /// type: KeyboardLogFlags <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy <br/>
     /// value = static_cast<type>(1) <br/>
     struct video::disable_keyboard_log {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3376,6 +3434,7 @@ namespace cfg {
     };
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: bitrate <br/>
     /// value{40000} <br/>
     struct context::opt_bitrate {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3392,6 +3451,7 @@ namespace cfg {
     };
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: framerate <br/>
     /// value{5} <br/>
     struct context::opt_framerate {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3408,6 +3468,7 @@ namespace cfg {
     };
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: qscale <br/>
     /// value{15} <br/>
     struct context::opt_qscale {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3424,6 +3485,7 @@ namespace cfg {
     };
     /// type: ColorDepth <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: bpp <br/>
     /// value = static_cast<type>(24) <br/>
     struct context::opt_bpp {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3440,6 +3502,7 @@ namespace cfg {
     };
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: height <br/>
     /// value{600} <br/>
     struct context::opt_height {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3456,6 +3519,7 @@ namespace cfg {
     };
     /// type: uint16_t <br/>
     /// sesman <-> proxy <br/>
+    /// sesman::name: width <br/>
     /// value{800} <br/>
     struct context::opt_width {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3675,6 +3739,7 @@ namespace cfg {
     };
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: proto_dest <br/>
     /// value = "RDP" <br/>
     struct context::target_protocol {
         static constexpr bool is_sesman_to_proxy = true;
@@ -3867,6 +3932,7 @@ namespace cfg {
     };
     /// type: unsigned int <br/>
     /// sesman -> proxy <br/>
+    /// sesman::name: timeclose <br/>
     /// value{0} <br/>
     struct context::end_date_cnx {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4190,6 +4256,7 @@ namespace cfg {
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::outbound_connection_monitoring_rules] <br/>
     /// value{} <br/>
     struct context::session_probe_outbound_connection_monitoring_rules {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4209,6 +4276,7 @@ namespace cfg {
     /// Session Probe must be enabled to use this feature. <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::process_monitoring_rules] <br/>
     /// value{} <br/>
     struct context::session_probe_process_monitoring_rules {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4226,6 +4294,7 @@ namespace cfg {
     /// Comma-separated extra system processes (Ex.: dllhos.exe,TSTheme.exe) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::extra_system_processes] <br/>
     /// value{} <br/>
     struct context::session_probe_extra_system_processes {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4243,6 +4312,7 @@ namespace cfg {
     /// Comma-separated processes (Ex.: chrome.exe,ngf.exe) <br/>
     /// type: std::string <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: session_probe::windows_of_these_applications_as_unidentified_input_field] <br/>
     /// value{} <br/>
     struct context::session_probe_windows_of_these_applications_as_unidentified_input_field {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4538,6 +4608,7 @@ namespace cfg {
     /// Delay before showing disconnect message after the last RemoteApp window is closed. <br/>
     /// type: std::chrono::milliseconds <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: rdp::remote_programs_disconnect_message_delay] <br/>
     /// value{3000} <br/>
     struct context::rail_disconnect_message_delay {
         static constexpr bool is_sesman_to_proxy = true;
@@ -4555,6 +4626,7 @@ namespace cfg {
     /// Use Session Probe to launch Remote Program as much as possible. <br/>
     /// type: bool <br/>
     /// sesman -> proxy <br/>
+    /// connpolicy -> proxy    [name: rdp::use_session_probe_to_launch_remote_program] <br/>
     /// value{true} <br/>
     struct context::use_session_probe_to_launch_remote_program {
         static constexpr bool is_sesman_to_proxy = true;

@@ -22,6 +22,7 @@
 #include "configs/generators/cpp_config.hpp"
 #include "configs/generators/ini.hpp"
 #include "configs/generators/python_spec.hpp"
+#include "configs/generators/sesman_dialog.hpp"
 #include "configs/specs/config_spec.hpp"
 #include "configs/specs/config_type.hpp"
 
@@ -31,6 +32,7 @@ int main()
     using Ini = cfg_generators::ini_writer::IniWriterBase;
     using Cpp = cfg_generators::cpp_config_writer::CppConfigWriterBase;
     using ConnPolicy = cfg_generators::connection_policy_writer::ConnectionPolicyWriterBase;
+    using SesmanDialog = cfg_generators::sesman_dialog_writer::SesmanDialogWriterBase;
 
     PythonSpec python_spec("autogen/include/configs/autogen/str_python_spec.hpp");
     Ini ini("autogen/include/configs/autogen/str_ini.hpp");
@@ -44,6 +46,7 @@ int main()
         "autogen/spec/", {"rdp", "vnc"},
         "../../tools/sesman/sesmanworker/sesmanconnpolicyspec.py"
     );
+    SesmanDialog sesman_dialog("autogen/doc/sesman_dialog.txt");
 
     auto evaluate = [](auto&&... writers){
         cfg_generators::ConfigSpecWrapper<std::remove_reference_t<decltype(writers)>...> config;
@@ -54,5 +57,5 @@ int main()
         return config.evaluate(writers...);
     };
 
-    return evaluate(python_spec, ini, cpp, conn_policy);
+    return evaluate(python_spec, ini, cpp, conn_policy, sesman_dialog);
 }
