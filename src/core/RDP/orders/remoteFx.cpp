@@ -25,6 +25,8 @@
 #include "utils/log.hpp"
 #include "utils/primitives/primitives.hpp"
 
+#include <cinttypes>
+
 
 /** 2.2.2.1.6 TS_RFX_RECT
  * The TS_RFX_RECT structure is used to specify a rectangle.
@@ -503,7 +505,7 @@ void TS_RFX_TILE::recv(InStream & stream) {
 
     uint16_t blockLen = stream.in_uint32_le();
     if (blockLen < 6 || !stream.in_check_rem(blockLen-6)) {
-    	LOG(LOG_ERR, "invalid TS_RFX_TILE, need=%u have=%lu", blockLen-4, stream.in_remain());
+    	LOG(LOG_ERR, "invalid TS_RFX_TILE, need=%u have=%zu", blockLen-4u, stream.in_remain());
 		throw Error(ERR_MCS_PDU_TRUNCATED);
     }
 
@@ -744,14 +746,14 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 	while (stream.in_check_rem(6)) {
 		size_t expected = 6;
 		if (!stream.in_check_rem(expected)){
-			LOG(LOG_ERR, "Truncated RFX_PACKET, need=%lu remains=%zu", expected, stream.in_remain());
+			LOG(LOG_ERR, "Truncated RFX_PACKET, need=%zu remains=%zu", expected, stream.in_remain());
 			throw Error(ERR_MCS_PDU_TRUNCATED);
 		}
 
 		blockType = stream.in_uint16_le();
 		blockLen = stream.in_uint32_le();
 
-		LOG(LOG_INFO, "blockType 0x%x blockLen %d", blockType, blockLen);
+		LOG(LOG_INFO, "blockType 0x%" PRIx16 " blockLen %" PRIu32, blockType, blockLen);
 
 		if (blockLen < 6) {
 			LOG(LOG_ERR, "Invalid blockLen=%u in RFX_PACKET", blockLen);
@@ -759,7 +761,7 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 		}
 
 		if (!stream.in_check_rem(blockLen-6)){
-			LOG(LOG_ERR, "Truncated RFX_PACKET, need=%u remains=%zu", blockLen-6, stream.in_remain());
+			LOG(LOG_ERR, "Truncated RFX_PACKET, need=%" PRIu32 " remains=%zu", blockLen-6u, stream.in_remain());
 			throw Error(ERR_MCS_PDU_TRUNCATED);
 		}
 

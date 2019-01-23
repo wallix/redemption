@@ -49,6 +49,7 @@ std::size_t mod_exp_direct(
     const uint8_t * exponent, std::size_t exponent_size
 ) {
     assert(out_len >= modulus_size);
+    (void)out_len;
 
     using int_type = boost::multiprecision::cpp_int;
 

@@ -28,19 +28,13 @@ class ChannelFile {
 
 private:
     const std::string dir_path;
-    unique_fd fd;
-    size_t total_file_size;
-    size_t current_file_size ;
-
-    bool validated;
+    unique_fd fd {invalid_fd()};
+    size_t total_file_size {0};
+    size_t current_file_size {0};
 
 public:
     ChannelFile(const std::string & dir_path)
     : dir_path(dir_path)
-    , fd(invalid_fd())
-    , total_file_size(0)
-    ,current_file_size(0)
-    , validated(false)
     {}
 
 //     void set_total_file_size() {

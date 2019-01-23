@@ -2803,7 +2803,7 @@ public:
             uint32_t frameId = stream.in_uint32_le();
             switch(frameAction) {
             case SURFACECMD_FRAMEACTION_BEGIN:
-                LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%d lastFrame=0x%x)", this->frameInProgress, this->currentFrameId);
+                LOG(LOG_DEBUG, "surfaceCmd frame begin(inProgress=%" PRIu32 " lastFrame=0x%" PRIx32 ")", this->frameInProgress, this->currentFrameId);
                 if (this->frameInProgress) {
                     // some servers don't send frame end markers, so send acks when we receive
                     // a new frame and the previous one was not acked

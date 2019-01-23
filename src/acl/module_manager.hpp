@@ -930,7 +930,7 @@ private:
     {
         auto throw_error = [this, &protocol, &report_message](char const* error_message, int id) {
             LOG_PROXY_SIEM("TARGET_CONNECTION_FAILED",
-                R"(target="%s" host="%s" port="%d" reason="%s")",
+                R"(target="%s" host="%s" port="%u" reason="%s")",
                 this->ini.get<cfg::globals::target_user>(),
                 this->ini.get<cfg::context::target_host>(),
                 this->ini.get<cfg::context::target_port>(),
@@ -953,7 +953,7 @@ private:
         };
 
         LOG_PROXY_SIEM("TARGET_CONNECTION",
-            R"(target="%s" host="%s" port="%d")",
+            R"(target="%s" host="%s" port="%u")",
             this->ini.get<cfg::globals::target_user>(),
             this->ini.get<cfg::context::target_host>(),
             this->ini.get<cfg::context::target_port>());
