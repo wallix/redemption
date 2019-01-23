@@ -22,9 +22,11 @@
       "members": [
         {
           "name": "inactivity_timeout",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 0,
+          "subtype": "duration",
+          "unit": "s",
           "description": "No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."
         }
       ]
@@ -109,9 +111,11 @@
         },
         {
           "name": "remote_programs_disconnect_message_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 3000,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": "Delay before showing disconnect message after the last RemoteApp window is closed."
         },
@@ -273,33 +277,41 @@
         },
         {
           "name": "smart_launcher_clipboard_initialization_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 2000,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_start_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 0,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_long_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 500,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_short_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 50,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },

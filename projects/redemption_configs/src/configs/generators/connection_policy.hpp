@@ -148,14 +148,31 @@ namespace json
         ;
     }
 
+    template<class Ratio>
+    struct ratio_to_unit;
+
+#define RATIO_TO_MULTIPLICATOR(type, unit) \
+    template<> struct ratio_to_unit<type>  \
+    { static constexpr char const* value = #unit ; }
+
+    RATIO_TO_MULTIPLICATOR(std::milli, ms);
+    RATIO_TO_MULTIPLICATOR(std::centi, cs);
+    RATIO_TO_MULTIPLICATOR(std::deci, ds);
+    RATIO_TO_MULTIPLICATOR(std::chrono::seconds::period, s);
+    RATIO_TO_MULTIPLICATOR(std::chrono::minutes::period, min);
+    RATIO_TO_MULTIPLICATOR(std::chrono::hours::period, h);
+
+#undef RATIO_TO_MULTIPLICATOR
 
     template<class T, class Ratio, class U>
     void write_type(std::ostream& out, type_enumerations& /*enums*/, type_<std::chrono::duration<T, Ratio>>, U const& i)
     {
         out <<
-            "          \"type\": \"duration\",\n"
+            "          \"type\": \"integer\",\n"
             "          \"min\": 0,\n"
             "          \"default\": " << impl::stringize_integral(i) << ",\n"
+            "          \"subtype\": \"duration\",\n"
+            "          \"unit\": \"" << ratio_to_unit<Ratio>::value << "\",\n"
         ;
     }
 
