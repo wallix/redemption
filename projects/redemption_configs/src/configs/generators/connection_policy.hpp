@@ -226,50 +226,51 @@ namespace json
         {
             if (e.flag == type_enumeration::flags) {
                 out <<
-                    "          \"type\": \"bitset\",\n"
+                    "          \"type\": \"integer\",\n"
                     "          \"min\": 0,\n"
                     "          \"max\": " << e.max() << ",\n"
                     "          \"default\": " << default_value << ",\n"
+                    "          \"subtype\": \"bitset\",\n"
                 ;
             }
             else {
-                bool const is_autoinc = (e.flag == type_enumeration::autoincrement);
                 out << "          \"type\": \"option\",\n";
                 if (e.is_string_parser) {
                     auto& v = e.values[default_value];
                     out << "          \"default\": \"" << (v.alias ? v.alias : v.name) << "\",\n";
                 }
                 else {
-                    auto d = default_value;
-                    out << "          \"default\": " << (is_autoinc ? d : (1 << d >> 1)) << ",\n";
+                    out << "          \"default\": " << default_value << ",\n";
                 }
-                out << "          \"values\": [";
-                char const* prefix = "\n";
-                int d = 0;
-                for (type_enumeration::Value const & v : e.values) {
-                    out << prefix <<
-                        "            {\n"
-                    ;
-                    if (e.is_string_parser) {
-                        out <<
-                            "               \"value\": \"" << (v.alias ? v.alias : v.name) << "\",\n"
-                        ;
-                    }
-                    else {
-                        out <<
-                            "               \"value\": " << (is_autoinc ? d : (1 << d >> 1)) << ",\n"
-                        ;
-                    }
-                    out <<
-                        "               \"label\": \"" << v.name << "\",\n"
-                        "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
-                        "            }"
-                    ;
-                    prefix = ",\n";
-                    ++d;
-                }
-                out << "\n          ],\n";
             }
+
+            out << "          \"values\": [";
+            bool const is_autoinc = (e.flag == type_enumeration::autoincrement);
+            char const* prefix = "\n";
+            int d = 0;
+            for (type_enumeration::Value const & v : e.values) {
+                out << prefix <<
+                    "            {\n"
+                ;
+                if (e.is_string_parser) {
+                    out <<
+                        "               \"value\": \"" << (v.alias ? v.alias : v.name) << "\",\n"
+                    ;
+                }
+                else {
+                    out <<
+                        "               \"value\": " << (is_autoinc ? d : (1 << d >> 1)) << ",\n"
+                    ;
+                }
+                out <<
+                    "               \"label\": \"" << v.name << "\",\n"
+                    "               \"description\": \"" << io_quoted(v.desc ? v.desc : "") << "\"\n"
+                    "            }"
+                ;
+                prefix = ",\n";
+                ++d;
+            }
+            out << "\n          ],\n";
         }
 
         template<class T>
