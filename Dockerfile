@@ -1,4 +1,4 @@
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 # clang: RUN echo "deb http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main\ndeb-src http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main" | tee -a /etc/apt/sources.list
 
