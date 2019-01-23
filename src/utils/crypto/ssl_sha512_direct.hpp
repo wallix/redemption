@@ -27,6 +27,7 @@
 #include <cassert>
 
 #include "utils/crypto/basic_hmac_direct.hpp"
+#include "cxx/diagnostic.hpp"
 
 
 class SslSha512_direct
@@ -215,15 +216,18 @@ private:
         }
     }
 
-    void sha512_update(const uint8_t *m, unsigned long len) noexcept
+    void sha512_update(const uint8_t *p, unsigned long len) noexcept
     {
-        const uint8_t *p = m;
         unsigned r = this->ctx.len % 128;
 
         this->ctx.len += len;
         if (r) {
             if (len < 128 - r) {
+                REDEMPTION_DIAGNOSTIC_PUSH
+                // release only (-O2 and above)
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Warray-bounds")
                 memcpy(this->ctx.buf + r, p, len);
+                REDEMPTION_DIAGNOSTIC_POP
                 return;
             }
             memcpy(this->ctx.buf + r, p, 128 - r);

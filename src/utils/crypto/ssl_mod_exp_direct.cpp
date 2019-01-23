@@ -26,9 +26,10 @@
 #include <cassert>
 #include <cstddef>
 
+# include "cxx/diagnostic.hpp"
+
 #ifdef __EMSCRIPTEN__
 // because _mm_getcsr() and _MM_FLUSH_ZERO_ON not implemented
-# include "cxx/diagnostic.hpp"
 REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-id-macro")
 # ifdef __SSE2__
@@ -63,7 +64,10 @@ std::size_t mod_exp_direct(
     int_type exp = b256_to_bigint(exponent, exponent_size);
     int_type m = b256_to_bigint(modulus, modulus_size);
 
+    REDEMPTION_DIAGNOSTIC_PUSH
+    REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wzero-as-null-pointer-constant")
     int_type r = boost::multiprecision::powm(base, exp, m);
+    REDEMPTION_DIAGNOSTIC_POP
 
     auto it = boost::multiprecision::export_bits(r, out, 8);
     auto r_len = static_cast<size_t>(it - out);

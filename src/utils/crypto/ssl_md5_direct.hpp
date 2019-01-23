@@ -30,6 +30,7 @@
 #include <cstring>
 
 #include "utils/crypto/basic_hmac_direct.hpp"
+#include "cxx/diagnostic.hpp"
 
 
 class SslMd5_direct
@@ -251,15 +252,18 @@ private:
         }
     }
 
-    void md5_update(const uint8_t *m, unsigned long len)
+    void md5_update(const uint8_t *p, unsigned long len)
     {
-        const uint8_t *p = m;
         unsigned r = this->md5.len % 64;
 
         this->md5.len += len;
         if (r) {
             if (len < 64 - r) {
+                REDEMPTION_DIAGNOSTIC_PUSH
+                // release only (-O2 and above)
+                REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Warray-bounds")
                 memcpy(this->md5.buf + r, p, len);
+                REDEMPTION_DIAGNOSTIC_POP
                 return;
             }
             memcpy(this->md5.buf + r, p, 64 - r);
