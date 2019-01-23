@@ -89,7 +89,7 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& front,
         const bool channel_filter_on,
-        const std::string & cliprdr_channel_files_directory,
+        const std::string & channel_files_directory,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -103,7 +103,7 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
-    , channel_file(cliprdr_channel_files_directory) {}
+    , channel_file(channel_files_directory) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -260,7 +260,7 @@ public:
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->channel_file.new_file(desc.file_name, desc.file_size());
+                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_CLIENT);
                 }
                 send_message_to_server = this->param_clipboard_file_authorized;
             }
@@ -307,6 +307,8 @@ public:
                 if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
+
+                    send_message_to_server = false;
                 }
                 if (receive.must_log_file_info_type) {
                     const bool from_remote_session = false;
@@ -520,7 +522,7 @@ public:
 
                 if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->channel_file.new_file(desc.file_name, desc.file_size());
+                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_SERVER);
                 }
 
                 if (!this->param_clipboard_file_authorized) {
@@ -547,6 +549,8 @@ public:
 
                     InStream channel_file_stream = chunk.clone();
                     this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
+
+                    send_message_to_client = false;
                 }
 
                 if (receive.must_log_file_info_type) {
@@ -718,6 +722,134 @@ public:
             message_type_str,
             flags&CHANNELS::CHANNEL_FLAG_FIRST?"FIRST":"",
             flags&CHANNELS::CHANNEL_FLAG_LAST?"LAST":"");
+    }
+
+    void send_filtered_file_content_message_to_server() {
+
+        RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->channel_file.get_file_size()+4);
+        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
+        RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+
+        uint32_t first_part_data_size(this->channel_file.get_file_size());
+        int total_length(first_part_data_size + 12);
+        if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
+            first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
+        }
+        fileRangeHeader.emit(out_stream_first_part);
+        fileRange.emit(out_stream_first_part);
+
+        const_bytes_view data;
+
+        if (data.size() > first_part_data_size ) {
+
+            int real_total = data.size() - first_part_data_size;
+            const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
+            const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
+            int data_sent(0);
+
+            // First Part
+            out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
+
+            data_sent += first_part_data_size;
+            InStream chunk_first(out_stream_first_part.get_bytes());
+
+            this->send_message_to_server(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+
+            for (int i = 0; i < cmpt_PDU_part; i++) {
+
+                // Next Part
+                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
+                out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+                data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
+                InStream chunk_next(out_stream_next_part.get_bytes());
+
+                this->send_message_to_server(total_length, CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+            }
+
+            // Last part
+            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
+            out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
+
+            InStream chunk_last(out_stream_last_part.get_bytes());
+
+            this->send_message_to_server(total_length, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+
+        } else {
+
+            out_stream_first_part.out_copy_bytes(data.data(), data.size());
+            InStream chunk(out_stream_first_part.get_bytes());
+
+            this->send_message_to_server(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, out_stream_first_part.get_data(),
+                out_stream_first_part.get_offset());
+        }
+    }
+
+    void send_filtered_file_content_message_to_client() {
+
+        RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, this->channel_file.get_file_size()+4);
+        StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
+        RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+
+        uint32_t first_part_data_size(this->channel_file.get_file_size());
+        int total_length(first_part_data_size + 12);
+        if (first_part_data_size > CHANNELS::CHANNEL_CHUNK_LENGTH - 12) {
+            first_part_data_size = CHANNELS::CHANNEL_CHUNK_LENGTH - 12;
+        }
+        fileRangeHeader.emit(out_stream_first_part);
+        fileRange.emit(out_stream_first_part);
+
+        const_bytes_view data;
+
+        if (data.size() > first_part_data_size ) {
+
+            int real_total = data.size() - first_part_data_size;
+            const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
+            const int remains_PDU  (real_total  % CHANNELS::CHANNEL_CHUNK_LENGTH);
+            int data_sent(0);
+
+            // First Part
+            out_stream_first_part.out_copy_bytes(data.data(), first_part_data_size);
+
+            data_sent += first_part_data_size;
+            InStream chunk_first(out_stream_first_part.get_bytes());
+
+            this->send_message_to_client(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+
+            for (int i = 0; i < cmpt_PDU_part; i++) {
+
+                // Next Part
+                StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_next_part;
+                out_stream_next_part.out_copy_bytes(data.data() + data_sent, CHANNELS::CHANNEL_CHUNK_LENGTH);
+
+                data_sent += CHANNELS::CHANNEL_CHUNK_LENGTH;
+                InStream chunk_next(out_stream_next_part.get_bytes());
+
+                this->send_message_to_client(total_length, CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+            }
+
+            // Last part
+            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_last_part;
+            out_stream_last_part.out_copy_bytes(data.data() + data_sent, remains_PDU);
+
+            InStream chunk_last(out_stream_last_part.get_bytes());
+
+            this->send_message_to_client(total_length, CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, chunk_first.get_data(),
+                chunk_first.get_offset());
+
+        } else {
+
+            out_stream_first_part.out_copy_bytes(data.data(), data.size());
+            InStream chunk(out_stream_first_part.get_bytes());
+
+            this->send_message_to_client(total_length, CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, out_stream_first_part.get_data(),
+                out_stream_first_part.get_offset());
+        }
     }
 
 private:

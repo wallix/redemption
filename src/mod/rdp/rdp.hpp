@@ -663,6 +663,8 @@ private:
                     this->file_system_to_server_sender.get(),
                     this->file_system_drive_manager,
                     front,
+                    false,
+                    "",
                     fsvc_params);
 
             if (this->file_system_to_server_sender) {
@@ -897,7 +899,6 @@ private:
 
                 FileSystemVirtualChannel& rdpdr_channel = *this->file_system_virtual_channel;
 
-
                 rdpdr_channel.disable_session_probe_drive();
             }
             else {
@@ -969,8 +970,8 @@ private:
             (void)session_probe_channel;
             if (!this->session_probe_virtual_channel) {
                 this->create_session_probe_virtual_channel(
-                        front, stc, 
-                        asynchronous_tasks, session_reactor, 
+                        front, stc,
+                        asynchronous_tasks, session_reactor,
                         mod_rdp, rdp,
                         lang,
                         bogus_refresh_rect,
@@ -997,7 +998,7 @@ private:
                 RailCaps const & client_rail_caps
                 ) {
             (void)rail_channel;
-            
+
             if (!this->remote_programs_virtual_channel) {
                 this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
             }
@@ -1759,8 +1760,8 @@ private:
 
                 if (!this->session_probe_virtual_channel) {
                     this->create_session_probe_virtual_channel(
-                            front, stc, 
-                            asynchronous_tasks, session_reactor, 
+                            front, stc,
+                            asynchronous_tasks, session_reactor,
                             mod_rdp, rdp,
                             lang,
                             bogus_refresh_rect,
@@ -1778,7 +1779,7 @@ private:
                 this->session_probe_launcher->set_session_probe_virtual_channel(this->session_probe_virtual_channel.get());
 
                 if (this->remote_program) {
-                
+
                     if (!this->remote_programs_virtual_channel) {
                         this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
                     }
@@ -1793,8 +1794,8 @@ private:
             {
                 if (!this->session_probe_virtual_channel) {
                     this->create_session_probe_virtual_channel(
-                            front, stc, 
-                            asynchronous_tasks, session_reactor, 
+                            front, stc,
+                            asynchronous_tasks, session_reactor,
                             mod_rdp, rdp,
                             lang,
                             bogus_refresh_rect,
@@ -1830,7 +1831,7 @@ private:
                 if (!this->remote_programs_virtual_channel) {
                     this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
                 }
-                
+
                 RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
 
                 rpvc.auth_rail_exec(flags, original_exe_or_file, exe_or_file,  working_dir, arguments, account, password);
@@ -1850,7 +1851,7 @@ private:
                 if (!this->remote_programs_virtual_channel) {
                     this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
                 }
-                
+
                 RemoteProgramsVirtualChannel& rpvc = *this->remote_programs_virtual_channel;
 
                 rpvc.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result);
@@ -2322,11 +2323,11 @@ public:
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
                 if (this->channels.enable_session_probe) {
-                
+
                     if (!this->channels.session_probe_virtual_channel) {
                         this->channels.create_session_probe_virtual_channel(
-                                this->front, this->stc, 
-                                this->asynchronous_tasks, this->session_reactor, 
+                                this->front, this->stc,
+                                this->asynchronous_tasks, this->session_reactor,
                                 *this, *this,
                                 this->lang,
                                 this->bogus_refresh_rect,
@@ -6249,7 +6250,7 @@ public:
     }
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
-        this->channels.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result, 
+        this->channels.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result,
                                                this->front, this->stc, this->vars, this->client_rail_caps);
     }
 

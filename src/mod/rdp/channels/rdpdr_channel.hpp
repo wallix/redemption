@@ -35,6 +35,9 @@
 
 #include <deque>
 
+#include <map>
+
+
 class FileSystemVirtualChannel final : public BaseVirtualChannel
 {
     VirtualChannelDataSender& to_server_sender;
@@ -208,8 +211,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
 
         FileSystemVirtualChannel& file_system_virtual_channel;
 
-//         ChannelFile channel_file;
-
         const RDPVerbose verbose;
 
     public:
@@ -225,7 +226,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
             bool serial_port_authorized,
             bool smart_card_authorized,
             uint32_t channel_chunk_length,
-
             RDPVerbose verbose)
         : file_system_drive_manager(file_system_drive_manager)
         , user_logged_on(user_logged_on)
@@ -951,12 +951,22 @@ public:
           : BaseVirtualChannel::Params(report_message) {}
     };
 
+    bool channel_filter_on;
+    const std::string channel_files_directory;
+
+    std::map<uint32_t /*FileId*/, std::string /*Path*/> filename_list;
+    std::map<uint32_t /*FileId*/, ChannelFile> file_list;
+
+
+
     FileSystemVirtualChannel(
         SessionReactor& session_reactor,
         VirtualChannelDataSender* to_client_sender_,
         VirtualChannelDataSender* to_server_sender_,
         FileSystemDriveManager& file_system_drive_manager,
         FrontAPI& front,
+        const bool channel_filter_on,
+        const std::string & channel_files_directory,
         const Params& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -987,6 +997,8 @@ public:
           params.verbose)
     , front(front)
     , session_reactor(session_reactor)
+    , channel_filter_on(channel_filter_on)
+    , channel_files_directory(channel_files_directory)
     {}
 
     ~FileSystemVirtualChannel() override

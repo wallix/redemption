@@ -87,7 +87,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender,
-        file_system_drive_manager, front, file_system_virtual_channel_params);
+        file_system_drive_manager, front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -124,7 +124,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -161,7 +161,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -198,7 +198,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -235,7 +235,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -272,7 +272,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -306,7 +306,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, file_system_virtual_channel_params);
+        front, false, "", file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }

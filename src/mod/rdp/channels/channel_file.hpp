@@ -27,32 +27,93 @@
 class ChannelFile {
 
 private:
-    const std::string dir_path;
+    std::string dir_path;
+    std::string filename;
     unique_fd fd;
     size_t total_file_size;
     size_t current_file_size ;
 
-    bool validated;
+    bool valid;
+
+    uint32_t streamID;
+
+    uint8_t direction;
 
 public:
+
+    enum : uint8_t {
+        NONE,
+        FILE_FROM_SERVER,
+        FILE_FROM_CLIENT
+    };
+
+//     ChannelFile()
+//     : fd(invalid_fd())
+//     , total_file_size(0)
+//     , current_file_size(0)
+//     , valid(false)
+//     {}
+
     ChannelFile(const std::string & dir_path)
     : dir_path(dir_path)
     , fd(invalid_fd())
     , total_file_size(0)
-    ,current_file_size(0)
-    , validated(false)
+    , current_file_size(0)
+    , valid(false)
+    , streamID(0)
+    , direction(NONE)
     {}
 
-//     void set_total_file_size() {
-//         this->total_file_size = total_file_size;
+//     void operator=(const ChannelFile & channel_file) {
+//         this->dir_path = channel_file.dir_path;
+//         this->total_file_size = channel_file.total_file_size;
+//         this->current_file_size = 0;
+//         this->valid = false;
+//
+//         std::string file_path = this->dir_path + this->filename;
+//         std::ifstream file(file_path.c_str());
+//         if (!file.good()) {
+//             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+//             if (!this->fd.is_open()) {
+//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
+//             }
+//         } else {
+//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
+//         }
+//     }
+//
+//     ChannelFile(const std::string & dir_path, const std::string & filename)
+//     : dir_path(dir_path)
+//     , filename(filename)
+//     , fd(invalid_fd())
+//     , total_file_size(0)
+//     , current_file_size(0)
+//     , valid(false)
+//     {
+//         std::string file_path = this->dir_path + filename;
+//         std::ifstream file(file_path.c_str());
+//         if (!file.good()) {
+//             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+//             if (!this->fd.is_open()) {
+//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
+//             }
+//         } else {
+//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
+//         }
 //     }
 
-    void new_file(const std::string & filename, const size_t total_file_size) {
-
+    void set_total_file_size(const size_t total_file_size) {
         this->total_file_size = total_file_size;
+    }
+
+    void new_file(const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction) {
+        this->direction = direction;
+        this->streamID = streamID;
+        this->total_file_size = total_file_size;
+        this->filename = filename;
         this->current_file_size = 0;
         this->fd.close();
-        std::string file_path = this->dir_path + filename;
+        std::string file_path = this->dir_path + this->filename;
         std::ifstream file(file_path.c_str());
         if (!file.good()) {
             this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -65,7 +126,6 @@ public:
     }
 
     void set_data(const uint8_t * data, const size_t data_size) {
-
         if (this->fd.is_open()) {
             size_t new_size = this->current_file_size + data_size;
             size_t over_data_len = 0;
@@ -77,16 +137,42 @@ public:
             if (written_data_size == -1 && (int(data_size) == written_data_size)) {
                 LOG(LOG_WARNING,"File error, can't write into \"%s\" (received data size = %zu, written data size = %d)", this->dir_path, data_size, written_data_size);
             } else {
-                this->current_file_size += data_size;
+                this->current_file_size += (data_size - over_data_len);
                 if ( this->current_file_size == this->total_file_size) {
                     this->fd.close();
                 }
             }
+        }
     }
+
+    void read_data(uint8_t * buffer, const size_t data_lan) {
+//         std::string file_path = this->dir_path + this->filename;
+//         std::ifstream file(file_path.c_str());
+//         if (file.good()) {
+//             this->fd = unique_fd(file_path.c_str(), O_RDONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+//             if (!this->fd.is_open()) {
+//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
+//             }
+//         } else {
+//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
+//         }
+    }
+
+    size_t get_file_size() {
+        return this->total_file_size;
+    }
+
+    uint32_t get_streamID() {
+        return this->streamID;
     }
 
     bool is_complete() {
         return this->total_file_size == this->current_file_size;
+    }
+
+    bool is_valide() {
+        this->valid = true;
+        return this->total_file_size == this->current_file_size && this->valid;
     }
 
     ~ChannelFile() {
