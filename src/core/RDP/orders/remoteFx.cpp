@@ -148,7 +148,7 @@ void TS_RFX_CODEC_VERSIONS::send(OutStream & /*stream*/) {
 // 		set to 0x00.
 
 void TS_RFX_CODEC_CHANNELT::recv(InStream & stream) {
-	size_t expected = 4;
+	size_t expected = 2;
 	if (!stream.in_check_rem(expected)){
 		LOG(LOG_ERR, "invalid TS_RFX_CODEC_CHANNELT, need=%zu have=%zu", expected, stream.in_remain());
 		throw Error(ERR_MCS_PDU_TRUNCATED);
@@ -615,6 +615,10 @@ TS_RFX_TILESET::~TS_RFX_TILESET() {
 	delete [] tiles;
 }
 
+static size_t roundTo(size_t l, size_t mod) {
+	return ((l + mod - 1) / mod) * mod;
+}
+
 // 2.2.2.3.4 TS_RFX_TILESET
 // The TS_RFX_TILESET message contains encoding parameters and data for an arbitrary number of
 // encoded tiles.
@@ -729,7 +733,8 @@ void TS_RFX_TILESET::recv(InStream & stream, const RDPSetSurfaceCommand &cmd, co
     for (int i = 0; i < numTiles; i++)
     	tiles[i].recv(tilesStream);
 
-    RDPSurfaceContent content(cmd.width * 4, cmd.height);
+    uint16_t width = roundTo(cmd.width, 64);
+    RDPSurfaceContent content(width, roundTo(cmd.height, 64), width * 4);
     for (int i = 0; i < numTiles; i++)
     	tiles[i].draw(cmd, *this, content);
 
@@ -750,6 +755,7 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 			throw Error(ERR_MCS_PDU_TRUNCATED);
 		}
 
+		LOG(LOG_INFO, "remaining size=%zu", stream.in_remain());
 		blockType = stream.in_uint16_le();
 		blockLen = stream.in_uint32_le();
 
@@ -771,14 +777,17 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 		switch(decoderState) {
 		// ####################################################################
 		case RFX_WAITING_SYNC: {
-			if (blockType != WBT_SYNC) {
+			switch(blockType) {
+			case WBT_SYNC: {
+				TS_RFX_SYNC sync;
+				sync.recv(packetStream);
+				decoderState = RFX_WAITING_PROPERTIES;
+				break;
+			}
+			default:
 				LOG(LOG_ERR, "Expecting a remoteFx Sync packet");
 				throw Error(ERR_MCS_PDU_TRUNCATED);
 			}
-
-			TS_RFX_SYNC sync;
-			sync.recv(packetStream);
-			decoderState = RFX_WAITING_PROPERTIES;
 			break;
 		}
 
@@ -825,8 +834,11 @@ void RfxDecoder::recv(InStream & stream, const RDPSetSurfaceCommand & cmd, gdi::
 				frameBegin.recv(packetStream);
 				break;
 			}
-			case WBT_FRAME_END:
+			case WBT_FRAME_END: {
+				TS_RFX_FRAME_END frameEnd;
+				frameEnd.recv(packetStream);
 				break;
+			}
 			case WBT_REGION: {
 				currentRegion.recv(packetStream);
 				currentRegionIndex = 0;

@@ -447,11 +447,13 @@ RED_AUTO_TEST_CASE(TestEncryptionLarge1)
             );
     #else
         auto expected_qhash = cstr_array_view(
-            "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
+            "\xdf\xd9\xf0\xcc\x20\x77\x38\xd4\x55\x44\x9f\xf0\xce\x6f\xf6\xd1"
+        	"\x62\x16\x0e\xbf\x76\xa9\x26\x4d\xa9\xd3\x40\x22\x13\xbd\x10\x2a"
             );
 
         auto expected_fhash = cstr_array_view(
-            "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
+            "\xcb\xfe\x7b\x9a\xe6\x69\x80\x4a\xf8\xc8\x28\x68\xfd\xef\x18\x11"
+            "\x22\x27\xce\xb1\xb6\x1c\xac\xe9\x1b\x04\x41\x23\xd6\xed\x75\x49"
             );
     #endif
 
@@ -1280,7 +1282,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigRead)
     ::unlink(encrypted_file);
     ::unlink(hash_encrypted_file);
 
-    constexpr std::size_t original_filesize = 4167058;
+    constexpr std::size_t original_filesize = 4166814;
     auto original_contents = get_file_contents(original_filename);
     RED_CHECK_EQUAL(original_contents.size(), original_filesize);
 
@@ -1330,7 +1332,7 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
     const char * encrypted_file = "/tmp/encrypted_file.enc";
     const char * hash_encrypted_file = "/tmp/hash_encrypted_file.enc";
 
-    constexpr std::size_t original_filesize = 4167058;
+    constexpr std::size_t original_filesize = 4166814;
     auto original_contents = get_file_contents(original_filename);
     RED_REQUIRE_EQUAL(original_contents.size(), original_filesize);
 
@@ -1379,8 +1381,8 @@ RED_AUTO_TEST_CASE(TestInCryptoTransportBigReadEncrypted)
         #else
             RED_CHECK_EQ(hash_buf,
                 "v2\n\n\nencrypted_file.enc 0 0 0 0 0 0 0 0"
-                " 7cf2107dfde3165f62df78a4f52b0b4cd8c19d4944fd1fe35e333c89fc5fd437"
-                " f79f3df59b22338f876b0a084b5c55f7a894c97b4fbf197b3afbfae0e951d862\n");
+            	" c36c3725393f4e06487181052b4035295da12e7850f127cc2f2d775997cc5211"
+            	" 2ba961dfd5159a57aef15b0646295deafa8aa4c2fd96ad221d0eeca64d200924\n");
         #endif
     }
 

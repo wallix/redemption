@@ -1422,8 +1422,7 @@ public:
                             //LOG(LOG_INFO, "hostname=\"%s\"", this->client_info.hostname);
                             this->client_info.screen_info.bpp = BitsPerPixel{8};
                             switch (cs_core.postBeta2ColorDepth) {
-                                // TODO use a enum
-                            case 0xca01:
+                            case GCC::UserData::RNS_UD_COLOR_8BPP:
                                 /*
                                 this->client_info.bpp =
                                     (cs_core.highColorDepth <= 24)?cs_core.highColorDepth:24;
@@ -1434,13 +1433,13 @@ public:
                                         : BitsPerPixel{checked_int(cs_core.highColorDepth)}
                                     );
                             break;
-                            case 0xca02:
+                            case GCC::UserData::RNS_UD_COLOR_16BPP_555:
                                 this->client_info.screen_info.bpp = BitsPerPixel{15};
                             break;
-                            case 0xca03:
+                            case GCC::UserData::RNS_UD_COLOR_16BPP_565:
                                 this->client_info.screen_info.bpp = BitsPerPixel{16};
                             break;
-                            case 0xca04:
+                            case GCC::UserData::RNS_UD_COLOR_24BPP:
                                 this->client_info.screen_info.bpp = BitsPerPixel{24};
                             break;
                             default:
@@ -2753,7 +2752,7 @@ private:
                 OrderCaps order_caps;
                 order_caps.pad4octetsA = 0x40420f00;
                 order_caps.numberFonts = 0x2f;
-                order_caps.orderFlags = 0x22;
+                order_caps.orderFlags = NEGOTIATEORDERSUPPORT | COLORINDEXSUPPORT;
                 order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
@@ -2763,8 +2762,8 @@ private:
                 order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 1;
                 order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = 1;
                 order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-                order_caps.orderSupport[UnusedIndex3] = 1;
+                order_caps.orderSupport[TS_NEG_GLYPH_INDEX]              = 1;
+                order_caps.orderSupport[TS_NEG_OPAQUERECT_INDEX] = 1;
                 order_caps.textFlags = 0x06a1;
                 order_caps.pad4octetsB = 0x0f4240;
                 order_caps.desktopSaveSize = 0x0f4240;
@@ -2778,22 +2777,6 @@ private:
                 order_caps.emit(stream);
                 caps_count++;
 
-                if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
-                    BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
-                    if (bool(this->verbose)) {
-                        bitmap_cache_host_support_caps.log("Front::send_demand_active: Sending to client");
-                    }
-                    bitmap_cache_host_support_caps.emit(stream);
-                    caps_count++;
-                }
-
-                ColorCacheCaps colorcache_caps;
-                if (bool(this->verbose)) {
-                    colorcache_caps.log("Front::send_demand_active: Sending to client");
-                }
-                colorcache_caps.emit(stream);
-                caps_count++;
-
                 PointerCaps pointer_caps;
                 pointer_caps.colorPointerCacheSize = 0x19;
                 pointer_caps.pointerCacheSize = 0x19;
@@ -2802,6 +2785,40 @@ private:
                 }
                 pointer_caps.emit(stream);
                 caps_count++;
+
+
+                InputCaps input_caps;
+
+                // Slow/Fast-path
+                input_caps.inputFlags          =
+                    INPUT_FLAG_SCANCODES
+                    | (this->ini.get<cfg::globals::unicode_keyboard_event_support>() ? INPUT_FLAG_UNICODE : 0)
+                    | (this->client_fastpath_input_event_support ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
+                input_caps.keyboardLayout      = 0;
+                input_caps.keyboardType        = 0;
+                input_caps.keyboardSubType     = 0;
+                input_caps.keyboardFunctionKey = 0;
+                if (bool(this->verbose)) {
+                    input_caps.log("Front::send_demand_active: Sending to client");
+                }
+                input_caps.emit(stream);
+                caps_count++;
+
+                VirtualChannelCaps virtual_channel_caps;
+                if (bool(this->verbose)) {
+                	virtual_channel_caps.log("Front::send_demand_active: Sending to client");
+                }
+                virtual_channel_caps.emit(stream);
+                caps_count++;
+
+                if (this->ini.get<cfg::client::persistent_disk_bitmap_cache>()) {
+                    BitmapCacheHostSupportCaps bitmap_cache_host_support_caps;
+                    if (bool(this->verbose)) {
+                        bitmap_cache_host_support_caps.log("Front::send_demand_active: Sending to client");
+                    }
+                    bitmap_cache_host_support_caps.emit(stream);
+                    caps_count++;
+                }
 
                 ShareCaps share_caps;
                 share_caps.nodeId = this->userid + GCC::MCS_USERCHANNEL_BASE;
@@ -2812,23 +2829,13 @@ private:
                 share_caps.emit(stream);
                 caps_count++;
 
-                InputCaps input_caps;
-
-                // Slow/Fast-path
-                input_caps.inputFlags          =
-                    INPUT_FLAG_SCANCODES
-                    | (this->ini.get<cfg::globals::unicode_keyboard_event_support>() ? INPUT_FLAG_UNICODE : 0)
-                    | (  this->client_fastpath_input_event_support
-                    ? (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2) : 0);
-                input_caps.keyboardLayout      = 0;
-                input_caps.keyboardType        = 0;
-                input_caps.keyboardSubType     = 0;
-                input_caps.keyboardFunctionKey = 0;
+                ColorCacheCaps colorcache_caps;
                 if (bool(this->verbose)) {
-                    input_caps.log("Front::send_demand_active: Sending to client");
+                    colorcache_caps.log("Front::send_demand_active: Sending to client");
                 }
-                input_caps.emit(stream);
+                colorcache_caps.emit(stream);
                 caps_count++;
+
 
                 if (this->client_info.remote_program) {
                     RailCaps rail_caps;
@@ -2850,6 +2857,9 @@ private:
                     caps_count++;
                 }
 
+                MultiFragmentUpdateCaps multifrag_caps;
+                bool send_multifrag_caps = false;
+
                 if (this->ini.get<cfg::globals::large_pointer_support>()) {
                     LargePointerCaps large_pointer_caps;
 
@@ -2860,8 +2870,19 @@ private:
                     large_pointer_caps.emit(stream);
                     caps_count++;
 
-                    MultiFragmentUpdateCaps multifrag_caps;
                     multifrag_caps.MaxRequestSize = 38055;
+                    send_multifrag_caps = true;
+                }
+
+                if (true) {
+                	BitmapCodecCaps bitmap_codec_caps(false);
+
+                	bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX);
+                	bitmap_codec_caps.emit(stream);
+                	caps_count++;
+                }
+
+                if (send_multifrag_caps) {
                     if (bool(this->verbose)) {
                         multifrag_caps.log("Front::send_demand_active: Sending to client");
                     }

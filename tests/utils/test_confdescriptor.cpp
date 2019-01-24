@@ -92,7 +92,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile2)
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_FAST_GLYPH_INDEX],         1);
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX],         1);
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX],         1);
-    RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_INDEX_INDEX],              1);
+    RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_GLYPH_INDEX],              1);
     RED_CHECK_EQUAL(ordercaps.orderSupportExFlags,                           0);
     RED_CHECK_EQUAL(ordercaps.desktopSaveSize,                               1000000u);
     RED_CHECK_EQUAL(ordercaps.textANSICodePage,                              0);
@@ -165,7 +165,7 @@ RED_AUTO_TEST_CASE(TestConfigDescriptorFromFile5)
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_FAST_GLYPH_INDEX],         8);
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX],         7);
     RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX],         6);
-    RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_INDEX_INDEX],              5);
+    RED_CHECK_EQUAL(ordercaps.orderSupport[TS_NEG_GLYPH_INDEX],              5);
     RED_CHECK_EQUAL(ordercaps.orderSupportExFlags,                           9);
     RED_CHECK_EQUAL(ordercaps.desktopSaveSize,                               20000u);
     RED_CHECK_EQUAL(ordercaps.textANSICodePage,                              8);

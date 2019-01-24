@@ -309,12 +309,14 @@ public:
     }
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
-        LOG(LOG_INFO, "DEFAULT: RDPSetSurfaceCommand(x=%d y=%d width=%d height=%d)", cmd.destRect.x, cmd.destRect.y,
-                        cmd.width, cmd.height);
+        LOG(LOG_INFO, "DEFAULT: RDPSetSurfaceCommand(x=%d y=%d width=%d(%d) height=%d(%d))", cmd.destRect.x, cmd.destRect.y,
+                        cmd.width, content.width, cmd.height, cmd.height);
 
         ClientRedemption::draw(cmd, content);
 
-		QImage img(content.data, cmd.width, cmd.height, QImage::Format_RGBA8888);
+		QImage img(content.data, content.width, cmd.height, QImage::Format_RGBA8888);
+		img = img.copy(QRect(0, 0, cmd.width, cmd.height));
+
 #if 0
 		static int frameNo = 0;
 		frameNo++;

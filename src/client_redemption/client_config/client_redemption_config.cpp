@@ -606,6 +606,7 @@ void ClientConfig::writeClientInfo(ClientRedemptionConfig & config)  {
             "nla ", std::to_string(config.modRDPParamsData.enable_nla), "\n"
             "sound ", std::to_string(config.modRDPParamsData.enable_sound), "\n"
             "console_mode ", std::to_string(config.info.console_session), "\n"
+			"remotefx ", std::to_string(config.enable_remotefx), "\n"
             "enable_shared_clipboard ", std::to_string(config.enable_shared_clipboard), "\n"
             "enable_shared_virtual_disk ", std::to_string(config.modRDPParamsData.enable_shared_virtual_disk), "\n"
             "enable_shared_remoteapp ", std::to_string(config.modRDPParamsData.enable_shared_remoteapp), "\n"
@@ -748,6 +749,9 @@ void ClientConfig::setClientInfo(ClientRedemptionConfig & config)  {
                 if (tag == "console_session") {
                     config.info.console_session = std::stoi(info);
                 } else
+				if (tag == "remotefx") {
+					config.enable_remotefx = std::stoi(info);
+				} else
                 if (tag == "brush_cache_code") {
                     config.info.brush_cache_code = std::stoi(info);
                 } else

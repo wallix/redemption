@@ -540,19 +540,24 @@ public:
         while (processed < orders_update.number_orders) {
             DrawingOrder_RecvFactory drawing_order(stream);
 
-            uint8_t class_ = (drawing_order.control_flags & (STANDARD | SECONDARY));
-            if (class_ == SECONDARY) {
-                LOG_IF(bool(this->verbose & RDPVerbose::graphics), LOG_INFO, "Alternate secondary order");
+            uint8_t klass = (drawing_order.control_flags & (STANDARD | SECONDARY));
+            if (klass == SECONDARY) {
+                if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "Alternate secondary order"); }
 
                 RDP::AltsecDrawingOrderHeader header(drawing_order.control_flags);
                 switch (header.orderType) {
+                	case RDP::AltsecDrawingOrderHeader::SwitchSurface: {
+                		uint16_t bitmapId = stream.in_uint16_le();
+                		LOG(LOG_INFO, "switchSurface bitmapId=0x%x", bitmapId);
+                		break;
+                	}
                     case RDP::AltsecDrawingOrderHeader::FrameMarker:
                         this->process_framemarker(stream, header, gd);
                     break;
                     case RDP::AltsecDrawingOrderHeader::Window:
                         this->process_windowing(stream, header, gd);
                     break;
-                    case TS_ALTSEC_CREATE_NINEGRID_BITMAP:
+                    case RDP::AltsecDrawingOrderHeader::CreateNinegridBitmap:
                         this->process_ninegrid_bmpcache(stream, header);
                         LOG(LOG_INFO, "CREATE_NINEGRID_BITMAP !!!!!!!!!!!!!!!!!");
                     break;
@@ -562,7 +567,7 @@ public:
                     break;
                 }
             }
-            else if (class_ == (STANDARD | SECONDARY)) {
+            else if (klass == (STANDARD | SECONDARY)) {
                 //uint8_t * order_start = stream.p;
                 RDPSecondaryOrderHeader header(stream);
                 //LOG(LOG_INFO, "secondary order=%d", header.type);
@@ -595,7 +600,7 @@ public:
                 }
                 stream.in_skip_bytes(next_order - stream.get_current());
             }
-            else if (class_ == STANDARD) {
+            else if (klass == STANDARD) {
                 RDPPrimaryOrderHeader header = this->common.receive(stream, drawing_order.control_flags);
                 const Rect cmd_clip =
                     (drawing_order.control_flags & BOUNDS)
@@ -738,7 +743,7 @@ public:
             }
             else {
                 /* error, this should always be set */
-                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. class=0x%02X", class_);
+                LOG(LOG_ERR, "Unsupported drawing order detected : protocol error. class=0x%02X", klass);
                 assert(false);
                 break;
             }

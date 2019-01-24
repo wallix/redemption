@@ -111,7 +111,7 @@ struct TS_RFX_CHANNELS {
 	uint8_t numChannels{0};
 	TS_RFX_CHANNELT *channels{nullptr};
 
-	virtual ~TS_RFX_CHANNELS();
+	~TS_RFX_CHANNELS();
 
 	void recv(InStream & stream);
 	void send(OutStream & stream);
@@ -125,6 +125,10 @@ struct TS_RFX_FRAME_BEGIN : public TS_RFX_CODEC_CHANNELT {
 
 	void recv(InStream & stream);
 	void send(OutStream & stream);
+};
+
+/** @brief TS_RFX_FRAME_END */
+struct TS_RFX_FRAME_END : public TS_RFX_CODEC_CHANNELT {
 };
 
 /** @brief a TS_RFX_REGION packet */

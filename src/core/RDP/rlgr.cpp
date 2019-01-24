@@ -94,10 +94,6 @@ bool Rlgr::decode(RlgrMode mode, const uint8_t *pSrcData, uint32_t srcSize, int1
     int kr = 1;
     int krp = kr << LSGR;
 
-    if ((mode != RLGR1) && (mode != RLGR3)) {
-        mode = RLGR1;
-    }
-
     if (!pSrcData || !srcSize) { // TODO: asserts
         return false;
     }

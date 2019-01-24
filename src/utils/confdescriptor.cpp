@@ -195,7 +195,7 @@ bool order_caps_load(OrderCaps & caps, char const * filename)
         Entry("TS_NEG_FAST_GLYPH_INDEX", &caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]),
         Entry("TS_NEG_ELLIPSE_SC_INDEX", &caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]),
         Entry("TS_NEG_ELLIPSE_CB_INDEX", &caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]),
-        Entry("TS_NEG_INDEX_INDEX", &caps.orderSupport[TS_NEG_INDEX_INDEX]),
+        Entry("TS_NEG_INDEX_INDEX", &caps.orderSupport[TS_NEG_GLYPH_INDEX]),
         Entry("orderSupportExFlags", &caps.orderSupportExFlags),
         Entry("desktopSaveSize", &caps.desktopSaveSize),
         Entry("textANSICodePage", &caps.textANSICodePage),

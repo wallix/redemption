@@ -27,6 +27,7 @@
 #include "utils/log.hpp"
 #include "core/error.hpp"
 #include "utils/stream.hpp"
+#include "utils/hexdump.hpp"
 #include "core/RDP/capabilities/common.hpp"
 
 #include <vector>
@@ -322,7 +323,7 @@ struct NSCodecCaps
 
 struct RFXSrvrCaps
 {
-    // std::unique_ptr<uint8_t[]> reserved;
+	uint16_t len{0};
 
     RFXSrvrCaps() = default;
 
@@ -338,11 +339,12 @@ struct RFXSrvrCaps
     void recv(InStream & stream, uint16_t len)
     {
         stream.in_skip_bytes(len);
+        this->len = len;
     }
 
     size_t computeSize() const
     {
-        return 0;
+        return this->len;
     }
 };
 
@@ -441,143 +443,47 @@ struct RFXICap
 //    structures. Each structure MUST be packed on byte boundaries. The size of each
 //    TS_RFX_ICAP structure within the array is specified in the icapLen field.
 
-struct RFXCapset
-{
-    uint16_t blockType{CBY_CAPSET}; // MUST be set to CBY_CAPSET (0xCBC1)
-    uint32_t blockLen{13 + 8};      // total length in bytes of the fields of that structure
-    uint8_t  codecId{1};            // MUST be set to 0x01
-    uint16_t capsetType{CLY_CAPSET};// MUST be set to CLY_CAPSET (0xCFC0)
-    uint16_t numIcaps{1};           // number of elements in icapsData array
-    uint16_t icapLen{8};            // total length in bytes of the fields of a icap structure (i.e. a row in icapsData array)
 
-private:
-    // numIcaps == icapsData.size()
-    std::vector<RFXICap> icapsData{RFXICap{}};
 
-public:
-    RFXCapset() = default;
 
-    void emit(OutStream & out) const {
-        out.out_uint16_le(this->blockType);
-        out.out_uint32_le(13 + this->icapLen * this->numIcaps);
-        out.out_uint8(this->codecId);
-        out.out_uint16_le(this->capsetType);
-        out.out_uint16_le(this->numIcaps);
-        out.out_uint16_le(this->icapLen);
-
-        for (auto& icap : this->icapsData) {
-            icap.emit(out);
-        }
-    }
-
-    void recv(InStream & stream, uint16_t len) {
-        this->blockType = stream.in_uint16_le();
-        if (this->blockType != CBY_CAPSET) {
-            LOG(LOG_ERR, "RFXCapset expecting blockType=CBY_CAPSET");
-        }
-
-        this->blockLen = stream.in_uint32_le();
-        if (this->blockLen < 12 || blockLen-12 > len) {
-            LOG(LOG_ERR, "Truncated RFXCapset, needs=%u remains=%zu", this->blockLen, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
-        this->codecId = stream.in_uint8();
-        if (this->codecId != 1) {
-            LOG(LOG_ERR, "RFXCapset expecting codecId=1");
-        }
-        this->capsetType = stream.in_uint16_le();
-        this->numIcaps = stream.in_uint16_le();
-        this->icapLen = stream.in_uint16_le();
-
-        if (this->numIcaps){
-            this->icapsData.clear();
-            this->icapsData.resize(numIcaps);
-        }
-
-        unsigned expected = this->numIcaps * this->icapLen;
-        if (len < expected + 13) {
-            LOG(LOG_ERR, "Truncated RFXCapset, needs=%u remains=%zu", expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
-        for (auto& icap : this->icapsData) {
-            icap.recv(stream, this->icapLen);
-        }
-    }
-
-    size_t computeSize() const {
-        return 13 + (this->numIcaps * this->icapLen);
-    }
-};
-
-struct RFXCaps
-{
-    uint16_t blockType{CBY_CAPS}; // MUST be set to CBY_CAPS (0xCBC0)
-    uint32_t blockLen{8};         // MUST be set to 0x0008
-    uint16_t numCapsets{1};       // MUST be set to 0x0001
-
-    RFXCapset capsetsData{};
-
-    RFXCaps() = default;
-
-    void emit(OutStream & out) const {
-        out.out_uint16_le(this->blockType);
-        out.out_uint32_le(this->blockLen);
-        out.out_uint16_le(this->numCapsets);
-        this->capsetsData.emit(out);
-    }
-
-    void recv(InStream & stream, uint16_t len) {
-        if (len < 8){
-            LOG(LOG_ERR, "RFXCaps, truncated pdu need=8 got=%u", len);
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-        this->blockType = stream.in_uint16_le();
-        if (this->blockType != CBY_CAPS) {
-            LOG(LOG_ERR, "RFXCaps, expecting blockType=CBY_CAPS");
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
-        this->blockLen = stream.in_uint32_le();
-        if (this->blockLen != 8) {
-            LOG(LOG_ERR, "RFXCaps, expecting blockLen=8");
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
-        this->numCapsets = stream.in_uint16_le();
-        if (this->numCapsets != 1) {
-            LOG(LOG_ERR, "RFXCaps, expecting numCapsets=1");
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-    }
-
-    size_t computeSize() const {
-        return 8 + this->capsetsData.computeSize();
-    }
-};
-
+/** @brief TS_RFX_CLNT_CAPS_CONTAINER */
 struct RFXClntCaps
 {
-    uint32_t length;
+    uint32_t length{49};
     uint32_t captureFlags{CARDP_CAPS_CAPTURE_NON_CAC};
-    uint32_t capsLength;
+    uint32_t capsLength{37};
 
-    RFXCaps capsData {};
+    std::vector<RFXICap> icapsData{RFXICap{}};
 
-    RFXClntCaps()
-    {
-         this->capsLength = this->capsData.computeSize();
-         this->length = 12 + this->capsLength;
+    RFXClntCaps() {
+    	icapsData.resize(2);
+    	icapsData[0].entropyBits = CLW_ENTROPY_RLGR1;
+    	icapsData[1].entropyBits = CLW_ENTROPY_RLGR3;
     }
 
     void emit(OutStream & out) const
     {
+    	/* TS_RFX_CLNT_CAPS_CONTAINER */
         out.out_uint32_le(this->length);
         out.out_uint32_le(this->captureFlags);
         out.out_uint32_le(this->capsLength);
 
-        this->capsData.emit(out);
+        /* TS_RFX_CAPS */
+        out.out_uint16_le(CBY_CAPS); /* blockType */
+        out.out_uint32_le(8);        /* blockLen */
+        out.out_uint16_le(1);		 /* numCapsets */
+
+        /* TS_RFX_CAPSET */
+        out.out_uint16_le(CBY_CAPSET); /* blockType */
+        out.out_uint32_le(29); /* blockLen */
+        out.out_uint8(0x01); /* codecId (MUST be set to 0x01) */
+        out.out_uint16_le(CLY_CAPSET); /* capsetType */
+        out.out_uint16_le(icapsData.size()); /* numIcaps */
+        out.out_uint16_le(8); /* icapLen */
+
+        for(size_t i = 0; i < icapsData.size(); i++) {
+        	icapsData[i].emit(out);
+        }
     }
 
     void recv(InStream & stream, uint16_t len)
@@ -596,21 +502,69 @@ struct RFXClntCaps
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        if (this->capsLength) {
-            this->capsData = RFXCaps{};
-            this->capsData.recv(stream, this->capsLength);
+        /* TS_RFX_CAPS */
+        uint16_t blockType = stream.in_uint16_le();
+        uint32_t blockLen = stream.in_uint32_le();
+        uint16_t numCapsets = stream.in_uint16_le();
+
+        if (blockType != CBY_CAPS) {
+            LOG(LOG_ERR, "we want blockType == CBY_CAPS");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
         }
+
+        if (blockLen != 8) {
+            LOG(LOG_ERR, "we want blockLen == 8");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        if (numCapsets != 1) {
+            LOG(LOG_ERR, "we want numCapsets == 1");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        /* TS_RFX_CAPSET */
+        blockType = stream.in_uint16_le();
+        blockLen = stream.in_uint32_le();
+        uint8_t codecId = stream.in_uint8();
+        uint16_t capsetType = stream.in_uint16_le();
+        uint16_t numIcaps = stream.in_uint16_le();
+        uint16_t icapLen = stream.in_uint16_le();
+
+        if (blockType != CBY_CAPSET) {
+            LOG(LOG_ERR, "we want blockType == CBY_CAPSET");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        if (codecId != 0x1) {
+            LOG(LOG_ERR, "we want codecId == 1");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        if (capsetType != 1) {
+            LOG(LOG_ERR, "we want capsetType == CLY_CAPSET");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        if (!stream.in_check_rem(numIcaps * icapLen)) {
+            LOG(LOG_ERR, "not enough room for RFXIcaps");
+            throw Error(ERR_MCS_PDU_TRUNCATED);
+        }
+
+        this->icapsData.resize(2);
+
+        for (int i = 0; i < numIcaps; i++)
+        	this->icapsData[i].recv(stream, icapLen);
+
     }
 
-    size_t computeSize() const
-    {
+    size_t computeSize() const {
         return this->length;
     }
 };
 
 // TODO enum class
 enum BitmapCodecType {
-    CODEC_REMOTEFX,
+    CODEC_REMOTEFX = 0,
     CODEC_NS,
     CODEC_IGNORE,
     CODEC_UNKNOWN
@@ -700,23 +654,21 @@ struct BitmapCodec
         return 19u + this->codecProperties.computeSize();
     }
 
-    void recv(InStream & stream, uint16_t & len, bool clientMode) {
-        if (len < 19){
-            LOG(LOG_ERR, "Truncated BitmapCodecs, need=19 remains=%u", len);
+    void recv(InStream & stream, bool clientMode) {
+        if (!stream.in_check_rem(19)){
+            LOG(LOG_ERR, "Truncated BitmapCodecs, need=19 remains=%lu", stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
         stream.in_copy_bytes(codecGUID, 16);
         this->codecID = stream.in_uint8();
         this->codecPropertiesLength = stream.in_uint16_le();
-        len -= 19;
 
         uint16_t expected = this->codecPropertiesLength;
-        if (len < expected){
-            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%u remains=%u", expected, len);
+        if (!stream.in_check_rem(expected)) {
+            LOG(LOG_ERR, "Truncated codec properties in BitmapCodecs, need=%u remains=%lu", expected, stream.in_remain());
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
-        len -= this->codecPropertiesLength;
 
         if (memcmp(codecGUID, "\xB9\x1B\x8D\xCA\x0F\x00\x4F\x15\x58\x9F\xAE\x2D\x1A\x87\xE2\xD6", 16) == 0) {
             /* CODEC_GUID_NSCODEC */
@@ -726,7 +678,7 @@ struct BitmapCodec
         } else if((memcmp(codecGUID, "\x12\x2F\x77\x76\x72\xBD\x63\x44\xAF\xB3\xB7\x3C\x9C\x6F\x78\x86", 16) == 0)
                || (memcmp(codecGUID, "\xD4\xCC\x44\x27\x8A\x9D\x74\x4E\x80\x3C\x0E\xCB\xEE\xA1\x9C\x54", 16) == 0)) {
             /* CODEC_GUID_REMOTEFX or CODEC_GUID_IMAGE_REMOTEFX */
-            if (clientMode){
+            if (clientMode) {
                 this->codecProperties.interface = RFXClntCaps();
             }
             else {
@@ -749,66 +701,100 @@ struct BitmapCodec
         out.out_copy_bytes(this->codecGUID, 16);
         out.out_uint8(this->codecID);
         out.out_uint16_le(this->codecPropertiesLength);
+
+        //const_byte_ptr props = out.get_current();
         this->codecProperties.emit(out);
+
+        //LOG(LOG_ERR, "codecProperties:");
+        //hexdump(props, this->codecPropertiesLength);
+    }
+
+    static const char *bitmapCodecTypeStr(BitmapCodecType btype) {
+    	const char *types[] = {
+    			"RemoteFx",	"NSCodec", "IGNORE", "UNKNOWN"
+      	};
+
+    	return types[btype];
+    }
+
+    void log() const {
+    	LOG(LOG_INFO, "  -%s, id=%d, size=%lu codecProperties=%lu", bitmapCodecTypeStr(this->codecType),
+    			this->codecID, this->computeSize(), this->codecProperties.computeSize());
     }
 };
 
 
-struct BitmapCodecs {
-
-    uint8_t bitmapCodecCount{0};
-
-    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE] {};
-
-    BitmapCodecs() = default;
-};
 
 enum {
     CAPLEN_BITMAP_CODECS_CAPS = 5
 };
 
+/** @brief BitmapCodec capabilities */
 struct BitmapCodecCaps : public Capability {
 
-    BitmapCodecs supportedBitmapCodecs;
+    BitmapCodec bitmapCodecArray[BITMAPCODECS_MAX_SIZE] {};
+    uint8_t bitmapCodecCount{0};
+
     bool clientMode;
-    uint8_t remoteFxCodecId;
+    bool haveRemoteFxCodec{false};
+    uint8_t codecCounter{2};
 
     BitmapCodecCaps(bool client)
     : Capability(CAPSETTYPE_BITMAP_CODECS, CAPLEN_BITMAP_CODECS_CAPS)
     , clientMode(client)
-    , remoteFxCodecId(1)
+    , haveRemoteFxCodec(false)
     {
     }
 
-    void addCodec(uint8_t codecType, uint8_t codecId) {
+    uint8_t addCodec(uint8_t codecType) {
+    	uint8_t ret = 1;
+
         switch(codecType) {
         case CODEC_GUID_REMOTEFX:
         case CODEC_GUID_IMAGE_REMOTEFX: {
-            BitmapCodec *codec = &supportedBitmapCodecs.bitmapCodecArray[supportedBitmapCodecs.bitmapCodecCount];
+            BitmapCodec *codec = &bitmapCodecArray[bitmapCodecCount];
             codec->setCodecGUID(codecType, this->clientMode);
-            codec->codecID = this->remoteFxCodecId = codecId;
-            supportedBitmapCodecs.bitmapCodecCount++;
+            ret = codec->codecID = codecCounter;
+            haveRemoteFxCodec = true;
+            bitmapCodecCount++;
+            codecCounter++;
+            if (codecCounter == 1) /* reserved for NSCodec */
+            	codecCounter++;
             break;
         }
         case CODEC_GUID_NSCODEC:
+        	/* TODO */
         default:
             LOG(LOG_ERR, "unsupported codecType=%u", codecType);
             break;
         }
+
+        len = CAPLEN_BITMAP_CODECS_CAPS + computeCodecsSize();
+        return ret;
+    }
+
+    size_t computeCodecsSize() {
+        size_t codecsLen = 0;
+        for (int i = 0; i < bitmapCodecCount; i++) {
+            codecsLen += bitmapCodecArray[i].computeSize();
+        }
+
+        return codecsLen;
     }
 
     void emit(OutStream & out) const {
         size_t codecsLen = 0;
-        for (int i = 0; i < supportedBitmapCodecs.bitmapCodecCount; i++) {
-            codecsLen += supportedBitmapCodecs.bitmapCodecArray[i].computeSize();
+        for (int i = 0; i < bitmapCodecCount; i++) {
+            codecsLen += bitmapCodecArray[i].computeSize();
         }
+
         out.out_uint16_le(this->capabilityType);
-        out.out_uint16_le(CAPLEN_BITMAP_CODECS_CAPS + codecsLen);
+        out.out_uint16_le(this->len);
 
-        out.out_uint8(supportedBitmapCodecs.bitmapCodecCount);
+        out.out_uint8(bitmapCodecCount);
 
-        for (int i = 0; i < supportedBitmapCodecs.bitmapCodecCount; i++) {
-            supportedBitmapCodecs.bitmapCodecArray[i].emit(out);
+        for (int i = 0; i < bitmapCodecCount; i++) {
+            bitmapCodecArray[i].emit(out);
         }
     }
 
@@ -821,20 +807,24 @@ struct BitmapCodecCaps : public Capability {
             throw Error(ERR_MCS_PDU_TRUNCATED);
         }
 
-        this->supportedBitmapCodecs.bitmapCodecCount = stream.in_uint8();
-        uint16_t tmplen = this->len-5;
-        for (int i = 0; i < this->supportedBitmapCodecs.bitmapCodecCount; i++) {
-            this->supportedBitmapCodecs.bitmapCodecArray[i].recv(stream, tmplen, this->clientMode);
-            if (this->supportedBitmapCodecs.bitmapCodecArray[i].codecType == CODEC_REMOTEFX){
-                this->remoteFxCodecId = this->supportedBitmapCodecs.bitmapCodecArray[i].codecID;
-            }
+        this->bitmapCodecCount = stream.in_uint8();
 
+        InStream subStream(stream.get_current(), len-5);
+
+        for (int i = 0; i < this->bitmapCodecCount; i++) {
+            this->bitmapCodecArray[i].recv(subStream, this->clientMode);
+
+            if (this->bitmapCodecArray[i].codecType == CODEC_REMOTEFX) {
+                this->haveRemoteFxCodec = true;
+            }
         }
     }
 
     void log(const char * msg) const {
         LOG(LOG_INFO, "%s BitmapCodecCaps (%u bytes)", msg, this->len);
-        LOG(LOG_INFO, "BitmapCodecsCaps::BitmapCodecs::bitmapCodecCount %u", this->supportedBitmapCodecs.bitmapCodecCount);
-        LOG(LOG_INFO, "BitmapCodecCaps::supportedBitmapCodecs %p", static_cast<void const*>(&this->supportedBitmapCodecs));
+        LOG(LOG_INFO, "BitmapCodecsCaps::BitmapCodecs::bitmapCodecCount %u", this->bitmapCodecCount);
+
+        for (auto i = 0; i < this->bitmapCodecCount; i++)
+        	this->bitmapCodecArray[i].log();
     }
 };

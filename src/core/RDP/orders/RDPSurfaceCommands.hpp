@@ -28,8 +28,9 @@
 /** @brief a surface content update */
 class RDPSurfaceContent {
 public:
-	RDPSurfaceContent(uint16_t stride, uint16_t height)
+	RDPSurfaceContent(uint16_t width, uint16_t height, uint16_t stride)
 	: stride(stride)
+	, width(width)
 	, data(new uint8_t[stride * height * 4]())
 	{
 	}
@@ -40,6 +41,7 @@ public:
 
 public:
 	uint16_t stride;
+	uint16_t width;
 	uint8_t *data;
 };
 
