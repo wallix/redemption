@@ -2798,8 +2798,10 @@ public:
                             ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                         }
                         else {
-                            ::memset(cs_net.channelDefArray[index].name, 0,
-                                sizeof(cs_net.channelDefArray[index].name));
+                            ::snprintf(cs_net.channelDefArray[index].name,
+                                       sizeof(cs_net.channelDefArray[index].name),
+                                       "null_%02d",
+                                       index);
                         }
                         cs_net.channelDefArray[index].options = channel_item.flags;
                         CHANNELS::ChannelDef def;
