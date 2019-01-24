@@ -85,8 +85,7 @@ struct BrowserTransport : Transport
 
         size_t const data_len = len - remaining;
 
-        LOG(LOG_DEBUG, "BrowserTransport::read %zu bytes", data_len);
-
+        // LOG(LOG_DEBUG, "BrowserTransport::read %zu bytes", data_len);
         // hexdump(data - data_len, data_len);
 
         return data_len;
@@ -94,7 +93,7 @@ struct BrowserTransport : Transport
 
     void do_send(const uint8_t * buffer, size_t len) override
     {
-        LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
+        // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
         // hexdump(buffer, len);
         out_buffers.insert(out_buffers.end(), buffer, buffer + len);
     }
@@ -107,6 +106,11 @@ struct BrowserTransport : Transport
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "utils/bitmap.hpp"
+
+extern "C" {
+  extern void draw_image(Bitmap& image);
+}
+
 
 class JsFront : public FrontAPI
 {
@@ -133,19 +137,7 @@ public:
         return a.intersect(width, height).intersect(b);
     }
 
-    void draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx) override
-    {
-        LOG(LOG_INFO, "JsFront::RDPOpaqueRect");
-
-        Rect const rect = intersect(clip, cmd.rect);
-        BGRColor const bgrcolor = color_decode(cmd.color, color_ctx);
-        auto bgr32 = bgrcolor.to_u32();
-
-        RED_EM_ASM({
-            canvas.fillStyle = '#' + $4;
-            canvas.fillRect($1, $2, $3, $4);
-        }, rect.x, rect.y, rect.cx, rect.cy, bgr32);
-    }
+    void draw(RDPOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
 
     void draw(const RDPScrBlt & /*cmd*/, Rect /*clip*/) override { }
     void draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/) override { }
@@ -155,21 +147,7 @@ public:
     void draw(const RDP::RDPMultiScrBlt & /*cmd*/, Rect /*clip*/) override { }
     void draw(RDPPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
 
-    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bmp) override
-    {
-        LOG(LOG_INFO, "JsFront::RDPMemBlt");
-
-        Rect const rect = intersect(clip, cmd.rect);
-        // BGRColor const bgrcolor = color_decode(cmd.color, color_ctx);
-        // auto bgr32 = bgrcolor.to_u32();
-        static int i = 0;
-        auto bgr32 = (++i) & 0x1000000;
-
-        RED_EM_ASM({
-            canvas.fillStyle = '#' + $4;
-            canvas.fillRect($1, $2, $3, $4);
-        }, rect.x, rect.y, rect.cx, rect.cy, bgr32);
-    }
+    void draw(const RDPMemBlt & /*cmd*/, Rect /*clip*/, const Bitmap & /*bmp*/) override { }
 
     void draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const Bitmap & /*bmp*/) override { }
     void draw(RDPLineTo const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
@@ -193,7 +171,7 @@ public:
 
     void draw(const RDPBitmapData & cmd, const Bitmap & bmp) override
     {
-        LOG(LOG_INFO, "JsFront::RDPBitmapData");
+        // LOG(LOG_INFO, "JsFront::RDPBitmapData");
 
         // void ctx.drawImage(image, dx, dy);
         // void ctx.drawImage(image, dx, dy, dWidth, dHeight);
@@ -203,8 +181,9 @@ public:
 
         RED_EM_ASM(
             {
-                drawImage24($0, $1, $2, $3, $4, $5, $6, $7);
+                RdpClientEventTable[$0].drawBmp($1, $2, $3, $4, $5, $6, $7, $8);
             },
+            this,
             image.data(),
             image.cx(),
             image.cy(),
@@ -408,6 +387,9 @@ EMSCRIPTEN_BINDINGS(client) {
         .function("get_data", &RdpClient::get_data)
         .function("clear_data", &RdpClient::clear_data)
         .function("next_message", &RdpClient::next_message)
+        .function("thisptr", +[](RdpClient& ref) {
+            return RED_EM_ASM_INT({ return $0; }, &ref.front);
+        }, emscripten::allow_raw_pointers())
     ;
 }
 

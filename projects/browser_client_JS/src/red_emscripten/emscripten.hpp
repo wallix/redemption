@@ -22,11 +22,13 @@ Author(s): Jonathan Poelen
 
 #ifdef IN_IDE_PARSER
 # define RED_EM_ASM(...)
+# define RED_EM_ASM_INT(...) int()
 # define RED_EM_JS(return_type, name, params, ...) return_type name params;
 #else
 # include <emscripten.h>
 # include "cxx/diagnostic.hpp"
 # define RED_EM_ASM EM_ASM
+# define RED_EM_ASM_INT EM_ASM_INT
 # define RED_EM_JS(return_type, name, params, ...)             \
     REDEMPTION_DIAGNOSTIC_PUSH                                 \
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \

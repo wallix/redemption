@@ -6,8 +6,15 @@
 <body>
 
 <canvas id="canvas" width="800" height="600"></canvas>
+<button id="newco" style="vertical-align:top">New Connection</button>
 <script>
-const canvas = document.getElementById('canvas').getContext('2d')
+const canvas = document.getElementById('canvas').getContext('2d');
+const newcobutton = document.getElementById('newco');
+let socketbutton;
+newcobutton.onclick = () => {
+    socketbutton.close();
+    Module.onRuntimeInitialized();
+};
 
 function imageFromBitmap24(idata, w, h, line_size)
 {
@@ -31,21 +38,45 @@ function imageFromBitmap24(idata, w, h, line_size)
   return new ImageData(arr, w, h)
 }
 
-function drawImage24(idata, w, h, line_size, dx, dy, dw, dh)
-{
-    let image = imageFromBitmap24(idata, w, h, line_size)
-    // console.log(image, dx, dy, dw, dh)
-    canvas.putImageData(image, dx, dy, 0, 0, dw, dh)
-}
+(function(context) {
+    const wrappersCb = {
+        drawBmp: function(cb) {
+            return function(idata, w, h, line_size, dx, dy, dw, dh) {
+                const imageData = imageFromBitmap24(idata, w, h, line_size);
+                cb(imageData, dx, dy, 0, 0, dw, dh);
+            }
+        }
+    }
+
+    context.RdpClientEventTable = {};
+
+    context.createRdpClient = function(verbosity) {
+        const rdpclient = new Module.RdpClient(verbosity);
+        const events = {}
+        context.RdpClientEventTable[rdpclient.thisptr()] = events
+        rdpclient.on = function(eventName, cb) {
+            const wrapCb = wrappersCb[eventName];
+            if (!wrapCb) {
+                console.log('RdpClient: Unknown event ' + eventName)
+                return false
+            }
+            events[eventName] = wrapCb(cb);
+            return this
+        };
+        return rdpclient;
+    }
+})(window)
 
 var Module = {
   TOTAL_MEMORY: 268435456, // 16**7
   onRuntimeInitialized: function() {
-    const rdpclient = new Module.RdpClient(0xff)
+    const rdpclient = createRdpClient(0/*xff*/)
+    rdpclient.on('drawBmp', canvas.putImageData.bind(canvas))
+
     const send_data = function() {
         const out = rdpclient.get_data()
         if (out.length) {
-            console.log("send " + out.length + " bytes")
+            // console.log("send " + out.length + " bytes")
             socket.send(out)
             rdpclient.clear_data()
         }
@@ -58,6 +89,7 @@ var Module = {
     canvas.fillRect(0,0,800,600)
 
     const socket = new WebSocket("ws://localhost:8080", "rdp-protocol")
+    socketbutton = socket
 
     socket.binaryType = 'arraybuffer';
 
@@ -71,13 +103,13 @@ var Module = {
 
     // Display messages received from the server
     socket.onmessage = function(event) {
-        const bytearray = new Uint8Array(event.data)
-        let text = ""
-        console.log('Received Binary Message of ' + bytearray.length + ' bytes')
-        for (let byte of bytearray) {
-            text += ":" + (byte+0x10000).toString(16).substr(-2)
-        }
-        console.log("Server Says: " + text)
+        // const bytearray = new Uint8Array(event.data)
+        // let text = ""
+        // // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+        // for (let byte of bytearray) {
+        //     text += ":" + (byte+0x10000).toString(16).substr(-2)
+        // }
+        // console.log("Server Says: " + text)
         rdpclient.update()
         try {
             rdpclient.next_message(event.data)
@@ -90,7 +122,7 @@ var Module = {
     }
 
     // Display any errors that occur
-    socket.onerrro = function(event) {
+    socket.onerror = function(event) {
         console.log("Error: " + event.type)
     }
 
