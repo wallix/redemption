@@ -49,22 +49,50 @@ em++ file.cpp -o file.html
 
 `-O1`, `-O2`, `-O3`
 
-# Include path
+
+# Compilation
+
+## Include path
 
 ```bash
 ln -s /usr/include/boost system_include/
 ```
 
-## Test
+## Configure Emscripten
 
-```
-ln -s /usr/include/boost system_include/
+```bash
 source $EMSDK_PATH/emsdk_set_env.sh
+```
+
+## Run bjam
+
+```bash
 bjam -j7 toolset=clang "cxxflags=-fcolor-diagnostics -s USE_ZLIB=1 -s USE_LIBPNG=1" debug jsclient
+```
+
+
+# Test
+
+```bash
 cd bin/clang.../debug
 ln -s ../../../src/js_client.html rdpclient.html
-python -m SimpleHTTPServer 7542 &
-node ../../../js_websocket_proxy/ws_server.js &
 # run proxy, with nla and tls disabled
 # open http://localhost:7542/rdpclient.html
+```
+
+## Proxy websocket -> tcp
+
+```bash
+wget https://github.com/vi/websocat/archive/master.zip
+cd websocat-master
+cargo build --release --bin websocat
+./target/release/websocat --binary ws-l:127.0.0.1:8080 tcp:127.0.0.1:3389
+```
+
+## Http server
+
+
+```bash
+cd bin/clang.../debug
+python -m SimpleHTTPServer 7542
 ```
