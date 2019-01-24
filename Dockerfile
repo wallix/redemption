@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-# clang: RUN echo "deb http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main\ndeb-src http://apt.llvm.org/artful/ llvm-toolchain-artful-6.0 main" | tee -a /etc/apt/sources.list
+# clang: RUN echo "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main\ndeb-src http://apt.llvm.org/bionic/ llvm-toolchain-bionic-7 main" | tee -a /etc/apt/sources.list
 
 # Install
 RUN apt-get -qq update
