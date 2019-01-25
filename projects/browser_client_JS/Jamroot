@@ -207,6 +207,8 @@ rule bindjs ( name : objs + : deps * )
     exe-main $(name) : $(objs) : $(deps) <cxxflags>--bind <cxxflags>-fno-rtti&&-frtti ;
 }
 
+objjs src/redjs/image_data.bc : src/redjs/image_utils.cpp ;
+
 bindjs jsclient :
   src/js_client.bc
   app_path_exe.bc
@@ -254,6 +256,7 @@ bindjs jsclient :
   src/utils/sugar/multisz.bc
   src/utils/utf.bc
   z.bc
+  src/redjs/image_data.bc
 
   log_test.bc
 :

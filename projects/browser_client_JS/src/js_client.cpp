@@ -37,6 +37,9 @@
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/emscripten.hpp"
+#include "redjs/image_utils.hpp"
+
+#include <emscripten.h>
 
 
 constexpr int FD_TRANS = 42;
@@ -177,17 +180,16 @@ public:
         // void ctx.drawImage(image, dx, dy, dWidth, dHeight);
         // void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 
-        Bitmap image(BitsPerPixel{24}, bmp);
+        redjs::ImageData image(bmp);
 
         RED_EM_ASM(
             {
-                RdpClientEventTable[$0].drawBmp($1, $2, $3, $4, $5, $6, $7, $8);
+                RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, 0, 0, $6, $7);
             },
             this,
             image.data(),
-            image.cx(),
-            image.cy(),
-            image.line_size(),
+            image.width(),
+            image.height(),
             cmd.dest_left,
             cmd.dest_top,
             cmd.dest_right - cmd.dest_left + 1,

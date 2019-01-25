@@ -319,8 +319,8 @@ Bitmap::Bitmap(BitsPerPixel out_bpp, const Bitmap & bmp)
             const uint8_t * src = bmp.data_bitmap->get();
             const uint8_t src_nbbytes = nb_bytes_per_pixel(dec.bpp);
             const uint8_t Bpp = nb_bytes_per_pixel(enc.bpp);
-            for (size_t y = 0; y < bmp.cy() ; y++) {
-                for (size_t x = 0; x < bmp.cx() ; x++) {
+            for (size_t y = 0; y < bmp.cy(); y++) {
+                for (size_t x = 0; x < bmp.cx(); x++) {
                     BGRColor pixel = dec(buf_to_color(src));
                     constexpr bool enc_8_15_16 = enc.bpp == BitsPerPixel{8}
                                               || enc.bpp == BitsPerPixel{15}

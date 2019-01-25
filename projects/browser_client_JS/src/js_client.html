@@ -40,10 +40,11 @@ function imageFromBitmap24(idata, w, h, line_size)
 
 (function(context) {
     const wrappersCb = {
-        drawBmp: function(cb) {
-            return function(idata, w, h, line_size, dx, dy, dw, dh) {
-                const imageData = imageFromBitmap24(idata, w, h, line_size);
-                cb(imageData, dx, dy, 0, 0, dw, dh);
+        drawImage: function(thisp, cb) {
+            return function(idata, w, h, dx, dy, sz, sy, dw, dh) {
+                const data = HEAPU8.subarray(idata, idata + w * h * 4);
+                const image = new ImageData(new Uint8ClampedArray(data), w, h);
+                cb.call(thisp, image, dx, dy, 0, 0, dw, dh);
             }
         }
     }
@@ -60,7 +61,7 @@ function imageFromBitmap24(idata, w, h, line_size)
                 console.log('RdpClient: Unknown event ' + eventName)
                 return false
             }
-            events[eventName] = wrapCb(cb);
+            events[eventName] = wrapCb(rdpclient, cb);
             return this
         };
         return rdpclient;
@@ -71,7 +72,7 @@ var Module = {
   TOTAL_MEMORY: 268435456, // 16**7
   onRuntimeInitialized: function() {
     const rdpclient = createRdpClient(0/*xff*/)
-    rdpclient.on('drawBmp', canvas.putImageData.bind(canvas))
+    rdpclient.on('drawImage', canvas.putImageData.bind(canvas))
 
     const send_data = function() {
         const out = rdpclient.get_data()
