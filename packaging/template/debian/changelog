@@ -1,3 +1,8 @@
+redemption (1.1.129%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
+
+
+ -- cgrosjean <cgrosjean at wallix.com>  Fri, 25 Jan 2019 10:34:35 +0200
+
 redemption (1.1.127%TARGET_NAME%) %PKG_DISTRIBUTION%; urgency=low
 
   * Fix RDP session crash caused by disabling some Proxy Options in GUI.
