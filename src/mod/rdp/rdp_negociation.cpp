@@ -942,13 +942,15 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
-                        ::memset(cs_net.channelDefArray[index].name, 0,
-                            sizeof(cs_net.channelDefArray[index].name));
+                        ::snprintf(cs_net.channelDefArray[index].name,
+                                   sizeof(cs_net.channelDefArray[index].name),
+                                   "null_%02zu",
+                                   index);
                     }
                     else if (this->authorization_channels.is_authorized(channel_item.name) ||
-                                ((channel_item.name == channel_names::rdpdr ||
-                                channel_item.name == channel_names::rdpsnd) &&
-                                this->has_managed_drive)
+                             ((channel_item.name == channel_names::rdpdr ||
+                               channel_item.name == channel_names::rdpsnd) &&
+                              this->has_managed_drive)
                     ) {
                         switch (channel_item.name) {
                             case channel_names::cliprdr: has_cliprdr_channel = true; break;
@@ -958,8 +960,10 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                         ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
                     }
                     else {
-                        ::memset(cs_net.channelDefArray[index].name, 0,
-                            sizeof(cs_net.channelDefArray[index].name));
+                        ::snprintf(cs_net.channelDefArray[index].name,
+                                   sizeof(cs_net.channelDefArray[index].name),
+                                   "null_%02zu",
+                                   index);
                     }
                     cs_net.channelDefArray[index].options = channel_item.flags;
                     CHANNELS::ChannelDef def;
