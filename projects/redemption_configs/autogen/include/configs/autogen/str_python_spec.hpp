@@ -316,11 +316,11 @@
 "persist_bitmap_cache_on_disk = boolean(default=False)\n\n"
 
 "# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.\n"
-"#_advanced\n"
+"#_hidden\n"
 "allow_channels = string_list(default=list('*'))\n\n"
 
 "# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.\n"
-"#_advanced\n"
+"#_hidden\n"
 "deny_channels = string_list(default=list())\n\n"
 
 "# Enables support of Client/Server Fast-Path Input/Update PDUs.\n"
