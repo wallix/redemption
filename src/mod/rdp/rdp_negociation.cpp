@@ -936,16 +936,15 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                 to redirect channel data
                 from client to server passing through the "proxy" */
                 GCC::UserData::CSNet cs_net;
-                cs_net.channelCount = num_channels;
+                cs_net.channelCount = 0;
                 bool has_cliprdr_channel = false;
                 bool has_rdpdr_channel   = false;
                 bool has_rdpsnd_channel  = false;
-                for (size_t index = 0; index < num_channels; index++) {
+                for (size_t index = 0, adjusted_index = 0; index < num_channels; index++) {
                     const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
-                        ::memset(cs_net.channelDefArray[index].name, 0,
-                            sizeof(cs_net.channelDefArray[index].name));
+                        continue;
                     }
                     else if (this->authorization_channels.is_authorized(channel_item.name) ||
                                 ((channel_item.name == channel_names::rdpdr ||
@@ -957,20 +956,21 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                             case channel_names::rdpdr:   has_rdpdr_channel = true; break;
                             case channel_names::rdpsnd:  has_rdpsnd_channel = true; break;
                         }
-                        ::memcpy(cs_net.channelDefArray[index].name, channel_item.name.c_str(), 8);
+                        ::memcpy(cs_net.channelDefArray[adjusted_index].name, channel_item.name.c_str(), 8);
                     }
                     else {
-                        ::memset(cs_net.channelDefArray[index].name, 0,
-                            sizeof(cs_net.channelDefArray[index].name));
+                        continue;
                     }
-                    cs_net.channelDefArray[index].options = channel_item.flags;
+                    cs_net.channelDefArray[adjusted_index].options = channel_item.flags;
                     CHANNELS::ChannelDef def;
-                    def.name = CHANNELS::ChannelNameId(cs_net.channelDefArray[index].name);
-                    def.flags = channel_item.flags;
+                    def.name = CHANNELS::ChannelNameId(cs_net.channelDefArray[adjusted_index].name);
+                    def.flags = cs_net.channelDefArray[adjusted_index].options;
                     if (bool(this->verbose & RDPVerbose::channels)) {
-                        def.log(index);
+                        def.log(adjusted_index);
                     }
                     this->mod_channel_list.push_back(def);
+                    cs_net.channelCount++;
+                    adjusted_index++;
                 }
 
                 // Inject a new channel for file system virtual channel (rdpdr)
