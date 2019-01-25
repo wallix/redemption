@@ -2782,8 +2782,10 @@ public:
                         const CHANNELS::ChannelDef & channel_item = channel_list[index];
 
                         if (!this->remote_program && channel_item.name == channel_names::rail) {
-                            ::memset(cs_net.channelDefArray[index].name, 0,
-                                sizeof(cs_net.channelDefArray[index].name));
+                            ::snprintf(cs_net.channelDefArray[index].name,
+                                       sizeof(cs_net.channelDefArray[index].name),
+                                       "null_%02d",
+                                       index);
                         }
                         else if (this->authorization_channels.is_authorized(channel_item.name) ||
                                  ((channel_item.name == channel_names::rdpdr ||
