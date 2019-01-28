@@ -27,6 +27,10 @@ REDEMPTION_DIAGNOSTIC_PUSH
 #include "utils/log.hpp"
 REDEMPTION_DIAGNOSTIC_POP
 
+#ifdef __EMSCRIPTEN__
+# include "red_emscripten/emscripten.hpp"
+#endif
+
 #include <cstdarg>
 #include <cstdio>
 
@@ -35,10 +39,20 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
     (void)priority;
     va_list ap;
     va_start(ap, format);
+
     REDEMPTION_DIAGNOSTIC_PUSH
     REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+#ifdef __EMSCRIPTEN__
+    char buffer[4096];
+    int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap); /*NOLINT*/
+    va_end(ap);
+    buffer[len] = 0;
+    RED_EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+#else
     std::vprintf(format, ap); /*NOLINT*/
-    REDEMPTION_DIAGNOSTIC_POP
     std::puts("");
+#endif
+    REDEMPTION_DIAGNOSTIC_POP
+
     va_end(ap);
 }

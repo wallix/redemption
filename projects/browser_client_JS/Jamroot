@@ -119,11 +119,8 @@ constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
 ;
 
-objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
-objjs log_test.js : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
-
-alias log_print.bc : log_test.bc ;
-alias log_print.o : log_test.bc ;
+objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+alias log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
