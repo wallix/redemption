@@ -33,6 +33,7 @@
 #include "utils/difftimeval.hpp"
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
+#include "core/session_reactor.hpp"
 
 #include <memory>
 
@@ -68,6 +69,8 @@ private:
 
     ChannelFile channel_file;
 
+    SessionReactor& session_reactor;
+
 public:
     struct Params : public BaseVirtualChannel::Params {
         bool clipboard_down_authorized;
@@ -90,6 +93,7 @@ public:
         FrontAPI& front,
         const bool channel_filter_on,
         const std::string & channel_files_directory,
+        SessionReactor& session_reactor,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
@@ -103,7 +107,8 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
-    , channel_file(channel_files_directory) {}
+    , channel_file(channel_files_directory)
+    , session_reactor(session_reactor) {}
 
 protected:
     const char* get_reporting_reason_exchanged_data_limit_reached() const
@@ -214,7 +219,6 @@ public:
 
             header.recv(chunk);
 
-            //
             this->clip_data.client_data.message_type = header.msgType();
         }
 
@@ -260,7 +264,7 @@ public:
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_CLIENT);
+                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_SERVER, session_reactor.get_current_time());
                 }
                 send_message_to_server = this->param_clipboard_file_authorized;
             }
@@ -522,7 +526,7 @@ public:
 
                 if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
-                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_SERVER);
+                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_CLIENT, session_reactor.get_current_time());
                 }
 
                 if (!this->param_clipboard_file_authorized) {
@@ -717,11 +721,31 @@ public:
             default:
                 return RDPECLIP::get_msgType_name(message_type);
             }
-        }(message_type));
+        } (message_type));
+
         LOG(LOG_INFO, "ClipboardVirtualChannel::process_client_message: %s (%s:%s)",
             message_type_str,
             flags&CHANNELS::CHANNEL_FLAG_FIRST?"FIRST":"",
             flags&CHANNELS::CHANNEL_FLAG_LAST?"LAST":"");
+    }
+
+    void check_channels_file_DLP_antivirus() {
+
+        if (this->channel_file.is_valide()) {
+
+            switch (this->channel_file.get_direction()) {
+
+                case ChannelFile::FILE_FROM_SERVER:
+                    this->send_filtered_file_content_message_to_client();
+                    break;
+
+                case ChannelFile::FILE_FROM_CLIENT:
+                    this->send_filtered_file_content_message_to_server();
+                    break;
+
+                default: break;
+            }
+        }
     }
 
     void send_filtered_file_content_message_to_server() {
@@ -738,9 +762,13 @@ public:
         fileRangeHeader.emit(out_stream_first_part);
         fileRange.emit(out_stream_first_part);
 
-        const_bytes_view data;
+        std::unique_ptr<uint8_t[]> data_file = std::make_unique<uint8_t[]>(this->channel_file.get_file_size());
 
-        if (data.size() > first_part_data_size ) {
+        this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
+
+        const_bytes_view data = {data_file.get(), this->channel_file.get_file_size()};
+
+        if (this->channel_file.get_file_size() > first_part_data_size ) {
 
             int real_total = data.size() - first_part_data_size;
             const int cmpt_PDU_part(real_total  / CHANNELS::CHANNEL_CHUNK_LENGTH);
@@ -802,7 +830,12 @@ public:
         fileRangeHeader.emit(out_stream_first_part);
         fileRange.emit(out_stream_first_part);
 
-        const_bytes_view data;
+        std::unique_ptr<uint8_t[]> data_file = std::make_unique<uint8_t[]>(this->channel_file.get_file_size());
+
+
+        this->channel_file.read_data(data_file.get(), this->channel_file.get_file_size());
+
+        /*array_view_uint8_t*/const_bytes_view data {data_file.get(), this->channel_file.get_file_size()};
 
         if (data.size() > first_part_data_size ) {
 

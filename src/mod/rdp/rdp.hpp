@@ -288,9 +288,11 @@ private:
         const bool enable_rdpdr_data_analysis;
         const RDPVerbose verbose;
 
+        SessionReactor & session_reactor;
+
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
 
-        ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics)
+        ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics, SessionReactor & session_reactor)
             :
             #ifndef __EMSCRIPTEN__
                 metrics(metrics),
@@ -367,6 +369,7 @@ private:
             , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
             , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
             , verbose(verbose)
+            , session_reactor(session_reactor)
         {
             if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
                 this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives, mod_rdp_params.proxy_managed_drive_prefix);
@@ -457,7 +460,7 @@ private:
             return std::unique_ptr<VirtualChannelDataSender>(std::move(to_client_sender));
         }
 
-        inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc) {
+        inline void create_clipboard_virtual_channel(FrontAPI & front, ServerTransportContext & stc, SessionReactor & session_reactor) {
             assert(!this->clipboard_to_client_sender
                 && !this->clipboard_to_server_sender);
 
@@ -482,6 +485,7 @@ private:
                     front,
                     false,
                     "",
+                    session_reactor,
                     cvc_params);
         }
 
@@ -836,7 +840,7 @@ private:
             ServerTransportContext & stc
         ) {
             if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc);
+                this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
             }
 
             ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
@@ -1017,7 +1021,7 @@ private:
                                 ServerTransportContext & stc) {
 
             if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc);
+                this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
             }
             ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
 
@@ -1743,7 +1747,7 @@ private:
             assert(this->enable_session_probe);
             if (this->session_probe_launcher){
                 if (!this->clipboard_virtual_channel) {
-                    this->create_clipboard_virtual_channel(front, stc);
+                    this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
                 }
                 ClipboardVirtualChannel& cvc = *this->clipboard_virtual_channel;
                 cvc.set_session_probe_launcher(this->session_probe_launcher.get());
@@ -2066,7 +2070,7 @@ public:
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics)
+        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)

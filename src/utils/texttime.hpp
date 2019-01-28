@@ -23,6 +23,7 @@
 #include <string>
 #include <chrono>
 #include <ctime>
+#include <sstream>
 
 // TODO std::string -> static_string
 
@@ -78,6 +79,15 @@ inline const char * get_short_text_month(int month) {
     return "date_error";
 }
 
+inline std::string get_full_text_sec_and_usec(const timeval tv) { // s_us
+    time_t time_sec = tv.tv_sec;
+    time_t time_usec = tv.tv_usec;
+
+    std::stringstream s_us;
+    s_us << time_sec << "_" << time_usec;
+
+    return s_us.str();
+}
 
 inline std::string arcsight_gmdatetime(const timeval tv)
 {                                                           // MMM(text) dd yyyy hh:mm:ss

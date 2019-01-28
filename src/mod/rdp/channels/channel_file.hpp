@@ -21,7 +21,10 @@
 #pragma once
 
 #include "utils/sugar/unique_fd.hpp"
+#include "utils/difftimeval.hpp"
+#include "utils/texttime.hpp"
 #include <fstream>
+#include <unistd.h>
 
 
 class ChannelFile {
@@ -29,6 +32,7 @@ class ChannelFile {
 private:
     std::string dir_path;
     std::string filename;
+    std::string file_path;
     unique_fd fd;
     size_t total_file_size;
     size_t current_file_size ;
@@ -106,17 +110,18 @@ public:
         this->total_file_size = total_file_size;
     }
 
-    void new_file(const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction) {
+    void new_file(const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction, const timeval tv) {
         this->direction = direction;
         this->streamID = streamID;
         this->total_file_size = total_file_size;
         this->filename = filename;
         this->current_file_size = 0;
         this->fd.close();
-        std::string file_path = this->dir_path + this->filename;
-        std::ifstream file(file_path.c_str());
+
+        this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
+        std::ifstream file(this->file_path.c_str());
         if (!file.good()) {
-            this->fd = unique_fd(file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+            this->fd = unique_fd(this->file_path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
             if (!this->fd.is_open()) {
                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
             }
@@ -145,17 +150,23 @@ public:
         }
     }
 
-    void read_data(uint8_t * buffer, const size_t data_lan) {
-//         std::string file_path = this->dir_path + this->filename;
-//         std::ifstream file(file_path.c_str());
-//         if (file.good()) {
-//             this->fd = unique_fd(file_path.c_str(), O_RDONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-//             if (!this->fd.is_open()) {
-//                 LOG(LOG_WARNING,"File error, can't open %s", file_path);
-//             }
-//         } else {
-//             LOG(LOG_WARNING,"Error,file %s already exist", file_path);
-//         }
+    void read_data(uint8_t * buffer, const size_t data_len) {
+        std::ifstream file(this->file_path.c_str());
+        if (file.good()) {
+            this->fd = unique_fd(this->file_path.c_str(), O_RDONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+            ::read(fd.fd(), buffer, data_len);
+
+            this->fd.close();
+            if (!this->fd.is_open()) {
+                LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
+            }
+        } else {
+            LOG(LOG_WARNING,"Error,file %s doen't exist", this->file_path);
+        }
+    }
+
+    uint8_t get_direction() {
+        return this->direction;
     }
 
     size_t get_file_size() {
@@ -172,7 +183,7 @@ public:
 
     bool is_valide() {
         this->valid = true;
-        return this->total_file_size == this->current_file_size && this->valid;
+        return this->is_complete() && this->valid;
     }
 
     ~ChannelFile() {

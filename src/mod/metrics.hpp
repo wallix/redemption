@@ -231,7 +231,6 @@ private:
         const timeval event_time,
         array_view_const_char event_name)
     {
-
         unique_fd fd_header(this->complete_index_file_path, O_WRONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
         if (!fd_header.is_open()) {
             int const errnum = errno;
