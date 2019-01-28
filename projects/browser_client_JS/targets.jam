@@ -66,7 +66,7 @@ test-run-js tests/test_image_data :
   src/utils/utf.bc
 ;
 
-objjs src/main/js_client.bc : src/main/js_client.cpp ;
+objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
 objjs src/redjs/image_data.bc : src/redjs/image_data.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 objjs src/RAIL/client_execute.bc : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;

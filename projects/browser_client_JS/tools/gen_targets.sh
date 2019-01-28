@@ -25,5 +25,5 @@ d=projects/browser_client_JS/
     s@ : tests/@ : $(REDEMPTION_TEST_PATH)/@g
     s@ : projects/redemption_configs/@ : $(REDEMPTION_CONFIG_PATH)/@g
     s@ '$d'@ @g
-    s@^(objjs '$d'src/main/[^.]+\.bc : src/[^ ]+) ;$@\1 : <cxxflags>-fno-rtti\&\&-frtti ;@
+    s@^(objjs src/main/[^.]+\.bc : src/[^ ]+) ;$@\1 : <cxxflags>-fno-rtti\&\&-frtti ;@
 '
