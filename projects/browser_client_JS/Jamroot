@@ -19,6 +19,8 @@ constant NO_FFMPEG : 1 ;
 constant BOOST_STACKTRACE : 0 ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
+EXE_DEPENDENCIES += <cxxflags>"-s ABORTING_MALLOC=0" ;
+
 project redjs
     : requirements
 
@@ -42,6 +44,9 @@ project redjs
     <cxxflags>"-s DISABLE_EXCEPTION_CATCHING=0"
     <cxxflags>"-s FS_LOG"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
+
+    <cxxflags>"-s USE_LIBPNG=1"
+    <cxxflags>"-s USE_ZLIB=1"
 
     # <cxx-lto>on
 
@@ -185,15 +190,15 @@ rule bindjs ( name : objs + : deps * )
     exe-main $(name) : $(objs) : $(deps) <cxxflags>--bind <cxxflags>-fno-rtti&&-frtti ;
 }
 
-rule exe-js ( name : src : obj + : deps * )
+rule exe-js ( name : src : objs + : deps * )
 {
-    bindjs $(name) : $(src) $(obj) : $(deps) <cxxflags>-Wno-missing-prototypes ;
+    bindjs $(name) : $(src) $(objs) : $(deps) <cxxflags>-Wno-missing-prototypes ;
 }
 
-rule test-run-js ( name : src : obj + : deps * )
+rule test-run-js ( name : src : objs + : deps * )
 {
     objjs $(name).bc : $(src) : <include>$(REDEMPTION_TEST_PATH)/includes ;
-    test-run $(name) : $(name).bc $(obj) : $(deps) ;
+    test-run $(name) : $(name).bc $(objs) : $(deps) ;
 }
 
 include targets.jam ;
