@@ -187,7 +187,7 @@ rule bindjs ( name : objs + : deps * )
 
 rule exe-js ( name : src : obj + : deps * )
 {
-    bindjs $(name) : $(src) $(obj) : $(deps) ;
+    bindjs $(name) : $(src) $(obj) : $(deps) <cxxflags>-Wno-missing-prototypes ;
 }
 
 rule test-run-js ( name : src : obj + : deps * )
