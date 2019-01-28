@@ -639,7 +639,10 @@ print()
 generate('test-run', tests, [], unprefixed_file)
 print()
 
-generate_obj(sources)
+if has_set_arg:
+    generate_obj(f for f in sources if f.used)
+else:
+    generate_obj(sources)
 print()
 
 ###
