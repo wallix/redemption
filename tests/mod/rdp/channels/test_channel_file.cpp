@@ -33,8 +33,6 @@ RED_AUTO_TEST_CASE(TestChannelFileCtr)
 {
     WorkingDirectory wd("channel_file");
 
-    ChannelFile file(wd.dirname());
-
     uint32_t streamID = 0x00;
     uint8_t direction = ChannelFile::NONE;
 
@@ -43,10 +41,10 @@ RED_AUTO_TEST_CASE(TestChannelFileCtr)
     sec_and_usec_time.tv_usec = 54321;
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
-    file.new_file("new_file1.txt", 0, streamID, direction, sec_and_usec_time);
+    ChannelFile file(wd.dirname(), "new_file1.txt", 0, streamID, direction, sec_and_usec_time);
 
     auto const file2 = wd.add_file("12345_54321_new_file2.txt");
-    file.new_file("new_file2.txt", 0, streamID, direction, sec_and_usec_time);
+    ChannelFile file_new(wd.dirname(), "new_file2.txt", 0, streamID, direction, sec_and_usec_time);
 
     RED_CHECK_WORKSPACE(wd);
 }
@@ -56,8 +54,6 @@ RED_AUTO_TEST_CASE(TestChannelFileCtr)
 RED_AUTO_TEST_CASE(TestChannelFileWrite)
 {
     WorkingDirectory wd("channel_file");
-
-    ChannelFile file(wd.dirname());
 
     auto const file1 = wd.add_file("12345_54321_new_file1.txt");
 
@@ -73,7 +69,7 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     sec_and_usec_time.tv_sec = 12345;
     sec_and_usec_time.tv_usec = 54321;
 
-    file.new_file("new_file1.txt", 12, streamID, direction, sec_and_usec_time);
+    ChannelFile file(wd.dirname(), "new_file1.txt", 12, streamID, direction, sec_and_usec_time);
     RED_CHECK_WORKSPACE(wd);
     RED_CHECK_EQUAL(file.is_complete(), false);
 
@@ -88,23 +84,24 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
     RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
 
     auto const file2 = wd.add_file("12345_54321_new_file2.txt");
-    file.new_file("new_file2.txt", 14, streamID, direction, sec_and_usec_time);
-    RED_CHECK_WORKSPACE(wd);
-    RED_CHECK_EQUAL(file.is_complete(), false);
+    ChannelFile file_new(wd.dirname(), "new_file2.txt", 14, streamID, direction, sec_and_usec_time);
 
-    file.set_data(reinterpret_cast<const uint8_t *>(word4), 8);
-    RED_CHECK_EQUAL(file.is_complete(), false);
-    file.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
-    RED_CHECK_EQUAL(file.is_complete(), true);
-    file.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
-    RED_CHECK_EQUAL(file.is_complete(), true);
+    RED_CHECK_WORKSPACE(wd);
+    RED_CHECK_EQUAL(file_new.is_complete(), false);
+
+    file_new.set_data(reinterpret_cast<const uint8_t *>(word4), 8);
+    RED_CHECK_EQUAL(file_new.is_complete(), false);
+    file_new.set_data(reinterpret_cast<const uint8_t *>(word2), 6);
+    RED_CHECK_EQUAL(file_new.is_complete(), true);
+    file_new.set_data(reinterpret_cast<const uint8_t *>(word3), 5);
+    RED_CHECK_EQUAL(file_new.is_complete(), true);
 
     RED_CHECK_EQUAL(get_file_contents(file1), "hello world!");
 
     RED_CHECK_EQUAL(get_file_contents(file2), "goodbye world!");
 
     uint8_t buffer[14];
-    file.read_data(buffer, 14);
+    file_new.read_data(buffer, 14);
 
     RED_CHECK_EQUAL(reinterpret_cast<const char *>(buffer), "goodbye world!");
 

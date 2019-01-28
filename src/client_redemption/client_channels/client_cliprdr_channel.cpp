@@ -1042,8 +1042,8 @@
                         data_sent += 4;
                     }
                     InStream chunk_first_part( out_stream_first_part.get_data()
-                                            , out_stream_first_part.get_offset()
-                                            );
+                                             , out_stream_first_part.get_offset()
+                                             );
 
                     this->callback->send_to_mod_channel( channel_names::cliprdr
                                                         , chunk_first_part

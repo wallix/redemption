@@ -872,6 +872,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
                 ),
             36);
 
+    RED_CHECK_EQUAL(to_client_sender.streams.size(), 5);
+
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_server_message: File Contents Response PDU
 // INFO (4749/4749) -- Sending on channel (20) n bytes
 // INFO (4749/4749) -- \x00\x00\x00\x00
@@ -887,10 +889,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
-        /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
+        /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
                 ),
             16,
             out_asynchronous_task);
+
+    RED_CHECK_EQUAL(to_client_sender.streams.size(), 5);
 
     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
 
@@ -899,26 +903,26 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
               CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
-        /* 0000 */ "\x20\x20\x74\x65\x73\x74\x00\x00\x00\x00"                         //   test....
+        /* 0000 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
                 ),
-            10,
+            6,
             out_asynchronous_task);
 
     RED_CHECK_EQUAL(to_client_sender.streams.size(), 5);
 
     RED_CHECK_EQUAL(get_file_contents(file_test), "test  test");
 
-    clipboard_virtual_channel.check_channels_file_DLP_antivirus();
+    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
 
     RED_CHECK_EQUAL(to_client_sender.streams.size(), 6);
 
     auto expected_pdu =
-    /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
-    /* 0001 */ "\x20\x20\x74\x65\x73\x74\x00\x00\x00\x00"                         //   test....
+    /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
+    /* 0001 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
     ""_av
     ;
 
-//     RED_CHECK_MEM(expected_pdu, make_array_view(to_client_sender.streams[5].get_data(), to_client_sender.streams[5].in_remain()));
+    RED_CHECK_MEM(expected_pdu, make_array_view(to_client_sender.streams[5].get_data(), to_client_sender.streams[5].in_remain()));
 
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
@@ -1374,6 +1378,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
             36,
             out_asynchronous_task);
 
+    RED_CHECK_EQUAL(to_server_sender.streams.size(), 6);
+
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_server_message: File Contents Response PDU
 // INFO (4749/4749) -- Sending on channel (20) n bytes
 // INFO (4749/4749) -- \x00\x00\x00\x00
@@ -1385,40 +1391,42 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 // INFO (4749/4749) -- Sent dumped on channel (20) n bytes
 
         clipboard_virtual_channel.process_client_message(
-            26,
+            22,
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
-        /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
+        /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
                 ),
             16);
+
+    RED_CHECK_EQUAL(to_server_sender.streams.size(), 6);
 
     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
 
         clipboard_virtual_channel.process_client_message(
-            26,
+            22,
               CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
-        /* 0000 */ "\x20\x20\x74\x65\x73\x74\x00\x00\x00\x00"                         //   test....
+        /* 0000 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
                 ),
-            10);
+            6);
 
     RED_CHECK_EQUAL(to_server_sender.streams.size(), 6);
 
     RED_CHECK_EQUAL(get_file_contents(file_test), "test  test");
 
-    clipboard_virtual_channel.check_channels_file_DLP_antivirus();
+    clipboard_virtual_channel.DLP_antivirus_check_channels_files();
 
     RED_CHECK_EQUAL(to_server_sender.streams.size(), 7);
 
     auto expected_pdu =
-    /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
-    /* 0001 */ "\x20\x20\x74\x65\x73\x74\x00\x00\x00\x00"                         //   test....
+    /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
+    /* 0001 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
     ""_av
     ;
 
-//     RED_CHECK_MEM(expected_pdu, make_array_view(to_client_sender.streams[5].get_data(), to_client_sender.streams[5].in_remain()));
+    RED_CHECK_MEM(expected_pdu, make_array_view(to_server_sender.streams[6].get_data(), to_server_sender.streams[6].in_remain()));
 
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU

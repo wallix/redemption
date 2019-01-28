@@ -376,6 +376,10 @@ private:
 
         }
 
+        void DLP_antivirus_check_channels_files() {
+            this->clipboard_virtual_channel.get()->DLP_antivirus_check_channels_files();
+        }
+
         private:
         void configure_proxy_managed_drives(const char * proxy_managed_drives, const char * proxy_managed_drive_prefix) {
             if (bool(this->verbose & RDPVerbose::connection)) {
@@ -6222,6 +6226,12 @@ private:
     }
 
 public:
+
+    void DLP_antivirus_check_channels_files() override {
+        this->channels.DLP_antivirus_check_channels_files();
+    }
+
+
     windowing_api* get_windowing_api() const {
         if (this->channels.remote_programs_session_manager) {
             return this->channels.remote_programs_session_manager.get();

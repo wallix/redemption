@@ -74,4 +74,6 @@ public:
     virtual Dimension get_dim() const { return Dimension(); }
 
     virtual void log_metrics() {}
+
+    virtual void DLP_antivirus_check_channels_files() {}
 };
