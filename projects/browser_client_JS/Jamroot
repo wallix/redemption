@@ -158,20 +158,7 @@ rule exe-main ( name : objects + : requirements * )
 
 actions gen_targets
 {
-    sed -E '/^lib |\.cpp\.lib\.o :$/,/^;/d;
-        /^  <covfile|^  <variant|^  \$\(FFMPEG_CXXFLAGS\)|^  \$\(GCOV_NO_BUILD\)|^  <library>boost_stacktrace|\.coverage ;$/d;
-        s/^obj /objjs /;
-        s/^exe /exe-main /;
-        s/\.o /.bc /;
-        s/\.o$/.bc/;
-        s/^  <library>(.*)/  \1.bc/;
-        s/\.bc\.bc$/.bc/' \
-    ../../targets.jam | sed '/^test-run/,/^;/{
-        /^:/d;s/^  </:\n&/;t
-    }
-    /^exe-main/,/^;/{
-        /^:/d;s/^  \$/:\n&/;t
-    }' > targets.jam
+    ./tools/gen_targets.sh > targets.jam
 }
 
 explicit targets.jam ;
@@ -190,16 +177,10 @@ alias z.bc ;
 alias png.bc : libpng.bc z.bc ;
 alias ffmpeg.bc ;
 alias ppocr.bc ;
+alias boost_stacktrace.bc ;
 
 objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
 
-
-include targets.jam ;
-
-objjs src/js_client.bc : src/js_client.cpp :
-    <include>$(REDEMPTION_TEST_PATH)/includes
-    <cxxflags>-fno-rtti&&-frtti
-;
 
 
 rule bindjs ( name : objs + : deps * )
@@ -207,66 +188,12 @@ rule bindjs ( name : objs + : deps * )
     exe-main $(name) : $(objs) : $(deps) <cxxflags>--bind <cxxflags>-fno-rtti&&-frtti ;
 }
 
-objjs src/redjs/image_data.bc : src/redjs/image_utils.cpp ;
+rule exe-js ( name : src : obj + : deps * )
+{
+    bindjs $(name) : $(src) $(obj) : $(deps) ;
+}
 
-bindjs jsclient :
-  src/js_client.bc
-  app_path_exe.bc
-  crypto.bc
-  gssapi_krb5.bc
-  krb5.bc
-  openssl.bc
-  png.bc
-  projects/redemption_configs/redemption_src/configs/config.bc
-  src/RAIL/client_execute.bc
-  src/core/RDP/RDPDrawable.bc
-  src/core/RDP/dwt.bc
-  src/core/RDP/mppc.bc
-  src/core/RDP/nego.bc
-  src/core/RDP/orders/remoteFx.bc
-  src/core/RDP/rlgr.bc
-  src/core/error.bc
-  src/core/font.bc
-  src/core/set_server_redirection_target.bc
-  src/gdi/clip_from_cmd.bc
-  src/gdi/graphic_api.bc
-  src/gdi/protected_graphics.bc
-  src/gdi/screen_functions.bc
-  src/keyboard/keymap2.bc
-  src/keyboard/keymapSym.bc
-  src/mod/internal/widget/flat_button.bc
-  src/mod/internal/widget/label.bc
-  src/mod/rdp/new_mod_rdp.bc
-  src/mod/rdp/rdp.bc
-  src/mod/rdp/rdp_negociation.bc
-  src/transport/recorder_transport.bc
-  src/utils/authorization_channels.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
-  src/utils/crypto/ssl_mod_exp_direct.bc
-  src/utils/d3des.bc
-  src/utils/drawable.bc
-  src/utils/fileutils.bc
-  src/utils/hexdump.bc
-  src/utils/netutils.bc
-  src/utils/png.bc
-  src/utils/primitives/primitives.bc
-  src/utils/rle.bc
-  src/utils/strutils.bc
-  src/utils/sugar/multisz.bc
-  src/utils/utf.bc
-  z.bc
-  src/redjs/image_data.bc
-
-  log_test.bc
-:
-  $(EXE_DEPENDENCIES_NO_SYSLOG)
-  <include>$(REDEMPTION_TEST_PATH)/includes
-
-    # <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
-    # <cxxflags>"--shell-file templates/penta_template.html"
-;
-
+include targets.jam ;
 
 
 # objjs test_rect.bc : $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp ;

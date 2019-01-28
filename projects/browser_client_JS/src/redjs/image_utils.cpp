@@ -18,8 +18,6 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#pragma once
-
 #include "redjs/image_utils.hpp"
 
 #include "utils/bitmap.hpp"

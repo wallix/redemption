@@ -10,7 +10,6 @@ project_root = '.'
 
 includes = set((
     'src/',
-    'src/system/linux/',
     'projects/redemption_configs/redemption_src/',
     'src/capture/ocr/',
     'tests/includes/',
@@ -26,7 +25,6 @@ disable_srcs = set((
     'tests/includes/test_only/test_framework/impl/register_exception.cpp',
     'tests/includes/test_only/test_framework/impl/test_framework.cpp',
     'tests/includes/test_only/test_framework/redemption_unit_tests.cpp',
-    'tests/includes/test_only/test_framework/emscripten.old/redemption_unit_tests_impl.cpp',
     'src/utils/log_as_syslog.cpp',
     'src/utils/log_as_logemasm.cpp',
     'src/utils/log_as_logprint.cpp',
@@ -228,6 +226,51 @@ def get_files(a, dirpath):
 def startswith(str, prefix):
     return str[:len(prefix)] == prefix
 
+def paths_in(paths, filters):
+    return [pf for pf in paths if pf.path in filters]
+
+def paths_not_in(paths, filters):
+    return [pf for pf in paths if pf.path not in filters]
+
+filter_targets = []
+
+argv_gen = (arg for arg in sys.argv)
+default_options = {}
+has_set_arg = False
+next(argv_gen)
+try:
+    set_arg = lambda name: lambda arg: default_options.setdefault(name, arg)
+    options = {
+        '--src': lambda arg: get_files(sources, arg),
+        '--main': set_arg('main'),
+        '--lib': set_arg('lib'),
+        '--test': set_arg('test'),
+        '--src-system': set_arg('system'),
+        '--disable-src': lambda arg: disable_srcs.append(arg),
+        '--include': lambda arg: includes.add(arg),
+    }
+    while True:
+        arg = next(argv_gen)
+        if arg == '-h' or arg == '--help':
+            for k in options.keys():
+                print(k, '[path]')
+        lbd = options.get(arg)
+        if lbd:
+            lbd(next(argv_gen))
+            has_set_arg = True
+        else:
+            filter_targets.append(arg)
+            filter_targets += argv_gen
+            break
+except StopIteration:
+    pass
+src_mains = default_options.get('main', 'src/main')
+src_libs = default_options.get('lib', 'src/lib')
+src_tests = default_options.get('test', 'tests')
+system_type = default_options.get('system', 'linux')
+
+includes.add('src/system/' + system_type + '/')
+
 for d in os.listdir('src'):
     if d not in (
         'ftests',
@@ -237,40 +280,50 @@ for d in os.listdir('src'):
     ):
         get_files(sources, 'src/' + d)
 
-get_files(sources, "src/system/linux/system")
+get_files(sources, "src/system/" + system_type + "/system")
 get_files(sources, 'tests/includes/test_only')
 
-for t in ((mains, 'src/main'), (libs, 'src/lib')):
+for t in ((mains, src_mains), (libs, src_libs)):
+    if not t[1]:
+        continue
     for path in glob.glob(t[1] + "/*.hpp"):
         append_file(sources, t[1], path, 'H')
     for path in glob.glob(t[1] + "/*.cpp"):
         f = append_file(sources, t[1], path, 'C')
         t[0].append(f)
 
-ocr_mains = [f for f in sources if startswith(f.path, 'src/capture/ocr/main/')]
+if has_set_arg:
+    ocr_mains = []
+else :
+    ocr_mains = [f for f in sources if startswith(f.path, 'src/capture/ocr/main/')]
 
 files_on_tests = []
 
-is_filtered_target = bool(len(sys.argv) > 1)
+def is_exclude_path(path):
+    return startswith(path, 'tests/includes/') \
+        or startswith(path, 'tests/system/'
+                      + (system_type == 'linux' and 'emscripten' or 'linux')
+                      + '/system/') \
+        or startswith(path, 'tests/web_video/') \
 
-if not is_filtered_target:
-    get_files(files_on_tests, 'tests')
-    tests = [f for f in files_on_tests \
-        if f.type != 'H' \
-        and not startswith(f.path, 'tests/includes/') \
-        and not startswith(f.path, 'tests/system/emscripten/system/') \
-        and not startswith(f.path, 'tests/web_video/') \
-        and f.path not in disable_tests
-    ]
+if not filter_targets:
+    if src_tests:
+        get_files(files_on_tests, src_tests)
+        tests = [f for f in files_on_tests \
+            if f.type != 'H' \
+            and not is_exclude_path(f.path) \
+            and f.path not in disable_tests
+        ]
+    libs = paths_not_in(libs, disable_srcs)
+    mains = paths_not_in(mains, disable_srcs)
+else:
+    mains = paths_in(mains, filter_targets)
+    libs = paths_in(libs, filter_targets)
 
-libs = [f for f in libs if f.path not in disable_srcs]
-mains = [f for f in mains if f.path not in disable_srcs]
-sources = [f for f in sources if f.path not in disable_srcs]
-sources += [f for f in files_on_tests \
-    if f.type == 'H' \
-    and not startswith(f.path, 'tests/includes/') \
-    and not startswith(f.path, 'tests/system/emscripten/system/') \
-    and not startswith(f.path, 'tests/web_video/')
+sources = paths_not_in(sources, disable_srcs)
+sources += [pf for pf in files_on_tests \
+    if pf.type == 'H'
+    and not is_exclude_path(pf.path)
 ]
 
 extra_srcs = (
@@ -556,11 +609,11 @@ def generate_obj(files):
             print(' ;')
 
 # filter target
-if is_filtered_target:
+if filter_targets:
     tests = []
     keep_paths = sys.argv[1:]
-    mains = [pf for pf in mains if pf.path in keep_paths]
-    libs = [pf for pf in libs if pf.path in keep_paths]
+    mains = paths_in(mains, filter_targets)
+    libs = paths_in(libs, filter_targets)
     sources = set()
     ocr_mains = []
     for f in libs:
@@ -639,7 +692,7 @@ if explicit_rec:
     print('explicit\n  ', '\n  '.join(explicit_rec),    '\n;', sep='')
 
 
-if not is_filtered_target:
+if not filter_targets and not has_set_arg:
     for f in all_files.values():
         if f.type == 'C' and not f.used and \
         f.path != 'src/capture/ocr/display_learning.cc' and \
