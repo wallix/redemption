@@ -804,6 +804,8 @@ public:
 		testResult = fuzzyCompareImage(refImage, content.data, cmd.width * cmd.height);
 	}
 
+	using gdi::NullGraphic::draw;
+
 public:
 	bool testPassed = false;
 	bool testResult = false;
@@ -826,6 +828,6 @@ RED_AUTO_TEST_CASE(TestRemoteFx) {
 	RED_CHECK_EQ(decoder.getState(), RfxDecoder::RFX_WAITING_FRAME);
 
 	decoder.recv(tilesetStream, cmd, gdi);
-	RED_CHECK_EQ(gdi.testPassed, true);
-	RED_CHECK_EQ(gdi.testResult, true);
+	RED_CHECK(gdi.testPassed);
+	RED_CHECK(gdi.testResult);
 }

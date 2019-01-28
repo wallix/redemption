@@ -30,6 +30,7 @@
 class ChannelFile {
 
 private:
+
     std::string dir_path;
     std::string filename;
     std::string file_path;
@@ -60,6 +61,7 @@ public:
 
     ChannelFile(const std::string & dir_path)
     : dir_path(dir_path)
+
     , fd(invalid_fd())
     , total_file_size(0)
     , current_file_size(0)

@@ -1,3 +1,0 @@
-# git config --local include.path ../.gitconfig
-[submodule]
-   recurse true

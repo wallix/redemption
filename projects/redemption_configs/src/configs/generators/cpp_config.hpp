@@ -291,6 +291,22 @@ struct CppConfigWriterBase
         else if ((properties & sesman_io::rw) == sesman_io::rw) {
             this->tab(); this->out() << "/// sesman <-> proxy <br/>\n";
         }
+        if constexpr (is_convertible_v<Pack, sesman::name>) {
+            this->tab(); this->out() << "/// sesman::name: " << get_elem<sesman::name>(infos).name << " <br/>\n";
+        }
+        if constexpr (is_convertible_v<Pack, connection_policy_t>) {
+            this->tab(); this->out() << "/// connpolicy -> proxy";
+            if constexpr (is_convertible_v<Pack, connpolicy::name>
+                       || is_convertible_v<Pack, connpolicy::section>
+            ) {
+                this->out() << "    [name: "
+                    << value_or<connpolicy::section>(
+                        infos, connpolicy::section{section_name.c_str()}).name
+                    << "::" << get_name<connpolicy::name>(infos) << "]"
+                ;
+            }
+            this->out() << " <br/>\n";
+        }
         this->tab(); this->out() << "/// value"; write_assignable_default(this->out(), infos); this->out() << " <br/>\n";
         this->tab(); this->out() << "struct " << varname_with_section << " {\n";
         this->tab(); this->out() << "    static constexpr bool is_sesman_to_proxy = " << (bool(properties & sesman_io::sesman_to_proxy) ? "true" : "false") << ";\n";

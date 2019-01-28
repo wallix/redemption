@@ -40,6 +40,13 @@
 
 RED_TEST_DELEGATE_PRINT(RDPVerbose, long(x))
 
+inline void write_file(std::string const& filename, array_view_const_char data)
+{
+    unique_fd fd(filename, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    RED_CHECK_EQ(
+        ::write(fd.fd(), data.data(), data.size()),
+        static_cast<ssize_t>(data.size()));
+}
 
 RED_AUTO_TEST_CASE(TestClientRedemptionConfigDefault)
 {
@@ -477,11 +484,7 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadLine) {
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);
 
-    {
-        unique_fd fd(test_file, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        auto text = "hello\nworld"_av;
-        ::write(fd.fd(), text.data(), text.size());
-    }
+    write_file(test_file, "hello\nworld"_av);
 
     {
         unique_fd fd_read = unique_fd(test_file, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -509,66 +512,58 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadClientInfo)
     auto const userConfig = wd.create_subdirectory("DATA/config/")
       .add_file("userConfig.config");
 
-
     FakeClient client;
 
-    unique_fd fd(userConfig, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-
-    const char * toReadData =
-                        "current_user_profil_id 1"
-                        "\n"
-                        "\nid 1"
-                        "\nname Custom"
-                        "\nkeylayout 1037"
-                        "\nbrush_cache_code 2"
-                        "\nbpp 16"
-                        "\nwidth 1600"
-                        "\nheight 900"
-                        "\nrdp5_performanceflags 4"
-                        "\nmonitorCount 1"
-                        "\nspan 1"
-                        "\nrecord 1"
-                        "\ntls 0"
-                        "\nnla 0"
-                        "\nsound 0"
-                        "\nconsole_mode 1"
-                        "\nenable_shared_clipboard 0"
-                        "\nenable_shared_virtual_disk 0"
-                        "\nenable_shared_remoteapp 1"
-                        "\nshare-dir /home/test"
-                        "\nremote-exe C:\\Windows\\system32\\eclipse.exe -h"
-                        "\nremote-dir C:\\Users\\user2"
-                        "\nvnc-applekeyboard 1"
-                        "\nmod 2"
-                        "\n"
-                        "\nid 0"
-                        "\nname Default"
-                        "\nkeylayout 1036"
-                        "\nbrush_cache_code 0"
-                        "\nbpp 24"
-                        "\nwidth 800"
-                        "\nheight 600"
-                        "\nrdp5_performanceflags 1"
-                        "\nmonitorCount 1"
-                        "\nspan 0"
-                        "\nrecord 0"
-                        "\ntls 1"
-                        "\nnla 1"
-                        "\nsound 0"
-                        "\nconsole_mode 0"
-                        "\nenable_shared_clipboard 1"
-                        "\nenable_shared_virtual_disk 1"
-                        "\nenable_shared_remoteapp 0"
-                        "\nshare-dir /home"
-                        "\nremote-exe C:\\Windows\\system32\\eclipse.exe -h"
-                        "\nremote-dir C:\\Users\\user1"
-                        "\nvnc-applekeyboard 0"
-                        "\nmod 2"
-                        "\n";
-
-    std::string string_to_read(toReadData);
-    ::write(fd.fd(), toReadData, string_to_read.length());
-    fd.close();
+    write_file(userConfig,
+        "current_user_profil_id 1\n"
+        "id 1\n"
+        "name Custom\n"
+        "keylayout 1037\n"
+        "brush_cache_code 2\n"
+        "bpp 16\n"
+        "width 1600\n"
+        "height 900\n"
+        "rdp5_performanceflags 4\n"
+        "monitorCount 1\n"
+        "span 1\n"
+        "record 1\n"
+        "tls 0\n"
+        "nla 0\n"
+        "sound 0\n"
+        "console_mode 1\n"
+        "enable_shared_clipboard 0\n"
+        "enable_shared_virtual_disk 0\n"
+        "enable_shared_remoteapp 1\n"
+        "share-dir /home/test\n"
+        "remote-exe C:\\Windows\\system32\\eclipse.exe -h\n"
+        "remote-dir C:\\Users\\user2\n"
+        "vnc-applekeyboard 1\n"
+        "mod 2\n"
+        "\n"
+        "id 0\n"
+        "name Default\n"
+        "keylayout 1036\n"
+        "brush_cache_code 0\n"
+        "bpp 24\n"
+        "width 800\n"
+        "height 600\n"
+        "rdp5_performanceflags 1\n"
+        "monitorCount 1\n"
+        "span 0\n"
+        "record 0\n"
+        "tls 1\n"
+        "nla 1\n"
+        "sound 0\n"
+        "console_mode 0\n"
+        "enable_shared_clipboard 1\n"
+        "enable_shared_virtual_disk 1\n"
+        "enable_shared_remoteapp 0\n"
+        "share-dir /home\n"
+        "remote-exe C:\\Windows\\system32\\eclipse.exe -h\n"
+        "remote-dir C:\\Users\\user1\n"
+        "vnc-applekeyboard 0\n"
+        "mod 2\n"_av
+    );
 
     char const * argv[] = {"cmd"};
     int argc = 1;
@@ -617,17 +612,13 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadMovieData)
     char const * argv[] = {"cmd"};
     int argc = 1;
 
-    {
-        unique_fd fd_1(movie1, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        std::string string_to_read1 = str_concat(
-            "v2\n"
-            "1600 900\n"
-            "nochecksum\n"
-            "\n"
-            "\n",
-            movie1, " 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190439 1511190456\n");
-        ::write(fd_1.fd(), string_to_read1.data(), string_to_read1.size());
-    }
+    write_file(movie1, str_concat(
+        "v2\n"
+        "1600 900\n"
+        "nochecksum\n"
+        "\n"
+        "\n",
+        movie1, " 515183 33024 1000 1000 2054 4063648 1511190456 1511190456 1511190439 1511190456\n"));
 
     {
         unique_fd fd_2(movie2, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
@@ -692,15 +683,11 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadWindowsData)
     char const * argv[] = {"cmd"};
     int argc = 1;
 
-    {
-        unique_fd fd(windows_config, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        auto toReadData =
-            "form_x 1920\n"
-            "form_y 351\n"
-            "screen_x 465\n"
-            "screen_y 259\n"_av;
-        ::write(fd.fd(), toReadData.data(), toReadData.size());
-    }
+    write_file(windows_config,
+        "form_x 1920\n"
+        "form_y 351\n"
+        "screen_x 465\n"
+        "screen_y 259\n"_av);
 
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);
@@ -729,14 +716,10 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadCustomKeyConfig)
     char const * argv[] = {"cmd"};
     int argc = 1;
 
-    {
-        unique_fd fd(keySetting, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        auto toReadData =
-            "Key Setting\n"
-            "- 1 2 x 1 key1\n"
-            "- 5 6 y 0 key2\n"_av;
-        ::write(fd.fd(), toReadData.data(), toReadData.size());
-    }
+    write_file(keySetting,
+        "Key Setting\n"
+        "- 1 2 x 1 key1\n"
+        "- 5 6 y 0 key2\n"_av);
 
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);
@@ -773,29 +756,25 @@ RED_AUTO_TEST_CASE(TestClientRedemptionConfigReadAccountData)
     char const * argv[] = {"cmd"};
     int argc = 1;
 
-    {
-        unique_fd fd(login, O_WRONLY | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-        auto toReadData =
-            "save_pwd true\n"
-            "last_target 1\n"
-            "\n"
-            "title 10.10.45.55 - user1\n"
-            "IP 10.10.45.55\n"
-            "name user1\n"
-            "protocol 1\n"
-            "pwd mdp\n"
-            "port 3389\n"
-            "options_profil 0\n"
-            "\n"
-            "title 10.10.45.87 - measure\n"
-            "IP 10.10.45.87\n"
-            "name measure\n"
-            "protocol 1\n"
-            "pwd mdp_\n"
-            "port 3389\n"
-            "options_profil 0\n"_av;
-        ::write(fd.fd(), toReadData.data(), toReadData.size());
-    }
+    write_file(login,
+        "save_pwd true\n"
+        "last_target 1\n"
+        "\n"
+        "title 10.10.45.55 - user1\n"
+        "IP 10.10.45.55\n"
+        "name user1\n"
+        "protocol 1\n"
+        "pwd mdp\n"
+        "port 3389\n"
+        "options_profil 0\n"
+        "\n"
+        "title 10.10.45.87 - measure\n"
+        "IP 10.10.45.87\n"
+        "name measure\n"
+        "protocol 1\n"
+        "pwd mdp_\n"
+        "port 3389\n"
+        "options_profil 0\n"_av);
 
     ClientRedemptionConfig config(RDPVerbose::none, wd.dirname());
     ClientConfig::set_config(argc, argv, config);

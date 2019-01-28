@@ -20,19 +20,15 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#ifdef IN_IDE_PARSER
-# define RED_EM_ASM(...)
-# define RED_EM_ASM_INT(...) int()
-# define RED_EM_JS(return_type, name, params, ...) return_type name params;
-#else
-# include <emscripten.h>
-# include "cxx/diagnostic.hpp"
-# define RED_EM_ASM EM_ASM
-# define RED_EM_ASM_INT EM_ASM_INT
-# define RED_EM_JS(return_type, name, params, ...)             \
-    REDEMPTION_DIAGNOSTIC_PUSH                                 \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
-    EM_JS(return_type, name, params, __VA_ARGS__)              \
-    REDEMPTION_DIAGNOSTIC_POP
-#endif
+#include "cxx/diagnostic.hpp"
 
+REDEMPTION_DIAGNOSTIC_PUSH
+REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wreserved-id-macro")
+#define __cpuid_count(leaf, count, eax, ebx, ecx, edx) \
+    do {                                               \
+        eax = 0;                                       \
+        ebx = 0;                                       \
+        ecx = 0;                                       \
+        edx = 0;                                       \
+    } while (0)
+REDEMPTION_DIAGNOSTIC_POP

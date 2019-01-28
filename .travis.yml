@@ -8,16 +8,16 @@ if: tag IS blank
 
 matrix:
   include:
-  # Clang 6.0
+  # Clang 7
   - compiler: clang
-    env: DIST=ubuntu:17.10 INSTALL='clang-6.0 libc++-dev libc++abi-dev' BJAM_COMPILER=clang
+    env: DIST=ubuntu:18.04 INSTALL='clang-7 libc++-7-dev libc++abi-7-dev' BJAM_COMPILER=clang
   # GCC 7
   - compiler: gcc
-    env: DIST=ubuntu:17.10 INSTALL=g++ BJAM_COMPILER=gcc
+    env: DIST=ubuntu:18.04 INSTALL=g++ BJAM_COMPILER=gcc
 
 before_install:
   - |
-    PATTERN="s/ubuntu:17.10/$DIST/;s/g++/$INSTALL/;s/gcc/$BJAM_COMPILER/g"
+    PATTERN="s/g++/$INSTALL/;s/gcc/$BJAM_COMPILER/g"
     echo "$PATTERN"
     sed "$PATTERN" Dockerfile > $BJAM_COMPILER.dockerfile
     if [ "$BJAM_COMPILER" = clang ]; then
@@ -27,7 +27,7 @@ before_install:
         -e '/mkdir/iRUN sed -i -e "s/__GLIBC__) || defined(//" /usr/include/c++/v1/__locale' \
         -e 's/^# clang: //' \
         $BJAM_COMPILER.dockerfile
-      echo -e 'using clang : : clang++-6.0 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
+      echo -e 'using clang : : clang++-7 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
     else
       echo -e 'using gcc : : g++-7 : <cxxflags>-fdiagnostics-color=always ;' > project-config.jam
     fi

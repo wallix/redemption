@@ -28,6 +28,7 @@
 #include "configs/generators/python_spec.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <chrono>
 #include <vector>
 

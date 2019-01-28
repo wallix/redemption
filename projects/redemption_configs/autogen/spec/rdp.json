@@ -22,9 +22,11 @@
       "members": [
         {
           "name": "inactivity_timeout",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 0,
+          "subtype": "duration",
+          "unit": "s",
           "description": "No traffic auto disconnection.\nIf value is 0, global value (session_timeout) is used."
         }
       ]
@@ -109,9 +111,11 @@
         },
         {
           "name": "remote_programs_disconnect_message_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 3000,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": "Delay before showing disconnect message after the last RemoteApp window is closed."
         },
@@ -273,33 +277,41 @@
         },
         {
           "name": "smart_launcher_clipboard_initialization_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 2000,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_start_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 0,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_long_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 500,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
         {
           "name": "smart_launcher_short_delay",
-          "type": "duration",
+          "type": "integer",
           "min": 0,
           "default": 50,
+          "subtype": "duration",
+          "unit": "ms",
           "advanced": true,
           "description": ""
         },
@@ -413,37 +425,129 @@
         },
         {
           "name": "server_access_allowed_message",
-          "type": "bitset",
+          "type": "integer",
           "min": 0,
           "max": 7,
           "default": 1,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "nobody",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "syslog",
+               "description": "message sent to syslog"
+            },
+            {
+               "value": 2,
+               "label": "user",
+               "description": "User notified (through proxy interface)"
+            },
+            {
+               "value": 4,
+               "label": "admin",
+               "description": "admin notified (wab notification)"
+            }
+          ],
           "advanced": true,
           "description": "Warn if check allow connexion to server."
         },
         {
           "name": "server_cert_create_message",
-          "type": "bitset",
+          "type": "integer",
           "min": 0,
           "max": 7,
           "default": 1,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "nobody",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "syslog",
+               "description": "message sent to syslog"
+            },
+            {
+               "value": 2,
+               "label": "user",
+               "description": "User notified (through proxy interface)"
+            },
+            {
+               "value": 4,
+               "label": "admin",
+               "description": "admin notified (wab notification)"
+            }
+          ],
           "advanced": true,
           "description": "Warn that new server certificate file was created."
         },
         {
           "name": "server_cert_success_message",
-          "type": "bitset",
+          "type": "integer",
           "min": 0,
           "max": 7,
           "default": 1,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "nobody",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "syslog",
+               "description": "message sent to syslog"
+            },
+            {
+               "value": 2,
+               "label": "user",
+               "description": "User notified (through proxy interface)"
+            },
+            {
+               "value": 4,
+               "label": "admin",
+               "description": "admin notified (wab notification)"
+            }
+          ],
           "advanced": true,
           "description": "Warn that server certificate file was successfully checked."
         },
         {
           "name": "server_cert_failure_message",
-          "type": "bitset",
+          "type": "integer",
           "min": 0,
           "max": 7,
           "default": 1,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "nobody",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "syslog",
+               "description": "message sent to syslog"
+            },
+            {
+               "value": 2,
+               "label": "user",
+               "description": "User notified (through proxy interface)"
+            },
+            {
+               "value": 4,
+               "label": "admin",
+               "description": "admin notified (wab notification)"
+            }
+          ],
           "advanced": true,
           "description": "Warn that server certificate file checking failed."
         }
@@ -454,10 +558,28 @@
       "members": [
         {
           "name": "disable_keyboard_log",
-          "type": "bitset",
+          "type": "integer",
           "min": 0,
           "max": 3,
           "default": 1,
+          "subtype": "bitset",
+          "values": [
+            {
+               "value": 0,
+               "label": "none",
+               "description": ""
+            },
+            {
+               "value": 1,
+               "label": "syslog",
+               "description": "keyboard log in syslog"
+            },
+            {
+               "value": 2,
+               "label": "wrm",
+               "description": "keyboard log in recorded sessions"
+            }
+          ],
           "description": "Disable keyboard log:"
         }
       ]

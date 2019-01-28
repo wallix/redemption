@@ -36,6 +36,7 @@
 #include <string>
 
 #include "red_emscripten/bind.hpp"
+#include "red_emscripten/emscripten.hpp"
 
 
 constexpr int FD_TRANS = 42;
@@ -53,8 +54,8 @@ struct BrowserTransport : Transport
         const char * /*certif_path*/
     ) override
     {
-        LOG(LOG_INFO, "enable_client_tls");
-        return TlsResult::Ok;
+        LOG(LOG_ERR, "enable_client_tls");
+        return TlsResult::Fail;
     }
 
     size_t do_partial_read(uint8_t * data, size_t len) override
@@ -65,29 +66,26 @@ struct BrowserTransport : Transport
 
         auto remaining = len;
 
-        while (len) {
+        while (remaining) {
             auto& s = in_buffers.front();
-            auto s_len = s.size() - current_pos;
-            if (s_len <= remaining) {
-                memcpy(data, s.data() + current_pos, s_len);
-                remaining -= s_len;
-                data += s_len;
-                current_pos += s_len;
-                if (s_len != remaining) {
-                    current_pos = 0;
-                    in_buffers.erase(in_buffers.begin());
+            auto const s_len = s.size() - current_pos;
+            auto const min_len = std::min(s_len, remaining);
+            memcpy(data, s.data() + current_pos, min_len);
+            current_pos += min_len;
+            remaining -= min_len;
+            data += min_len;
+            if (min_len == s_len) {
+                current_pos = 0;
+                in_buffers.erase(in_buffers.begin());
+                if (in_buffers.empty()) {
+                    break;
                 }
-            }
-
-            if (in_buffers.empty()) {
-                break;
             }
         }
 
         size_t const data_len = len - remaining;
 
-        LOG(LOG_DEBUG, "BrowserTransport::read %zu bytes", data_len);
-
+        // LOG(LOG_DEBUG, "BrowserTransport::read %zu bytes", data_len);
         // hexdump(data - data_len, data_len);
 
         return data_len;
@@ -95,13 +93,156 @@ struct BrowserTransport : Transport
 
     void do_send(const uint8_t * buffer, size_t len) override
     {
-        LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
+        // LOG(LOG_DEBUG, "BrowserTransport::send %zu bytes (total %zu)", len, out_buffers.size() + len);
         // hexdump(buffer, len);
         out_buffers.insert(out_buffers.end(), buffer, buffer + len);
     }
 
     int get_fd() const override { return FD_TRANS; }
 };
+
+
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/bitmapupdate.hpp"
+#include "utils/bitmap.hpp"
+
+extern "C" {
+  extern void draw_image(Bitmap& image);
+}
+
+
+class JsFront : public FrontAPI
+{
+public:
+    JsFront(ScreenInfo& screen_info, bool verbose)
+    : width(screen_info.width)
+    , height(screen_info.height)
+    , verbose(verbose)
+    , screen_info(screen_info)
+    {}
+
+    bool can_be_start_capture() override
+    {
+        return false;
+    }
+
+    bool must_be_stop_capture() override
+    {
+        return false;
+    }
+
+    Rect intersect(Rect const& a, Rect const& b)
+    {
+        return a.intersect(width, height).intersect(b);
+    }
+
+    void draw(RDPOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+
+    void draw(const RDPScrBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(RDPMultiOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDP::RDPMultiScrBlt & /*cmd*/, Rect /*clip*/) override { }
+    void draw(RDPPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+
+    void draw(const RDPMemBlt & /*cmd*/, Rect /*clip*/, const Bitmap & /*bmp*/) override { }
+
+    void draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const Bitmap & /*bmp*/) override { }
+    void draw(RDPLineTo const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPGlyphIndex const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const GlyphCache & /*gly_cache*/) override { }
+    void draw(RDPPolygonSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPPolygonCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPPolyline const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPEllipseSC const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(RDPEllipseCB const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override { }
+    void draw(const RDPColCache   & /*unused*/) override { }
+    void draw(const RDPBrushCache & /*unused*/) override { }
+    void draw(const RDP::FrameMarker & /*cmd*/) override { }
+    void draw(const RDP::RAIL::NewOrExistingWindow & /*unused*/) override { }
+    void draw(const RDP::RAIL::WindowIcon & /*unused*/) override { }
+    void draw(const RDP::RAIL::CachedIcon & /*unused*/) override { }
+    void draw(const RDP::RAIL::DeletedWindow & /*unused*/) override { }
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override { }
+    void draw(const RDP::RAIL::DeletedNotificationIcons & /*unused*/) override { }
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop & /*unused*/) override { }
+    void draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) override { }
+
+    void draw(const RDPBitmapData & cmd, const Bitmap & bmp) override
+    {
+        // LOG(LOG_INFO, "JsFront::RDPBitmapData");
+
+        // void ctx.drawImage(image, dx, dy);
+        // void ctx.drawImage(image, dx, dy, dWidth, dHeight);
+        // void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+
+        Bitmap image(BitsPerPixel{24}, bmp);
+
+        RED_EM_ASM(
+            {
+                RdpClientEventTable[$0].drawBmp($1, $2, $3, $4, $5, $6, $7, $8);
+            },
+            this,
+            image.data(),
+            image.cx(),
+            image.cy(),
+            image.line_size(),
+            cmd.dest_left,
+            cmd.dest_top,
+            cmd.dest_right - cmd.dest_left + 1,
+            cmd.dest_bottom - cmd.dest_top + 1
+        );
+    }
+
+    void set_palette(const BGRPalette& /*unused*/) override { }
+    void draw(RDPNineGrid const &  /*unused*/, Rect  /*unused*/, gdi::ColorCtx  /*unused*/, Bitmap const & /*unused*/) override {}
+    void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override { }
+
+
+    ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override {
+        this->width = width;
+        this->height = height;
+        this->screen_info.width = width;
+        this->screen_info.height = height;
+        this->screen_info.bpp = bpp;
+        if (this->verbose) {
+            LOG(LOG_INFO, "JsFront::server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+        }
+        return ResizeResult::instant_done;
+    }
+
+    void set_pointer(const Pointer & /*unused*/) override { }
+
+    void begin_update() override { }
+    void end_update() override { }
+
+    const CHANNELS::ChannelDefArray & get_channel_list() const override { return cl; }
+
+    void send_to_channel(
+        const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/,
+        std::size_t /*length*/, std::size_t /*chunk_size*/, int /*flags*/) override
+    {
+        if (this->verbose) {
+            LOG(LOG_INFO, "JsFront::send_to_channel");
+        }
+    }
+
+    void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override
+    {
+        if (this->verbose) {
+            LOG(LOG_INFO, "JsFront::update_pointer_position");
+        }
+    }
+
+private:
+    uint16_t width;
+    uint16_t height;
+    bool verbose;
+    ScreenInfo& screen_info;
+    CHANNELS::ChannelDefArray cl;
+};
+
 
 #ifndef JS_CLIENT_USERNAME
 # define JS_CLIENT_USERNAME "x"
@@ -126,13 +267,14 @@ struct RdpClient
 
     ClientInfo client_info;
 
-    ClientFront front = ClientFront(client_info.screen_info, verbose);
+    JsFront front = JsFront(client_info.screen_info, verbose);
     NullReportMessage report_message;
     SessionReactor session_reactor;
     TimeSystem system_timeobj;
 
     Inifile ini;
 
+    // TODO JsRandom
     FixedRandom lcg_gen;
     LCGTime lcg_timeobj;
     NullAuthentifier authentifier;
@@ -176,7 +318,7 @@ struct RdpClient
         );
 
         mod_rdp_params.device_id                  = "device_id";
-        mod_rdp_params.enable_tls                 = true;
+        mod_rdp_params.enable_tls                 = false;
         mod_rdp_params.enable_nla                 = false;
         mod_rdp_params.enable_fastpath            = true;
         mod_rdp_params.enable_mem3blt             = true;
@@ -245,6 +387,9 @@ EMSCRIPTEN_BINDINGS(client) {
         .function("get_data", &RdpClient::get_data)
         .function("clear_data", &RdpClient::clear_data)
         .function("next_message", &RdpClient::next_message)
+        .function("thisptr", +[](RdpClient& ref) {
+            return RED_EM_ASM_INT({ return $0; }, &ref.front);
+        }, emscripten::allow_raw_pointers())
     ;
 }
 

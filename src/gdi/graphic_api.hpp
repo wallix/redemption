@@ -333,17 +333,17 @@ public:
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
 
-    void draw(const RDP::RAIL::NewOrExistingWindow            & /*unused*/) override {}
-    void draw(const RDP::RAIL::WindowIcon                     & /*unused*/) override {}
-    void draw(const RDP::RAIL::CachedIcon                     & /*unused*/) override {}
-    void draw(const RDP::RAIL::DeletedWindow                  & /*unused*/) override {}
-    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*unused*/) override {}
-    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*unused*/) override {}
-    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
-    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingWindow            & /*cmd*/) override {}
+    void draw(const RDP::RAIL::WindowIcon                     & /*cmd*/) override {}
+    void draw(const RDP::RAIL::CachedIcon                     & /*cmd*/) override {}
+    void draw(const RDP::RAIL::DeletedWindow                  & /*cmd*/) override {}
+    void draw(const RDP::RAIL::NewOrExistingNotificationIcons & /*cmd*/) override {}
+    void draw(const RDP::RAIL::DeletedNotificationIcons       & /*cmd*/) override {}
+    void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*cmd*/) override {}
+    void draw(const RDP::RAIL::NonMonitoredDesktop            & /*cmd*/) override {}
 
-    void draw(RDPColCache   const & /*unused*/) override {}
-    void draw(RDPBrushCache const & /*unused*/) override {}
+    void draw(RDPColCache   const & /*cmd*/) override {}
+    void draw(RDPBrushCache const & /*cmd*/) override {}
 
     static gdi::NullGraphic & instance()
     {
