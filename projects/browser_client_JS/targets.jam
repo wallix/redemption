@@ -6,7 +6,7 @@
 #
 
 exe-js js_client :
-  projects/browser_client_JS/src/main/js_client.bc
+  src/main/js_client.bc
 :
   app_path_exe.bc
   boost_stacktrace.bc
@@ -14,7 +14,7 @@ exe-js js_client :
   gssapi_krb5.bc
   krb5.bc
   png.bc
-  projects/browser_client_JS/src/redjs/image_utils.bc
+  src/redjs/image_data.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   src/RAIL/client_execute.bc
   src/core/RDP/RDPDrawable.bc
@@ -55,9 +55,19 @@ exe-js js_client :
 ;
 
 
+test-run-js tests/test_image_data :
+  tests/test_image_data.cpp
+:
+  boost_stacktrace.bc
+  src/redjs/image_data.bc
+  src/core/error.bc
+  src/utils/bitmap.bc
+  src/utils/rle.bc
+  src/utils/utf.bc
+;
 
-objjs projects/browser_client_JS/src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
-objjs projects/browser_client_JS/src/redjs/image_utils.bc : src/redjs/image_utils.cpp ;
+objjs src/main/js_client.bc : src/main/js_client.cpp ;
+objjs src/redjs/image_data.bc : src/redjs/image_data.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 objjs src/RAIL/client_execute.bc : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
 objjs src/acl/module_manager/create_module_rdp.bc : $(REDEMPTION_SRC_PATH)/acl/module_manager/create_module_rdp.cpp : <define>ZLIB_CONST ;
@@ -176,3 +186,20 @@ objjs tests/includes/test_only/front/fake_front.bc : $(REDEMPTION_TEST_PATH)/inc
 objjs tests/includes/test_only/gdi/test_graphic.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/gdi/test_graphic.cpp : $(CXXFLAGS_TEST) ;
 objjs tests/includes/test_only/working_directory.bc : $(REDEMPTION_TEST_PATH)/includes/test_only/working_directory.cpp : $(CXXFLAGS_TEST) ;
 
+alias test_image_data : tests/test_image_data ;
+alias tests.norec :
+  tests/test_image_data
+;
+alias tests :
+  tests.norec
+;
+alias projects/browser_client_JS :
+  tests
+;
+explicit
+  tests.norec
+;
+explicit
+  tests
+  projects/browser_client_JS
+;

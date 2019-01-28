@@ -193,6 +193,12 @@ rule exe-js ( name : src : obj + : deps * )
     bindjs $(name) : $(src) $(obj) : $(deps) ;
 }
 
+rule test-run-js ( name : src : obj + : deps * )
+{
+    objjs $(name).bc : $(src) : <include>$(REDEMPTION_TEST_PATH)/includes ;
+    test-run $(name) : $(name).bc $(obj) : $(deps) ;
+}
+
 include targets.jam ;
 
 

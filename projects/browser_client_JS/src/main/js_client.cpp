@@ -37,7 +37,7 @@
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/emscripten.hpp"
-#include "redjs/image_utils.hpp"
+#include "redjs/image_data.hpp"
 
 #include <emscripten.h>
 

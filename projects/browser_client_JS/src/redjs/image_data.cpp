@@ -18,7 +18,7 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/image_utils.hpp"
+#include "redjs/image_data.hpp"
 
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_data_allocator.hpp"
