@@ -295,8 +295,7 @@ class Sesman():
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
         if DEBUG:
-            import pprint
-            Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
+            Logger().info(u'=> send_data (update) = %s' % data.keys())
 
 
         #if current language changed, send translations
@@ -320,8 +319,8 @@ class Sesman():
             _list.append(_pair)
 
         if DEBUG:
-           import pprint
-           Logger().info(u'send_data (on the wire)=%s' % (pprint.pformat(_list)))
+           Logger().info(u'send_data (on the wire) length = %s' %
+                         len(_list))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -379,12 +378,15 @@ class Sesman():
             except Exception, e:
                 if DEBUG:
                     import traceback
-                    Logger().info(u"Error while parsing received data %s" % traceback.format_exc(e))
+                    Logger().info(
+                        u"Error while parsing received data %s" %
+                        traceback.format_exc(e)
+                    )
                 _status = False
 
             if DEBUG:
-                import pprint
-                Logger().info("received_data (on the wire) = %s" % (pprint.pformat(_data)))
+                Logger().info("received_data (on the wire) (%s) = %s" %
+                              (len(_data), _data.keys()))
 
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
@@ -877,9 +879,9 @@ class Sesman():
             notify, days = self.engine.password_expiration_date()
             if notify:
                 if days == 0:
-                    message = TR(u'Your password will expire soon. Please change it.')
+                    message = TR(u'Your Bastion password will expire soon. Please change it.')
                 else:
-                    message = TR(u'Your password will expire in %s days. Please change it.') % days
+                    message = TR(u'Your Bastion password will expire in %s days. Please change it.') % days
                 _status, _error = self.interactive_display_message({u'message': message})
         except Exception, e:
             if DEBUG:
@@ -1119,57 +1121,6 @@ class Sesman():
             duration = 3600
         return duration
 
-    @staticmethod
-    def _get_tf_flags(ticketfields):
-        flag = 0
-        field = ticketfields.get("description")
-        if field is not None:
-            flag += 0x01
-            if field == APPREQ_REQUIRED:
-                flag += 0x02
-        field = ticketfields.get("ticket")
-        if field is not None:
-            flag += 0x04
-            if field == APPREQ_REQUIRED:
-                flag += 0x08
-        field = ticketfields.get("duration")
-        if field is not None:
-            flag += 0x10
-            if field == APPREQ_REQUIRED:
-                flag += 0x20
-        return flag
-
-    # 'request_fields':{
-    #     '<name>': {
-    #         'label': str, # translated field to be displayed by the clients
-    #         'type': 'str'|'int'|'datetime'|'duration',
-    #         'mandatory': bool,
-    #         'min': int,
-    #         'max': int
-    # }, ...}
-
-    MAP_FIELD_FLAG = {
-        'description': 0x01,
-        'ticket': 0x04,
-        'duration': 0x10
-    }
-
-    @staticmethod
-    def _get_rf_flags(request_fields):
-        flag = 0
-        if not request_fields:
-            return flag
-        for key, value in request_fields.iteritems():
-            bitset = Sesman.MAP_FIELD_FLAG.get(key)
-            if bitset is not None:
-                flag += bitset
-                flag += (bitset << 1) if value.get('mandatory') else 0
-        return flag
-
-    @staticmethod
-    def _get_rf_duration_max(request_fields):
-        return request_fields.get('duration', {}).get('max', 0)
-
     def interactive_display_waitinfo(self, status, infos):
         show_message = infos.get('message') or ''
         target = infos.get('target')
@@ -1180,20 +1131,28 @@ class Sesman():
                    u'display_message' : MAGICASK,
                    u'waitinforeturn' : MAGICASK
                    }
-        flag = 0
-        duration_max = infos.get("duration_max") or 0
         ticketfields = infos.get("ticket_fields")
+        flag = 0
         if ticketfields:
-            flag = self._get_tf_flags(ticketfields)
-        request_fields = infos.get('request_fields')
-        if request_fields:
-            flag = self._get_rf_flags(request_fields)
-            # duration_max is in minutes
-            duration_max =  self._get_rf_duration_max(request_fields) / 60
+            field = ticketfields.get("description")
+            if field is not None:
+                flag += 0x01
+                if field == APPREQ_REQUIRED:
+                    flag += 0x02
+            field = ticketfields.get("ticket")
+            if field is not None:
+                flag += 0x04
+                if field == APPREQ_REQUIRED:
+                    flag += 0x08
+            field = ticketfields.get("duration")
+            if field is not None:
+                flag += 0x10
+                if field == APPREQ_REQUIRED:
+                    flag += 0x20
         if status == APPROVAL_NONE:
             tosend["showform"] = True
             tosend["formflag"] = flag
-            tosend["duration_max"] = duration_max
+            tosend["duration_max"] = infos.get("duration_max") or 0
         else:
             tosend["showform"] = False
         self.send_data(tosend)
@@ -1320,7 +1279,6 @@ class Sesman():
             kv[u'proto_dest'] = proto_info.protocol
             kv[u'target_str'] = target_login_info.get_target_str()
 
-            # Depecrated, credentials checkout is made by check_target
             _status, _error = self.engine.checkout_target(selected_target)
             if not _status:
                 self.send_data({
@@ -1436,13 +1394,13 @@ class Sesman():
                     physical_target = None
                     break
 
-                cstatus, infos = self.engine.check_target(physical_target,
-                                                          self.pid,
-                                                          None)
-                if cstatus != APPROVAL_ACCEPTED:
-                    Logger().info("Jump server unavailable (%s)"
-                                  % infos.get('message'))
-                    _status = False
+                _status, _error = self.engine.checkout_target(physical_target)
+                if not _status:
+                    if _error is None:
+                        self.send_data({u'rejected': TR(u"start_session_failed")})
+                        Logger().info("License Error")
+                        break
+                    Logger().info("Account locked on jump server, %s." % _error)
                     continue
 
                 physical_proto_info = self.engine.get_target_protocols(physical_target)
