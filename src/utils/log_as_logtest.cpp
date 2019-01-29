@@ -32,7 +32,8 @@ REDEMPTION_DIAGNOSTIC_PUSH
 REDEMPTION_DIAGNOSTIC_POP
 
 #ifdef __EMSCRIPTEN__
-# include "red_emscripten/emscripten.hpp"
+# include "red_emscripten/em_js.hpp"
+# include "red_emscripten/em_asm.hpp"
 #endif
 
 #include <iostream>

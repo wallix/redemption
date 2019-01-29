@@ -20,29 +20,15 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include <emscripten/bind.h>
+#ifdef IN_IDE_PARSER
+# define RED_EM_JS(return_type, name, params, ...) return_type name params;
+#else
+# include <emscripten/em_js.h>
+# include "cxx/diagnostic.hpp"
+# define RED_EM_JS(return_type, name, params, ...)             \
+    REDEMPTION_DIAGNOSTIC_PUSH                                 \
+    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
+    EM_JS(return_type, name, params, __VA_ARGS__)              \
+    REDEMPTION_DIAGNOSTIC_POP
+#endif
 
-namespace redjs
-{
-    template<class T>
-    struct class_ : emscripten::class_<T>
-    {
-        using em_class = emscripten::class_<T>;
-
-        using em_class::em_class;
-
-        template<typename... ConstructorArgs, typename... Policies>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(Policies... policies) const
-        {
-            em_class::template constructor<ConstructorArgs...>(policies...);
-            return *this;
-        }
-
-        template<class F>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& function_ptr(char const* name, F f) const
-        {
-            this->function(name, +f, emscripten::allow_raw_pointers());
-            return *this;
-        }
-    };
-}

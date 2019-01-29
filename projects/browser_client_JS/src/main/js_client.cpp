@@ -36,10 +36,11 @@
 #include <string>
 
 #include "red_emscripten/bind.hpp"
-#include "red_emscripten/emscripten.hpp"
-#include "redjs/image_data.hpp"
+#include "red_emscripten/em_js.hpp"
+#include "red_emscripten/em_asm.hpp"
+#include "red_emscripten/val.hpp"
 
-#include <emscripten.h>
+#include "redjs/image_data.hpp"
 
 
 constexpr int FD_TRANS = 42;
@@ -253,6 +254,8 @@ private:
 # define JS_CLIENT_PASSWORD "x"
 #endif
 
+using Ms = std::chrono::milliseconds;
+
 struct RdpClient
 {
     std::unique_ptr<mod_api> mod;
@@ -342,35 +345,36 @@ struct RdpClient
             lcg_timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
     }
 
-    // long long is not embind type. Use long or double (safe for 53 bits)
-    long next_timeout()
+    /// \return milliseconds before next timer, or 0 if no timer
+    Ms update_time(timeval current_time)
     {
-        session_reactor.set_current_time(tvtime());
-        std::chrono::microseconds us =
-            session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, 5s)
-          - session_reactor.get_current_time();
-        return us.count();
-    }
+        session_reactor.set_current_time(current_time);
 
-    void update()
-    {
-        session_reactor.execute_timers_at(
-            SessionReactor::EnableGraphics{true}, tvtime(),
+        session_reactor.execute_timers(
+            SessionReactor::EnableGraphics{true},
             [&]() -> gdi::GraphicApi& { return front; });
+
+        std::chrono::microseconds us =
+            session_reactor.get_next_timeout(SessionReactor::EnableGraphics{true}, 1h)
+          - session_reactor.get_current_time();
+
+        if (us <= 1ms) {
+            return 1ms;
+        }
+        return std::chrono::duration_cast<Ms>(us);
     }
 
-    emscripten::val get_data()
+    const_bytes_view get_sending_data_view() const
     {
-        auto& out = browser_trans.out_buffers;
-        return emscripten::val(emscripten::typed_memory_view(out.size(), out.data()));
+        return browser_trans.out_buffers;
     }
 
-    void clear_data()
+    void clear_sending_data()
     {
         browser_trans.out_buffers.clear();
     }
 
-    void next_message(std::string data)
+    void add_receiving_data(std::string data)
     {
         browser_trans.in_buffers.emplace_back(std::move(data));
         // browser_trans.out_buffers.insert(browser_trans.out_buffers.end(), data.begin(), data.end());
@@ -381,59 +385,22 @@ struct RdpClient
 };
 
 // Binding code
-EMSCRIPTEN_BINDINGS(client) {
-    emscripten::class_<RdpClient>("RdpClient")
+EMSCRIPTEN_BINDINGS(client)
+{
+    redjs::class_<RdpClient>("RdpClient")
         .constructor<unsigned long>()
-        .function("next_timeout", &RdpClient::next_timeout)
-        .function("update", &RdpClient::update)
-        .function("get_data", &RdpClient::get_data)
-        .function("clear_data", &RdpClient::clear_data)
-        .function("next_message", &RdpClient::next_message)
-        .function("thisptr", +[](RdpClient& ref) {
+        /// long long is not embind type. Use long or double (safe for 53 bits);
+        .function_ptr("updateTime", [](RdpClient& client) {
+            Ms ms = client.update_time(tvtime());
+            return static_cast<unsigned long>(ms.count());
+        })
+        .function_ptr("getSendingData", [](RdpClient& client) {
+            return redjs::emval_from_view(client.get_sending_data_view());
+        })
+        .function_ptr("thisptr", +[](RdpClient& ref) {
             return RED_EM_ASM_INT({ return $0; }, &ref.front);
-        }, emscripten::allow_raw_pointers())
+        })
+        .function("clearSendingData", &RdpClient::clear_sending_data)
+        .function("addReceivingData", &RdpClient::add_receiving_data)
     ;
 }
-
-// int run_main()
-// {
-//
-//     auto run_rdp = [&]{
-//         auto mod = new_mod_rdp(
-//             mod_trans, session_reactor, front, client_info, redir_info, lcg_gen,
-//             lcg_timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
-//         using Ms = std::chrono::milliseconds;
-//         return run_test_client(
-//             "RDP", session_reactor, *mod, front,
-//             Ms(inactivity_time_ms), Ms(max_time_ms), screen_output);
-//     };
-//
-//     int eid = run_rdp();
-//
-//     if (ERR_RDP_SERVER_REDIR != eid) {
-//         return eid ? 1 : 0;
-//     }
-//
-//     set_server_redirection_target(ini, report_message);
-//
-//     return run_rdp() ? 2 : 0;
-// }
-//
-// int main(int argc, char** argv)
-// {
-//     try {
-//         run_main();
-//     }
-//     catch (Error const& e) {
-//         if (e.errnum) {
-//             std::cerr << e.errmsg() << " - " << strerror(e.errnum) << std::endl;
-//             return e.errnum;
-//         }
-//         std::cerr << e.errmsg() << std::endl;
-//         return 1;
-//     }
-//     catch (std::exception const& e) {
-//         std::cerr << e.what() << std::endl;
-//         return 1;
-//     }
-// }

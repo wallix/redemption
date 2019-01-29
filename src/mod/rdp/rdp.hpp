@@ -1986,7 +1986,7 @@ private:
     SessionReactor& session_reactor;
     SessionReactor::GraphicFdPtr fd_event;
 
-    SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_lecalnotice;
+    SessionReactor::TimerPtr remoteapp_one_shot_bypass_window_legalnotice;
 
     std::string end_session_reason;
     std::string end_session_message;
@@ -5032,7 +5032,7 @@ public:
 
             this->front.send_savesessioninfo();
 
-            this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
+            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
         }
         break;
         case RDP::INFOTYPE_LOGON_LONG:
@@ -5045,7 +5045,7 @@ public:
 
             this->front.send_savesessioninfo();
 
-            this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
+            this->remoteapp_one_shot_bypass_window_legalnotice.reset();
         }
         break;
         case RDP::INFOTYPE_LOGON_PLAINNOTIFY:
@@ -5089,7 +5089,7 @@ public:
 
                 this->is_server_auto_reconnec_packet_received = true;
 
-                this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
+                this->remoteapp_one_shot_bypass_window_legalnotice.reset();
             }
 
             if (lie.FieldsPresent & RDP::LOGON_EX_LOGONERRORS) {
@@ -5106,10 +5106,10 @@ public:
                             this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
-                        this->remoteapp_one_shot_bypass_window_lecalnotice = this->session_reactor.create_timer()
+                        this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer()
                             .on_action(jln::sequencer(
                                     [this](JLN_TIMER_CTX ctx) {
-                                        LOG(LOG_INFO, "RDP::process_save_session_info: One-shut bypass Windows's Legal Notice");
+                                        LOG(LOG_INFO, "RDP::process_save_session_info: One-shot bypass Windows's Legal Notice");
                                         this->send_input(0, RDP_INPUT_SCANCODE, 0x0, 0x1C, 0x0);
                                         this->send_input(0, RDP_INPUT_SCANCODE, 0x8000, 0x1C, 0x0);
 
@@ -5130,7 +5130,7 @@ public:
                     }
                 }
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
-                    this->remoteapp_one_shot_bypass_window_lecalnotice.reset();
+                    this->remoteapp_one_shot_bypass_window_legalnotice.reset();
                 }
             }
         }

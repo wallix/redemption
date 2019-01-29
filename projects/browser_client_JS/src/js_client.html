@@ -10,131 +10,168 @@
 <script>
 const canvas = document.getElementById('canvas').getContext('2d');
 const newcobutton = document.getElementById('newco');
-let socketbutton;
+let client;
 newcobutton.onclick = () => {
-    socketbutton.close();
+    client.close();
     Module.onRuntimeInitialized();
 };
 
-function imageFromBitmap24(idata, w, h, line_size)
-{
-  const u8data = HEAPU8.subarray(idata, idata + line_size * 3 * h - 1)
-  const len = w*h*4
-  const arr = new Uint8ClampedArray(len)
-  const step = line_size + w*3
-  let si = line_size * (h-1)
-  let di = 0
-
-  while (di < len) {
-    for (let endi = di+w*4; di < endi; si+=3) {
-      arr[di++] = u8data[si+2]
-      arr[di++] = u8data[si+1]
-      arr[di++] = u8data[si]
-      arr[di++] = 255
-    }
-    si -= step
-  }
-
-  return new ImageData(arr, w, h)
-}
-
 (function(context) {
+    const identity = (x) => x;
     const wrappersCb = {
-        drawImage: function(thisp, cb) {
+        drawImage: function(cb) {
             return function(idata, w, h, dx, dy, sz, sy, dw, dh) {
                 const data = HEAPU8.subarray(idata, idata + w * h * 4);
                 const image = new ImageData(new Uint8ClampedArray(data), w, h);
-                cb.call(thisp, image, dx, dy, 0, 0, dw, dh);
-            }
-        }
+                cb(image, dx, dy, 0, 0, dw, dh);
+            };
+        },
+
+        socketOpen: identity,
+        socketClose: identity,
+        socketMessage: identity,
+        socketError: identity,
+        socketSend: identity,
     }
 
     context.RdpClientEventTable = {};
 
-    context.createRdpClient = function(verbosity) {
-        const rdpclient = new Module.RdpClient(verbosity);
-        const events = {}
-        context.RdpClientEventTable[rdpclient.thisptr()] = events
-        rdpclient.on = function(eventName, cb) {
-            const wrapCb = wrappersCb[eventName];
-            if (!wrapCb) {
-                console.log('RdpClient: Unknown event ' + eventName)
-                return false
-            }
-            events[eventName] = wrapCb(rdpclient, cb);
-            return this
+    const noop = function(){};
+
+    context.createRdpClient = function(url, verbosity) {
+        const socket = new WebSocket(url, "RDP")
+        socket.binaryType = 'arraybuffer';
+
+        let rdpclient = null;
+        const events = {};
+
+        const client = {
+            on: function(eventName, cb) {
+                const wrapCb = wrappersCb[eventName];
+                if (!wrapCb) {
+                    console.log('RdpClient: Unknown event ' + eventName);
+                    return false;
+                }
+                events[eventName] = wrapCb(cb);
+                return this;
+            },
+            close: noop
         };
-        return rdpclient;
+
+        const send_data = function() {
+            const out = rdpclient.getSendingData()
+            if (out.length) {
+                // console.log("send " + out.length + " bytes")
+                const cb = events.socketSend
+                if (cb) {
+                    cb(out)
+                }
+                socket.send(out)
+                rdpclient.clearSendingData()
+            }
+        };
+
+        let timeoutID = -1;
+        let timeoutDate = 0xffffffff;
+        const timer_action = function() {
+            const now = Data.now();
+            const timeout = rdpclient.updateTime();
+            send_data();
+            timeoutDate = now + timeout;
+            timeoutID = setTimeout(timer_action, timeout);
+        }
+        const update_timer = function(nextDate) {
+            if (nextDate < timeoutDate) {
+                timeoutDate = nextDate;
+                clearTimeout(timeoutID);
+                timeoutID = setTimeout(timer_action, Math.max(0, nextDate - Data.now()));
+            }
+        }
+
+        const finally_ = function(cb, event) {
+            try {
+                if (cb) {
+                    cb(event);
+                }
+            }
+            finally {
+                if (rdpclient) {
+                    if (timeoutID) {
+                        clearTimeout(timeoutID)
+                    }
+                    rdpclient.delete()
+                    rdpclient = null
+                }
+            }
+        }
+
+        socket.onopen = function(event) {
+            const cb = events.socketOpen
+            if (cb) {
+                cb(event)
+            }
+            client.close = function() {
+                socket.close()
+            };
+            rdpclient = new Module.RdpClient(verbosity || 0);
+
+            context.RdpClientEventTable[rdpclient.thisptr()] = events;
+
+            rdpclient.updateTime();
+            timeoutDate = Date.now();
+            send_data()
+        };
+
+        socket.onmessage = function(event) {
+            const cb = events.socketMessage
+            if (cb) {
+                cb(event)
+            }
+            rdpclient.addReceivingData(event.data)
+            const now = Date.now()
+            const timeout = rdpclient.updateTime()
+            send_data()
+            const nextDateTimer = now + timeout;
+            if (nextDateTimer < timeoutDate) {
+                timeoutDate = nextDateTimer;
+                clearTimeout(timeoutID);
+                timeoutID = setTimeout(timer_action, Math.max(0, nextDateTimer - Data.now()));
+            }
+        };
+
+        socket.onerror = function(event) {
+            finally_(events.socketError);
+        };
+
+        socket.onclose = function(event) {
+            finally_(events.socketClose);
+        };
+
+        return client;
     }
 })(window)
 
 var Module = {
   TOTAL_MEMORY: 268435456, // 16**7
   onRuntimeInitialized: function() {
-    const rdpclient = createRdpClient(0/*xff*/)
+    const rdpclient = createRdpClient("ws://localhost:8080", 0/*xff*/)
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas))
-
-    const send_data = function() {
-        const out = rdpclient.get_data()
-        if (out.length) {
-            // console.log("send " + out.length + " bytes")
-            socket.send(out)
-            rdpclient.clear_data()
-        }
-        else {
-            console.log("client.data is empty")
-        }
-    }
+    rdpclient.on('socketClose', () => console.log('RdpClient close'))
+    client = rdpclient
 
     canvas.fillStyle = 0xffff00
     canvas.fillRect(0,0,800,600)
-
-    const socket = new WebSocket("ws://localhost:8080", "rdp-protocol")
-    socketbutton = socket
-
-    socket.binaryType = 'arraybuffer';
-
-    socket.onopen = function(event) {
-        console.log("socket is open")
-        const timeout = rdpclient.next_timeout()
-        console.log("timeout:", timeout)
-        rdpclient.update()
-        send_data()
-    }
-
-    // Display messages received from the server
-    socket.onmessage = function(event) {
-        // const bytearray = new Uint8Array(event.data)
-        // let text = ""
-        // // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
-        // for (let byte of bytearray) {
-        //     text += ":" + (byte+0x10000).toString(16).substr(-2)
-        // }
-        // console.log("Server Says: " + text)
-        rdpclient.update()
-        try {
-            rdpclient.next_message(event.data)
-        }
-        catch (e) {
-            stackTrace()
-            throw e
-        }
-        send_data()
-    }
-
-    // Display any errors that occur
-    socket.onerror = function(event) {
-        console.log("Error: " + event.type)
-    }
-
-    socket.onclose = function(event) {
-        console.log("close: " + event.code + ": " + event.reason)
-        rdpclient.delete()
-    }
+            // const bytearray = new Uint8Array(event.data)
+            // let text = ""
+            // // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+            // for (let byte of bytearray) {
+            //     text += ":" + (byte+0x10000).toString(16).substr(-2)
+            // }
+            // console.log("Server Says: " + text)
   }
 };
 </script>
-<script src="jsclient.js"></script>
+<script src="js_client.js"></script>
 
 </body>
 </html>

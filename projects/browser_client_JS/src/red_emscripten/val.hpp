@@ -14,25 +14,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2018
+Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#ifdef IN_IDE_PARSER
-# define RED_EM_ASM(...)
-# define RED_EM_ASM_INT(...) int()
-# define RED_EM_JS(return_type, name, params, ...) return_type name params;
-#else
-# include <emscripten.h>
-# include "cxx/diagnostic.hpp"
-# define RED_EM_ASM EM_ASM
-# define RED_EM_ASM_INT EM_ASM_INT
-# define RED_EM_JS(return_type, name, params, ...)             \
-    REDEMPTION_DIAGNOSTIC_PUSH                                 \
-    REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wmissing-prototypes") \
-    EM_JS(return_type, name, params, __VA_ARGS__)              \
-    REDEMPTION_DIAGNOSTIC_POP
-#endif
+#include "utils/sugar/bytes_view.hpp"
 
+#include <emscripten/val.h>
+
+namespace redjs
+{
+    inline emscripten::val emval_from_view(const_bytes_view av)
+    {
+        return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
+    }
+}
