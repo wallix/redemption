@@ -885,21 +885,19 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 // INFO (4749/4749) -- Sent dumped on channel (20) n bytes
 
         clipboard_virtual_channel.process_server_message(
-            26,
+            22,
               CHANNELS::CHANNEL_FLAG_FIRST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
-        /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
+        /* 0000 */ "\x09\x00\x01\x00\x0c\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
                 ),
             16,
             out_asynchronous_task);
 
-    RED_CHECK_EQUAL(to_client_sender.streams.size(), 5);
-
     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
 
         clipboard_virtual_channel.process_server_message(
-            26,
+            22,
               CHANNELS::CHANNEL_FLAG_LAST
             | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
             byte_ptr_cast(
@@ -937,6 +935,13 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 
     RED_CHECK_WORKSPACE(wd);
 }
+
+
+
+
+
+
+
 
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
@@ -1398,8 +1403,6 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
         /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" // ............test
                 ),
             16);
-
-    RED_CHECK_EQUAL(to_server_sender.streams.size(), 6);
 
     RED_CHECK_EQUAL(get_file_contents(file_test), "test");
 

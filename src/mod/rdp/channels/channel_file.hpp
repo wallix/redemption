@@ -61,6 +61,7 @@ public:
 
     ChannelFile(const std::string & dir_path)
     : dir_path(dir_path)
+
     , fd(invalid_fd())
     , total_file_size(0)
     , current_file_size(0)
@@ -107,15 +108,17 @@ public:
 //         }
 //     }
 
-    ChannelFile(const std::string & dir_path, const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction, const timeval tv)
-        : dir_path(dir_path)
-        , filename(filename)
-        , fd(invalid_fd())
-        , total_file_size(total_file_size)
-        , current_file_size(0)
-        , valid(false)
-        , streamID(streamID)
-        , direction(direction) {
+    void set_total_file_size(const size_t total_file_size) {
+        this->total_file_size = total_file_size;
+    }
+
+    void new_file(const std::string & filename, const size_t total_file_size, const uint32_t streamID, const uint8_t direction, const timeval tv) {
+        this->direction = direction;
+        this->streamID = streamID;
+        this->total_file_size = total_file_size;
+        this->filename = filename;
+        this->current_file_size = 0;
+        this->fd.close();
 
         this->file_path = this->dir_path + get_full_text_sec_and_usec(tv) + "_" + this->filename;
         std::ifstream file(this->file_path.c_str());
@@ -172,10 +175,6 @@ public:
         return this->total_file_size;
     }
 
-    std::string get_file_name() {
-        return this->filename;
-    }
-
     uint32_t get_streamID() {
         return this->streamID;
     }
@@ -184,7 +183,7 @@ public:
         return this->total_file_size == this->current_file_size;
     }
 
-    bool is_valid() {
+    bool is_valide() {
         this->valid = true;
         return this->is_complete() && this->valid;
     }

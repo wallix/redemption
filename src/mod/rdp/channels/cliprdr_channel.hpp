@@ -67,11 +67,7 @@ private:
 
     bool channel_filter_on;
 
-    std::vector<ChannelFile> channel_file_list;
-    const std::string channel_files_directory;
-
-    uint32_t last_filtered_file_lindex = 0;
-    const std::string blocked_file_content;
+    ChannelFile channel_file;
 
     SessionReactor& session_reactor;
 
@@ -111,8 +107,7 @@ public:
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
-    , channel_files_directory(channel_files_directory)
-    , blocked_file_content("File content has been blocked.")
+    , channel_file(channel_files_directory)
     , session_reactor(session_reactor) {}
 
 protected:
@@ -267,96 +262,43 @@ public:
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
                 if (!this->param_clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
-
-                } else if (this->channel_filter_on) {
-
-                    switch(receiver.dwFlags) {
-                        case RDPECLIP::FILECONTENTS_SIZE: {
-                            StaticOutStream<32> out_stream;
-
-                            RDPECLIP::CliprdrHeader fileSizeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_OK, 16);
-                            RDPECLIP::FileContentsResponseSize fileSize(
-                                  receiver.streamID
-                                , this->channel_file_list[receive.lindex].get_file_size()
-                                );
-                            fileSizeHeader.emit(out_stream);
-                            fileSize.emit(out_stream);
-
-                            this->send_message_to_client(out_stream.get_offset(),
-                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, out_stream.get_data(),
-                                out_stream.get_offset());
-                        }
-                        break;
-
-                        case RDPECLIP::FILECONTENTS_SIZE: {
-                            this->send_filtered_file_content_message_to_client();
-                        }
-                        break;
-                    }
-
+                } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
+                    const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
+                    this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_SERVER, session_reactor.get_current_time());
+                }
                 send_message_to_server = this->param_clipboard_file_authorized;
             }
             break;
 
             case RDPECLIP::CB_FORMAT_DATA_RESPONSE: {
-                ClientFormatDataResponseReceive receiver(
-                    this->clip_data.client_data,
-                    this->clip_data,
-                    chunk,
-                    header,
-                    this->param_dont_log_data_into_syslog,
-                    flags,
-                    this->verbose);
+                    ClientFormatDataResponseReceive receiver(
+                        this->clip_data.client_data,
+                        this->clip_data,
+                        chunk,
+                        header,
+                        this->param_dont_log_data_into_syslog,
+                        flags,
+                        this->verbose);
 
-                if (!this->clip_data.client_data.file_list_format_id
-                    || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
+                    if (!this->clip_data.client_data.file_list_format_id
+                        || !(this->clip_data.requestedFormatId  == this->clip_data.client_data.file_list_format_id)) {
 
-                    const bool is_from_remote_session = false;
-                    this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
+                        const bool is_from_remote_session = false;
+                        this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 
-                    for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
-                        this->clip_data.file_descr_list.push_back(file);
-                    }
-
-                    if (this->channel_filter_on) {
-                        this->last_filtered_file_lindex = 0;
 
                         for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
-
-                            ChannelFile channel_file(this->channel_files_directory, file.file_name, file.file_size(), receiver.streamID, ChannelFile::FILE_FROM_CLIENT, session_reactor.get_current_time());
-                            this->channel_file_list.push_back(channel_file);
+                            this->clip_data.file_descr_list.push_back(file);
                         }
-
-                        StaticOutStream<64> range_request_chunk;
-                        RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
-
-                        fileContentsRequestHeader.emit(range_request_chunk);
-
-                        RDPECLIP::FileContentsRequestPDU fileContentsRequest(
-                                      receiver.streamID
-                                    , this->last_filtered_file_lindex
-                                    , RDPECLIP::FILECONTENTS_RANGE
-                                    , 0
-                                    , 0
-                                    , 0xffff
-                                    , 0
-                                    , false);
-
-                        fileContentsRequest.emit(range_request_chunk);
-
-                        this->send_message_to_client(range_request_chunk.get_offset(),
-                                                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, range_request_chunk.get_data(),
-                                                     range_request_chunk.get_offset());
                     }
+
+                    send_message_to_server = true;
                 }
 
-                send_message_to_server = !(this->channel_filter_on);
-            }
-
-            if (send_message_to_server &&
-                bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
-                this->update_exchanged_data(total_length);
-            }
+                if (send_message_to_server &&
+                    bool(flags & CHANNELS::CHANNEL_FLAG_FIRST)) {
+                    this->update_exchanged_data(total_length);
+                }
             break;
 
             case RDPECLIP::CB_FILECONTENTS_RESPONSE: {
@@ -368,56 +310,7 @@ public:
 
                 if (this->channel_filter_on && (this->clip_data.server_data.last_dwFlags == RDPECLIP::FILECONTENTS_RANGE)) {
                     InStream channel_file_stream = chunk.clone();
-                    this->channel_file_list[this->last_filtered_file_lindex].set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
-
-                    if (flags & CHANNELS::CHANNEL_FLAG_LAST) {
-
-                        this->last_filtered_file_lindex++;
-
-                        if ( size_t(this->last_filtered_file_lindex) == this->channel_file_liste.size()) {
-
-                            StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream;
-
-                            RDPECLIP::CliprdrHeader formatDataResponseHeader_FileList(RDPECLIP::CB_FORMAT_DATA_RESPONSE, RDPECLIP::CB_RESPONSE_OK, (RDPECLIP::FileDescriptor::size() * this->channel_file_liste.size() + 4);
-
-                            formatDataResponseHeader_FileList.emit(out_stream);
-
-                            for (ChannelFile file : this->channel_file_list) {
-
-                                RDPECLIP::FileDescriptor fdf(
-                                    file.get_file_name()
-                                    , file.is_valid() ? file.get_file_size() : this->blocked_file_content.lenght()
-                                    , fscc::FILE_ATTRIBUTE_ARCHIVE
-                                );
-                                fdf.emit(out_stream);
-                            }
-
-                            this->send_message_to_server(out_stream.get_offset(),
-                                                     CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, out_stream.get_data(),
-                                                     out_stream.get_offset());
-                        } else {
-                            StaticOutStream<64> range_request_chunk;
-                            RDPECLIP::CliprdrHeader fileContentsRequestHeader(RDPECLIP::CB_FILECONTENTS_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, 28);
-
-                            fileContentsRequestHeader.emit(range_request_chunk);
-
-                            RDPECLIP::FileContentsRequestPDU fileContentsRequest(
-                                            receiver.streamID,
-                                        , this->last_filtered_file_lindex
-                                        , RDPECLIP::FILECONTENTS_RANGE
-                                        , 0
-                                        , 0
-                                        , 0xffff
-                                        , 0
-                                        , false);
-
-                            fileContentsRequest.emit(range_request_chunk);
-
-                            this->send_message_to_client(range_request_chunk.get_offset(),
-                                                        CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL, range_request_chunk.get_data(),
-                                                        range_request_chunk.get_offset());
-                        }
-                    }
+                    this->channel_file.set_data(channel_file_stream.get_current(), channel_file_stream.in_remain());
 
                     send_message_to_server = false;
                 }
@@ -851,6 +744,36 @@ public:
                     break;
 
                 default: break;
+            }
+
+        } else {
+
+            RDPECLIP::CliprdrHeader fileRangeHeader(RDPECLIP::CB_FILECONTENTS_RESPONSE, RDPECLIP::CB_RESPONSE_FAIL, 4);
+            StaticOutStream<16> out_stream;
+            RDPECLIP::FileContentsResponseRange fileRange(this->channel_file.get_streamID());
+
+            fileRangeHeader.emit(out_stream);
+            fileRange.emit(out_stream);
+
+            switch (this->channel_file.get_direction()) {
+
+
+
+            case ChannelFile::FILE_FROM_SERVER:
+                this->send_message_to_client(out_stream.get_offset(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                            out_stream.get_data(),
+                                            out_stream.get_offset());
+                break;
+
+            case ChannelFile::FILE_FROM_CLIENT:
+                this->send_message_to_server(out_stream.get_offset(),
+                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                            out_stream.get_data(),
+                                            out_stream.get_offset());
+                break;
+
+            default: break;
             }
         }
     }
