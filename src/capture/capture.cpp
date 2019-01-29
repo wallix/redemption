@@ -551,8 +551,6 @@ public:
             arc_info.name = "KBD_INPUT";
             arc_info.message = this->formatted_message.str();
 
-            LOG(LOG_INFO, "capture::flush this->formatted_message.str()=%s", this->formatted_message.str());
-
             this->report_message.log6(this->formatted_message.str(), arc_info, tvtime());
 
             this->kbd_stream.rewind();
