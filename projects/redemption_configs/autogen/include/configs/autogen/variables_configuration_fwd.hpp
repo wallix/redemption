@@ -170,6 +170,7 @@ namespace cfg {
         struct log_only_relevant_clipboard_activities;
         struct experimental_fix_input_event_sync;
         struct experimental_fix_too_long_cookie;
+        struct split_domain;
     };
 
     struct metrics {

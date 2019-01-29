@@ -579,6 +579,10 @@
 "#_advanced\n"
 "experimental_fix_too_long_cookie = boolean(default=True)\n\n"
 
+"# Force to split target domain and username with '@' separator.\n"
+"#_advanced\n"
+"split_domain = boolean(default=False)\n\n"
+
 "[metrics]\n\n"
 
 "#_advanced\n"
