@@ -7,16 +7,14 @@
 
 <canvas id="canvas" width="800" height="600"></canvas>
 <button id="newco" style="vertical-align:top">New Connection</button>
+<script src="js_client.js"></script>
 <script>
-const canvas = document.getElementById('canvas').getContext('2d');
-const newcobutton = document.getElementById('newco');
-let client;
-newcobutton.onclick = () => {
-    client.close();
-    Module.onRuntimeInitialized();
-};
+const Module = WallixModule({
+    TOTAL_MEMORY: 268435456, // 16**7
+});
 
-(function(context) {
+const createRdpClient = (function(Module) {
+    const HEAPU8 = Module.HEAPU8;
     const identity = (x) => x;
     const wrappersCb = {
         drawImage: function(cb) {
@@ -34,11 +32,11 @@ newcobutton.onclick = () => {
         socketSend: identity,
     }
 
-    context.RdpClientEventTable = {};
+    Module.RdpClientEventTable = {};
 
     const noop = function(){};
 
-    context.createRdpClient = function(url, verbosity) {
+    return function(url, verbosity) {
         const socket = new WebSocket(url, "RDP")
         socket.binaryType = 'arraybuffer';
 
@@ -115,7 +113,7 @@ newcobutton.onclick = () => {
             };
             rdpclient = new Module.RdpClient(verbosity || 0);
 
-            context.RdpClientEventTable[rdpclient.thisptr()] = events;
+            Module.RdpClientEventTable[rdpclient.thisptr()] = events;
 
             rdpclient.updateTime();
             timeoutDate = Date.now();
@@ -149,29 +147,38 @@ newcobutton.onclick = () => {
 
         return client;
     }
-})(window)
+})(Module);
 
-var Module = {
-  TOTAL_MEMORY: 268435456, // 16**7
-  onRuntimeInitialized: function() {
-    const rdpclient = createRdpClient("ws://localhost:8080", 0/*xff*/)
-    rdpclient.on('drawImage', canvas.putImageData.bind(canvas))
-    rdpclient.on('socketClose', () => console.log('RdpClient close'))
-    client = rdpclient
+const canvas = document.getElementById('canvas').getContext('2d');
+const newcobutton = document.getElementById('newco');
+let rdpclient;
 
-    canvas.fillStyle = 0xffff00
-    canvas.fillRect(0,0,800,600)
-            // const bytearray = new Uint8Array(event.data)
-            // let text = ""
-            // // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
-            // for (let byte of bytearray) {
-            //     text += ":" + (byte+0x10000).toString(16).substr(-2)
-            // }
-            // console.log("Server Says: " + text)
-  }
+function run() {
+    rdpclient = createRdpClient("ws://localhost:8080", 0/*xff*/);
+    rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
+    rdpclient.on('socketClose', () => console.log('RdpClient close'));
+}
+
+newcobutton.onclick = () => {
+    if (rdpclient) {
+        rdpclient.close();
+    }
+    run();
 };
+
+canvas.fillStyle = 0xffff00;
+canvas.fillRect(0,0,800,600);
+
+run();
+
+// const bytearray = new Uint8Array(event.data)
+// let text = ""
+// // console.log('Received Binary Message of ' + bytearray.length + ' bytes')
+// for (let byte of bytearray) {
+//     text += ":" + (byte+0x10000).toString(16).substr(-2)
+// }
+// console.log("Server Says: " + text)
 </script>
-<script src="js_client.js"></script>
 
 </body>
 </html>

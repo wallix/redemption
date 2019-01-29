@@ -21,6 +21,8 @@ include $(JAM_INCLUDE_PATH)/libs.jam ;
 
 EXE_DEPENDENCIES += <cxxflags>"-s ABORTING_MALLOC=0" ;
 
+constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
+
 project redjs
     : requirements
 
@@ -51,12 +53,16 @@ project redjs
     # <cxx-lto>on
 
     <cxxflags>"-s WASM=0"
-    <cxxflags>-g
-    <cxxflags>-g4
-    <cxxflags>--emit-symbol-map
+    <variant>debug:<cxxflags>-g
+    <variant>debug:<cxxflags>-g4
+    <variant>debug:<cxxflags>--emit-symbol-map
     # last `/` removed by bjam...
-    <cxxflags>"--source-map-base http://localhost:3389//"
-    <cxxflags>"-s DEMANGLE_SUPPORT=1"
+    <variant>debug:<cxxflags>"--source-map-base http://localhost:3389//"
+    <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+
+    <variant>release:<cxxflags>-O3
+    # <variant>release:<cxxflags>-Os
+    # <variant>release:<cxxflags>-Oz
 
     <cxxflags>-Wno-dollar-in-identifier-extension
 
@@ -148,25 +154,21 @@ rule test-run ( name : objects + : requirements * )
         objects += register_exception.bc ;
     }
 
-    exejs $(name).node : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
-    make $(name) : $(name).node : @exenode ;
+    exejs $(name).em : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
+    make $(name) : $(name).em : @exenode ;
 }
-
-rule exe-main ( name : objects + : requirements * )
-{
-    exejs $(name).node : $(objects) log_test.bc : $(requirements) ;
-    make $(name) : $(name).node : @exenode ;
-}
-
 
 rule exe-js ( name : src : objs + : deps * )
 {
-    exe-main $(name) : $(src) $(objs) :
+    exejs $(name).em : $(src) $(objs) log_test.bc :
         $(deps)
         <cxxflags>--bind
         <cxxflags>-fno-rtti&&-frtti
         <cxxflags>-Wno-missing-prototypes
+        <cxxflags>"-s MODULARIZE=1"
+        <cxxflags>"-s EXPORT_NAME="$(JS_MODULE_NAME)
     ;
+    alias $(name) : $(name).em ;
 }
 
 rule test-run-js ( name : src : objs + : deps * )

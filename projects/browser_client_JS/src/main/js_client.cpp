@@ -185,7 +185,7 @@ public:
 
         RED_EM_ASM(
             {
-                RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, 0, 0, $6, $7);
+                Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, 0, 0, $6, $7);
             },
             this,
             image.data(),
