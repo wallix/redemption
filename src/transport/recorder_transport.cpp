@@ -26,8 +26,8 @@
 
 
 RecorderFile::RecorderFile(TimeObj& timeobj, const char *filename)
-	: timeobj(timeobj)
-	, start_time(to_ms(timeobj.get_time()))
+    : timeobj(timeobj)
+    , start_time(to_ms(timeobj.get_time()))
     , file(unique_fd(filename, O_CREAT|O_RDWR|O_TRUNC, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH))
 {
     if (!this->file.is_open()) {
@@ -44,12 +44,12 @@ RecorderFile::~RecorderFile()
 
 void RecorderFile::write_packet(PacketType type, const_bytes_view buffer)
 {
-	auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
+    auto delta = to_ms(this->timeobj.get_time()) - this->start_time;
 
-	StaticOutStream<13> headers_stream;
-	headers_stream.out_uint8(uint8_t(type));
-	headers_stream.out_uint64_le(delta.count());
-	headers_stream.out_uint32_le(buffer.size());
+    StaticOutStream<13> headers_stream;
+    headers_stream.out_uint8(uint8_t(type));
+    headers_stream.out_uint64_le(delta.count());
+    headers_stream.out_uint32_le(buffer.size());
     // LOG(LOG_DEBUG, "write_packet len=%lu", len);
 
     this->file.send(headers_stream.get_bytes());
@@ -58,8 +58,8 @@ void RecorderFile::write_packet(PacketType type, const_bytes_view buffer)
 
 
 RecorderTransport::RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename)
-	: trans(trans)
-	, out(timeobj, filename)
+    : trans(trans)
+    , out(timeobj, filename)
 {
 }
 
@@ -81,9 +81,9 @@ Transport::TlsResult RecorderTransport::enable_client_tls(
     return r;
 }
 
-void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list)
+void RecorderTransport::enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
 {
-    this->trans.enable_server_tls(certificate_password, ssl_cipher_list);
+    this->trans.enable_server_tls(certificate_password, ssl_cipher_list, tls_min_level);
     this->out.write_packet(RecorderFile::PacketType::ServerCert, this->trans.get_public_key());
 }
 
@@ -151,11 +151,11 @@ void RecorderTransport::do_send(const uint8_t * buffer, size_t len)
 RecorderTransportHeader read_recorder_transport_header(Transport& trans)
 {
     char data[13];
-	InStream headers_stream(data);
+    InStream headers_stream(data);
 
     trans.recv_boom(make_array_view(data));
 
-	return {
+    return {
         RecorderFile::PacketType(headers_stream.in_uint8()),
         std::chrono::milliseconds(headers_stream.in_uint64_le()),
         headers_stream.in_uint32_le()

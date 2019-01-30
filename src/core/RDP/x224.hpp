@@ -901,7 +901,7 @@ namespace X224
     // | 0x00000001 SSL_REQUIRED_BY_SERVER    | The server requires that the       |
     // |                                      | client support Enhanced RDP        |
     // |                                      | Security (section 5.4) with either |
-    // |                                      | TLS 1.0 (section 5.4.5.1) or       |
+    // |                                      | TLS     (section 5.4.5.1) or       |
     // |                                      | CredSSP (section 5.4.5.2). If only |
     // |                                      | CredSSP was requested then the     |
     // |                                      | server only supports TLS.          |
