@@ -1,12 +1,17 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
+    <meta charset="utf-8">
 </head>
 <body>
 
 <canvas id="canvas" width="800" height="600"></canvas>
-<button id="newco" style="vertical-align:top">New Connection</button>
+<form id="login" method="get" action="#" style="display:inline;vertical-align:top">
+    <input type="text" id="user" name="user" value="x" placeholder="Username"/>
+    <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
+    <input type="submit" value="New Connection">
+</form>
+
 <script src="js_client.js"></script>
 <script>
 const Module = WallixModule({
@@ -36,8 +41,8 @@ const createRdpClient = (function(Module) {
 
     const noop = function(){};
 
-    return function(url, verbosity) {
-        const socket = new WebSocket(url, "RDP")
+    return function(url, username, password, verbosity) {
+        const socket = new WebSocket(url, "RDP");
         socket.binaryType = 'arraybuffer';
 
         let rdpclient = null;
@@ -60,12 +65,12 @@ const createRdpClient = (function(Module) {
             const out = rdpclient.getSendingData()
             if (out.length) {
                 // console.log("send " + out.length + " bytes")
-                const cb = events.socketSend
+                const cb = events.socketSend;
                 if (cb) {
-                    cb(out)
+                    cb(out);
                 }
-                socket.send(out)
-                rdpclient.clearSendingData()
+                socket.send(out);
+                rdpclient.clearSendingData();
             }
         };
 
@@ -95,40 +100,40 @@ const createRdpClient = (function(Module) {
             finally {
                 if (rdpclient) {
                     if (timeoutID) {
-                        clearTimeout(timeoutID)
+                        clearTimeout(timeoutID);
                     }
-                    rdpclient.delete()
-                    rdpclient = null
+                    rdpclient.delete();
+                    rdpclient = null;
                 }
             }
         }
 
         socket.onopen = function(event) {
-            const cb = events.socketOpen
+            const cb = events.socketOpen;
             if (cb) {
-                cb(event)
+                cb(event);
             }
             client.close = function() {
-                socket.close()
+                socket.close();
             };
-            rdpclient = new Module.RdpClient(verbosity || 0);
+            rdpclient = new Module.RdpClient(username || "", password || "", verbosity || 0);
 
             Module.RdpClientEventTable[rdpclient.thisptr()] = events;
 
             rdpclient.updateTime();
             timeoutDate = Date.now();
-            send_data()
+            send_data();
         };
 
         socket.onmessage = function(event) {
-            const cb = events.socketMessage
+            const cb = events.socketMessage;
             if (cb) {
-                cb(event)
+                cb(event);
             }
-            rdpclient.addReceivingData(event.data)
-            const now = Date.now()
-            const timeout = rdpclient.updateTime()
-            send_data()
+            rdpclient.addReceivingData(event.data);
+            const now = Date.now();
+            const timeout = rdpclient.updateTime();
+            send_data();
             const nextDateTimer = now + timeout;
             if (nextDateTimer < timeoutDate) {
                 timeoutDate = nextDateTimer;
@@ -150,16 +155,23 @@ const createRdpClient = (function(Module) {
 })(Module);
 
 const canvas = document.getElementById('canvas').getContext('2d');
-const newcobutton = document.getElementById('newco');
+const login = document.getElementById('login');
+const user_input = document.getElementById('user');
+const pass_input = document.getElementById('pass');
 let rdpclient;
 
 function run() {
-    rdpclient = createRdpClient("ws://localhost:8080", 0/*xff*/);
+    rdpclient = createRdpClient(
+        "ws://localhost:8080",
+        user_input.value,
+        pass_input.value,
+        0/*xff*/);
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     rdpclient.on('socketClose', () => console.log('RdpClient close'));
 }
 
-newcobutton.onclick = () => {
+login.onsubmit = (e) => {
+    e.preventDefault();
     if (rdpclient) {
         rdpclient.close();
     }
@@ -168,6 +180,18 @@ newcobutton.onclick = () => {
 
 canvas.fillStyle = 0xffff00;
 canvas.fillRect(0,0,800,600);
+
+const stringvalues = document.URL.split('?')[1];
+if (stringvalues) {
+    const inputs = {user: user_input, pass: pass_input};
+    for (const strvalue of stringvalues.split('&')) {
+        const kv = strvalue.split('=');
+        const input = inputs[kv[0]]
+        if (input) {
+            input.value = kv[1].replace('#')
+        }
+    }
+}
 
 run();
 

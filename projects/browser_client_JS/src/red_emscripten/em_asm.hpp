@@ -21,7 +21,7 @@ Author(s): Jonathan Poelen
 #pragma once
 
 #ifdef IN_IDE_PARSER
-# define RED_EM_ASM(...)
+# define RED_EM_ASM(jscode, ...) [](auto&&...){}(__VA_ARGS__)
 # define RED_EM_ASM_INT(...) int()
 #else
 # include <emscripten/em_asm.h>

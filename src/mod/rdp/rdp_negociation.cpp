@@ -368,9 +368,9 @@ RdpNegociation::RdpNegociation(
     , has_managed_drive(has_managed_drive)
 	, send_channel_index(0)
 {
-    this->negociation_result.front_width = safe_int(info.screen_info.width);
+    this->negociation_result.front_width = info.screen_info.width;
     this->negociation_result.front_width -= this->negociation_result.front_width % 4;
-    this->negociation_result.front_height = safe_int(info.screen_info.height);
+    this->negociation_result.front_height = info.screen_info.height;
 
     if (this->cbAutoReconnectCookie) {
         ::memcpy(this->autoReconnectCookie, info.autoReconnectCookie, sizeof(this->autoReconnectCookie));

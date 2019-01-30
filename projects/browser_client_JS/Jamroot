@@ -22,6 +22,7 @@ include $(JAM_INCLUDE_PATH)/libs.jam ;
 EXE_DEPENDENCIES += <cxxflags>"-s ABORTING_MALLOC=0" ;
 
 constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
+constant JS_SOURCE_MAP : [ setvar JS_SOURCE_MAP : "http://localhost:3389//" ] ; # last `/` removed by bjam...
 
 project redjs
     : requirements
@@ -56,8 +57,7 @@ project redjs
     <variant>debug:<cxxflags>-g
     <variant>debug:<cxxflags>-g4
     <variant>debug:<cxxflags>--emit-symbol-map
-    # last `/` removed by bjam...
-    <variant>debug:<cxxflags>"--source-map-base http://localhost:3389//"
+    <variant>debug:<cxxflags>"--source-map-base "$(JS_SOURCE_MAP)
     <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
 
     <variant>release:<cxxflags>-O3
@@ -147,14 +147,14 @@ actions exenode
   node $(>:S=.js) && : > $(<)
 }
 
-rule test-run ( name : objects + : requirements * )
+rule test-run ( name : objs + : requirements * )
 {
-    if src/core/error.bc in $(objects)
+    if src/core/error.bc in $(objs)
     {
-        objects += register_exception.bc ;
+        objs += register_exception.bc ;
     }
 
-    exejs $(name).em : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
+    exejs $(name).em : $(objs) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
     make $(name) : $(name).em : @exenode ;
 }
 
