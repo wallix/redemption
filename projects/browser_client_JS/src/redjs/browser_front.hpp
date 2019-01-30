@@ -92,6 +92,8 @@ public:
     void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override;
 
 private:
+    Rect intersect(Rect const& a, Rect const& b);
+
     uint16_t width;
     uint16_t height;
     bool verbose;

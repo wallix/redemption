@@ -21,16 +21,10 @@ Author(s): Jonathan Poelen
 #include "acl/auth_api.hpp"
 #include "configs/config.hpp"
 #include "core/client_info.hpp"
-#include "core/set_server_redirection_target.hpp"
-#include "front/client_front.hpp"
 #include "mod/rdp/new_mod_rdp.hpp"
-#include "utils/fixed_random.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/theme.hpp"
-
-#include <memory>
-#include <string>
 
 #include "red_emscripten/bind.hpp"
 #include "red_emscripten/em_asm.hpp"
@@ -40,33 +34,81 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_transport.hpp"
 #include "redjs/browser_front.hpp"
 
+#include <chrono>
+
 
 using Ms = std::chrono::milliseconds;
 
 struct RdpClient
 {
+    struct JsReportMessage : NullReportMessage
+    {
+        void report(const char * reason, const char * message) override
+        {
+            RED_EM_ASM({
+                console.log("RdpClient: " + Pointer_stringify($0) + ": " + Pointer_stringify($1));
+            }, reason, message);
+        }
+    };
+
+    struct JsRandom : Random
+    {
+        void random(void * dest, std::size_t size) override
+        {
+            uint8_t* p = static_cast<uint8_t*>(dest);
+
+            if (size % 4) {
+                int const r = next_int();
+                switch (size % 4) {
+                    case 3: *p++ = static_cast<uint8_t>(r >> 16); [[fallthrough]];
+                    case 2: *p++ = static_cast<uint8_t>(r >> 8); [[fallthrough]];
+                    case 1: *p++ = static_cast<uint8_t>(r);
+                }
+            }
+
+            for (std::size_t i = 0, ie = size / 4; i < ie; ++i) {
+                int const r = next_int();
+                *p++ = static_cast<uint8_t>(r >> 24);
+                *p++ = static_cast<uint8_t>(r >> 16);
+                *p++ = static_cast<uint8_t>(r >> 8);
+                *p++ = static_cast<uint8_t>(r);
+            }
+        }
+
+        int next_int() noexcept
+        {
+            return RED_EM_ASM_INT({ return Math.random() * 4294967296 });
+        }
+    };
+
+    struct JsAuth : NullAuthentifier
+    {
+        void set_auth_error_message(const char * error_message) override
+        {
+            RED_EM_ASM({
+                console.log("RdpClient: " + Pointer_stringify($0));
+            }, error_message);
+        }
+    };
+
     std::unique_ptr<mod_api> mod;
 
-    uint64_t verbose = 0xfffff;
-    std::string target_device = "10.10.46.73";
-
-    std::string screen_output;
+    uint64_t verbose;
 
     redjs::BrowserTransport browser_trans;
 
     ClientInfo client_info;
 
     redjs::BrowserFront front = redjs::BrowserFront(client_info.screen_info, verbose);
-    NullReportMessage report_message;
+    JsReportMessage report_message;
     SessionReactor session_reactor;
-    TimeSystem system_timeobj;
 
     Inifile ini;
 
     // TODO JsRandom
-    FixedRandom lcg_gen;
+    JsRandom lcg_gen;
     LCGTime lcg_timeobj;
-    NullAuthentifier authentifier;
+    JsAuth authentifier;
     RedirectionInfo redir_info;
 
     std::array<unsigned char, 28> server_auto_reconnect_packet;
@@ -82,6 +124,8 @@ struct RdpClient
         client_info.screen_info.height = 600;
         client_info.screen_info.bpp = BitsPerPixel{24};
 
+        client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
+
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
@@ -90,7 +134,7 @@ struct RdpClient
         ModRDPParams mod_rdp_params(
             username.c_str(),
             password.c_str(),
-            target_device.c_str(),
+            "0.0.0.0",
             "0.0.0.0", // client ip is silenced
             /*front.keymap.key_flags*/ 0,
             font,

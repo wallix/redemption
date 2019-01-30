@@ -24,8 +24,36 @@ Author(s): Jonathan Poelen
 #include "red_emscripten/em_asm.hpp"
 
 #include "core/RDP/bitmapupdate.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "utils/log.hpp"
 
+namespace
+{
+    constexpr char char_hex[] = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f',
+    };
+
+    inline std::array<char, 8> rdp_color_to_js_color(RDPColor c, gdi::ColorCtx color_ctx) noexcept
+    {
+        std::array<char, 8> r;
+
+        auto* p = r.data();
+        *p++ = '#';
+
+        auto write_hex = [&p](uint8_t byte){
+            *p++ = char_hex[byte >> 4];
+            *p++ = char_hex[byte & 0xf];
+        };
+
+        const BGRColor color = color_decode(c, color_ctx);
+        write_hex(color.red());
+        write_hex(color.green());
+        write_hex(color.blue());
+
+        *p++ = '\0';
+        return r;
+    }
+}
 
 namespace redjs
 {
@@ -47,12 +75,29 @@ bool BrowserFront::must_be_stop_capture()
     return false;
 }
 
-// Rect BrowserFront::intersect(Rect const& a, Rect const& b)
-// {
-//     return a.intersect(width, height).intersect(b);
-// }
+Rect BrowserFront::intersect(Rect const& a, Rect const& b)
+{
+    return a.intersect(width, height).intersect(b);
+}
 
-void BrowserFront::draw(RDPOpaqueRect const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
+void BrowserFront::draw(RDPOpaqueRect const & cmd, Rect clip, gdi::ColorCtx color_ctx)
+{
+    // LOG(LOG_INFO, "BrowserFront::RDPOpaqueRect");
+
+    const Rect trect = intersect(clip, cmd.rect);
+
+    RED_EM_ASM(
+        {
+            Module.RdpClientEventTable[$0].drawRect($1, $2, $3, $4, Pointer_stringify($5));
+        },
+        this,
+        trect.x,
+        trect.y,
+        trect.cx,
+        trect.cy,
+        rdp_color_to_js_color(cmd.color, color_ctx).data()
+    );
+}
 
 void BrowserFront::draw(const RDPScrBlt & /*cmd*/, Rect /*clip*/) { }
 void BrowserFront::draw(const RDPDestBlt & /*cmd*/, Rect /*clip*/) { }
@@ -86,11 +131,7 @@ void BrowserFront::draw(const RDP::RAIL::NonMonitoredDesktop & /*unused*/) { }
 
 void BrowserFront::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
-    // LOG(LOG_INFO, "JsFront::RDPBitmapData");
-
-    // void ctx.drawImage(image, dx, dy);
-    // void ctx.drawImage(image, dx, dy, dWidth, dHeight);
-    // void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    // LOG(LOG_INFO, "BrowserFront::RDPBitmapData");
 
     redjs::ImageData image(bmp);
 
@@ -122,7 +163,7 @@ BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, Bi
     this->screen_info.height = height;
     this->screen_info.bpp = bpp;
     if (this->verbose) {
-        LOG(LOG_INFO, "JsFront::server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
+        LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
     }
     return ResizeResult::instant_done;
 }
@@ -137,14 +178,14 @@ void BrowserFront::send_to_channel(
     std::size_t /*length*/, std::size_t /*chunk_size*/, int /*flags*/)
 {
     if (this->verbose) {
-        LOG(LOG_INFO, "JsFront::send_to_channel");
+        LOG(LOG_INFO, "BrowserFront::send_to_channel");
     }
 }
 
 void BrowserFront::update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/)
 {
     if (this->verbose) {
-        LOG(LOG_INFO, "JsFront::update_pointer_position");
+        LOG(LOG_INFO, "BrowserFront::update_pointer_position");
     }
 }
 

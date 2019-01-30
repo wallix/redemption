@@ -2,11 +2,25 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <style>
+        body {
+            display: flex;
+        }
+        form {
+            display:inline;
+            vertical-align:top;
+        }
+
+        input {
+            display: flex;
+            flex-direction: column;
+        }
+    </style>
 </head>
 <body>
 
 <canvas id="canvas" width="800" height="600"></canvas>
-<form id="login" method="get" action="#" style="display:inline;vertical-align:top">
+<form id="login" method="get" action="#">
     <input type="text" id="user" name="user" value="x" placeholder="Username"/>
     <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
     <input type="submit" value="New Connection">
@@ -21,7 +35,8 @@ const Module = WallixModule({
 const createRdpClient = (function(Module) {
     const HEAPU8 = Module.HEAPU8;
     const identity = (x) => x;
-    const wrappersCb = {
+
+    const wrappersCbDraw = {
         drawImage: function(cb) {
             return function(idata, w, h, dx, dy, sz, sy, dw, dh) {
                 const data = HEAPU8.subarray(idata, idata + w * h * 4);
@@ -30,6 +45,13 @@ const createRdpClient = (function(Module) {
             };
         },
 
+        drawRect: function(cb) {
+            return cb;
+        },
+    }
+
+    const wrappersCb = {
+        ...wrappersCbDraw,
         socketOpen: identity,
         socketClose: identity,
         socketMessage: identity,
@@ -117,6 +139,9 @@ const createRdpClient = (function(Module) {
                 socket.close();
             };
             rdpclient = new Module.RdpClient(username || "", password || "", verbosity || 0);
+            for (eventName in wrappersCbDraw) {
+                rdpclient[eventName] = console.log.bind(console, eventName);
+            }
 
             Module.RdpClientEventTable[rdpclient.thisptr()] = events;
 
@@ -166,8 +191,12 @@ function run() {
         user_input.value,
         pass_input.value,
         0/*xff*/);
-    rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     rdpclient.on('socketClose', () => console.log('RdpClient close'));
+    rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
+    rdpclient.on('drawRect', function(x, y, w, h, color) {
+        canvas.fillStyle = color;
+        canvas.fillRect(x,y,w,h);
+    });
 }
 
 login.onsubmit = (e) => {
@@ -178,7 +207,7 @@ login.onsubmit = (e) => {
     run();
 };
 
-canvas.fillStyle = 0xffff00;
+canvas.fillStyle = 'black';
 canvas.fillRect(0,0,800,600);
 
 const stringvalues = document.URL.split('?')[1];
