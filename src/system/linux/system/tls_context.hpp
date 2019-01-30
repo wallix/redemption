@@ -551,7 +551,9 @@ public:
             error_message->clear();
         }
 
-        LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+//        LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+        LOG(LOG_INFO, "Connected to target using TLS version %s", SSL_get_version(ssl));
+
         return Transport::TlsResult::Ok;
     }
 
