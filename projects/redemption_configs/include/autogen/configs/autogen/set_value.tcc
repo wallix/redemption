@@ -609,6 +609,18 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 static_cast<cfg::client::tls_support&>(this->variables)
             );
         }
+        else if (0 == strcmp(key, "tls_min_level")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::tls_min_level&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+            ::configs::post_set_value(
+                this->variables,
+                static_cast<cfg::client::tls_min_level&>(this->variables)
+            );
+        }
         else if (0 == strcmp(key, "bogus_neg_request")) {
             ::configs::parse_and_log(
                 context, key,

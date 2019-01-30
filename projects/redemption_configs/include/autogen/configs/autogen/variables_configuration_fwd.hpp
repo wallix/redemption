@@ -76,6 +76,7 @@ namespace cfg {
         struct auto_adjust_performance_flags;
         struct tls_fallback_legacy;
         struct tls_support;
+        struct tls_min_level;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;

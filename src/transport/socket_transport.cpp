@@ -95,7 +95,7 @@ size_t SocketTransport::get_public_key_length() const
 }
 
 void SocketTransport::enable_server_tls(const char * certificate_password,
-                                        const char * ssl_cipher_list)
+                                        const char * ssl_cipher_list, uint32_t tls_min_level)
 {
     if (this->tls != nullptr) {
         // TODO this should be an error, no need to commute two times to TLS
@@ -105,7 +105,7 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
-    this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list);
+    this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level);
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }
