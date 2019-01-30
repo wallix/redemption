@@ -717,7 +717,7 @@ namespace X224
                         LOG(LOG_INFO, "CR Recv: PROTOCOL RDP");
                     }
                     if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_TLS){
-                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS 1.0");
+                        LOG(LOG_INFO, "CR Recv: PROTOCOL TLS");
                     }
                     if (this->rdp_neg_requestedProtocols & X224::PROTOCOL_HYBRID){
                         LOG(LOG_INFO, "CR Recv: PROTOCOL HYBRID");
@@ -1031,7 +1031,7 @@ namespace X224
                             LOG(LOG_INFO, "CC Recv: PROTOCOL RDP");
                             break;
                         case X224::PROTOCOL_TLS:
-                            LOG(LOG_INFO, "CC Recv: PROTOCOL TLS 1.0");
+                            LOG(LOG_INFO, "CC Recv: PROTOCOL TLS");
                             break;
                         case X224::PROTOCOL_HYBRID:
                             LOG(LOG_INFO, "CC Recv: PROTOCOL HYBRID");
@@ -1129,7 +1129,7 @@ namespace X224
                         LOG(LOG_INFO, "CC Send: PROTOCOL RDP");
                     break;
                     case X224::PROTOCOL_TLS:
-                        LOG(LOG_INFO, "CC Send: PROTOCOL TLS 1.0");
+                        LOG(LOG_INFO, "CC Send: PROTOCOL TLS");
                     break;
                     case X224::PROTOCOL_HYBRID:
                         LOG(LOG_INFO, "CC Send: PROTOCOL HYBRID");

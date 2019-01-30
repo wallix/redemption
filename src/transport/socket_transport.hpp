@@ -77,7 +77,7 @@ public:
 
     size_t get_public_key_length() const override;
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level) override;
 
     TlsResult enable_client_tls(bool server_cert_store,
                                 ServerCertCheck server_cert_check,

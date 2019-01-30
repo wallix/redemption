@@ -186,6 +186,9 @@
 
 "tls_support = boolean(default=True)\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"tls_min_level = integer(min=0, default=2)\n\n"
+
 "# Needed to connect with jrdp, based on bogus X224 layer code.\n"
 "#_advanced\n"
 "bogus_neg_request = boolean(default=False)\n\n"

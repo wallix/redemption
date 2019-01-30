@@ -851,6 +851,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
+    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2 <br/>
+    /// type: unsigned int <br/>
+    /// value{2} <br/>
+    struct client::tls_min_level {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "client"; }
+        static constexpr char const * name() { return "tls_min_level"; }
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{2};
+    };
     /// Needed to connect with jrdp, based on bogus X224 layer code. <br/>
     /// type: bool <br/>
     /// value{0} <br/>
@@ -4604,6 +4617,7 @@ struct client
 , cfg::client::auto_adjust_performance_flags
 , cfg::client::tls_fallback_legacy
 , cfg::client::tls_support
+, cfg::client::tls_min_level
 , cfg::client::bogus_neg_request
 , cfg::client::bogus_user_id
 , cfg::client::disable_tsk_switch_shortcuts

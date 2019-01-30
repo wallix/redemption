@@ -618,11 +618,12 @@ public:
             error_message->clear();
         }
 
-        LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+//        LOG(LOG_INFO, "TLSContext::enable_client_tls() done");
+        LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(this->allocated_ssl));
         return Transport::TlsResult::Ok;
     }
 
-    void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list)
+    void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -817,6 +818,23 @@ public:
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2);
         SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3);
 
+        switch (tls_min_level){
+        default:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_2);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            break;
+        case 2:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1_1);
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            break;
+        case 1:
+            SSL_CTX_set_options(ctx, SSL_OP_NO_TLSv1);
+            break;
+        case 0:
+            break;
+        }
+
 //        LOG(LOG_INFO, "TLSContext::SSL_CTX_set_ciphers(HIGH:!ADH:!3DES)");
 //        SSL_CTX_set_cipher_list(ctx, "ALL:!aNULL:!eNULL:!ADH:!EXP");
 // Not compatible with MSTSC 6.1 on XP and W2K3
@@ -907,7 +925,8 @@ public:
         this->tls = true;
 
         BIO_free(bio_err);
-        LOG(LOG_INFO, "TLSContext::enable_server_tls() done");
+//        LOG(LOG_INFO, "TLSContext::enable_server_tls() done");
+        LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(ssl));
     }
 
     ssize_t privpartial_recv_tls(uint8_t * data, size_t len)
