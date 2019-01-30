@@ -1030,6 +1030,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "HIGH:!ADH:!3DES:!SHA";
     };
+    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2 <br/>
+    /// type: unsigned int <br/>
+    /// value{2} <br/>
+    struct client::tls_min_level {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "tls_min_level";
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{2};
+    };
     /// type: bool <br/>
     /// value{false} <br/>
     struct client::show_target_user_in_f12_message {
@@ -4780,6 +4793,7 @@ struct session_log
 struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
+, cfg::client::tls_min_level
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default

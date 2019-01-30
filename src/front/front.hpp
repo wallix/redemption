@@ -1347,6 +1347,7 @@ public:
                     this->trans.enable_server_tls(
                         this->ini.get<cfg::globals::certificate_password>(),
                         this->ini.get<cfg::client::ssl_cipher_list>().c_str());
+                        this->ini.get<cfg::client::tls_min_level>());
                 }
 
                 this->state = BASIC_SETTINGS_EXCHANGE;

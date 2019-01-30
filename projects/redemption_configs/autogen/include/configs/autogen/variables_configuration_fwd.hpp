@@ -89,6 +89,7 @@ namespace cfg {
         struct fast_path;
         struct enable_suppress_output;
         struct ssl_cipher_list;
+        struct tls_min_level;
         struct show_target_user_in_f12_message;
         struct enable_new_pointer_update;
         struct bogus_ios_glyph_support_level;

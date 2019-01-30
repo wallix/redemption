@@ -246,6 +246,9 @@
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
 "ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"tls_min_level = integer(min=0, default=2)\n\n"
+
 "show_target_user_in_f12_message = boolean(default=False)\n\n"
 
 "enable_new_pointer_update = boolean(default=False)\n\n"

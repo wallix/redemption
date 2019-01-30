@@ -293,6 +293,10 @@
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
 "#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"# min = 0\n"
+"#tls_min_level = 2\n\n"
+
 "# value: 0 or 1\n"
 "#show_target_user_in_f12_message = 0\n\n"
 
