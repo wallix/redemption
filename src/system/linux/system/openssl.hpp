@@ -924,7 +924,7 @@ public:
         this->tls = true;
 
         BIO_free(bio_err);
-        LOG(LOG_INFO, "TLSContext::enable_server_tls() done");
+        LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(ssl));
     }
 
     ssize_t privpartial_recv_tls(uint8_t * data, size_t len)
