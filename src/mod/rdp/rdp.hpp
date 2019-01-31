@@ -186,7 +186,15 @@ private:
         const bool bogus_ios_rdpdr_virtual_channel;
 
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
-        const bool enable_session_probe;
+
+        struct SessionProbeStartParams {
+            const bool enabled;
+            
+            SessionProbeStartParams(const ModRDPParams & mod_rdp_params)
+                : enabled(mod_rdp_params.enable_session_probe) 
+                {}
+        } session_probe;
+
 
         const bool                        use_session_probe_to_launch_remote_program;
         std::string                       session_probe_arguments;
@@ -319,7 +327,7 @@ private:
             , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
             , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 
-            , enable_session_probe(mod_rdp_params.enable_session_probe)
+            , session_probe(mod_rdp_params)
             , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
 
             , session_probe_arguments(mod_rdp_params.session_probe_arguments)
@@ -675,7 +683,7 @@ private:
                     fsvc_params);
 
             if (this->file_system_to_server_sender) {
-                if (this->enable_session_probe
+                if (this->session_probe.enabled
                 || this->use_application_driver) {
                     this->file_system_virtual_channel->enable_session_probe_drive();
                 }
@@ -1747,7 +1755,7 @@ private:
             const bool bogus_refresh_rect,
             const Translation::language_t & lang)
         {
-            assert(this->enable_session_probe);
+            assert(this->session_probe.enabled);
             if (this->session_probe_launcher){
                 if (!this->clipboard_virtual_channel) {
                     this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
@@ -2181,7 +2189,7 @@ public:
         // There should be a way to prepare some objects useful for the remaining work to do
 
         if (this->channels.remote_program) {
-            if (this->channels.enable_session_probe) {
+            if (this->channels.session_probe.enabled) {
                 this->channels.init_remote_program_with_session_probe(front, *this, mod_rdp_params, this->session_reactor, this->lang, this->font, this->authentifier);
             }
             else {
@@ -2189,12 +2197,12 @@ public:
             }
         }
         else { // ! this->remote_program
-            if (this->channels.enable_session_probe) {
+            if (this->channels.session_probe.enabled) {
                 this->channels.init_no_remote_program_with_session_probe(*this, info, mod_rdp_params, program, directory, this->session_reactor);
-            } // ! this->enable_session_probe
+            } // ! this->session_probe.enabled
             else  {
                 this->channels.init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
-            } // this->enable_session_probe
+            } // this->session_probe.enabled
         } // this->remote_program
 
         this->negociation_result.front_width = safe_int(info.screen_info.width);
@@ -2206,7 +2214,7 @@ public:
 
 
     ~mod_rdp() override {
-        if (this->channels.enable_session_probe) {
+        if (this->channels.session_probe.enabled) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
@@ -2329,7 +2337,7 @@ public:
             && !this->input_event_disabled) {
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
-                if (this->channels.enable_session_probe) {
+                if (this->channels.session_probe.enabled) {
 
                     if (!this->channels.session_probe_virtual_channel) {
                         this->channels.create_session_probe_virtual_channel(
@@ -3131,7 +3139,7 @@ public:
                             this->deactivation_reactivation_in_progress = false;
 
                             if (!this->already_upped_and_running) {
-                                if (this->channels.enable_session_probe) {
+                                if (this->channels.session_probe.enabled) {
                                     this->channels.do_enable_session_probe(
                                                 this->front,
                                                 this->stc,
@@ -3151,7 +3159,7 @@ public:
                                 this->already_upped_and_running = true;
                             }
 
-                            if (this->channels.enable_session_probe
+                            if (this->channels.session_probe.enabled
                             &&  this->session_probe_enable_launch_mask) {
                                 this->delayed_start_capture = true;
 
@@ -3494,7 +3502,7 @@ public:
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
-                if (this->channels.enable_session_probe) {
+                if (this->channels.session_probe.enabled) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
                     this->disable_input_event_and_graphics_update(
@@ -5008,7 +5016,7 @@ public:
 
         this->fd_event->disable_timeout();
 
-        if (this->channels.enable_session_probe) {
+        if (this->channels.session_probe.enabled) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->session_probe_enable_launch_mask;
             this->disable_input_event_and_graphics_update(
@@ -5053,7 +5061,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
-            if (this->channels.enable_session_probe) {
+            if (this->channels.session_probe.enabled) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->session_probe_enable_launch_mask;
                 this->disable_input_event_and_graphics_update(

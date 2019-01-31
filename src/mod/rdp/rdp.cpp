@@ -95,7 +95,7 @@ void mod_rdp::init_negociate_event_(
         this->channels.enable_auth_channel,
         this->trans, this->front, info, this->redir_info,
         this->gen, timeobj, mod_rdp_params, this->report_message,
-        (this->channels.file_system_drive_manager.has_managed_drive() || this->channels.enable_session_probe)
+        (this->channels.file_system_drive_manager.has_managed_drive() || this->channels.session_probe.enabled)
     ))
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
@@ -147,7 +147,7 @@ void mod_rdp::init_negociate_event_(
 
             this->report_message.report("CONNECTION_FAILED", "Logon timer expired.");
 
-            if (this->channels.enable_session_probe) {
+            if (this->channels.session_probe.enabled) {
                 const bool disable_input_event     = false;
                 const bool disable_graphics_update = false;
                 this->disable_input_event_and_graphics_update(
