@@ -81,7 +81,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
             switch (m.type) {
                 case Pck::DataOut: trans.send(m.s); break;
                 case Pck::DataIn: (void)trans.partial_read(buf, 3); break;
-                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::NlaClientIn:
@@ -166,7 +166,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                     in = in.array_from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
-                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::NlaClientIn:
@@ -203,7 +203,7 @@ RED_AUTO_TEST_CASE(TestRecorderTransport)
                     in = in.array_from_offset(3);
                     break;
                 case Pck::DataOut: trans.send(m.s); break;
-                case Pck::ServerCert: trans.enable_server_tls("", ""); break;
+                case Pck::ServerCert: trans.enable_server_tls("", "", 0); break;
                 case Pck::Disconnect: trans.disconnect(); break;
                 case Pck::Connect: trans.connect(); break;
                 case Pck::NlaClientIn:

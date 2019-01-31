@@ -248,10 +248,11 @@ Transport::TlsResult ReplayTransport::enable_client_tls(
 }
 
 void ReplayTransport::enable_server_tls(
-    const char* certificate_password, const char* ssl_cipher_list)
+    const char* certificate_password, const char* ssl_cipher_list, uint32_t tls_min_level)
 {
     (void)certificate_password;
     (void)ssl_cipher_list;
+    (void)tls_min_level;
 }
 
 bool ReplayTransport::connect()

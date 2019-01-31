@@ -80,7 +80,7 @@ public:
         ServerNotifier & server_notifier, const char * certif_path
     ) override;
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level) override;
 
     array_view_const_u8 get_public_key() const override;
 

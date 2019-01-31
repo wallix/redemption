@@ -174,7 +174,7 @@ public:
                 frontConn.send(stream_to_avu8(front_x224_stream));
 
                 if (is_tls_client || is_nla_client) {
-                    frontConn.enable_server_tls("inquisition", nullptr);
+                    frontConn.enable_server_tls("inquisition", nullptr, 0);
                 }
 
                 if (is_nla_client) {
