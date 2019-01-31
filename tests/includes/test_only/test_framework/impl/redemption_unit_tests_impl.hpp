@@ -27,6 +27,7 @@ Author(s): Jonathan Poelen
 #endif
 
 #include <boost/test/auto_unit_test.hpp>
+#include <boost/version.hpp>
 
 
 #define RED_AUTO_TEST_CASE BOOST_AUTO_TEST_CASE
@@ -66,3 +67,16 @@ Author(s): Jonathan Poelen
 #define RED_REQUIRE_MESSAGE BOOST_REQUIRE_MESSAGE
 #define RED_REQUIRE_EQUAL_COLLECTIONS BOOST_REQUIRE_EQUAL_COLLECTIONS
 #define RED_REQUIRE_PREDICATE BOOST_REQUIRE_PREDICATE
+
+#if BOOST_VERSION < 106300
+namespace boost {
+namespace test_tools {
+namespace tt_detail {
+
+template<>
+struct BOOST_TEST_DECL print_log_value<decltype(nullptr)> {
+    void operator()(std::ostream& ostr, decltype(nullptr) t);
+};
+
+}}}
+#endif
