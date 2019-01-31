@@ -286,7 +286,6 @@ public:
                         const bool is_from_remote_session = false;
                         this->log_siem_info(flags, header, this->clip_data.requestedFormatId, receiver.data_to_dump, is_from_remote_session);
 
-
                         for (RDPECLIP::FileDescriptor file : receiver.files_descriptors) {
                             this->clip_data.file_descr_list.push_back(file);
                         }
@@ -757,23 +756,21 @@ public:
 
             switch (this->channel_file.get_direction()) {
 
+                case ChannelFile::FILE_FROM_SERVER:
+                    this->send_message_to_client(out_stream.get_offset(),
+                                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                                out_stream.get_data(),
+                                                out_stream.get_offset());
+                    break;
 
+                case ChannelFile::FILE_FROM_CLIENT:
+                    this->send_message_to_server(out_stream.get_offset(),
+                                                CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
+                                                out_stream.get_data(),
+                                                out_stream.get_offset());
+                    break;
 
-            case ChannelFile::FILE_FROM_SERVER:
-                this->send_message_to_client(out_stream.get_offset(),
-                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                                            out_stream.get_data(),
-                                            out_stream.get_offset());
-                break;
-
-            case ChannelFile::FILE_FROM_CLIENT:
-                this->send_message_to_server(out_stream.get_offset(),
-                                            CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL,
-                                            out_stream.get_data(),
-                                            out_stream.get_offset());
-                break;
-
-            default: break;
+                default: break;
             }
         }
     }

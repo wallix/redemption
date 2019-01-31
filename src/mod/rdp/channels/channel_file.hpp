@@ -153,17 +153,18 @@ public:
     }
 
     void read_data(uint8_t * buffer, const size_t data_len) {
-        std::ifstream file(this->file_path.c_str());
-        if (file.good()) {
-            this->fd = unique_fd(this->file_path.c_str(), O_RDONLY | O_APPEND | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
-            ::read(fd.fd(), buffer, data_len);
+        this->fd = unique_fd(this->file_path.c_str(), O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
+//         std::ifstream file(this->file_path.c_str());
+        if (this->fd.is_open()) {
 
-            this->fd.close();
-            if (!this->fd.is_open()) {
-                LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
+            size_t read_size = ::read(fd.fd(), buffer, data_len);
+
+            if (read_size != data_len) {
+                LOG(LOG_WARNING,"Read error, can't read data (%zu/%zu) in %s ", read_size, data_len, this->file_path);
             }
+            this->fd.close();
         } else {
-            LOG(LOG_WARNING,"Error,file %s doen't exist", this->file_path);
+            LOG(LOG_WARNING,"File error, can't open %s", this->file_path);
         }
     }
 
