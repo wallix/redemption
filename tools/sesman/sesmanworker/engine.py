@@ -1150,24 +1150,12 @@ class Engine(object):
     def release_all_target(self):
         self.checkout.release_all()
 
-    def get_pidhandler(self, pid):
-        if not self.pidhandler:
-            try:
-                from wabengine.common.interface import IPBSessionHandler
-                from wabengine.common.utils import ProcessSessionHandler
-                self.pidhandler = IPBSessionHandler(
-                    ProcessSessionHandler(int(pid))
-                )
-            except Exception as e:
-                self.pidhandler = None
-        return self.pidhandler
-
     def start_session(self, auth, pid, effective_login=None, **kwargs):
         Logger().debug("**** CALL wabengine START SESSION ")
         try:
             self.session_id, self.start_time = self.wabengine.start_session(
                 auth,
-                self.get_pidhandler(pid),
+                pid=pid,
                 effective_login=effective_login,
                 **kwargs
             )
