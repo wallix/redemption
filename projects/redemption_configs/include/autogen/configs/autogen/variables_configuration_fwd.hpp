@@ -167,6 +167,7 @@ namespace cfg {
         struct remoteapp_bypass_legal_notice_delay;
         struct remoteapp_bypass_legal_notice_timeout;
         struct experimental_fix_input_event_sync;
+        struct split_domain;
     };
 
     struct metrics {

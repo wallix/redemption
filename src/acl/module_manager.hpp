@@ -1470,6 +1470,8 @@ public:
 
                 mod_rdp_params.experimental_fix_input_event_sync   = this->ini.get<cfg::mod_rdp::experimental_fix_input_event_sync>();
 
+                mod_rdp_params.split_domain                        = this->ini.get<cfg::mod_rdp::split_domain>();
+
                 try {
                     const char * const name = "RDP Target";
 

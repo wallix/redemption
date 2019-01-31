@@ -2213,6 +2213,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value{1};
     };
+    /// Force to split target domain and username with '@' separator. <br/>
+    /// type: bool <br/>
+    /// value{0} <br/>
+    struct mod_rdp::split_domain {
+        static constexpr bool is_sesman_to_proxy() { return 0; }
+        static constexpr bool is_proxy_to_sesman() { return 0; }
+        static constexpr char const * section() { return "mod_rdp"; }
+        static constexpr char const * name() { return "split_domain"; }
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{0};
+    };
 
     /// type: bool <br/>
     /// value{0} <br/>
@@ -4871,6 +4884,7 @@ struct mod_rdp
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_delay
 , cfg::mod_rdp::remoteapp_bypass_legal_notice_timeout
 , cfg::mod_rdp::experimental_fix_input_event_sync
+, cfg::mod_rdp::split_domain
 { static constexpr bool is_section = true; };
 
 struct metrics

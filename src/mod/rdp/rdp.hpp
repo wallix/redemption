@@ -1260,28 +1260,37 @@ public:
         const char * username_pos = nullptr;
         size_t       username_len = 0;
         const char * separator = strchr(mod_rdp_params.target_user, '\\');
-        if (separator)
+        const char * separator_a = strchr(mod_rdp_params.target_user, '@');
+
+        username_pos = mod_rdp_params.target_user;
+        username_len = strlen(username_pos);
+
+        if (separator && !separator_a)
         {
+            // Legacy Login
+            // Split only if there's no @, otherwise not a legacy login
             domain_pos   = mod_rdp_params.target_user;
             domain_len   = separator - mod_rdp_params.target_user;
             username_pos = ++separator;
             username_len = strlen(username_pos);
         }
-        else
+        else if (mod_rdp_params.split_domain)
         {
-            separator = strchr(mod_rdp_params.target_user, '@');
+            // Old Behavior
             if (separator)
             {
-                domain_pos   = separator + 1;
+                domain_pos   = mod_rdp_params.target_user;
+                domain_len   = separator - mod_rdp_params.target_user;
+                username_pos = ++separator;
+                username_len = strlen(username_pos);
+            }
+            else if (separator_a)
+            {
+                domain_pos   = separator_a + 1;
                 domain_len   = strlen(domain_pos);
                 username_pos = mod_rdp_params.target_user;
-                username_len = separator - mod_rdp_params.target_user;
+                username_len = separator_a - mod_rdp_params.target_user;
                 LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
-            }
-            else
-            {
-                username_pos = mod_rdp_params.target_user;
-                username_len = strlen(username_pos);
             }
         }
 

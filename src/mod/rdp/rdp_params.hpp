@@ -217,6 +217,8 @@ struct ModRDPParams {
 
     bool experimental_fix_input_event_sync = true;
 
+    bool split_domain = false;
+
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;
 
@@ -426,4 +428,3 @@ struct ModRDPParams {
 #undef RDP_PARAMS_LOG_GET
     }   // void log() const
 };  // struct ModRDPParams
-
