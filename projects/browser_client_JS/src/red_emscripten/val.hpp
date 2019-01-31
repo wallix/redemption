@@ -14,35 +14,20 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 Product name: redemption, a FLOSS RDP proxy
-Copyright (C) Wallix 2010-2018
+Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
 #pragma once
 
-#include <emscripten/bind.h>
+#include "utils/sugar/bytes_view.hpp"
+
+#include <emscripten/val.h>
 
 namespace redjs
 {
-    template<class T>
-    struct class_ : emscripten::class_<T>
+    inline emscripten::val emval_from_view(const_bytes_view av)
     {
-        using em_class = emscripten::class_<T>;
-
-        using em_class::em_class;
-
-        template<typename... ConstructorArgs, typename... Policies>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(Policies... policies) const
-        {
-            em_class::template constructor<ConstructorArgs...>(policies...);
-            return *this;
-        }
-
-        template<class F>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& function_ptr(char const* name, F f) const
-        {
-            this->function(name, +f, emscripten::allow_raw_pointers());
-            return *this;
-        }
-    };
+        return emscripten::val(emscripten::typed_memory_view(av.size(), av.data()));
+    }
 }

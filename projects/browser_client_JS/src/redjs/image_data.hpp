@@ -20,29 +20,31 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
-#include <emscripten/bind.h>
+#include <memory>
+
+class Bitmap;
 
 namespace redjs
 {
-    template<class T>
-    struct class_ : emscripten::class_<T>
+    struct ImageData
     {
-        using em_class = emscripten::class_<T>;
+        explicit ImageData(Bitmap const& bmp);
 
-        using em_class::em_class;
+        uint8_t const* data() const noexcept;
 
-        template<typename... ConstructorArgs, typename... Policies>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& constructor(Policies... policies) const
+        unsigned width() const noexcept;
+
+        unsigned height() const noexcept;
+
+        std::size_t size() const noexcept;
+
+    private:
+        struct Deleter
         {
-            em_class::template constructor<ConstructorArgs...>(policies...);
-            return *this;
-        }
+            void operator()(void* p) noexcept;
+        };
 
-        template<class F>
-        EMSCRIPTEN_ALWAYS_INLINE class_ const& function_ptr(char const* name, F f) const
-        {
-            this->function(name, +f, emscripten::allow_raw_pointers());
-            return *this;
-        }
+        unsigned cx, cy;
+        std::unique_ptr<uint8_t[], Deleter> buf;
     };
 }

@@ -98,10 +98,10 @@ struct SesmanDialogWriterBase
             char const* dialog = " <-> ";
 
             if ((properties & sesman_io::rw) == sesman_io::sesman_to_proxy) {
-                dialog = " -> ";
+                dialog = " <- ";
             }
             else if ((properties & sesman_io::rw) == sesman_io::proxy_to_sesman) {
-                dialog = " <- ";
+                dialog = " -> ";
             }
 
             this->out

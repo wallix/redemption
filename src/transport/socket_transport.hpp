@@ -92,7 +92,7 @@ public:
 
     array_view_const_u8 get_public_key() const override;
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t enable_server_tls) override;
 
     TlsResult enable_client_tls(bool server_cert_store,
                                 ServerCertCheck server_cert_check,

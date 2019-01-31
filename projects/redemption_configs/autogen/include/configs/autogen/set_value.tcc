@@ -517,6 +517,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "tls_min_level")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::tls_min_level&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "show_target_user_in_f12_message")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1128,6 +1136,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
             ::configs::parse_and_log(
                 context, key,
                 static_cast<cfg::mod_rdp::experimental_fix_too_long_cookie&>(this->variables).value,
+                ::configs::spec_type<bool>{},
+                av
+            );
+        }
+        else if (0 == strcmp(key, "split_domain")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::mod_rdp::split_domain&>(this->variables).value,
                 ::configs::spec_type<bool>{},
                 av
             );

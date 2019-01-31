@@ -52,7 +52,7 @@ actions exehtml
 }
 
 
-type.register EXEJS : node ;
+type.register EXEJS : em ;
 generators.register-composing emscripten.exejs : CPP OBJJS : EXEJS ;
 flags emscripten.exejs INCLUDES <include> ;
 flags emscripten.exejs CXXFLAGS <cxxflags> ;

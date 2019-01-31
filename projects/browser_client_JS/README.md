@@ -67,8 +67,10 @@ source $EMSDK_PATH/emsdk_set_env.sh
 ## Run bjam
 
 ```bash
-bjam -j7 toolset=clang "cxxflags=-fcolor-diagnostics -s USE_ZLIB=1 -s USE_LIBPNG=1" debug jsclient
+bjam -j7 toolset=clang "cxxflags=-fcolor-diagnostics" debug js_client
 ```
+
+Set module name with `-s JS_MODULE_NAME=xxx`
 
 
 # Test

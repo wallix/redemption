@@ -14,7 +14,7 @@
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
    Product name: redemption, a FLOSS RDP proxy
-   Copyright (C) Wallix 2013
+   Copyright (C) Wallix 2018
    Author(s): David Fort
 
 */
@@ -34,28 +34,28 @@ class TimeObj;
  */
 class RecorderFile {
 public:
-	/** @brief type of packet */
-	enum class PacketType : uint8_t
-	{
-		DataIn,
-		DataOut,
-		ClientCert,
-		ServerCert,
-		Eof,
-		Disconnect,
-		Connect,
-		Info,
-		NlaClientIn,
-		NlaClientOut,
-		NlaServerIn,
-		NlaServerOut,
-	};
+    /** @brief type of packet */
+    enum class PacketType : uint8_t
+    {
+        DataIn,
+        DataOut,
+        ClientCert,
+        ServerCert,
+        Eof,
+        Disconnect,
+        Connect,
+        Info,
+        NlaClientIn,
+        NlaClientOut,
+        NlaServerIn,
+        NlaServerOut,
+    };
 
-	explicit RecorderFile(TimeObj& timeobj, char const* filename);
+    explicit RecorderFile(TimeObj& timeobj, char const* filename);
 
-	~RecorderFile();
+    ~RecorderFile();
 
-	void write_packet(PacketType type, const_bytes_view buffer);
+    void write_packet(PacketType type, const_bytes_view buffer);
 
 protected:
     TimeObj& timeobj;
@@ -71,16 +71,16 @@ class RecorderTransport : public Transport
 {
 public:
 
-	explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
+    explicit RecorderTransport(Transport& trans, TimeObj& timeobj, char const* filename);
 
-	void add_info(bytes_view info);
+    void add_info(bytes_view info);
 
     TlsResult enable_client_tls(
         bool server_cert_store, ServerCertCheck server_cert_check,
         ServerNotifier & server_notifier, const char * certif_path
     ) override;
 
-    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list) override;
+    void enable_server_tls(const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level) override;
 
     array_view_const_u8 get_public_key() const override;
 

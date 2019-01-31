@@ -31,6 +31,11 @@ REDEMPTION_DIAGNOSTIC_PUSH
 #include "utils/log.hpp"
 REDEMPTION_DIAGNOSTIC_POP
 
+#ifdef __EMSCRIPTEN__
+# include "red_emscripten/em_js.hpp"
+# include "red_emscripten/em_asm.hpp"
+#endif
+
 #include <iostream>
 #include <sstream>
 
@@ -65,12 +70,21 @@ namespace
     }
 # endif
 
+#ifdef __EMSCRIPTEN__
+    RED_EM_JS(bool, red_is_loggable_impl, (), {
+        return !ENVIRONMENT_IS_NODE || process.env["REDEMPTION_LOG_PRINT"] === "1";
+    })
+#else
+    bool red_is_loggable_impl()
+    {
+        auto s = std::getenv("REDEMPTION_LOG_PRINT");
+        return s && s[0] == '1';
+    }
+#endif
+
     bool is_loggable()
     {
-        static bool logprint = []{
-            auto s = std::getenv("REDEMPTION_LOG_PRINT");
-            return s && s[0] == '1';
-        }();
+        static bool logprint = red_is_loggable_impl();
         return logprint;
     }
 } // namespace
@@ -170,15 +184,23 @@ void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*N
     }
     else if (is_loggable())
     {
-        (void)priority;
         va_list ap;
         va_start(ap, format);
+
         REDEMPTION_DIAGNOSTIC_PUSH
         REDEMPTION_DIAGNOSTIC_GCC_IGNORE("-Wformat-nonliteral")
+#ifdef __EMSCRIPTEN__
+        char buffer[4096];
+        int len = std::vsnprintf(buffer, sizeof(buffer)-2, format, ap); /*NOLINT*/
+        buffer[len] = 0;
+        RED_EM_ASM({console.log(Pointer_stringify($0));}, buffer);
+#else
         std::vprintf(format, ap); /*NOLINT*/
-        REDEMPTION_DIAGNOSTIC_POP
         std::puts("");
         std::fflush(stdout);
+#endif
+        REDEMPTION_DIAGNOSTIC_POP
+
         va_end(ap);
     }
 }

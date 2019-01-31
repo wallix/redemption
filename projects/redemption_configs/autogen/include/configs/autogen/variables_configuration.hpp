@@ -1030,6 +1030,19 @@ namespace cfg {
         using mapped_type = sesman_and_spec_type;
         type value = "HIGH:!ADH:!3DES:!SHA";
     };
+    /// Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2 <br/>
+    /// type: unsigned int <br/>
+    /// value{2} <br/>
+    struct client::tls_min_level {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "client";
+        static constexpr char const * name = "tls_min_level";
+        using type = unsigned int;
+        using sesman_and_spec_type = unsigned int;
+        using mapped_type = sesman_and_spec_type;
+        type value{2};
+    };
     /// type: bool <br/>
     /// value{false} <br/>
     struct client::show_target_user_in_f12_message {
@@ -2241,6 +2254,19 @@ namespace cfg {
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
         type value{true};
+    };
+    /// Force to split target domain and username with '@' separator. <br/>
+    /// type: bool <br/>
+    /// value{false} <br/>
+    struct mod_rdp::split_domain {
+        static constexpr bool is_sesman_to_proxy = false;
+        static constexpr bool is_proxy_to_sesman = false;
+        static constexpr char const * section = "mod_rdp";
+        static constexpr char const * name = "split_domain";
+        using type = bool;
+        using sesman_and_spec_type = bool;
+        using mapped_type = sesman_and_spec_type;
+        type value{false};
     };
 
     /// type: bool <br/>
@@ -4767,6 +4793,7 @@ struct session_log
 struct client
 : cfg::client::ssl_cipher_list
 , cfg::client::keyboard_layout
+, cfg::client::tls_min_level
 , cfg::client::keyboard_layout_proposals
 , cfg::client::ignore_logon_password
 , cfg::client::performance_flags_default
@@ -4867,6 +4894,7 @@ struct mod_rdp
 , cfg::mod_rdp::log_only_relevant_clipboard_activities
 , cfg::mod_rdp::experimental_fix_input_event_sync
 , cfg::mod_rdp::experimental_fix_too_long_cookie
+, cfg::mod_rdp::split_domain
 { static constexpr bool is_section = true; };
 
 struct metrics

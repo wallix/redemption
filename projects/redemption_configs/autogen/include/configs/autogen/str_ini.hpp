@@ -293,6 +293,10 @@
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
 "#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"# min = 0\n"
+"#tls_min_level = 2\n\n"
+
 "# value: 0 or 1\n"
 "#show_target_user_in_f12_message = 0\n\n"
 
@@ -377,11 +381,11 @@
 "#persist_bitmap_cache_on_disk = 0\n\n"
 
 "# Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority.\n"
-"#_advanced\n"
+"#_hidden\n"
 "#allow_channels = *\n\n"
 
 "# Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority.\n"
-"#_advanced\n"
+"#_hidden\n"
 "#deny_channels = \n\n"
 
 "# Enables support of Client/Server Fast-Path Input/Update PDUs.\n"
@@ -689,6 +693,11 @@
 "# value: 0 or 1\n"
 "#_advanced\n"
 "#experimental_fix_too_long_cookie = 1\n\n"
+
+"# Force to split target domain and username with '@' separator.\n"
+"# value: 0 or 1\n"
+"#_advanced\n"
+"#split_domain = 0\n\n"
 
 "[metrics]\n\n"
 

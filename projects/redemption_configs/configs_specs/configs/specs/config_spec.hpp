@@ -242,6 +242,8 @@ void config_spec_definition(Writer && W)
             "HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)"
         }, set("HIGH:!ADH:!3DES:!SHA"));
 
+        W.member(ini_and_gui, no_sesman, L, type_<uint32_t>(), "tls_min_level", desc{"Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2"}, set(2));
+
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "show_target_user_in_f12_message", set(false));
 
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_new_pointer_update", set(false));
@@ -287,8 +289,8 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "cache_waiting_list", desc{"Support of Cache Waiting List (this value is ignored if Persistent Disk Bitmap Cache is disabled)."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "persist_bitmap_cache_on_disk", desc{"If enabled, the contents of Persistent Bitmap Caches are stored on disk."}, set(false));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
+        W.member(hidden_in_gui, no_sesman, L, type_<types::list<std::string>>(), "allow_channels", desc{"Enables channels names (example: channel1,channel2,etc). Character * only, activate all with low priority."}, set("*"));
+        W.member(hidden_in_gui, no_sesman, L, type_<types::list<std::string>>(), "deny_channels", desc{"Disable channels names (example: channel1,channel2,etc). Character * only, deactivate all with low priority."});
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "fast_path", desc{"Enables support of Client/Server Fast-Path Input/Update PDUs.\nFast-Path is required for Windows Server 2012 (or more recent)!"}, set(true));
 
@@ -412,6 +414,10 @@ void config_spec_definition(Writer && W)
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_fix_input_event_sync", set(true));
 
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "experimental_fix_too_long_cookie", set(true));
+
+        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "split_domain", desc{
+            "Force to split target domain and username with '@' separator."
+        }, set(false));
     });
 
     W.section("metrics", [&]

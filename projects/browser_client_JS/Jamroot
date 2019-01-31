@@ -19,6 +19,10 @@ constant NO_FFMPEG : 1 ;
 constant BOOST_STACKTRACE : 0 ;
 include $(JAM_INCLUDE_PATH)/libs.jam ;
 
+EXE_DEPENDENCIES += <cxxflags>"-s ABORTING_MALLOC=0" ;
+
+constant JS_MODULE_NAME : [ setvar JS_MODULE_NAME : "WallixModule" ] ;
+
 project redjs
     : requirements
 
@@ -43,15 +47,22 @@ project redjs
     <cxxflags>"-s FS_LOG"
     # <cxxflags>"-s EXCEPTION_CATCHING_WHITELIST='[Error]'"
 
+    <cxxflags>"-s USE_LIBPNG=1"
+    <cxxflags>"-s USE_ZLIB=1"
+
     # <cxx-lto>on
 
     <cxxflags>"-s WASM=0"
-    <cxxflags>-g
-    <cxxflags>-g4
-    <cxxflags>--emit-symbol-map
+    <variant>debug:<cxxflags>-g
+    <variant>debug:<cxxflags>-g4
+    <variant>debug:<cxxflags>--emit-symbol-map
     # last `/` removed by bjam...
-    <cxxflags>"--source-map-base http://localhost:3389//"
-    <cxxflags>"-s DEMANGLE_SUPPORT=1"
+    <variant>debug:<cxxflags>"--source-map-base http://localhost:3389//"
+    <variant>debug:<cxxflags>"-s DEMANGLE_SUPPORT=1"
+
+    <variant>release:<cxxflags>-O3
+    # <variant>release:<cxxflags>-Os
+    # <variant>release:<cxxflags>-Oz
 
     <cxxflags>-Wno-dollar-in-identifier-extension
 
@@ -60,32 +71,6 @@ project redjs
 
 using emscripten ;
 
-install pentamino
-   : [ glob ./sys/pentamino/* ] pentamino.js pentamino.html pentamino.wasm
-   : <location>$(INSTALLDIR)
-   ;
-
-objjs penta.bc : src/ftests/penta.cpp
-:
-    # <cxxflags>"-s WASM=0"
-    # <cxxflags>-g3
-;
-
-actions nothing { }
-
-rule htmljs ( name : objs + : deps * )
-{
-    exehtml $(name).js : $(objs) : $(deps) ;
-    make $(name).html : $(name).js : @nothing ;
-    make $(name).wasm : $(name).js : @nothing ;
-}
-
-htmljs pentamino : penta.bc :
-   # <cxxflags>-g3
-   <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
-   <cxxflags>"--shell-file templates/penta_template.html"
-    # <cxxflags>"-s WASM=0"
-;
 
 constant CXXFLAGS_TEST :
     <include>$(REDEMPTION_TEST_PATH)/includes
@@ -119,11 +104,8 @@ constant TEST_DEPENDENCIES :
     $(CXXFLAGS_TEST)
 ;
 
-objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
-objjs log_test.js : $(REDEMPTION_SRC_PATH)/utils/log_as_logemasm.cpp ;
-
-alias log_print.bc : log_test.bc ;
-alias log_print.o : log_test.bc ;
+objjs log_test.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logtest.cpp ;
+alias log_print.bc : $(REDEMPTION_SRC_PATH)/utils/log_as_logprint.cpp ;
 
 objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
     <conditional>@defines-for-test
@@ -132,51 +114,6 @@ objjs app_path_test.bc : $(REDEMPTION_SRC_PATH)/core/app_path.cpp :
 ;
 
 alias app_path_exe.bc : app_path_test.bc ;
-
-actions exenode
-{
-  node $(>:S=.js) && : > $(<)
-}
-
-rule test-run ( name : objects + : requirements * )
-{
-    if src/core/error.bc in $(objects)
-    {
-        objects += register_exception.bc ;
-    }
-
-    exejs $(name).node : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
-    make $(name) : $(name).node : @exenode ;
-}
-
-rule exe-main ( name : objects + : requirements * )
-{
-    exejs $(name).node : $(objects) log_test.bc : $(requirements) ;
-    make $(name) : $(name).node : @exenode ;
-}
-
-
-actions gen_targets
-{
-    sed -E '/^lib |\.cpp\.lib\.o :$/,/^;/d;
-        /^  <covfile|^  <variant|^  \$\(FFMPEG_CXXFLAGS\)|^  \$\(GCOV_NO_BUILD\)|^  <library>boost_stacktrace|\.coverage ;$/d;
-        s/^obj /objjs /;
-        s/^exe /exe-main /;
-        s/\.o /.bc /;
-        s/\.o$/.bc/;
-        s/^  <library>(.*)/  \1.bc/;
-        s/\.bc\.bc$/.bc/' \
-    ../../targets.jam | sed '/^test-run/,/^;/{
-        /^:/d;s/^  </:\n&/;t
-    }
-    /^exe-main/,/^;/{
-        /^:/d;s/^  \$/:\n&/;t
-    }' > targets.jam
-}
-
-explicit targets.jam ;
-make targets.jam : : @gen_targets ;
-
 
 alias bz2.bc ;
 alias crypto.bc ;
@@ -190,181 +127,64 @@ alias z.bc ;
 alias png.bc : libpng.bc z.bc ;
 alias ffmpeg.bc ;
 alias ppocr.bc ;
+alias boost_stacktrace.bc ;
 
-objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
+# objjs program_options.bc : $(PROGRAM_OPTIONS_SRC_PATH)/program_options.cpp ;
+
+
+actions gen_targets
+{
+    ./tools/gen_targets.sh > targets.jam
+}
+
+explicit targets.jam ;
+make targets.jam : : @gen_targets ;
+
+
+
+actions exenode
+{
+  node $(>:S=.js) && : > $(<)
+}
+
+rule test-run ( name : objects + : requirements * )
+{
+    if src/core/error.bc in $(objects)
+    {
+        objects += register_exception.bc ;
+    }
+
+    exejs $(name).em : $(objects) unit_test.bc log_test.bc : $(TEST_DEPENDENCIES) $(requirements) ;
+    make $(name) : $(name).em : @exenode ;
+}
+
+rule exe-js ( name : src : objs + : deps * )
+{
+    exejs $(name).em : $(src) $(objs) log_test.bc :
+        $(deps)
+        <cxxflags>--bind
+        <cxxflags>-fno-rtti&&-frtti
+        <cxxflags>-Wno-missing-prototypes
+        <cxxflags>"-s MODULARIZE=1"
+        <cxxflags>"-s EXPORT_NAME="$(JS_MODULE_NAME)
+    ;
+    alias $(name) : $(name).em ;
+}
+
+rule test-run-js ( name : src : objs + : deps * )
+{
+    objjs $(name).bc : $(src) : <include>$(REDEMPTION_TEST_PATH)/includes ;
+    test-run $(name) : $(name).bc $(objs) : $(deps) ;
+}
+
+actions nothing { }
+
+rule htmljs ( name : objs + : deps * )
+{
+    exehtml $(name).js : $(objs) : $(deps) ;
+    make $(name).html : $(name).js : @nothing ;
+    make $(name).wasm : $(name).js : @nothing ;
+}
 
 
 include targets.jam ;
-
-objjs src/js_client.bc : src/js_client.cpp :
-    <include>$(REDEMPTION_TEST_PATH)/includes
-    <cxxflags>-fno-rtti&&-frtti
-;
-
-
-rule bindjs ( name : objs + : deps * )
-{
-    exe-main $(name) : $(objs) : $(deps) <cxxflags>--bind <cxxflags>-fno-rtti&&-frtti ;
-}
-
-bindjs jsclient :
-  src/js_client.bc
-  app_path_exe.bc
-  crypto.bc
-  gssapi_krb5.bc
-  krb5.bc
-  openssl.bc
-  png.bc
-  projects/redemption_configs/redemption_src/configs/config.bc
-  src/RAIL/client_execute.bc
-  src/core/RDP/RDPDrawable.bc
-  src/core/RDP/dwt.bc
-  src/core/RDP/mppc.bc
-  src/core/RDP/nego.bc
-  src/core/RDP/orders/remoteFx.bc
-  src/core/RDP/rlgr.bc
-  src/core/error.bc
-  src/core/font.bc
-  src/core/set_server_redirection_target.bc
-  src/gdi/clip_from_cmd.bc
-  src/gdi/graphic_api.bc
-  src/gdi/protected_graphics.bc
-  src/gdi/screen_functions.bc
-  src/keyboard/keymap2.bc
-  src/keyboard/keymapSym.bc
-  src/mod/internal/widget/flat_button.bc
-  src/mod/internal/widget/label.bc
-  src/mod/rdp/new_mod_rdp.bc
-  src/mod/rdp/rdp.bc
-  src/mod/rdp/rdp_negociation.bc
-  src/transport/recorder_transport.bc
-  src/utils/authorization_channels.bc
-  src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
-  src/utils/crypto/ssl_mod_exp_direct.bc
-  src/utils/d3des.bc
-  src/utils/drawable.bc
-  src/utils/fileutils.bc
-  src/utils/hexdump.bc
-  src/utils/netutils.bc
-  src/utils/png.bc
-  src/utils/primitives/primitives.bc
-  src/utils/rle.bc
-  src/utils/strutils.bc
-  src/utils/sugar/multisz.bc
-  src/utils/utf.bc
-  z.bc
-
-  log_test.bc
-:
-  $(EXE_DEPENDENCIES_NO_SYSLOG)
-  <include>$(REDEMPTION_TEST_PATH)/includes
-
-    # <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main']\""
-    # <cxxflags>"--shell-file templates/penta_template.html"
-;
-
-
-
-# objjs test_rect.bc : $(REDEMPTION_TEST_PATH)/utils/test_rect.cpp ;
-# test-run test_rect : test_rect.bc ;
-#
-# objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
-# test-run tests/utils/test_redirection_info :
-#   $(REDEMPTION_TEST_PATH)/utils/test_redirection_info.cpp
-#   src/utils/hexdump.bc
-# :
-# ;
-# alias test_redirection_info : tests/utils/test_redirection_info ;
-
-
-
-# install client_rdp_JS_natif
-#     : [ glob ./sys/js_client/* ] client_rdp_JS_natif.js client_rdp_JS_natif.html
-#     : <location>./sandbox
-#     ;
-#
-# #install client_rdp_JS_SDL
-# #    : [ glob ./sys/js_client/* ] client_rdp_JS_SDL.js client_rdp_JS_SDL.html client_rdp_JS_SDL.html.mem
-# #    : <location>./sandbox
-# #    ;
-#
-# install test_transport_web_socket
-#     : [ glob ./sys/js_client/* ] test_transport_web_socket.js test_transport_web_socket.html
-#     : <location>./sandbox
-#     ;
-#
-#
-#
-# #objjs test_rdp_client_test_card_JS_SDL.bc
-# #	: src/test_rdp_client_test_card_JS_SDL.cpp
-# #	: <include>$(EMSCRIPTEN)/system/include
-# #	;
-#
-#
-# objjs test_rdp_client_test_card_JS_natif.bc
-# 	: src/test_rdp_client_test_card_JS_natif.cpp
-# 	: <include>$(EMSCRIPTEN)/system/include
-# 	;
-#
-# objjs rdp_client.bc
-# 	: ../../src/main/rdp_client.cpp
-# 	: <include>$(EMSCRIPTEN)/system/include
-# 	;
-#
-#
-# # objjs bitmap_data_allocator.bc
-# # 	: $($(REDEMPTION_SRC_PATH))/utils/bitmap_data_allocator.cpp
-# # 	: <include>$(EMSCRIPTEN)/system/include
-# # 	;
-#
-# objjs test_transport_web_socket.bc
-# 	: src/test_transport_web_socket.cpp
-# 	: <include>$(EMSCRIPTEN)/system/include
-# 	;
-#
-#
-#
-# #exejs client_rdp_JS_SDL.js
-# #     :
-# #        test_rdp_client_test_card_JS_SDL.bc
-# #        bitmap_data_allocator.bc
-# #     :
-# #        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-# #        <cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEventG']\""
-# #	<cxxflags>-s\ EXPORTED_FUNCTIONS="['_SDL_CreateRGBSurfaceFrom']"
-# #     ;
-#
-# exejs client_rdp_JS_natif.js
-#      :
-#         rdp_client.bc
-#         # bitmap_data_allocator.bc
-#      :
-#         <cxxflags>"-Werror"
-#         <cxxflags>"-01"
-#         <cxxflags>"-s ASSERTIONS=2"
-#         <cxxflags>"-s ALLOW_MEMORY_GROWTH=1"
-#         <cxxflags>"--shell-file templates/template_client_rdp_js_natif.html"
-# #        <cxxflags>"--shell-file templates/template_mobile_WAB.html"
-#         <cxxflags>"--llvm-opts 3 --llvm-lto 0"
-# 	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_mousePressEvent','_mouseReleaseEvent','_mouseMoveEvent','_charPressed','_enterPressed','_backspacePressed','_refreshPressed','_connexion','_client_event','_up_and_running','_recv_value','_disconnection','_CtrlAltDelPressed']\""
-#      ;
-#
-# exejs test_transport_web_socket.js
-#      :
-#         test_transport_web_socket.bc
-#      :
-#         <cxxflags>"--shell-file templates/test_transport_web_socket_template.html"
-# 	<cxxflags>"-s EXPORTED_FUNCTIONS=\"['_run_main','_recv_value']\""
-#      ;
-#
-#
-# make client_rdp_JS_natif.html : client_rdp_JS_natif.js : @nothing ;
-# #make client_rdp_JS_natif.html.mem : client_rdp_JS_natif.js : @nothing ;
-#
-# #make client_rdp_JS_SDL.html : client_rdp_JS_SDL.js : @nothing ;
-# #make client_rdp_JS_SDL.html.mem : client_rdp_JS_natif.js : @nothing ;
-#
-# make test_transport_web_socket.html : test_transport_web_socket.js : @nothing ;
-# #make test_transport_web_socket.html.mem : test_transport_web_socket.js : @nothing ;
-
