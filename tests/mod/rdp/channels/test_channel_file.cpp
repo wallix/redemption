@@ -103,8 +103,9 @@ RED_AUTO_TEST_CASE(TestChannelFileWrite)
 
     RED_CHECK_EQUAL(get_file_contents(file2), "goodbye world!");
 
-    uint8_t buffer[14];
+    uint8_t buffer[15];
     file.read_data(buffer, 14);
+    buffer[14] = 0;
 
     std::string file_read_data(reinterpret_cast<const char *>(buffer));
     std::string expected_data("goodbye world!");
