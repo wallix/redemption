@@ -287,7 +287,7 @@ rule flags ( properties * )
                 <cxxflags>-Wformat-overflow #=level
                 #<cxxflags>-Wformat-truncation=level #-Wall
                 #<cxxflags>-Wshadow=local
-                <cxxflags>-Wshadow=compatible-local
+                # <cxxflags>-Wshadow=compatible-local
             ;
         }
         if $(version) >= 07.00
