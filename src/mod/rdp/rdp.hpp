@@ -189,26 +189,40 @@ private:
 
         struct SessionProbeStartParams {
             const bool enabled;
+            const bool used_to_launch_remote_program;
+            std::string arguments;
+            bool customize_executable_name;
+            const std::chrono::milliseconds   launch_timeout;
+            const std::chrono::milliseconds   launch_fallback_timeout;
+            const bool                        start_launch_timeout_timer_only_after_logon;
+            const SessionProbeOnLaunchFailure on_launch_failure;
+            const std::chrono::milliseconds   keepalive_timeout;
+            const SessionProbeOnKeepaliveTimeout on_keepalive_timeout;
+            const bool                        end_disconnected_session;
+            const std::chrono::milliseconds   disconnected_application_limit;
+            const std::chrono::milliseconds   disconnected_session_limit;
+            const std::chrono::milliseconds   idle_session_limit;
             
             SessionProbeStartParams(const ModRDPParams & mod_rdp_params)
                 : enabled(mod_rdp_params.enable_session_probe) 
+                , used_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
+                , arguments(mod_rdp_params.session_probe_arguments)
+                , customize_executable_name(mod_rdp_params.session_probe_customize_executable_name)
+                , launch_timeout(mod_rdp_params.session_probe_launch_timeout)
+                , launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
+                , start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
+                , on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
+                , keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
+                , on_keepalive_timeout(mod_rdp_params.session_probe_on_keepalive_timeout)
+                , end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
+                , disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
+                , disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
+                , idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
+
                 {}
         } session_probe;
 
 
-        const bool                        use_session_probe_to_launch_remote_program;
-        std::string                       session_probe_arguments;
-        bool                              session_probe_customize_executable_name;
-        const std::chrono::milliseconds   session_probe_launch_timeout;
-        const std::chrono::milliseconds   session_probe_launch_fallback_timeout;
-        const bool                        session_probe_start_launch_timeout_timer_only_after_logon;
-        const SessionProbeOnLaunchFailure session_probe_on_launch_failure;
-        const std::chrono::milliseconds   session_probe_keepalive_timeout;
-        const SessionProbeOnKeepaliveTimeout session_probe_on_keepalive_timeout;
-        const bool                        session_probe_end_disconnected_session;
-        const std::chrono::milliseconds   session_probe_disconnected_application_limit;
-        const std::chrono::milliseconds   session_probe_disconnected_session_limit;
-        const std::chrono::milliseconds   session_probe_idle_session_limit;
         const bool                        session_probe_enable_log;
         const bool                        session_probe_enable_log_rotation;
         SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
@@ -328,20 +342,7 @@ private:
             , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 
             , session_probe(mod_rdp_params)
-            , use_session_probe_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
 
-            , session_probe_arguments(mod_rdp_params.session_probe_arguments)
-            , session_probe_customize_executable_name(mod_rdp_params.session_probe_customize_executable_name)
-            , session_probe_launch_timeout(mod_rdp_params.session_probe_launch_timeout)
-            , session_probe_launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
-            , session_probe_start_launch_timeout_timer_only_after_logon(mod_rdp_params.session_probe_start_launch_timeout_timer_only_after_logon)
-            , session_probe_on_launch_failure(mod_rdp_params.session_probe_on_launch_failure)
-            , session_probe_keepalive_timeout(mod_rdp_params.session_probe_keepalive_timeout)
-            , session_probe_on_keepalive_timeout(mod_rdp_params.session_probe_on_keepalive_timeout)
-            , session_probe_end_disconnected_session(mod_rdp_params.session_probe_end_disconnected_session)
-            , session_probe_disconnected_application_limit(mod_rdp_params.session_probe_disconnected_application_limit)
-            , session_probe_disconnected_session_limit(mod_rdp_params.session_probe_disconnected_session_limit)
-            , session_probe_idle_session_limit(mod_rdp_params.session_probe_idle_session_limit)
             , session_probe_enable_log(mod_rdp_params.session_probe_enable_log)
             , session_probe_enable_log_rotation(mod_rdp_params.session_probe_enable_log_rotation)
             , session_probe_clipboard_based_launcher(mod_rdp_params.session_probe_clipboard_based_launcher)
@@ -716,6 +717,17 @@ private:
 
             SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
 
+            sp_vc_params.session_probe_launch_timeout = this->session_probe.launch_timeout;
+            sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe.launch_fallback_timeout;
+            sp_vc_params.session_probe_keepalive_timeout = this->session_probe.keepalive_timeout;
+            sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe.on_keepalive_timeout;
+            sp_vc_params.session_probe_on_launch_failure = this->session_probe.on_launch_failure;
+            sp_vc_params.session_probe_end_disconnected_session = this->session_probe.end_disconnected_session;
+            sp_vc_params.session_probe_disconnected_application_limit = this->session_probe.disconnected_application_limit;
+            sp_vc_params.session_probe_disconnected_session_limit = this->session_probe.disconnected_session_limit;
+            sp_vc_params.session_probe_idle_session_limit =  this->session_probe.idle_session_limit;
+
+
             sp_vc_params.front_width = stc.negociation_result.front_width;
             sp_vc_params.front_height = stc.negociation_result.front_height;
             sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
@@ -727,15 +739,6 @@ private:
             sp_vc_params.show_maximized = (!remote_program);
             sp_vc_params.target_informations = this->session_probe_target_informations.c_str();
 
-            sp_vc_params.session_probe_launch_timeout = this->session_probe_launch_timeout;
-            sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe_launch_fallback_timeout;
-            sp_vc_params.session_probe_keepalive_timeout = this->session_probe_keepalive_timeout;
-            sp_vc_params.session_probe_on_keepalive_timeout = this->session_probe_on_keepalive_timeout;
-            sp_vc_params.session_probe_on_launch_failure = this->session_probe_on_launch_failure;
-            sp_vc_params.session_probe_end_disconnected_session = this->session_probe_end_disconnected_session;
-            sp_vc_params.session_probe_disconnected_application_limit = this->session_probe_disconnected_application_limit;
-            sp_vc_params.session_probe_disconnected_session_limit = this->session_probe_disconnected_session_limit;
-            sp_vc_params.session_probe_idle_session_limit =  this->session_probe_idle_session_limit;
             sp_vc_params.session_probe_enable_log = this->session_probe_enable_log;
             sp_vc_params.session_probe_enable_log_rotation = this->session_probe_enable_log_rotation;
             sp_vc_params.session_probe_allow_multiple_handshake = this->session_probe_allow_multiple_handshake;
@@ -775,6 +778,10 @@ private:
 
             RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
 
+            remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
+                this->session_probe.used_to_launch_remote_program;
+
+
             remote_programs_virtual_channel_params.exchanged_data_limit               =
                 0;
             remote_programs_virtual_channel_params.verbose                            =
@@ -803,9 +810,6 @@ private:
 
             remote_programs_virtual_channel_params.should_ignore_first_client_execute =
                 this->should_ignore_first_client_execute;
-
-            remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
-                this->use_session_probe_to_launch_remote_program;
 
             remote_programs_virtual_channel_params.client_supports_handshakeex_pdu    =
                 (client_rail_caps.RailSupportLevel & TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
@@ -1204,7 +1208,7 @@ private:
                                                 && *mod_rdp_params.client_execute_exe_or_file);
 
             if (has_target) {
-                if (this->use_session_probe_to_launch_remote_program) {
+                if (this->session_probe.used_to_launch_remote_program) {
                     std::string shell_arguments = mod_rdp_params.shell_arguments;
                     Channels::replace_shell_arguments(shell_arguments,
                                 "${APPID}", mod_rdp_params.target_application,
@@ -1239,7 +1243,7 @@ private:
             if (has_target || use_client_provided_remoteapp){
 
                 if (use_client_provided_remoteapp
-                || !this->use_session_probe_to_launch_remote_program) {
+                || !this->session_probe.used_to_launch_remote_program) {
                     this->real_alternate_shell = "[None]";
                     this->real_client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
                     this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
@@ -1249,7 +1253,7 @@ private:
 
                 // Executable file name of SP.
                 char exe_var_str[16] {};
-                if (this->session_probe_customize_executable_name) {
+                if (this->session_probe.customize_executable_name) {
                     ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
                 }
 
@@ -1265,13 +1269,13 @@ private:
                         return std::string("/#")+ s + " ";
                     }(this->session_probe_target_informations);
 
-                Channels::replace_probe_arguments(this->session_probe_arguments,
+                Channels::replace_probe_arguments(this->session_probe.arguments,
                     "${EXE_VAR}", exe_var_str,
                     "${TITLE_VAR} ", title_param.c_str(),
                     "/${COOKIE_VAR} ", cookie_param.c_str(),
                     "${CBSPL_VAR} ", "");
 
-                this->client_execute_arguments   = this->session_probe_arguments;
+                this->client_execute_arguments   = this->session_probe.arguments;
                 this->client_execute_working_dir = "%TMP%";
             }
 
@@ -1357,7 +1361,7 @@ private:
         {
             // Executable file name of SP.
             char exe_var_str[16] {};
-            if (this->session_probe_customize_executable_name) {
+            if (this->session_probe.customize_executable_name) {
                 ::snprintf(exe_var_str, sizeof(exe_var_str), "-%d", ::getpid());
             }
 
@@ -1405,7 +1409,7 @@ private:
               ? str_concat("/#", cookie, ' ')
               : std::string();
 
-            Channels::replace_probe_arguments(this->session_probe_arguments,
+            Channels::replace_probe_arguments(this->session_probe.arguments,
                     "${EXE_VAR}", exe_var_str,
                     "${TITLE_VAR} ", "",
                     "/${COOKIE_VAR} ", cookie_param.c_str(),
@@ -1435,7 +1439,7 @@ private:
                     alternate_shell.erase(0, 2);
                 }
 
-                str_append(alternate_shell, ' ', this->session_probe_arguments);
+                str_append(alternate_shell, ' ', this->session_probe.arguments);
 
                 strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
                 program[sizeof(program) - 1] = 0;
@@ -1464,7 +1468,7 @@ private:
                         alternate_shell.erase(0, 2);
                     }
 
-                    str_append(alternate_shell, ' ', this->session_probe_arguments);
+                    str_append(alternate_shell, ' ', this->session_probe.arguments);
 
                     strncpy(program, alternate_shell.c_str(), sizeof(program) - 1);
                     program[sizeof(program) - 1] = 0;
@@ -1483,7 +1487,7 @@ private:
                         alternate_shell.erase(0, 2);
                     }
 
-                    str_append(alternate_shell, ' ', this->session_probe_arguments);
+                    str_append(alternate_shell, ' ', this->session_probe.arguments);
 
                     if (this->session_probe_use_clipboard_based_launcher) {
                         this->session_probe_launcher = std::make_unique<SessionProbeClipboardBasedLauncher>(
@@ -1787,7 +1791,7 @@ private:
                 }
 
                 this->session_probe_virtual_channel->set_session_probe_launcher(this->session_probe_launcher.get());
-                if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
                     this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 this->session_probe_launcher->set_clipboard_virtual_channel(&cvc);
@@ -1820,7 +1824,7 @@ private:
                             client_name);
                 }
 
-                if (!this->session_probe_start_launch_timeout_timer_only_after_logon) {
+                if (!this->session_probe.start_launch_timeout_timer_only_after_logon) {
                     this->session_probe_virtual_channel->start_launch_timeout_timer();
                 }
                 if (this->remote_program) {
@@ -5006,7 +5010,7 @@ public:
         }
 
         if (this->channels.session_probe_virtual_channel
-        && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+        && this->channels.session_probe.start_launch_timeout_timer_only_after_logon) {
             this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
 
@@ -5069,7 +5073,7 @@ public:
             }
 
             if (this->channels.session_probe_virtual_channel
-            && this->channels.session_probe_start_launch_timeout_timer_only_after_logon) {
+            && this->channels.session_probe.start_launch_timeout_timer_only_after_logon) {
                 this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
         }
