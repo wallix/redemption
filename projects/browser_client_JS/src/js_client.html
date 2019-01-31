@@ -34,6 +34,7 @@ const Module = WallixModule({
 
 const createRdpClient = (function(Module) {
     const HEAPU8 = Module.HEAPU8;
+    const HEAP16 = Module.HEAP16;
     const identity = (x) => x;
 
     const wrappersCbDraw = {
@@ -45,9 +46,16 @@ const createRdpClient = (function(Module) {
             };
         },
 
-        drawRect: function(cb) {
-            return cb;
+        drawPolyline: function(cb) {
+            return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
+                const datas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
+                cb(xStart, yStart, deltas, penColor)
+            };
         },
+
+        drawRect: identity,
+        drawSrcBlt: identity,
+        drawLineTo: identity,
     }
 
     const wrappersCb = {
@@ -55,6 +63,7 @@ const createRdpClient = (function(Module) {
         socketOpen: identity,
         socketClose: identity,
         socketMessage: identity,
+        socketAfterMessage: identity,
         socketError: identity,
         socketSend: identity,
     }
@@ -135,6 +144,7 @@ const createRdpClient = (function(Module) {
             if (cb) {
                 cb(event);
             }
+
             client.close = function() {
                 socket.close();
             };
@@ -151,10 +161,11 @@ const createRdpClient = (function(Module) {
         };
 
         socket.onmessage = function(event) {
-            const cb = events.socketMessage;
-            if (cb) {
-                cb(event);
+            const cb1 = events.socketMessage;
+            if (cb1) {
+                cb1(event);
             }
+
             rdpclient.addReceivingData(event.data);
             const now = Date.now();
             const timeout = rdpclient.updateTime();
@@ -164,6 +175,11 @@ const createRdpClient = (function(Module) {
                 timeoutDate = nextDateTimer;
                 clearTimeout(timeoutID);
                 timeoutID = setTimeout(timer_action, Math.max(0, nextDateTimer - Data.now()));
+            }
+
+            const cb2 = events.socketAfterMessage;
+            if (cb2) {
+                cb2(event);
             }
         };
 
@@ -185,7 +201,21 @@ const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
 let rdpclient;
 
-function run() {
+function has_intersection(x1,y1,w1,h1,x2,y2,w2,h2)
+{
+    return ((x2 >= x1 && x2 < x1 + w1) || (x1 >= x2 && x1 < x2 + w2))
+        && ((y2 >= y1 && y2 < y1 + h1) || (y1 >= y2 && y1 < y2 + h2));
+}
+
+const scrROp = new Array(255);
+scrROp[0x00] = 'darken';
+scrROp[0xF0] = 'source-over';
+scrROp[0xCC] = 'source-over';
+scrROp[0x55] = 'xor';
+scrROp[0xFF] = 'lighten';
+
+function run()
+{
     rdpclient = createRdpClient(
         "ws://localhost:8080",
         user_input.value,
@@ -196,6 +226,69 @@ function run() {
     rdpclient.on('drawRect', function(x, y, w, h, color) {
         canvas.fillStyle = color;
         canvas.fillRect(x,y,w,h);
+    });
+    rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
+        const sourceImageData = canvas.getImageData(sx, sy, w, h);
+        if (rop == 0xCC) {
+            canvas.putImageData(sourceImageData, dx, dy);
+        }
+        else {
+            const op = scrROp[rop]
+            if (op && has_intersection(x,y,w,h,dx,dy,w,h)) {
+                canvas.globalCompositeOperation = op
+                canvas.drawImage(sourceImageData, dx, dy);
+                canvas.globalCompositeOperation = 'source-over'
+            }
+            else {
+                canvas.putImageData(sourceImageData, dx, dy);
+            }
+        }
+    });
+    rdpclient.on('drawLineTo', function(backMode, nXStart, nYStart, nXEnd, nYEnd, backColor, penStyle, penWidth, penColor) {
+		canvas.save();
+		canvas.beginPath();
+		canvas.moveTo(nXStart, nYStart);
+		canvas.lineTo(nXEnd, nYEnd);
+		canvas.lineWidth = penWidth;
+		canvas.fillStyle = backColor;
+		canvas.strokeStyle = penColor;
+		switch (penStyle) {
+		case 1:
+			canvas.setLineDash([ 10, 6, 10, 6 ]);
+			break;
+		case 2:
+			canvas.setLineDash([ 3, 3, 3, 3 ]);
+			break;
+		case 3:
+			canvas.setLineDash([ 9, 6, 3, 6 ]);
+			break;
+		case 4:
+			canvas.setLineDash([ 9, 3, 3, 3 ]);
+			break;
+		default:
+			canvas.setLineDash([ 16, 0, 16, 0 ]);
+		}
+		canvas.setLineDash([ 16, 0, 16, 0 ]);
+		// BackMode does not imply the transparency level of what is about too be drawn
+        // canvas.globalAlpha = (backMode == 1 /* TRANSPARENT */? 0.0 : 1.0);
+		canvas.stroke();
+		canvas.restore();
+    });
+    rdpclient.on('drawPolyline', function(xStart, yStart, deltas, penColor) {
+		canvas.save();
+		canvas.strokeStyle = penColor;
+		canvas.beginPath();
+		canvas.moveTo(xStart, yStart);
+        let endx = xStart;
+        let endy = yStart;
+        const iend = deltas.length
+		for (let i = 0; i < iend; i += 2) {
+			endx += deltas[i];
+			endy += deltas[i+1];
+			canvas.lineTo(endx, endy);
+		}
+		canvas.stroke();
+		canvas.restore();
     });
 }
 

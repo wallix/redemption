@@ -22,7 +22,9 @@ Author(s): Jonathan Poelen
 
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
-#include "gdi/screen_info.hpp"
+
+class ScreenInfo;
+class OrderCaps;
 
 namespace redjs
 {
@@ -30,7 +32,7 @@ namespace redjs
 class BrowserFront : public FrontAPI
 {
 public:
-    BrowserFront(ScreenInfo& screen_info, bool verbose);
+    BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool verbose);
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;

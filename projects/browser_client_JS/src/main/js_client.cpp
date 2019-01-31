@@ -99,7 +99,7 @@ struct RdpClient
 
     ClientInfo client_info;
 
-    redjs::BrowserFront front = redjs::BrowserFront(client_info.screen_info, verbose);
+    redjs::BrowserFront front = redjs::BrowserFront(client_info.screen_info, client_info.order_caps, verbose);
     JsReportMessage report_message;
     SessionReactor session_reactor;
 
@@ -120,12 +120,6 @@ struct RdpClient
     RdpClient(std::string const& username, std::string const& password, unsigned long verbose)
     : verbose(verbose)
     {
-        client_info.screen_info.width = 800;
-        client_info.screen_info.height = 600;
-        client_info.screen_info.bpp = BitsPerPixel{24};
-
-        client_info.order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
-
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
         ini.set<cfg::client::tls_fallback_legacy>(true);
