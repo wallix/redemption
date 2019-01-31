@@ -221,6 +221,7 @@ struct ModRDPParams {
     bool experimental_fix_too_long_cookie  = true;
 
     bool log_only_relevant_clipboard_activities = true;
+    bool split_domain = false;
 
     RDPVerbose verbose;
     BmpCache::Verbose cache_verbose = BmpCache::Verbose::none;

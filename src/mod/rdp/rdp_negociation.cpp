@@ -44,7 +44,8 @@
 #include <cstring>
 
 
-RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name, char const* target_user) noexcept
+RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
+                           char const* target_user, bool split_domain) noexcept
 {
     if (::strlen(hostname) >= sizeof(this->_hostname)) {
         LOG(LOG_WARNING, "mod_rdp: hostname too long! %zu >= %zu", ::strlen(hostname), sizeof(this->_hostname));
@@ -65,28 +66,37 @@ RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name, char con
     const char * username_pos = nullptr;
     size_t       username_len = 0;
     const char * separator = strchr(target_user, '\\');
-    if (separator)
+    const char * separator_a = strchr(target_user, '@');
+
+    username_pos = target_user;
+    username_len = strlen(username_pos);
+
+    if (separator && !separator_a)
     {
+        // Legacy username
+        // Split only if there's no @, otherwise not a legacy username
         domain_pos   = target_user;
         domain_len   = separator - target_user;
         username_pos = ++separator;
         username_len = strlen(username_pos);
     }
-    else
+    else if (split_domain)
     {
-        separator = strchr(target_user, '@');
+        // Old behavior
         if (separator)
         {
-            domain_pos   = separator + 1;
+            domain_pos   = target_user;
+            domain_len   = separator - target_user;
+            username_pos = ++separator;
+            username_len = strlen(username_pos);
+        }
+        else if (separator_a)
+        {
+            domain_pos   = separator_a + 1;
             domain_len   = strlen(domain_pos);
             username_pos = target_user;
-            username_len = separator - target_user;
+            username_len = separator_a - target_user;
             LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
-        }
-        else
-        {
-            username_pos = target_user;
-            username_len = strlen(username_pos);
         }
     }
 

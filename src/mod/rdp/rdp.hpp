@@ -725,7 +725,7 @@ public:
         , enable_auth_channel(mod_rdp_params.alternate_shell[0]
                            && !mod_rdp_params.ignore_auth_channel)
         , redir_info(redir_info)
-        , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user)
+        , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)
         , target_host(mod_rdp_params.target_host)
         , allow_using_multiple_monitors(mod_rdp_params.allow_using_multiple_monitors)

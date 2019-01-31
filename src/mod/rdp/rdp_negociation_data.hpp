@@ -39,7 +39,8 @@ struct RdpNegociationResult
 
 struct RdpLogonInfo
 {
-    RdpLogonInfo(char const* hostname, bool hide_client_name, char const* target_user) noexcept;
+    RdpLogonInfo(char const* hostname, bool hide_client_name,
+                 char const* target_user, bool split_domain) noexcept;
 
     char const* username()  const noexcept { return this->_username; }
     char const* domain()    const noexcept { return this->_domain; }
