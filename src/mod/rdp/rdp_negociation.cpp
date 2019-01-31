@@ -69,6 +69,9 @@ RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
     const char * separator = strchr(target_user, '\\');
     const char * separator_a = strchr(target_user, '@');
 
+    username_pos = target_user;
+    username_len = strlen(username_pos);
+
     if (separator && !separator_a)
     {
         // Legacy username
@@ -96,16 +99,6 @@ RdpLogonInfo::RdpLogonInfo(char const* hostname, bool hide_client_name,
             username_len = separator_a - target_user;
             LOG(LOG_INFO, "mod_rdp: username_len=%zu", username_len);
         }
-        else
-        {
-            username_pos = target_user;
-            username_len = strlen(username_pos);
-        }
-    }
-    else
-    {
-        username_pos = target_user;
-        username_len = strlen(username_pos);
     }
 
     if (username_len >= sizeof(this->_username)) {
