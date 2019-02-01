@@ -722,7 +722,12 @@ private:
 
             FileSystemVirtualChannel& file_system_virtual_channel = *this->file_system_virtual_channel;
 
-            SessionProbeVirtualChannel::Params sp_vc_params(this->report_message);
+            BaseVirtualChannel::Params base_params(this->report_message);
+            base_params.exchanged_data_limit = static_cast<data_size_type>(-1);
+            base_params.verbose  = this->verbose;
+
+
+            SessionProbeVirtualChannel::Params sp_vc_params;
 
             sp_vc_params.session_probe_launch_timeout = this->session_probe.vc.launch_timeout;
             sp_vc_params.session_probe_launch_fallback_timeout = this->session_probe.vc.launch_fallback_timeout;
@@ -750,8 +755,6 @@ private:
 
             sp_vc_params.front_width = stc.negociation_result.front_width;
             sp_vc_params.front_height = stc.negociation_result.front_height;
-            sp_vc_params.exchanged_data_limit = static_cast<data_size_type>(-1);
-            sp_vc_params.verbose  = this->verbose;
             sp_vc_params.real_alternate_shell = this->real_alternate_shell.c_str();
             sp_vc_params.real_working_dir = this->real_working_dir.c_str();
             sp_vc_params.lang = lang;
@@ -767,6 +770,7 @@ private:
                     rdp,
                     file_system_virtual_channel,
                     this->gen,
+                    base_params,
                     sp_vc_params);
         }
 

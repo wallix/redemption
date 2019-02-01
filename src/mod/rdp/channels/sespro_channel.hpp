@@ -380,7 +380,8 @@ private:
     }
 
 public:
-    struct Params : public BaseVirtualChannel::Params
+
+    struct Params
     {
         uninit_checked<std::chrono::milliseconds> session_probe_launch_timeout;
         uninit_checked<std::chrono::milliseconds> session_probe_launch_fallback_timeout;
@@ -432,9 +433,7 @@ public:
 
         uninit_checked<bool> show_maximized;
 
-        explicit Params(ReportMessageApi & report_message)
-          : BaseVirtualChannel::Params(report_message)
-        {}
+        explicit Params() {}
     };
 
     explicit SessionProbeVirtualChannel(
@@ -445,10 +444,11 @@ public:
         rdp_api& rdp,
         FileSystemVirtualChannel& file_system_virtual_channel,
         Random & gen,
+        const BaseVirtualChannel::Params & base_params,
         const Params& params)
     : BaseVirtualChannel(nullptr,
                          to_server_sender_,
-                         params)
+                         base_params)
     , session_probe_effective_launch_timeout(
             (params.session_probe_on_launch_failure ==
              SessionProbeOnLaunchFailure::disconnect_user) ?
