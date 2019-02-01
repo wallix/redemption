@@ -939,7 +939,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     ""_av
     ;
 
-    RED_CHECK_MEM(expected_pdu, make_array_view(to_client_sender.streams[5].get_data(), to_client_sender.streams[5].in_remain()));
+    RED_CHECK_MEM(expected_pdu, to_client_sender.streams[5].get_bytes());
 
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
