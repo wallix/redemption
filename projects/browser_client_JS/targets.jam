@@ -14,6 +14,8 @@ exe-js js_client :
   gssapi_krb5.bc
   krb5.bc
   png.bc
+  src/redjs/browser_front.bc
+  src/redjs/browser_transport.bc
   src/redjs/image_data.bc
   projects/redemption_configs/redemption_src/configs/config.bc
   src/RAIL/client_execute.bc
@@ -55,8 +57,15 @@ exe-js js_client :
 ;
 
 
-test-run-js tests/test_image_data :
-  tests/test_image_data.cpp
+test-run-js tests/redjs/test_browser_transport :
+  tests/redjs/test_browser_transport.cpp
+:
+  boost_stacktrace.bc
+  src/redjs/browser_transport.bc
+  src/core/error.bc
+;
+test-run-js tests/redjs/test_image_data :
+  tests/redjs/test_image_data.cpp
 :
   boost_stacktrace.bc
   src/redjs/image_data.bc
@@ -67,6 +76,8 @@ test-run-js tests/test_image_data :
 ;
 
 objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
+objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
+objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
 objjs src/redjs/image_data.bc : src/redjs/image_data.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
 objjs src/RAIL/client_execute.bc : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
@@ -104,20 +115,22 @@ objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
-alias test_image_data : tests/test_image_data ;
-alias tests.norec :
-  tests/test_image_data
+alias test_browser_transport : tests/redjs/test_browser_transport ;
+alias test_image_data : tests/redjs/test_image_data ;
+alias tests/redjs.norec :
+  tests/redjs/test_browser_transport
+  tests/redjs/test_image_data
+;
+alias tests/redjs :
+  tests/redjs.norec
 ;
 alias tests :
-  tests.norec
-;
-alias projects/browser_client_JS :
-  tests
+  tests/redjs
 ;
 explicit
-  tests.norec
+  tests/redjs.norec
 ;
 explicit
+  tests/redjs
   tests
-  projects/browser_client_JS
 ;

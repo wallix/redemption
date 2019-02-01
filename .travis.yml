@@ -23,8 +23,7 @@ before_install:
     if [ "$BJAM_COMPILER" = clang ]; then
       wget -O llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key
       sed -i \
-        -e '4iRUN apt install -y gnupg' \
-        -e '4iCOPY llvm-snapshot.gpg.key .\nRUN apt-key add llvm-snapshot.gpg.key' \
+        -e '4iRUN apt-get -qq update\nRUN apt-get install -y gnupg\nCOPY llvm-snapshot.gpg.key .\nRUN apt-key add llvm-snapshot.gpg.key' \
         -e '/mkdir/iRUN sed -i -e "s/__GLIBC__) || defined(//" /usr/include/c++/v1/__locale' \
         -e 's/^# clang: //' \
         $BJAM_COMPILER.dockerfile

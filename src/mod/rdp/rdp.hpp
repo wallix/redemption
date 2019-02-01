@@ -2216,8 +2216,8 @@ public:
             } // this->session_probe.enabled
         } // this->remote_program
 
-        this->negociation_result.front_width = safe_int(info.screen_info.width);
-        this->negociation_result.front_height = safe_int(info.screen_info.height);
+        this->negociation_result.front_width = info.screen_info.width;
+        this->negociation_result.front_height = info.screen_info.height;
 
         this->init_negociate_event_(info, timeobj, mod_rdp_params, program, directory);
 

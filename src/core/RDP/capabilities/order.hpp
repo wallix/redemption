@@ -324,7 +324,7 @@ enum {
 
 struct OrderCaps : public Capability {
 
-    uint8_t terminalDescriptor[16];
+    uint8_t terminalDescriptor[16]{};
     uint32_t pad4octetsA{0};                         // MUST be ignored
     uint16_t desktopSaveXGranularity{1};             // ignored and assumed to be 1
     uint16_t desktopSaveYGranularity{20};            // ignored and assumed to be 20
@@ -332,7 +332,7 @@ struct OrderCaps : public Capability {
     uint16_t maximumOrderLevel{ORD_LEVEL_1_ORDERS};  // is ignored and SHOULD be set to 1
     uint16_t numberFonts{0};                         // is ignored and SHOULD be set to 0
     uint16_t orderFlags{NEGOTIATEORDERSUPPORT};      //  from a "const list"
-    uint8_t orderSupport[NB_ORDER_SUPPORT];
+    uint8_t orderSupport[NB_ORDER_SUPPORT]{};
     uint16_t textFlags{0};                           // MUST be ignored
     uint16_t orderSupportExFlags{0};                 //  from a "const list"
     uint32_t pad4octetsB{0};                         // MUST be ignored
@@ -345,10 +345,7 @@ struct OrderCaps : public Capability {
 
     OrderCaps()
     : Capability(CAPSTYPE_ORDER, CAPLEN_ORDER)
-//        , terminalDescriptor = "";
     {
-        memset(this->terminalDescriptor, 0, 16); // 16 bytes array ALWAYS filled with 0
-        memset(this->orderSupport, 0, NB_ORDER_SUPPORT); // 32 bits array filled with 0 BY DEFAULT
     }
 
     void emit(OutStream & stream) const

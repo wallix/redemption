@@ -4426,6 +4426,35 @@ test-run tests/mod/rdp/test_rdp_metrics :
   <variant>debug:<library>dl
   <variant>san:<library>dl
 ;
+test-run tests/mod/rdp/test_rdp_negociation :
+  $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_negociation.cpp
+:
+  <library>app_path_test.o
+  <library>boost_stacktrace
+  <library>crypto
+  <library>gssapi_krb5
+  <library>krb5
+  <library>src/core/RDP/mppc.o
+  <library>src/core/RDP/nego.o
+  <library>src/core/error.o
+  <library>src/core/font.o
+  <library>src/gdi/graphic_api.o
+  <library>src/gdi/screen_functions.o
+  <library>src/mod/rdp/rdp_negociation.o
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/bitmap.o
+  <library>src/utils/fileutils.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/rle.o
+  <library>src/utils/strutils.o
+  <library>src/utils/sugar/multisz.o
+  <library>src/utils/utf.o
+  <covfile>src/mod/rdp/rdp_negociation.cpp
+  <covfile>src/mod/rdp/rdp_negociation.hpp
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
+;
 test-run tests/mod/rdp/test_rdp_orders :
   $(REDEMPTION_TEST_PATH)/mod/rdp/test_rdp_orders.cpp
 :
@@ -6143,6 +6172,8 @@ alias test_rdp : tests/mod/rdp/test_rdp ;
 alias test_rdp.coverage : tests/mod/rdp/test_rdp.coverage ;
 alias test_rdp_metrics : tests/mod/rdp/test_rdp_metrics ;
 alias test_rdp_metrics.coverage : tests/mod/rdp/test_rdp_metrics.coverage ;
+alias test_rdp_negociation : tests/mod/rdp/test_rdp_negociation ;
+alias test_rdp_negociation.coverage : tests/mod/rdp/test_rdp_negociation.coverage ;
 alias test_rdp_orders : tests/mod/rdp/test_rdp_orders ;
 alias test_rdp_orders.coverage : tests/mod/rdp/test_rdp_orders.coverage ;
 alias test_rdp_params : tests/mod/rdp/test_rdp_params ;
@@ -6658,6 +6689,7 @@ alias tests/mod/rdp/channels.norec :
 alias tests/mod/rdp.norec :
   tests/mod/rdp/test_rdp
   tests/mod/rdp/test_rdp_metrics
+  tests/mod/rdp/test_rdp_negociation
   tests/mod/rdp/test_rdp_orders
   tests/mod/rdp/test_rdp_params
 ;

@@ -3,39 +3,39 @@ JAM_INCLUDE_PATH ?= jam ;
 #############################
 # Internal help (`bjam --help`/`b2 --help`)
 #
-# # Environment variable setting
+# # Setting build variables
 #
-# List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*/\1/' jam/defines.jam`
+# List with `sed -E 's/.*\[ setvar ([^ ]+).*\] ;/\1/;t;d' jam/defines.jam`
 #
-#   bjam -sFFMPEG_INC_PATH=$HOME/ffmpeg/includes ....
+#   bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ....
 #
 # `BOOST_STACKTRACE=1`: (debug only) compile with `boost_stacktrace_backtrace`.
-# `REDEMPTION_FILTER_ERROR`: (runtime) Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA`.
+# `REDEMPTION_FILTER_ERROR`: (runtime) Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
 #
 # # Compilation
 #
-# (Extra `cxx-*` options list with `sed -E 's/^feature <([^>]+)> .*/\1/;t;d' jam/cxxflags.jam`)
+# (Extra `cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
 #
 # Compile executables without tests (as user):
 #
-# $ `bjam exe libs`
+#   bjam exe libs
 #
 # and install (as administrator):
 #
-# $ `bjam install`
+#   bjam install
 #
 # Binaries are located by default in `/usr/local/bin`.
 #
 # ## Tests
 #
-# `bjam tests`
-# `bjam tests/utils` all tests in tests/utils
-# `bjam tests/utils.norec` tests selected by tests/utils/test_*.cpp
+#   bjam tests
+#   bjam tests/utils` all tests in tests/utils
+#   bjam tests/utils.norec` tests selected by tests/utils/test_*.cpp
 #
 # Verbose tests:
 #
-# `export REDEMPTION_LOG_PRINT=1`
-# `bjam tests`
+#   export REDEMPTION_LOG_PRINT=1
+#   bjam tests
 #
 #############################
 

@@ -12,9 +12,29 @@ Support of:
 - RDP client to RDP server and
 - RDP client to VNC server
 
+<!-- ./tools/update_table_of_contents.awk -->
+<!-- summary -->
+1. [Dependencies](#dependencies)
+    1. [FFmpeg:](#ffmpeg)
+        1. [Ubuntu:](#ubuntu)
+        2. [Other distros:](#other-distros)
+        3. [Note:](#note)
+2. [Compilation](#compilation)
+    1. [Special runtime variables (shell variable)](#special-runtime-variables-shell-variable)
+    2. [Setting build variables](#setting-build-variables)
+    3. [Modes and options](#modes-and-options)
+3. [Run ReDemPtion](#run-redemption)
+4. [Convert .mwrm/.wrm capture to video](#convert-mwrmwrm-capture-to-video)
+5. [Generate target and lib/obj dependencies](#generate-target-and-libobj-dependencies)
+6. [Compile proxy_recorder](#compile-proxy_recorder)
+7. [Packaging](#packaging)
+8. [Tag and Version](#tag-and-version)
+9. [FAQ](#faq)
+    1. [Q - Why do you use bjam for ReDemPtion instead of make, cmake, scons, etc ?](#q---why-do-you-use-bjam-for-redemption-instead-of-make-cmake-scons-etc-)
+    2. [Q - How to add configuration variables in rdpproxy.ini ?](#q---how-to-add-configuration-variables-in-rdpproxyini-)
+<!-- /summary -->
 
-Dependencies
-============
+# Dependencies
 
 To compile ReDemPtion you need the following packages:
 - libboost-tools-dev (contains bjam: software build tool) (https://github.com/boostorg/build)
@@ -30,13 +50,6 @@ To compile ReDemPtion you need the following packages:
 
 ```sh
 apt install libboost-tools-dev libboost-test-dev libssl-dev libkrb5-dev libsnappy-dev libpng12-dev
-```
-
-Extra packet:
-- libboost-stacktrace-dev (only with `-sBOOST_STACKTRACE=1`)
-
-```sh
-apt install libboost-stacktrace-dev
 ```
 
 Submodule ($ `git submodule update --init`):
@@ -67,42 +80,17 @@ apt install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-
 ### Other distros:
 - https://github.com/FFmpeg/FFmpeg/archive/n2.5.11.tar.gz
 
-And set environment variable (optionally)
-- `export FFMPEG_INC_PATH=/my/ffmpeg/include/path`
-- `export FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
-- `export FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
+And set the [build variables](#setting-build-variables) (optionally)
+- `FFMPEG_INC_PATH=/my/ffmpeg/include/path`
+- `FFMPEG_LIB_PATH=/my/ffmpeg/library/path` (/!\\ without `/` terminal)
+- `FFMPEG_LINK_MODE=shared` (static or shared, shared by default)
 
 ### Note:
 
-Disable ffmpeg with `-sNO_FFMPEG=1`.
+Disable ffmpeg with `NO_FFMPEG=1`.
 
 
-## Environment variable setting
-
-List with `sed -E '/\[ setvar/!d;s/.*\[ setvar ([^ ]+).*\] ;/\1/' jam/defines.jam`
-
-    export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
-    bjam ....
-
-Or
-
-    FFMPEG_INC_PATH=$HOME/ffmpeg/includes FFMPEG_LIB_PATH=... bjam ....
-
-Or with `-s` to bjam
-
-    bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
-
-### Special compilation variables
-
-- `BOOST_STACKTRACE=1`: (debug only) compile with `boost_stacktrace_backtrace`.
-
-### Special runtime variables
-
-- `REDEMPTION_FILTER_ERROR`: Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA`.
-
-
-Compilation
-===========
+# Compilation
 
 Well, that's pretty easy once you installed the required dependencies.
 
@@ -126,10 +114,29 @@ and install (as administrator):
 
 \# `bjam install`
 
-Binaries are located by default in `/usr/local/bin`.
+Binaries are located by default in `/usr/local/bin`. For a user install, see [setting build variables](#setting-build-variables).
 
 
 Use `bjam --help` for more information.
+
+
+## Special runtime variables (shell variable)
+
+- `REDEMPTION_FILTER_ERROR`: Only with `BOOST_STACKTRACE=1`. no backtrace for specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA,ERR_SEC`.
+
+
+## Setting build variables
+
+List with `sed -E 's/.*\[ setvar ([^ ]+).*\] ;/\1/;t;d' jam/defines.jam`
+
+    bjam -s FFMPEG_INC_PATH=$HOME/ffmpeg/includes ...
+
+Or with a shell variable
+
+    export FFMPEG_INC_PATH=$HOME/ffmpeg/includes
+    bjam ....
+
+List default values with `sed -E 's/^([A-Z_]+)_DEFAULT [^=]+= (.*) ;/\1 = \2/;t;d' jam/defines.jam`
 
 
 ## Modes and options
@@ -145,11 +152,10 @@ $ `bjam [variant=]{release|debug|san} [cxx-options=value] [target...]`
 - `cxx-relro`: default off on full
 - `cxx-stack-protector`: off on strong all
 
-(`cxx-*` options list with `sed -E 's/^feature <([^>]+)> .*/\1/;t;d' jam/cxxflags.jam`)
+(`cxx-*` options list with `sed -E 's/^feature <([^>]+)> : ([^:]+).*/\1 = \2/;t;d' jam/cxxflags.jam`)
 
 
-Run ReDemPtion
-==============
+# Run ReDemPtion
 
 To test it, executes:
 
@@ -175,8 +181,17 @@ to current passthrough.py, please contribute it, it will be much appreciated.
 
 $ `xfreerdp /u:internal /p:internal 127.0.0.1`
 
-Generate target and lib/obj dependencies
-========================================
+
+# Convert .mwrm/.wrm capture to video
+
+`.mwrm` and `.wrm` are native capture formats in `capture_flags=2` in `rdpproxy.ini`.
+
+    redrec -f --video-codec mp4 -i file.mwrm -o output_prefix
+
+Note: `rdpproxy --print-default-ini` show a default ini file.
+
+
+# Generate target and lib/obj dependencies
 
 When create a new test or when a target fail with link error:
 
@@ -186,8 +201,8 @@ Or run `./tools/bjam/gen_targets.py > targets.jam`
 
 Specific deps (libs, header, cpp, etc) in `./tools/bjam/gen_targets.py`.
 
-Compile proxy_recorder
-======================
+
+# Compile proxy_recorder
 
 Proxy recorder is a tools used to record dialog between a client and an RDP server without
 any modification of the data by redemption. This allows to record reference traffic for
@@ -199,14 +214,14 @@ It can be compiled using static c++ libraries (usefull to use the runtime on sys
 where reference compiler is older) using the command line below. Links with openssl
 and kerberos are still dynamic and using shared libraries.
 
-`bjam -a -d2 toolset=gcc-7 proxy_recorder linkflags=-static-libstdc++`
+    bjam -a -d2 toolset=gcc-7 proxy_recorder linkflags=-static-libstdc++
 
 Exemple call line for proxy_recorder:
 
-`proxy_recorder --target-host 10.10.47.252 -p 3389 -P 8000 --nla-username myusername --nla-password mypassword -t dump-%d.out`
+    proxy_recorder --target-host 10.10.47.252 -p 3389 -P 8000 --nla-username myusername --nla-password mypassword -t dump-%d.out
 
-Packaging
-=========
+
+# Packaging
 
     ./tools/packager.py --build-package
 
@@ -214,17 +229,14 @@ Packaging
 - `--force-build`
 
 
-Tag and Version
-===============
+# Tag and Version
 
     ./tools/packager.py --update-version 1.2.7 --git-tag --git-push-tag --git-push
 
 
-FAQ
-===
+# FAQ
 
-Q - Why do you use bjam for ReDemPtion instead of make, cmake, scons, etc ?
----------------------------------------------------------------------------
+## Q - Why do you use bjam for ReDemPtion instead of make, cmake, scons, etc ?
 
 It is simple, more that could be thought at first sight, and bjam has the major
 feature over make to keep source directories clean, all build related
@@ -236,13 +248,11 @@ But keeping in mind the complexity of make (or worse autotools + make), bjam is
 a great help. We also used to have an alternative cmake build system, but it was
 more complex than bjam and not maintained, so was removed.
 
-Q - How to add configuration variables in rdpproxy.ini ?
---------------------------------------------------------
+## Q - How to add configuration variables in rdpproxy.ini ?
 
-Just edit config_spec.hpp (./projects/redemption_configs/configs_specs/configs/specs/config_spec.hpp).
+Just edit config_spec.hpp (`projects/redemption_configs/configs_specs/configs/specs/config_spec.hpp`).
 
 The necessary changes should be simple using the surrounding code as exemple.
 
 Then enter directory `projects/redemption_configs` and type `bjam`
 the needed files will be generated.
-
