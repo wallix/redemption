@@ -101,4 +101,4 @@ constant FFMPEG_LIB_PATH : [ setvar FFMPEG_LIB_PATH : $(_FFMPEG_LIB_PATH) ] ; # 
 constant FFMPEG_LINK_MODE : [ setvar FFMPEG_LINK_MODE : $(_FFMPEG_LINK_MODE) ] ; # static or shared
 constant NO_FFMPEG : [ setvar NO_FFMPEG : 0 ] ;
 
-constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTRACE=1` (for debug ans san mode) require libboost_stacktrace_backtrace (apt install libboost-stacktrace-dev). Use REDEMPTION_FILTER_ERROR shell variable for disable backtrace of specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA;ERR_SEC`.
+constant BOOST_STACKTRACE : [ setvar BOOST_STACKTRACE : 0 ] ; # `-sBOOST_STACKTRACE=1` (for debug and san mode) require libboost_stacktrace_backtrace (apt install libboost-stacktrace-dev). Use REDEMPTION_FILTER_ERROR shell variable for disable backtrace of specific error (see `src/core/error.hpp`). example: `export REDEMPTION_FILTER_ERROR=ERR_TRANSPORT_NO_MORE_DATA;ERR_SEC`.

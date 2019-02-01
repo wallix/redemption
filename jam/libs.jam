@@ -64,5 +64,6 @@ if $(BOOST_STACKTRACE) = 1
 else
 {
     alias boost_stacktrace : ;
+    BOOST_STACKTRACE_CXXFLAGS = <define>REDEMPTION_NO_STACKTRACE ;
 }
 ## }
