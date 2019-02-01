@@ -58,6 +58,7 @@ private:
           bool           exchanged_data_limit_reached_reported = false;
 
 public:
+    // TODO: move that to BaseVirtualChannelConstructor
     struct Params
     {
         ReportMessageApi & report_message;
