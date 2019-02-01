@@ -268,6 +268,43 @@ RED_AUTO_TEST_CASE(TestAclSerializeReceiveBigData)
     RED_REQUIRE_EQUAL(ini.get<cfg::context::rejected>(), result);
 }
 
+RED_AUTO_TEST_CASE(TestAclSerializeReceiveKeyMultiPacket)
+{
+    Inifile ini;
+    ini.clear_send_index();
+
+    auto const key1 = string_from_authid(cfg::context::rejected::index);
+    auto const key2 = string_from_authid(cfg::context::message::index);
+    size_t const key2_splitted_len = key2.size() / 2;
+    auto const total_sz = 4 * 2 + key1.size() + key2.size() + 5 * 2;
+    std::unique_ptr<char[]> u(new char[total_sz]);
+    OutStream big_stream(u.get(), total_sz);
+    big_stream.out_uint16_be(1);
+    big_stream.out_uint16_be(key1.size() + 5 + key2_splitted_len);
+    big_stream.out_copy_bytes(key1);
+    big_stream.out_copy_bytes("\n!aa\n"_av);
+    big_stream.out_copy_bytes(key1.first(key2_splitted_len));
+    big_stream.out_uint16_be(0);
+    big_stream.out_uint16_be(key2.size() - key2_splitted_len + 5);
+    big_stream.out_copy_bytes(key2.array_from_offset(key2_splitted_len));
+    big_stream.out_copy_bytes("\n!xy\n"_av);
+
+    RED_REQUIRE_EQUAL(total_sz, big_stream.get_offset());
+
+    GeneratorTransport trans(u.get(), big_stream.get_offset());
+
+    LCGRandom rnd(0);
+    Fstat fstat;
+    CryptoContext cctx;
+    init_keys(cctx);
+
+    AclSerializer acl(ini, 10010, trans, cctx, rnd, fstat, to_verbose_flags(0));
+
+    RED_CHECK_EXCEPTION_ERROR_ID(acl.incoming(), ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
+
+    trans.disable_remaining_error();
+}
+
 RED_AUTO_TEST_CASE(TestAclSerializeUnknownKey)
 {
     Inifile ini;

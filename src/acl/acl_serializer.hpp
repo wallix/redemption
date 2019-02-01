@@ -805,7 +805,6 @@ private:
     {
         static constexpr size_t buf_len = 65535;
         char buf[buf_len];
-        char key_name_buf[128];
         bool has_next_buffer = true;
         std::string data_multipacket;
         char * p;
@@ -822,48 +821,23 @@ private:
             this->safe_read_packet();
         }
 
-        array_view_const_char key(bool always_internal_copy)
+        array_view_const_char key()
         {
             auto m = std::find(this->p, this->e, '\n');
             if (m == this->e) {
-                size_t key_buf_len = this->e - this->p;
-                if (key_buf_len) {
-                    if (key_buf_len > sizeof(this->key_name_buf)) {
-                        LOG(LOG_ERR, "Error: ACL key length too big (got %zu max 64o)", key_buf_len);
-                        throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-                    }
-                    memcpy(this->key_name_buf, this->p, key_buf_len);
+                if (this->e - this->p) {
+                    LOG(LOG_ERR, "ACL SERIALIZER: key is truncated");
+                    throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
                 }
-                else if (!this->has_next_buffer) {
-                    if (key_buf_len) {
-                        LOG(LOG_ERR, "Error: ERR_ACL_UNEXPECTED_IN_ITEM_OUT (1)");
-                        throw Error(ERR_ACL_UNEXPECTED_IN_ITEM_OUT);
-                    }
+                if (!this->has_next_buffer) {
                     return nullptr;
                 }
                 this->safe_read_packet();
                 m = std::find(this->p, this->e, '\n');
-                if (key_buf_len) {
-                    if (size_t(m - this->p) > sizeof(this->key_name_buf)) {
-                        LOG(LOG_ERR, "Error: ACL key length too big (got %" PRIdPTR " max 64o)", m - this->p);
-                        throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-                    }
-                    always_internal_copy = true;
-                }
             }
 
             std::size_t const len = m - this->p;
-            *m = 0;
-            ++m;
-            if (always_internal_copy) {
-                if (len > sizeof(this->key_name_buf)) {
-                    LOG(LOG_ERR, "Error: ACL key length too big (got %zu max 64o)", len);
-                    throw Error(ERR_ACL_MESSAGE_TOO_BIG);
-                }
-                memcpy(this->key_name_buf, this->p, len);
-                this->p = m;
-                return {this->key_name_buf, len};
-            }
+            *m++ = 0;
             return {std::exchange(this->p, m), len};
         }
 
@@ -940,7 +914,8 @@ private:
             this->safe_read_packet();
         }
 
-        void safe_read_packet() {
+        void safe_read_packet()
+ {
             uint16_t buf_sz = 0;
             do {
                 this->trans.recv_boom(this->buf, HEADER_SIZE);
@@ -969,7 +944,7 @@ public:
         Reader reader(this->auth_trans, this->verbose);
         array_view_const_char key;
 
-        while (!(key = reader.key(bool(this->verbose & Verbose::variable))).empty()) {
+        while (!(key = reader.key()).empty()) {
             auto authid = authid_from_string(key);
             if (auto field = this->ini.get_acl_field(authid)) {
                 if (reader.is_set_value()) {
@@ -977,13 +952,15 @@ public:
                         array_view_const_char val         = field.to_string_view();
                         array_view_const_char display_val = field.is_loggable()
                             ? val : ::get_printable_password(val, this->ini.get<cfg::debug::password>());
-                        LOG(LOG_INFO, "receiving '%.*s'='%.*s'", int(key.size()), key.data(), int(display_val.size()), display_val.data());
+                        LOG(LOG_INFO, "receiving '%s'='%.*s'",
+                            string_from_authid(authid).data(),
+                            int(display_val.size()), display_val.data());
                     }
                 }
                 else if (reader.consume_ask()) {
                     field.ask();
                     if (bool(this->verbose & Verbose::variable)) {
-                        LOG(LOG_INFO, "receiving ASK '%.*s'", int(key.size()), key.data());
+                        LOG(LOG_INFO, "receiving ASK '%s'", string_from_authid(authid).data());
                     }
                 }
                 else {
@@ -993,9 +970,14 @@ public:
                 }
             }
             else {
+                char sauthid[128];
+                std::size_t const min = std::min(std::size(sauthid)-1, key.size());
+                memcpy(sauthid, key.data(), min);
+                sauthid[min] = 0;
+                // this invalidate key value
                 auto val = reader.get_val();
-                LOG(LOG_WARNING, "Unexpected receving '%.*s' - '%.*s'",
-                    int(key.size()), key.data(), int(val.size()), val.data());
+                LOG(LOG_WARNING, "Unexpected receving '%s' - '%.*s'",
+                    sauthid, int(val.size()), val.data());
             }
         }
     }
