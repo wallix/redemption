@@ -22,66 +22,36 @@
 
 #define RED_TEST_MODULE TestRdpNegociation
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/data_test_case.hpp"
 
 #include "mod/rdp/rdp_negociation.hpp"
 
-RED_AUTO_TEST_CASE(TestRdpLogonInfo)
+#include <tuple>
+#include <array>
+
+
+RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
+    std::tuple{"mer", "mollusque@rocher", "", "mollusque@rocher"},
+    std::tuple{"sable", "coquillage\\crustacé@plageabandonnée",
+               "", "coquillage\\crustacé@plageabandonnée"},
+    std::tuple{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
+    std::tuple{"ohnon", "zigouigoui", "", "zigouigoui"}
+}), hostname, target_user, domain, username)
 {
-    {
-        RdpLogonInfo logon_info("mer", false,
-                                "mollusque@rocher", false);
-        RED_CHECK_EQUAL(logon_info.domain(), "");
-        RED_CHECK_EQUAL(logon_info.username(), "mollusque@rocher");
-    }
-    {
-        RdpLogonInfo logon_info("sable", false,
-                                "coquillage\\crustacé@plageabandonnée", false);
-        RED_CHECK_EQUAL(logon_info.domain(), "");
-        RED_CHECK_EQUAL(logon_info.username(),
-                        "coquillage\\crustacé@plageabandonnée");
-    }
-    {
-        RdpLogonInfo logon_info("what", false,
-                                "tounicoti\\tournicoton", false);
-        RED_CHECK_EQUAL(logon_info.domain(), "tounicoti");
-        RED_CHECK_EQUAL(logon_info.username(), "tournicoton");
-    }
-    {
-        RdpLogonInfo logon_info("ohnon", false,
-                                "zigouigoui", false);
-        RED_CHECK_EQUAL(logon_info.domain(), "");
-        RED_CHECK_EQUAL(logon_info.username(), "zigouigoui");
-    }
+    RdpLogonInfo logon_info(hostname, false, target_user, false);
+    RED_CHECK_EQUAL(logon_info.domain(), domain);
+    RED_CHECK_EQUAL(logon_info.username(), username);
 }
 
-RED_AUTO_TEST_CASE(TestRdpLogonInfoLegacy)
+RED_BIND_DATA_TEST_CASE(TestRdpLogonInfoLegacy, (std::array{
+    std::tuple{"mer", "mollusque@rocher", "rocher", "mollusque"},
+    std::tuple{"sable", "coquillage\\crustacé@plageabandonnée",
+               "coquillage", "crustacé@plageabandonnée"},
+    std::tuple{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
+    std::tuple{"ohnon", "zigouigoui", "", "zigouigoui"}
+}), hostname, target_user, domain, username)
 {
-    // Legacy Login Format
-    {
-        RdpLogonInfo logon_info("mer", false,
-                                "mollusque@rocher", true);
-        RED_CHECK_EQUAL(logon_info.domain(), "rocher");
-        RED_CHECK_EQUAL(logon_info.username(), "mollusque");
-    }
-    {
-        // This legacy behavior is incorrect
-        RdpLogonInfo logon_info("sable", false,
-                                "coquillage\\crustacé@plageabandonnée", true);
-        RED_CHECK_EQUAL(logon_info.domain(), "coquillage");
-        RED_CHECK_EQUAL(logon_info.username(),
-                        "crustacé@plageabandonnée");
-    }
-    {
-        RdpLogonInfo logon_info("what", false,
-                                "tounicoti\\tournicoton", true);
-        RED_CHECK_EQUAL(logon_info.domain(), "tounicoti");
-        RED_CHECK_EQUAL(logon_info.username(), "tournicoton");
-    }
-    {
-        RdpLogonInfo logon_info("ohnon", false,
-                                "zigouigoui", true);
-        RED_CHECK_EQUAL(logon_info.domain(), "");
-        RED_CHECK_EQUAL(logon_info.username(), "zigouigoui");
-    }
-
+    RdpLogonInfo logon_info(hostname, false, target_user, true);
+    RED_CHECK_EQUAL(logon_info.domain(), domain);
+    RED_CHECK_EQUAL(logon_info.username(), username);
 }
