@@ -660,10 +660,11 @@ private:
                                                : nullptr);
             this->file_system_to_server_sender = this->create_to_server_asynchronous_sender(channel_names::rdpdr, stc, asynchronous_tasks);
 
-            FileSystemVirtualChannel::Params fsvc_params(this->report_message);
+            BaseVirtualChannel::Params base_params(this->report_message);
+            base_params.exchanged_data_limit = this->max_rdpdr_data;
+            base_params.verbose = this->verbose;
 
-            fsvc_params.exchanged_data_limit = this->max_rdpdr_data;
-            fsvc_params.verbose = this->verbose;
+            FileSystemVirtualChannel::Params fsvc_params;
 
             fsvc_params.client_name = client_name;
             fsvc_params.file_system_read_authorized = this->authorization_channels.rdpdr_drive_read_is_authorized();
@@ -688,6 +689,7 @@ private:
                     front,
                     false,
                     "",
+                    base_params,
                     fsvc_params);
 
             if (this->file_system_to_server_sender) {
@@ -725,7 +727,6 @@ private:
             BaseVirtualChannel::Params base_params(this->report_message);
             base_params.exchanged_data_limit = static_cast<data_size_type>(-1);
             base_params.verbose  = this->verbose;
-
 
             SessionProbeVirtualChannel::Params sp_vc_params;
 

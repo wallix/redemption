@@ -928,7 +928,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     NullVirtualChannelDataSender null_virtual_channel_data_sender;
 
 public:
-    struct Params : public BaseVirtualChannel::Params
+    struct Params
     {
         uninit_checked<const char*> client_name;
 
@@ -947,8 +947,7 @@ public:
 
         uninit_checked<const char*> proxy_managed_drive_prefix;
 
-        explicit Params(ReportMessageApi & report_message)
-          : BaseVirtualChannel::Params(report_message) {}
+        explicit Params(){}
     };
 
     bool channel_filter_on;
@@ -967,10 +966,11 @@ public:
         FrontAPI& front,
         const bool channel_filter_on,
         const std::string & channel_files_directory,
+        const BaseVirtualChannel::Params & base_params,
         const Params& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
-                         params)
+                         base_params)
     , to_server_sender(to_server_sender_ ? *to_server_sender_  : null_virtual_channel_data_sender)
     , serverVersionMinor(0xC)
     , file_system_drive_manager(file_system_drive_manager)
@@ -987,14 +987,13 @@ public:
           user_logged_on,
           to_client_sender_,
           to_server_sender_,
-          (params.file_system_read_authorized ||
-           params.file_system_write_authorized),
+          (params.file_system_read_authorized || params.file_system_write_authorized),
           params.parallel_port_authorized,
           params.print_authorized,
           params.serial_port_authorized,
           params.smart_card_authorized,
           CHANNELS::CHANNEL_CHUNK_LENGTH,
-          params.verbose)
+          base_params.verbose)
     , front(front)
     , session_reactor(session_reactor)
     , channel_filter_on(channel_filter_on)

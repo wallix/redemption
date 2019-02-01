@@ -32,14 +32,11 @@
 
 namespace
 {
-    FileSystemVirtualChannel::Params file_system_param(
-        ReportMessageApi& report_message, RDPVerbose verbose)
+
+    FileSystemVirtualChannel::Params common_file_system_param()
     {
-        FileSystemVirtualChannel::Params file_system_virtual_channel_params(report_message);
-
-        file_system_virtual_channel_params.exchanged_data_limit         = 0;
-        file_system_virtual_channel_params.verbose                      = verbose;
-
+        
+        FileSystemVirtualChannel::Params file_system_virtual_channel_params;
         file_system_virtual_channel_params.client_name                  = "rzh";
 
         file_system_virtual_channel_params.random_number                = 5245;
@@ -61,8 +58,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -87,7 +89,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender,
-        file_system_drive_manager, front, false, "", file_system_virtual_channel_params);
+        file_system_drive_manager, front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -99,8 +101,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -124,7 +130,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -136,8 +142,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -161,7 +171,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -173,8 +183,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
@@ -198,7 +212,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -210,8 +224,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -235,7 +253,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -247,8 +265,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -272,7 +294,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -284,8 +306,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     RDPVerbose verbose = RDPVerbose::rdpdr | RDPVerbose::rdpdr_dump;
 
     NullReportMessage report_message;
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit         = 0;
+    base_params.verbose                      = verbose;
+
     FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = file_system_param(report_message, verbose);
+      = common_file_system_param();
 
     file_system_virtual_channel_params.file_system_read_authorized  = true;
     file_system_virtual_channel_params.file_system_write_authorized = true;
@@ -306,7 +332,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", file_system_virtual_channel_params);
+        front, false, "", base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
