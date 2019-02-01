@@ -486,10 +486,12 @@ private:
             this->clipboard_to_client_sender = this->create_to_client_sender(channel_names::cliprdr, front);
             this->clipboard_to_server_sender = this->create_to_server_synchronous_sender(channel_names::cliprdr, stc);
 
-            ClipboardVirtualChannel::Params cvc_params(this->report_message);
+            BaseVirtualChannel::Params base_params(this->report_message);
+            base_params.exchanged_data_limit      = this->max_clipboard_data;
+            base_params.verbose                   = this->verbose;
 
-            cvc_params.exchanged_data_limit      = this->max_clipboard_data;
-            cvc_params.verbose                   = this->verbose;
+            ClipboardVirtualChannel::Params cvc_params;
+
             cvc_params.clipboard_down_authorized = this->authorization_channels.cliprdr_down_is_authorized();
             cvc_params.clipboard_up_authorized   = this->authorization_channels.cliprdr_up_is_authorized();
             cvc_params.clipboard_file_authorized = this->authorization_channels.cliprdr_file_is_authorized();
@@ -505,6 +507,7 @@ private:
                     false,
                     "",
                     session_reactor,
+                    base_params,
                     cvc_params);
         }
 

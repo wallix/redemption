@@ -72,7 +72,7 @@ private:
     SessionReactor& session_reactor;
 
 public:
-    struct Params : public BaseVirtualChannel::Params {
+    struct Params {
         bool clipboard_down_authorized;
         bool clipboard_up_authorized;
         bool clipboard_file_authorized;
@@ -82,9 +82,7 @@ public:
 
         bool log_only_relevant_clipboard_activities;
 
-        explicit Params(ReportMessageApi & report_message)
-          : BaseVirtualChannel::Params(report_message)
-        {}
+        explicit Params() {}
     };
 
     ClipboardVirtualChannel(
@@ -94,10 +92,11 @@ public:
         const bool channel_filter_on,
         const std::string & channel_files_directory,
         SessionReactor& session_reactor,
+        const BaseVirtualChannel::Params & base_params,
         const Params & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
-                         params)
+                         base_params)
     , param_clipboard_down_authorized(params.clipboard_down_authorized)
     , param_clipboard_up_authorized(params.clipboard_up_authorized)
     , param_clipboard_file_authorized(params.clipboard_file_authorized)

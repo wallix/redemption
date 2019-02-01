@@ -44,10 +44,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -66,7 +68,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
-        clipboard_virtual_channel_params);
+                base_params,
+                clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -81,10 +84,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -103,6 +108,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -118,10 +124,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
@@ -140,6 +147,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -155,10 +163,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
     NullReportMessage report_message;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
@@ -177,6 +186,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
@@ -197,10 +207,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -216,6 +228,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     uint8_t  virtual_channel_data[CHANNELS::CHANNEL_CHUNK_LENGTH];
@@ -260,10 +273,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -279,6 +294,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
 // ClipboardVirtualChannel::process_server_message: total_length=28 flags=0x00000003 chunk_data_length=28
@@ -450,10 +466,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
-
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
+    
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -469,6 +487,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, true, wd.dirname(), session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
@@ -959,10 +978,12 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     int verbose = static_cast<int>(RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump);
 
     NullReportMessage report_message;
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params(report_message);
+    
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = to_verbose_flags(verbose);
 
-    clipboard_virtual_channel_params.exchanged_data_limit      = 0;
-    clipboard_virtual_channel_params.verbose                   = to_verbose_flags(verbose);
+    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
 
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -978,6 +999,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 
     ClipboardVirtualChannel clipboard_virtual_channel(
         &to_client_sender, &to_server_sender, front, true, wd.dirname(), session_reactor,
+        base_params,
         clipboard_virtual_channel_params);
 
     std::unique_ptr<AsynchronousTask> out_asynchronous_task;
