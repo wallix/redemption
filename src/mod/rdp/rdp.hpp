@@ -791,16 +791,14 @@ private:
             this->remote_programs_to_server_sender =
                 this->create_to_server_synchronous_sender(channel_names::rail, stc);
 
-            RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params(this->report_message);
+            BaseVirtualChannel::Params base_params(this->report_message);
+            base_params.exchanged_data_limit = 0;
+            base_params.verbose  = this->verbose;
+
+            RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params;
 
             remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
                 this->session_probe.used_to_launch_remote_program;
-
-
-            remote_programs_virtual_channel_params.exchanged_data_limit               =
-                0;
-            remote_programs_virtual_channel_params.verbose                            =
-                this->verbose;
 
             remote_programs_virtual_channel_params.client_execute_flags               =
                 this->client_execute_flags;
@@ -838,6 +836,7 @@ private:
                     this->remote_programs_to_server_sender.get(),
                     front,
                     vars,
+                    base_params,
                     remote_programs_virtual_channel_params);
         }
 

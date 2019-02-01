@@ -101,7 +101,7 @@ private:
     std::vector<LaunchPendingApp> launch_pending_apps;
 
 public:
-    struct Params : public BaseVirtualChannel::Params
+    struct Params
     {
         uninit_checked<   uint16_t> client_execute_flags;
         uninit_checked<const char*> client_execute_exe_or_file;
@@ -122,9 +122,7 @@ public:
         uninit_checked<bool> client_supports_handshakeex_pdu;
         uninit_checked<bool> client_supports_enhanced_remoteapp;
 
-        explicit Params(ReportMessageApi & report_message)
-          : BaseVirtualChannel::Params(report_message)
-        {}
+        explicit Params() {}
     };
 
     RemoteProgramsVirtualChannel(
@@ -132,10 +130,11 @@ public:
         VirtualChannelDataSender* to_server_sender_,
         FrontAPI& /*front*/,
         ModRdpVariables vars,
+        const BaseVirtualChannel::Params & base_params,
         const Params& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
-                         params)
+                         base_params)
     , param_client_execute_flags(params.client_execute_flags)
     , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
     , param_client_execute_working_dir(params.client_execute_working_dir)
