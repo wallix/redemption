@@ -729,7 +729,7 @@ public:
 
     void DLP_antivirus_check_channels_files() {
 
-        if (this->channel_file.is_valide()) {
+        if (this->channel_file.is_valid()) {
 
             switch (this->channel_file.get_direction()) {
 

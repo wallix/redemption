@@ -184,7 +184,7 @@ public:
         return this->total_file_size == this->current_file_size;
     }
 
-    bool is_valide() {
+    bool is_valid() {
         this->valid = true;
         return this->is_complete() && this->valid;
     }
