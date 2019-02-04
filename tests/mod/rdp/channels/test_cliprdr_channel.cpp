@@ -45,13 +45,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -79,14 +73,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -114,14 +102,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -150,14 +132,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_denied.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -189,13 +166,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
 
     NullSender to_client_sender;
     NullSender to_server_sender;
@@ -246,14 +217,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
 
     NullSender to_client_sender;
     NullSender to_server_sender;
@@ -435,13 +399,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
     
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
 
     TestResponseSender to_client_sender;
     NullSender to_server_sender;
@@ -941,16 +899,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    ClipboardVirtualChannel::Params clipboard_virtual_channel_params;
-
-    clipboard_virtual_channel_params.clipboard_down_authorized = true;
-    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-    clipboard_virtual_channel_params.clipboard_file_authorized = true;
-
-    clipboard_virtual_channel_params.dont_log_data_into_syslog = false;
-    clipboard_virtual_channel_params.dont_log_data_into_wrm    = false;
-
-    clipboard_virtual_channel_params.log_only_relevant_clipboard_activities = false;
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
 
     NullSender to_client_sender;
     TestResponseSender to_server_sender;

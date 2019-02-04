@@ -39,6 +39,15 @@
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
 
+struct ClipboardVirtualChannelParams {
+// Default Values: everything transmitted, everything is logged
+    bool clipboard_down_authorized = true;
+    bool clipboard_up_authorized   = true;
+    bool clipboard_file_authorized = true;
+    bool dont_log_data_into_syslog = false;
+    bool dont_log_data_into_wrm    = false;
+    bool log_only_relevant_clipboard_activities = false;
+};
 
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
@@ -46,14 +55,7 @@ class ClipboardVirtualChannel final : public BaseVirtualChannel
 private:
     ClipboardData clip_data;
 
-    const bool param_clipboard_down_authorized;
-    const bool param_clipboard_up_authorized;
-    const bool param_clipboard_file_authorized;
-
-    const bool param_dont_log_data_into_syslog;
-    const bool param_dont_log_data_into_wrm;
-
-    const bool param_log_only_relevant_clipboard_activities = false;
+    const ClipboardVirtualChannelParams params;
 
     FrontAPI& front;
 
@@ -72,18 +74,6 @@ private:
     SessionReactor& session_reactor;
 
 public:
-    struct Params {
-        bool clipboard_down_authorized;
-        bool clipboard_up_authorized;
-        bool clipboard_file_authorized;
-
-        bool dont_log_data_into_syslog;
-        bool dont_log_data_into_wrm;
-
-        bool log_only_relevant_clipboard_activities;
-
-        explicit Params() {}
-    };
 
     ClipboardVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
@@ -93,16 +83,11 @@ public:
         const std::string & channel_files_directory,
         SessionReactor& session_reactor,
         const BaseVirtualChannel::Params & base_params,
-        const Params & params)
+        const ClipboardVirtualChannelParams & params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
-    , param_clipboard_down_authorized(params.clipboard_down_authorized)
-    , param_clipboard_up_authorized(params.clipboard_up_authorized)
-    , param_clipboard_file_authorized(params.clipboard_file_authorized)
-    , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
-    , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_log_only_relevant_clipboard_activities(params.log_only_relevant_clipboard_activities)
+    , params(params)
     , front(front)
     , proxy_managed(to_client_sender_ == nullptr)
     , channel_filter_on(channel_filter_on)
@@ -160,9 +145,9 @@ public:
                                          this->clip_data.format_name_inventory,
                                          verbose);
 
-        if (!this->param_clipboard_down_authorized &&
-            !this->param_clipboard_up_authorized &&
-            !this->format_list_response_notifier) {
+        if (!this->params.clipboard_down_authorized 
+        &&  !this->params.clipboard_up_authorized 
+        &&  !this->format_list_response_notifier) {
 
             LOG(LOG_WARNING,"ClipboardVirtualChannel::process_client_format_list_pdu: Clipboard is fully disabled.");
 
@@ -249,23 +234,23 @@ public:
 
             case RDPECLIP::CB_FORMAT_DATA_REQUEST: {
                 FormatDataRequestReceive receiver(this->clip_data, this->clip_data.client_data, this->verbose, chunk);
-                if (!this->param_clipboard_down_authorized) {
+                if (!this->params.clipboard_down_authorized) {
 
                     ClientFormatDataRequestSendBack sender(this->verbose, this);
                 }
-                send_message_to_server = this->param_clipboard_down_authorized;
+                send_message_to_server = this->params.clipboard_down_authorized;
             }
             break;
 
             case RDPECLIP::CB_FILECONTENTS_REQUEST: {
                 FilecontentsRequestReceive receiver(this->clip_data.client_data, chunk, this->verbose, header.dataLen());
-                if (!this->param_clipboard_file_authorized) {
+                if (!this->params.clipboard_file_authorized) {
                     ClientFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 } else if (this->channel_filter_on && (receiver.dwFlags == RDPECLIP::FILECONTENTS_SIZE)) {
                     const RDPECLIP::FileDescriptor & desc = this->clip_data.file_descr_list[receiver.lindex];
                     this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_SERVER, session_reactor.get_current_time());
                 }
-                send_message_to_server = this->param_clipboard_file_authorized;
+                send_message_to_server = this->params.clipboard_file_authorized;
             }
             break;
 
@@ -275,7 +260,7 @@ public:
                         this->clip_data,
                         chunk,
                         header,
-                        this->param_dont_log_data_into_syslog,
+                        this->params.dont_log_data_into_syslog,
                         flags,
                         this->verbose);
 
@@ -373,7 +358,7 @@ public:
             return false;
         }
 
-        if (!this->param_clipboard_up_authorized) {
+        if (!this->params.clipboard_up_authorized) {
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 LOG(LOG_INFO,
                     "ClipboardVirtualChannel::process_server_format_data_request_pdu: "
@@ -407,7 +392,7 @@ public:
             this->clip_data.requestedFormatId ,
             chunk,
             in_header,
-            this->param_dont_log_data_into_syslog,
+            this->params.dont_log_data_into_syslog,
             this->clip_data.server_data.file_list_format_id,
             flags,
             this->clip_data.server_data.file_descriptor_stream,
@@ -432,8 +417,8 @@ public:
 
         this->clip_data.file_descr_list.clear();
 
-        if (!this->param_clipboard_down_authorized &&
-            !this->param_clipboard_up_authorized) {
+        if (!this->params.clipboard_down_authorized 
+        &&  !this->params.clipboard_up_authorized) {
             LOG(LOG_WARNING,
                 "ClipboardVirtualChannel::process_server_format_list_pdu: "
                     "Clipboard is fully disabled.");
@@ -527,10 +512,10 @@ public:
                     this->channel_file.new_file(desc.file_name, desc.file_size(), receiver.streamID, ChannelFile::FILE_FROM_CLIENT, session_reactor.get_current_time());
                 }
 
-                if (!this->param_clipboard_file_authorized) {
+                if (!this->params.clipboard_file_authorized) {
                     ServerFilecontentsRequestSendBack sender(this->verbose, receiver.dwFlags, receiver.streamID, this);
                 }
-                send_message_to_client = this->param_clipboard_file_authorized;
+                send_message_to_client = this->params.clipboard_file_authorized;
             }
             break;
 
@@ -952,11 +937,11 @@ private:
 
         this->report_message.log6(info, arc_info, tvtime());
 
-        if (!this->param_dont_log_data_into_syslog) {
+        if (!this->params.dont_log_data_into_syslog) {
             LOG(LOG_INFO, "%s", info);
         }
 
-        if (!this->param_dont_log_data_into_wrm) {
+        if (!this->params.dont_log_data_into_wrm) {
             std::string message = str_concat(
                 type, '=', file_info.file_name, '\x01', file_size_str, '\x01', digest_s);
             this->front.session_update(message);
@@ -985,7 +970,7 @@ private:
                 }
 
                 bool const log_current_activity = (
-                        (!this->param_log_only_relevant_clipboard_activities)
+                        (!this->params.log_only_relevant_clipboard_activities)
                          ||    (strcasecmp("Preferred DropEffect", format_name.c_str()) != 0
                              && strcasecmp("FileGroupDescriptorW", format_name.c_str()) != 0)
                     );
@@ -1023,11 +1008,11 @@ private:
                     this->report_message.log6(info, arc_info, tvtime());
                 }
 
-                if (!this->param_dont_log_data_into_syslog) {
+                if (!this->params.dont_log_data_into_syslog) {
                     LOG(LOG_INFO, "%s", info);
                 }
 
-                if (!this->param_dont_log_data_into_wrm) {
+                if (!this->params.dont_log_data_into_wrm) {
                     std::string message = str_concat(type, '=', format_name, '\x01', size_str);
                     if (!data_to_dump.empty()) {
                         str_append(message, '\x01', data_to_dump);

@@ -490,7 +490,7 @@ private:
             base_params.exchanged_data_limit      = this->max_clipboard_data;
             base_params.verbose                   = this->verbose;
 
-            ClipboardVirtualChannel::Params cvc_params;
+            ClipboardVirtualChannelParams cvc_params;
 
             cvc_params.clipboard_down_authorized = this->authorization_channels.cliprdr_down_is_authorized();
             cvc_params.clipboard_up_authorized   = this->authorization_channels.cliprdr_up_is_authorized();
