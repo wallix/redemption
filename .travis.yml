@@ -26,6 +26,8 @@ before_install:
         -e '4iRUN apt-get -qq update\nRUN apt-get install -y gnupg\nCOPY llvm-snapshot.gpg.key .\nRUN apt-key add llvm-snapshot.gpg.key' \
         -e '/mkdir/iRUN sed -i -e "s/__GLIBC__) || defined(//" /usr/include/c++/v1/__locale' \
         -e 's/^# clang: //' \
+        -e 's/ update/ update --allow-unauthenticated/' \
+        -e 's/ install/ install --allow-unauthenticated/' \
         $BJAM_COMPILER.dockerfile
       echo -e 'using clang : : clang++-7 : <cxxflags>-fdiagnostics-color=always <cxxflags>-stdlib=libc++ <cxxflags>-Wunused-command-line-argument <linkflags>-stdlib=libc++ ;' > project-config.jam
     else
