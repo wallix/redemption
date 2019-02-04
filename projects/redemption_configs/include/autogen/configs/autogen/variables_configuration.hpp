@@ -665,7 +665,7 @@ namespace cfg {
         type value{0};
     };
     /// type: bool <br/>
-    /// value{0} <br/>
+    /// value{1} <br/>
     struct globals::experimental_support_resize_session_during_recording {
         static constexpr bool is_sesman_to_proxy() { return 0; }
         static constexpr bool is_proxy_to_sesman() { return 0; }
@@ -674,7 +674,7 @@ namespace cfg {
         using type = bool;
         using sesman_and_spec_type = bool;
         using mapped_type = sesman_and_spec_type;
-        type value{0};
+        type value{1};
     };
 
     /// type: bool <br/>

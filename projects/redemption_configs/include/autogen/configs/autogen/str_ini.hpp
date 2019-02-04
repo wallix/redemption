@@ -133,7 +133,7 @@
 "#experimental_enable_serializer_data_block_size_limit = 0\n\n"
 
 "#_advanced\n"
-"#experimental_support_resize_session_during_recording = 0\n\n"
+"#experimental_support_resize_session_during_recording = 1\n\n"
 
 "[session_log]\n\n"
 

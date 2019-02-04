@@ -133,7 +133,7 @@
 "experimental_enable_serializer_data_block_size_limit = boolean(default=False)\n\n"
 
 "#_advanced\n"
-"experimental_support_resize_session_during_recording = boolean(default=False)\n\n"
+"experimental_support_resize_session_during_recording = boolean(default=True)\n\n"
 
 "[session_log]\n\n"
 
