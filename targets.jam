@@ -1962,6 +1962,13 @@ test-run tests/core/test_channel_names :
 :
   <covfile>src/core/channel_names.hpp
 ;
+test-run tests/core/test_channels_authorizations :
+  $(REDEMPTION_TEST_PATH)/core/test_channels_authorizations.cpp
+:
+  <library>src/utils/authorization_channels.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/log.o
+;
 test-run tests/core/test_check_files :
   $(REDEMPTION_TEST_PATH)/core/test_check_files.cpp
 :
@@ -4187,15 +4194,6 @@ test-run tests/utils/test_asynchronous_task_manager :
 :
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
-test-run tests/utils/test_authorization_channels :
-  $(REDEMPTION_TEST_PATH)/utils/test_authorization_channels.cpp
-:
-  <covfile>src/utils/authorization_channels.cpp
-  <covfile>src/utils/authorization_channels.hpp
-  <library>src/utils/authorization_channels.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/log.o
-;
 test-run tests/utils/test_bitfu :
   $(REDEMPTION_TEST_PATH)/utils/test_bitfu.cpp
 :
@@ -4882,6 +4880,7 @@ alias test_channel_list : tests/core/test_channel_list ;
 alias test_channel_list.coverage : tests/core/test_channel_list.coverage ;
 alias test_channel_names : tests/core/test_channel_names ;
 alias test_channel_names.coverage : tests/core/test_channel_names.coverage ;
+alias test_channels_authorizations : tests/core/test_channels_authorizations ;
 alias test_check_files : tests/core/test_check_files ;
 alias test_check_files.coverage : tests/core/test_check_files.coverage ;
 alias test_client_info : tests/core/test_client_info ;
@@ -5165,8 +5164,6 @@ alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
-alias test_authorization_channels : tests/utils/test_authorization_channels ;
-alias test_authorization_channels.coverage : tests/utils/test_authorization_channels.coverage ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -5459,6 +5456,7 @@ alias tests/core :
   tests/core/test_callback
   tests/core/test_channel_list
   tests/core/test_channel_names
+  tests/core/test_channels_authorizations
   tests/core/test_check_files
   tests/core/test_client_info
   tests/core/test_error
@@ -5674,7 +5672,6 @@ alias tests/utils/sugar :
 explicit tests/utils ;
 alias tests/utils :
   tests/utils/test_asynchronous_task_manager
-  tests/utils/test_authorization_channels
   tests/utils/test_bitfu
   tests/utils/test_bitmap
   tests/utils/test_bitmap_data_allocator
