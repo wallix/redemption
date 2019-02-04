@@ -51,6 +51,7 @@ namespace redemption_unit_test__
 #else
 
 #include "impl/data_test_case_impl.hpp"
+#include "utils/sugar/array.hpp"
 
 #include <boost/preprocessor/cat.hpp>
 #include <boost/preprocessor/comma_if.hpp>
@@ -88,23 +89,20 @@ namespace redemption_unit_test__
         }
     };
 
-    using std::begin;
-    using std::end;
-
     template<class T>
     struct wrap_data_test
     {
         T a;
         char const* prefix_message;
 
-        using internal_iterator = decltype(begin(std::declval<T const&>()));
+        using internal_iterator = decltype(utils::begin(std::declval<T const&>()));
         using internal_value = wrap_data_test_elem<decltype(*std::declval<internal_iterator>())>;
         using const_iterator = wrap_data_test_iter<internal_iterator>;
 
         using value_type = internal_value;
 
-        const_iterator begin() const { using std::begin; return {begin(a), prefix_message}; }
-        const_iterator end() const { using std::end; return {end(a), prefix_message}; }
+        const_iterator begin() const { return {utils::begin(a), prefix_message}; }
+        const_iterator end() const { return {utils::end(a), prefix_message}; }
 
         std::size_t size() const { return a.size(); }
     };

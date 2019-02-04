@@ -24,9 +24,7 @@
 
 #include <type_traits>
 #include <array>
-#if __cplusplus >= REDEMPTION_CXX_STD_17
-# include <iterator>
-#endif
+#include <iterator>
 
 namespace utils
 {
@@ -73,6 +71,23 @@ namespace utils
         noexcept(noexcept(size(c)))
         -> decltype(size(c))
         { return size(c); }
+
+        using std::begin;
+        using std::end;
+        using std::cbegin;
+        using std::cend;
+
+        template<class C>
+        constexpr auto begin_impl(C & c)
+        noexcept(noexcept(size(c)))
+        -> decltype(begin(c))
+        { return begin(c); }
+
+        template<class C>
+        constexpr auto end_impl(C & c)
+        noexcept(noexcept(size(c)))
+        -> decltype(end(c))
+        { return end(c); }
     }  // namespace detail_
 
     template<class C>
@@ -87,6 +102,25 @@ namespace utils
     -> decltype(static_cast<std::size_t>(detail_::size_impl(c)))
     { return static_cast<std::size_t>(detail_::size_impl(c)); }
 
+    template<class Cont>
+    auto begin(Cont & cont)
+    -> decltype(detail_::begin_impl(cont))
+    { return detail_::begin_impl(cont); }
+
+    template<class Cont>
+    auto end(Cont & cont)
+    -> decltype(detail_::end_impl(cont))
+    { return detail_::end_impl(cont); }
+
+    template<class Cont>
+    auto cbegin(Cont const& cont)
+    -> decltype(detail_::begin_impl(cont))
+    { return detail_::begin_impl(cont); }
+
+    template<class Cont>
+    auto cend(Cont const& cont)
+    -> decltype(detail_::end_impl(cont))
+    { return detail_::end_impl(cont); }
 
     template<std::size_t N, class T>
     constexpr T const &

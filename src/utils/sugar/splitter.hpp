@@ -24,6 +24,7 @@
 #include <cstring>
 
 #include "utils/sugar/range.hpp"
+#include "utils/sugar/array.hpp"
 
 
 template<class ForwardIterator, class ValueT = typename std::iterator_traits<ForwardIterator>::value_type>
@@ -118,37 +119,10 @@ get_split(ForwardIterator first, ForwardIterator last, T && sep)
     return {first, last, std::forward<T>(sep)};
 }
 
-namespace adl_begin_end
-{
-    using std::begin;
-    using std::end;
-
-    template<class Cont>
-    auto begin_(Cont && cont) -> decltype(begin(std::forward<Cont>(cont)))
-    { return begin(cont); }
-
-    template<class Cont>
-    auto end_(Cont && cont) -> decltype(end(std::forward<Cont>(cont)))
-    { return end(cont); }
-}  // namespace adl_begin_end
-
-namespace fn
-{
-    template<class Cont>
-    auto begin(Cont & cont)
-    -> decltype(adl_begin_end::begin_(cont))
-    { return adl_begin_end::begin_(cont); }
-
-    template<class Cont>
-    auto end(Cont & cont)
-    -> decltype(adl_begin_end::end_(cont))
-    { return adl_begin_end::end_(cont); }
-}  // namespace fn
-
 template<class Cont>
 struct container_traits
 {
-    using iterator = decltype(adl_begin_end::begin_(std::declval<Cont>()));
+    using iterator = decltype(utils::begin(std::declval<Cont>()));
 };
 
 template<class T> struct container_traits<T*> { using iterator = T*; };
@@ -161,7 +135,7 @@ template<class Cont, class T>
 splitter<typename container_traits<Cont>::iterator, typename std::decay<T>::type>
 get_split(Cont && cont, T && sep)
 {
-    return {fn::begin(cont), fn::end(cont), std::forward<T>(sep)};
+    return {utils::begin(cont), utils::end(cont), std::forward<T>(sep)};
 }
 
 
