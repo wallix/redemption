@@ -109,7 +109,7 @@ class RDPMetrics;
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/server_transport_context.hpp"
 
-#include "utils/authorization_channels.hpp"
+#include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/stream.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -170,7 +170,7 @@ private:
         RDPMetrics * metrics;
 #endif
         CHANNELS::ChannelDefArray mod_channel_list;
-        const AuthorizationChannels authorization_channels;
+        const ChannelsAuthorizations channels_authorizations;
         ReportMessageApi & report_message;
         Random & gen;
         const bool enable_auth_channel;
@@ -332,13 +332,12 @@ private:
         SessionReactor & session_reactor;
 
         Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
-
-        ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics, SessionReactor & session_reactor)
+            ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics, SessionReactor & session_reactor)
             :
             #ifndef __EMSCRIPTEN__
                 metrics(metrics),
             #endif
-                authorization_channels(
+                channels_authorizations(
                 mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
                 mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
               )
@@ -423,7 +422,7 @@ private:
         std::unique_ptr<VirtualChannelDataSender> create_to_client_sender(
             CHANNELS::ChannelNameId channel_name, FrontAPI& front) const
         {
-            if (!this->authorization_channels.is_authorized(channel_name))
+            if (!this->channels_authorizations.is_authorized(channel_name))
             {
                 return nullptr;
             }
@@ -492,9 +491,9 @@ private:
 
             ClipboardVirtualChannelParams cvc_params;
 
-            cvc_params.clipboard_down_authorized = this->authorization_channels.cliprdr_down_is_authorized();
-            cvc_params.clipboard_up_authorized   = this->authorization_channels.cliprdr_up_is_authorized();
-            cvc_params.clipboard_file_authorized = this->authorization_channels.cliprdr_file_is_authorized();
+            cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
+            cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
+            cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
             cvc_params.dont_log_data_into_syslog = this->disable_clipboard_log_syslog;
             cvc_params.dont_log_data_into_wrm    = this->disable_clipboard_log_wrm;
             cvc_params.log_only_relevant_clipboard_activities = this->log_only_relevant_clipboard_activities;
@@ -670,12 +669,12 @@ private:
             FileSystemVirtualChannel::Params fsvc_params;
 
             fsvc_params.client_name = client_name;
-            fsvc_params.file_system_read_authorized = this->authorization_channels.rdpdr_drive_read_is_authorized();
-            fsvc_params.file_system_write_authorized = this->authorization_channels.rdpdr_drive_write_is_authorized();
-            fsvc_params.parallel_port_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL);
-            fsvc_params.print_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
-            fsvc_params.serial_port_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
-            fsvc_params.smart_card_authorized = this->authorization_channels.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
+            fsvc_params.file_system_read_authorized = this->channels_authorizations.rdpdr_drive_read_is_authorized();
+            fsvc_params.file_system_write_authorized = this->channels_authorizations.rdpdr_drive_write_is_authorized();
+            fsvc_params.parallel_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL);
+            fsvc_params.print_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
+            fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
+            fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
             // TODO: getpid() is global and execution dependent, replace by a constant because it will break tests
             fsvc_params.random_number = ::getpid();
 
@@ -1124,7 +1123,7 @@ private:
                                GeneralCaps const & client_general_caps,
                                const char (& client_name)[128]) {
             if (!this->enable_rdpdr_data_analysis
-            &&   this->authorization_channels.rdpdr_type_all_is_authorized()
+            &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
             &&  !this->file_system_drive_manager.has_managed_drive()) {
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
@@ -1577,7 +1576,7 @@ private:
                                        const char (& client_name)[128])
         {
             if (!this->enable_rdpdr_data_analysis
-            &&   this->authorization_channels.rdpdr_type_all_is_authorized()
+            &&   this->channels_authorizations.rdpdr_type_all_is_authorized()
             &&  !this->file_system_drive_manager.has_managed_drive()) {
 
                 if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {

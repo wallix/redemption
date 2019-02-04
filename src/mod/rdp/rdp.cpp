@@ -89,7 +89,7 @@ void mod_rdp::init_negociate_event_(
     this->fd_event = this->session_reactor
     .create_graphic_fd_event(this->trans.get_fd(), jln::emplace<Private_RdpNegociation>(
         program, directory,
-        this->channels.authorization_channels, this->channels.mod_channel_list,
+        this->channels.channels_authorizations, this->channels.mod_channel_list,
         this->channels.auth_channel, this->channels.checkout_channel,
         this->decrypt, this->stc.encrypt, this->logon_info,
         this->channels.enable_auth_channel,

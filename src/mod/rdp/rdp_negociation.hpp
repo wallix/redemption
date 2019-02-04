@@ -38,7 +38,7 @@
 #include <functional> // std::reference_wrapper
 #include <memory>
 
-class AuthorizationChannels;
+class ChannelsAuthorizations;
 class ClientInfo;
 class CryptContext;
 class FrontAPI;
@@ -106,7 +106,7 @@ private:
     State state = State::NEGO_INITIATE;
 
     CHANNELS::ChannelDefArray& mod_channel_list;
-    const AuthorizationChannels& authorization_channels;
+    const ChannelsAuthorizations& channels_authorizations;
     const CHANNELS::ChannelNameId auth_channel;
     const CHANNELS::ChannelNameId checkout_channel;
 
@@ -177,7 +177,7 @@ private:
 
 public:
     RdpNegociation(
-        std::reference_wrapper<const AuthorizationChannels> authorization_channels,
+        std::reference_wrapper<const ChannelsAuthorizations> authorization_channels,
         CHANNELS::ChannelDefArray& mod_channel_list,
         const CHANNELS::ChannelNameId auth_channel,
         const CHANNELS::ChannelNameId checkout_channel,

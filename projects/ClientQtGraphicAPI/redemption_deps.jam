@@ -4,6 +4,7 @@ add_obj src/client_redemption/client_channels/client_cliprdr_channel.o : $(REDEM
 add_obj src/client_redemption/client_channels/client_rdpdr_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpdr_channel.cpp ;
 add_obj src/client_redemption/client_channels/client_rdpsnd_channel.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_rdpsnd_channel.cpp ;
 add_obj src/client_redemption/client_config/client_redemption_config.o : $(REDEMPTION_SRC_PATH)/client_redemption/client_config/client_redemption_config.cpp ;
+add_obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 add_obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 add_obj src/core/font.o : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 add_obj src/core/RDP/dwt.o : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
@@ -37,7 +38,6 @@ add_obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_read
 add_obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 add_obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_transport.cpp ;
 add_obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
-add_obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 add_obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 add_obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 add_obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
@@ -68,6 +68,7 @@ requirement_list += <library>src/client_redemption/client_channels/client_cliprd
 requirement_list += <library>src/client_redemption/client_channels/client_rdpdr_channel.o ;
 requirement_list += <library>src/client_redemption/client_channels/client_rdpsnd_channel.o ;
 requirement_list += <library>src/client_redemption/client_config/client_redemption_config.o ;
+requirement_list += <library>src/core/channels_authorizations.o ;
 requirement_list += <library>src/core/error.o ;
 requirement_list += <library>src/core/font.o ;
 requirement_list += <library>src/core/RDP/dwt.o ;
@@ -101,7 +102,6 @@ requirement_list += <library>src/transport/mwrm_reader.o ;
 requirement_list += <library>src/transport/recorder_transport.o ;
 requirement_list += <library>src/transport/replay_transport.o ;
 requirement_list += <library>src/transport/socket_transport.o ;
-requirement_list += <library>src/utils/authorization_channels.o ;
 requirement_list += <library>src/utils/bitmap_from_file.o ;
 requirement_list += <library>src/utils/bitmap.o ;
 requirement_list += <library>src/utils/cfgloader.o ;

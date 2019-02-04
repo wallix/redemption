@@ -32,7 +32,7 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "utils/authorization_channels.hpp"
+#include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
 #include "utils/redirection_info.hpp"
 #include "utils/sugar/unique_fd.hpp"
@@ -264,7 +264,7 @@ void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, c
 
 
 RdpNegociation::RdpNegociation(
-    std::reference_wrapper<const AuthorizationChannels> authorization_channels,
+    std::reference_wrapper<const ChannelsAuthorizations> channels_authorizations,
     CHANNELS::ChannelDefArray& mod_channel_list,
     const CHANNELS::ChannelNameId auth_channel,
     const CHANNELS::ChannelNameId checkout_channel,
@@ -283,7 +283,7 @@ RdpNegociation::RdpNegociation(
     bool has_managed_drive
 )
     : mod_channel_list(mod_channel_list)
-    , authorization_channels(authorization_channels)
+    , channels_authorizations(channels_authorizations)
     , auth_channel(auth_channel)
     , checkout_channel(checkout_channel)
     , decrypt(decrypt)
@@ -956,7 +956,7 @@ void RdpNegociation::send_connectInitialPDUwithGccConferenceCreateRequest()
                     if (!this->remote_program && channel_item.name == channel_names::rail) {
                         continue;
                     }
-                    else if (this->authorization_channels.is_authorized(channel_item.name) ||
+                    else if (this->channels_authorizations.is_authorized(channel_item.name) ||
                                 ((channel_item.name == channel_names::rdpdr ||
                                 channel_item.name == channel_names::rdpsnd) &&
                                 this->has_managed_drive)

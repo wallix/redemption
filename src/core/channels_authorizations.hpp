@@ -31,12 +31,12 @@
 #include <array>
 
 
-class AuthorizationChannels : public movable_noncopyable
+class ChannelsAuthorizations : public movable_noncopyable
 {
 public:
-    AuthorizationChannels() = default;
+    ChannelsAuthorizations() = default;
 
-    AuthorizationChannels(std::string const & allow, std::string const & deny);
+    ChannelsAuthorizations(std::string const & allow, std::string const & deny);
 
     bool is_authorized(CHANNELS::ChannelNameId id) const noexcept;
 
@@ -53,7 +53,7 @@ public:
 
     bool rdpsnd_audio_output_is_authorized() const noexcept;
 
-    REDEMPTION_FRIEND_OSTREAM(out, AuthorizationChannels const & auth);
+    REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
 
     static void update_authorized_channels(
         std::string & allow, std::string & deny, const std::string & proxy_opt

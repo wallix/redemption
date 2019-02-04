@@ -18,7 +18,7 @@
  *   Author(s): Christophe Grosjean, Raphael Zhou, Jonathan Poelen, Meng Tan
  */
 
-#include "utils/authorization_channels.hpp"
+#include "core/channels_authorizations.hpp"
 
 #include "utils/sugar/splitter.hpp"
 #include "utils/sugar/algostring.hpp"
@@ -95,7 +95,7 @@ namespace
 } // namespace
 
 
-AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::string const & deny)
+ChannelsAuthorizations::ChannelsAuthorizations(std::string const & allow, std::string const & deny)
 {
     std::vector<CHANNELS::ChannelNameId> allow_ids;
     std::vector<CHANNELS::ChannelNameId> deny_ids;
@@ -190,7 +190,7 @@ AuthorizationChannels::AuthorizationChannels(std::string const & allow, std::str
     this->allow_and_deny_pivot_ = this->allow_and_deny_.data() + allow_ids.size();
 }
 
-bool AuthorizationChannels::is_authorized(CHANNELS::ChannelNameId id) const noexcept
+bool ChannelsAuthorizations::is_authorized(CHANNELS::ChannelNameId id) const noexcept
 {
     if (this->all_deny_) {
         return contains(this->rng_allow(), id);
@@ -202,7 +202,7 @@ bool AuthorizationChannels::is_authorized(CHANNELS::ChannelNameId id) const noex
         &&  contains(this->rng_allow(), id);
 }
 
-bool AuthorizationChannels::rdpdr_type_all_is_authorized() const noexcept
+bool ChannelsAuthorizations::rdpdr_type_all_is_authorized() const noexcept
 {
     return (this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL) &&
             this->rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT) &&
@@ -211,7 +211,7 @@ bool AuthorizationChannels::rdpdr_type_all_is_authorized() const noexcept
             );
 }
 
-bool AuthorizationChannels::rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept
+bool ChannelsAuthorizations::rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceType) const noexcept
 {
     switch (DeviceType) {
         case rdpdr::RDPDR_DTYP_SERIAL:
@@ -233,37 +233,37 @@ bool AuthorizationChannels::rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP DeviceTyp
     }
 }
 
-bool AuthorizationChannels::rdpdr_drive_read_is_authorized() const noexcept
+bool ChannelsAuthorizations::rdpdr_drive_read_is_authorized() const noexcept
 {
     return this->rdpdr_restriction_[2];
 }
 
-bool AuthorizationChannels::rdpdr_drive_write_is_authorized() const noexcept
+bool ChannelsAuthorizations::rdpdr_drive_write_is_authorized() const noexcept
 {
     return this->rdpdr_restriction_[3];
 }
 
-bool AuthorizationChannels::cliprdr_up_is_authorized() const noexcept
+bool ChannelsAuthorizations::cliprdr_up_is_authorized() const noexcept
 {
     return this->cliprdr_restriction_[0];
 }
 
-bool AuthorizationChannels::cliprdr_down_is_authorized() const noexcept
+bool ChannelsAuthorizations::cliprdr_down_is_authorized() const noexcept
 {
     return this->cliprdr_restriction_[1];
 }
 
-bool AuthorizationChannels::cliprdr_file_is_authorized() const noexcept
+bool ChannelsAuthorizations::cliprdr_file_is_authorized() const noexcept
 {
     return this->cliprdr_restriction_[2];
 }
 
-bool AuthorizationChannels::rdpsnd_audio_output_is_authorized() const noexcept
+bool ChannelsAuthorizations::rdpsnd_audio_output_is_authorized() const noexcept
 {
     return this->rdpsnd_restriction_[0];
 }
 
-REDEMPTION_OSTREAM(out, AuthorizationChannels const & auth)
+REDEMPTION_OSTREAM(out, ChannelsAuthorizations const & auth)
 {
     auto p = [&](
         std::vector<CHANNELS::ChannelNameId> const & ids,
@@ -276,17 +276,17 @@ REDEMPTION_OSTREAM(out, AuthorizationChannels const & auth)
             out << name << '=';
             for (size_t i = 0; i < auth.cliprdr_restriction_.size(); ++i) {
                 if (auth.cliprdr_restriction_[i] == val_ok) {
-                    out << AuthorizationChannels::cliprde_list()[i].data();
+                    out << ChannelsAuthorizations::cliprde_list()[i].data();
                 }
             }
             for (size_t i = 0; i < auth.rdpdr_restriction_.size(); ++i) {
                 if (auth.rdpdr_restriction_[i] == val_ok) {
-                    out << AuthorizationChannels::rdpdr_list()[i].data();
+                    out << ChannelsAuthorizations::rdpdr_list()[i].data();
                 }
             }
             for (size_t i = 0; i < auth.rdpsnd_restriction_.size(); ++i) {
                 if (auth.rdpsnd_restriction_[i] == val_ok) {
-                    out << AuthorizationChannels::rdpsnd_list()[i].data();
+                    out << ChannelsAuthorizations::rdpsnd_list()[i].data();
                 }
             }
 
@@ -302,7 +302,7 @@ REDEMPTION_OSTREAM(out, AuthorizationChannels const & auth)
 }
 
 // TODO review
-void AuthorizationChannels::update_authorized_channels(
+void ChannelsAuthorizations::update_authorized_channels(
     std::string & allow, std::string & deny, const std::string & proxy_opt)
 {
     auto remove = [] (std::string & str, const char * pattern) -> bool {
@@ -343,13 +343,13 @@ void AuthorizationChannels::update_authorized_channels(
         remove(s, "cliprdr,");
         remove(s, "rdpdr,");
         remove(s, "rdpsnd,");
-        for (auto str : AuthorizationChannels::cliprde_list()) {
+        for (auto str : ChannelsAuthorizations::cliprde_list()) {
             remove(s, str.data());
         }
-        for (auto str : AuthorizationChannels::rdpdr_list()) {
+        for (auto str : ChannelsAuthorizations::rdpdr_list()) {
             remove(s, str.data());
         }
-        for (auto str : AuthorizationChannels::rdpsnd_list()) {
+        for (auto str : ChannelsAuthorizations::rdpsnd_list()) {
             remove(s, str.data());
         }
         if (!s.empty() && s.back() == ',') {
@@ -375,9 +375,9 @@ void AuthorizationChannels::update_authorized_channels(
     };
 
     static_assert(
-        decltype(AuthorizationChannels::cliprde_list())().size()
-        + decltype(AuthorizationChannels::rdpdr_list())().size()
-        + decltype(AuthorizationChannels::rdpsnd_list())().size()
+        decltype(ChannelsAuthorizations::cliprde_list())().size()
+        + decltype(ChannelsAuthorizations::rdpdr_list())().size()
+        + decltype(ChannelsAuthorizations::rdpsnd_list())().size()
     == std::extent<decltype(opts_channels)>::value
     , "opts_channels.size() error");
 
@@ -392,12 +392,12 @@ void AuthorizationChannels::update_authorized_channels(
     }
 }
 
-inline array_view<CHANNELS::ChannelNameId const> AuthorizationChannels::rng_allow() const
+inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_allow() const
 {
     return {this->allow_and_deny_.data(), this->allow_and_deny_pivot_};
 }
 
-inline array_view<CHANNELS::ChannelNameId const> AuthorizationChannels::rng_deny() const
+inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_deny() const
 {
     return {this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
 }

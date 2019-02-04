@@ -29,6 +29,7 @@ exe headlessclient :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -55,7 +56,6 @@ exe headlessclient :
   <library>src/transport/recorder_transport.o
   <library>src/transport/replay_transport.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -111,6 +111,7 @@ exe rdpproxy :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/check_files.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
@@ -173,7 +174,6 @@ exe rdpproxy :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -251,6 +251,7 @@ exe rdpclient :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/core/set_server_redirection_target.o
@@ -274,7 +275,6 @@ exe rdpclient :
   <library>src/mod/vnc/new_mod_vnc.o
   <library>src/transport/recorder_transport.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -513,6 +513,7 @@ test-run tests/acl/test_module_manager :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -572,7 +573,6 @@ test-run tests/acl/test_module_manager :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -820,6 +820,7 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -832,7 +833,6 @@ test-run tests/client_mods/test_rdp_client_large_pointer :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -902,6 +902,7 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -914,7 +915,6 @@ test-run tests/client_mods/test_rdp_client_tls_w2008 :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -951,6 +951,7 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -963,7 +964,6 @@ test-run tests/client_mods/test_rdp_client_wab :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2471,6 +2471,7 @@ test-run tests/core/test_mainloop :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2532,7 +2533,6 @@ test-run tests/core/test_mainloop :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2600,6 +2600,7 @@ test-run tests/core/test_session :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2660,7 +2661,6 @@ test-run tests/core/test_session :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2731,6 +2731,7 @@ test-run tests/core/test_session_server :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2791,7 +2792,6 @@ test-run tests/core/test_session_server :
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
   <library>src/transport/socket_transport.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -2845,6 +2845,7 @@ test-run tests/front/test_front :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/date_dir_from_filename.o
   <library>src/core/error.o
   <library>src/core/font.o
@@ -2860,7 +2861,6 @@ test-run tests/front/test_front :
   <library>src/mod/rdp/rdp_negociation.o
   <library>src/transport/crypto_transport.o
   <library>src/transport/mwrm_reader.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4375,6 +4375,7 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/core/RDP/nego.o
   <library>src/core/RDP/orders/remoteFx.o
   <library>src/core/RDP/rlgr.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/clip_from_cmd.o
@@ -4387,7 +4388,6 @@ test-run tests/mod/rdp/test_rdp :
   <library>src/mod/rdp/new_mod_rdp.o
   <library>src/mod/rdp/rdp.o
   <library>src/mod/rdp/rdp_negociation.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/bitmap_from_file.o
   <library>src/utils/cfgloader.o
@@ -4436,12 +4436,12 @@ test-run tests/mod/rdp/test_rdp_negociation :
   <library>krb5
   <library>src/core/RDP/mppc.o
   <library>src/core/RDP/nego.o
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
   <library>src/core/font.o
   <library>src/gdi/graphic_api.o
   <library>src/gdi/screen_functions.o
   <library>src/mod/rdp/rdp_negociation.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/bitmap.o
   <library>src/utils/fileutils.o
   <library>src/utils/hexdump.o
@@ -5222,11 +5222,10 @@ test-run tests/utils/test_authorization_channels :
   $(REDEMPTION_TEST_PATH)/utils/test_authorization_channels.cpp
 :
   <library>boost_stacktrace
+  <library>src/core/channels_authorizations.o
   <library>src/core/error.o
-  <library>src/utils/authorization_channels.o
   <library>src/utils/hexdump.o
   <library>src/utils/utf.o
-  <covfile>src/utils/authorization_channels.cpp
   <covfile>src/utils/authorization_channels.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
@@ -5631,6 +5630,7 @@ obj src/core/RDP/mppc.o : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 obj src/core/RDP/nego.o : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 obj src/core/RDP/orders/remoteFx.o : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
 obj src/core/RDP/rlgr.o : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
+obj src/core/channels_authorizations.o : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 obj src/core/check_files.o : $(REDEMPTION_SRC_PATH)/core/check_files.cpp ;
 obj src/core/date_dir_from_filename.o : $(REDEMPTION_SRC_PATH)/core/date_dir_from_filename.cpp ;
 obj src/core/error.o : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
@@ -5705,7 +5705,6 @@ obj src/transport/mwrm_reader.o : $(REDEMPTION_SRC_PATH)/transport/mwrm_reader.c
 obj src/transport/recorder_transport.o : $(REDEMPTION_SRC_PATH)/transport/recorder_transport.cpp ;
 obj src/transport/replay_transport.o : $(REDEMPTION_SRC_PATH)/transport/replay_transport.cpp ;
 obj src/transport/socket_transport.o : $(REDEMPTION_SRC_PATH)/transport/socket_transport.cpp ;
-obj src/utils/authorization_channels.o : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 obj src/utils/bitmap.o : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 obj src/utils/bitmap_from_file.o : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 obj src/utils/cfgloader.o : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;

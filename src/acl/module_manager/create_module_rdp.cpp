@@ -65,7 +65,7 @@ void ModuleManager::create_mod_rdp(
 
     // BEGIN READ PROXY_OPT
     if (ini.get<cfg::globals::enable_wab_integration>()) {
-        AuthorizationChannels::update_authorized_channels(
+        ChannelsAuthorizations::update_authorized_channels(
             ini.get_ref<cfg::mod_rdp::allow_channels>(),
             ini.get_ref<cfg::mod_rdp::deny_channels>(),
             ini.get<cfg::context::proxy_opt>()
