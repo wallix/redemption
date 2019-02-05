@@ -230,12 +230,9 @@ function run()
     });
     rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
         const sourceImageData = canvas.getImageData(sx, sy, w, h);
-        if (rop == 0xCC) {
-            canvas.putImageData(sourceImageData, dx, dy);
-        }
-        else {
-            const op = scrROp[rop]
-            if (op && has_intersection(x,y,w,h,dx,dy,w,h)) {
+        const op = scrROp[rop]
+        if (op) {
+            if (has_intersection(x,y,w,h,dx,dy,w,h)) {
                 canvas.globalCompositeOperation = op
                 canvas.drawImage(sourceImageData, dx, dy);
                 canvas.globalCompositeOperation = 'source-over'
