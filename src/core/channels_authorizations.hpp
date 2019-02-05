@@ -25,6 +25,7 @@
 #include "utils/sugar/array_view.hpp"
 #include "utils/sugar/std_stream_proto.hpp"
 #include "utils/sugar/movable_noncopyable.hpp"
+#include "core/clipboard_virtual_channels_params.hpp"
 
 #include <vector>
 #include <string>
@@ -59,6 +60,18 @@ public:
         std::string & allow, std::string & deny, const std::string & proxy_opt
     );
 
+    const ClipboardVirtualChannelParams get_clipboard_virtual_channel_params(bool disable_clipboard_log_syslog, bool disable_clipboard_log_wrm, bool log_only_relevant_clipboard_activities ) const
+    {
+        ClipboardVirtualChannelParams cvc_params;
+        cvc_params.clipboard_down_authorized = this->cliprdr_down_is_authorized();
+        cvc_params.clipboard_up_authorized   = this->cliprdr_up_is_authorized();
+        cvc_params.clipboard_file_authorized = this->cliprdr_file_is_authorized();
+        cvc_params.dont_log_data_into_syslog = disable_clipboard_log_syslog;
+        cvc_params.dont_log_data_into_wrm    = disable_clipboard_log_wrm;
+        cvc_params.log_only_relevant_clipboard_activities = log_only_relevant_clipboard_activities;
+        return cvc_params;
+    }
+
 private:
     static constexpr const std::array<array_view_const_char, 3> cliprde_list()
     {
@@ -89,6 +102,7 @@ private:
     array_view<CHANNELS::ChannelNameId const> rng_deny() const;
 
     std::vector<CHANNELS::ChannelNameId> allow_and_deny_;
+    // TODO: this must not be a pointer URGENT!!!
     CHANNELS::ChannelNameId const * allow_and_deny_pivot_;
     bool all_allow_ = false;
     bool all_deny_ = false;

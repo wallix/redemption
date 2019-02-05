@@ -34,21 +34,11 @@
 #include "mod/rdp/channels/cliprdr_channel_send_and_receive.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
 #include "core/session_reactor.hpp"
+#include "core/clipboard_virtual_channels_params.hpp"
 
 #include <memory>
 
 #define FILE_LIST_FORMAT_NAME "FileGroupDescriptorW"
-
-struct ClipboardVirtualChannelParams {
-// Default Values: everything transmitted, everything is logged
-    bool clipboard_down_authorized = true;
-    bool clipboard_up_authorized   = true;
-    bool clipboard_file_authorized = true;
-    bool dont_log_data_into_syslog = false;
-    bool dont_log_data_into_wrm    = false;
-    bool log_only_relevant_clipboard_activities = false;
-};
-
 
 class ClipboardVirtualChannel final : public BaseVirtualChannel
 {

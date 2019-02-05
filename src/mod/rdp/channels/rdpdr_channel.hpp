@@ -32,7 +32,7 @@
 #include "utils/sugar/algostring.hpp"
 #include "utils/strutils.hpp"
 #include "mod/rdp/channels/channel_file.hpp"
-
+#include "core/file_system_virtual_channel_params.hpp"
 #include <deque>
 
 #include <map>
@@ -928,28 +928,6 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
     NullVirtualChannelDataSender null_virtual_channel_data_sender;
 
 public:
-    struct Params
-    {
-        uninit_checked<const char*> client_name;
-
-        uninit_checked<bool> file_system_read_authorized;
-        uninit_checked<bool> file_system_write_authorized;
-
-        uninit_checked<bool> parallel_port_authorized;
-        uninit_checked<bool> print_authorized;
-        uninit_checked<bool> serial_port_authorized;
-        uninit_checked<bool> smart_card_authorized;
-
-        uninit_checked<uint32_t> random_number;
-
-        uninit_checked<bool> dont_log_data_into_syslog;
-        uninit_checked<bool> dont_log_data_into_wrm;
-
-        uninit_checked<const char*> proxy_managed_drive_prefix;
-
-        explicit Params(){}
-    };
-
     bool channel_filter_on;
     const std::string channel_files_directory;
 
@@ -966,21 +944,24 @@ public:
         FrontAPI& front,
         const bool channel_filter_on,
         const std::string & channel_files_directory,
+        const char * client_name,
+        uint32_t random_number,
+        const char * proxy_managed_drive_prefix,
         const BaseVirtualChannel::Params & base_params,
-        const Params& params)
+        const FileSystemVirtualChannelParams& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
     , to_server_sender(to_server_sender_ ? *to_server_sender_  : null_virtual_channel_data_sender)
     , serverVersionMinor(0xC)
     , file_system_drive_manager(file_system_drive_manager)
-    , param_client_name(params.client_name)
+    , param_client_name(client_name)
     , param_file_system_read_authorized(params.file_system_read_authorized)
     , param_file_system_write_authorized(params.file_system_write_authorized)
-    , param_random_number(params.random_number)
+    , param_random_number(random_number)
     , param_dont_log_data_into_syslog(params.dont_log_data_into_syslog)
     , param_dont_log_data_into_wrm(params.dont_log_data_into_wrm)
-    , param_proxy_managed_drive_prefix(params.proxy_managed_drive_prefix)
+    , param_proxy_managed_drive_prefix(proxy_managed_drive_prefix)
     , device_redirection_manager(
           *this,
           file_system_drive_manager,

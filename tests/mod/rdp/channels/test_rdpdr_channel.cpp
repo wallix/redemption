@@ -30,27 +30,6 @@
 #include "./test_channel.hpp"
 #include "test_only/front/fake_front.hpp"
 
-namespace
-{
-
-    FileSystemVirtualChannel::Params common_file_system_param()
-    {
-        
-        FileSystemVirtualChannel::Params file_system_virtual_channel_params;
-        file_system_virtual_channel_params.client_name                  = "rzh";
-
-        file_system_virtual_channel_params.random_number                = 5245;
-
-        file_system_virtual_channel_params.dont_log_data_into_syslog    = false;
-        file_system_virtual_channel_params.dont_log_data_into_wrm       = false;
-
-        file_system_virtual_channel_params.proxy_managed_drive_prefix   = "";
-
-        return file_system_virtual_channel_params;
-    }
-}
-
-
 RED_AUTO_TEST_CASE(TestRdpdrChannel)
 {
     ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
@@ -63,18 +42,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
-    file_system_virtual_channel_params.file_system_read_authorized  = true;
-    file_system_virtual_channel_params.file_system_write_authorized = true;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
-    file_system_virtual_channel_params.print_authorized             = true;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
-
-
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -86,10 +54,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender,
-        file_system_drive_manager, front, false, "", base_params, file_system_virtual_channel_params);
+        file_system_drive_manager, front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -105,16 +77,9 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
-    file_system_virtual_channel_params.print_authorized             = true;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -127,10 +92,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -146,16 +115,8 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
-    file_system_virtual_channel_params.file_system_read_authorized  = true;
-    file_system_virtual_channel_params.file_system_write_authorized = true;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.print_authorized             = false;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -168,10 +129,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     TestToClientSender to_client_sender(t);
     TestToServerSender to_server_sender(t);
 
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+
     SessionReactor session_reactor;
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -187,16 +152,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
     file_system_virtual_channel_params.print_authorized             = false;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -210,9 +169,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
+    
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+    
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -228,16 +192,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
-    file_system_virtual_channel_params.file_system_read_authorized  = true;
-    file_system_virtual_channel_params.file_system_write_authorized = true;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
-    file_system_virtual_channel_params.print_authorized             = true;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -251,9 +206,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
+    
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+    
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -269,17 +229,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
-    file_system_virtual_channel_params.file_system_read_authorized  = true;
-    file_system_virtual_channel_params.file_system_write_authorized = true;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
-    file_system_virtual_channel_params.print_authorized             = true;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
-    file_system_virtual_channel_params.smart_card_authorized        = true;
-
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -292,9 +242,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
+    
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+    
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }
@@ -310,15 +265,7 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     base_params.exchanged_data_limit         = 0;
     base_params.verbose                      = verbose;
 
-    FileSystemVirtualChannel::Params file_system_virtual_channel_params
-      = common_file_system_param();
-
-    file_system_virtual_channel_params.file_system_read_authorized  = true;
-    file_system_virtual_channel_params.file_system_write_authorized = true;
-
-    file_system_virtual_channel_params.parallel_port_authorized     = true;
-    file_system_virtual_channel_params.print_authorized             = true;
-    file_system_virtual_channel_params.serial_port_authorized       = true;
+    FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.smart_card_authorized        = false;
 
     FileSystemDriveManager file_system_drive_manager;
@@ -330,9 +277,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     TestToServerSender to_server_sender(t);
 
     SessionReactor session_reactor;
+    
+    const char * client_name                  = "rzh";
+    uint32_t     random_number                = 5245;
+    const char * proxy_managed_drive_prefix   = "";
+    
     FileSystemVirtualChannel file_system_virtual_channel(
         session_reactor, &to_client_sender, &to_server_sender, file_system_drive_manager,
-        front, false, "", base_params, file_system_virtual_channel_params);
+        front, false, "", client_name, random_number, proxy_managed_drive_prefix, base_params, file_system_virtual_channel_params);
 
     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, file_system_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
 }

@@ -338,10 +338,6 @@ private:
                 metrics(metrics)
             #endif
             , channels_authorizations(std::move(channels_authorizations))
-//                channels_authorizations(
-//                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-//                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-//              )
             , report_message(report_message)
             , gen(gen)
             , enable_auth_channel(mod_rdp_params.alternate_shell[0]
@@ -490,14 +486,7 @@ private:
             base_params.exchanged_data_limit      = this->max_clipboard_data;
             base_params.verbose                   = this->verbose;
 
-            ClipboardVirtualChannelParams cvc_params;
-
-            cvc_params.clipboard_down_authorized = this->channels_authorizations.cliprdr_down_is_authorized();
-            cvc_params.clipboard_up_authorized   = this->channels_authorizations.cliprdr_up_is_authorized();
-            cvc_params.clipboard_file_authorized = this->channels_authorizations.cliprdr_file_is_authorized();
-            cvc_params.dont_log_data_into_syslog = this->disable_clipboard_log_syslog;
-            cvc_params.dont_log_data_into_wrm    = this->disable_clipboard_log_wrm;
-            cvc_params.log_only_relevant_clipboard_activities = this->log_only_relevant_clipboard_activities;
+            ClipboardVirtualChannelParams cvc_params = this->channels_authorizations.get_clipboard_virtual_channel_params(this->disable_clipboard_log_syslog, this->disable_clipboard_log_wrm, this->log_only_relevant_clipboard_activities);
 
             this->clipboard_virtual_channel =
                 std::make_unique<ClipboardVirtualChannel>(
@@ -667,22 +656,16 @@ private:
             base_params.exchanged_data_limit = this->max_rdpdr_data;
             base_params.verbose = this->verbose;
 
-            FileSystemVirtualChannel::Params fsvc_params;
+            FileSystemVirtualChannelParams fsvc_params;
 
-            fsvc_params.client_name = client_name;
             fsvc_params.file_system_read_authorized = this->channels_authorizations.rdpdr_drive_read_is_authorized();
             fsvc_params.file_system_write_authorized = this->channels_authorizations.rdpdr_drive_write_is_authorized();
             fsvc_params.parallel_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PARALLEL);
             fsvc_params.print_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_PRINT);
             fsvc_params.serial_port_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SERIAL);
             fsvc_params.smart_card_authorized = this->channels_authorizations.rdpdr_type_is_authorized(rdpdr::RDPDR_DTYP_SMARTCARD);
-            // TODO: getpid() is global and execution dependent, replace by a constant because it will break tests
-            fsvc_params.random_number = ::getpid();
-
             fsvc_params.dont_log_data_into_syslog = this->disable_file_system_log_syslog;
             fsvc_params.dont_log_data_into_wrm = this->disable_file_system_log_wrm;
-
-            fsvc_params.proxy_managed_drive_prefix = this->proxy_managed_drive_prefix.c_str();
 
             this->file_system_virtual_channel =  std::make_unique<FileSystemVirtualChannel>(
                     asynchronous_tasks.session_reactor,
@@ -692,6 +675,9 @@ private:
                     front,
                     false,
                     "",
+                    client_name,
+                    ::getpid(),
+                    this->proxy_managed_drive_prefix.c_str(),
                     base_params,
                     fsvc_params);
 
