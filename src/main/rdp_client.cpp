@@ -248,6 +248,12 @@ int main(int argc, char** argv)
 
     bool const use_system_obj = record_output.empty() && !options.count("lcg");
 
+    const ChannelsAuthorizations channels_authorizations(
+        mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+        mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+      );
+
+
     auto run_rdp = [&]{
         return run([&](Transport& trans){
             using TimeObjRef = TimeObj&;
@@ -256,7 +262,7 @@ int main(int argc, char** argv)
                 trans, session_reactor, front, client_info, redir_info,
                 use_system_obj ? RandomRef(system_gen) : lcg_gen,
                 use_system_obj ? TimeObjRef(system_timeobj) : lcg_timeobj,
-                mod_rdp_params, authentifier, report_message, ini, nullptr);
+                channels_authorizations, mod_rdp_params, authentifier, report_message, ini, nullptr);
         });
     };
 

@@ -404,6 +404,11 @@ public:
                         this->config.rDPRemoteAppConfig);
                 }
 
+                const ChannelsAuthorizations channels_authorizations(
+                    mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+                    mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+                  );
+
                 this->unique_mod = new_mod_rdp(
                     *this->socket
                   , session_reactor
@@ -412,6 +417,7 @@ public:
                   , ini.get_ref<cfg::mod_rdp::redir_info>()
                   , *this->gen
                   , this->timeSystem
+                  , channels_authorizations
                   , mod_rdp_params
                   , this->authentifier
                   , this->reportMessage

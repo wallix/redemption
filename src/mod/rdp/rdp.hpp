@@ -331,16 +331,17 @@ private:
 
         SessionReactor & session_reactor;
 
-        Channels(const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
+        Channels(const ChannelsAuthorizations & channels_authorizations, const ModRDPParams & mod_rdp_params, const RDPVerbose verbose,
             ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics, SessionReactor & session_reactor)
             :
             #ifndef __EMSCRIPTEN__
-                metrics(metrics),
+                metrics(metrics)
             #endif
-                channels_authorizations(
-                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
-                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
-              )
+            , channels_authorizations(std::move(channels_authorizations))
+//                channels_authorizations(
+//                mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+//                mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+//              )
             , report_message(report_message)
             , gen(gen)
             , enable_auth_channel(mod_rdp_params.alternate_shell[0]
@@ -2092,13 +2093,14 @@ public:
       , RedirectionInfo & redir_info
       , Random & gen
       , TimeObj & timeobj
+      , const ChannelsAuthorizations & channels_authorizations
       , const ModRDPParams & mod_rdp_params
       , AuthApi & authentifier
       , ReportMessageApi & report_message
       , ModRdpVariables vars
       , [[maybe_unused]] RDPMetrics * metrics
     )
-        : channels(mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
+        : channels(channels_authorizations, mod_rdp_params, mod_rdp_params.verbose, report_message, gen, metrics, session_reactor)
         , redir_info(redir_info)
         , logon_info(info.hostname, mod_rdp_params.hide_client_name, mod_rdp_params.target_user, mod_rdp_params.split_domain)
         , server_auto_reconnect_packet_ref(mod_rdp_params.server_auto_reconnect_packet_ref)

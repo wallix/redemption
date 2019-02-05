@@ -5226,7 +5226,6 @@ test-run tests/utils/test_authorization_channels :
   <library>src/core/error.o
   <library>src/utils/hexdump.o
   <library>src/utils/utf.o
-  <covfile>src/utils/authorization_channels.hpp
   <variant>coverage:<library>dl
   <variant>debug:<library>dl
   <variant>san:<library>dl
@@ -6306,7 +6305,6 @@ alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
 alias test_authorization_channels : tests/utils/test_authorization_channels ;
-alias test_authorization_channels.coverage : tests/utils/test_authorization_channels.coverage ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap : tests/utils/test_bitmap ;

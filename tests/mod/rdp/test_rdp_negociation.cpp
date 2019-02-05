@@ -55,3 +55,5 @@ RED_BIND_DATA_TEST_CASE(TestRdpLogonInfoLegacy, (std::array{
     RED_CHECK_EQUAL(logon_info.domain(), domain);
     RED_CHECK_EQUAL(logon_info.username(), username);
 }
+
+

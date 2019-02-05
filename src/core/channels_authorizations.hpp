@@ -31,7 +31,7 @@
 #include <array>
 
 
-class ChannelsAuthorizations : public movable_noncopyable
+class ChannelsAuthorizations
 {
 public:
     ChannelsAuthorizations() = default;

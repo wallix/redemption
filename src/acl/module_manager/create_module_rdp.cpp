@@ -30,6 +30,7 @@
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/rdp.hpp"
 #include "keyboard/keymap2.hpp"
+#include "core/channels_authorizations.hpp"
 #include "acl/module_manager.hpp"
 
 #ifndef __EMSCRIPTEN__
@@ -206,9 +207,6 @@ void ModuleManager::create_mod_rdp(
 
     mod_rdp_params.extra_orders                        = ini.get<cfg::mod_rdp::extra_orders>().c_str();
 
-    mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
-    mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
-
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
 
@@ -267,6 +265,16 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.log_only_relevant_clipboard_activities
                                                        = ini.get<cfg::mod_rdp::log_only_relevant_clipboard_activities>();
     mod_rdp_params.split_domain                        = ini.get<cfg::mod_rdp::split_domain>();
+
+
+    mod_rdp_params.allow_channels                      = &(ini.get<cfg::mod_rdp::allow_channels>());
+    mod_rdp_params.deny_channels                       = &(ini.get<cfg::mod_rdp::deny_channels>());
+
+    const ChannelsAuthorizations channels_authorizations(
+        mod_rdp_params.allow_channels ? *mod_rdp_params.allow_channels : std::string{},
+        mod_rdp_params.deny_channels ? *mod_rdp_params.deny_channels : std::string{}
+      );
+
 
     try {
         const char * const name = "RDP Target";
@@ -351,6 +359,7 @@ void ModuleManager::create_mod_rdp(
             ini.get_ref<cfg::mod_rdp::redir_info>(),
             this->gen,
             this->timeobj,
+            channels_authorizations,
             mod_rdp_params,
             authentifier,
             report_message,

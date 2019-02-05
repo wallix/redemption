@@ -22,6 +22,7 @@ Author(s): Jonathan Poelen
 
 #include "mod/mod_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
+#include "core/channels_authorizations.hpp"
 
 #include <memory>
 
@@ -44,6 +45,7 @@ std::unique_ptr<mod_api> new_mod_rdp(
     RedirectionInfo& redir_info,
     Random& gen,
     TimeObj& timeobj,
+    const ChannelsAuthorizations & channels_authorizations,
     const ModRDPParams& mod_rdp_params,
     AuthApi& authentifier,
     ReportMessageApi& report_message,
