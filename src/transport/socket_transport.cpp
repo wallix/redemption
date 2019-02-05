@@ -106,7 +106,10 @@ void SocketTransport::enable_server_tls(const char * certificate_password,
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() start");
 
-    this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level);
+    if (!this->tls->enable_server_tls(this->sck, certificate_password, ssl_cipher_list, tls_min_level)) {
+        this->tls.reset();
+        throw Error(ERR_TRANSPORT_TLS_SERVER);
+    }
 
     LOG(LOG_INFO, "SocketTransport::enable_server_tls() done");
 }

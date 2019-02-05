@@ -455,20 +455,21 @@ public:
         }
         catch (Error const& e) {
             disconnection_message_error = e.errmsg();
-            LOG(LOG_INFO, "Session::Session Init exception = %s!\n", disconnection_message_error);
+            LOG(LOG_INFO, "Session::Session Init exception = %s!", disconnection_message_error);
         }
         catch (const std::exception & e) {
             disconnection_message_error = e.what();
-            LOG(LOG_ERR, "Session::Session exception = %s!\n", disconnection_message_error);
+            LOG(LOG_ERR, "Session::Session exception = %s!", disconnection_message_error);
         }
         catch(...) {
             disconnection_message_error = "Exception in Session::Session";
-            LOG(LOG_INFO, "Session::Session other exception in Init\n");
+            LOG(LOG_INFO, "Session::Session other exception in Init");
         }
         // silent message for localhost for watchdog
-        if (!this->ini.is_asked<cfg::globals::host>()
-        && (this->ini.get<cfg::globals::host>() != "127.0.0.1")) {
-            LOG(LOG_INFO, "Session::Client Session Disconnected\n");
+        if (this->ini.get<cfg::globals::host>() != "127.0.0.1") {
+            if (!this->ini.is_asked<cfg::globals::host>()) {
+                LOG(LOG_INFO, "Session::Client Session Disconnected");
+            }
             detail::log_proxy_disconnection(disconnection_message_error.c_str());
         }
         front.must_be_stop_capture();
