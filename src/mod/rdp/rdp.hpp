@@ -56,7 +56,6 @@
 #include "core/RDP/capabilities/multifragmentupdate.hpp"
 #include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/capabilities/pointer.hpp"
-#include "core/RDP/capabilities/rail.hpp"
 #include "core/RDP/capabilities/surfacecommands.hpp"
 #include "core/RDP/capabilities/window.hpp"
 
@@ -83,27 +82,29 @@
 #include "core/front_api.hpp"
 #include "core/report_message_api.hpp"
 
-#ifndef __EMSCRIPTEN__
-# include "mod/rdp/rdp_metrics.hpp"
-# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
-#else
+#ifdef __EMSCRIPTEN__
 class RDPMetrics;
 # define IF_ENABLE_METRICS(m) do {} while(0)
+# include "mod/rdp/windowing_api.hpp"
+#else
+# include "mod/rdp/rdp_metrics.hpp"
+# define IF_ENABLE_METRICS(m) do { if (this->metrics) this->metrics->m; } while (0)
+# include "mod/rdp/channels/rail_session_manager.hpp"
+# include "mod/rdp/channels/rail_channel.hpp"
+# include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
+# include "mod/rdp/channels/sespro_channel.hpp"
+# include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+# include "core/RDP/capabilities/rail.hpp"
+# include "RAIL/client_execute.hpp"
 #endif
 
-#include "RAIL/client_execute.hpp"
 #include "mod/mod_api.hpp"
 
 #include "mod/rdp/alternate_shell.hpp"
 #include "mod/rdp/channels/cliprdr_channel.hpp"
 #include "mod/rdp/channels/drdynvc_channel.hpp"
-#include "mod/rdp/channels/rail_channel.hpp"
-#include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/rdpdr_channel.hpp"
 #include "mod/rdp/channels/rdpdr_file_system_drive_manager.hpp"
-#include "mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp"
-#include "mod/rdp/channels/sespro_channel.hpp"
-#include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "mod/rdp/rdp_negociation_data.hpp"
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
@@ -185,9 +186,11 @@ private:
         const bool log_only_relevant_clipboard_activities;
         const bool bogus_ios_rdpdr_virtual_channel;
 
+#ifndef __EMSCRIPTEN__
         std::unique_ptr<SessionProbeLauncher> session_probe_launcher;
 
-        struct SessionProbeStartParams {
+        struct SessionProbeStartParams
+        {
             const bool enabled;
             const bool used_to_launch_remote_program;
             std::string arguments;
@@ -220,7 +223,7 @@ private:
                 const std::string                 outbound_connection_monitoring_rules;
                 const std::string                 process_monitoring_rules;
                 const std::string                 windows_of_these_applications_as_unidentified_input_field;
-                
+
                 VirtualChannelParams(const ModRDPParams & mod_rdp_params)
                     : launch_timeout(mod_rdp_params.session_probe_launch_timeout)
                     , launch_fallback_timeout(mod_rdp_params.session_probe_launch_fallback_timeout)
@@ -248,9 +251,9 @@ private:
 
                 {}
             } vc;
-            
+
             SessionProbeStartParams(const ModRDPParams & mod_rdp_params)
-                : enabled(mod_rdp_params.enable_session_probe) 
+                : enabled(mod_rdp_params.enable_session_probe)
                 , used_to_launch_remote_program(mod_rdp_params.use_session_probe_to_launch_remote_program)
                 , arguments(mod_rdp_params.session_probe_arguments)
                 , customize_executable_name(mod_rdp_params.session_probe_customize_executable_name)
@@ -258,8 +261,8 @@ private:
                 {}
         } session_probe;
 
-
         SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
+#endif
 
         const bool use_application_driver;
         const bool disable_file_system_log_syslog;
@@ -271,15 +274,16 @@ private:
         const char *                      primary_user_id;
         const bool                        experimental_fix_too_long_cookie;
 
+#ifndef __EMSCRIPTEN__
         const bool                        mod_rdp_params_session_probe_use_clipboard_based_launcher;
         const bool                        session_probe_use_clipboard_based_launcher;
+        bool should_ignore_first_client_execute = false;
+#endif
 
         uint16_t    client_execute_flags = 0;
         std::string client_execute_exe_or_file;
         std::string client_execute_working_dir;
         std::string client_execute_arguments;
-
-        bool should_ignore_first_client_execute = false;
 
         uint16_t    real_client_execute_flags = 0;
         std::string real_client_execute_exe_or_file;
@@ -307,6 +311,7 @@ private:
 
         std::unique_ptr<DynamicChannelVirtualChannel> dynamic_channel_virtual_channel;
 
+#ifndef __EMSCRIPTEN__
         std::unique_ptr<VirtualChannelDataSender>     session_probe_to_server_sender;
 
         std::unique_ptr<SessionProbeVirtualChannel>   session_probe_virtual_channel;
@@ -320,6 +325,7 @@ private:
         std::unique_ptr<RemoteProgramsVirtualChannel> remote_programs_virtual_channel;
 
         std::unique_ptr<RemoteProgramsSessionManager> remote_programs_session_manager;
+#endif
 
         FileSystemDriveManager file_system_drive_manager;
 
@@ -357,9 +363,11 @@ private:
             , log_only_relevant_clipboard_activities(mod_rdp_params.log_only_relevant_clipboard_activities)
             , bogus_ios_rdpdr_virtual_channel(mod_rdp_params.bogus_ios_rdpdr_virtual_channel)
 
+#ifndef __EMSCRIPTEN__
             , session_probe(mod_rdp_params)
 
             , session_probe_clipboard_based_launcher(mod_rdp_params.session_probe_clipboard_based_launcher)
+#endif
 
             , use_application_driver(mod_rdp_params.alternate_shell
                 && !::strncasecmp(mod_rdp_params.alternate_shell, "\\\\tsclient\\SESPRO\\AppDriver.exe", 31))
@@ -369,23 +377,25 @@ private:
             , target_application(mod_rdp_params.target_application)
             , primary_user_id(mod_rdp_params.primary_user_id)
             , experimental_fix_too_long_cookie(mod_rdp_params.experimental_fix_too_long_cookie)
+#ifndef __EMSCRIPTEN__
             , mod_rdp_params_session_probe_use_clipboard_based_launcher(mod_rdp_params.session_probe_use_clipboard_based_launcher)
-            , session_probe_use_clipboard_based_launcher(this->mod_rdp_params_session_probe_use_clipboard_based_launcher
-                                                        && (!this->target_application || !(*this->target_application))
-                                                        && (!mod_rdp_params.use_client_provided_alternate_shell
-                                                            || !mod_rdp_params.alternate_shell[0]
-                                                            || mod_rdp_params.remote_program))
+            , session_probe_use_clipboard_based_launcher(
+                this->mod_rdp_params_session_probe_use_clipboard_based_launcher
+             && (!this->target_application || !(*this->target_application))
+             && (!mod_rdp_params.use_client_provided_alternate_shell
+              || !mod_rdp_params.alternate_shell[0]
+              || mod_rdp_params.remote_program))
             , should_ignore_first_client_execute(mod_rdp_params.should_ignore_first_client_execute)
             , remote_program(mod_rdp_params.remote_program)
             , remote_program_enhanced(mod_rdp_params.remote_program_enhanced)
+#endif
             , enable_rdpdr_data_analysis(mod_rdp_params.enable_rdpdr_data_analysis)
             , verbose(verbose)
             , session_reactor(session_reactor)
         {
-            if (mod_rdp_params.proxy_managed_drives && (*mod_rdp_params.proxy_managed_drives)) {
+            if (mod_rdp_params.proxy_managed_drives && *mod_rdp_params.proxy_managed_drives) {
                 this->configure_proxy_managed_drives(mod_rdp_params.proxy_managed_drives, mod_rdp_params.proxy_managed_drive_prefix);
             }
-
         }
 
         void DLP_antivirus_check_channels_files() {
@@ -680,15 +690,16 @@ private:
                     this->proxy_managed_drive_prefix.c_str(),
                     base_params,
                     fsvc_params);
-
+#ifndef __EMSCRIPTEN__
             if (this->file_system_to_server_sender) {
-                if (this->session_probe.enabled
-                || this->use_application_driver) {
+                if (this->session_probe.enabled || this->use_application_driver) {
                     this->file_system_virtual_channel->enable_session_probe_drive();
                 }
             }
+#endif
         }
 
+#ifndef __EMSCRIPTEN__
         inline void create_session_probe_virtual_channel(
                         FrontAPI& front,
                         ServerTransportContext & stc,
@@ -825,22 +836,8 @@ private:
                     base_params,
                     remote_programs_virtual_channel_params);
         }
+#endif
 
-
-        inline RemoteProgramsVirtualChannel& get_remote_programs_virtual_channel(
-                        FrontAPI& front,
-                        ServerTransportContext & stc,
-                        const ModRdpVariables & vars,
-                        RailCaps const & client_rail_caps) {
-            if (!this->remote_programs_virtual_channel) {
-                this->create_remote_programs_virtual_channel(front, stc, vars, client_rail_caps);
-            }
-
-            return *this->remote_programs_virtual_channel;
-        }
-
-
-    private:
     public:
         // TODO: make that private again when callers will be moved to channels
         void send_to_front_channel(FrontAPI & front, CHANNELS::ChannelNameId mod_channel_name, uint8_t const * data, size_t length, size_t chunk_size, int flags) {
@@ -970,6 +967,7 @@ private:
         }
 
 
+#ifndef __EMSCRIPTEN__
         void process_session_probe_event(
             const CHANNELS::ChannelDef & session_probe_channel,
             InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
@@ -1031,29 +1029,6 @@ private:
             assert(!out_asynchronous_task);
         }
 
-        void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
-                                FrontAPI& front,
-                                ServerTransportContext & stc) {
-
-            if (!this->clipboard_virtual_channel) {
-                this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
-            }
-            ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
-
-            if (bool(this->verbose & RDPVerbose::cliprdr)) {
-                InStream clone = chunk.clone();
-                RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
-            }
-
-            if (this->session_probe_launcher) {
-                if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
-                    return;
-                }
-            }
-
-            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
-        }
-
         void send_to_mod_rail_channel(InStream & chunk, size_t length, uint32_t flags,
                         FrontAPI& front,
                         ServerTransportContext & stc,
@@ -1070,6 +1045,32 @@ private:
             channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
 
         }   // send_to_mod_rail_channel
+#endif
+
+        void send_to_mod_cliprdr_channel(InStream & chunk, size_t length, uint32_t flags,
+                                FrontAPI& front,
+                                ServerTransportContext & stc) {
+
+            if (!this->clipboard_virtual_channel) {
+                this->create_clipboard_virtual_channel(front, stc, this->session_reactor);
+            }
+            ClipboardVirtualChannel& channel = *this->clipboard_virtual_channel;
+
+            if (bool(this->verbose & RDPVerbose::cliprdr)) {
+                InStream clone = chunk.clone();
+                RDPECLIP::streamLogCliprdr(clone, flags, this->cliprdrLogStatus);
+            }
+
+#ifndef __EMSCRIPTEN__
+            if (this->session_probe_launcher) {
+                if (!this->session_probe_launcher->process_client_cliprdr_message(chunk, length, flags)) {
+                    return;
+                }
+            }
+#endif
+
+            channel.process_client_message(length, flags, chunk.get_current(), chunk.in_remain());
+        }
 
         void process_drdynvc_event(InStream & stream, uint32_t length, uint32_t flags, size_t chunk_size,
                                    FrontAPI& front,
@@ -1150,6 +1151,7 @@ private:
         }
 
 
+#ifndef __EMSCRIPTEN__
         static void replace(std::string & text_with_tags, char const* marker, char const* replacement){
             size_t pos = 0;
             auto const marker_len = strlen(marker);
@@ -1292,7 +1294,7 @@ private:
         }
 
 
-       void init_remote_program_without_session_probe(
+        void init_remote_program_without_session_probe(
                     FrontAPI& front,
                     mod_api & mod_rdp,
                     const ModRDPParams & mod_rdp_params,
@@ -1300,7 +1302,7 @@ private:
                     Translation::language_t lang,
                     Font const & font,
                     AuthApi & authentifier)
-       {
+        {
             char session_probe_window_title[32] = { 0 };
             uint32_t const r = this->gen.rand32();
 
@@ -1511,6 +1513,7 @@ private:
                 }
             }
         }
+#endif
 
 
         void init_no_remote_program_no_session_probe(
@@ -1723,8 +1726,13 @@ private:
                     this->send_to_mod_cliprdr_channel(chunk, length, flags, front, stc);
                     break;
                 case channel_names::rail:
+#ifndef __EMSCRIPTEN__
                     IF_ENABLE_METRICS(client_rail_channel_data(length));
                     this->send_to_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
+#else
+                    (void)vars;
+                    (void)client_rail_caps;
+#endif
                     break;
                 case channel_names::rdpdr:
                     IF_ENABLE_METRICS(set_client_rdpdr_metrics(chunk.clone(), length, flags));
@@ -1741,6 +1749,7 @@ private:
             }
         }
 
+#ifndef __EMSCRIPTEN__
         // This function can be called several times. If a remaining session_probe is running on the
         // target serveur, the session probe channels is already there before the session probe launcher is created
         void do_enable_session_probe(
@@ -1897,8 +1906,7 @@ private:
                 LOG(LOG_WARNING, "mod_rdp::sespro_rail_exec_result(): Current session has no Remote Program Virtual Channel");
             }
         }
-
-
+#endif
     } channels;
 
     /// shared with RdpNegociation
@@ -1965,7 +1973,9 @@ private:
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // = choice of programmer
     const bool enable_glyph_cache;
+#ifndef __EMSCRIPTEN__
     const bool session_probe_enable_launch_mask;
+#endif
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
@@ -1981,8 +1991,10 @@ private:
     bool delayed_start_capture = false;
 
 
+#ifndef __EMSCRIPTEN__
     const std::chrono::milliseconds   remoteapp_bypass_legal_notice_delay;
     const std::chrono::milliseconds   remoteapp_bypass_legal_notice_timeout;
+#endif
 
     const bool                        experimental_fix_input_event_sync;
 
@@ -2023,7 +2035,9 @@ private:
 
     Translation::language_t lang;
 
+#ifndef __EMSCRIPTEN__
     Font const & font;
+#endif
 
     bool already_upped_and_running = false;
 
@@ -2113,7 +2127,9 @@ public:
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
+#ifndef __EMSCRIPTEN__
         , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
+#endif
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
@@ -2122,8 +2138,10 @@ public:
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
         , remoteFx_codec_id(0)
+#ifndef __EMSCRIPTEN__
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
+#endif
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
         , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
@@ -2143,7 +2161,9 @@ public:
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
+#ifndef __EMSCRIPTEN__
         , font(mod_rdp_params.font)
+#endif
         , beginning(timeobj.get_time().tv_sec)
         , clean_up_32_bpp_cursor(mod_rdp_params.clean_up_32_bpp_cursor)
         , large_pointer_support(mod_rdp_params.large_pointer_support)
@@ -2193,6 +2213,7 @@ public:
         // one to prepare part of the context, the other used to prepare the remaining context.
         // There should be a way to prepare some objects useful for the remaining work to do
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.remote_program) {
             if (this->channels.session_probe.enabled) {
                 this->channels.init_remote_program_with_session_probe(front, *this, mod_rdp_params, this->session_reactor, this->lang, this->font, this->authentifier);
@@ -2209,6 +2230,9 @@ public:
                 this->channels.init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
             } // this->session_probe.enabled
         } // this->remote_program
+#else
+        this->channels.init_no_remote_program_no_session_probe(info, mod_rdp_params, program, directory);
+#endif
 
         this->negociation_result.front_width = info.screen_info.width;
         this->negociation_result.front_height = info.screen_info.height;
@@ -2219,11 +2243,13 @@ public:
 
 
     ~mod_rdp() override {
+#ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enabled) {
             const bool disable_input_event     = false;
             const bool disable_graphics_update = false;
             this->disable_input_event_and_graphics_update(disable_input_event, disable_graphics_update);
         }
+#endif
 
         if (!this->end_session_reason.empty()
         &&  !this->end_session_message.empty()) {
@@ -2241,7 +2267,9 @@ public:
                 this->recv_bmp_update);
         }
 
+#ifndef __EMSCRIPTEN__
         this->channels.remote_programs_session_manager.reset();
+#endif
 
         if (!this->server_redirection_packet_received) {
             this->redir_info = RedirectionInfo();
@@ -2342,8 +2370,8 @@ public:
             && !this->input_event_disabled) {
 
             if (this->first_scancode && !(device_flags & 0x8000)) {
+#ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enabled) {
-
                     if (!this->channels.session_probe_virtual_channel) {
                         this->channels.create_session_probe_virtual_channel(
                                 this->front, this->stc,
@@ -2364,7 +2392,9 @@ public:
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
                     }
                 }
-                else {
+                else
+#endif
+                {
                         LOG(LOG_INFO, "mod_rdp::rdp_input_scancode: First Keyboard Event. Resend the Synchronize Event to server.");
                         this->first_scancode = false;
                         this->send_input(time, RDP_INPUT_SYNCHRONIZE, 0, this->last_key_flags_sent, 0);
@@ -2373,11 +2403,13 @@ public:
 
             this->send_input(time, RDP_INPUT_SCANCODE, device_flags, param1, param2);
 
+#ifndef __EMSCRIPTEN__
             IF_ENABLE_METRICS(key_pressed());
 
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_scancode(param1, param2, device_flags);
             }
+#endif
         }
     }
 
@@ -2416,9 +2448,11 @@ public:
                 }
             }
 
+#ifndef __EMSCRIPTEN__
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_mouse(device_flags, x, y);
             }
+#endif
         }
     }
 
@@ -2893,11 +2927,13 @@ public:
             this->end_session_reason.clear();
             this->end_session_message.clear();
 
+#ifndef __EMSCRIPTEN__
             if ((!this->channels.session_probe_virtual_channel
                 || !this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required())
              && !this->remote_apps_not_enabled) {
                 this->authentifier.disconnect_target();
             }
+#endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
             if (!this->session_disconnection_logged) {
@@ -2961,24 +2997,27 @@ public:
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
+#ifndef __EMSCRIPTEN__
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
                     this->front, *this, *this, this->stc,
                     this->asynchronous_tasks, this->session_reactor,
                     this->client_general_caps, this->client_name,
                     this->allow_using_multiple_monitors, this->monitor_count,
                     this->bogus_refresh_rect, this->lang);
+#endif
             }
-
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
                 this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, this->stc);
             }
             else if (mod_channel.name == channel_names::rail) {
+#ifndef __EMSCRIPTEN__
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
                 this->channels.process_rail_event(mod_channel, sec.payload, length, flags, chunk_size,
                             this->front, this->stc,
                             this->vars, this->client_rail_caps);
+#endif
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
@@ -3144,6 +3183,7 @@ public:
                             this->deactivation_reactivation_in_progress = false;
 
                             if (!this->already_upped_and_running) {
+#ifndef __EMSCRIPTEN__
                                 if (this->channels.session_probe.enabled) {
                                     this->channels.do_enable_session_probe(
                                                 this->front,
@@ -3161,16 +3201,21 @@ public:
                                                 this->bogus_refresh_rect,
                                                 this->lang);
                                 }
+#endif
                                 this->already_upped_and_running = true;
                             }
 
+#ifndef __EMSCRIPTEN__
                             if (this->channels.session_probe.enabled
-                            &&  this->session_probe_enable_launch_mask) {
+                             && this->session_probe_enable_launch_mask
+                            ) {
                                 this->delayed_start_capture = true;
 
                                 LOG(LOG_INFO, "Mod_rdp: Capture starting is delayed.");
                             }
-                            else if (this->front.can_be_start_capture()) {
+                            else
+#endif
+                            if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect
                                  && this->allow_using_multiple_monitors
                                  && this->monitor_count > 1
@@ -3426,9 +3471,11 @@ public:
     {
         //LOG(LOG_INFO, "mod_rdp::draw_event()");
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
             this->channels.remote_programs_session_manager->set_drawable(&gd);
         }
+#endif
 
         this->buf.load_data(this->trans);
         draw_event_impl(now, gd);
@@ -3442,12 +3489,14 @@ public:
 
             try{
                 gdi::GraphicApi & drawable =
-                    ( this->channels.remote_programs_session_manager
-                    ? (*this->channels.remote_programs_session_manager)
-                    : ( this->graphics_update_disabled
-                        ? gdi::null_gd()
-                        : gd
-                    ));
+#ifndef __EMSCRIPTEN__
+                    this->channels.remote_programs_session_manager
+                      ? *this->channels.remote_programs_session_manager
+                      :
+#endif
+                    this->graphics_update_disabled
+                      ? gdi::null_gd()
+                      : gd;
                 if (this->buf.current_pdu_is_fast_path()) {
                     this->connected_fast_path(drawable, this->buf.current_pdu_buffer());
                 }
@@ -3463,10 +3512,12 @@ public:
                     throw;
                 }
 
+#ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe_virtual_channel
                 &&  this->channels.session_probe_virtual_channel->is_disconnection_reconnection_required()) {
                     throw Error(ERR_SESSION_PROBE_DISCONNECTION_RECONNECTION);
                 }
+#endif
                 this->front.must_be_stop_capture();
 
                 if (this->remote_apps_not_enabled) {
@@ -3507,12 +3558,14 @@ public:
 
                 this->session_reactor.set_next_event(BACK_EVENT_NEXT);
 
+#ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enabled) {
                     const bool disable_input_event     = false;
                     const bool disable_graphics_update = false;
                     this->disable_input_event_and_graphics_update(
                         disable_input_event, disable_graphics_update);
                 }
+#endif
 
                 if ((e.id == ERR_RDP_UNSUPPORTED_MONITOR_LAYOUT) ||
                     (e.id == ERR_RAIL_CLIENT_EXECUTE) ||
@@ -3740,6 +3793,7 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
+                            this->front,
                             this->BmpCacheRev2_Cache_NumEntries()[0], nb_bytes_per_pixel(this->orders.bpp) * 16 * 16, false,
                             this->BmpCacheRev2_Cache_NumEntries()[1], nb_bytes_per_pixel(this->orders.bpp) * 32 * 32, false,
                             this->BmpCacheRev2_Cache_NumEntries()[2], nb_bytes_per_pixel(this->orders.bpp) * 64 * 64, this->enable_persistent_disk_bitmap_cache,
@@ -3755,6 +3809,7 @@ public:
 
                     if (!this->deactivation_reactivation_in_progress) {
                         this->orders.create_cache_bitmap(
+                            this->front,
                             0x258, nb_bytes_per_pixel(this->orders.bpp) * 0x100,  false,
                             0x12c, nb_bytes_per_pixel(this->orders.bpp) * 0x400,  false,
                             0x106, nb_bytes_per_pixel(this->orders.bpp) * 0x1000, false,
@@ -3832,6 +3887,7 @@ public:
                 }
                 confirm_active_pdu.emit_capability_set(glyphcache_caps);
 
+#ifndef __EMSCRIPTEN__
                 if (this->channels.remote_program) {
                     RailCaps rail_caps = this->client_rail_caps;
                     rail_caps.RailSupportLevel &= (TS_RAIL_LEVEL_SUPPORTED | TS_RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED | TS_RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED);
@@ -3845,6 +3901,7 @@ public:
                     }
                     confirm_active_pdu.emit_capability_set(this->client_window_list_caps);
                 }
+#endif
 
                 if (this->large_pointer_support &&
                     this->client_large_pointer_caps.largePointerSupportFlags) {
@@ -5010,10 +5067,12 @@ public:
             throw Error(ERR_RDP_LOGON_USER_CHANGED);
         }
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.session_probe_virtual_channel
         && this->channels.session_probe.vc.start_launch_timeout_timer_only_after_logon) {
             this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
         }
+#endif
 
         this->report_message.report("OPEN_SESSION_SUCCESSFUL", "OK.");
         this->end_session_reason = "CLOSE_SESSION_SUCCESSFUL";
@@ -5021,12 +5080,14 @@ public:
 
         this->fd_event->disable_timeout();
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.session_probe.enabled) {
             const bool disable_input_event     = true;
             const bool disable_graphics_update = this->session_probe_enable_launch_mask;
             this->disable_input_event_and_graphics_update(
                 disable_input_event, disable_graphics_update);
         }
+#endif
     }   // process_logon_info
 
     void process_save_session_info(InStream & stream) {
@@ -5066,6 +5127,7 @@ public:
             LOG(LOG_INFO, "process save session info : Logon plainnotify");
             RDP::PlainNotify_Recv pn(ssipdudata.payload);
 
+#ifndef __EMSCRIPTEN__
             if (this->channels.session_probe.enabled) {
                 const bool disable_input_event     = true;
                 const bool disable_graphics_update = this->session_probe_enable_launch_mask;
@@ -5077,6 +5139,7 @@ public:
             && this->channels.session_probe.vc.start_launch_timeout_timer_only_after_logon) {
                 this->channels.session_probe_virtual_channel->start_launch_timeout_timer();
             }
+#endif
         }
         break;
         case RDP::INFOTYPE_LOGON_EXTENDED_INFO:
@@ -5110,13 +5173,16 @@ public:
 
                 RDP::LogonErrorsInfo_Recv lei(lif.payload);
 
+#ifndef __EMSCRIPTEN__
                 if ((RDP::LOGON_MSG_SESSION_CONTINUE != lei.ErrorNotificationType) &&
                     (RDP::LOGON_WARNING >= lei.ErrorNotificationData) &&
-                    this->channels.remote_program) {
+                    this->channels.remote_program
+                ) {
                     if ((0 != lei.ErrorNotificationType) ||
                         (RDP::LOGON_FAILED_OTHER != lei.ErrorNotificationData) ||
-                        (!this->remoteapp_bypass_legal_notice_delay.count())) {
-                            this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
+                        (!this->remoteapp_bypass_legal_notice_delay.count())
+                    ) {
+                        this->on_remoteapp_redirect_user_screen(this->authentifier, lei.ErrorNotificationData);
                     }
                     else {
                         this->remoteapp_one_shot_bypass_window_legalnotice = this->session_reactor.create_timer()
@@ -5145,6 +5211,7 @@ public:
                 else if (RDP::LOGON_MSG_SESSION_CONTINUE == lei.ErrorNotificationType) {
                     this->remoteapp_one_shot_bypass_window_legalnotice.reset();
                 }
+#endif
             }
         }
         break;
@@ -5479,6 +5546,7 @@ public:
     }
 
     void send_persistent_key_list() {
+#ifndef __EMSCRIPTEN__
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list");
         }
@@ -5556,6 +5624,7 @@ public:
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_rdp::send_persistent_key_list done");
         }
+#endif
     }   // send_persistent_key_list
 
     // TODO CGR: duplicated code in front
@@ -6230,25 +6299,27 @@ private:
         this->input_event_disabled     = disable_input_event;
         this->graphics_update_disabled = disable_graphics_update;
 
+#ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
             this->channels.remote_programs_session_manager->disable_graphics_update(
                 disable_graphics_update);
         }
+#endif
 
         return need_full_screen_update;
     }
 
 public:
-
     void DLP_antivirus_check_channels_files() override {
         this->channels.DLP_antivirus_check_channels_files();
     }
 
-
     windowing_api* get_windowing_api() const {
+#ifndef __EMSCRIPTEN__
         if (this->channels.remote_programs_session_manager) {
             return this->channels.remote_programs_session_manager.get();
         }
+#endif
 
         return nullptr;
     }
@@ -6257,27 +6328,53 @@ public:
     { return Dimension(this->stc.negociation_result.front_width, this->stc.negociation_result.front_height); }
 
     bool is_auto_reconnectable() override {
-        return (this->is_server_auto_reconnec_packet_received &&
-            this->is_up_and_running() &&
-            (!this->channels.session_probe_launcher || this->channels.session_probe_launcher->is_stopped()));
+        return this->is_server_auto_reconnec_packet_received
+            && this->is_up_and_running()
+#ifndef __EMSCRIPTEN__
+            && (!this->channels.session_probe_launcher || this->channels.session_probe_launcher->is_stopped())
+#endif
+            ;
     }
 
     void auth_rail_exec(uint16_t flags, const char* original_exe_or_file,
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
+#ifndef __EMSCRIPTEN__
         this->channels.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
                                 working_dir, arguments, account, password,
                                 this->front, this->stc, this->vars, this->client_rail_caps);
+#else
+        (void)flags;
+        (void)original_exe_or_file;
+        (void)exe_or_file;
+        (void)working_dir;
+        (void)arguments;
+        (void)account;
+        (void)password;
+#endif
     }
 
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file, uint16_t exec_result) override {
+#ifndef __EMSCRIPTEN__
         this->channels.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result,
                                     this->front, this->stc, this->vars, this->client_rail_caps);
+#else
+        (void)flags;
+        (void)original_exe_or_file;
+        (void)exec_result;
+#endif
     }
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
+#ifndef __EMSCRIPTEN__
         this->channels.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result,
                                                this->front, this->stc, this->vars, this->client_rail_caps);
+#else
+        (void)flags;
+        (void)exe_or_file;
+        (void)exec_result;
+        (void)raw_result;
+#endif
     }
 
     void sespro_ending_in_progress() override

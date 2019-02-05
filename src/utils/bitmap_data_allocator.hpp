@@ -35,7 +35,9 @@
 using std::size_t; /*NOLINT*/
 
 namespace aux_ {
-    extern class BmpMemAlloc {
+    extern class BmpMemAlloc
+    {
+#ifndef __EMSCRIPTEN__
         class Memory {
             void * mem_first = nullptr;
             void * mem_last = nullptr;
@@ -111,22 +113,42 @@ namespace aux_ {
             }
             ::operator delete(p);
         }
+#else
+    public:
+        void * alloc(size_t n)
+        {
+            return ::operator new(n);
+        }
 
-        struct MemoryDef {
-            size_t cel;
-            size_t sz;
+        void dealloc(void * p) noexcept
+        {
+            ::operator delete(p);
+        }
+#endif
 
-        private:
+        class MemoryDef
+        {
             static const size_t align = sizeof(void*) > sizeof(size_t) ? sizeof(void*) : sizeof(size_t);
 
         public:
+            size_t cel;
+            size_t sz;
+
             MemoryDef(size_t cel, size_t sz)
             : cel(cel)
             , sz((sz + (align-1)) & ~(align-1))
             {}
         };
 
-        void reserve(MemoryDef const & m1, MemoryDef const & m2, MemoryDef const & m3, MemoryDef const & m4, MemoryDef const & m5) {
+        void reserve(MemoryDef const & m1, MemoryDef const & m2, MemoryDef const & m3, MemoryDef const & m4, MemoryDef const & m5)
+        {
+#ifdef __EMSCRIPTEN__
+            (void)m1;
+            (void)m2;
+            (void)m3;
+            (void)m4;
+            (void)m5;
+#else
             if (!this->data) {
                 const size_t mem_size = m1.cel * m1.sz + m2.cel * m2.sz + m3.cel * m3.sz + m4.cel * m4.sz + m5.cel * m5.sz;
                 const size_t ntotal = (m1.cel + m2.cel + m3.cel + m4.cel + m5.cel);
@@ -147,6 +169,7 @@ namespace aux_ {
                     this->mems[i].init(pp_tmp, epp, szs[i]);
                 }
             }
+#endif
         }
     } bitmap_data_allocator;
 } // namespace aux_

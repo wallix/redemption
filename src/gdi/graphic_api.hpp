@@ -46,6 +46,10 @@ class RDPPolygonCB;
 class RDPPolyline;
 class RDPEllipseSC;
 class RDPEllipseCB;
+#ifdef __EMSCRIPTEN__
+class RDPBmpCache;
+# include <array>
+#endif
 
 struct RDPBitmapData;
 struct Pointer;
@@ -265,7 +269,17 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPMultiDstBlt      const & cmd, Rect clip) = 0;
     virtual void draw(RDPScrBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDP::RDPMultiScrBlt const & cmd, Rect clip) = 0;
+
+#ifdef __EMSCRIPTEN__
+    virtual void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) = 0;
+    virtual void draw(RDPBmpCache         const & /*cmd*/) = 0;
+    virtual void draw(RDPMemBlt           const & cmd, Rect clip) = 0;
+    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+#else
     virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
+    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
+#endif
+
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
 
     virtual void draw(RDPPatBlt           const & cmd, Rect clip, ColorCtx color_ctx) = 0;
@@ -278,7 +292,6 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPPolyline         const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseSC        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
     virtual void draw(RDPEllipseCB        const & cmd, Rect clip, ColorCtx color_ctx) = 0;
-    virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPNineGrid         const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
     virtual void draw(RDPGlyphIndex       const & cmd, Rect clip, ColorCtx color_ctx, GlyphCache const & gly_cache) = 0;
     virtual void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) = 0;
@@ -327,8 +340,15 @@ public:
     void draw(RDPEllipseSC        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
     void draw(RDPEllipseCB        const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
     void draw(RDPBitmapData       const & /*cmd*/, Bitmap const & /*bmp*/) override {}
+#ifdef __EMSCRIPTEN__
+    void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) override {}
+    void draw(RDPBmpCache         const & /*cmd*/) override {}
+    void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/) override {}
+    void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+#else
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
+#endif
     void draw(RDPNineGrid         const & /*unused*/, Rect /*unused*/, ColorCtx /*unused*/, Bitmap const & /*unused*/) override {}
     void draw(RDPGlyphIndex       const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, GlyphCache const & /*gly_cache*/) override {}
     void draw(RDPSetSurfaceCommand const & /*cmd*/, RDPSurfaceContent const & /*content*/) override {}
@@ -352,8 +372,7 @@ public:
     }
 
 public:
-    NullGraphic()
-    = default;
+    NullGraphic() = default;
 };
 
 inline gdi::GraphicApi & null_gd() noexcept

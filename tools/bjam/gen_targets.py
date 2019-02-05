@@ -247,7 +247,7 @@ try:
         '--lib': set_arg('lib'),
         '--test': set_arg('test'),
         '--src-system': set_arg('system'),
-        '--disable-src': lambda arg: disable_srcs.append(arg),
+        '--disable-src': lambda arg: disable_srcs.add(arg),
         '--include': lambda arg: includes.add(arg),
     }
     while True:

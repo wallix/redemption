@@ -20,6 +20,10 @@ Author(s): Jonathan Poelen
 
 #pragma once
 
+#ifdef IN_IDE_PARSER
+# define __EMSCRIPTEN__
+#endif
+
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 
@@ -28,6 +32,8 @@ class OrderCaps;
 
 namespace redjs
 {
+
+class ImageData;
 
 class BrowserFront : public FrontAPI
 {
@@ -47,9 +53,11 @@ public:
     void draw(const RDP::RDPMultiScrBlt & cmd, Rect clip) override;
     void draw(RDPPatBlt const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
 
-    void draw(const RDPMemBlt & cmd, Rect clip, const Bitmap & bmp) override;
+    void set_bmp_cache_entries(std::array<uint16_t, 3> const & /*nb_entries*/) override;
+    void draw(RDPBmpCache const & /*cmd*/) override;
+    void draw(RDPMemBlt const & /*cmd*/, Rect /*clip*/) override;
+    void draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) override;
 
-    void draw(RDPMem3Blt const & cmd, Rect clip, gdi::ColorCtx color_ctx, const Bitmap & bmp) override;
     void draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
     void draw(RDPGlyphIndex const & cmd, Rect clip, gdi::ColorCtx color_ctx, const GlyphCache & gly_cache) override;
     void draw(RDPPolygonSC const & cmd, Rect clip, gdi::ColorCtx color_ctx) override;
@@ -100,6 +108,9 @@ private:
     uint16_t height;
     bool verbose;
     ScreenInfo& screen_info;
+    std::unique_ptr<ImageData[]> image_datas;
+    std::array<size_t, 3> image_data_index {0};
+    size_t nb_image_datas {0};
     CHANNELS::ChannelDefArray cl;
 };
 

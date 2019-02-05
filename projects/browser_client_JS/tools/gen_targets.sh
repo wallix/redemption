@@ -11,6 +11,16 @@ d=projects/browser_client_JS/
     --src-system emscripten \
     --lib '' \
     --test $d/tests \
+    --disable-src src/mod/rdp/rdp_metrics.hpp \
+    --disable-src src/mod/metrics.hpp \
+    --disable-src src/mod/rdp/channels/rail_session_manager.hpp \
+    --disable-src src/mod/rdp/channels/rail_channel.hpp \
+    --disable-src src/mod/rdp/channels/sespro_alternate_shell_based_launcher.hpp \
+    --disable-src src/mod/rdp/channels/sespro_channel.hpp \
+    --disable-src src/mod/rdp/channels/sespro_clipboard_based_launcher.hpp \
+    --disable-src src/RAIL/client_execute.hpp \
+    --disable-src src/core/RDP/capabilities/rail.hpp \
+    --disable-src core/RDP/caches/bmpcachepersister.hpp \
 | sed -E '
     /^  <variant>[^:]+:<library>dl$|^  <(covfile|variant)|^  \$\(GCOV_NO_BUILD\)|\.coverage ;$/d;
     s/^exe /exe-js /;t

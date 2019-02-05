@@ -28,6 +28,7 @@ namespace redjs
 {
     struct ImageData
     {
+        explicit ImageData() = default;
         explicit ImageData(Bitmap const& bmp);
 
         uint8_t const* data() const noexcept;
@@ -39,12 +40,7 @@ namespace redjs
         std::size_t size() const noexcept;
 
     private:
-        struct Deleter
-        {
-            void operator()(void* p) noexcept;
-        };
-
-        unsigned cx, cy;
-        std::unique_ptr<uint8_t[], Deleter> buf;
+        unsigned cx = 0, cy = 0;
+        std::unique_ptr<uint8_t[]> buf;
     };
 }

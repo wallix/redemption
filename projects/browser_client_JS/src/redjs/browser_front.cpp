@@ -18,8 +18,9 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/image_data.hpp"
 #include "redjs/browser_front.hpp"
+
+#include "redjs/image_data.hpp"
 
 #include "red_emscripten/em_asm.hpp"
 
@@ -32,8 +33,13 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryMultiOpaqueRect.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryMultiScrBlt.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryScrBlt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMem3Blt.hpp"
+#include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
+#include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
 #include "utils/log.hpp"
+
+#include <numeric>
 
 
 namespace
@@ -112,6 +118,7 @@ BrowserFront::BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool 
     order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
+    order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
 }
 
 bool BrowserFront::can_be_start_capture()
@@ -222,8 +229,93 @@ void BrowserFront::draw(const RDPMultiDstBlt & /*cmd*/, Rect /*clip*/) { }
 void BrowserFront::draw(RDPPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
 void BrowserFront::draw(RDP::RDPMultiPatBlt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) { }
 
-void BrowserFront::draw(const RDPMemBlt & /*cmd*/, Rect /*clip*/, const Bitmap & /*bmp*/) { }
-void BrowserFront::draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/, const Bitmap & /*bmp*/) { }
+void BrowserFront::set_bmp_cache_entries(std::array<uint16_t, 3> const & nb_entries)
+{
+    this->image_data_index[0] = 0;
+    this->image_data_index[1] = nb_entries[0];
+    this->image_data_index[2] = this->image_data_index[1] + nb_entries[1];
+    this->nb_image_datas = this->image_data_index[2] + nb_entries[2];
+    this->image_datas = std::make_unique<ImageData[]>(this->nb_image_datas);
+}
+
+void BrowserFront::draw(RDPBmpCache const & cmd)
+{
+    size_t const image_idx = this->image_data_index[cmd.id & 0b11] + cmd.idx;
+    if (image_idx >= this->nb_image_datas) {
+        LOG(LOG_INFO, "BrowserFront::RDPBmpCache: out of range");
+        return ;
+    }
+    image_datas[image_idx] = ImageData(cmd.bmp);
+}
+
+void BrowserFront::draw(RDPMemBlt const & cmd_, Rect clip)
+{
+    // LOG(LOG_INFO, "BrowserFront::RDPMemBlt");
+
+    RDPMemBlt cmd(cmd_);
+
+    cmd.rect = cmd_.rect.intersect(this->width, this->height);
+    cmd.srcx += (cmd.rect.x - cmd_.rect.x);
+    cmd.srcy += (cmd.rect.y - cmd_.rect.y);
+
+    Rect const rect = clip.intersect(cmd.rect);
+    uint16_t const srcx = cmd.srcx + (rect.x - cmd.rect.x);
+    uint16_t const srcy = cmd.srcy + (rect.y - cmd.rect.y);
+
+    size_t const image_idx = this->image_data_index[cmd.cache_id & 0b11] + cmd.cache_idx;
+    if (image_idx >= this->nb_image_datas) {
+        LOG(LOG_ERR, "BrowserFront::RDPMemBlt: out of range (%" PRIu16 " %" PRIu16 ")",
+            cmd.cache_id, cmd.cache_idx);
+        return ;
+    }
+
+    ImageData const& image = this->image_datas[image_idx];
+
+    if (image.width() < srcx || image.height() < srcy) {
+        return ;
+    }
+
+    const int mincx = std::min<int>(image.width() - srcx, std::min<int>(this->width - rect.x, rect.cx));
+    const int mincy = std::min<int>(image.height() - srcy, std::min<int>(this->height - rect.y, rect.cy));
+
+    if (mincx <= 0 || mincy <= 0) {
+        return;
+    }
+
+    // cmd.rop == 0xCC
+    RED_EM_ASM(
+        {
+            Module.RdpClientEventTable[$0].drawImage($1, $2, $3, $4, $5, $6, $7, $8, $9);
+        },
+        this,
+        image.data(),
+        image.width(),
+        image.height(),
+        rect.x,
+        rect.y,
+        srcx,
+        srcy,
+        mincx,
+        mincy
+    );
+
+    // switch (cmd.rop) {
+    // case 0xCC:  // dest
+    // case 0x55:  // dest = NOT source
+    // case 0x22:  // dest = dest AND (NOT source)
+    // case 0x66:  // dest = source XOR dest (SRCINVERT)
+    // case 0x88:  // dest = source AND dest (SRCAND)
+    // case 0xBB:  // dest = (NOT source) OR dest (MERGEPAINT)
+    // case 0xEE:  // dest = source OR dest (SRCPAINT)
+    //     break;
+    // default:
+    //     // should not happen
+    //     //LOG(LOG_INFO, "Unsupported Rop=0x%02X", cmd.rop);
+    // break;
+    // }
+}
+
+void BrowserFront::draw(RDPMem3Blt const & /*cmd*/, Rect /*clip*/, gdi::ColorCtx /*color_ctx*/) {}
 
 void BrowserFront::draw(RDPLineTo const & cmd, Rect clip, gdi::ColorCtx color_ctx)
 {

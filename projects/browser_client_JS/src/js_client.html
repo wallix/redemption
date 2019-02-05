@@ -29,7 +29,8 @@
 <script src="js_client.js"></script>
 <script>
 const Module = WallixModule({
-    TOTAL_MEMORY: 268435456, // 16**7
+    TOTAL_MEMORY: 16777216, // 16**6
+    // TOTAL_MEMORY: 268435456, // 16**7
 });
 
 const createRdpClient = (function(Module) {
@@ -42,7 +43,7 @@ const createRdpClient = (function(Module) {
             return function(idata, w, h, dx, dy, sz, sy, dw, dh) {
                 const data = HEAPU8.subarray(idata, idata + w * h * 4);
                 const image = new ImageData(new Uint8ClampedArray(data), w, h);
-                cb(image, dx, dy, 0, 0, dw, dh);
+                cb(image, dx, dy, sz, sy, dw, dh);
             };
         },
 
@@ -253,20 +254,11 @@ function run()
 		canvas.fillStyle = backColor;
 		canvas.strokeStyle = penColor;
 		switch (penStyle) {
-		case 1:
-			canvas.setLineDash([ 10, 6, 10, 6 ]);
-			break;
-		case 2:
-			canvas.setLineDash([ 3, 3, 3, 3 ]);
-			break;
-		case 3:
-			canvas.setLineDash([ 9, 6, 3, 6 ]);
-			break;
-		case 4:
-			canvas.setLineDash([ 9, 3, 3, 3 ]);
-			break;
-		default:
-			canvas.setLineDash([ 16, 0, 16, 0 ]);
+		case 1: canvas.setLineDash([ 10, 6, 10, 6 ]); break;
+		case 2: canvas.setLineDash([ 3, 3, 3, 3 ]); break;
+		case 3: canvas.setLineDash([ 9, 6, 3, 6 ]); break;
+		case 4: canvas.setLineDash([ 9, 3, 3, 3 ]); break;
+		default: canvas.setLineDash([ 16, 0, 16, 0 ]);
 		}
 		canvas.setLineDash([ 16, 0, 16, 0 ]);
 		// BackMode does not imply the transparency level of what is about too be drawn

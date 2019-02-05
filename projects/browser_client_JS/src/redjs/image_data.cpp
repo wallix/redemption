@@ -21,7 +21,6 @@ Author(s): Jonathan Poelen
 #include "redjs/image_data.hpp"
 
 #include "utils/bitmap.hpp"
-#include "utils/bitmap_data_allocator.hpp"
 #include "utils/colors.hpp"
 
 #include <memory>
@@ -33,7 +32,7 @@ namespace redjs
 ImageData::ImageData(Bitmap const& bmp)
 : cx(bmp.cx())
 , cy(bmp.cy())
-, buf(static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(this->size())))
+, buf(new uint8_t[this->size()])
 {
     auto init = [this, bmp](auto buf_to_color, auto dec) -> void
     {
@@ -91,11 +90,6 @@ unsigned ImageData::height() const noexcept
 std::size_t ImageData::size() const noexcept
 {
     return static_cast<std::size_t>(cx * cy * 4);
-}
-
-void ImageData::Deleter::operator()(void* p) noexcept
-{
-    aux_::bitmap_data_allocator.dealloc(p);
 }
 
 }
