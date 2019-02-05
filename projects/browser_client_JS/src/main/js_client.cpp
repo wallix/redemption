@@ -200,6 +200,19 @@ struct RdpClient
         };
         session_reactor.execute_graphics(fd_isset, front);
     }
+
+    void rdp_input_scancode(uint16_t key, uint16_t flag)
+    {
+        this->mod->rdp_input_scancode(
+            key, 0, flag,
+            session_reactor.get_current_time().tv_sec,
+            nullptr);
+    }
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag)
+    {
+        this->mod->rdp_input_unicode(unicode, flag);
+    }
 };
 
 // Binding code
@@ -220,5 +233,7 @@ EMSCRIPTEN_BINDINGS(client)
         })
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
+        .function("sendUnicode", &RdpClient::rdp_input_unicode)
+        .function("sendScancode", &RdpClient::rdp_input_scancode)
     ;
 }

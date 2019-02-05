@@ -90,6 +90,8 @@ const createRdpClient = (function(Module) {
                 events[eventName] = wrapCb(cb);
                 return this;
             },
+            sendUnicode: noop,
+            sendScancode: noop,
             close: noop
         };
 
@@ -153,6 +155,8 @@ const createRdpClient = (function(Module) {
             for (eventName in wrappersCbDraw) {
                 rdpclient[eventName] = console.log.bind(console, eventName);
             }
+            client.sendUnicode = rdpclient.sendUnicode.bind(rdpclient);
+            client.sendScancode = rdpclient.sendScancode.bind(rdpclient);
 
             Module.RdpClientEventTable[rdpclient.thisptr()] = events;
 
@@ -215,6 +219,134 @@ scrROp[0xCC] = 'source-over';
 scrROp[0x55] = 'xor';
 scrROp[0xFF] = 'lighten';
 
+const KBD_FLAGS_EXTENDED  = 0x0100
+const KBD_FLAGS_EXTENDED1 = 0x0200
+const KBD_FLAGS_DOWN      = 0x4000
+const KBD_FLAGS_RELEASE   = 0x8000
+
+const keymap = {
+    Alt: [0x00000038, 0],
+    AltGr: [0x00000138, KBD_FLAGS_EXTENDED],
+    Apps: [0x0000015d, 0],
+    ArrowDown: [0x00000150, 0],
+    ArrowLeft: [0x0000014b, 0],
+    ArrowRight: [0x0000014d, 0],
+    ArrowUp: [0x00000148, 0],
+    Backspace: [0x0000000e, 0],
+    BracketLeft: [0x0000001a, 0],
+    CapsLock: [0x0000003a, 0],
+    ContextMenu: [0x0000015d, 0],
+    Control: [0x0000001d, 0],
+    extControl: [0x0000011d, 0],
+    DeadCircumflex: [0x0000001a, 0],
+    DeadUmlaut: [0x0000001a, 0],
+    Del: [0x00000153, 0],
+    Delete: [0x00000153, 0],
+    Digit0: [0x0000000b, 0],
+    Digit7: [0x00000008, 0],
+    Down: [0x00000150, 0],
+    End: [0x0000014f, 0],
+    Enter: [0x0000001c, 0],
+    Esc: [0x00000001, 0],
+    Escape: [0x00000001, 0],
+    F1: [0x0000003b, 0],
+    F10: [0x00000044, 0],
+    F11: [0x00000057, 0],
+    F12: [0x00000058, 0],
+    F2: [0x0000003c, 0],
+    F3: [0x0000003d, 0],
+    F4: [0x0000003e, 0],
+    F5: [0x0000003f, 0],
+    F6: [0x00000040, 0],
+    F7: [0x00000041, 0],
+    F8: [0x00000042, 0],
+    F9: [0x00000043, 0],
+    Home: [0x00000147, 0],
+    Insert: [0x00000152, 0],
+    Left: [0x0000014b, 0],
+    Menu: [0x0000015d, 0],
+    NumLock: [0x00000145, 0],
+    'numpad*': [0x00000037, 0],
+    'numpad.': [0x00000053, 0],
+    'numpad/': [0x00000135, 0],
+    'numpad-': [0x0000004a, 0],
+    'numpad+': [0x0000004e, 0],
+    numpad0: [0x00000052, 0],
+    numpad1: [0x0000004f, 0],
+    numpad2: [0x00000050, 0],
+    numpad3: [0x00000051, 0],
+    numpad4: [0x0000004b, 0],
+    numpad5: [0x0000004c, 0],
+    numpad6: [0x0000004d, 0],
+    numpad7: [0x00000047, 0],
+    numpad8: [0x00000048, 0],
+    numpad9: [0x00000049, 0],
+    numpadAdd: [0x0000004e, 0],
+    numpadArrowDown: [0x00000050, 0],
+    numpadArrowLeft: [0x0000004b, 0],
+    numpadArrowRight: [0x0000004d, 0],
+    numpadArrowUp: [0x00000048, 0],
+    numpadClear: [0x0000004c, 0],
+    numpadDecimal: [0x00000053, 0],
+    numpadDel: [0x00000053, 0],
+    numpadDelete: [0x00000053, 0],
+    numpadDivide: [0x00000135, 0],
+    numpadDown: [0x00000050, 0],
+    numpadEnd: [0x0000004f, 0],
+    numpadEnter: [0x0000011c, 0],
+    numpadHome: [0x00000047, 0],
+    numpadInsert: [0x00000052, 0],
+    numpadLeft: [0x0000004b, 0],
+    numpadMultiply: [0x00000037, 0],
+    numpadPageDown: [0x00000051, 0],
+    numpadPageUp: [0x00000049, 0],
+    numpadRight: [0x0000004d, 0],
+    numpadSubtract: [0x0000004a, 0],
+    numpadUp: [0x00000048, 0],
+    OS: [0x0000015b, KBD_FLAGS_EXTENDED],
+    Meta: [0x0000015b, 0],
+    PageDown: [0x00000151, 0],
+    PageUp: [0x00000149, 0],
+    PrintScreen: [0x00000137, KBD_FLAGS_EXTENDED],
+    Scroll: [0x00000046, 0],
+    ScrollLock: [0x00000046, 0],
+    Pause: [0x00000045, 0],
+    Quote: [0x00000028, 0],
+    Right: [0x0000014d, 0],
+    Shift: [0x0000002a, 0],
+    Spacebar: [0x00000039, 0],
+    Tab: [0x0000000f, 0],
+    Win: [0x0000015b, KBD_FLAGS_EXTENDED],
+}
+
+// let stateKey = 0;
+function onKeyEvent(flag, evt)
+{
+    if (evt.key.length === 1) {
+        evt.preventDefault();
+        // const newSateKey
+        //     = (evt.altKey ? 1 : 0)
+        //     + (evt.ctrlKey ? 2 : 0)
+        //     + (evt.metaKey ? 4 : 0)
+        //     + (evt.shifKey ? 8 : 0);
+        // if (stateKey !== newSateKey) {
+        //     stateKey = newSateKey
+        // }
+        console.log(evt.key, evt.key.charCodeAt(0))
+        rdpclient.sendUnicode(evt.key.charCodeAt(0), flag);
+    }
+    else {
+        const m = keymap[evt.key];
+        if (m) {
+            console.log(evt.key, m[0], m[1])
+            rdpclient.sendScancode(m[0], flag | m[1]);
+        }
+    }
+}
+
+const onKeyEventUp = (e) => { onKeyEvent(KBD_FLAGS_DOWN, e); };
+const onKeyEventDown = (e) => { onKeyEvent(KBD_FLAGS_RELEASE, e); };
+
 function run()
 {
     rdpclient = createRdpClient(
@@ -222,7 +354,13 @@ function run()
         user_input.value,
         pass_input.value,
         0/*xff*/);
-    rdpclient.on('socketClose', () => console.log('RdpClient close'));
+    document.addEventListener('keyup', onKeyEventUp)
+    document.addEventListener('keydown', onKeyEventDown)
+    rdpclient.on('socketClose', () => {
+        console.log('RdpClient close');
+        document.removeEventListener('keyup', onKeyEventUp)
+        document.removeEventListener('keydown', onKeyEventDown)
+    });
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     rdpclient.on('drawRect', function(x, y, w, h, color) {
         canvas.fillStyle = color;
