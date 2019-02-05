@@ -20,6 +20,8 @@
 
 #pragma once
 
+
+
 struct ClipboardVirtualChannelParams {
 // Default Values: everything transmitted, everything is logged
     bool clipboard_down_authorized = true;
@@ -28,5 +30,21 @@ struct ClipboardVirtualChannelParams {
     bool dont_log_data_into_syslog = false;
     bool dont_log_data_into_wrm    = false;
     bool log_only_relevant_clipboard_activities = false;
+
+// Used for Tests only    
+    friend ::std::ostream& operator<<(::std::ostream& ostr, ClipboardVirtualChannelParams const& x)
+    {
+        auto const & [a, b, c, d, e, f] = x;
+        return ostr << " down=" << a << " up=" << b << " file=" << c 
+                    << " no syslog=" << d << " no wrm=" << e << " no verbose=" << f;
+    }
+    
+    bool operator==(const ClipboardVirtualChannelParams & other) const {
+        auto const & [a, b, c, d, e, f] = *this;
+        auto const & [a1, b1, c1, d1, e1, f1] = other;
+        return (a == a1 && b == b1 && c == c1 && d == d1 && e == e1 && f == f1);
+    }
+// End Used for Tests only    
+    
 };
 

@@ -79,37 +79,36 @@ RED_AUTO_TEST_CASE(TestChannelsAuthorizationsCliprdr)
     ChannelsAuthorizations channels_authorizations("cliprdr", "*");
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_down_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_file_is_authorized(), true);
+
+    ClipboardVirtualChannelParams cvcp;
+    
+    BOOST_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_up,cliprdr_down", "*");
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_down_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_file_is_authorized(), false);
+    cvcp.clipboard_file_authorized = false;
+    BOOST_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_down", "*");
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_down_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_file_is_authorized(), false);
+    cvcp.clipboard_up_authorized = false;
+    cvcp.clipboard_file_authorized = false;
+    BOOST_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
 
     channels_authorizations = ChannelsAuthorizations("cliprdr_down", "cliprdr_up");
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_down_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_file_is_authorized(), false);
+    cvcp.clipboard_up_authorized = false;
+    cvcp.clipboard_file_authorized = false;
+    BOOST_CHECK_EQUAL(cvcp, channels_authorizations.get_clipboard_virtual_channel_params(false, false, false));
 
     channels_authorizations = ChannelsAuthorizations("*", "cliprdr_up");
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(cliprdr), true);
     RED_CHECK_EQUAL(channels_authorizations.is_authorized(d), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_down_is_authorized(), true);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_up_is_authorized(), false);
-    RED_CHECK_EQUAL(channels_authorizations.cliprdr_file_is_authorized(), true);
+    cvcp.clipboard_up_authorized = false;
+    cvcp.clipboard_file_authorized = true;
 }
 
 RED_AUTO_TEST_CASE(TestChannelsAuthorizationsRdpdr)

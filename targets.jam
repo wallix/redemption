@@ -5218,18 +5218,6 @@ test-run tests/utils/test_asynchronous_task_manager :
 :
   <covfile>src/utils/asynchronous_task_manager.hpp
 ;
-test-run tests/utils/test_authorization_channels :
-  $(REDEMPTION_TEST_PATH)/utils/test_authorization_channels.cpp
-:
-  <library>boost_stacktrace
-  <library>src/core/channels_authorizations.o
-  <library>src/core/error.o
-  <library>src/utils/hexdump.o
-  <library>src/utils/utf.o
-  <variant>coverage:<library>dl
-  <variant>debug:<library>dl
-  <variant>san:<library>dl
-;
 test-run tests/utils/test_bitfu :
   $(REDEMPTION_TEST_PATH)/utils/test_bitfu.cpp
 :
@@ -5292,6 +5280,18 @@ test-run tests/utils/test_cfgloader :
   <library>src/utils/hexdump.o
   <covfile>src/utils/cfgloader.cpp
   <covfile>src/utils/cfgloader.hpp
+;
+test-run tests/utils/test_channels_authorizations :
+  $(REDEMPTION_TEST_PATH)/utils/test_channels_authorizations.cpp
+:
+  <library>boost_stacktrace
+  <library>src/core/channels_authorizations.o
+  <library>src/core/error.o
+  <library>src/utils/hexdump.o
+  <library>src/utils/utf.o
+  <variant>coverage:<library>dl
+  <variant>debug:<library>dl
+  <variant>san:<library>dl
 ;
 test-run tests/utils/test_colors :
   $(REDEMPTION_TEST_PATH)/utils/test_colors.cpp
@@ -6304,7 +6304,6 @@ alias test_update_lock : tests/utils/sugar/test_update_lock ;
 alias test_update_lock.coverage : tests/utils/sugar/test_update_lock.coverage ;
 alias test_asynchronous_task_manager : tests/utils/test_asynchronous_task_manager ;
 alias test_asynchronous_task_manager.coverage : tests/utils/test_asynchronous_task_manager.coverage ;
-alias test_authorization_channels : tests/utils/test_authorization_channels ;
 alias test_bitfu : tests/utils/test_bitfu ;
 alias test_bitfu.coverage : tests/utils/test_bitfu.coverage ;
 alias test_bitmap : tests/utils/test_bitmap ;
@@ -6319,6 +6318,7 @@ alias test_bitstream : tests/utils/test_bitstream ;
 alias test_bitstream.coverage : tests/utils/test_bitstream.coverage ;
 alias test_cfgloader : tests/utils/test_cfgloader ;
 alias test_cfgloader.coverage : tests/utils/test_cfgloader.coverage ;
+alias test_channels_authorizations : tests/utils/test_channels_authorizations ;
 alias test_colors : tests/utils/test_colors ;
 alias test_colors.coverage : tests/utils/test_colors.coverage ;
 alias test_compression_transport_builder : tests/utils/test_compression_transport_builder ;
@@ -6779,7 +6779,6 @@ alias tests/utils/sugar.norec :
 ;
 alias tests/utils.norec :
   tests/utils/test_asynchronous_task_manager
-  tests/utils/test_authorization_channels
   tests/utils/test_bitfu
   tests/utils/test_bitmap
   tests/utils/test_bitmap_data_allocator
@@ -6787,6 +6786,7 @@ alias tests/utils.norec :
   tests/utils/test_bitmap_shrink
   tests/utils/test_bitstream
   tests/utils/test_cfgloader
+  tests/utils/test_channels_authorizations
   tests/utils/test_colors
   tests/utils/test_compression_transport_builder
   tests/utils/test_confdescriptor
