@@ -48,10 +48,6 @@ public:
     bool rdpdr_drive_read_is_authorized() const noexcept;
     bool rdpdr_drive_write_is_authorized() const noexcept;
 
-    bool cliprdr_up_is_authorized() const noexcept;
-    bool cliprdr_down_is_authorized() const noexcept;
-    bool cliprdr_file_is_authorized() const noexcept;
-
     bool rdpsnd_audio_output_is_authorized() const noexcept;
 
     REDEMPTION_FRIEND_OSTREAM(out, ChannelsAuthorizations const & auth);
@@ -73,6 +69,11 @@ public:
     }
 
 private:
+
+    bool cliprdr_up_is_authorized() const noexcept;
+    bool cliprdr_down_is_authorized() const noexcept;
+    bool cliprdr_file_is_authorized() const noexcept;
+
     static constexpr const std::array<array_view_const_char, 3> cliprde_list()
     {
         return {{
