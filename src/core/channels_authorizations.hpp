@@ -101,6 +101,30 @@ private:
     array_view<CHANNELS::ChannelNameId const> rng_allow() const;
     array_view<CHANNELS::ChannelNameId const> rng_deny() const;
 
+    // Boolean structures moved around in other parts of the code
+    // could merely be restricted to what we have below
+    // See equivalent fields in : core/file_system_virtual_channel_params.hpp
+    // and core/clipboard_virtual_channels_params.hpp
+//    struct {
+//        bool up;    // client to server
+//        bool down;  // server to client
+//        bool file;  // file copy
+//    } rdpsnd_acl;
+
+//    struct {
+//        bool up;    // client to server
+//        bool down;  // server to client
+//        bool file;  // file copy
+//    } cliprdr_acl;
+
+//    struct {
+//        bool printer;
+//        bool port;
+//        bool drive_read;
+//        bool drive_write;
+//        bool smartcard;
+//    } rdpdr_acl;
+
     std::vector<CHANNELS::ChannelNameId> allow_and_deny_;
     // TODO: this must not be a pointer URGENT!!!
     CHANNELS::ChannelNameId const * allow_and_deny_pivot_;

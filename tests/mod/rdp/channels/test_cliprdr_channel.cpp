@@ -46,6 +46,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
@@ -74,6 +77,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 
     
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_down_denied.hpp"
@@ -103,6 +108,8 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPUpDenied)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
 
     #include "fixtures/test_cliprdr_channel_xfreerdp_up_denied.hpp"
@@ -133,6 +140,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullDenied)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
     clipboard_virtual_channel_params.clipboard_down_authorized = false;
     clipboard_virtual_channel_params.clipboard_up_authorized   = false;
 
@@ -167,6 +175,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     NullSender to_client_sender;
     NullSender to_server_sender;
@@ -218,6 +229,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     NullSender to_client_sender;
     NullSender to_server_sender;
@@ -400,6 +414,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
     
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     TestResponseSender to_client_sender;
     NullSender to_server_sender;
@@ -900,6 +917,9 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
 
     NullSender to_client_sender;
     TestResponseSender to_server_sender;

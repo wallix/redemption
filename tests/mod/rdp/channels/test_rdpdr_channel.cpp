@@ -43,6 +43,14 @@ RED_AUTO_TEST_CASE(TestRdpdrChannel)
     base_params.verbose                      = verbose;
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
+    
+    
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -80,6 +88,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDrive)
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -116,8 +128,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoPrint)
     base_params.verbose                      = verbose;
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
     file_system_virtual_channel_params.print_authorized             = false;
-
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
+    
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -155,7 +172,10 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelNoDriveNoPrint)
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
     file_system_virtual_channel_params.file_system_read_authorized  = false;
     file_system_virtual_channel_params.file_system_write_authorized = false;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
     file_system_virtual_channel_params.print_authorized             = false;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -193,6 +213,12 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelDeviceRemove)
     base_params.verbose                      = verbose;
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
 
     FileSystemDriveManager file_system_drive_manager;
 
@@ -230,6 +256,13 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelFragmentedHeader)
     base_params.verbose                      = verbose;
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
+    file_system_virtual_channel_params.smart_card_authorized        = true;
+
     FileSystemDriveManager file_system_drive_manager;
 
     mkdir("/tmp/export", 0664); file_system_drive_manager.enable_drive("export", "/tmp", verbose);
@@ -266,6 +299,11 @@ RED_AUTO_TEST_CASE(TestRdpdrChannelCapabilityNegotiation)
     base_params.verbose                      = verbose;
 
     FileSystemVirtualChannelParams file_system_virtual_channel_params;
+    file_system_virtual_channel_params.file_system_read_authorized  = true;
+    file_system_virtual_channel_params.file_system_write_authorized = true;
+    file_system_virtual_channel_params.parallel_port_authorized     = true;
+    file_system_virtual_channel_params.print_authorized             = true;
+    file_system_virtual_channel_params.serial_port_authorized       = true;
     file_system_virtual_channel_params.smart_card_authorized        = false;
 
     FileSystemDriveManager file_system_drive_manager;
