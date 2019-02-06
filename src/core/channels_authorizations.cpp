@@ -187,7 +187,7 @@ ChannelsAuthorizations::ChannelsAuthorizations(std::string const & allow, std::s
     this->allow_and_deny_.reserve(allow_ids.size() + deny_ids.size());
     this->allow_and_deny_.insert(this->allow_and_deny_.end(), allow_ids.begin(), allow_ids.end());
     this->allow_and_deny_.insert(this->allow_and_deny_.end(), deny_ids.begin(), deny_ids.end());
-    this->allow_and_deny_pivot_ = this->allow_and_deny_.data() + allow_ids.size();
+    this->allow_and_deny_pivot_ = allow_ids.size();
 }
 
 bool ChannelsAuthorizations::is_authorized(CHANNELS::ChannelNameId id) const noexcept
@@ -394,10 +394,10 @@ void ChannelsAuthorizations::update_authorized_channels(
 
 inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_allow() const
 {
-    return {this->allow_and_deny_.data(), this->allow_and_deny_pivot_};
+    return {this->allow_and_deny_.data(), this->allow_and_deny_.data() + this->allow_and_deny_pivot_};
 }
 
 inline array_view<CHANNELS::ChannelNameId const> ChannelsAuthorizations::rng_deny() const
 {
-    return {this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
+    return {this->allow_and_deny_.data() + this->allow_and_deny_pivot_, this->allow_and_deny_.data() + this->allow_and_deny_.size()};
 }

@@ -126,8 +126,7 @@ private:
 //    } rdpdr_acl;
 
     std::vector<CHANNELS::ChannelNameId> allow_and_deny_;
-    // TODO: this must not be a pointer URGENT!!!
-    CHANNELS::ChannelNameId const * allow_and_deny_pivot_;
+    size_t allow_and_deny_pivot_;
     bool all_allow_ = false;
     bool all_deny_ = false;
     // TODO array<bool, n> -> bitset<n> | uint8_t | enum
