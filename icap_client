@@ -49,9 +49,14 @@ body_req = POST_line + loch_line + acpt_line + AEnc_line + prag_line
 request = head_line + Host_line + Conn_line + encp_line + POST_line + loch_line + acpt_line + AEnc_line + prag_line + chuk_line + content + "\r\n\r\n0\r\n\r\n"
 
 
+
+
+
 print ""
 print "send:"
-print "\""+request+"\""
+request_lines = request.split("\r\n");
+for line in request_lines:
+    print("    "+line)
 print ""
 
 socket.send(request.encode("utf-8"))
@@ -70,11 +75,14 @@ while msg_recu != b"0\r\n\r\n" and step < 5:
     
     if msg_recu != b"":
         response += msg_recu
+
 if response:
     print("rcv:")
-    print("\""+response+"\"")
+    response_lines = response.split("\r\n");
+    for line in response_lines:
+        print("    "+line)
 
-print "Close"
+print "Close connection to {}".format(host+":"+str(port))
 socket.close()
 
 
