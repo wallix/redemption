@@ -20,6 +20,7 @@
 <body>
 
 <canvas id="canvas" width="800" height="600"></canvas>
+<canvas id="canvas2" width="800" height="600"></canvas>
 <form id="login" method="get" action="#">
     <input type="text" id="user" name="user" value="x" placeholder="Username"/>
     <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
@@ -213,6 +214,7 @@ const createRdpClient = (function(Module) {
 
 const ecanvas = document.getElementById('canvas');
 const canvas = ecanvas.getContext('2d');
+const canvas2 = document.getElementById('canvas2').getContext('2d');
 const login = document.getElementById('login');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
@@ -439,54 +441,32 @@ const keymap = {
     '€': 0x00000012,
 }
 
-function getScanCode(kevt, keyId)
+function getScanCode(kevt)
 {
-    console.log(kevt.key)
-	let curKey;
-    if (keyId)
+	let curKey = kevt.key;
+
+    if (curKey.length === 1)
     {
-		curKey = keyId;
-    }
-	else
-    {
-        curKey = kevt.key;
-        if (curKey.length === 1)
+        const lower = curKey.toLowerCase();
+        if (lower !== curKey.toUpperCase())
         {
-            const lower = curKey.toLowerCase();
-            if (lower !== curKey.toUpperCase())
-            {
-                curKey = lower;
-            }
+            curKey = lower;
         }
-        else if (curKey === 'Unidentified')
-        {
-            curKey = keyId;
-        }
-        // else if (curKey.length === 2)
-        // {
-        //     curKey = curKey.charAt(1);
-        // }
     }
-    console.log(curKey)
 
 	// Field present in Firefox and Internet Explorer
 	// Managing num pad characters apart
 	if ("1234567890.,/*-+".indexOf(curKey) === -1) // General case
 	{
-		if (kevt.location === 3) { // Numpad key ( case of arrows, pageup, pagedown, etc... )
-			return keymap['numpad' + kevt.key];
-		}
-
-        if (kevt.location == 2 && curKey === 'Control') {
-			return keymap['ext' + kevt.key];
-		}
-
-		return keymap[curKey]; // Upper line figures
-	}
-
-	if (kevt.keyCode >= 96 && kevt.keyCode <= 111)  // NumPad case
-    {
-        return keymap['numpad' + curKey]; // Numeric Pad
+        switch (kevt.location) {
+        case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD:
+            return keymap['numpad' + kevt.key];
+        case KeyboardEvent.DOM_KEY_LOCATION_RIGHT:
+            if (curKey === 'Control') {
+                return keymap['numpad' + curKey];
+            }
+        default: return keymap[curKey];
+        }
     }
 
     return 0;
@@ -496,6 +476,7 @@ function getScanCode(kevt, keyId)
 // let stateKey = 0;
 function onKeyEvent(flag, evt)
 {
+    const scancode = getScanCode(evt);
     // console.log(flag, evt.key, evt.keyCode, scancode)
     if (scancode) {
         switch (scancode) {
@@ -517,18 +498,7 @@ function onKeyEvent(flag, evt)
     }
 }
 
-function mousePos(evt)
-{
-    const theTargetRect = ecanvas.getBoundingClientRect();
-
-    //calculate the real X/Y position to send to RDP
-    const x = (evt.pageX - theTargetRect.left) / theTargetRect.width * ecanvas.width;
-    const y = (evt.pageY - theTargetRect.top) / theTargetRect.height * ecanvas.sheight;
-
-    return [x, y];
-}
-
-function mouseEventToFlag(evt)
+function mouseButtonToFlag(evt)
 {
     switch (evt.button) {
     case 0: return 0x1000; // left button
@@ -541,41 +511,58 @@ function mouseEventToFlag(evt)
 function onMouseEvent(flag, evt)
 {
     evt.preventDefault();
-    const [x,y] = mousePos(evt)
-    rdpclient.sendMouseEvent(flag | mouseEventToFlag(evt), x, y);
+    rdpclient.sendMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
 }
 
 
-const onKeyUp = (e) => { onKeyEvent(KBD_FLAGS_RELEASE, e); };
-const onKeyDown = (e) => { onKeyEvent(0, e); };
-const onKeyPress = (e) => { onKeyEvent(KBD_FLAGS_DOWN, e); };
+const onKeyUp = (evt) => { onKeyEvent(KBD_FLAGS_RELEASE, evt); };
+const onKeyDown = (evt) => { onKeyEvent(0, evt); };
+const onKeyPress = (evt) => { onKeyEvent(KBD_FLAGS_DOWN, evt); };
 
 const onMouseMove = (evt) => {
     evt.preventDefault();
-    const [x,y] = mousePos(evt)
-    rdpclient.sendMouseEvent(0x0800, x, y);
+    rdpclient.sendMouseEvent(0x0800, evt.offsetX, evt.offsetY);
 };
-const onMouseDown = (e) => { onMouseEvent(0x8000, e); };
-const onMouseUp = (e) => { onMouseEvent(0, e); };
-const onMouseWheel =  (evt) => {
+const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
+const onMouseUp = (evt) => { onMouseEvent(0, evt); };
+const onMouseWheel = (evt) => {
     evt.preventDefault();
     var offset = evt.target.offset();
     var x = evt.pageX - offset.left;
     var y = evt.pageY - offset.top;
     evt = evt.originalEvent || evt;
-    const delta = _evt.detail < 0 || _evt.wheelDelta > 0 ? 1 : -1;
-    rdpclient.sendMouseEvent(0x200 | ((delta > 0) ? 0x087 : 0x188), x, y);
+    // const delta = (evt.detail < 0 || evt.wheelDelta > 0) ? 0x087 : 0x188;
+    // rdpclient.sendMouseEvent(0x200 | delta, x, y);
+    rdpclient.sendMouseEvent(0x200, x, y);
 };
 
 const docEvents = {
     keyup: onKeyUp,
     keydown: onKeyDown,
     keypress: onKeyPress,
+};
+
+const canvasEvent = {
     mousemove: onMouseMove,
     mousedown: onMouseDown,
     mouseup: onMouseUp,
     mousewheel: onMouseWheel,
+    contextmenu: event => event.preventDefault()
 };
+
+function addEvents(elem, events)
+{
+    for (let [eventName, func] of Object.entries(events)) {
+        elem.addEventListener(eventName, func);
+    }
+}
+
+function removeEvents(elem, events)
+{
+    for (let [eventName, func] of Object.entries(events)) {
+        elem.removeEventListener(eventName, func);
+    }
+}
 
 function run()
 {
@@ -584,17 +571,15 @@ function run()
         user_input.value,
         pass_input.value,
         0/*xff*/);
-    rdpclient.on('socketClose', () => {
-        console.log('RdpClient close');
-        for (let [eventName, func] of Object.entries(docEvents)) {
-            document.removeEventListener(eventName, func);
-        }
-    });
     rdpclient.on('socketOpen', () => {
         console.log('RdpClient open');
-        for (let [eventName, func] of Object.entries(docEvents)) {
-            document.addEventListener(eventName, func);
-        }
+        addEvents(document, docEvents);
+        addEvents(ecanvas, canvasEvent);
+    });
+    rdpclient.on('socketClose', () => {
+        console.log('RdpClient close');
+        removeEvents(document, docEvents);
+        removeEvents(ecanvas, canvasEvent);
     });
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
     rdpclient.on('drawRect', function(x, y, w, h, color) {
@@ -607,7 +592,13 @@ function run()
         if (op) {
             if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
                 canvas.globalCompositeOperation = op
-                canvas.drawImage(sourceImageData, dx, dy);
+                canvas.putImageData(sourceImageData, dx, dy);
+                // if (rop == 0xCC) {
+                // }
+                // else {
+                //     canvas2.putImageData(sourceImageData, 0, 0);
+                //     canvas.drawImage(canvas2, dx, dy);
+                // }
                 canvas.globalCompositeOperation = 'source-over'
             }
             else {
