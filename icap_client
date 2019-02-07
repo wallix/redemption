@@ -21,6 +21,7 @@ args = parser.parse_args()
 file_path = args.file_path
 file_path_list = file_path.split("/")
 filename  = file_path_list[len(file_path_list)-1]
+req_body = len(localhost) + len(filename) + 103
 f = open(file_path, "rb")
 content = b""
 content = f.read(128)
@@ -33,7 +34,7 @@ print "Connection on {}".format(host+":"+str(port))
 head_line = "REQMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n" 
 Host_line = "Host: "+host+":"+str(port)+"\r\n"
 Conn_line = "Connection: close\r\n"
-encp_line = "Encapsulated: req-hdr=0, req-body=119\r\n\r\n"
+encp_line = "Encapsulated: req-hdr=0, req-body="+str(req_body)+"\r\n\r\n"
 
 POST_line = "POST "+filename+" HTTP/1.1\r\n"
 loch_line = "Host: "+localhost+"\r\n"
@@ -60,9 +61,12 @@ msg_recu = b""
 
 response = b""
 
-while msg_recu != b"0\r\n\r\n":
+step = 0
+
+while msg_recu != b"0\r\n\r\n" and step < 5:
 
     msg_recu = socket.recv(1024)
+    step += 1
     
     if msg_recu != b"":
         response += msg_recu
