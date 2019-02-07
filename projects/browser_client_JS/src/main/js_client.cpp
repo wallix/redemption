@@ -213,6 +213,11 @@ struct RdpClient
     {
         this->mod->rdp_input_unicode(unicode, flag);
     }
+
+    void rdp_input_mouse(int device_flags, int x, int y)
+    {
+        this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
+    }
 };
 
 // Binding code
@@ -235,5 +240,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("addReceivingData", &RdpClient::add_receiving_data)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
+        .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
     ;
 }
