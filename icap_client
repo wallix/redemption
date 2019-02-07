@@ -21,31 +21,54 @@ args = parser.parse_args()
 file_path = args.file_path
 file_path_list = file_path.split("/")
 filename  = file_path_list[len(file_path_list)-1]
-f = open(file_path, "r")
+f = open(file_path, "rb")
+content = b""
 content = f.read(128)
 
 socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket.connect((host, port))
 print "Connection on {}".format(host+":"+str(port))
 
-body_req = "POST "+filename+" HTTP/1.1\r\nHost: "+localhost+"\r\n"+"Accept: text/html, text/plain\r\nAccept-Encoding: compress\r\nPragma: no-cache\r\n\r\n"+content
 
-request = "REQMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n" +"Host: "+host+":"+str(port)+"\r\n"+"Connection: close\r\n"+"Encapsulated: req-hdr=0, req-body="+str(len(body_req))+"\r\n\r\n"+body_req
+head_line = "REQMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n" 
+Host_line = "Host: "+host+":"+str(port)+"\r\n"
+Conn_line = "Connection: close\r\n"
+encp_line = "Encapsulated: req-hdr=0, req-body=119\r\n\r\n"
 
+POST_line = "POST "+filename+" HTTP/1.1\r\n"
+loch_line = "Host: "+localhost+"\r\n"
+acpt_line = "Accept: text/html, text/plain\r\n"
+AEnc_line = "Accept-Encoding: compress\r\n"
+prag_line = "Pragma: no-cache\r\n\r\n"
+
+chuk_line = "80\r\n\r\n"
+
+body_req = POST_line + loch_line + acpt_line + AEnc_line + prag_line 
+
+request = head_line + Host_line + Conn_line + encp_line + POST_line + loch_line + acpt_line + AEnc_line + prag_line + chuk_line + content + "\r\n\r\n0\r\n\r\n"
+
+
+print ""
+print "send:"
+print "\""+request+"\""
+print ""
 
 socket.send(request.encode("utf-8"))
 
 
 msg_recu = b""
 
-while msg_recu == b"":
+response = b""
+
+while msg_recu != b"0\r\n\r\n":
 
     msg_recu = socket.recv(1024)
     
     if msg_recu != b"":
-        print("rcv:")
-        print("\""+msg_recu.decode("utf-8")+"\"")
-        break
+        response += msg_recu
+if response:
+    print("rcv:")
+    print("\""+response+"\"")
 
 print "Close"
 socket.close()
