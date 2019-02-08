@@ -505,6 +505,8 @@ function mouseButtonToFlag(evt)
     case 0: return 0x1000; // left button
     case 1: return 0x4000; // middle button
     case 2: return 0x2000; // right button
+    // case 3: return 0x0001;
+    // case 4: return 0x0002;
     }
     return 0x1000;
 }
@@ -531,13 +533,8 @@ const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
 const onMouseUp = (evt) => { onMouseEvent(0, evt); };
 const onMouseWheel = (evt) => {
     evt.preventDefault();
-    var offset = evt.target.offset();
-    var x = evt.pageX - offset.left;
-    var y = evt.pageY - offset.top;
-    evt = evt.originalEvent || evt;
-    // const delta = (evt.detail < 0 || evt.wheelDelta > 0) ? 0x087 : 0x188;
-    // rdpclient.sendMouseEvent(0x200 | delta, x, y);
-    rdpclient.sendMouseEvent(0x200, x, y);
+    const delta = (evt.deltaY < 0) ? 0x087 : 0x188;
+    rdpclient.sendMouseEvent(0x200 | delta, 0, 0);
 };
 
 const docEvents = {
@@ -550,7 +547,7 @@ const canvasEvent = {
     mousemove: onMouseMove,
     mousedown: onMouseDown,
     mouseup: onMouseUp,
-    mousewheel: onMouseWheel,
+    wheel: onMouseWheel,
     contextmenu: event => event.preventDefault()
 };
 
