@@ -20,7 +20,7 @@
 <body>
 
 <canvas id="canvas" width="800" height="600"></canvas>
-<canvas id="canvas2" width="800" height="600"></canvas>
+<canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <form id="login" method="get" action="#">
     <input type="text" id="user" name="user" value="x" placeholder="Username"/>
     <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
@@ -213,8 +213,9 @@ const createRdpClient = (function(Module) {
 })(Module);
 
 const ecanvas = document.getElementById('canvas');
+const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
-const canvas2 = document.getElementById('canvas2').getContext('2d');
+const canvas2 = ecanvas2.getContext('2d');
 const login = document.getElementById('login');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
@@ -511,6 +512,8 @@ function mouseButtonToFlag(evt)
 function onMouseEvent(flag, evt)
 {
     evt.preventDefault();
+    // console.log(evt.offsetX, evt.offsetY, evt.button)
+    // console.log(flag, evt.button)
     rdpclient.sendMouseEvent(flag | mouseButtonToFlag(evt), evt.offsetX, evt.offsetY);
 }
 
@@ -521,6 +524,7 @@ const onKeyPress = (evt) => { onKeyEvent(KBD_FLAGS_DOWN, evt); };
 
 const onMouseMove = (evt) => {
     evt.preventDefault();
+    // console.log(evt.offsetX, evt.offsetY, evt.button)
     rdpclient.sendMouseEvent(0x0800, evt.offsetX, evt.offsetY);
 };
 const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
@@ -582,31 +586,40 @@ function run()
         removeEvents(ecanvas, canvasEvent);
     });
     rdpclient.on('drawImage', canvas.putImageData.bind(canvas));
+    // rdpclient.on('drawImage', function() {
+    //     console.log('drawImage');
+    //     canvas.putImageData.apply(canvas, arguments);
+    // });
     rdpclient.on('drawRect', function(x, y, w, h, color) {
+        // console.log('drawRect');
         canvas.fillStyle = color;
         canvas.fillRect(x,y,w,h);
     });
     rdpclient.on('drawSrcBlt', function(sx, sy, w, h, dx, dy, rop) {
+        // console.log('drawSrcBlt');
         const sourceImageData = canvas.getImageData(sx, sy, w, h);
-        const op = scrROp[rop]
-        if (op) {
-            if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
-                canvas.globalCompositeOperation = op
-                canvas.putImageData(sourceImageData, dx, dy);
-                // if (rop == 0xCC) {
-                // }
-                // else {
-                //     canvas2.putImageData(sourceImageData, 0, 0);
-                //     canvas.drawImage(canvas2, dx, dy);
-                // }
-                canvas.globalCompositeOperation = 'source-over'
-            }
-            else {
-                canvas.putImageData(sourceImageData, dx, dy);
+        if (rop == 0xCC) {
+            canvas.putImageData(sourceImageData, dx, dy);
+        }
+        else {
+            const op = scrROp[rop]
+            if (op) {
+                if (has_intersection(sx,sy,w,h,dx,dy,w,h)) {
+                    console.log(sx,sy,dx,dy,w,h)
+                    // canvas2.putImageData(sourceImageData, 0, 0);
+                    canvas.globalCompositeOperation = op
+                    // canvas.drawImage(ecanvas2, 0, 0, w, h, dx, dy, w, h);
+                    canvas.putImageData(sourceImageData, 0, 0, w, h, dx, dy, w, h);
+                    canvas.globalCompositeOperation = 'source-over'
+                }
+                else {
+                    canvas.putImageData(sourceImageData, dx, dy);
+                }
             }
         }
     });
     rdpclient.on('drawLineTo', function(backMode, nXStart, nYStart, nXEnd, nYEnd, backColor, penStyle, penWidth, penColor) {
+        // console.log('drawLineTo');
 		canvas.save();
 		canvas.beginPath();
 		canvas.moveTo(nXStart, nYStart);
@@ -628,6 +641,7 @@ function run()
 		canvas.restore();
     });
     rdpclient.on('drawPolyline', function(xStart, yStart, deltas, penColor) {
+        // console.log('drawPolyline');
 		canvas.save();
 		canvas.strokeStyle = penColor;
 		canvas.beginPath();

@@ -179,7 +179,7 @@ void BrowserFront::draw(const RDPScrBlt & cmd, Rect clip)
 {
     // LOG(LOG_INFO, "BrowserFront::RDPScrBlt");
 
-    const Rect trect = intersect(clip, cmd.rect);
+    const Rect drect = intersect(clip, cmd.rect);
     // adding delta move dest to source
     const auto deltax = cmd.srcx - cmd.rect.x;
     const auto deltay = cmd.srcy - cmd.rect.y;
@@ -189,12 +189,12 @@ void BrowserFront::draw(const RDPScrBlt & cmd, Rect clip)
             Module.RdpClientEventTable[$0].drawSrcBlt($1, $2, $3, $4, $5, $6, $7);
         },
         this,
-        trect.x,
-        trect.y,
-        trect.cx,
-        trect.cy,
-        trect.x + deltax,
-        trect.y + deltay,
+        drect.x + deltax,
+        drect.y + deltay,
+        drect.cx,
+        drect.cy,
+        drect.x,
+        drect.y,
         cmd.rop
     );
 }
