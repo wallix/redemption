@@ -23,6 +23,7 @@ exe-js js_client :
   src/core/RDP/nego.bc
   src/core/RDP/orders/remoteFx.bc
   src/core/RDP/rlgr.bc
+  src/core/channels_authorizations.bc
   src/core/error.bc
   src/core/font.bc
   src/gdi/graphic_api.bc
@@ -30,7 +31,6 @@ exe-js js_client :
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
-  src/utils/authorization_channels.bc
   src/utils/bitmap.bc
   src/utils/cfgloader.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
@@ -84,6 +84,7 @@ objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 objjs src/core/RDP/nego.bc : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 objjs src/core/RDP/orders/remoteFx.bc : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
 objjs src/core/RDP/rlgr.bc : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
+objjs src/core/channels_authorizations.bc : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 objjs src/core/error.bc : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
@@ -91,7 +92,6 @@ objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
-objjs src/utils/authorization_channels.bc : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;

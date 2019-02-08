@@ -156,9 +156,12 @@ struct RdpClient
             mod_rdp_params.log();
         }
 
+        const ChannelsAuthorizations channels_authorizations("*", std::string{});
+
         this->mod = new_mod_rdp(
             browser_trans, session_reactor, front, client_info, redir_info, lcg_gen,
-            lcg_timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+            lcg_timeobj, channels_authorizations,
+            mod_rdp_params, authentifier, report_message, ini, nullptr);
     }
 
     /// \return milliseconds before next timer, or 0 if no timer

@@ -341,9 +341,9 @@ private:
             ReportMessageApi & report_message, Random & gen, [[maybe_unused]] RDPMetrics * metrics, SessionReactor & session_reactor)
             :
             #ifndef __EMSCRIPTEN__
-                metrics(metrics)
+                metrics(metrics),
             #endif
-            , channels_authorizations(std::move(channels_authorizations))
+              channels_authorizations(std::move(channels_authorizations))
             , report_message(report_message)
             , gen(gen)
             , enable_auth_channel(mod_rdp_params.alternate_shell[0]
