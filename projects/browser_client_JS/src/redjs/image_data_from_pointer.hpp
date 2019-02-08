@@ -18,46 +18,12 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#pragma once
+#include "redjs/image_data.hpp"
 
-#include <memory>
+class Pointer;
 
 
 namespace redjs
 {
-    // RGBA
-    struct ImageData
-    {
-        explicit ImageData() = default;
-
-        explicit ImageData(unsigned width, unsigned height, std::unique_ptr<uint8_t[]> data) noexcept
-        : cx(width)
-        , cy(height)
-        , buf(std::move(data))
-        {}
-
-        unsigned width() const noexcept
-        {
-            return this->cx;
-        }
-
-        unsigned height() const noexcept
-        {
-            return this->cy;
-        }
-
-        uint8_t const* data() const noexcept
-        {
-            return this->buf.get();
-        }
-
-        std::size_t size() const noexcept
-        {
-            return cx * cy * 4u;
-        }
-
-    private:
-        unsigned cx = 0, cy = 0;
-        std::unique_ptr<uint8_t[]> buf;
-    };
+    ImageData image_data_from_pointer(Pointer const& pointer);
 }

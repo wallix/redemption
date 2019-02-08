@@ -20,11 +20,13 @@ Author(s): Jonathan Poelen
 
 #include "redjs/browser_front.hpp"
 
-#include "redjs/image_data.hpp"
+#include "redjs/image_data_from_bitmap.hpp"
+#include "redjs/image_data_from_pointer.hpp"
 
 #include "red_emscripten/em_asm.hpp"
 
 #include "gdi/screen_info.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/bitmapupdate.hpp"
 #include "core/RDP/capabilities/order.hpp"
 #include "core/RDP/orders/RDPOrdersPrimaryPolyline.hpp"
@@ -37,6 +39,7 @@ Author(s): Jonathan Poelen
 #include "core/RDP/orders/RDPOrdersPrimaryMemBlt.hpp"
 #include "core/RDP/orders/RDPOrdersSecondaryBmpCache.hpp"
 
+#include "utils/drawable_pointer.hpp"
 #include "utils/log.hpp"
 
 #include <numeric>
@@ -245,7 +248,7 @@ void BrowserFront::draw(RDPBmpCache const & cmd)
         LOG(LOG_INFO, "BrowserFront::RDPBmpCache: out of range");
         return ;
     }
-    image_datas[image_idx] = ImageData(cmd.bmp);
+    image_datas[image_idx] = image_data_from_bitmap(cmd.bmp);
 }
 
 void BrowserFront::draw(RDPMemBlt const & cmd_, Rect clip)
@@ -385,7 +388,7 @@ void BrowserFront::draw(const RDPBitmapData & cmd, const Bitmap & bmp)
 {
     // LOG(LOG_INFO, "BrowserFront::RDPBitmapData");
 
-    redjs::ImageData image(bmp);
+    redjs::ImageData image = image_data_from_bitmap(bmp);
 
     RED_EM_ASM(
         {
@@ -420,7 +423,53 @@ BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, Bi
     return ResizeResult::instant_done;
 }
 
-void BrowserFront::set_pointer(const Pointer & /*unused*/) { }
+void BrowserFront::set_pointer(Pointer const & pointer)
+{
+    const redjs::ImageData image = redjs::image_data_from_pointer(pointer);
+    const auto hotspot = pointer.get_hotspot();
+
+    RED_EM_ASM(
+        {
+            Module.RdpClientEventTable[$0].setPointer($1, $2, $3, $4, $5);
+        },
+        this,
+        image.data(),
+        image.width(),
+        image.height(),
+        hotspot.x,
+        hotspot.y
+    );
+}
+
+void BrowserFront::new_pointer(uint16_t offset, Pointer const & pointer)
+{
+    const redjs::ImageData image = redjs::image_data_from_pointer(pointer);
+    const auto hotspot = pointer.get_hotspot();
+
+    RED_EM_ASM(
+        {
+            Module.RdpClientEventTable[$0].newPointer($1, $2, $3, $4, $5, $6);
+        },
+        this,
+        image.data(),
+        image.width(),
+        image.height(),
+        offset,
+        hotspot.x,
+        hotspot.y
+    );
+}
+
+void BrowserFront::cached_pointer(uint16_t offset)
+{
+    RED_EM_ASM(
+        {
+            Module.RdpClientEventTable[$0].cachedPointer($1);
+        },
+        this,
+        offset
+    );
+}
 
 void BrowserFront::begin_update() { }
 void BrowserFront::end_update() { }

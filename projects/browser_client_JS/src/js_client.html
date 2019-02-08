@@ -21,6 +21,7 @@
 
 <canvas id="canvas" width="800" height="600"></canvas>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
+<canvas id="curCanvas" style="display:none"></canvas>
 <form id="login" method="get" action="#">
     <input type="text" id="user" name="user" value="x" placeholder="Username"/>
     <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
@@ -39,15 +40,17 @@ const createRdpClient = (function(Module) {
     const HEAP16 = Module.HEAP16;
     const identity = (x) => x;
 
-    const wrappersCbDraw = {
-        drawImage: function(cb) {
-            return function(idata, w, h, dx, dy, sz, sy, dw, dh) {
-                const data = HEAPU8.subarray(idata, idata + w * h * 4);
-                const image = new ImageData(new Uint8ClampedArray(data), w, h);
-                cb(image, dx, dy, sz, sy, dw, dh);
-            };
-        },
+    const wCb_em2js_ImageData = function(cb) {
+        return function(idata, w, h, ...args) {
+            const data = HEAPU8.subarray(idata, idata + w * h * 4);
+            const image = new ImageData(new Uint8ClampedArray(data), w, h);
+            cb(image, ...args);
+        };
+    };
 
+    const wrappersCbDraw = {
+        // idata, w, h, dx, dy, sz, sy, dw, dh
+        drawImage: wCb_em2js_ImageData,
         drawPolyline: function(cb) {
             return function(xStart, yStart, numDeltaEntries, deltaEntries, penColor) {
                 const datas = HEAP16.subarray(deltaEntries, deltaEntries + numDeltaEntries * 2);
@@ -58,6 +61,10 @@ const createRdpClient = (function(Module) {
         drawRect: identity,
         drawSrcBlt: identity,
         drawLineTo: identity,
+
+        setPointer: wCb_em2js_ImageData,
+        newPointer: wCb_em2js_ImageData,
+        cachedPointer: identity,
     }
 
     const wrappersCb = {
@@ -154,8 +161,11 @@ const createRdpClient = (function(Module) {
                 socket.close();
             };
             rdpclient = new Module.RdpClient(username || "", password || "", verbosity || 0);
+            // TODO
             for (eventName in wrappersCbDraw) {
-                rdpclient[eventName] = console.log.bind(console, eventName);
+                if (!(eventName in events)) {
+                    events[eventName] = console.log.bind(console, eventName);
+                }
             }
             client.sendUnicode = function(unicode, flags) {
                 rdpclient.sendUnicode(unicode, flags);
@@ -212,6 +222,7 @@ const createRdpClient = (function(Module) {
     }
 })(Module);
 
+const ecurCanvas = document.getElementById('curCanvas');
 const ecanvas = document.getElementById('canvas');
 const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
@@ -533,8 +544,8 @@ const onMouseDown = (evt) => { onMouseEvent(0x8000, evt); };
 const onMouseUp = (evt) => { onMouseEvent(0, evt); };
 const onMouseWheel = (evt) => {
     evt.preventDefault();
-    const delta = (evt.deltaY < 0) ? 0x087 : 0x188;
-    rdpclient.sendMouseEvent(0x200 | delta, 0, 0);
+    // 0x200 | delta
+    rdpclient.sendMouseEvent((evt.deltaY < 0) ? 0x287 : 0x388, 0, 0);
 };
 
 const docEvents = {
@@ -653,6 +664,29 @@ function run()
 		}
 		canvas.stroke();
 		canvas.restore();
+    });
+    const imageToURL = function(image) {
+        ecurCanvas.width = image.width;
+        ecurCanvas.height = image.height;
+        ecurCanvas.getContext('2d').putImageData(image, 0, 0);
+        const dataURL = ecurCanvas.toDataURL();
+        return dataURL;
+    };
+    const dataURL2CSS = function(dataURL, x, y) {
+        // console.log('url(' + dataURL + ') ' + x + ' ' + y + ', auto');
+        return 'url(' + dataURL + ') ' + x + ' ' + y + ', auto';
+    };
+    rdpclient.on('setPointer', function(image, x, y) {
+        ecanvas.style.cursor = dataURL2CSS(imageToURL(image), x, y);
+    });
+    let cachePointers = [];
+    rdpclient.on('newPointer', function(image, offset, x, y) {
+        const data = dataURL2CSS(imageToURL(image), x, y);
+        cachePointers[offset] = data;
+        ecanvas.style.cursor = data;
+    });
+    rdpclient.on('cachedPointer', function(offset) {
+        ecanvas.style.cursor = cachePointers[offset];
     });
 }
 

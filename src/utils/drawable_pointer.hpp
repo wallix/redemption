@@ -230,10 +230,10 @@ struct DrawablePointer {
     }
 
     struct ContiguousPixelsView {
-        DrawablePointer::ContiguousPixels const * first;
-        DrawablePointer::ContiguousPixels const * last;
-        DrawablePointer::ContiguousPixels const * begin() const noexcept { return this->first; }
-        DrawablePointer::ContiguousPixels const * end() const noexcept { return this->last; }
+        ContiguousPixels const * first;
+        ContiguousPixels const * last;
+        ContiguousPixels const * begin() const noexcept { return this->first; }
+        ContiguousPixels const * end() const noexcept { return this->last; }
     };
 
     ContiguousPixelsView contiguous_pixels_view() const {

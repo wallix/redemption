@@ -261,7 +261,6 @@ struct GraphicApi : private noncopyable
 
     virtual ~GraphicApi() = default;
 
-    virtual void set_pointer(Pointer      const & /*unused*/) {}
     virtual void set_palette(BGRPalette   const & /*unused*/) {}
 
     virtual void draw(RDP::FrameMarker    const & cmd) = 0;
@@ -275,9 +274,13 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPBmpCache         const & /*cmd*/) = 0;
     virtual void draw(RDPMemBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx) = 0;
+    virtual void set_pointer(Pointer const & /*unused*/) = 0;
+    virtual void cached_pointer(uint16_t offset) = 0;
+    virtual void new_pointer(uint16_t offset, Pointer const & /*unused*/) = 0;
 #else
     virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
+    virtual void set_pointer(Pointer      const & /*unused*/) {}
 #endif
 
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
@@ -345,6 +348,9 @@ public:
     void draw(RDPBmpCache         const & /*cmd*/) override {}
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
+    void set_pointer(Pointer const & /*unused*/) override {}
+    void cached_pointer(uint16_t /*offset*/) override {}
+    void new_pointer(uint16_t /*offset*/, Pointer const & /*unused*/) override {}
 #else
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}

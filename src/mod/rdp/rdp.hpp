@@ -2276,12 +2276,6 @@ public:
         }
     }
 
-private:
-
-
-
-
-public:
     void configure_extra_orders(const char * extra_orders) {
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
@@ -2457,7 +2451,6 @@ public:
         }
     }
 
-public:
     // TODO: move to channels (and also remains here as it is mod API)
     void send_to_mod_channel(
         CHANNELS::ChannelNameId front_channel_name,
@@ -2479,9 +2472,6 @@ public:
             );
     }
 
-private:
-
-public:
     // Method used by session to transmit sesman answer for auth_channel
     // TODO: move to channels
     void send_auth_channel_data(const char * string_data) override {
@@ -3840,6 +3830,7 @@ public:
                 PointerCaps pointer_caps;
                 pointer_caps.len                       = 10;
                 if (!this->enable_new_pointer) {
+                    // TODO std::size(this->cursors) = 32
                     pointer_caps.pointerCacheSize      = 0;
                     pointer_caps.colorPointerCacheSize = 20;
                     pointer_caps.len                   = 8;
@@ -5888,7 +5879,11 @@ public:
         }
         Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
+#ifdef __EMSCRIPTEN__
+            drawable.cached_pointer(pointer_idx);
+#else
             drawable.set_pointer(cursor);
+#endif
         }
         else {
             LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
@@ -5985,10 +5980,14 @@ public:
             throw Error(ERR_RDP_PROCESS_POINTER_CACHE_NOT_OK);
         }
 
-        Pointer cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
+        Pointer& cursor = this->cursors[pointer_idx];
+        cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
 
-        this->cursors[pointer_idx] = cursor;
+#ifdef __EMSCRIPTEN__
+        drawable.new_pointer(pointer_idx, cursor);
+#else
         drawable.set_pointer(cursor);
+#endif
     }   // process_new_pointer_pdu
 
 private:
