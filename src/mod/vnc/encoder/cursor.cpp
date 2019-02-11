@@ -27,6 +27,7 @@ Vnc encoder module for Cursor Pseudo Encoding
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 
 // 7.7.2   Cursor Pseudo-encoding

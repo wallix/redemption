@@ -28,7 +28,6 @@
 #include <cstring>
 #include <vector>
 #include "utils/log.hpp"
-#include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
