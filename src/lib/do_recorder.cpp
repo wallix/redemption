@@ -943,10 +943,10 @@ static void raise_error(
 
 static void show_metadata(FileToGraphic const & player) {
     std::cout
-    << "\nWRM file version      : " << player.info.version
+    << "\nWRM file version      : " << static_cast<int>(player.info.version)
     << "\nWidth                 : " << player.info.width
     << "\nHeight                : " << player.info.height
-    << "\nBpp                   : " << player.info.bpp
+    << "\nBpp                   : " << static_cast<int>(player.info.bpp)
     << "\nCache 0 entries       : " << player.info.cache_0_entries
     << "\nCache 0 size          : " << player.info.cache_0_size
     << "\nCache 1 entries       : " << player.info.cache_1_entries
