@@ -4,11 +4,12 @@
 
 import socket
 import argparse
+import os
 
 
 #Entry data
 host      = "127.0.0.1"
-localhost = "127.0.0.1"
+localhost = "127.0.1.1"
 port      = 1344
 file_path = ""
 
@@ -35,10 +36,12 @@ if args.localhost:
 file_path = args.file_path
 file_path_list = file_path.split("/")
 filename  = file_path_list[len(file_path_list)-1]
-req_body = len(localhost) + len(filename) + 103
+req_body = len(localhost) + len(filename) + 102
 f = open(file_path, "rb")
-content = b""
-content = f.read(128)
+size_to_read = os.path.getsize(file_path)
+#if size_to_read > 1024:
+#   size_to_read = 1024
+
 
 
 #Socket connection
@@ -48,20 +51,23 @@ print "Connection on {}".format(host+":"+str(port))
 
 
 #Write request
-head_line = "REQMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n" 
-Host_line = "Host: "+host+":"+str(port)+"\r\n"
-Conn_line = "Connection: close\r\n"
-encp_line = "Encapsulated: req-hdr=0, req-body="+str(req_body)+"\r\n\r\n"
+httpRequest   = "GET http://"+localhost+"/"+filename+" HTTP/1.1\r\n"
+httpRequest  += "Host: "+localhost+"\r\n" 
+httpRequest  += "\r\n"
 
-POST_line = "POST "+filename+" HTTP/1.1\r\n"
-loch_line = "Host: "+localhost+"\r\n"
-acpt_line = "Accept: text/html, text/plain\r\n"
-AEnc_line = "Accept-Encoding: compress\r\n"
-prag_line = "Pragma: no-cache\r\n\r\n"
+httpResponse  = "HTTP/1.1 200 OK\r\n"
+httpResponse += "Transfer-Encoding: chunked\r\n"
+httpResponse += "Content-Length: "+str(size_to_read)+"\r\n"
+httpResponse += "\r\n"
 
-chuk_line = "80\r\n\r\n"
+icapRequest   = "RESPMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n"
+icapRequest  += "Allow: 204\r\n"   
+icapRequest  += "Connection: close\r\n"
+icapRequest  += "Host: "+host+"\r\n"
+icapRequest  += "Encapsulated: req-hdr=0, res-hdr="+str(len(httpRequest))+", res-body="+str(len(httpRequest) + (len(httpResponse)))+"\r\n" # 
+icapRequest  += "\r\n"
 
-request = head_line + Host_line + Conn_line + encp_line + POST_line + loch_line + acpt_line + AEnc_line + prag_line + chuk_line + content + "\r\n\r\n0\r\n\r\n"
+request = icapRequest + httpRequest + httpResponse
 
 print ""
 print "send:"
@@ -71,20 +77,40 @@ for line in request_lines:
 print ""
 
 
-#Send request and receive response
+#Send request and chunk
 socket.send(request.encode("utf-8"))
 
+if size_to_read < 4096:
+    size_to_read = 4096
+
+content    = b""
+chunklen   = "400\r\n"
+chunk_end  = "\r\n\r\n0\r\n\r\n"
+
+while size_to_read > 1024:
+    size_to_read -= 1024
+    content = f.read(1024)
+    socket.send(chunklen+content+"\r\n")
+
+endchunklen = str(hex(size_to_read).split('x')[-1])+"\r\n"
+content = b""
+content = f.read(size_to_read)
+socket.send(endchunklen+content+"\r\n")
+
+socket.send(chunk_end.encode("utf-8"))
+
+
+# Receive response
 msg_recu = b""
 response = b""
 step = 0
 
-while msg_recu != b"0\r\n\r\n" and step < 5:
-
+while msg_recu != b"0\r\n\r\n" and step < 50:
     msg_recu = socket.recv(1024)
     step += 1
-    
-    if msg_recu != b"":
-        response += msg_recu
+
+    if msg_recu != b"":    
+       response += msg_recu
 
 if response:
     print("rcv:")
@@ -92,7 +118,7 @@ if response:
     for line in response_lines:
         print("    "+line)
 
-#Disconnection
+#Socket disconnection
 print "Close connection to {}".format(host+":"+str(port))
 socket.close()
 

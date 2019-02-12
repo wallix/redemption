@@ -75,7 +75,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
 
-    
+
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
     clipboard_virtual_channel_params.clipboard_file_authorized = true;
@@ -169,7 +169,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelMalformedFormatListPDU)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
-    
+
     BaseVirtualChannel::Params base_params(report_message);
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
@@ -223,7 +223,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFailedFormatDataResponsePDU)
     FakeFront front(screen_info);
     SessionReactor session_reactor;
     NullReportMessage report_message;
-    
+
     BaseVirtualChannel::Params base_params(report_message);
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
@@ -408,11 +408,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
     session_reactor.set_current_time(time_test);
 
     NullReportMessage report_message;
-    
+
     BaseVirtualChannel::Params base_params(report_message);
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
-    
+
     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
     clipboard_virtual_channel_params.clipboard_down_authorized = true;
     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
@@ -868,13 +868,18 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterServerDataFile) {
 
     RED_CHECK_EQUAL(to_client_sender.streams.size(), 6);
 
-    auto expected_pdu =
-    /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
-    /* 0001 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
-    ""_av
+//     auto expected_pdu =
+//     /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
+//     /* 0001 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
+//     ""_av
+//     ;
+
+    uint8_t expected_pdu[] =
+    /* 0000 */ {0x09,0x00,0x01,0x00,0x0e,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x74,0x65,0x73,0x74 //............test
+    /* 0001 */ ,0x20,0x20,0x74,0x65,0x73,0x74}                         //   test....
     ;
 
-//    RED_CHECK_MEM(expected_pdu, to_client_sender.streams[5].get_bytes());
+    RED_CHECK_MEM(make_array_view(expected_pdu, sizeof(expected_pdu)), make_array_view(to_client_sender.streams[5].get_data(), to_client_sender.streams[5].in_remain()));
 
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
@@ -911,7 +916,7 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
     session_reactor.set_current_time(time_test);
 
     NullReportMessage report_message;
-    
+
     BaseVirtualChannel::Params base_params(report_message);
     base_params.exchanged_data_limit      = 0;
     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
@@ -1372,13 +1377,11 @@ RED_AUTO_TEST_CASE(TestCliprdrChannelFilterClientDataFile) {
 
     RED_CHECK_EQUAL(to_server_sender.streams.size(), 7);
 
-//    auto expected_pdu =
-//    /* 0000 */ "\x09\x00\x01\x00\x0e\x00\x00\x00\x01\x00\x00\x00\x74\x65\x73\x74" //............test
-//    /* 0001 */ "\x20\x20\x74\x65\x73\x74"                         //   test....
-//    ""_av
-//    ;
-
-//    RED_CHECK_MEM(expected_pdu, make_array_view(to_server_sender.streams[6].get_data(), to_server_sender.streams[6].in_remain()));
+    uint8_t expected_pdu[] =
+   /* 0000 */ {0x09,0x00,0x01,0x00,0x0e,0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x74,0x65,0x73,0x74 //............test
+   /* 0001 */ ,0x20,0x20,0x74,0x65,0x73,0x74}                         //   test....
+   ;
+   RED_CHECK_MEM(make_array_view(expected_pdu, sizeof(expected_pdu)), make_array_view(to_server_sender.streams[6].get_data(), to_server_sender.streams[6].in_remain()));
 
 
 // INFO (4749/4749) -- ClipboardVirtualChannel::process_client_message: Unlock Clipboard Data PDU
