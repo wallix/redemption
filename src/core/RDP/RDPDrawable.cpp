@@ -59,7 +59,7 @@ namespace
 
     Color u32_to_color(Drawable const& drawable, BGRColor color)
     {
-        return drawable.u32bgr_to_color(color.to_u32());
+        return drawable.u32bgr_to_color(color.as_u32());
     }
 
     Color u32rgb_to_color(Drawable const& drawable, gdi::ColorCtx color_ctx, RDPColor color)

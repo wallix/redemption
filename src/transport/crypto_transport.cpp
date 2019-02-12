@@ -804,7 +804,7 @@ namespace
         cbyte_ptr data_, size_t len,
         ocrypto & encrypter, OutFileTransport & out_file)
     {
-        const uint8_t * data = data_.to_u8p();
+        const uint8_t * data = data_.as_u8p();
         auto to_send = len;
         while (to_send > 0) {
             const ocrypto::Result res = encrypter.write({data, to_send});

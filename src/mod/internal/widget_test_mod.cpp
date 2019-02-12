@@ -155,7 +155,7 @@ void WidgetTestMod::draw_event(time_t /*now*/, gdi::GraphicApi& gd)
     auto plain_img = [&](BGRColor const& color){
         Bitmap img;
         Bitmap::PrivateData::Data & data = Bitmap::PrivateData::initialize(img, BitsPerPixel{8}, cx, cy);
-        memset(data.get(), encode_color(color).as_bgr().to_u32(), data.line_size() * cy);
+        memset(data.get(), encode_color(color).as_bgr().as_u32(), data.line_size() * cy);
         //data.palette() = BGRPalette::classic_332();
         data.palette() = mono_palette(color);
         return img;

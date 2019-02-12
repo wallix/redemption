@@ -136,7 +136,7 @@ struct GeneratorTransport : Transport
             throw Error(ERR_TRANSPORT_OPEN_FAILED);
         }
         if (data) {
-            memcpy(this->data.get(), data.to_u8p(), len);
+            memcpy(this->data.get(), data.as_u8p(), len);
         }
     }
 
@@ -215,7 +215,7 @@ private:
 struct CheckTransport : Transport
 {
     CheckTransport(const_buffer_t buffer)
-    : CheckTransport(buffer.to_charp(), buffer.size())
+    : CheckTransport(buffer.as_charp(), buffer.size())
     {}
 
     CheckTransport(cbyte_ptr data, size_t len)
@@ -226,7 +226,7 @@ struct CheckTransport : Transport
         if (!this->data) {
             throw Error(ERR_TRANSPORT, 0);
         }
-        memcpy(this->data.get(), data.to_u8p(), len);
+        memcpy(this->data.get(), data.as_u8p(), len);
     }
 
     size_t remaining() {

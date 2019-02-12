@@ -95,7 +95,7 @@ public:
 
     void init(const_bytes_view data)
     {
-        this->init(data.to_u8p(), data.size());
+        this->init(data.as_u8p(), data.size());
     }
 
     void init(const uint8_t * const key, size_t key_len)

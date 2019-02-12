@@ -46,7 +46,7 @@ public:
 
     void update(const_bytes_view data)
     {
-        if (0 == SHA1_Update(&this->sha1, data.to_u8p(), data.size())){
+        if (0 == SHA1_Update(&this->sha1, data.as_u8p(), data.size())){
             throw Error(ERR_SSL_CALL_SHA1_UPDATE_FAILED);
         }
     }

@@ -45,11 +45,11 @@ struct bytes_view : array_view<uint8_t>
     {}
 
     constexpr bytes_view(byte_ptr const p, std::size_t sz) noexcept
-    : array_view<uint8_t>(p.to_u8p(), sz)
+    : array_view<uint8_t>(p.as_u8p(), sz)
     {}
 
     constexpr bytes_view(byte_ptr p, byte_ptr pright) noexcept
-    : array_view<uint8_t>(p.to_u8p(), pright.to_u8p())
+    : array_view<uint8_t>(p.as_u8p(), pright.as_u8p())
     {}
 
     bytes_view(array_view<char> av) noexcept /*NOLINT*/
@@ -71,13 +71,13 @@ struct bytes_view : array_view<uint8_t>
     {}
 
 
-    char       * to_charp() noexcept { return char_ptr_cast(this->data()); }
-    char const * to_charp() const noexcept { return char_ptr_cast(this->data()); }
-    constexpr uint8_t       * to_u8p() noexcept { return this->data(); }
-    constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
+    char       * as_charp() noexcept { return char_ptr_cast(this->data()); }
+    char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
+    constexpr uint8_t       * as_u8p() noexcept { return this->data(); }
+    constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
-    array_view_char       as_chars() noexcept { return {this->to_charp(), this->size()}; }
-    array_view_const_char as_chars() const noexcept { return {this->to_charp(), this->size()}; }
+    array_view_char       as_chars() noexcept { return {this->as_charp(), this->size()}; }
+    array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };
 
 /**
@@ -102,11 +102,11 @@ struct const_bytes_view : array_view<const uint8_t>
     {}
 
     constexpr const_bytes_view(const_byte_ptr p, std::size_t sz) noexcept
-    : array_view<const uint8_t>(p.to_u8p(), sz)
+    : array_view<const uint8_t>(p.as_u8p(), sz)
     {}
 
     constexpr const_bytes_view(const_byte_ptr p, const_byte_ptr pright) noexcept
-    : array_view<const uint8_t>(p.to_u8p(), pright.to_u8p())
+    : array_view<const uint8_t>(p.as_u8p(), pright.as_u8p())
     {}
 
     const_bytes_view(array_view<const char> const av) noexcept /*NOLINT*/
@@ -128,10 +128,10 @@ struct const_bytes_view : array_view<const uint8_t>
     {}
 
 
-    char const * to_charp() const noexcept { return char_ptr_cast(this->data()); }
-    constexpr uint8_t const * to_u8p() const noexcept { return this->data(); }
+    char const * as_charp() const noexcept { return char_ptr_cast(this->data()); }
+    constexpr uint8_t const * as_u8p() const noexcept { return this->data(); }
 
-    array_view_const_char as_chars() const noexcept { return {this->to_charp(), this->size()}; }
+    array_view_const_char as_chars() const noexcept { return {this->as_charp(), this->size()}; }
 };
 
 using cbytes_view = const_bytes_view;

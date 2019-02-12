@@ -37,10 +37,10 @@ struct byte_ptr
     : data_(data)
     {}
 
-    char * to_charp() const noexcept { return char_ptr_cast(this->data_); }
-    constexpr uint8_t * to_u8p() const noexcept { return this->data_; }
+    char * as_charp() const noexcept { return char_ptr_cast(this->data_); }
+    constexpr uint8_t * as_u8p() const noexcept { return this->data_; }
 
-    operator char * () const noexcept { return to_charp(); }
+    operator char * () const noexcept { return as_charp(); }
     constexpr operator uint8_t * () const noexcept { return this->data_; }
 
     explicit operator bool () const noexcept { return this->data_; }
@@ -68,10 +68,10 @@ struct const_byte_ptr
     : data_(bytes)
     {}
 
-    char const * to_charp() const noexcept { return char_ptr_cast(this->data_); }
-    constexpr uint8_t const * to_u8p() const noexcept { return this->data_; }
+    char const * as_charp() const noexcept { return char_ptr_cast(this->data_); }
+    constexpr uint8_t const * as_u8p() const noexcept { return this->data_; }
 
-    operator char const * () const noexcept { return to_charp(); }
+    operator char const * () const noexcept { return as_charp(); }
     constexpr operator uint8_t const * () const noexcept { return this->data_; }
 
     constexpr explicit operator bool () const noexcept { return this->data_; }

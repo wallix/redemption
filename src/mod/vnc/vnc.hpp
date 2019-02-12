@@ -1768,7 +1768,7 @@ private:
                     }
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
-                            int(bytes.size()), bytes.to_charp());
+                            int(bytes.size()), bytes.as_charp());
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                 })) {
@@ -1806,7 +1806,7 @@ private:
                     }
                     else {
                         LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
-                            int(bytes.size()), bytes.to_charp());
+                            int(bytes.size()), bytes.as_charp());
                     }
                 })) {
                     return false;
