@@ -100,7 +100,7 @@ public:
 
     void set_palette(const BGRPalette &) override;
 
-    void set_pointer(const Pointer & cursor) override;
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 
     void sync() override;
 

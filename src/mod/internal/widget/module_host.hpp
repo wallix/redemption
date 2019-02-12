@@ -76,7 +76,7 @@ public:
     void draw(RDPColCache   const & cmd) override;
     void draw(RDPBrushCache const & cmd) override;
 
-    virtual void set_pointer(Pointer const & pointer) override;
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 
     mod_api& get_managed_mod()
     {

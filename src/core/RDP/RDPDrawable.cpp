@@ -146,17 +146,16 @@ RDPDrawable::RDPDrawable(const uint16_t width, const uint16_t height)
 , save_mouse_y(0)
 , mouse_cursor_pos_x(width / 2)
 , mouse_cursor_pos_y(height / 2)
-, mouse_cursor_hotspot_x(0)
-, mouse_cursor_hotspot_y(0)
 , dont_show_mouse_cursor(false)
 , current_pointer(&this->default_pointer)
 , frame_start_count(0)
 , mod_palette_rgb(BGRPalette::classic_332())
 {
-    Pointer p = drawable_default_pointer(true);
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-    this->default_pointer.initialize(32, 32, av.data(), avmask.data());
+    Pointer const& p = drawable_default_pointer(true);
+    auto hotspot = p.get_hotspot();
+    this->mouse_cursor_hotspot_x = hotspot.x;
+    this->mouse_cursor_hotspot_y = hotspot.y;
+    this->default_pointer.initialize(p);
 }
 
 
@@ -886,15 +885,11 @@ void RDPDrawable::clear_mouse()
     return this->drawable.clear_mouse(this->current_pointer, x, y, this->save_mouse);
 }
 
-void RDPDrawable::set_pointer(const Pointer & cursor)
+void RDPDrawable::set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode /*mode*/)
 {
-    const auto dimensions = cursor.get_dimensions();
     const auto hotspot = cursor.get_hotspot();
-    auto av_xor = cursor.get_24bits_xor_mask();
-    auto av_and = cursor.get_monochrome_and_mask();
-
-    this->dynamic_pointer.initialize(dimensions.width, dimensions.height, av_xor.data(), av_and.data());
     this->mouse_cursor_hotspot_x = hotspot.x;
     this->mouse_cursor_hotspot_y = hotspot.y;
-    this->current_pointer = &this->dynamic_pointer ;
+    this->dynamic_pointer.initialize(cursor);
+    this->current_pointer = &this->dynamic_pointer;
 }

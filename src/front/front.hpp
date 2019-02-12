@@ -872,8 +872,8 @@ public:
         return res;
     }
 
-    void set_pointer(const Pointer & cursor) override {
-        this->graphics_update->set_pointer(cursor);
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->graphics_update->set_pointer(cache_idx, cursor, mode);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override

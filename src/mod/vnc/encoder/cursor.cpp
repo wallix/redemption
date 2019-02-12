@@ -126,7 +126,7 @@ namespace
                 this->green_shift, this->green_max,
                 this->blue_shift, this->blue_max);
             drawable.begin_update();
-            drawable.set_pointer(cursor);
+            drawable.set_pointer(0, cursor, gdi::GraphicApi::SetPointerMode::Insert);
             drawable.end_update();
 
             return EncoderState::Exit;

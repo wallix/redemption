@@ -210,7 +210,7 @@ public:
     void draw(const RDP::RAIL::ActivelyMonitoredDesktop       & /*unused*/) override {}
     void draw(const RDP::RAIL::NonMonitoredDesktop            & /*unused*/) override {}
 
-    void set_pointer(const Pointer & cursor) override;
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 
     void set_palette(const BGRPalette & palette) override
     {

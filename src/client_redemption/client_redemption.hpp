@@ -1168,7 +1168,8 @@ public:
         (void) bmp;
     }
 
-    virtual void set_pointer(Pointer const &) override {}
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override
+    {}
 
     void draw(RDPSetSurfaceCommand const & cmd, RDPSurfaceContent const & content) override {
 		this->draw_impl(no_log{}, cmd, content);

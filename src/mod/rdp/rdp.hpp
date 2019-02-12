@@ -2643,14 +2643,14 @@ public:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer null (Fast)");
                 }
-                drawable.set_pointer(null_pointer());
+                drawable.set_pointer(0, null_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                 break;
 
             case FastPath::UpdateType::PTR_DEFAULT:
                 if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
                     LOG(LOG_INFO, "Process pointer default (Fast)");
                 }
-                drawable.set_pointer(system_normal_pointer());
+                drawable.set_pointer(0, system_normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                 break;
 
             case FastPath::UpdateType::PTR_POSITION:
@@ -4040,10 +4040,10 @@ public:
                     "RDP_NULL_POINTER":"RDP_DEFAULT_POINTER");
             }
             if (system_pointer_type == RDP_NULL_POINTER) {
-                drawable.set_pointer(null_pointer());
+                drawable.set_pointer(0, null_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
             }
             else {
-                drawable.set_pointer(normal_pointer());
+                drawable.set_pointer(0, normal_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
             }
         }
         break;
@@ -5855,11 +5855,7 @@ public:
         }
         Pointer & cursor = this->cursors[pointer_idx];
         if (cursor.is_valid()) {
-#ifdef __EMSCRIPTEN__
-            drawable.cached_pointer(pointer_idx);
-#else
-            drawable.set_pointer(cursor);
-#endif
+            drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
         }
         else {
             LOG(LOG_WARNING,  "mod_rdp::process_cached_pointer_pdu: invalid cache cell index, use system default. index=%u",
@@ -5958,12 +5954,7 @@ public:
 
         Pointer& cursor = this->cursors[pointer_idx];
         cursor = pointer_loader_new(data_bpp, stream, this->orders.global_palette, this->clean_up_32_bpp_cursor);
-
-#ifdef __EMSCRIPTEN__
-        drawable.new_pointer(pointer_idx, cursor);
-#else
-        drawable.set_pointer(cursor);
-#endif
+        drawable.set_pointer(pointer_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
     }   // process_new_pointer_pdu
 
 private:

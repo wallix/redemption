@@ -115,10 +115,7 @@ ImageData image_data_from_pointer(Pointer const& pointer)
     else
     {
         DrawablePointer drawable_pointer;
-        drawable_pointer.initialize(
-            dimensions.width, dimensions.height,
-            pointer.get_24bits_xor_mask().data(),
-            pointer.get_monochrome_and_mask().data());
+        drawable_pointer.initialize(pointer);
 
         for (DrawablePointer::ContiguousPixels const & contiguous_pixels : drawable_pointer.contiguous_pixels_view()) {
             uint8_t* data = pdata + (contiguous_pixels.y * img.width() + contiguous_pixels.x) * 4;

@@ -88,8 +88,8 @@ public:
     void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
     void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-    void set_pointer(Pointer    const & pointer) override {
-        this->get_graphic_proxy().set_pointer(pointer);
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->get_graphic_proxy().set_pointer(cache_idx, cursor, mode);
     }
 
     void set_palette(BGRPalette const & palette) override {

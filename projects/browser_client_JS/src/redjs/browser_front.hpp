@@ -85,9 +85,7 @@ public:
 
     ResizeResult server_resize(int width, int height, BitsPerPixel bpp) override;
 
-    void set_pointer(Pointer const & pointer) override;
-    void cached_pointer(uint16_t offset) override;
-    void new_pointer(uint16_t offset, Pointer const & pointer) override;
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override;
 
     void begin_update() override;
     void end_update() override;

@@ -802,8 +802,8 @@ public:
         }
     }
 
-    // XXXXXXXXXXXXXXXXXXXXXXXXXXX
-    void set_pointer(const Pointer & cursor) override {
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode mode) override
+    {
         int cache_idx = 0;
         switch (this->pointer_cache.add_pointer(cursor, cache_idx)) {
         case POINTER_TO_SEND:
@@ -811,14 +811,22 @@ public:
         break;
         default:
         case POINTER_ALLREADY_SENT:
-            if ((this->bmp_cache.owner == BmpCache::Recorder) && !this->pointer_cache.is_cached(cache_idx)) {
+            if (this->bmp_cache.owner == BmpCache::Recorder
+             && !this->pointer_cache.is_cached(cache_idx)
+            ) {
                 this->send_pointer(cache_idx, cursor);
                 this->pointer_cache.set_cached(cache_idx, true);
                 break;
             }
+        }
 
+        switch (mode) {
+        case SetPointerMode::Cached:
+        case SetPointerMode::Insert:
             this->cached_pointer_update(cache_idx);
-        break;
+            break;
+        case SetPointerMode::New:
+            break;
         }
     }
 

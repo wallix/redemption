@@ -308,7 +308,7 @@ void WidgetModuleHost::draw(const RDP::RAIL::NonMonitoredDesktop            & cm
 void WidgetModuleHost::draw(RDPColCache   const & cmd)  { Impl::draw_impl(*this, cmd); }
 void WidgetModuleHost::draw(RDPBrushCache const & cmd)  { Impl::draw_impl(*this, cmd); }
 
-void WidgetModuleHost::set_pointer(Pointer const & pointer)
+void WidgetModuleHost::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
     Rect rect = this->get_rect();
     rect.x  += (BORDER_WIDTH_HEIGHT - 1);
@@ -316,10 +316,10 @@ void WidgetModuleHost::set_pointer(Pointer const & pointer)
     rect.cy -= (BORDER_WIDTH_HEIGHT - 1);
 
     if (rect.contains_pt(this->current_pointer_pos_x, this->current_pointer_pos_y)) {
-        Impl::get_drawable(*this).set_pointer(pointer);
+        Impl::get_drawable(*this).set_pointer(cache_idx, cursor, mode);
     }
 
-    this->current_pointer = pointer;
+    this->current_pointer = cursor;
 }
 
 WidgetModuleHost::WidgetModuleHost(

@@ -372,8 +372,8 @@ public:
         return FrontAPI::ResizeResult::instant_done;
     }
 
-    void set_pointer(Pointer const & cursor) override {
-
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& cursor, SetPointerMode /*mode*/) override
+    {
         auto dimensions = cursor.get_dimensions();
         auto hotspot = cursor.get_hotspot();
 

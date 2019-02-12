@@ -811,7 +811,7 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        drawable.set_pointer(dot_pointer());
+        drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ESTABLISHED";

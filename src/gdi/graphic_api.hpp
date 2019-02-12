@@ -274,13 +274,9 @@ struct GraphicApi : private noncopyable
     virtual void draw(RDPBmpCache         const & /*cmd*/) = 0;
     virtual void draw(RDPMemBlt           const & cmd, Rect clip) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx) = 0;
-    virtual void set_pointer(Pointer const & /*unused*/) = 0;
-    virtual void cached_pointer(uint16_t offset) = 0;
-    virtual void new_pointer(uint16_t offset, Pointer const & /*unused*/) = 0;
 #else
     virtual void draw(RDPMemBlt           const & cmd, Rect clip, Bitmap const & bmp) = 0;
     virtual void draw(RDPMem3Blt          const & cmd, Rect clip, ColorCtx color_ctx, Bitmap const & bmp) = 0;
-    virtual void set_pointer(Pointer      const & /*unused*/) {}
 #endif
 
     virtual void draw(RDPBitmapData       const & cmd, Bitmap const & bmp) = 0;
@@ -318,6 +314,16 @@ struct GraphicApi : private noncopyable
 
     virtual void sync() {}
 
+    enum class SetPointerMode : uint8_t
+    {
+        New,
+        Cached,
+        Insert,
+    };
+
+    /// \c cache_idx is ignored with \c SetPointerMode::Insert
+    virtual void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) = 0;
+
     // TODO berk, data within size
     virtual void set_row(std::size_t rownum, const uint8_t * data, size_t data_length) { (void)rownum; (void)data; (void)data_length; }
 };
@@ -348,9 +354,6 @@ public:
     void draw(RDPBmpCache         const & /*cmd*/) override {}
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/) override {}
-    void set_pointer(Pointer const & /*unused*/) override {}
-    void cached_pointer(uint16_t /*offset*/) override {}
-    void new_pointer(uint16_t /*offset*/, Pointer const & /*unused*/) override {}
 #else
     void draw(RDPMemBlt           const & /*cmd*/, Rect /*clip*/, Bitmap const & /*bmp*/) override {}
     void draw(RDPMem3Blt          const & /*cmd*/, Rect /*clip*/, ColorCtx /*color_ctx*/, Bitmap const & /*bmp*/) override {}
@@ -370,6 +373,8 @@ public:
 
     void draw(RDPColCache   const & /*cmd*/) override {}
     void draw(RDPBrushCache const & /*cmd*/) override {}
+
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 
     static gdi::NullGraphic & instance()
     {

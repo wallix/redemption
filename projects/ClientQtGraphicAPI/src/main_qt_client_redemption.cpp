@@ -146,8 +146,8 @@ public:
         this->qt_graphic.set_ErrorMsg(error);
     }
 
-    void set_pointer(Pointer const & cursor) override {
-        this->qt_graphic.set_pointer(cursor);
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->qt_graphic.set_pointer(cache_idx, cursor, mode);
     }
 
     bool init_mod() override {

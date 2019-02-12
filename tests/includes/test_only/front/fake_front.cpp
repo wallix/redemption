@@ -186,9 +186,9 @@ void FakeFront::set_palette(const BGRPalette &)
 {
 }
 
-void FakeFront::set_pointer(const Pointer & cursor)
+void FakeFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
-    d->gd->set_pointer(cursor);
+    d->gd->set_pointer(cache_idx, cursor, mode);
 }
 
 void FakeFront::sync()

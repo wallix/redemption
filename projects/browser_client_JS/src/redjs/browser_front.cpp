@@ -423,52 +423,54 @@ BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, Bi
     return ResizeResult::instant_done;
 }
 
-void BrowserFront::set_pointer(Pointer const & pointer)
+void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
-    const redjs::ImageData image = redjs::image_data_from_pointer(pointer);
-    const auto hotspot = pointer.get_hotspot();
+    switch (mode) {
+    case SetPointerMode::Cached:
+        RED_EM_ASM(
+            {
+                Module.RdpClientEventTable[$0].cachedPointer($1);
+            },
+            this,
+            cache_idx
+        );
+        break;
+    case SetPointerMode::New: {
+        const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
+        const auto hotspot = cursor.get_hotspot();
 
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].setPointer($1, $2, $3, $4, $5);
-        },
-        this,
-        image.data(),
-        image.width(),
-        image.height(),
-        hotspot.x,
-        hotspot.y
-    );
-}
+        RED_EM_ASM(
+            {
+                Module.RdpClientEventTable[$0].newPointer($1, $2, $3, $4, $5, $6);
+            },
+            this,
+            image.data(),
+            image.width(),
+            image.height(),
+            cache_idx,
+            hotspot.x,
+            hotspot.y
+        );
+        break;
+    }
+    case SetPointerMode::Insert: {
+        const redjs::ImageData image = redjs::image_data_from_pointer(cursor);
+        const auto hotspot = cursor.get_hotspot();
 
-void BrowserFront::new_pointer(uint16_t offset, Pointer const & pointer)
-{
-    const redjs::ImageData image = redjs::image_data_from_pointer(pointer);
-    const auto hotspot = pointer.get_hotspot();
-
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].newPointer($1, $2, $3, $4, $5, $6);
-        },
-        this,
-        image.data(),
-        image.width(),
-        image.height(),
-        offset,
-        hotspot.x,
-        hotspot.y
-    );
-}
-
-void BrowserFront::cached_pointer(uint16_t offset)
-{
-    RED_EM_ASM(
-        {
-            Module.RdpClientEventTable[$0].cachedPointer($1);
-        },
-        this,
-        offset
-    );
+        RED_EM_ASM(
+            {
+                Module.RdpClientEventTable[$0].setPointer($1, $2, $3, $4, $5);
+            },
+            this,
+            image.data(),
+            image.width(),
+            image.height(),
+            hotspot.x,
+            hotspot.y
+        );
+        break;
+    }
+    }
 }
 
 void BrowserFront::begin_update() { }

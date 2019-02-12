@@ -260,6 +260,8 @@ public:
 
     void draw(RDPColCache   const & /*cmd*/) override {}
     void draw(RDPBrushCache const & /*cmd*/) override {}
+
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 };
 
 // class FakeClientInputMouseKeyboard : public ClientInputMouseKeyboardAPI {
@@ -375,6 +377,8 @@ public:
 
     void draw(RDPColCache   const & /*cmd*/) override {}
     void draw(RDPBrushCache const & /*cmd*/) override {}
+
+    void set_pointer(uint16_t /*cache_idx*/, Pointer const& /*cursor*/, SetPointerMode /*mode*/) override {}
 };
 
 
