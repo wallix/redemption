@@ -121,7 +121,6 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "target_application_account");
         W.member(no_ini_no_gui, sesman_to_proxy, NL, type_<std::string>(), "target_application_password");
 
-        W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "bitmap_cache", desc{"Support of Bitmap Cache."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "glyph_cache", set(false));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "port", set(3389));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "nomouse", set(false));
@@ -142,9 +141,6 @@ void config_spec_definition(Writer && W)
         W.member(iptables_in_gui, no_sesman, L, type_<bool>(), "enable_transparent_mode", desc{"Allow Transparent mode."}, set(false));
         W.member(advanced_in_gui | password_in_gui, no_sesman, L, type_<types::fixed_string<254>>(), "certificate_password", desc{"Proxy certificate password."}, set("inquisition"));
 
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "png_path", set(CPP_EXPR(app_path(AppPath::Png))));
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "wrm_path", set(CPP_EXPR(app_path(AppPath::Wrm))));
-
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<bool>(), "is_rec", set(false));
         W.member(advanced_in_gui, sesman_to_proxy, L, type_<std::string>(), "movie_path", sesman::name{"rec_path"});
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_bitmap_update", desc{"Support of Bitmap Update."}, set(true));
@@ -152,8 +148,6 @@ void config_spec_definition(Writer && W)
         W.member(ini_and_gui, no_sesman, L, type_<bool>(), "enable_close_box", desc{"Show close screen."}, set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_osd", set(true));
         W.member(advanced_in_gui, no_sesman, L, type_<bool>(), "enable_osd_display_remote_target", set(true));
-
-        W.member(advanced_in_gui, no_sesman, L, type_<types::dirpath>(), "persistent_path", set(CPP_EXPR(app_path(AppPath::Persistent))));
 
         W.member(hidden_in_gui, no_sesman, L, type_<bool>(), "enable_wab_integration", set((CPP_EXPR(REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION))));
 
@@ -517,8 +511,8 @@ void config_spec_definition(Writer && W)
 
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_bitrate", desc{"Bitrate for high quality."}, set(30000));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_framerate", desc{"Framerate for high quality."}, set(5));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
-        W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
+        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_height", desc{"Height for high quality."}, set(2048));
+        // W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_width", desc{"Width for high quality."}, set(2048));
         W.member(advanced_in_gui, no_sesman, L, type_<unsigned>(), "h_qscale", desc{"Qscale (parameter given to ffmpeg) for high quality."}, set(7));
 
         W.member(ini_and_gui, no_sesman, L, type_<SmartVideoCropping>(), "smart_video_cropping", set(SmartVideoCropping::disable));
@@ -543,8 +537,6 @@ void config_spec_definition(Writer && W)
     W.section("debug", [&]
     {
         W.member(hidden_in_gui, no_sesman, L, type_<std::string>(), "fake_target_ip");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "x224");
-        W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "mcs");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "sec");
         W.member(advanced_in_gui | hex_in_gui, no_sesman, L, type_<types::u32>(), "rdp");
 
@@ -644,10 +636,8 @@ void config_spec_definition(Writer && W)
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "session_id");
 
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<unsigned>(), "end_date_cnx", sesman::name{"timeclose"}, set(0));
-        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<std::string>(), "end_time");
 
         W.member(no_ini_no_gui, sesman_to_proxy, L, type_<RdpModeConsole>(), "mode_console", set(RdpModeConsole::allow));
-        W.member(no_ini_no_gui, sesman_to_proxy, L, type_<int>(), "timezone", set(-3600));
 
         W.member(no_ini_no_gui, sesman_rw, L, type_<std::string>(), "real_target_device");
 

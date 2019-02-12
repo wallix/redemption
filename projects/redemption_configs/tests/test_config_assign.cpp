@@ -118,8 +118,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::context::duration>(cs);
     ini.set_acl<cfg::context::duration>(s);
     ini.set<cfg::context::end_date_cnx>(1);
-    ini.set<cfg::context::end_time>(cs);
-    ini.set<cfg::context::end_time>(s);
     ini.set<cfg::context::forcemodule>(true);
     ini.set_acl<cfg::context::formflag>(1);
     ini.set<cfg::context::keepalive>(true);
@@ -175,7 +173,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::context::target_service>(s);
     ini.set_acl<cfg::context::ticket>(cs);
     ini.set_acl<cfg::context::ticket>(s);
-    ini.set<cfg::context::timezone>(1);
     ini.set_acl<cfg::context::waitinforeturn>(cs);
     ini.set_acl<cfg::context::waitinforeturn>(s);
 
@@ -189,7 +186,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::globals::auth_user>(s);
     ini.set<cfg::globals::globals::authfile>(cs);
     ini.set<cfg::globals::globals::authfile>(s);
-    ini.set<cfg::globals::globals::bitmap_cache>(true);
     ini.set<cfg::globals::globals::capture_chunk>(true);
     ini.set<cfg::globals::globals::certificate_password>(cs);
     ini.set<cfg::globals::globals::certificate_password>(s);
@@ -215,10 +211,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set<cfg::globals::globals::movie_path>(spath);
     ini.set<cfg::globals::globals::nomouse>(true);
     ini.set<cfg::globals::globals::notimestamp>(true);
-    ini.set<cfg::globals::globals::persistent_path>(cpath);
-    ini.set<cfg::globals::globals::persistent_path>(spath);
-    ini.set<cfg::globals::globals::png_path>(cpath);
-    ini.set<cfg::globals::globals::png_path>(spath);
     ini.set<cfg::globals::globals::port>(1);
     ini.set<cfg::globals::globals::session_timeout>(std::chrono::seconds{1});
     ini.set_acl<cfg::globals::globals::target>(cs);
@@ -234,8 +226,6 @@ RED_AUTO_TEST_CASE(TestIniAssign)
     ini.set_acl<cfg::globals::globals::target_user>(cs);
     ini.set_acl<cfg::globals::globals::target_user>(s);
     ini.set<cfg::globals::globals::trace_type>(TraceType::localfile);
-    ini.set<cfg::globals::globals::wrm_path>(cpath);
-    ini.set<cfg::globals::globals::wrm_path>(spath);
 
     ini.set<cfg::internal_mod::theme>(cpath);
     ini.set<cfg::internal_mod::theme>(spath);

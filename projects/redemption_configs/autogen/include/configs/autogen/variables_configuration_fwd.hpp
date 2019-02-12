@@ -19,7 +19,6 @@ namespace cfg {
         struct target_application;
         struct target_application_account;
         struct target_application_password;
-        struct bitmap_cache;
         struct glyph_cache;
         struct port;
         struct nomouse;
@@ -36,15 +35,12 @@ namespace cfg {
         struct listen_address;
         struct enable_transparent_mode;
         struct certificate_password;
-        struct png_path;
-        struct wrm_path;
         struct is_rec;
         struct movie_path;
         struct enable_bitmap_update;
         struct enable_close_box;
         struct enable_osd;
         struct enable_osd_display_remote_target;
-        struct persistent_path;
         struct enable_wab_integration;
         struct allow_using_multiple_monitors;
         struct bogus_refresh_rect;
@@ -77,6 +73,7 @@ namespace cfg {
         struct auto_adjust_performance_flags;
         struct tls_fallback_legacy;
         struct tls_support;
+        struct tls_min_level;
         struct bogus_neg_request;
         struct bogus_user_id;
         struct disable_tsk_switch_shortcuts;
@@ -89,7 +86,6 @@ namespace cfg {
         struct fast_path;
         struct enable_suppress_output;
         struct ssl_cipher_list;
-        struct tls_min_level;
         struct show_target_user_in_f12_message;
         struct enable_new_pointer_update;
         struct bogus_ios_glyph_support_level;
@@ -236,8 +232,6 @@ namespace cfg {
         struct m_qscale;
         struct h_bitrate;
         struct h_framerate;
-        struct h_height;
-        struct h_width;
         struct h_qscale;
         struct smart_video_cropping;
         struct play_video_with_corrupted_bitmap;
@@ -250,8 +244,6 @@ namespace cfg {
 
     struct debug {
         struct fake_target_ip;
-        struct x224;
-        struct mcs;
         struct sec;
         struct rdp;
         struct primary_orders;
@@ -326,9 +318,7 @@ namespace cfg {
         struct keepalive;
         struct session_id;
         struct end_date_cnx;
-        struct end_time;
         struct mode_console;
-        struct timezone;
         struct real_target_device;
         struct authentication_challenge;
         struct ticket;

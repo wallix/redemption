@@ -38,35 +38,23 @@ operator<<(std::basic_ostream<Ch, Tr> & out, E const & e)
     return out << +underlying_cast(e); // '+' for transform u8/s8 to int
 }
 
-inline std::string to_string_path(std::string path)
-{
-    if (path.empty()) {
-        return "./";
-    }
-    if (path.front() != '/') {
-        path = "./" + path;
-    }
-    if (path.back() != '/') {
-        path += '/';
-    }
-    return path;
-}
 
 RED_AUTO_TEST_CASE(TestConfigFromFile)
 {
     // test we can read from a file (and not only from a stream)
     Inifile             ini;
+    RED_CHECK_EQUAL(true, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
     {
         std::ofstream out("/tmp/tmp-rdpproxy.ini");
         out <<
-          "[globals]\n"
-          "wrm_path = /tmp/raw/movie\n"
-          "persistent_path = tmp/raw/persistent\n"
+          "[mod_rdp]\n"
+          "proxy_managed_drives = /tmp/raw/movie/\n"
+          "bogus_sc_net_size = no\n"
         ;
     }
     configuration_load(ini.configuration_holder(), "/tmp/tmp-rdpproxy.ini");
-    RED_CHECK_EQUAL("/tmp/raw/movie/",       ini.get<cfg::globals::wrm_path>());
-    RED_CHECK_EQUAL("./tmp/raw/persistent/", ini.get<cfg::globals::persistent_path>());
+    RED_CHECK_EQUAL("/tmp/raw/movie/", ini.get<cfg::mod_rdp::proxy_managed_drives>());
+    RED_CHECK_EQUAL(false, ini.get<cfg::mod_rdp::bogus_sc_net_size>());
 }
 
 RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
@@ -83,7 +71,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -91,7 +78,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -100,10 +86,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -131,9 +113,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL(to_string_path(WRM_PATH),         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
@@ -150,8 +129,6 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -292,10 +269,8 @@ RED_AUTO_TEST_CASE(TestConfigDefaultEmpty)
 
 
     RED_CHECK_EQUAL(0,                                ini.get<cfg::context::end_date_cnx>());
-    RED_CHECK_EQUAL("",                               ini.get<cfg::context::end_time>());
 
     RED_CHECK_EQUAL(RdpModeConsole::allow,            ini.get<cfg::context::mode_console>());
-    RED_CHECK_EQUAL(-3600,                            ini.get<cfg::context::timezone>());
 
     RED_CHECK_EQUAL("",                               ini.get<cfg::context::real_target_device>());
 
@@ -400,7 +375,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -408,7 +382,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL("/var/tmp/wab/persistent/rdp/",   ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -446,9 +419,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL("/var/wab/recorded/rdp/",         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_osd>());
@@ -465,8 +435,6 @@ RED_AUTO_TEST_CASE(TestConfig1)
                                                                "\xFF\xEE\xDD\xCC\xBB\xAA\x99\x88"
                                                                "\x77\x66\x55\x44\x33\x22\x11\x00", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -623,7 +591,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::medium,                    ini.get<cfg::globals::encryptionLevel>());
@@ -631,7 +598,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                       ini.get<cfg::video::capture_flags>());
@@ -667,9 +633,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL("/var/wab/recorded/rdp/",         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
@@ -686,8 +649,6 @@ RED_AUTO_TEST_CASE(TestConfig1bis)
                                                                "\x10\x11\x12\x13\x14\x15\x16\x17"
                                                                "\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F", 32));
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -816,7 +777,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
@@ -824,7 +784,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -833,10 +792,6 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -863,16 +818,11 @@ RED_AUTO_TEST_CASE(TestConfig2)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("rdpproxy",                       ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL("/var/wab/recorded/rdp/",         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -1013,7 +963,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::high,                      ini.get<cfg::globals::encryptionLevel>());
@@ -1021,7 +970,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1030,10 +978,6 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -1059,16 +1003,11 @@ RED_AUTO_TEST_CASE(TestConfig3)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("rdpproxy RDP",                   ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL("/var/tmp/wab/recorded/rdp/",     ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL("/var/wab/recorded/rdp/",         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -1183,7 +1122,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -1191,7 +1129,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1200,10 +1137,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -1230,16 +1163,11 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("redemption",                     ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL(to_string_path(WRM_PATH),         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -1354,7 +1282,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3390,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -1362,7 +1289,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1371,10 +1297,6 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -1401,16 +1323,11 @@ RED_AUTO_TEST_CASE(TestMultiple)
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL(to_string_path(WRM_PATH),         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -1510,7 +1427,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -1518,7 +1434,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1527,10 +1442,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -1558,16 +1469,11 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL(to_string_path(WRM_PATH),         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -1669,7 +1575,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_user>());
     RED_CHECK_EQUAL("",                               ini.get<cfg::globals::target_application>());
 
-    RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::bitmap_cache>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::glyph_cache>());
     RED_CHECK_EQUAL(3389,                             ini.get<cfg::globals::port>());
     RED_CHECK_EQUAL(Level::low,                       ini.get<cfg::globals::encryptionLevel>());
@@ -1677,7 +1582,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
 
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::nomouse>());
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::notimestamp>());
-    RED_CHECK_EQUAL(to_string_path(PERSISTENT_PATH),  ini.get<cfg::globals::persistent_path>());
 
     RED_CHECK_EQUAL((CaptureFlags::png | CaptureFlags::wrm | CaptureFlags::ocr),
                                                         ini.get<cfg::video::capture_flags>());
@@ -1686,10 +1590,6 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(600,                              ini.get<cfg::video::break_interval>().count());
 
     RED_CHECK_EQUAL(5,                                ini.get<cfg::video::png_limit>());
-
-    RED_CHECK_EQUAL(to_string_path(HASH_PATH),        ini.get<cfg::video::hash_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_PATH),      ini.get<cfg::video::record_path>());
-    RED_CHECK_EQUAL(to_string_path(RECORD_TMP_PATH),  ini.get<cfg::video::record_tmp_path>());
 
     RED_CHECK_EQUAL(KeyboardLogFlags::syslog,
                                                         ini.get<cfg::video::disable_keyboard_log>());
@@ -1717,16 +1617,11 @@ RED_AUTO_TEST_CASE(TestNewConf)
     RED_CHECK_EQUAL(false,                            ini.get<cfg::globals::enable_transparent_mode>());
     RED_CHECK_EQUAL("inquisition",                    ini.get<cfg::globals::certificate_password>());
 
-    RED_CHECK_EQUAL(to_string_path(PNG_PATH),         ini.get<cfg::globals::png_path>());
-    RED_CHECK_EQUAL(to_string_path(WRM_PATH),         ini.get<cfg::globals::wrm_path>());
-
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_bitmap_update>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_close_box>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd>());
     RED_CHECK_EQUAL(true,                             ini.get<cfg::globals::enable_osd_display_remote_target>());
 
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::x224>());
-    RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::mcs>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::sec>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::rdp>());
     RED_CHECK_EQUAL(0,                                ini.get<cfg::debug::primary_orders>());
@@ -2117,24 +2012,10 @@ RED_AUTO_TEST_CASE(TestContextSetValue)
 
     RED_CHECK_EQUAL(12345678, ini.get<cfg::context::end_date_cnx>());
 
-
-    // end_time
-    ini.get_acl_field(cfg::context::end_time::index).set(cstr_array_view("end_time"));
-
-    RED_CHECK_EQUAL("end_time", ini.get<cfg::context::end_time>());
-
-
     // mode_console
     ini.get_acl_field(cfg::context::mode_console::index).set(cstr_array_view("forbid"));
 
     RED_CHECK_EQUAL(RdpModeConsole::forbid, ini.get<cfg::context::mode_console>());
-
-
-    // timezone
-    ini.get_acl_field(cfg::context::timezone::index).set(cstr_array_view("-7200"));
-
-    RED_CHECK_EQUAL(-7200, ini.get<cfg::context::timezone>());
-
 
     // real_target_device
     ini.get_acl_field(cfg::context::real_target_device::index).set(cstr_array_view("10.0.0.1"));

@@ -150,12 +150,6 @@ inline void config_type_definition(type_enumerations & e)
       .value("rdp6_1", "RDP 6.1 bulk compression")
     ;
 
-    e.enumeration_list("BogusLinuxCursor", "Needed to get the old behavior of cursor rendering.")
-      .value("disable", "More compatible with MSTSC.")
-      .value("enable", "The old behavior of cursor rendering.")
-      .value("smart", "Depend on platform RDP client.")
-    ;
-
     e.enumeration_set("OcrVersion")
       .value("v1", 1)
       .value("v2", 2)

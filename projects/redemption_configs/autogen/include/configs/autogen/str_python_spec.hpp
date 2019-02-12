@@ -3,10 +3,6 @@
 "## Python spec file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
-"# Support of Bitmap Cache.\n"
-"#_advanced\n"
-"bitmap_cache = boolean(default=True)\n\n"
-
 "#_advanced\n"
 "glyph_cache = boolean(default=False)\n\n"
 
@@ -75,12 +71,6 @@
 "certificate_password = string(max=254, default='inquisition')\n\n"
 
 "#_advanced\n"
-"png_path = string(max=4096, default='" << (app_path(AppPath::Png)) << "')\n\n"
-
-"#_advanced\n"
-"wrm_path = string(max=4096, default='" << (app_path(AppPath::Wrm)) << "')\n\n"
-
-"#_advanced\n"
 "movie_path = string(default='')\n\n"
 
 "# Support of Bitmap Update.\n"
@@ -95,9 +85,6 @@
 
 "#_advanced\n"
 "enable_osd_display_remote_target = boolean(default=True)\n\n"
-
-"#_advanced\n"
-"persistent_path = string(max=4096, default='" << (app_path(AppPath::Persistent)) << "')\n\n"
 
 "#_hidden\n"
 "enable_wab_integration = boolean(default=" << (REDEMPTION_CONFIG_ENABLE_WAB_INTEGRATION) << ")\n\n"
@@ -191,6 +178,9 @@
 
 "tls_support = boolean(default=True)\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"tls_min_level = integer(min=0, default=2)\n\n"
+
 "# Needed to connect with jrdp, based on bogus X224 layer code.\n"
 "#_advanced\n"
 "bogus_neg_request = boolean(default=False)\n\n"
@@ -245,9 +235,6 @@
 "# [Not configured]: Compatible with more RDP clients (less secure)\n"
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
 "ssl_cipher_list = string(default='HIGH:!ADH:!3DES:!SHA')\n\n"
-
-"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
-"tls_min_level = integer(min=0, default=2)\n\n"
 
 "show_target_user_in_f12_message = boolean(default=False)\n\n"
 
@@ -812,14 +799,6 @@
 "#_advanced\n"
 "h_framerate = integer(min=0, default=5)\n\n"
 
-"# Height for high quality.\n"
-"#_advanced\n"
-"h_height = integer(min=0, default=2048)\n\n"
-
-"# Width for high quality.\n"
-"#_advanced\n"
-"h_width = integer(min=0, default=2048)\n\n"
-
 "# Qscale (parameter given to ffmpeg) for high quality.\n"
 "#_advanced\n"
 "h_qscale = integer(min=0, default=7)\n\n"
@@ -846,14 +825,6 @@
 
 "#_hidden\n"
 "fake_target_ip = string(default='')\n\n"
-
-"#_advanced\n"
-"#_hex\n"
-"x224 = integer(min=0, default=0)\n\n"
-
-"#_advanced\n"
-"#_hex\n"
-"mcs = integer(min=0, default=0)\n\n"
 
 "#_advanced\n"
 "#_hex\n"

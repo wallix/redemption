@@ -3,11 +3,6 @@
 "## Config file for RDP proxy.\n\n\n"
 "[globals]\n\n"
 
-"# Support of Bitmap Cache.\n"
-"# value: 0 or 1\n"
-"#_advanced\n"
-"#bitmap_cache = 1\n\n"
-
 "# value: 0 or 1\n"
 "#_advanced\n"
 "#glyph_cache = 0\n\n"
@@ -83,14 +78,6 @@
 "#_password\n"
 "#certificate_password = inquisition\n\n"
 
-"# maxlen = 4096\n"
-"#_advanced\n"
-"#png_path = " << (app_path(AppPath::Png)) << "\n\n"
-
-"# maxlen = 4096\n"
-"#_advanced\n"
-"#wrm_path = " << (app_path(AppPath::Wrm)) << "\n\n"
-
 "#_advanced\n"
 "#movie_path = \n\n"
 
@@ -110,10 +97,6 @@
 "# value: 0 or 1\n"
 "#_advanced\n"
 "#enable_osd_display_remote_target = 1\n\n"
-
-"# maxlen = 4096\n"
-"#_advanced\n"
-"#persistent_path = " << (app_path(AppPath::Persistent)) << "\n\n"
 
 "# value: 0 or 1\n"
 "#_hidden\n"
@@ -228,6 +211,10 @@
 "# value: 0 or 1\n"
 "#tls_support = 1\n\n"
 
+"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
+"# min = 0\n"
+"#tls_min_level = 2\n\n"
+
 "# Needed to connect with jrdp, based on bogus X224 layer code.\n"
 "# value: 0 or 1\n"
 "#_advanced\n"
@@ -292,10 +279,6 @@
 "# [Not configured]: Compatible with more RDP clients (less secure)\n"
 "# HIGH:!ADH:!3DES: Compatible only with MS Windows 7 client or more recent (moderately secure)HIGH:!ADH:!3DES:!SHA: Compatible only with MS Server Windows 2008 R2 client or more recent (more secure)\n"
 "#ssl_cipher_list = HIGH:!ADH:!3DES:!SHA\n\n"
-
-"# Minimal incoming TLS level 0=no restriction (TLSv1.0), 1=TLSv1.1, 2=TLSv1.2\n"
-"# min = 0\n"
-"#tls_min_level = 2\n\n"
 
 "# value: 0 or 1\n"
 "#show_target_user_in_f12_message = 0\n\n"
@@ -966,16 +949,6 @@
 "#_advanced\n"
 "#h_framerate = 5\n\n"
 
-"# Height for high quality.\n"
-"# min = 0\n"
-"#_advanced\n"
-"#h_height = 2048\n\n"
-
-"# Width for high quality.\n"
-"# min = 0\n"
-"#_advanced\n"
-"#h_width = 2048\n\n"
-
 "# Qscale (parameter given to ffmpeg) for high quality.\n"
 "# min = 0\n"
 "#_advanced\n"
@@ -1005,16 +978,6 @@
 
 "#_hidden\n"
 "#fake_target_ip = \n\n"
-
-"# min = 0\n"
-"#_advanced\n"
-"#_hex\n"
-"#x224 = 0\n\n"
-
-"# min = 0\n"
-"#_advanced\n"
-"#_hex\n"
-"#mcs = 0\n\n"
 
 "# min = 0\n"
 "#_advanced\n"

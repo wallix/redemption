@@ -7,14 +7,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
     if (0) {}
     else if (0 == strcmp(context, "globals")) {
         if (0) {}
-        else if (0 == strcmp(key, "bitmap_cache")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::bitmap_cache&>(this->variables).value,
-                ::configs::spec_type<bool>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "glyph_cache")) {
             ::configs::parse_and_log(
                 context, key,
@@ -143,22 +135,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "png_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::png_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "wrm_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::wrm_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "movie_path")) {
             ::configs::parse_and_log(
                 context, key,
@@ -196,14 +172,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::globals::enable_osd_display_remote_target&>(this->variables).value,
                 ::configs::spec_type<bool>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "persistent_path")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::globals::persistent_path&>(this->variables).value,
-                ::configs::spec_type<::configs::spec_types::directory_path>{},
                 av
             );
         }
@@ -421,6 +389,14 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
+        else if (0 == strcmp(key, "tls_min_level")) {
+            ::configs::parse_and_log(
+                context, key,
+                static_cast<cfg::client::tls_min_level&>(this->variables).value,
+                ::configs::spec_type<unsigned int>{},
+                av
+            );
+        }
         else if (0 == strcmp(key, "bogus_neg_request")) {
             ::configs::parse_and_log(
                 context, key,
@@ -514,14 +490,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::client::ssl_cipher_list&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "tls_min_level")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::client::tls_min_level&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
                 av
             );
         }
@@ -1575,22 +1543,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 av
             );
         }
-        else if (0 == strcmp(key, "h_height")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::h_height&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "h_width")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::video::h_width&>(this->variables).value,
-                ::configs::spec_type<unsigned int>{},
-                av
-            );
-        }
         else if (0 == strcmp(key, "h_qscale")) {
             ::configs::parse_and_log(
                 context, key,
@@ -1650,22 +1602,6 @@ void Inifile::ConfigurationHolder::set_value(const char * context, const char * 
                 context, key,
                 static_cast<cfg::debug::fake_target_ip&>(this->variables).value,
                 ::configs::spec_type<std::string>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "x224")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::x224&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
-                av
-            );
-        }
-        else if (0 == strcmp(key, "mcs")) {
-            ::configs::parse_and_log(
-                context, key,
-                static_cast<cfg::debug::mcs&>(this->variables).value,
-                ::configs::spec_type<uint32_t>{},
                 av
             );
         }
