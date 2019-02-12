@@ -39,7 +39,7 @@ redjs::ImageData create_image_4x_2y(Encoder encoder)
     uint8_t* data = bitmap_data.get();
 
     auto enc = [&](uint8_t* p, BGRColor bgr){
-        auto c = encoder(bgr).as_bgr().to_u32();
+        auto c = encoder(bgr).as_bgr().as_u32();
         for (uint8_t i = 0; i < nb_bytes; ++i) {
             *p++ = uint8_t(c);
             c >>= 8u;

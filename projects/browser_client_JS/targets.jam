@@ -69,7 +69,6 @@ test-run-js tests/redjs/test_image_data_test_from_pointer :
   boost_stacktrace.bc
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
-  src/utils/hexdump.bc
   src/utils/utf.bc
 ;
 

@@ -425,6 +425,8 @@ BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, Bi
 
 void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode)
 {
+    // LOG(LOG_INFO, "BrowserFront::Pointer %d", mode);
+
     switch (mode) {
     case SetPointerMode::Cached:
         RED_EM_ASM(
