@@ -60,7 +60,7 @@ public:
         InteractiveTargetModVariables vars,
         SessionReactor& session_reactor, FrontAPI & front,
         uint16_t width, uint16_t height, Rect const widget_rect,
-        ClientExecute & client_execute_object, Font const& font, Theme const& theme);
+        ClientExecute & rail_client_execute, Font const& font, Theme const& theme);
 
     ~InteractiveTargetMod() override;
 

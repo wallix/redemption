@@ -87,7 +87,7 @@ class RemoteProgramsSessionManager final
 
     uint32_t auxiliary_window_id = RemoteProgramsWindowIdManager::INVALID_WINDOW_ID;
 
-    const not_null_ptr<ClientExecute> client_execute_object;
+    const not_null_ptr<ClientExecute> rail_client_execute;
 
     bool currently_without_window = false;
 
@@ -137,7 +137,7 @@ public:
         FrontAPI& front, mod_api& mod, Translation::language_t lang,
         Font const & font, Theme const & theme, AuthApi & authentifier,
         char const * session_probe_window_title,
-        not_null_ptr<ClientExecute> client_execute_object,
+        not_null_ptr<ClientExecute> rail_client_execute,
         std::chrono::milliseconds rail_disconnect_message_delay,
         RDPVerbose verbose)
     : front(front)
@@ -148,7 +148,7 @@ public:
     , verbose(verbose)
     , authentifier(authentifier)
     , session_probe_window_title(session_probe_window_title)
-    , client_execute_object(client_execute_object)
+    , rail_client_execute(rail_client_execute)
     , rail_disconnect_message_delay(rail_disconnect_message_delay)
     , session_reactor(session_reactor)
     {}
@@ -516,7 +516,7 @@ private:
 
         this->dialog_box_window_id = this->register_client_window();
 
-        Rect mod_window_rect = this->client_execute_object->get_window_rect();
+        Rect mod_window_rect = this->rail_client_execute->get_window_rect();
 
         Rect dialog_box_rect(
                 mod_window_rect.x + (mod_window_rect.cx - 640) / 2,
@@ -527,7 +527,7 @@ private:
 
         this->protected_rect = dialog_box_rect;
 
-        Point window_offset = this->client_execute_object->get_window_offset();
+        Point window_offset = this->rail_client_execute->get_window_offset();
 
         const Rect adjusted_protected_rect = this->protected_rect.offset(
                     window_offset.x, window_offset.y);
@@ -761,7 +761,7 @@ public:
         this->auxiliary_window_id = this->register_client_window();
 
         {
-            Point window_offset = this->client_execute_object->get_window_offset();
+            Point window_offset = this->rail_client_execute->get_window_offset();
 
             const Rect adjusted_window_rect = window_rect.offset(
                         window_offset.x, window_offset.y);

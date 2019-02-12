@@ -49,7 +49,7 @@ std::unique_ptr<mod_api> new_mod_vnc(
     ReportMessageApi& report_message,
     bool server_is_apple,
     bool send_alt_ksym, 
-    ClientExecute* client_execute_object,
+    ClientExecute* rail_client_execute,
     ModVncVariables vars,
     VNCVerbose verbose,
     VNCMetrics * metrics

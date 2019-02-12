@@ -29,16 +29,16 @@ RailModuleHostMod::RailModuleHostMod(
     SessionReactor& session_reactor,
     FrontAPI& front, uint16_t width, uint16_t height,
     Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-    ClientExecute& client_execute_object, Font const& font, Theme const& theme,
+    ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
     const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop)
-: LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute_object, theme)
+: LocallyIntegrableMod(session_reactor, front, width, height, font, rail_client_execute, theme)
 , rail_module_host(front, widget_rect.x, widget_rect.y,
                    widget_rect.cx, widget_rect.cy,
                    this->screen, this, std::move(managed_mod),
                    font, cs_monitor, width, height)
 , vars(vars)
 , can_resize_hosted_desktop(can_resize_hosted_desktop)
-, client_execute_object(client_execute_object)
+, rail_client_execute(rail_client_execute)
 {
     this->screen.move_xy(widget_rect.x, widget_rect.y);
 
@@ -59,7 +59,7 @@ RailModuleHost& RailModuleHostMod::get_module_host()
 
 void RailModuleHostMod::rdp_input_mouse(int device_flags, int x, int y, Keymap2* keymap)
 {
-    Rect client_execute_auxiliary_window_rect = this->client_execute_object.get_auxiliary_window_rect();
+    Rect client_execute_auxiliary_window_rect = this->rail_client_execute.get_auxiliary_window_rect();
 
     if (!client_execute_auxiliary_window_rect.isempty() &&
         client_execute_auxiliary_window_rect.contains_pt(x, y)) {
@@ -131,7 +131,7 @@ void RailModuleHostMod::move_size_widget(int16_t left, int16_t top, uint16_t wid
     this->rail_module_host.move_size_widget(left, top, width, height);
 
     if (dim.w && dim.h && ((dim.w != width) || (dim.h != height)) &&
-        this->client_execute_object.is_resizing_hosted_desktop_enabled()) {
+        this->rail_client_execute.is_resizing_hosted_desktop_enabled()) {
         if (this->disconnection_reconnection_timer) {
             this->disconnection_reconnection_timer->set_delay(std::chrono::seconds(1));
         }

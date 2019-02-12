@@ -62,7 +62,7 @@ public:
         FlatLoginModVariables vars, SessionReactor& session_reactor,
         char const * username, char const * password,
         FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t now,
-        ClientExecute & client_execute_object, Font const& font, Theme const& theme
+        ClientExecute & rail_client_execute, Font const& font, Theme const& theme
     );
 
     ~FlatLoginMod() override;

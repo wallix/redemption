@@ -1267,7 +1267,7 @@ private:
                     session_reactor, front, mod_rdp, lang,
                     font, mod_rdp_params.theme, authentifier,
                     session_probe_window_title,
-                    mod_rdp_params.client_execute_object,
+                    mod_rdp_params.rail_client_execute,
                     mod_rdp_params.rail_disconnect_message_delay,
                     this->verbose
                 );
@@ -1321,7 +1321,7 @@ private:
                         session_reactor, front, mod_rdp, lang,
                         font, mod_rdp_params.theme, authentifier,
                         session_probe_window_title,
-                        mod_rdp_params.client_execute_object,
+                        mod_rdp_params.rail_client_execute,
                         mod_rdp_params.rail_disconnect_message_delay,
                         this->verbose
                     );

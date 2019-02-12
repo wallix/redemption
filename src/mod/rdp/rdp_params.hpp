@@ -180,7 +180,7 @@ struct ModRDPParams
 
     bool adjust_performance_flags_for_recording = false;
 
-    ClientExecute * client_execute_object = nullptr;
+    ClientExecute * rail_client_execute = nullptr;
 
     WindowsExecuteShellParams client_execute;
 
@@ -387,7 +387,7 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             adjust_performance_flags_for_recording);
 
-        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    client_execute_object);
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    rail_client_execute);
 
         RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute.flags);
 
