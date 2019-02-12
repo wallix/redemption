@@ -86,7 +86,7 @@ class RDPOpaqueRect {
         // from Microsoft. Looks like an error in RDP specs.
         header.control |= dr.fully_relative() * DELTA;
 
-        uint32_t const diff_color = this->color.as_bgr().to_u32() ^ oldcmd.color.as_bgr().to_u32();
+        uint32_t const diff_color = this->color.as_bgr().as_u32() ^ oldcmd.color.as_bgr().as_u32();
 
 //        LOG(LOG_INFO, "emit opaque rect old_color = %.6x new_color = %.6x\n", oldcmd.color, this->color);
 
@@ -132,7 +132,7 @@ class RDPOpaqueRect {
         if (header.fields & 0x40) {
             b = stream.in_uint8();
         }
-        this->color = RDPColor::from(BGRColor(b, g, r).to_u32());
+        this->color = RDPColor::from(BGRColor(b, g, r).as_u32());
     }
 
     size_t str(char * buffer, size_t sz, const RDPOrderCommon & common) const
@@ -142,7 +142,7 @@ class RDPOpaqueRect {
             buffer+lg,
             sz-lg,
             "opaquerect(rect(%d,%d,%d,%d) color=0x%.6x)",
-            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.as_bgr().to_u32());
+            this->rect.x, this->rect.y, this->rect.cx, this->rect.cy, this->color.as_bgr().as_u32());
         if (lg >= sz){
             return sz;
         }

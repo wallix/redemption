@@ -25,21 +25,21 @@
 LocallyIntegrableMod::LocallyIntegrableMod(
     SessionReactor& session_reactor, FrontAPI & front,
     uint16_t front_width, uint16_t front_height,
-    Font const & font, ClientExecute & client_execute,
+    Font const & font, ClientExecute & rail_client_execute,
     Theme const & theme)
 : InternalMod(front, front_width, front_height, font, theme)
-, client_execute(client_execute)
+, rail_client_execute(rail_client_execute)
 , dvc_manager(false)
 , dc_state(DCState::Wait)
-, rail_enabled(client_execute.is_rail_enabled())
+, rail_enabled(rail_client_execute.is_rail_enabled())
 , current_mouse_owner(MouseOwner::WidgetModule)
 , session_reactor(session_reactor)
 {
     if (this->rail_enabled) {
         this->graphic_event = session_reactor.create_graphic_event()
         .on_action(jln::one_shot([this](gdi::GraphicApi&){
-            if (!this->client_execute) {
-                this->client_execute.ready(
+            if (!this->rail_client_execute) {
+                this->rail_client_execute.ready(
                     *this, this->front_width, this->front_height, this->font(),
                     this->is_resizing_hosted_desktop_allowed());
 
@@ -51,7 +51,7 @@ LocallyIntegrableMod::LocallyIntegrableMod(
 
 LocallyIntegrableMod::~LocallyIntegrableMod()
 {
-    this->client_execute.reset(true);
+    this->rail_client_execute.reset(true);
 }
 
 void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
@@ -59,7 +59,7 @@ void LocallyIntegrableMod::rdp_input_invalidate(Rect r)
     InternalMod::rdp_input_invalidate(r);
 
     if (this->rail_enabled) {
-        this->client_execute.input_invalidate(r);
+        this->rail_client_execute.input_invalidate(r);
     }
 }
 
@@ -79,7 +79,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
     }
     else {
         bool out_mouse_captured = false;
-        if (!this->client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
+        if (!this->rail_client_execute.input_mouse(device_flags, x, y, out_mouse_captured)) {
             switch (this->dc_state) {
                 case DCState::Wait:
                     if (device_flags == (SlowPath::PTRFLAGS_DOWN | SlowPath::PTRFLAGS_BUTTON1)) {
@@ -124,7 +124,7 @@ void LocallyIntegrableMod::rdp_input_mouse(int device_flags, int x, int y, Keyma
 
                         bool out_mouse_captured_2 = false;
 
-                        this->client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
+                        this->rail_client_execute.input_mouse(PTRFLAGS_EX_DOUBLE_CLICK, x, y, out_mouse_captured_2);
 
                         this->cancel_double_click_detection();
                     }
@@ -193,7 +193,7 @@ void LocallyIntegrableMod::refresh(Rect r)
     InternalMod::refresh(r);
 
     if (this->rail_enabled) {
-        this->client_execute.input_invalidate(r);
+        this->rail_client_execute.input_invalidate(r);
     }
 }
 
@@ -204,13 +204,13 @@ void LocallyIntegrableMod::send_to_mod_channel(
     CHANNELS::ChannelNameId front_channel_name, InStream& chunk,
     size_t length, uint32_t flags)
 {
-    if (this->rail_enabled && this->client_execute &&
-        front_channel_name == CHANNELS::channel_names::rail) {
+    if (this->rail_enabled && this->rail_client_execute 
+    && front_channel_name == CHANNELS::channel_names::rail) {
 
-        this->client_execute.send_to_mod_rail_channel(length, chunk, flags);
+        this->rail_client_execute.send_to_mod_rail_channel(length, chunk, flags);
     }
-    else if (this->rail_enabled && this->client_execute &&
-        front_channel_name == CHANNELS::channel_names::drdynvc) {
+    else if (this->rail_enabled && this->rail_client_execute 
+    && front_channel_name == CHANNELS::channel_names::drdynvc) {
 
         this->dvc_manager.send_to_mod_drdynvc_channel(length, chunk, flags);
     }

@@ -42,7 +42,7 @@ public:
 
     void update(const_bytes_view data)
     {
-        MD4_Update(&this->md4, data.to_u8p(), data.size());
+        MD4_Update(&this->md4, data.as_u8p(), data.size());
     }
 
     void final(uint8_t (&out_data)[DIGEST_LENGTH])

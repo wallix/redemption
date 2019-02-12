@@ -179,7 +179,7 @@ bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_c
 
 size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len)
 {
-	const uint8_t * s = source.to_u8p();
+	const uint8_t * s = source.as_u8p();
 
 	size_t i_t = 0;
     uint32_t ucode = 0;
@@ -241,7 +241,7 @@ UTF8toUTF16_exit:
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
 size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, size_t t_len)
 {
-	const uint8_t * s = source.to_u8p();
+	const uint8_t * s = source.as_u8p();
 
 	size_t i_t = 0;
     uint32_t ucode = 0;
@@ -334,7 +334,7 @@ constexpr uint32_t utf8_4_bytes_to_ucs(uint8_t a, uint8_t b, uint8_t c, uint8_t 
 
 
 UTF8toUnicodeIterator::UTF8toUnicodeIterator(const_byte_ptr str) noexcept
-: source(str.to_u8p())
+: source(str.as_u8p())
 { ++*this; }
 
 UTF8toUnicodeIterator & UTF8toUnicodeIterator::operator++() noexcept
@@ -626,7 +626,7 @@ bool is_ASCII_string(const_bytes_view source)
 
 bool is_ASCII_string(const_byte_ptr source)
 {
-    auto const* s = source.to_u8p();
+    auto const* s = source.as_u8p();
     for (; *s; ++s) {
         if (*s > 0x7F) { return false; }
     }
@@ -636,7 +636,7 @@ bool is_ASCII_string(const_byte_ptr source)
 
 size_t UTF8StrLenInChar(const_byte_ptr source)
 {
-    auto const* s = source.to_u8p();
+    auto const* s = source.as_u8p();
     size_t length = 0;
 
     Stat stat = Stat::ASCII;
@@ -767,7 +767,7 @@ size_t Latin1toUTF16(const_bytes_view latin1_source, uint8_t * utf16_target, siz
         return true;
     };
 
-    const uint8_t * current_latin1_source = latin1_source.to_u8p();
+    const uint8_t * current_latin1_source = latin1_source.as_u8p();
           uint8_t * current_utf16_target  = utf16_target;
 
     for (size_t remaining_latin1_len = latin1_source.size(), remaining_utf16_len = utf16_len;

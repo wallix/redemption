@@ -706,12 +706,8 @@ void FileToGraphic::interpret_order()
 
             this->ptr_cache.add_pointer_static(cursor, cache_idx);
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->set_pointer(cursor);
-            }
-
-            this->ptr_cache.add_pointer_static(cursor, cache_idx);
-            for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->set_pointer(cursor);
+                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
+                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
             }
 
             this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
@@ -721,7 +717,7 @@ void FileToGraphic::interpret_order()
             Pointer cursor(this->ptr_cache.Pointers[cache_idx]);
             this->ptr_cache.Pointers[cache_idx] = cursor;
             for (gdi::GraphicApi * gd : this->graphic_consumers){
-                gd->set_pointer(cursor);
+                gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::Cached);
             }
             this->statistics.PointerIndex.count++;
         }
@@ -741,7 +737,7 @@ void FileToGraphic::interpret_order()
 
         this->ptr_cache.add_pointer_static(cursor, cache_idx);
         for (gdi::GraphicApi * gd : this->graphic_consumers){
-            gd->set_pointer(cursor);
+            gd->set_pointer(cache_idx, cursor, gdi::GraphicApi::SetPointerMode::New);
         }
         this->statistics.CachePointer.total_len += this->stream.get_offset()-start_offset;
         this->statistics.CachePointer.count++;

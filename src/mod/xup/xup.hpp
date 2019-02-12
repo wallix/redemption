@@ -324,7 +324,7 @@ enum {
                         stream.in_skip_bytes(32 * (32 * 3)); // data
                         stream.in_skip_bytes(32 * (32 / 8)); // mask
                         // TODO: we just ignore cursor data for now. Fix that later
-                        this->front.set_pointer(dot_pointer());
+                        this->front.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
                     }
                     break;
                     default:

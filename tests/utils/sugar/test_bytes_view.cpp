@@ -68,28 +68,28 @@ RED_AUTO_TEST_CASE(TestBytesT)
     const_byte_ptr{cus};
     const_byte_ptr{byte_ptr{a}};
 
-    RED_CHECK_EQUAL(voidp(byte_ptr(a).to_charp()), voidp(a));
-    RED_CHECK_EQUAL(voidp(byte_ptr(ua).to_charp()), voidp(ua));
-    RED_CHECK_EQUAL(voidp(byte_ptr(s).to_charp()), voidp(s));
-    RED_CHECK_EQUAL(voidp(byte_ptr(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(byte_ptr(a).as_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(byte_ptr(ua).as_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(byte_ptr(s).as_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(byte_ptr(us).as_charp()), voidp(us));
 
-    RED_CHECK_EQUAL(voidp(byte_ptr(a).to_charp()), voidp(byte_ptr(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(byte_ptr(a).as_charp()), voidp(byte_ptr(a).as_u8p()));
 
     RED_CHECK(bool(byte_ptr(a)));
     RED_CHECK(!bool(byte_ptr{}));
 
 
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).to_charp()), voidp(a));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(ua).to_charp()), voidp(ua));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(s).to_charp()), voidp(s));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(us).to_charp()), voidp(us));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).as_charp()), voidp(a));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(ua).as_charp()), voidp(ua));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(s).as_charp()), voidp(s));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(us).as_charp()), voidp(us));
 
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(ca).to_charp()), voidp(ca));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cua).to_charp()), voidp(cus));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cs).to_charp()), voidp(cs));
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(cus).to_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(ca).as_charp()), voidp(ca));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(cua).as_charp()), voidp(cus));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(cs).as_charp()), voidp(cs));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(cus).as_charp()), voidp(cus));
 
-    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).to_charp()), voidp(const_byte_ptr(a).to_u8p()));
+    RED_CHECK_EQUAL(voidp(const_byte_ptr(a).as_charp()), voidp(const_byte_ptr(a).as_u8p()));
 
     RED_CHECK(bool(const_byte_ptr(a)));
     RED_CHECK(!bool(const_byte_ptr{}));

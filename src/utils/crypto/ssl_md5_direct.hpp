@@ -45,7 +45,7 @@ public:
 
     void update(const_bytes_view data)
     {
-        this->md5_update(data.to_u8p(), data.size());
+        this->md5_update(data.as_u8p(), data.size());
     }
 
     void final(uint8_t (&out_data)[DIGEST_LENGTH])

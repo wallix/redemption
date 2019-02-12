@@ -27,6 +27,7 @@ Vnc encoder module for Cursor Pseudo Encoding
 #include "gdi/graphic_api.hpp"
 #include "mod/vnc/vnc_verbose.hpp"
 #include "utils/log.hpp"
+#include "utils/hexdump.hpp"
 
 
 // 7.7.2   Cursor Pseudo-encoding
@@ -125,7 +126,7 @@ namespace
                 this->green_shift, this->green_max,
                 this->blue_shift, this->blue_max);
             drawable.begin_update();
-            drawable.set_pointer(cursor);
+            drawable.set_pointer(0, cursor, gdi::GraphicApi::SetPointerMode::Insert);
             drawable.end_update();
 
             return EncoderState::Exit;

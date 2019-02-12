@@ -197,10 +197,9 @@ private:
         void draw(RDPColCache   const & cmd) override { this->draw_impl(cmd); }
         void draw(RDPBrushCache const & cmd) override { this->draw_impl(cmd); }
 
-        // XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        void set_pointer(Pointer    const & pointer) override {
+        void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
             for (gdi::GraphicApi & gd : this->gds){
-                gd.set_pointer(pointer);
+                gd.set_pointer(cache_idx, cursor, mode);
             }
         }
 
@@ -417,9 +416,9 @@ protected:
     Rect get_joint_visibility_rect() const;
 
 public:
-    void set_pointer(const Pointer & cursor) override {
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
         if (this->capture_drawable) {
-            this->graphic_api->set_pointer(cursor);
+            this->graphic_api->set_pointer(cache_idx, cursor, mode);
         }
     }
 

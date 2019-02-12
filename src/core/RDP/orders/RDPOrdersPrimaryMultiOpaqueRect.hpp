@@ -183,7 +183,7 @@ public:
         header.control |= (is_1_byte(this->nLeftRect - oldcmd.nLeftRect) && is_1_byte(this->nTopRect - oldcmd.nTopRect) &&
             is_1_byte(this->nWidth - oldcmd.nWidth) && is_1_byte(this->nHeight - oldcmd.nHeight)) * RDP::DELTA;
 
-        uint32_t const diff_color = this->_Color.as_bgr().to_u32() ^ oldcmd._Color.as_bgr().to_u32();
+        uint32_t const diff_color = this->_Color.as_bgr().as_u32() ^ oldcmd._Color.as_bgr().as_u32();
         header.fields =
                 (this->nLeftRect            != oldcmd.nLeftRect     ) * 0x0001
               | (this->nTopRect             != oldcmd.nTopRect      ) * 0x0002
@@ -287,7 +287,7 @@ public:
             b = stream.in_uint8();
         }
 
-        this->_Color = RDPColor::from(BGRColor(b, g, r).to_u32());
+        this->_Color = RDPColor::from(BGRColor(b, g, r).as_u32());
 
         if (header.fields & 0x0080) {
             this->nDeltaEntries = stream.in_uint8();

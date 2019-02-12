@@ -28,6 +28,8 @@
 #include "utils/log.hpp"
 #include "utils/translation.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
+
 
 #include <chrono>
 #include <string>
@@ -178,12 +180,9 @@ struct ModRDPParams
 
     bool adjust_performance_flags_for_recording = false;
 
-    ClientExecute * client_execute = nullptr;
+    ClientExecute * rail_client_execute = nullptr;
 
-    uint16_t     client_execute_flags = 0;
-    const char * client_execute_exe_or_file = "";
-    const char * client_execute_working_dir = "";
-    const char * client_execute_arguments = "";
+    WindowsExecuteShellParams client_execute;
 
     bool use_client_provided_remoteapp = false;
     bool should_ignore_first_client_execute = false;
@@ -388,13 +387,13 @@ struct ModRDPParams
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             adjust_performance_flags_for_recording);
 
-        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    client_execute);
+        RDP_PARAMS_LOG("<%p>",   static_cast<void*>,    rail_client_execute);
 
-        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute_flags);
+        RDP_PARAMS_LOG("0x%04X", RDP_PARAMS_LOG_GET,    client_execute.flags);
 
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_exe_or_file);
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_working_dir);
-        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute_arguments);
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.exe_or_file.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.working_dir.c_str());
+        RDP_PARAMS_LOG("%s",     s_or_none,             client_execute.arguments.c_str());
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             use_client_provided_remoteapp);
 

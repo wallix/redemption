@@ -8,6 +8,8 @@ if ! [[ $PWD =~ ^/var/lib/jenkins/jobs/* ]]; then
   exit 1
 fi
 
+set -e
+
 # Cleaning
 #rm -fr cmake_temp
 

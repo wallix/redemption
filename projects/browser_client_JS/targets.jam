@@ -13,40 +13,29 @@ exe-js js_client :
   crypto.bc
   gssapi_krb5.bc
   krb5.bc
-  png.bc
   src/redjs/browser_front.bc
   src/redjs/browser_transport.bc
-  src/redjs/image_data.bc
+  src/redjs/image_data_from_bitmap.bc
+  src/redjs/image_data_from_pointer.bc
   projects/redemption_configs/redemption_src/configs/config.bc
-  src/RAIL/client_execute.bc
-  src/core/RDP/RDPDrawable.bc
   src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
   src/core/RDP/orders/remoteFx.bc
   src/core/RDP/rlgr.bc
+  src/core/channels_authorizations.bc
   src/core/error.bc
   src/core/font.bc
-  src/core/set_server_redirection_target.bc
-  src/gdi/clip_from_cmd.bc
   src/gdi/graphic_api.bc
-  src/gdi/protected_graphics.bc
   src/gdi/screen_functions.bc
-  src/keyboard/keymap2.bc
-  src/mod/internal/widget/flat_button.bc
-  src/mod/internal/widget/label.bc
   src/mod/rdp/new_mod_rdp.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
-  src/utils/authorization_channels.bc
   src/utils/bitmap.bc
-  src/utils/bitmap_from_file.bc
   src/utils/cfgloader.bc
   src/utils/crypto/ssl_mod_exp_direct.bc
-  src/utils/drawable.bc
   src/utils/fileutils.bc
   src/utils/hexdump.bc
-  src/utils/png.bc
   src/utils/primitives/primitives.bc
   src/utils/rle.bc
   src/utils/strutils.bc
@@ -64,51 +53,50 @@ test-run-js tests/redjs/test_browser_transport :
   src/redjs/browser_transport.bc
   src/core/error.bc
 ;
-test-run-js tests/redjs/test_image_data :
-  tests/redjs/test_image_data.cpp
+test-run-js tests/redjs/test_image_data_test_from_bitmap :
+  tests/redjs/test_image_data_test_from_bitmap.cpp
 :
   boost_stacktrace.bc
-  src/redjs/image_data.bc
+  src/redjs/image_data_from_bitmap.bc
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/rle.bc
+  src/utils/utf.bc
+;
+test-run-js tests/redjs/test_image_data_test_from_pointer :
+  tests/redjs/test_image_data_test_from_pointer.cpp
+:
+  boost_stacktrace.bc
+  src/redjs/image_data_from_pointer.bc
+  src/core/error.bc
+  src/utils/hexdump.bc
   src/utils/utf.bc
 ;
 
 objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
 objjs src/redjs/browser_front.bc : src/redjs/browser_front.cpp ;
 objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
-objjs src/redjs/image_data.bc : src/redjs/image_data.cpp ;
+objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
+objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
-objjs src/RAIL/client_execute.bc : $(REDEMPTION_SRC_PATH)/RAIL/client_execute.cpp ;
-objjs src/core/RDP/RDPDrawable.bc : $(REDEMPTION_SRC_PATH)/core/RDP/RDPDrawable.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 objjs src/core/RDP/nego.bc : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;
 objjs src/core/RDP/orders/remoteFx.bc : $(REDEMPTION_SRC_PATH)/core/RDP/orders/remoteFx.cpp ;
 objjs src/core/RDP/rlgr.bc : $(REDEMPTION_SRC_PATH)/core/RDP/rlgr.cpp ;
+objjs src/core/channels_authorizations.bc : $(REDEMPTION_SRC_PATH)/core/channels_authorizations.cpp ;
 objjs src/core/error.bc : $(REDEMPTION_SRC_PATH)/core/error.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
-objjs src/core/set_server_redirection_target.bc : $(REDEMPTION_SRC_PATH)/core/set_server_redirection_target.cpp ;
-objjs src/gdi/clip_from_cmd.bc : $(REDEMPTION_SRC_PATH)/gdi/clip_from_cmd.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
-objjs src/gdi/protected_graphics.bc : $(REDEMPTION_SRC_PATH)/gdi/protected_graphics.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
-objjs src/keyboard/keymap2.bc : $(REDEMPTION_SRC_PATH)/keyboard/keymap2.cpp ;
-objjs src/mod/internal/widget/flat_button.bc : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
-objjs src/mod/internal/widget/label.bc : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
-objjs src/utils/authorization_channels.bc : $(REDEMPTION_SRC_PATH)/utils/authorization_channels.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
-objjs src/utils/bitmap_from_file.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap_from_file.cpp ;
 objjs src/utils/cfgloader.bc : $(REDEMPTION_SRC_PATH)/utils/cfgloader.cpp ;
 objjs src/utils/crypto/ssl_mod_exp_direct.bc : $(REDEMPTION_SRC_PATH)/utils/crypto/ssl_mod_exp_direct.cpp ;
-objjs src/utils/drawable.bc : $(REDEMPTION_SRC_PATH)/utils/drawable.cpp ;
 objjs src/utils/fileutils.bc : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
-objjs src/utils/png.bc : $(REDEMPTION_SRC_PATH)/utils/png.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 objjs src/utils/rle.bc : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
 objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
@@ -116,10 +104,12 @@ objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cp
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;
 
 alias test_browser_transport : tests/redjs/test_browser_transport ;
-alias test_image_data : tests/redjs/test_image_data ;
+alias test_image_data_test_from_bitmap : tests/redjs/test_image_data_test_from_bitmap ;
+alias test_image_data_test_from_pointer : tests/redjs/test_image_data_test_from_pointer ;
 alias tests/redjs.norec :
   tests/redjs/test_browser_transport
-  tests/redjs/test_image_data
+  tests/redjs/test_image_data_test_from_bitmap
+  tests/redjs/test_image_data_test_from_pointer
 ;
 alias tests/redjs :
   tests/redjs.norec

@@ -819,10 +819,10 @@ void Drawable::mem_blt_op( Rect rect
 }
 
 /*
-    * The name doesn't say it : mem_blt COPIES a decoded bitmap from
-    * a cache (data) and insert a subpart (srcx, srcy) to the local
-    * image cache (dimpl.impl().first_pixel()) a the given position (rect).
-    */
+ * The name doesn't say it : mem_blt COPIES a decoded bitmap from
+ * a cache (data) and insert a subpart (srcx, srcy) to the local
+ * image cache (dimpl.impl().first_pixel()) a the given position (rect).
+ */
 void Drawable::mem_blt(Rect rect, ConstImageDataView bmp, const uint16_t srcx, const uint16_t srcy)
 {
     this->mem_blt_op<Ops::CopySrc>(rect, bmp, srcx, srcy);

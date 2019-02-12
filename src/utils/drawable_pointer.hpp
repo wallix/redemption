@@ -36,6 +36,7 @@
 #pragma once
 
 #include "utils/bitfu.hpp"
+#include "core/RDP/rdp_pointer.hpp"
 
 #include <cstdint>
 #include <cstddef>
@@ -188,12 +189,21 @@ struct DrawablePointer {
 
     ContiguousPixels contiguous_pixels[MAX_WIDTH / 2 * MAX_HEIGHT] {}; // MAX_WIDTH / 2 contiguous pixels per line * MAX_HEIGHT lines
     uint8_t number_of_contiguous_pixels = 0;
-    uint8_t Bpp = 3;
+    static const uint8_t Bpp = 3;
     uint8_t data[MAX_WIDTH * MAX_HEIGHT * 3] {}; // 32 pixels per line * 32 lines * 3 bytes per pixel
 
     explicit DrawablePointer() = default;
 
-    void initialize(unsigned int width, unsigned int height, const uint8_t * pointer_data, const uint8_t * pointer_mask) {
+    void initialize(Pointer const& cursor)
+    {
+        const auto dimensions = cursor.get_dimensions();
+        auto av_xor = cursor.get_24bits_xor_mask();
+        auto av_and = cursor.get_monochrome_and_mask();
+        unsigned int const width = dimensions.width;
+        unsigned int height = dimensions.height;
+        const uint8_t * pointer_data = av_xor.data();
+        const uint8_t * pointer_mask = av_and.data();
+
         ::memset(this->contiguous_pixels, 0, sizeof(this->contiguous_pixels));
         this->number_of_contiguous_pixels = 0;
         ::memset(this->data, 0, sizeof(this->data));
@@ -230,10 +240,10 @@ struct DrawablePointer {
     }
 
     struct ContiguousPixelsView {
-        DrawablePointer::ContiguousPixels const * first;
-        DrawablePointer::ContiguousPixels const * last;
-        DrawablePointer::ContiguousPixels const * begin() const noexcept { return this->first; }
-        DrawablePointer::ContiguousPixels const * end() const noexcept { return this->last; }
+        ContiguousPixels const * first;
+        ContiguousPixels const * last;
+        ContiguousPixels const * begin() const noexcept { return this->first; }
+        ContiguousPixels const * end() const noexcept { return this->last; }
     };
 
     ContiguousPixelsView contiguous_pixels_view() const {

@@ -22,7 +22,7 @@ Author(s): Jonathan Poelen
 
 #ifdef IN_IDE_PARSER
 # define RED_EM_ASM(jscode, ...) [](auto&&...){}(__VA_ARGS__)
-# define RED_EM_ASM_INT(...) int()
+# define RED_EM_ASM_INT(jscode, ...) [](auto&&...){}(__VA_ARGS__)
 #else
 # include <emscripten/em_asm.h>
 # include "cxx/diagnostic.hpp"

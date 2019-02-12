@@ -39,7 +39,7 @@ struct BlockTransport : Transport
         if (!n) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
-        memcpy(buffer, this->data.to_u8p(), n);
+        memcpy(buffer, this->data.as_u8p(), n);
         this->data = this->data.array_from_offset(n);
         return n;
     }

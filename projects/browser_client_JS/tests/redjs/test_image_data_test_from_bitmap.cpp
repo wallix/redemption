@@ -18,10 +18,10 @@ Copyright (C) Wallix 2010-2019
 Author(s): Jonathan Poelen
 */
 
-#define RED_TEST_MODULE TestImageData
+#define RED_TEST_MODULE TestImageDataFromBitmap
 #include "test_only/test_framework/redemption_unit_tests.hpp"
 
-#include "redjs/image_data.hpp"
+#include "redjs/image_data_from_bitmap.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/bitmap_private_data.hpp"
 
@@ -57,7 +57,7 @@ redjs::ImageData create_image_4x_2y(Encoder encoder)
     data = enc(data, BGRColor(0x0033aa));
     data = enc(data, BGRColor(0x030a3a));
 
-    redjs::ImageData img(bitmap);
+    redjs::ImageData img = redjs::image_data_from_bitmap(bitmap);
 
     RED_CHECK(img.width() == bitmap.cx());
     RED_CHECK(img.height() == bitmap.cy());

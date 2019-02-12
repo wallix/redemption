@@ -156,9 +156,12 @@ struct RdpClient
             mod_rdp_params.log();
         }
 
+        const ChannelsAuthorizations channels_authorizations("*", std::string{});
+
         this->mod = new_mod_rdp(
             browser_trans, session_reactor, front, client_info, redir_info, lcg_gen,
-            lcg_timeobj, mod_rdp_params, authentifier, report_message, ini, nullptr);
+            lcg_timeobj, channels_authorizations,
+            mod_rdp_params, authentifier, report_message, ini, nullptr);
     }
 
     /// \return milliseconds before next timer, or 0 if no timer
@@ -200,6 +203,24 @@ struct RdpClient
         };
         session_reactor.execute_graphics(fd_isset, front);
     }
+
+    void rdp_input_scancode(uint16_t key, uint16_t flag)
+    {
+        this->mod->rdp_input_scancode(
+            key, 0, flag,
+            session_reactor.get_current_time().tv_sec,
+            nullptr);
+    }
+
+    void rdp_input_unicode(uint16_t unicode, uint16_t flag)
+    {
+        this->mod->rdp_input_unicode(unicode, flag);
+    }
+
+    void rdp_input_mouse(int device_flags, int x, int y)
+    {
+        this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
+    }
 };
 
 // Binding code
@@ -220,5 +241,8 @@ EMSCRIPTEN_BINDINGS(client)
         })
         .function("clearSendingData", &RdpClient::clear_sending_data)
         .function("addReceivingData", &RdpClient::add_receiving_data)
+        .function("sendUnicode", &RdpClient::rdp_input_unicode)
+        .function("sendScancode", &RdpClient::rdp_input_scancode)
+        .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
     ;
 }

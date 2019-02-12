@@ -214,7 +214,7 @@ private:
     bool server_is_apple;
     bool remove_server_alt_state_for_char;
     int keylayout;
-    ClientExecute* client_execute = nullptr;
+    ClientExecute* rail_client_execute = nullptr;
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
@@ -246,7 +246,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , bool remove_server_alt_state_for_char
-           , ClientExecute* client_execute
+           , ClientExecute* rail_client_execute
            , ModVncVariables vars
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
@@ -266,7 +266,7 @@ public:
     , server_is_apple(server_is_apple)
     , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
     , keylayout(keylayout)
-    , client_execute(client_execute)
+    , rail_client_execute(rail_client_execute)
     , session_reactor(session_reactor)
     , vars(vars)
     #ifndef __EMSCRIPTEN__
@@ -811,7 +811,7 @@ public:
         }
 
         // set almost null cursor, this is the little dot cursor
-        drawable.set_pointer(dot_pointer());
+        drawable.set_pointer(0, dot_pointer(), gdi::GraphicApi::SetPointerMode::Insert);
 
         ArcsightLogInfo arc_info;
         arc_info.name = "SESSION_ESTABLISHED";
@@ -1768,7 +1768,7 @@ private:
                     }
                     else {
                         LOG(LOG_INFO, "vnc password failed. Reason: %.*s",
-                            int(bytes.size()), bytes.to_charp());
+                            int(bytes.size()), bytes.as_charp());
                         throw Error(ERR_VNC_CONNECTION_ERROR);
                     }
                 })) {
@@ -1806,7 +1806,7 @@ private:
                     }
                     else {
                         LOG(LOG_INFO, "MS LOGON password FAILED. Reason: %.*s",
-                            int(bytes.size()), bytes.to_charp());
+                            int(bytes.size()), bytes.as_charp());
                     }
                 })) {
                     return false;
@@ -2080,8 +2080,8 @@ private:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "resizing remoteapp");
                 }
-                if (this->client_execute) {
-                    this->client_execute->adjust_window_to_mod();
+                if (this->rail_client_execute) {
+                    this->rail_client_execute->adjust_window_to_mod();
                 }
                 // RZ: Continue with FrontAPI::ResizeResult::no_need
                 REDEMPTION_CXX_FALLTHROUGH;

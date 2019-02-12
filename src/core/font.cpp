@@ -94,7 +94,7 @@ void Font::load_from_file(char const * file_path)
     auto read = [&ufd](byte_ptr buf, size_t len){
         ssize_t r;
         do  {
-            r = ::read(ufd.fd(), buf.to_u8p(), len);
+            r = ::read(ufd.fd(), buf.as_u8p(), len);
         } while (r == -1 && errno == EINTR);
         return r;
     };
@@ -146,7 +146,7 @@ void Font::load_from_file(char const * file_path)
                 break;
         }
 
-        if (strncmp(byte_ptr(stream_buf).to_charp(), "RBF1", 4)) {
+        if (strncmp(byte_ptr(stream_buf).as_charp(), "RBF1", 4)) {
             LOG(LOG_ERR,"Font: bad magic number ('%.*s', expected 'RBF1'). Please, update font file", 4, stream_buf);
             return ;
         }

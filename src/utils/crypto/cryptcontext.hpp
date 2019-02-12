@@ -98,7 +98,7 @@ struct CryptContext
 
     void decrypt(bytes_view data)
     {
-        this->decrypt(data.to_u8p(), data.size(), data.to_u8p());
+        this->decrypt(data.as_u8p(), data.size(), data.as_u8p());
     }
 
     /* Decrypt data using RC4 */

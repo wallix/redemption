@@ -62,7 +62,7 @@ public:
     basic_HMAC(const_bytes_view key)
     {
         this->hmac.init();
-        int res = HMAC_Init_ex(this->hmac, key.to_u8p(), key.size(), evp(), nullptr);
+        int res = HMAC_Init_ex(this->hmac, key.as_u8p(), key.size(), evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -75,7 +75,7 @@ public:
 
     void update(const_bytes_view data)
     {
-        int res = HMAC_Update(this->hmac, data.to_u8p(), data.size());
+        int res = HMAC_Update(this->hmac, data.as_u8p(), data.size());
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
@@ -107,7 +107,7 @@ public:
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
         this->hmac.init();
-        int res = HMAC_Init_ex(this->hmac, key.to_u8p(), key.size(), evp(), nullptr);
+        int res = HMAC_Init_ex(this->hmac, key.as_u8p(), key.size(), evp(), nullptr);
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_INIT_FAILED);
         }
@@ -126,7 +126,7 @@ public:
         if (!this->initialized){
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }
-        int res = HMAC_Update(this->hmac, data.to_u8p(), data.size());
+        int res = HMAC_Update(this->hmac, data.as_u8p(), data.size());
         if (res == 0) {
             throw Error(ERR_SSL_CALL_HMAC_UPDATE_FAILED);
         }

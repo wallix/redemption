@@ -42,7 +42,7 @@ public:
         RailModuleHostModVariables vars, SessionReactor& session_reactor,
         FrontAPI& front, uint16_t width, uint16_t height,
         Rect const widget_rect, std::unique_ptr<mod_api> managed_mod,
-        ClientExecute& client_execute, Font const& font, Theme const& theme,
+        ClientExecute& rail_client_execute, Font const& font, Theme const& theme,
         const GCC::UserData::CSMonitor& cs_monitor, bool can_resize_hosted_desktop);
 
     ~RailModuleHostMod() override
@@ -103,5 +103,5 @@ private:
 
     SessionReactor::TimerPtr disconnection_reconnection_timer; // Window resize
 
-    ClientExecute& client_execute;
+    ClientExecute& rail_client_execute;
 };

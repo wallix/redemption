@@ -28,7 +28,6 @@
 #include <cstring>
 #include <vector>
 #include "utils/log.hpp"
-#include "utils/hexdump.hpp"
 #include "utils/sugar/array_view.hpp"
 #include "utils/colors.hpp"
 #include "utils/stream.hpp"
@@ -669,8 +668,8 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
         for (unsigned i = 0; i < dlen ; i++) {
             const uint8_t px = data[i];
             // target cursor will receive 8 bits input at once
-            ::out_bytes_le(&(cursor.data[6 * i]),     3, palette[(px >> 4) & 0xF].to_u32());
-            ::out_bytes_le(&(cursor.data[6 * i + 3]), 3, palette[ px       & 0xF].to_u32());
+            ::out_bytes_le(&(cursor.data[6 * i]),     3, palette[(px >> 4) & 0xF].as_u32());
+            ::out_bytes_le(&(cursor.data[6 * i + 3]), 3, palette[ px       & 0xF].as_u32());
         }
         memcpy(cursor.mask, mask, mlen);
     }
@@ -694,7 +693,7 @@ inline Pointer decode_pointer(BitsPerPixel data_bpp, const BGRPalette & palette,
             for (unsigned int i1 = 0; i1 < width; ++i1) {
                 RDPColor px = RDPColor::from(in_uint32_from_nb_bytes_le(BPP, src));
                 src += BPP;
-                ::out_bytes_le(dest, 3, color_decode(px, data_bpp, palette).to_u32());
+                ::out_bytes_le(dest, 3, color_decode(px, data_bpp, palette).as_u32());
                 dest += 3;
             }
         }

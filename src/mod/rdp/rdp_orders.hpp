@@ -60,7 +60,9 @@
 #include "core/RDP/orders/AlternateSecondaryWindowing.hpp"
 
 #include "core/RDP/caches/bmpcache.hpp"
-#include "core/RDP/caches/bmpcachepersister.hpp"
+#ifndef __EMSCRIPTEN__
+# include "core/RDP/caches/bmpcachepersister.hpp"
+#endif
 #include "core/RDP/caches/glyphcache.hpp"
 
 #include "mod/rdp/rdp_verbose.hpp"
@@ -92,7 +94,9 @@ public:
     BitsPerPixel bpp {};
     BGRPalette global_palette;
 
+#ifndef __EMSCRIPTEN__
     std::unique_ptr<BmpCache> bmp_cache;
+#endif
     // std::unique_ptr<BmpCache> ninegrid_bmp_cache;
 
 private:
@@ -109,10 +113,12 @@ public:
 
 private:
     std::string target_host;
+#ifndef __EMSCRIPTEN__
     bool        enable_persistent_disk_bitmap_cache;
     bool        persist_bitmap_cache_on_disk;
 
     ReportError report_error;
+#endif
 
 public:
     rdp_orders( const char * target_host, bool enable_persistent_disk_bitmap_cache
@@ -128,19 +134,24 @@ public:
     , glyph_index( 0, 0, 0, 0, RDPColor{}, RDPColor{}, Rect(0, 0, 1, 1), Rect(0, 0, 1, 1), RDPBrush(), 0, 0, 0
                  , byte_ptr_cast(""))
     , global_palette(BGRPalette::classic_332())
-    , bmp_cache(nullptr)
-    // , ninegrid_bmp_cache(nullptr)
     , verbose(verbose)
     , recv_bmp_cache_count(0)
     , recv_order_count(0)
     , recv_ninegrid_bmp_cache_count(0)
     , recv_ninegrid_order_count(0)
     , target_host(target_host)
+#ifndef __EMSCRIPTEN__
     , enable_persistent_disk_bitmap_cache(enable_persistent_disk_bitmap_cache)
     , persist_bitmap_cache_on_disk(persist_bitmap_cache_on_disk)
     , report_error(std::move(report_error))
+    {}
+#else
     {
+        (void)report_error;
+        assert(!enable_persistent_disk_bitmap_cache);
+        assert(!persist_bitmap_cache_on_disk);
     }
+#endif
 
     void reset()
     {
@@ -162,6 +173,7 @@ public:
         this->ninegrid     = RDPNineGrid();
     }
 
+#ifndef __EMSCRIPTEN__
     ~rdp_orders() {
         if (this->bmp_cache) {
             try {
@@ -185,14 +197,31 @@ private:
           convert_verbose_flags(this->verbose)
       );
     }
+#endif
 
 public:
     void create_cache_bitmap(
+        gdi::GraphicApi& gd,
         uint16_t small_entries, uint16_t small_size, bool small_persistent,
         uint16_t medium_entries, uint16_t medium_size, bool medium_persistent,
         uint16_t big_entries, uint16_t big_size, bool big_persistent,
         bool enable_waiting_list, BmpCache::Verbose verbose)
     {
+#ifdef __EMSCRIPTEN__
+        (void)small_size;
+        (void)small_persistent;
+        (void)medium_size;
+        (void)medium_persistent;
+        (void)big_size;
+        (void)big_persistent;
+        (void)verbose;
+        gd.set_bmp_cache_entries({
+            uint16_t(small_entries + (enable_waiting_list ? 1 : 0)),
+            uint16_t(medium_entries + (enable_waiting_list ? 1 : 0)),
+            uint16_t(big_entries + (enable_waiting_list ? 1 : 0))
+        });
+#else
+        (void)gd;
         if (this->bmp_cache) {
             if (this->bmp_cache->bpp == this->bpp) {
                 return;
@@ -238,6 +267,7 @@ public:
             catch (...) {
             }
         }
+#endif
     }
 
 private:
@@ -418,7 +448,7 @@ private:
         }
     }
 
-    void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header)
+    void process_bmpcache(InStream & stream, const RDPSecondaryOrderHeader & header, gdi::GraphicApi& gd)
     {
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG(LOG_INFO, "rdp_orders_process_bmpcache bpp=%u", this->bpp);
@@ -430,6 +460,10 @@ private:
 
         assert(bmp.bmp.is_valid());
 
+#ifdef __EMSCRIPTEN__
+        gd.draw(bmp);
+#else
+        (void)gd;
         this->bmp_cache->put(bmp.id, bmp.idx, bmp.bmp, bmp.key1, bmp.key2);
         if (bool(this->verbose & RDPVerbose::graphics)) {
             LOG( LOG_INFO
@@ -437,6 +471,7 @@ private:
                  " bmp_size=%zu original_bpp=%" PRIu8 " bpp=%" PRIu8
                , bmp.id, bmp.idx, bmp.bmp.cx(), bmp.bmp.cy(), bmp.bmp.bmp_size(), bmp.bmp.bpp(), this->bpp);
         }
+#endif
     }
 
     void process_ninegrid_bmpcache(InStream & stream, const RDP::AltsecDrawingOrderHeader & /*header*/)
@@ -568,7 +603,7 @@ public:
                 case TS_CACHE_BITMAP_COMPRESSED_REV2:
                 case TS_CACHE_BITMAP_UNCOMPRESSED_REV2:
                     if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_BITMAP XXX secondary order"); }
-                    this->process_bmpcache(stream, header);
+                    this->process_bmpcache(stream, header, gd);
                     break;
                 case TS_CACHE_COLOR_TABLE:
                     if (bool(this->verbose & RDPVerbose::graphics)){ LOG( LOG_INFO, "TS_CACHE_COLOR_TABLE secondary order"); }
@@ -650,6 +685,9 @@ public:
                     break;
                 case MEMBLT:
                     this->memblt.receive(stream, header);
+                    #ifdef __EMSCRIPTEN__
+                    gd.draw(this->memblt, cmd_clip);
+                    #else
                     {
                         if ((this->memblt.cache_id >> 8) >= 6) {
                             LOG( LOG_INFO, "colormap out of range in memblt:%x"
@@ -671,9 +709,13 @@ public:
                             assert(false);
                         }
                     }
+                    #endif
                     break;
                 case MEM3BLT:
                     this->mem3blt.receive(stream, header);
+                    #ifdef __EMSCRIPTEN__
+                    gd.draw(this->mem3blt, cmd_clip, gdi::ColorCtx::from_bpp(this->bpp, this->global_palette));
+                    #else
                     {
                         if ((this->mem3blt.cache_id >> 8) >= 6){
                             LOG( LOG_INFO, "colormap out of range in mem3blt: %x"
@@ -695,6 +737,7 @@ public:
                             assert(false);
                         }
                     }
+                    #endif
                     break;
                 case POLYLINE:
                     this->polyline.receive(stream, header);

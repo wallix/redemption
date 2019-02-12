@@ -40,7 +40,7 @@
 void ModuleManager::create_mod_rdp(
     AuthApi& authentifier, ReportMessageApi& report_message,
     Inifile& ini, FrontAPI& front, ClientInfo client_info /* /!\ modified */,
-    ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+    ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
     std::array<uint8_t, 28>& server_auto_reconnect_packet)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'RDP'");
@@ -223,21 +223,22 @@ void ModuleManager::create_mod_rdp(
                                                             ((ini.get<cfg::video::capture_flags>() &
                                                             (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                             CaptureFlags::none));
-    mod_rdp_params.client_execute                      = &client_execute;
-    mod_rdp_params.client_execute_flags                = client_execute.Flags();
-    mod_rdp_params.client_execute_exe_or_file          = client_execute.ExeOrFile();
-    mod_rdp_params.client_execute_working_dir          = client_execute.WorkingDir();
-    mod_rdp_params.client_execute_arguments            = client_execute.Arguments();
+    mod_rdp_params.rail_client_execute               = &rail_client_execute;
+    
+    // TODO: add a method to ClientExecute returning a WindowsExecuteShellParams structure
+    mod_rdp_params.client_execute.flags                = rail_client_execute.Flags();
+    mod_rdp_params.client_execute.exe_or_file          = rail_client_execute.ExeOrFile();
+    mod_rdp_params.client_execute.working_dir          = rail_client_execute.WorkingDir();
+    mod_rdp_params.client_execute.arguments            = rail_client_execute.Arguments();
 
-    mod_rdp_params.should_ignore_first_client_execute  = client_execute.should_ignore_first_client_execute();
+    mod_rdp_params.should_ignore_first_client_execute  = rail_client_execute.should_ignore_first_client_execute();
 
-    mod_rdp_params.remote_program                      = (client_info.remote_program &&
-                                                            ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() &&
-                                                            ((mod_rdp_params.target_application &&
-                                                            (*mod_rdp_params.target_application)) ||
-                                                            (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() &&
-                                                            mod_rdp_params.client_execute_exe_or_file &&
-                                                            (*mod_rdp_params.client_execute_exe_or_file))));
+    mod_rdp_params.remote_program                      = (client_info.remote_program 
+                                                       && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() 
+                                                       && ((mod_rdp_params.target_application 
+                                                       && (*mod_rdp_params.target_application)) 
+                                                        || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() 
+                                                            && not mod_rdp_params.client_execute.exe_or_file.empty())));
     mod_rdp_params.remote_program_enhanced             = client_info.remote_program_enhanced;
     mod_rdp_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
 
@@ -280,7 +281,7 @@ void ModuleManager::create_mod_rdp(
         const char * const name = "RDP Target";
 
         Rect const adjusted_client_execute_rect =
-            client_execute.adjust_rect(get_widget_rect(
+            rail_client_execute.adjust_rect(get_widget_rect(
                     client_info.screen_info.width,
                     client_info.screen_info.height,
                     client_info.cs_monitor
@@ -296,7 +297,7 @@ void ModuleManager::create_mod_rdp(
             client_info.cs_monitor = GCC::UserData::CSMonitor{};
         }
         else {
-            client_execute.reset(false);
+            rail_client_execute.reset(false);
         }
 
         const char * target_user = ini.get<cfg::globals::target_user>().c_str();
@@ -389,7 +390,7 @@ void ModuleManager::create_mod_rdp(
                 ':',
                 ini.get<cfg::globals::primary_user_id>());
 
-            client_execute.set_target_info(target_info);
+            rail_client_execute.set_target_info(target_info);
 
             auto* host_mod = new RailModuleHostMod(
                 ini,
@@ -399,14 +400,14 @@ void ModuleManager::create_mod_rdp(
                 client_info.screen_info.height,
                 adjusted_client_execute_rect,
                 std::move(new_mod),
-                client_execute,
+                rail_client_execute,
                 this->load_font(),
                 this->load_theme(),
                 client_info.cs_monitor,
                 !ini.get<cfg::globals::is_rec>()
             );
 
-            this->set_mod(host_mod, nullptr, &client_execute);
+            this->set_mod(host_mod, nullptr, &rail_client_execute);
             this->rail_module_host_mod_ptr = host_mod;
             LOG(LOG_INFO, "ModuleManager::internal module 'RailModuleHostMod' ready");
         }

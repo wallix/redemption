@@ -283,10 +283,6 @@ RED_AUTO_TEST_CASE(TestDestBlt)
 RED_AUTO_TEST_CASE(TestAddMouse)
 {
 
-    Pointer p = drawable_default_pointer(true);
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width = 640;
     uint16_t height = 480;
@@ -294,7 +290,7 @@ RED_AUTO_TEST_CASE(TestAddMouse)
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     DrawablePointer current_pointer;
-    current_pointer.initialize(32, 32, av.data(), avmask.data());
+    current_pointer.initialize(drawable_default_pointer(true));
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.trace_mouse(&current_pointer, 100, 100, save_mouse);
@@ -310,7 +306,6 @@ RED_AUTO_TEST_CASE(TestAddMouse)
 //    dump_png24("./test_mouse_001_.png", gd, true);
 
     RED_CHECK_SIG(gd, "\x2b\x74\x99\xee\x6a\x39\x35\x8b\x87\xe3\x61\xa7\x8f\x91\x38\xdd\x72\xb3\x46\x05");
-
 }
 
 
@@ -318,10 +313,6 @@ RED_AUTO_TEST_CASE(TestAddMouse)
 
 RED_AUTO_TEST_CASE(TestAddMouse2)
 {
-    Pointer p = drawable_default_pointer(true);
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
     uint16_t height = 480;
@@ -329,7 +320,7 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     DrawablePointer current_pointer;
-    current_pointer.initialize(32, 32, av.data(), avmask.data());
+    current_pointer.initialize(drawable_default_pointer(true));
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
 
@@ -348,10 +339,6 @@ RED_AUTO_TEST_CASE(TestAddMouse2)
 
 RED_AUTO_TEST_CASE(TestAddMouse3)
 {
-    Pointer p = drawable_default_pointer(true);
-    auto av     = p.get_24bits_xor_mask();
-    auto avmask = p.get_monochrome_and_mask();
-
     // Create a simple capture image and dump it to file
     uint16_t width  = 640;
     uint16_t height = 480;
@@ -359,7 +346,7 @@ RED_AUTO_TEST_CASE(TestAddMouse3)
     Drawable gd(width, height);
     uint8_t  save_mouse[3072];   // 32 lines * 32 columns * 3 bytes per pixel = 3072 octets
     DrawablePointer current_pointer;
-    current_pointer.initialize(32, 32, av.data(), avmask.data());
+    current_pointer.initialize(drawable_default_pointer(true));
 
     gd.opaquerect(screen_rect, gd.u32bgr_to_color(RED)); // RED
     gd.trace_mouse(&current_pointer, -8, -8, save_mouse);

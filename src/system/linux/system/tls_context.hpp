@@ -52,9 +52,9 @@ REDEMPTION_DIAGNOSTIC_GCC_ONLY_IGNORE("-Wzero-as-null-pointer-constant")
     REDEMPTION_DIAGNOSTIC_CLANG_IGNORE("-Wzero-as-null-pointer-constant")
 #endif
 
-inline bool tls_ctx_print_error(char const* error_msg, std::string* error_message)
+inline bool tls_ctx_print_error(char const* funcname, char const* error_msg, std::string* error_message)
 {
-    LOG(LOG_ERR, "TLSContext::enable_client_tls: %s", error_msg);
+    LOG(LOG_ERR, "TLSContext::%s: %s", funcname, error_msg);
     unsigned long error;
     char buf[1024];
     while ((error = ERR_get_error()) != 0) {
@@ -146,7 +146,7 @@ public:
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
 
         if (ctx == nullptr) {
-            return tls_ctx_print_error("SSL_CTX_new returned NULL", error_message);
+            return tls_ctx_print_error("enable_client_tls", "SSL_CTX_new returned NULL", error_message);
         }
 
         this->allocated_ctx = ctx;
@@ -166,13 +166,13 @@ public:
         SSL* ssl = SSL_new(ctx);
 
         if (ctx == nullptr) {
-            return tls_ctx_print_error("SSL_new returned NULL", error_message);
+            return tls_ctx_print_error("enable_client_tls", "SSL_new returned NULL", error_message);
         }
 
         this->allocated_ssl = ssl;
 
         if (0 == SSL_set_fd(ssl, sck)) {
-            return tls_ctx_print_error("SSL_set_fd failed", error_message);
+            return tls_ctx_print_error("enable_client_tls", "SSL_set_fd failed", error_message);
         }
 
         LOG(LOG_INFO, "SSL_connect()");
@@ -203,7 +203,7 @@ public:
                     error_msg = "Unknown error";
                     break;
             }
-            tls_ctx_print_error(error_msg, error_message);
+            tls_ctx_print_error("enable_client_tls", error_msg, error_message);
             return Transport::TlsResult::Fail;
         }
 
@@ -557,7 +557,7 @@ public:
         return Transport::TlsResult::Ok;
     }
 
-    void enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
+    bool enable_server_tls(int sck, const char * certificate_password, const char * ssl_cipher_list, uint32_t tls_min_level)
     {
         // SSL_CTX_new - create a new SSL_CTX object as framework for TLS/SSL enabled functions
         // ------------------------------------------------------------------------------------
@@ -583,8 +583,6 @@ public:
         // TLSv1_client_method(void): A TLS/SSL connection established with this methods will
         // only understand the TLSv1 protocol. A client will send out TLSv1 client hello messages
         // and will indicate that it only understands TLSv1.
-
-        BIO * bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
         SSL_CTX* ctx = SSL_CTX_new(SSLv23_server_method());
         this->allocated_ctx = ctx;
@@ -785,9 +783,7 @@ public:
         /* Load our keys and certificates*/
         if(!(SSL_CTX_use_certificate_chain_file(ctx, app_path(AppPath::CfgCrt))))
         {
-            BIO_printf(bio_err, "Can't read certificate file\n");
-            ERR_print_errors(bio_err);
-            exit(128);
+            return tls_ctx_print_error("enable_server_tls", "Can't read certificate file", nullptr);
         }
 
         SSL_CTX_set_default_passwd_cb(
@@ -807,25 +803,20 @@ public:
         SSL_CTX_set_default_passwd_cb_userdata(ctx, const_cast<void*>(static_cast<const void*>(certificate_password))); /*NOLINT*/
         if(!(SSL_CTX_use_PrivateKey_file(ctx, app_path(AppPath::CfgKey), SSL_FILETYPE_PEM)))
         {
-            BIO_printf(bio_err,"Can't read key file\n");
-            ERR_print_errors(bio_err);
-            exit(129);
+            return tls_ctx_print_error("enable_server_tls", "Can't read key file", nullptr);
         }
 
         BIO *bio = BIO_new_file(app_path(AppPath::CfgDhPem), "r");
         if (bio == nullptr){
-            BIO_printf(bio_err,"Couldn't open DH file\n");
-            ERR_print_errors(bio_err);
-            exit(130);
+            return tls_ctx_print_error("enable_server_tls", "Couldn't open DH file", nullptr);
         }
 
         DH *ret = PEM_read_bio_DHparams(bio, nullptr, nullptr, nullptr);
         BIO_free(bio);
         if(SSL_CTX_set_tmp_dh(ctx, ret) < 0) /*NOLINT*/
         {
-            BIO_printf(bio_err,"Couldn't set DH parameters\n");
-            ERR_print_errors(bio_err);
-            exit(131);
+            DH_free(ret);
+            return tls_ctx_print_error("enable_server_tls", "Couldn't set DH parameters", nullptr);
         }
         DH_free(ret);
         // SSL_new() creates a new SSL structure which is needed to hold the data for a TLS/SSL
@@ -851,7 +842,8 @@ public:
             if (!pkey)
             {
                 LOG(LOG_WARNING, "TLSContext::crypto_cert_get_public_key: X509_get_pubkey() failed");
-                exit(132);
+                BIO_free(sbio);
+                return false;
             }
 
             LOG(LOG_INFO, "TLSContext::i2d_PublicKey()");
@@ -875,16 +867,15 @@ public:
         int r = SSL_accept(ssl);
         if(r <= 0)
         {
-            BIO_printf(bio_err, "SSL accept error\n");
-            ERR_print_errors(bio_err);
-            exit(133);
+            return tls_ctx_print_error("enable_server_tls", "SSL accept error", nullptr);
         }
 
         this->io = ssl;
         this->tls = true;
 
-        BIO_free(bio_err);
         LOG(LOG_INFO, "Incoming connection to Bastion using TLS version %s", SSL_get_version(ssl));
+
+        return true;
     }
 
     ssize_t privpartial_recv_tls(uint8_t * data, size_t len)

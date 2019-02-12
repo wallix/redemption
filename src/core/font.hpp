@@ -162,14 +162,6 @@ struct FontChar
     FontChar & operator=(FontChar &&) = default;
     FontChar & operator=(FontChar const &) = delete;
 
-    FontCharView to_view() const noexcept
-    {
-        return FontCharView{
-            this->offsetx, this->offsety, this->incby,
-            this->width, this->height, this->data.get()
-        };
-    }
-
     void * operator new (size_t) = delete;
 
     FontChar clone() const {

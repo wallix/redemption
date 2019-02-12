@@ -168,9 +168,9 @@ class ModuleManager : public MMIni
             this->background_color = color_encode(BGRColor(LIGHT_YELLOW), this->mm.front.client_info.screen_info.bpp);
 
             if (this->mm.front.client_info.remote_program &&
-                (this->mm.winapi == static_cast<windowing_api*>(&this->mm.client_execute))) {
+                (this->mm.winapi == static_cast<windowing_api*>(&this->mm.rail_client_execute))) {
 
-                Rect current_work_area_rect = this->mm.client_execute.get_current_work_area_rect();
+                Rect current_work_area_rect = this->mm.rail_client_execute.get_current_work_area_rect();
 
                 this->clip = Rect(
                     current_work_area_rect.x +
@@ -432,11 +432,11 @@ private:
     Random & gen;
     TimeObj & timeobj;
 
-    ClientExecute client_execute;
+    ClientExecute rail_client_execute;
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
-    int old_target_module = MODULE_UNKNOWN;
+    ModuleIndex old_target_module = MODULE_UNKNOWN;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -458,7 +458,7 @@ public:
         , mod_osd(*this)
         , gen(gen)
         , timeobj(timeobj)
-        , client_execute(session_reactor, front, this->front.client_info.window_list_caps,
+        , rail_client_execute(session_reactor, front, this->front.client_info.window_list_caps,
                          ini.get<cfg::debug::mod_internal>() & 1)
         , verbose(static_cast<Verbose>(ini.get<cfg::debug::auth>()))
     {
@@ -513,12 +513,12 @@ private:
     }
 
 public:
-    void new_mod(int target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
+    void new_mod(ModuleIndex target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
 
-        this->client_execute.enable_remote_program(this->front.client_info.remote_program);
+        this->rail_client_execute.enable_remote_program(this->front.client_info.remote_program);
 
         switch (target_module) {
         case MODULE_INTERNAL_CLOSE:
@@ -616,7 +616,6 @@ public:
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
             break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-        case MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
@@ -628,12 +627,12 @@ public:
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->client_execute.adjust_rect(get_widget_rect(
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
-                this->client_execute,
+                this->rail_client_execute,
                 this->load_font(),
                 this->load_theme()
             ));
@@ -657,13 +656,13 @@ public:
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->client_execute.adjust_rect(get_widget_rect(
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
                 now,
-                this->client_execute,
+                this->rail_client_execute,
                 this->load_font(),
                 this->load_theme(),
                 true,
@@ -682,12 +681,12 @@ public:
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
+                    this->rail_client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.screen_info.width,
                         this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
                     )),
-                    this->client_execute,
+                    this->rail_client_execute,
                     this->load_font(),
                     this->load_theme()
                 ));
@@ -695,7 +694,6 @@ public:
             }
             break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-        case MODULE_INTERNAL_WIDGET_DIALOG:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
@@ -707,7 +705,7 @@ public:
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
+                    this->rail_client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.screen_info.width,
                         this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
@@ -716,7 +714,7 @@ public:
                     message,
                     button,
                     now,
-                    this->client_execute,
+                    this->rail_client_execute,
                     this->load_font(),
                     this->load_theme()
                 ));
@@ -724,7 +722,6 @@ public:
             }
             break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-        case MODULE_INTERNAL_WIDGET_MESSAGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
@@ -736,7 +733,7 @@ public:
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
+                    this->rail_client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.screen_info.width,
                         this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
@@ -745,7 +742,7 @@ public:
                     message,
                     button,
                     now,
-                    this->client_execute,
+                    this->rail_client_execute,
                     this->load_font(),
                     this->load_theme()
                 ));
@@ -770,7 +767,7 @@ public:
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
+                    this->rail_client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.screen_info.width,
                         this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
@@ -779,7 +776,7 @@ public:
                     message,
                     button,
                     now,
-                    this->client_execute,
+                    this->rail_client_execute,
                     this->load_font(),
                     this->load_theme(),
                     challenge
@@ -801,7 +798,7 @@ public:
                     this->front,
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
-                    this->client_execute.adjust_rect(get_widget_rect(
+                    this->rail_client_execute.adjust_rect(get_widget_rect(
                         this->front.client_info.screen_info.width,
                         this->front.client_info.screen_info.height,
                         this->front.client_info.cs_monitor
@@ -809,7 +806,7 @@ public:
                     caption,
                     message,
                     now,
-                    this->client_execute,
+                    this->rail_client_execute,
                     this->load_font(),
                     this->load_theme(),
                     showform,
@@ -852,13 +849,13 @@ public:
                 this->front,
                 this->front.client_info.screen_info.width,
                 this->front.client_info.screen_info.height,
-                this->client_execute.adjust_rect(get_widget_rect(
+                this->rail_client_execute.adjust_rect(get_widget_rect(
                     this->front.client_info.screen_info.width,
                     this->front.client_info.screen_info.height,
                     this->front.client_info.cs_monitor
                 )),
                 now,
-                this->client_execute,
+                this->rail_client_execute,
                 this->load_font(),
                 this->load_theme()
             ));
@@ -904,7 +901,7 @@ public:
             this->create_mod_rdp(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
-                this->client_execute, this->front.keymap.key_flags,
+                this->rail_client_execute, this->front.keymap.key_flags,
                 this->server_auto_reconnect_packet);
             break;
 
@@ -912,7 +909,7 @@ public:
             this->create_mod_vnc(
                 authentifier, report_message, this->ini,
                 this->front, this->front.client_info,
-                this->client_execute, this->front.keymap.key_flags);
+                this->rail_client_execute, this->front.keymap.key_flags);
             break;
 
         default:
@@ -984,13 +981,13 @@ private:
     void create_mod_rdp(
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, FrontAPI& front, ClientInfo client_info,
-        ClientExecute& client_execute, Keymap2::KeyFlags key_flags,
+        ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags,
         std::array<uint8_t, 28>& server_auto_reconnect_packet);
 
     void create_mod_vnc(
         AuthApi& authentifier, ReportMessageApi& report_message,
         Inifile& ini, FrontAPI& front, ClientInfo const& client_info,
-        ClientExecute& client_execute, Keymap2::KeyFlags key_flags);
+        ClientExecute& rail_client_execute, Keymap2::KeyFlags key_flags);
 
     Font& load_font()
     {

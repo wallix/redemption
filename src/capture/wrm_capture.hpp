@@ -646,10 +646,8 @@ public:
     	// TODO
     }
 
-
-    // XXXXXXXXXXXXXX
-    void set_pointer(Pointer const & ptr) override {
-        this->graphic_to_file.set_pointer(ptr);
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->graphic_to_file.set_pointer(cache_idx, cursor, mode);
     }
 
     class NativeCaptureLocal : public gdi::CaptureApi, public gdi::ExternalCaptureApi

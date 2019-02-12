@@ -660,12 +660,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
     }
 
     // Mouse pointer managment
+    using SetPointerMode = gdi::GraphicApi::SetPointerMode;
+
     if (!this->move_size_initialized) {
         if (this->north.contains_pt(xPos, yPos)
         ||  this->south.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENS != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENS;
-                    this->front_->set_pointer(size_NS_pointer());
+                    this->front_->set_pointer(0, size_NS_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->north_west_north.contains_pt(xPos, yPos)
@@ -674,14 +676,14 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->south_east_east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENWSE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENWSE;
-                    this->front_->set_pointer(size_NESW_pointer());
+                    this->front_->set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->west.contains_pt(xPos, yPos)
              ||  this->east.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZEWE != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZEWE;
-                    this->front_->set_pointer(size_WE_pointer());
+                    this->front_->set_pointer(0, size_WE_pointer(), SetPointerMode::Insert);
             }
         }
         else if (this->south_west_west.contains_pt(xPos, yPos)
@@ -690,7 +692,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  this->north_east_north.contains_pt(xPos, yPos)) {
             if (Pointer::POINTER_SIZENESW != this->current_mouse_pointer_type) {
                     this->current_mouse_pointer_type = Pointer::POINTER_SIZENESW;
-                    this->front_->set_pointer(size_NESW_pointer());
+                    this->front_->set_pointer(0, size_NESW_pointer(), SetPointerMode::Insert);
             }
         }
         else if ((this->title_bar_rect.contains_pt(xPos, yPos))
@@ -700,7 +702,7 @@ bool ClientExecute::input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t y
              ||  (this->close_box_rect.contains_pt(xPos, yPos))) {
             if (Pointer::POINTER_NORMAL != this->current_mouse_pointer_type) {
                 this->current_mouse_pointer_type = Pointer::POINTER_NORMAL;
-                this->front_->set_pointer(normal_pointer());
+                this->front_->set_pointer(0, normal_pointer(), SetPointerMode::Insert);
             }
         }
         else {
@@ -1930,10 +1932,10 @@ void ClientExecute::process_client_execute_pdu(uint32_t total_length,
 
     if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
         (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
-        this->client_execute_flags       = cepdu.Flags();
-        this->client_execute_exe_or_file = cepdu.ExeOrFile();
-        this->client_execute_working_dir = cepdu.WorkingDir();
-        this->client_execute_arguments   = cepdu.Arguments();
+        this->client_execute.flags       = cepdu.Flags();
+        this->client_execute.exe_or_file = cepdu.ExeOrFile();
+        this->client_execute.working_dir = cepdu.WorkingDir();
+        this->client_execute.arguments   = cepdu.Arguments();
     }
 
     this->should_ignore_first_client_execute_ = false;
@@ -2995,13 +2997,13 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
     }   // switch (this->client_order_type)
 }   // send_to_mod_rail_channel
 
-uint16_t ClientExecute::Flags() const { return this->client_execute_flags; }
+uint16_t ClientExecute::Flags() const { return this->client_execute.flags; }
 
-const char * ClientExecute::ExeOrFile() const { return this->client_execute_exe_or_file.c_str(); }
+const char * ClientExecute::ExeOrFile() const { return this->client_execute.exe_or_file.c_str(); }
 
-const char * ClientExecute::WorkingDir() const { return this->client_execute_working_dir.c_str(); }
+const char * ClientExecute::WorkingDir() const { return this->client_execute.working_dir.c_str(); }
 
-const char * ClientExecute::Arguments() const { return this->client_execute_arguments.c_str(); }
+const char * ClientExecute::Arguments() const { return this->client_execute.arguments.c_str(); }
 
 bool ClientExecute::should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
 

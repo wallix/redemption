@@ -156,7 +156,7 @@ inline void receive_rdp_color(InStream & stream, RDPColor & color)
     uint8_t r = stream.in_uint8();
     uint8_t g = stream.in_uint8();
     uint8_t b = stream.in_uint8();
-    color = RDPColor::from(BGRColor(b, g, r).to_u32());
+    color = RDPColor::from(BGRColor(b, g, r).as_u32());
 }
 
 struct RDPPen {

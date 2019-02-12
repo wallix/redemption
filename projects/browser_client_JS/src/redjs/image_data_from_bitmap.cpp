@@ -18,33 +18,30 @@ Copyright (C) Wallix 2010-2018
 Author(s): Jonathan Poelen
 */
 
-#include "redjs/image_data.hpp"
+#include "redjs/image_data_from_bitmap.hpp"
 
 #include "utils/bitmap.hpp"
-#include "utils/bitmap_data_allocator.hpp"
 #include "utils/colors.hpp"
-
-#include <memory>
 
 
 namespace redjs
 {
 
-ImageData::ImageData(Bitmap const& bmp)
-: cx(bmp.cx())
-, cy(bmp.cy())
-, buf(static_cast<uint8_t*>(aux_::bitmap_data_allocator.alloc(this->size())))
+ImageData image_data_from_bitmap(Bitmap const& bmp)
 {
-    auto init = [this, bmp](auto buf_to_color, auto dec) -> void
+    uint8_t* pdata = new uint8_t[bmp.cx() * bmp.cy() * 4];
+    ImageData img{bmp.cx(), bmp.cy(), std::unique_ptr<uint8_t[]>(pdata)};
+
+    auto init = [pdata, &img, &bmp](auto buf_to_color, auto dec) -> void
     {
-        uint8_t * dest = this->buf.get();
+        uint8_t * dest = pdata;
         uint8_t const src_nbbytes = nb_bytes_per_pixel(dec.bpp);
         uint8_t const* src = bmp.data() + bmp.line_size() * (bmp.cy() - 1);
         size_t const step = bmp.line_size() + bmp.cx() * src_nbbytes;
-        uint8_t const* end = dest + this->size();
+        uint8_t const* end = dest + img.size();
 
         while (dest < end) {
-            uint8_t const* endx = dest + cx * 4;
+            uint8_t const* endx = dest + img.width() * 4;
             while (dest < endx) {
                 BGRColor pixel = dec(buf_to_color(src));
                 if (dec.bpp == BitsPerPixel{24}) {
@@ -71,31 +68,8 @@ ImageData::ImageData(Bitmap const& bmp)
         case BitsPerPixel::BitsPP24: init(buf2col_3B, dec24{}); break;
         default: assert(!"unknown bpp");
     }
-}
 
-uint8_t const* ImageData::data() const noexcept
-{
-    return this->buf.get();
-}
-
-unsigned ImageData::width() const noexcept
-{
-    return this->cx;
-}
-
-unsigned ImageData::height() const noexcept
-{
-    return this->cy;
-}
-
-std::size_t ImageData::size() const noexcept
-{
-    return static_cast<std::size_t>(cx * cy * 4);
-}
-
-void ImageData::Deleter::operator()(void* p) noexcept
-{
-    aux_::bitmap_data_allocator.dealloc(p);
+    return img;
 }
 
 }

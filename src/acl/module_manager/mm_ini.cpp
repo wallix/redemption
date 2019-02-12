@@ -46,7 +46,7 @@ Rect get_widget_rect(uint16_t width, uint16_t height, GCC::UserData::CSMonitor c
 }
 
 
-void MMIni::new_mod(int target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
+void MMIni::new_mod(ModuleIndex target_module, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/)
 {
     LOG(LOG_INFO, "new mod %d at time: %d\n", target_module, static_cast<int>(now));
     switch (target_module) {
@@ -88,7 +88,7 @@ void MMIni::invoke_close_box(
     }
 }
 
-int MMIni::next_module()
+ModuleIndex MMIni::next_module()
 {
     LOG(LOG_INFO, "----------> ACL next_module <--------");
     auto & module_cstr = this->ini.get<cfg::context::module>();
@@ -97,13 +97,9 @@ int MMIni::next_module()
         LOG(LOG_INFO, "===========> MODULE_LOGIN");
         return MODULE_INTERNAL_WIDGET_LOGIN;
     }
-    if (module_cstr == STRMODULE_SELECTOR) {
+    if (module_cstr == STRMODULE_SELECTOR || module_cstr == STRMODULE_SELECTOR_LEGACY) {
         LOG(LOG_INFO, "===============> MODULE_SELECTOR");
         return MODULE_INTERNAL_WIDGET_SELECTOR;
-    }
-    if (module_cstr == STRMODULE_SELECTOR_LEGACY) {
-        LOG(LOG_INFO, "===============> MODULE_SELECTOR_LEGACY");
-        return MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY;
     }
     if (module_cstr == STRMODULE_CONFIRM) {
         LOG(LOG_INFO, "===============> MODULE_DIALOG_CONFIRM");
@@ -137,9 +133,7 @@ int MMIni::next_module()
         LOG(LOG_INFO, "===========> MODULE_INTERNAL_CLOSE_BACK");
         return MODULE_INTERNAL_CLOSE_BACK;
     }
-    if (this->connected &&
-        (module_cstr == STRMODULE_RDP ||
-            module_cstr == STRMODULE_VNC)) {
+    if (this->connected && (module_cstr == STRMODULE_RDP || module_cstr == STRMODULE_VNC)) {
         LOG(LOG_INFO, "===========> MODULE_CLOSE");
         if (this->ini.get<cfg::context::auth_error_message>().empty()) {
             this->ini.set<cfg::context::auth_error_message>(TR(trkeys::end_connection, language(this->ini)));
@@ -155,7 +149,7 @@ int MMIni::next_module()
         return MODULE_VNC;
     }
     if (module_cstr == STRMODULE_INTERNAL) {
-        int res = MODULE_EXIT;
+        ModuleIndex res = MODULE_EXIT;
         auto & target = this->ini.get<cfg::context::target_host>();
         if (target == "bouncer2") {
             LOG(LOG_INFO, "==========> MODULE_INTERNAL bouncer2");
@@ -167,7 +161,7 @@ int MMIni::next_module()
         }
         else if (target == "widget_message") {
             LOG(LOG_INFO, "==========> MODULE_INTERNAL widget_message");
-            res = MODULE_INTERNAL_WIDGET_MESSAGE;
+            res = MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE;
         }
         else if (target == "widgettest") {
             LOG(LOG_INFO, "==========> MODULE_INTERNAL widgettest");

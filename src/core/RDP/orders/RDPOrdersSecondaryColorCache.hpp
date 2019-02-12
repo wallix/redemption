@@ -137,7 +137,7 @@ public:
         for (size_t i = 0; i < 256 ; ++i){
             if (this->palette[i] != other.palette[i]){
                 printf("palette differs at index %d: %x != %x\n",
-                       static_cast<int>(i), this->palette[i].to_u32(), other.palette[i].to_u32());
+                       static_cast<int>(i), this->palette[i].as_u32(), other.palette[i].as_u32());
                 return false;
             }
         }
@@ -152,8 +152,8 @@ public:
             "RDPColCache(%u,"
             "[0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, 0x%.6x, ...]\n",
             unsigned(this->cacheIndex),
-            this->palette[0].to_u32(), this->palette[1].to_u32(), this->palette[2].to_u32(),
-            this->palette[3].to_u32(), this->palette[4].to_u32(), this->palette[5].to_u32());
+            this->palette[0].as_u32(), this->palette[1].as_u32(), this->palette[2].as_u32(),
+            this->palette[3].as_u32(), this->palette[4].as_u32(), this->palette[5].as_u32());
         if (lg >= sz){
             return sz;
         }

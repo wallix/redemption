@@ -101,7 +101,7 @@ public:
 
     void recv_boom(bytes_view buffer)
     {
-        if (Read::Eof == this->atomic_read(buffer.to_u8p(), buffer.size())) {
+        if (Read::Eof == this->atomic_read(buffer.as_u8p(), buffer.size())) {
             throw Error(ERR_TRANSPORT_NO_MORE_DATA);
         }
     }
@@ -113,37 +113,37 @@ public:
     REDEMPTION_CXX_NODISCARD
     Read atomic_read(byte_ptr buffer, size_t len)
     {
-        return this->do_atomic_read(buffer.to_u8p(), len);
+        return this->do_atomic_read(buffer.as_u8p(), len);
     }
 
     REDEMPTION_CXX_NODISCARD
     Read atomic_read(bytes_view buffer)
     {
-        return this->do_atomic_read(buffer.to_u8p(), buffer.size());
+        return this->do_atomic_read(buffer.as_u8p(), buffer.size());
     }
 
     // TODO returns bytes_view
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(byte_ptr buffer, size_t len)
     {
-        return this->do_partial_read(buffer.to_u8p(), len);
+        return this->do_partial_read(buffer.as_u8p(), len);
     }
 
     // TODO returns bytes_view
     REDEMPTION_CXX_NODISCARD
     size_t partial_read(bytes_view buffer)
     {
-        return this->do_partial_read(buffer.to_u8p(), buffer.size());
+        return this->do_partial_read(buffer.as_u8p(), buffer.size());
     }
 
     void send(cbyte_ptr buffer, size_t len)
     {
-        this->do_send(buffer.to_u8p(), len);
+        this->do_send(buffer.as_u8p(), len);
     }
 
     void send(cbytes_view buffer)
     {
-        this->do_send(buffer.to_u8p(), buffer.size());
+        this->do_send(buffer.as_u8p(), buffer.size());
     }
 
     virtual void flush()

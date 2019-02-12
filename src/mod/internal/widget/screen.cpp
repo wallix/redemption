@@ -169,17 +169,18 @@ void WidgetScreen::redo_mouse_pointer_change(int x, int y)
     Widget * w = this->last_widget_at_pos(x, y);
     if (this->current_over != w){
         if (this->allow_mouse_pointer_change_) {
+            using SetPointerMode = gdi::GraphicApi::SetPointerMode;
             switch ( !w                                          ? (Pointer::POINTER_NULL)
                     :(w->pointer_flag == Pointer::POINTER_CUSTOM ? (w->get_pointer() ? Pointer::POINTER_CUSTOM:Pointer::POINTER_NORMAL)
                     : w->pointer_flag) ){
             case Pointer::POINTER_EDIT:
-                this->drawable.set_pointer(::edit_pointer());
+                this->drawable.set_pointer(0, ::edit_pointer(), SetPointerMode::Insert);
             break;
             case Pointer::POINTER_CUSTOM:
-                this->drawable.set_pointer(*w->get_pointer());
+                this->drawable.set_pointer(0, *w->get_pointer(), SetPointerMode::Insert);
             break;
             default:
-                this->drawable.set_pointer(::normal_pointer());
+                this->drawable.set_pointer(0, ::normal_pointer(), SetPointerMode::Insert);
             }
         }
         this->current_over = w;

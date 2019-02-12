@@ -30,9 +30,9 @@ FlatLoginMod::FlatLoginMod(
     FlatLoginModVariables vars, SessionReactor& session_reactor,
     char const * username, char const * password,
     FrontAPI & front, uint16_t width, uint16_t height, Rect const widget_rect, time_t /*now*/,
-    ClientExecute & client_execute, Font const& font, Theme const& theme
+    ClientExecute & rail_client_execute, Font const& font, Theme const& theme
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, rail_client_execute, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(),
         this->login, front, front, font, theme)

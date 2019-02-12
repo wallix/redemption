@@ -872,8 +872,8 @@ public:
         return res;
     }
 
-    void set_pointer(const Pointer & cursor) override {
-        this->graphics_update->set_pointer(cursor);
+    void set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPointerMode mode) override {
+        this->graphics_update->set_pointer(cache_idx, cursor, mode);
     }
 
     void update_pointer_position(uint16_t xPos, uint16_t yPos) override
@@ -4511,7 +4511,7 @@ protected:
 
             BGRColor order_color = color_decode(cmd.color, color_ctx);
             RDPColor image_color = color_encode(order_color, image_bpp);
-            uint32_t pixel_color = ((nb_bytes_per_pixel(image_bpp) <= 2) ? image_color.as_bgr().to_u32() : BGRColor(image_color.as_rgb()).to_u32());
+            uint32_t pixel_color = ((nb_bytes_per_pixel(image_bpp) <= 2) ? image_color.as_bgr().as_u32() : BGRColor(image_color.as_rgb()).as_u32());
 
             std::vector<Bitmap> image_collection;
 
