@@ -191,6 +191,8 @@ public:
     // Return true if event is consumed.
     bool input_mouse(uint16_t pointerFlags, uint16_t xPos, uint16_t yPos, bool& mouse_captured_ref);
 
+    const WindowsExecuteShellParams & get_client_execute();
+
     uint16_t Flags() const;
 
     const char * ExeOrFile() const;

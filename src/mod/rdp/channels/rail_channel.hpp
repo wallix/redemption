@@ -290,8 +290,10 @@ private:
             return false;
         }
 
-        const char* exe_of_file = cepdu.ExeOrFile();
+        const char* exe_of_file = cepdu.get_client_execute().exe_or_file.c_str();
 
+
+        // TODO: code below means startwith, code can likely be simplified
         if (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") == exe_of_file)
         {
             const char* remoteapplicationprogram =
@@ -305,7 +307,7 @@ private:
             }
 
             this->vars.set_acl<cfg::context::auth_notify>("rail_exec");
-            this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.Flags());
+            this->vars.set_acl<cfg::context::auth_notify_rail_exec_flags>(cepdu.get_client_execute().flags);
             this->vars.set_acl<cfg::context::auth_notify_rail_exec_exe_or_file>(remoteapplicationprogram);
         }
         else if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP)) {

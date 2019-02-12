@@ -27,6 +27,7 @@
 #include "utils/stream.hpp"
 #include "utils/sugar/cast.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 
 // [MS-RDPERP] - 2.2.2.1 Common Header (TS_RAIL_PDU_HEADER)
 // ========================================================
@@ -671,15 +672,11 @@ enum {
 
 class ClientExecutePDU {
 
-    uint16_t Flags_ = 0;
-
-    std::string exe_or_file;
-    std::string working_dir;
-    std::string arguments;
+    WindowsExecuteShellParams client_execute;
 
 public:
     void emit(OutStream & stream) const {
-        stream.out_uint16_le(this->Flags_);
+        stream.out_uint16_le(this->client_execute.flags);
 
         const uint32_t offset_of_ExeOrFile  = stream.get_offset();
         stream.out_clear_bytes(2);
@@ -690,18 +687,42 @@ public:
 
         const size_t maximum_length_of_ExeOrFile_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
+            stream, this->client_execute.exe_or_file, maximum_length_of_ExeOrFile_in_bytes,
             offset_of_ExeOrFile);
 
         const size_t maximum_length_of_WorkingDir_in_bytes = 520;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->working_dir, maximum_length_of_WorkingDir_in_bytes,
+            stream, this->client_execute.working_dir, maximum_length_of_WorkingDir_in_bytes,
             offset_of_WorkingDir);
 
         const size_t maximum_length_of_Arguments_in_bytes = 16000;
         put_non_null_terminated_utf16_from_utf8(
-            stream, this->arguments, maximum_length_of_Arguments_in_bytes,
+            stream, this->client_execute.arguments, maximum_length_of_Arguments_in_bytes,
             offset_of_Arguments);
+    }
+
+
+    // TODO: the name of the function is misleading it converts from utf16 to utf8
+
+    inline void get_non_null_terminated_utf16_from_utf8(
+        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
+        char const * context_error
+    ) {
+        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
+            LOG(LOG_ERR,
+                "Truncated %s: expected=%zu remains=%zu",
+                context_error, length_of_utf16_data_in_bytes, in.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+        uint8_t const * const utf16_data = in.get_current();
+        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+
+        const size_t size_of_utf8_string = length_of_utf16_data_in_bytes / 2 * maximum_length_of_utf8_character_in_bytes + 1;
+        auto const original_sz = 0; //out.size();
+        out.resize(original_sz + size_of_utf8_string);
+        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
+        const size_t length_of_utf8_string = ::UTF16toUTF8(utf16_data, length_of_utf16_data_in_bytes / 2, utf8_string, size_of_utf8_string);
+        out.resize(original_sz + length_of_utf8_string);
     }
 
     void receive(InStream & stream) {
@@ -717,35 +738,32 @@ public:
             }
         }
 
-        this->Flags_ = stream.in_uint16_le();
+        this->client_execute.flags = stream.in_uint16_le();
 
         uint16_t ExeOrFileLength  = stream.in_uint16_le();
         uint16_t WorkingDirLength = stream.in_uint16_le();
         uint16_t ArgumentsLen     = stream.in_uint16_le();
 
-        get_non_null_terminated_utf16_from_utf8(
-            this->exe_or_file, stream, ExeOrFileLength, "Client Execute PDU");
-        get_non_null_terminated_utf16_from_utf8(
-            this->working_dir, stream, WorkingDirLength, "Client Execute PDU");
-        get_non_null_terminated_utf16_from_utf8(
-            this->arguments, stream, ArgumentsLen, "Client Execute PDU");
+        this->get_non_null_terminated_utf16_from_utf8(
+            this->client_execute.exe_or_file, stream, ExeOrFileLength, "Client Execute PDU");
+        this->get_non_null_terminated_utf16_from_utf8(
+            this->client_execute.working_dir, stream, WorkingDirLength, "Client Execute PDU");
+        this->get_non_null_terminated_utf16_from_utf8(
+            this->client_execute.arguments, stream, ArgumentsLen, "Client Execute PDU");
     }
 
-    uint16_t Flags() const { return this->Flags_; }
+    const WindowsExecuteShellParams get_client_execute()
+    {
+        return this->client_execute;
+    }
 
-    void Flags(uint16_t Flags_) { this->Flags_ = Flags_; }
+    void Flags(uint16_t flags) { this->client_execute.flags = flags; }
 
-    const char * ExeOrFile() const { return this->exe_or_file.c_str(); }
+    void ExeOrFile(const char * ExeOrFile_) { this->client_execute.exe_or_file = ExeOrFile_; }
 
-    void ExeOrFile(const char * ExeOrFile_) { this->exe_or_file = ExeOrFile_; }
+    void WorkingDir(const char * WorkingDir_) { this->client_execute.working_dir = WorkingDir_; }
 
-    const char * WorkingDir() const { return this->working_dir.c_str(); }
-
-    void WorkingDir(const char * WorkingDir_) { this->working_dir = WorkingDir_; }
-
-    const char * Arguments() const { return this->arguments.c_str(); }
-
-    void Arguments(const char * Arguments_) { this->arguments = Arguments_; }
+    void Arguments(const char * Arguments_) { this->client_execute.arguments = Arguments_; }
 
     size_t size() const {
         size_t count = 12;  // Flags(2) + ExeOrFileLength(2) + WorkingDirLength(2) + ArgumentsLen(2)
@@ -754,7 +772,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->exe_or_file, this->exe_or_file.length() * 2);
+                out_stream, this->client_execute.exe_or_file, this->client_execute.exe_or_file.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -763,7 +781,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->working_dir, this->working_dir.length() * 2);
+                out_stream, this->client_execute.working_dir, this->client_execute.working_dir.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -772,7 +790,7 @@ public:
             StaticOutStream<65536> out_stream;
 
             auto size_of_unicode_data = put_non_null_terminated_utf16_from_utf8(
-                out_stream, this->arguments, this->arguments.length() * 2);
+                out_stream, this->client_execute.arguments, this->client_execute.arguments.length() * 2);
 
             count += 2 /* CbString(2) */ + size_of_unicode_data;
         }
@@ -789,8 +807,8 @@ private:
 
         result = ::snprintf(buffer + length, size - length,
             "Flags=0x%X ExeOrFile=\"%s\" WorkingDir=\"%s\" Arguments=\"%s\"",
-            this->Flags_, this->exe_or_file.c_str(), this->working_dir.c_str(),
-            this->arguments.c_str());
+            this->client_execute.flags, this->client_execute.exe_or_file.c_str(), this->client_execute.working_dir.c_str(),
+            this->client_execute.arguments.c_str());
         length += ((result < size - length) ? result : (size - length - 1));
 
         return length;
@@ -920,6 +938,34 @@ class ServerExecuteResultPDU {
 
     std::string exe_or_file;
 
+
+    // TODO: the name of the function is misleading it converts from utf16 to utf8
+    inline void get_non_null_terminated_utf16_from_utf8(
+        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
+        char const * context_error
+    ) {
+        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
+            LOG(LOG_ERR,
+                "Truncated %s: expected=%zu remains=%zu",
+                context_error, length_of_utf16_data_in_bytes, in.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+        uint8_t const * const utf16_data = in.get_current();
+        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+
+        const size_t size_of_utf8_string =
+            length_of_utf16_data_in_bytes / 2 *
+            maximum_length_of_utf8_character_in_bytes + 1;
+        auto const original_sz = 0; //out.size();
+        out.resize(original_sz + size_of_utf8_string);
+        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
+        const size_t length_of_utf8_string = ::UTF16toUTF8(
+            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf8_string, size_of_utf8_string);
+        out.resize(original_sz + length_of_utf8_string);
+    }
+
+
 public:
     void emit(OutStream & stream) const {
         stream.out_uint16_le(this->Flags_);
@@ -958,7 +1004,7 @@ public:
 
         this->ExeOrFileLength   = stream.in_uint16_le();
 
-        get_non_null_terminated_utf16_from_utf8(
+        this->get_non_null_terminated_utf16_from_utf8(
             this->exe_or_file, stream, this->ExeOrFileLength, "Server Execute Result PDU");
     }
 
@@ -1059,6 +1105,33 @@ public:
     : Flags_(Flags_)
     , color_scheme(ColorScheme_) {}
 
+    // TODO: the name of the function is misleading it converts from utf16 to utf8
+    inline void get_non_null_terminated_utf16_from_utf8(
+        std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
+        char const * context_error
+    ) {
+        if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
+            LOG(LOG_ERR,
+                "Truncated %s: expected=%zu remains=%zu",
+                context_error, length_of_utf16_data_in_bytes, in.in_remain());
+            throw Error(ERR_RAIL_PDU_TRUNCATED);
+        }
+        uint8_t const * const utf16_data = in.get_current();
+        in.in_skip_bytes(length_of_utf16_data_in_bytes);
+
+        const size_t size_of_utf8_string =
+            length_of_utf16_data_in_bytes / 2 *
+            maximum_length_of_utf8_character_in_bytes + 1;
+        auto const original_sz = 0; //out.size();
+        out.resize(original_sz + size_of_utf8_string);
+        uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
+        const size_t length_of_utf8_string = ::UTF16toUTF8(
+            utf16_data, length_of_utf16_data_in_bytes / 2,
+            utf8_string, size_of_utf8_string);
+        out.resize(original_sz + length_of_utf8_string);
+    }
+
+
     void emit(OutStream & stream) const {
         stream.out_uint32_le(this->Flags_);
 
@@ -1099,7 +1172,7 @@ public:
 
 //        assert(ColorSchemeLength >= 2);
 
-        get_non_null_terminated_utf16_from_utf8(
+        this->get_non_null_terminated_utf16_from_utf8(
             this->color_scheme, stream, ColorSchemeLength/*stream.in_uint16_le()*/,
             "High Contrast System Information Structure");
     }

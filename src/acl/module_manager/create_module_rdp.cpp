@@ -225,11 +225,7 @@ void ModuleManager::create_mod_rdp(
                                                             CaptureFlags::none));
     mod_rdp_params.rail_client_execute               = &rail_client_execute;
     
-    // TODO: add a method to ClientExecute returning a WindowsExecuteShellParams structure
-    mod_rdp_params.client_execute.flags                = rail_client_execute.Flags();
-    mod_rdp_params.client_execute.exe_or_file          = rail_client_execute.ExeOrFile();
-    mod_rdp_params.client_execute.working_dir          = rail_client_execute.WorkingDir();
-    mod_rdp_params.client_execute.arguments            = rail_client_execute.Arguments();
+    mod_rdp_params.client_execute                      = rail_client_execute.get_client_execute();
 
     mod_rdp_params.should_ignore_first_client_execute  = rail_client_execute.should_ignore_first_client_execute();
 

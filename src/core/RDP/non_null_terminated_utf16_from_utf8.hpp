@@ -28,31 +28,6 @@
 
 #include <string>
 
-inline void get_non_null_terminated_utf16_from_utf8(
-    std::string & out, InStream & in, size_t length_of_utf16_data_in_bytes,
-    char const * context_error
-) {
-    if (!in.in_check_rem(length_of_utf16_data_in_bytes)) {
-        LOG(LOG_ERR,
-            "Truncated %s: expected=%zu remains=%zu",
-            context_error, length_of_utf16_data_in_bytes, in.in_remain());
-        throw Error(ERR_RAIL_PDU_TRUNCATED);
-    }
-    uint8_t const * const utf16_data = in.get_current();
-    in.in_skip_bytes(length_of_utf16_data_in_bytes);
-
-    const size_t size_of_utf8_string =
-        length_of_utf16_data_in_bytes / 2 *
-        maximum_length_of_utf8_character_in_bytes + 1;
-    auto const original_sz = 0; //out.size();
-    out.resize(original_sz + size_of_utf8_string);
-    uint8_t * const utf8_string = byte_ptr_cast(&out[original_sz]);
-    const size_t length_of_utf8_string = ::UTF16toUTF8(
-        utf16_data, length_of_utf16_data_in_bytes / 2,
-        utf8_string, size_of_utf8_string);
-    out.resize(original_sz + length_of_utf8_string);
-}
-
 /// \return size of unicode data
 inline size_t put_non_null_terminated_utf16_from_utf8(
     OutStream & out, const_bytes_view utf8_string,
