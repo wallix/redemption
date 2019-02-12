@@ -32,7 +32,7 @@ public:
     LocallyIntegrableMod(SessionReactor& session_reactor,
                          FrontAPI & front,
                          uint16_t front_width, uint16_t front_height,
-                         Font const & font, ClientExecute & client_execute,
+                         Font const & font, ClientExecute & client_execute_object,
                          Theme const & theme);
 
     ~LocallyIntegrableMod() override;
@@ -55,7 +55,7 @@ private:
 
     virtual bool is_resizing_hosted_desktop_allowed() const;
 
-    ClientExecute & client_execute;
+    ClientExecute & client_execute_object;
     DVCManager dvc_manager;
 
     bool alt_key_pressed = false;

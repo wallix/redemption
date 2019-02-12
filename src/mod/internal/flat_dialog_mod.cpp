@@ -30,10 +30,10 @@ FlatDialogMod::FlatDialogMod(
     FlatDialogModVariables vars, SessionReactor& session_reactor,
     FrontAPI & front, uint16_t width, uint16_t height,
     Rect const widget_rect, const char * caption, const char * message,
-    const char * cancel_text, time_t /*now*/, ClientExecute & client_execute,
+    const char * cancel_text, time_t /*now*/, ClientExecute & client_execute_object,
     Font const& font, Theme const& theme, ChallengeOpt has_challenge
 )
-    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute, theme)
+    : LocallyIntegrableMod(session_reactor, front, width, height, font, client_execute_object, theme)
     , language_button(
         vars.get<cfg::client::keyboard_layout_proposals>(), this->dialog_widget,
         front, front, font, theme)

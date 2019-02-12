@@ -73,6 +73,7 @@
 #include "core/RDP/x224.hpp"
 #include "core/RDP/orders/remoteFx.hpp"
 #include "core/RDP/orders/RDPSurfaceCommands.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 
 #include "core/RDPEA/audio_output.hpp"
 
@@ -280,15 +281,11 @@ private:
         bool should_ignore_first_client_execute = false;
 #endif
 
-        uint16_t    client_execute_flags = 0;
-        std::string client_execute_exe_or_file;
-        std::string client_execute_working_dir;
-        std::string client_execute_arguments;
 
-        uint16_t    real_client_execute_flags = 0;
-        std::string real_client_execute_exe_or_file;
-        std::string real_client_execute_working_dir;
-        std::string real_client_execute_arguments;
+        WindowsExecuteShellParams client_execute;
+
+        WindowsExecuteShellParams real_client_execute;
+
         std::string real_alternate_shell;
         std::string real_working_dir;
 
@@ -792,28 +789,13 @@ private:
             base_params.exchanged_data_limit = 0;
             base_params.verbose  = this->verbose;
 
-            RemoteProgramsVirtualChannel::Params remote_programs_virtual_channel_params;
+            RemoteProgramsVirtualChannelParams remote_programs_virtual_channel_params;
 
             remote_programs_virtual_channel_params.use_session_probe_to_launch_remote_program   =
                 this->session_probe.used_to_launch_remote_program;
 
-            remote_programs_virtual_channel_params.client_execute_flags               =
-                this->client_execute_flags;
-            remote_programs_virtual_channel_params.client_execute_exe_or_file         =
-                this->client_execute_exe_or_file.c_str();
-            remote_programs_virtual_channel_params.client_execute_working_dir         =
-                this->client_execute_working_dir.c_str();
-            remote_programs_virtual_channel_params.client_execute_arguments           =
-                this->client_execute_arguments.c_str();
-
-            remote_programs_virtual_channel_params.client_execute_flags_2             =
-                this->real_client_execute_flags;
-            remote_programs_virtual_channel_params.client_execute_exe_or_file_2       =
-                this->real_client_execute_exe_or_file.c_str();
-            remote_programs_virtual_channel_params.client_execute_working_dir_2       =
-                this->real_client_execute_working_dir.c_str();
-            remote_programs_virtual_channel_params.client_execute_arguments_2         =
-                this->real_client_execute_arguments.c_str();
+            remote_programs_virtual_channel_params.client_execute = this->client_execute;
+            remote_programs_virtual_channel_params.client_execute_2 = this->real_client_execute;
 
             remote_programs_virtual_channel_params.rail_session_manager               =
                 this->remote_programs_session_manager.get();
@@ -1206,8 +1188,7 @@ private:
 
             bool has_target = (mod_rdp_params.target_application && *mod_rdp_params.target_application);
             bool use_client_provided_remoteapp = (mod_rdp_params.use_client_provided_remoteapp
-                                                && mod_rdp_params.client_execute_exe_or_file
-                                                && *mod_rdp_params.client_execute_exe_or_file);
+                                                && not mod_rdp_params.client_execute.exe_or_file.empty());
 
             if (has_target) {
                 if (this->session_probe.used_to_launch_remote_program) {
@@ -1224,20 +1205,20 @@ private:
                     this->real_working_dir     = mod_rdp_params.shell_working_dir;
                 }
                 else {
-                    Channels::replace_shell_arguments(this->real_client_execute_arguments,
+                    Channels::replace_shell_arguments(this->real_client_execute.arguments,
                         "${APPID}", mod_rdp_params.target_application,
                         "${USER}", mod_rdp_params.target_application_account,
                         "${PASSWORD}", mod_rdp_params.target_application_password);
-                    this->real_client_execute_flags       = 0;
+                    this->real_client_execute.flags       = 0;
                 }
-                this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
                 this->session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
             }
             else {
                 if (use_client_provided_remoteapp) {
-                        this->real_client_execute_arguments   = mod_rdp_params.client_execute_arguments;
-                        this->real_client_execute_flags       = mod_rdp_params.client_execute_flags;
-                        this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                        this->real_client_execute.arguments   = mod_rdp_params.client_execute.arguments;
+                        this->real_client_execute.flags       = mod_rdp_params.client_execute.flags;
+                        this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
                         this->session_probe_launcher = std::make_unique<SessionProbeAlternateShellBasedLauncher>(this->verbose);
                 }
             }
@@ -1247,11 +1228,11 @@ private:
                 if (use_client_provided_remoteapp
                 || !this->session_probe.used_to_launch_remote_program) {
                     this->real_alternate_shell = "[None]";
-                    this->real_client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
-                    this->real_client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+                    this->real_client_execute.exe_or_file = mod_rdp_params.client_execute.exe_or_file;
+                    this->real_client_execute.working_dir = mod_rdp_params.client_execute.working_dir;
                 }
 
-                this->client_execute_exe_or_file = mod_rdp_params.session_probe_exe_or_file;
+                this->client_execute.exe_or_file = mod_rdp_params.session_probe_exe_or_file;
 
                 // Executable file name of SP.
                 char exe_var_str[16] {};
@@ -1277,8 +1258,8 @@ private:
                     "/${COOKIE_VAR} ", cookie_param.c_str(),
                     "${CBSPL_VAR} ", "");
 
-                this->client_execute_arguments   = this->session_probe.arguments;
-                this->client_execute_working_dir = "%TMP%";
+                this->client_execute.arguments   = this->session_probe.arguments;
+                this->client_execute.working_dir = "%TMP%";
             }
 
             this->remote_programs_session_manager =
@@ -1286,7 +1267,7 @@ private:
                     session_reactor, front, mod_rdp, lang,
                     font, mod_rdp_params.theme, authentifier,
                     session_probe_window_title,
-                    mod_rdp_params.client_execute,
+                    mod_rdp_params.client_execute_object,
                     mod_rdp_params.rail_disconnect_message_delay,
                     this->verbose
                 );
@@ -1323,20 +1304,15 @@ private:
                     get_alternate_shell_arguments::Account{mod_rdp_params.target_application_account},
                     get_alternate_shell_arguments::Password{mod_rdp_params.target_application_password});
 
-                this->client_execute_exe_or_file = mod_rdp_params.alternate_shell;
-                this->client_execute_arguments   = std::move(shell_arguments);
-                this->client_execute_working_dir = mod_rdp_params.shell_working_dir;
-                this->client_execute_flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
+                this->client_execute.exe_or_file = mod_rdp_params.alternate_shell;
+                this->client_execute.arguments   = std::move(shell_arguments);
+                this->client_execute.working_dir = mod_rdp_params.shell_working_dir;
+                this->client_execute.flags       = TS_RAIL_EXEC_FLAG_EXPAND_WORKINGDIRECTORY;
             }
             else {
                 if (mod_rdp_params.use_client_provided_remoteapp
-                    && mod_rdp_params.client_execute_exe_or_file
-                    && *mod_rdp_params.client_execute_exe_or_file
-                    ) {
-                        this->client_execute_flags       = mod_rdp_params.client_execute_flags;
-                        this->client_execute_exe_or_file = mod_rdp_params.client_execute_exe_or_file;
-                        this->client_execute_arguments   = mod_rdp_params.client_execute_arguments;
-                        this->client_execute_working_dir = mod_rdp_params.client_execute_working_dir;
+                    && not mod_rdp_params.client_execute.exe_or_file.empty()) {
+                        this->client_execute       = mod_rdp_params.client_execute;
                 }
             }
 
@@ -1345,7 +1321,7 @@ private:
                         session_reactor, front, mod_rdp, lang,
                         font, mod_rdp_params.theme, authentifier,
                         session_probe_window_title,
-                        mod_rdp_params.client_execute,
+                        mod_rdp_params.client_execute_object,
                         mod_rdp_params.rail_disconnect_message_delay,
                         this->verbose
                     );

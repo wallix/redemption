@@ -101,7 +101,7 @@ public:
     std::string close_box_extra_message_ref;
 
     //  Remote App
-    ClientExecute client_execute;
+    ClientExecute client_execute_object;
 
     std::unique_ptr<mod_api> unique_mod;
 
@@ -230,7 +230,7 @@ public:
         , _callback(this)
         , session_reactor(session_reactor)
         , close_box_extra_message_ref("Close")
-        , client_execute(session_reactor, *(this), this->config.info.window_list_caps, false)
+        , client_execute_object(session_reactor, *(this), this->config.info.window_list_caps, false)
         , clientRDPSNDChannel(this->config.verbose, &(this->channel_mod), this->config.rDPSoundConfig)
         , clientCLIPRDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPClipboardConfig)
         , clientRDPDRChannel(this->config.verbose, &(this->channel_mod), this->config.rDPDiskConfig)
@@ -243,7 +243,7 @@ public:
         SSL_load_error_strings();
         SSL_library_init();
 
-        this->client_execute.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
+        this->client_execute_object.set_verbose(bool( (RDPVerbose::rail & this->config.verbose) | (RDPVerbose::rail_dump & this->config.verbose) ));
     }
 
    ~ClientRedemption() = default;
@@ -390,9 +390,9 @@ public:
                 const bool is_remote_app = this->config.mod_state == ClientRedemptionConfig::MOD_RDP_REMOTE_APP;
 
                 if (is_remote_app) {
-                    this->client_execute.enable_remote_program(true);
+                    this->client_execute_object.enable_remote_program(true);
                     mod_rdp_params.remote_program = true;
-                    mod_rdp_params.client_execute = &(this->client_execute);
+                    mod_rdp_params.client_execute_object = &(this->client_execute_object);
                     mod_rdp_params.remote_program_enhanced = INFO_HIDEF_RAIL_SUPPORTED != 0;
                     mod_rdp_params.use_client_provided_remoteapp = this->ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();
                     mod_rdp_params.use_session_probe_to_launch_remote_program = this->ini.get<cfg::context::use_session_probe_to_launch_remote_program>();
@@ -430,7 +430,7 @@ public:
                         this->config.user_name,  // this->ini.get<cfg::context::target_str>(),
                         ':',
                         this->config.target_IP); // this->ini.get<cfg::globals::primary_user_id>());
-                    this->client_execute.set_target_info(target_info);
+                    this->client_execute_object.set_target_info(target_info);
                 }
 
                 break;

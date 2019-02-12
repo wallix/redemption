@@ -26,6 +26,8 @@
 #include "mod/rdp/windowing_api.hpp"
 #include "utils/bitmap.hpp"
 #include "utils/rect.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
+
 
 #include <string>
 
@@ -49,10 +51,7 @@ class ClientExecute : public windowing_api
 
     uint16_t client_order_type = 0;
 
-    uint16_t    client_execute_flags = 0;
-    std::string client_execute_exe_or_file;
-    std::string client_execute_working_dir;
-    std::string client_execute_arguments;
+    WindowsExecuteShellParams client_execute;
 
     bool should_ignore_first_client_execute_ = true;
 

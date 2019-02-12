@@ -21,6 +21,7 @@
 #pragma once
 
 #include "configs/config.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
 #include "mod/rdp/channels/rail_session_manager.hpp"
 #include "mod/rdp/channels/sespro_channel.hpp"
@@ -31,6 +32,24 @@
 
 class FrontAPI;
 
+struct RemoteProgramsVirtualChannelParams
+{
+    WindowsExecuteShellParams client_execute;
+    WindowsExecuteShellParams client_execute_2;
+
+    uninit_checked<RemoteProgramsSessionManager*> rail_session_manager;
+
+    uninit_checked<bool> should_ignore_first_client_execute;
+
+    uninit_checked<bool> use_session_probe_to_launch_remote_program;
+
+    uninit_checked<bool> client_supports_handshakeex_pdu;
+    uninit_checked<bool> client_supports_enhanced_remoteapp;
+
+    explicit RemoteProgramsVirtualChannelParams() {}
+};
+
+
 class RemoteProgramsVirtualChannel final : public BaseVirtualChannel,
     public rdp_api
 {
@@ -38,15 +57,9 @@ private:
     uint16_t client_order_type = 0;
     uint16_t server_order_type = 0;
 
-       uint16_t param_client_execute_flags;
-    std::string param_client_execute_exe_or_file;
-    std::string param_client_execute_working_dir;
-    std::string param_client_execute_arguments;
+    WindowsExecuteShellParams client_execute;
 
-       uint16_t param_client_execute_flags_2;
-    std::string param_client_execute_exe_or_file_2;
-    std::string param_client_execute_working_dir_2;
-    std::string param_client_execute_arguments_2;
+    WindowsExecuteShellParams client_execute_2;
 
     RemoteProgramsSessionManager * param_rail_session_manager = nullptr;
 
@@ -101,29 +114,6 @@ private:
     std::vector<LaunchPendingApp> launch_pending_apps;
 
 public:
-    struct Params
-    {
-        uninit_checked<   uint16_t> client_execute_flags;
-        uninit_checked<const char*> client_execute_exe_or_file;
-        uninit_checked<const char*> client_execute_working_dir;
-        uninit_checked<const char*> client_execute_arguments;
-
-        uninit_checked<   uint16_t> client_execute_flags_2;
-        uninit_checked<const char*> client_execute_exe_or_file_2;
-        uninit_checked<const char*> client_execute_working_dir_2;
-        uninit_checked<const char*> client_execute_arguments_2;
-
-        uninit_checked<RemoteProgramsSessionManager*> rail_session_manager;
-
-        uninit_checked<bool> should_ignore_first_client_execute;
-
-        uninit_checked<bool> use_session_probe_to_launch_remote_program;
-
-        uninit_checked<bool> client_supports_handshakeex_pdu;
-        uninit_checked<bool> client_supports_enhanced_remoteapp;
-
-        explicit Params() {}
-    };
 
     RemoteProgramsVirtualChannel(
         VirtualChannelDataSender* to_client_sender_,
@@ -131,18 +121,12 @@ public:
         FrontAPI& /*front*/,
         ModRdpVariables vars,
         const BaseVirtualChannel::Params & base_params,
-        const Params& params)
+        const RemoteProgramsVirtualChannelParams& params)
     : BaseVirtualChannel(to_client_sender_,
                          to_server_sender_,
                          base_params)
-    , param_client_execute_flags(params.client_execute_flags)
-    , param_client_execute_exe_or_file(params.client_execute_exe_or_file)
-    , param_client_execute_working_dir(params.client_execute_working_dir)
-    , param_client_execute_arguments(params.client_execute_arguments)
-    , param_client_execute_flags_2(params.client_execute_flags_2)
-    , param_client_execute_exe_or_file_2(params.client_execute_exe_or_file_2)
-    , param_client_execute_working_dir_2(params.client_execute_working_dir_2)
-    , param_client_execute_arguments_2(params.client_execute_arguments_2)
+    , client_execute(params.client_execute)
+    , client_execute_2(params.client_execute_2)
     , param_rail_session_manager(params.rail_session_manager)
     , param_should_ignore_first_client_execute(params.should_ignore_first_client_execute)
     , param_use_session_probe_to_launch_remote_program(params.use_session_probe_to_launch_remote_program)
@@ -529,17 +513,19 @@ private:
         }
 
         if (!this->client_execute_pdu_sent) {
-            if (!this->param_client_execute_exe_or_file.empty()) {
+            if (!this->client_execute.exe_or_file.empty()) {
                 StaticOutStream<16384> out_s;
                 RAILPDUHeader header;
                 header.emit_begin(out_s, TS_RAIL_ORDER_EXEC);
 
+
+                //TODO: define a constructor providing a WindowsExecuteShellParams structure
                 ClientExecutePDU cepdu;
 
-                cepdu.Flags(this->param_client_execute_flags);
-                cepdu.ExeOrFile(this->param_client_execute_exe_or_file.c_str());
-                cepdu.WorkingDir(this->param_client_execute_working_dir.c_str());
-                cepdu.Arguments(this->param_client_execute_arguments.c_str());
+                cepdu.Flags(this->client_execute.flags);
+                cepdu.ExeOrFile(this->client_execute.exe_or_file.c_str());
+                cepdu.WorkingDir(this->client_execute.working_dir.c_str());
+                cepdu.Arguments(this->client_execute.arguments.c_str());
 
                 cepdu.emit(out_s);
 
@@ -958,7 +944,7 @@ public:
         }
         else {
             if (!this->session_probe_channel ||
-                this->param_client_execute_exe_or_file != serpdu.ExeOrFile()) {
+                this->client_execute.exe_or_file != serpdu.ExeOrFile()) {
 
                 auto info = key_qvalue_pairs({
                     {"type", "CLIENT_EXECUTE_REMOTEAPP"},
@@ -976,7 +962,7 @@ public:
             }
         }
 
-        if (this->param_client_execute_exe_or_file == serpdu.ExeOrFile()) {
+        if (this->client_execute.exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -992,7 +978,7 @@ public:
                 }
 
                 if (!this->exe_or_file_2_sent &&
-                    !this->param_client_execute_exe_or_file_2.empty()) {
+                    !this->client_execute_2.exe_or_file.empty()) {
                     this->exe_or_file_exec_ok = true;
 
                     this->try_launch_application();
@@ -1007,7 +993,7 @@ public:
             return (!this->session_probe_channel);
         }
 
-        if (this->param_client_execute_exe_or_file_2 == serpdu.ExeOrFile()) {
+        if (this->client_execute_2.exe_or_file == serpdu.ExeOrFile()) {
             assert(!is_auth_application);
 
             if (this->session_probe_channel) {
@@ -1668,7 +1654,7 @@ public:
 
     void confirm_session_probe_launch() {
         if (!this->exe_or_file_2_sent &&
-            !this->param_client_execute_exe_or_file_2.empty()) {
+            !this->client_execute_2.exe_or_file.empty()) {
             this->session_probe_launch_confirmed = true;
 
             this->try_launch_application();
@@ -1682,7 +1668,7 @@ private:
         }
 
         assert(!this->exe_or_file_2_sent &&
-            !this->param_client_execute_exe_or_file_2.empty());
+            !this->client_execute_2.exe_or_file.empty());
 
         this->exe_or_file_2_sent = true;
 
@@ -1692,10 +1678,10 @@ private:
 
         ClientExecutePDU cepdu;
 
-        cepdu.Flags(this->param_client_execute_flags_2);
-        cepdu.ExeOrFile(this->param_client_execute_exe_or_file_2.c_str());
-        cepdu.WorkingDir(this->param_client_execute_working_dir_2.c_str());
-        cepdu.Arguments(this->param_client_execute_arguments_2.c_str());
+        cepdu.Flags(this->client_execute_2.flags);
+        cepdu.ExeOrFile(this->client_execute_2.exe_or_file.c_str());
+        cepdu.WorkingDir(this->client_execute_2.working_dir.c_str());
+        cepdu.Arguments(this->client_execute_2.arguments.c_str());
 
         cepdu.emit(out_s);
 

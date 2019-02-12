@@ -36,7 +36,7 @@
 
 void ModuleManager::create_mod_vnc(
     AuthApi& authentifier, ReportMessageApi& report_message,
-    Inifile& ini, FrontAPI& front, ClientInfo const& client_info, ClientExecute& client_execute,
+    Inifile& ini, FrontAPI& front, ClientInfo const& client_info, ClientExecute& client_execute_object,
     Keymap2::KeyFlags key_flags)
 {
     LOG(LOG_INFO, "ModuleManager::Creation of new mod 'VNC'\n");
@@ -120,7 +120,7 @@ void ModuleManager::create_mod_vnc(
             report_message,
             ini.get<cfg::mod_vnc::server_is_apple>(),
             ini.get<cfg::mod_vnc::server_unix_alt>(),
-            (client_info.remote_program ? &client_execute : nullptr),
+            (client_info.remote_program ? &client_execute_object : nullptr),
             ini,
             to_verbose_flags(ini.get<cfg::debug::mod_vnc>()),
             enable_metrics ? protocol_metrics.get() : nullptr
@@ -142,7 +142,7 @@ void ModuleManager::create_mod_vnc(
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'RailModuleHostMod'");
 
             Rect adjusted_client_execute_rect =
-                client_execute.adjust_rect(get_widget_rect(
+                client_execute_object.adjust_rect(get_widget_rect(
                     client_info.screen_info.width,
                     client_info.screen_info.height,
                     client_info.cs_monitor
@@ -153,7 +153,7 @@ void ModuleManager::create_mod_vnc(
               ':',
               ini.get<cfg::globals::primary_user_id>());
 
-            client_execute.set_target_info(target_info);
+            client_execute_object.set_target_info(target_info);
 
             auto* host_mod = new RailModuleHostMod(
                 ini,
@@ -163,7 +163,7 @@ void ModuleManager::create_mod_vnc(
                 client_info.screen_info.height,
                 adjusted_client_execute_rect,
                 std::move(new_mod),
-                client_execute,
+                client_execute_object,
                 this->load_font(),
                 this->load_theme(),
                 client_info.cs_monitor,

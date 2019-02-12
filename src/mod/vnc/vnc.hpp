@@ -214,7 +214,7 @@ private:
     bool server_is_apple;
     bool remove_server_alt_state_for_char;
     int keylayout;
-    ClientExecute* client_execute = nullptr;
+    ClientExecute* client_execute_object = nullptr;
     Zdecompressor<> zd;
 
     SessionReactor& session_reactor;
@@ -246,7 +246,7 @@ public:
            , ReportMessageApi & report_message
            , bool server_is_apple
            , bool remove_server_alt_state_for_char
-           , ClientExecute* client_execute
+           , ClientExecute* client_execute_object
            , ModVncVariables vars
            , VNCVerbose verbose
            , [[maybe_unused]] VNCMetrics * metrics
@@ -266,7 +266,7 @@ public:
     , server_is_apple(server_is_apple)
     , remove_server_alt_state_for_char(remove_server_alt_state_for_char)
     , keylayout(keylayout)
-    , client_execute(client_execute)
+    , client_execute_object(client_execute_object)
     , session_reactor(session_reactor)
     , vars(vars)
     #ifndef __EMSCRIPTEN__
@@ -2080,8 +2080,8 @@ private:
                 if (bool(this->verbose & VNCVerbose::basic_trace)) {
                     LOG(LOG_INFO, "resizing remoteapp");
                 }
-                if (this->client_execute) {
-                    this->client_execute->adjust_window_to_mod();
+                if (this->client_execute_object) {
+                    this->client_execute_object->adjust_window_to_mod();
                 }
                 // RZ: Continue with FrontAPI::ResizeResult::no_need
                 REDEMPTION_CXX_FALLTHROUGH;

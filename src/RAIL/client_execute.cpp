@@ -1930,10 +1930,10 @@ void ClientExecute::process_client_execute_pdu(uint32_t total_length,
 
     if (0 != ::strcasecmp(exe_of_file, DUMMY_REMOTEAPP) &&
         (::strcasestr(exe_of_file, DUMMY_REMOTEAPP ":") != exe_of_file)) {
-        this->client_execute_flags       = cepdu.Flags();
-        this->client_execute_exe_or_file = cepdu.ExeOrFile();
-        this->client_execute_working_dir = cepdu.WorkingDir();
-        this->client_execute_arguments   = cepdu.Arguments();
+        this->client_execute.flags       = cepdu.Flags();
+        this->client_execute.exe_or_file = cepdu.ExeOrFile();
+        this->client_execute.working_dir = cepdu.WorkingDir();
+        this->client_execute.arguments   = cepdu.Arguments();
     }
 
     this->should_ignore_first_client_execute_ = false;
@@ -2995,13 +2995,13 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
     }   // switch (this->client_order_type)
 }   // send_to_mod_rail_channel
 
-uint16_t ClientExecute::Flags() const { return this->client_execute_flags; }
+uint16_t ClientExecute::Flags() const { return this->client_execute.flags; }
 
-const char * ClientExecute::ExeOrFile() const { return this->client_execute_exe_or_file.c_str(); }
+const char * ClientExecute::ExeOrFile() const { return this->client_execute.exe_or_file.c_str(); }
 
-const char * ClientExecute::WorkingDir() const { return this->client_execute_working_dir.c_str(); }
+const char * ClientExecute::WorkingDir() const { return this->client_execute.working_dir.c_str(); }
 
-const char * ClientExecute::Arguments() const { return this->client_execute_arguments.c_str(); }
+const char * ClientExecute::Arguments() const { return this->client_execute.arguments.c_str(); }
 
 bool ClientExecute::should_ignore_first_client_execute() const { return this->should_ignore_first_client_execute_; }
 
