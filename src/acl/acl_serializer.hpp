@@ -654,8 +654,9 @@ public:
                     LOG(LOG_INFO, "===========> MODULE_RETRY_CURRENT");
                 }
 
-                int next_state = (((signal == BACK_EVENT_NEXT)
-                                  || (front_signal == BACK_EVENT_NEXT)) ? mm.next_module() : MODULE_RDP);
+                ModuleIndex next_state
+                  = (signal == BACK_EVENT_NEXT || front_signal == BACK_EVENT_NEXT)
+                  ? mm.next_module() : MODULE_RDP;
 
                 front_signal = BACK_EVENT_NONE;
 

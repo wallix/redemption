@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "acl/module_manager/enums.hpp"
 #include "core/back_event_t.hpp"
 #include "mod/mod_api.hpp"
 
@@ -50,8 +51,8 @@ public:
     MMApi() = default;
     virtual ~MMApi() = default;
     virtual void remove_mod() = 0;
-    virtual void new_mod(int target_module, time_t now, AuthApi &, ReportMessageApi &) = 0;
-    virtual int next_module() = 0;
+    virtual void new_mod(ModuleIndex target_module, time_t now, AuthApi &, ReportMessageApi &) = 0;
+    virtual ModuleIndex next_module() = 0;
     // virtual int get_mod_from_protocol() = 0;
     virtual void invoke_close_box(const char * auth_error_message, BackEvent_t & signal, time_t now, AuthApi & /*unused*/, ReportMessageApi & /*unused*/) {
         (void)auth_error_message;

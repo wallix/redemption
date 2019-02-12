@@ -436,7 +436,7 @@ private:
 
     std::array<uint8_t, 28> server_auto_reconnect_packet {};
 
-    int old_target_module = MODULE_UNKNOWN;
+    ModuleIndex old_target_module = MODULE_UNKNOWN;
 
 public:
     REDEMPTION_VERBOSE_FLAGS(private, verbose)
@@ -513,7 +513,7 @@ private:
     }
 
 public:
-    void new_mod(int target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
+    void new_mod(ModuleIndex target_module, time_t now, AuthApi & authentifier, ReportMessageApi & report_message) override
     {
         LOG(LOG_INFO, "----------> ACL new_mod <--------");
         LOG(LOG_INFO, "target_module=%s(%d)", get_module_name(target_module), target_module);
@@ -616,7 +616,6 @@ public:
             LOG(LOG_INFO, "ModuleManager::internal module 'test_card' ready");
             break;
         case MODULE_INTERNAL_WIDGET_SELECTOR:
-        case MODULE_INTERNAL_WIDGET_SELECTOR_LEGACY:
             LOG(LOG_INFO, "ModuleManager::Creation of internal module 'selector'");
             if (report_message.get_inactivity_timeout() != this->ini.get<cfg::globals::session_timeout>().count()) {
                 report_message.update_inactivity_timeout();
@@ -695,7 +694,6 @@ public:
             }
             break;
         case MODULE_INTERNAL_DIALOG_VALID_MESSAGE:
-        case MODULE_INTERNAL_WIDGET_DIALOG:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Accept Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
@@ -724,7 +722,6 @@ public:
             }
             break;
         case MODULE_INTERNAL_DIALOG_DISPLAY_MESSAGE:
-        case MODULE_INTERNAL_WIDGET_MESSAGE:
             {
                 LOG(LOG_INFO, "ModuleManager::Creation of internal module 'Dialog Display Message'");
                 const char * message = this->ini.get<cfg::context::message>().c_str();
