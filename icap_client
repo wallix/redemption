@@ -57,7 +57,7 @@ httpRequest  += "\r\n"
 
 httpResponse  = "HTTP/1.1 200 OK\r\n"
 httpResponse += "Transfer-Encoding: chunked\r\n"
-httpResponse += "Content-Length: "+str(size_to_read)+"\r\n"
+httpResponse += "Content-Length: 0\r\n" # "+str(size_to_read)+"
 httpResponse += "\r\n"
 
 icapRequest   = "RESPMOD icap://"+host+":"+str(port)+"/avscan ICAP/1.0\r\n"
