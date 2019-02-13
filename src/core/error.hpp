@@ -182,6 +182,7 @@
     f(ERR_RDP_SLOWPATH)                                          \
     f(ERR_RDP_FASTPATH)                                          \
     f(ERR_RDP_DATA_TRUNCATED)                                    \
+    f(ERR_RDP_DATA_CHANNEL_FRAGMENTATION)                        \
     f(ERR_RDP_LOGON_USER_CHANGED)                                \
     f(ERR_RDP_LOGON_TIMER_EXPIRED)                               \
     f(ERR_RDP_UNSUPPORTED)                                       \

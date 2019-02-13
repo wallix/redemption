@@ -225,6 +225,8 @@ private:
     void draw_maximize_box(bool mouse_over, const Rect r);
 
     void initialize_move_size(uint16_t xPos, uint16_t yPos, int pressed_mouse_button_);
+    
+    void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message);
 
 public:
     void adjust_window_to_mod();

@@ -30,6 +30,7 @@
 #include "core/RDP/orders/RDPOrdersPrimaryOpaqueRect.hpp"
 #include "core/RDP/rdp_pointer.hpp"
 #include "core/RDP/remote_programs.hpp"
+#include "core/stream_throw_helpers.hpp"
 #include "mod/mod_api.hpp"
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "utils/bitmap_from_file.hpp"
@@ -1831,25 +1832,36 @@ void ClientExecute::reset(bool soft)
     this->channel_ = nullptr;
 }   // reset
 
-void ClientExecute::process_client_activate_pdu(uint32_t total_length,
-    uint32_t flags, InStream& chunk)
+// Check if a PDU chunk is a "unit" on the channel, which means
+// - it has both FLAG_FIRST and FLAG_LAST
+// - it contains at least two bytes (to read the chunk length)
+// - it's total length is the same as the chunk length
+void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
 {
-    (void)total_length;
-
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_activate_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
+    if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST))
+              != (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST)){
+        LOG(LOG_ERR, "ClientExecute::%s unexpected fragmentation flags=%.4x", message, flags);
+        throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
+    }
+    
+    // orderLength(2)
+    if (!chunk.in_check_rem(2)) {
+        LOG(LOG_ERR, "Truncated ClientExecute::%s::orderLength: expected=2 remains=%zu", message, chunk.in_remain());
+        throw Error(ERR_RDP_DATA_TRUNCATED);
     }
 
-    ClientActivatePDU capdu;
+    auto order_length = chunk.in_uint16_le(); // orderLength(2)
+    if (total_length != order_length){
+        LOG(LOG_ERR, "ClientExecute::%s unexpected fragmentation chunk=%u total=%u", message, order_length, total_length);
+        throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
+    }
+}
 
+void ClientExecute::process_client_activate_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
+{
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientActivatePDU");
+
+    ClientActivatePDU capdu;
     capdu.receive(chunk);
 
     if (this->verbose) {
@@ -1901,27 +1913,13 @@ void ClientExecute::process_client_activate_pdu(uint32_t total_length,
     }
 }   // process_client_activate_pdu
 
-void ClientExecute::process_client_execute_pdu(uint32_t total_length,
-        uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_execute_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
     if (!this->channel_) return;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_execute_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientExecutePDU");
 
     ClientExecutePDU cepdu;
-
     cepdu.receive(chunk);
 
     if (this->verbose) {
@@ -1941,21 +1939,9 @@ void ClientExecute::process_client_execute_pdu(uint32_t total_length,
 void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
     if (!this->channel_) return;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_get_application_id_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ApplicationIdPDU");
 
     ClientGetApplicationIDPDU cgaipdu;
 
@@ -2005,24 +1991,11 @@ void ClientExecute::process_client_get_application_id_pdu(uint32_t total_length,
 void ClientExecute::process_client_handshake_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
     if (!this->channel_) return;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_handshake_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientHandshakePDU");
 
     HandshakePDU hspdu;
-
     hspdu.receive(chunk);
 
     if (this->verbose) {
@@ -2030,27 +2003,13 @@ void ClientExecute::process_client_handshake_pdu(uint32_t total_length,
     }
 }   // process_client_handshake_pdu
 
-void ClientExecute::process_client_information_pdu(uint32_t total_length,
-    uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_information_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
     if (!this->channel_) return;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_information_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientInformationPDU");
 
     ClientInformationPDU cipdu;
-
     cipdu.receive(chunk);
 
     if (this->verbose) {
@@ -2058,25 +2017,12 @@ void ClientExecute::process_client_information_pdu(uint32_t total_length,
     }
 }   // process_client_information_pdu
 
-void ClientExecute::process_client_system_command_pdu(uint32_t total_length,
-    uint32_t flags, InStream& chunk)
+void ClientExecute::process_client_system_command_pdu(uint32_t total_length, uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "RemoteProgramsVirtualChannel::process_client_system_command_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemCommandPDU");
 
     ClientSystemCommandPDU cscpdu;
-
     cscpdu.receive(chunk);
 
     if (this->verbose) {
@@ -2266,24 +2212,11 @@ void ClientExecute::on_delete_window()
 void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_length,
     uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
     if (!this->channel_) return;
 
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_system_parameters_update_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientSystemParametersUpdatePDU");
 
     ClientSystemParametersUpdatePDU cspupdu;
-
     cspupdu.receive(chunk);
 
     if (this->verbose) {
@@ -2666,22 +2599,9 @@ void ClientExecute::process_client_system_parameters_update_pdu(uint32_t total_l
 void ClientExecute::process_client_window_move_pdu(uint32_t total_length,
     uint32_t flags, InStream& chunk)
 {
-    (void)total_length;
-
-    if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::process_client_window_move_pdu: "
-                    "Truncated orderLength, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
-        chunk.in_skip_bytes(2); // orderLength(2)
-    }
+    this->check_is_unit_throw(total_length, flags, chunk, "ProcessClientWindowMovePDU");
 
     ClientWindowMovePDU cwmpdu;
-
     cwmpdu.receive(chunk);
 
     if (this->verbose) {
@@ -2815,14 +2735,8 @@ void ClientExecute::send_to_mod_rail_channel(size_t length, InStream & chunk, ui
     }
 
     if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-        if (!chunk.in_check_rem(2 /* orderType(2) */)) {
-            LOG(LOG_ERR,
-                "ClientExecute::send_to_mod_rail_channel: "
-                    "Truncated orderType, need=2 remains=%zu",
-                chunk.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
-
+        // orderType(2)
+        ::check_throw(chunk,  2, "ClientExecute::SendToModRailChannel::orderType", ERR_RDP_DATA_TRUNCATED);
         this->client_order_type = chunk.in_uint16_le();
     }
 
