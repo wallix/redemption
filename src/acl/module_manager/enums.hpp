@@ -40,7 +40,8 @@
 #define STRMODULE_WAITINFO         "waitinfo"
 
 // TODO enum class
-enum ModuleIndex {
+enum ModuleIndex : int
+{
     MODULE_EXIT,
     MODULE_VNC,
     MODULE_RDP,
