@@ -34,35 +34,35 @@
 #include "test_only/front/fake_front.hpp"
 
 
-// RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
-// {
-//     ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
-//     FakeFront front(screen_info);
-//     SessionReactor session_reactor;
-//     NullReportMessage report_message;
-//
-//     BaseVirtualChannel::Params base_params(report_message);
-//     base_params.exchanged_data_limit      = 0;
-//     base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
-//
-//     ClipboardVirtualChannelParams clipboard_virtual_channel_params;
-//     clipboard_virtual_channel_params.clipboard_down_authorized = true;
-//     clipboard_virtual_channel_params.clipboard_up_authorized   = true;
-//     clipboard_virtual_channel_params.clipboard_file_authorized = true;
-//
-//     #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
-//     TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
-//
-//     TestToClientSender to_client_sender(t);
-//     TestToServerSender to_server_sender(t);
-//
-//     ClipboardVirtualChannel clipboard_virtual_channel(
-//         &to_client_sender, &to_server_sender, front, false, "", session_reactor,
-//                 base_params,
-//                 clipboard_virtual_channel_params);
-//
-//     RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
-// }
+RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPFullAuthrisation)
+{
+    ScreenInfo screen_info{BitsPerPixel{24}, 800, 600};
+    FakeFront front(screen_info);
+    SessionReactor session_reactor;
+    NullReportMessage report_message;
+
+    BaseVirtualChannel::Params base_params(report_message);
+    base_params.exchanged_data_limit      = 0;
+    base_params.verbose                   = RDPVerbose::cliprdr | RDPVerbose::cliprdr_dump;
+
+    ClipboardVirtualChannelParams clipboard_virtual_channel_params;
+    clipboard_virtual_channel_params.clipboard_down_authorized = true;
+    clipboard_virtual_channel_params.clipboard_up_authorized   = true;
+    clipboard_virtual_channel_params.clipboard_file_authorized = true;
+
+    #include "fixtures/test_cliprdr_channel_xfreerdp_full_authorisation.hpp"
+    TestTransport t(indata, sizeof(indata)-1, outdata, sizeof(outdata)-1);
+
+    TestToClientSender to_client_sender(t);
+    TestToServerSender to_server_sender(t);
+
+    ClipboardVirtualChannel clipboard_virtual_channel(
+        &to_client_sender, &to_server_sender, front, false, "", session_reactor,
+                base_params,
+                clipboard_virtual_channel_params);
+
+    RED_CHECK_EXCEPTION_ERROR_ID(CHECK_CHANNEL(t, clipboard_virtual_channel), ERR_TRANSPORT_NO_MORE_DATA);
+}
 
 RED_AUTO_TEST_CASE(TestCliprdrChannelXfreeRDPDownDenied)
 {
