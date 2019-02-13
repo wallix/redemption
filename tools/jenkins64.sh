@@ -27,6 +27,8 @@ export FFMPEG_LINK_MODE=static
 
 export LSAN_OPTIONS=exitcode=0 # re-trace by valgrind
 
+export BOOST_TEST_COLOR_OUTPUT=0
+
 rm -rf bin
 
 # export REDEMPTION_LOG_PRINT=1
