@@ -36,6 +36,7 @@ projects/ClientQtGraphicAPI/writev
 /tools/ocr/fonts/
 /tools/ocr/learning
 *.pyc
+*.pyo
 
 # user depends
 password.py
