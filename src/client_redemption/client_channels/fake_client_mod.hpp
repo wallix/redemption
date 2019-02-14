@@ -134,8 +134,8 @@ public:
         this->data_text = str;
     }
 
-    array_view_const_char get_cliboard_text() override {
-        return {char_ptr_cast(this->_chunk.get()), this->_cliboard_data_length};
+    array_view_const_u8 get_cliboard_text() override {
+        return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
     void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {
