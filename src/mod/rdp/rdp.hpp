@@ -861,7 +861,7 @@ private:
             GeneralCaps const & client_general_caps,
             const char (& client_name)[128],
             AuthApi& authentifier
-           ) {
+        ) {
             (void)length;
             (void)chunk_size;
             assert(stream.in_remain() == chunk_size);
@@ -1667,24 +1667,6 @@ private:
             if (!mod_channel) {
                 return;
             }
-
-//            switch (front_channel_name) {
-//                case channel_names::cliprdr:
-//                    this->create_cliprdr_channel(chunk, length, flags, front, stc);
-//                    break;
-//                case channel_names::rail:
-//                    this->create_mod_rail_channel(chunk, length, flags, front, stc, vars, client_rail_caps);
-//                    break;
-//                case channel_names::rdpdr:
-//                    this->create_mod_rdpdr_channel(mod_channel, chunk, length, flags, front, stc, asynchronous_tasks,
-//                                    client_general_caps, client_name);
-//                    break;
-//                case channel_names::drdynvc:
-//                    break;
-//                    this->create_to_mod_drdynvc_channel(chunk, length, flags, front, stc);
-//                default:
-//                    this->create_channel_by_name(*mod_channel, chunk.get_data(), chunk.get_capacity(), length, flags, stc);
-//            }
 
             if (bool(this->verbose & RDPVerbose::channels)) {
                 mod_channel->log(unsigned(mod_channel - &this->mod_channel_list[0]));

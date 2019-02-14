@@ -7,8 +7,9 @@
             display: flex;
         }
         form {
-            display:inline;
-            vertical-align:top;
+            /* display:inline; */
+            /* vertical-align:top; */
+            margin-bottom: 2em
         }
 
         input {
@@ -22,11 +23,21 @@
 <canvas id="canvas" width="800" height="600"></canvas>
 <canvas id="canvas2" width="800" height="600" style="display:none"></canvas>
 <canvas id="curCanvas" style="display:none"></canvas>
-<form id="login" method="get" action="#">
-    <input type="text" id="user" name="user" value="x" placeholder="Username"/>
-    <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
-    <input type="submit" value="New Connection">
-</form>
+<section>
+    <form id="login" method="get" action="#">
+        <input type="text" id="user" name="user" value="x" placeholder="Username"/>
+        <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
+        <input type="submit" value="New Connection">
+    </form>
+    <form id="sendCbUtf8" method="get" action="#">
+        <input type="submit" value="Send Clipboard">
+        <textarea id="sendCbUtf8_data"></textarea>
+    </form>
+    <!-- <form id="receiveCbUtf8" method="get" action="#"> -->
+        <!-- <input type="submit" value="Send Clipboard"> -->
+        <textarea id="receiveCbUtf8_data"></textarea>
+    <!-- </form> -->
+<section>
 
 <script src="js_client.js"></script>
 <script>
@@ -48,7 +59,7 @@ const createRdpClient = (function(Module) {
         };
     };
 
-    const wrappersCbDraw = {
+    const wrappersCbMod = {
         // idata, w, h, dx, dy, sz, sy, dw, dh
         drawImage: wCb_em2js_ImageData,
         drawPolyline: function(cb) {
@@ -65,17 +76,19 @@ const createRdpClient = (function(Module) {
         setPointer: wCb_em2js_ImageData,
         newPointer: wCb_em2js_ImageData,
         cachedPointer: identity,
-    }
+
+        setClipboardUtf8: identity,
+    };
 
     const wrappersCb = {
-        ...wrappersCbDraw,
+        ...wrappersCbMod,
         socketOpen: identity,
         socketClose: identity,
         socketMessage: identity,
         socketAfterMessage: identity,
         socketError: identity,
         socketSend: identity,
-    }
+    };
 
     Module.RdpClientEventTable = {};
 
@@ -101,7 +114,8 @@ const createRdpClient = (function(Module) {
             sendUnicode: noop,
             sendScancode: noop,
             sendMouseEvent: noop,
-            close: noop
+            close: noop,
+            setClipboardUtf8: noop,
         };
 
         const send_data = function() {
@@ -157,12 +171,10 @@ const createRdpClient = (function(Module) {
                 cb(event);
             }
 
-            client.close = function() {
-                socket.close();
-            };
+            client.close = () => socket.close();
             rdpclient = new Module.RdpClient(username || "", password || "", verbosity || 0);
             // TODO
-            for (eventName in wrappersCbDraw) {
+            for (eventName in wrappersCbMod) {
                 if (!(eventName in events)) {
                     events[eventName] = console.log.bind(console, eventName);
                 }
@@ -178,6 +190,9 @@ const createRdpClient = (function(Module) {
             client.sendMouseEvent = function(flag, x, y) {
                 rdpclient.sendMouseEvent(flag, x, y);
                 send_data();
+            }
+            client.sendClipboardUtf8 = (utf8String) => {
+                rdpclient.sendClipboardUtf8(utf8String);
             }
 
             Module.RdpClientEventTable[rdpclient.thisptr()] = events;
@@ -228,6 +243,10 @@ const ecanvas2 = document.getElementById('canvas2');
 const canvas = ecanvas.getContext('2d');
 const canvas2 = ecanvas2.getContext('2d');
 const login = document.getElementById('login');
+const sendCbUtf8 = document.getElementById('sendCbUtf8');
+// const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
+const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
+const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
 let rdpclient;
@@ -688,6 +707,9 @@ function run()
     rdpclient.on('cachedPointer', function(offset) {
         ecanvas.style.cursor = cachePointers[offset];
     });
+    rdpclient.on('setClipboardUtf8', function(str) {
+        receiveCbUtf8_data.value = str;
+    });
 }
 
 login.onsubmit = (e) => {
@@ -696,6 +718,13 @@ login.onsubmit = (e) => {
         rdpclient.close();
     }
     run();
+};
+
+sendCbUtf8.onsubmit = (e) => {
+    e.preventDefault();
+    if (rdpclient) {
+        rdpclient.sendClipboardUtf8(sendCbUtf8_data.value);
+    }
 };
 
 canvas.fillStyle = 'black';

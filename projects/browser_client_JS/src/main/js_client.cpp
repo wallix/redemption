@@ -35,6 +35,7 @@ Author(s): Jonathan Poelen
 #include "redjs/browser_front.hpp"
 
 #include <chrono>
+#include <string_view>
 
 
 using Ms = std::chrono::milliseconds;
@@ -162,6 +163,7 @@ struct RdpClient
             browser_trans, session_reactor, front, client_info, redir_info, lcg_gen,
             lcg_timeobj, channels_authorizations,
             mod_rdp_params, authentifier, report_message, ini, nullptr);
+        front.set_mod(this->mod.get());
     }
 
     /// \return milliseconds before next timer, or 0 if no timer
@@ -221,6 +223,11 @@ struct RdpClient
     {
         this->mod->rdp_input_mouse(device_flags, x, y, nullptr);
     }
+
+    void send_clipboard_utf8(std::string const& utf8_string)
+    {
+        this->front.send_clipboard_utf8(utf8_string);
+    }
 };
 
 // Binding code
@@ -236,6 +243,7 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
+        // TODO front_ptr
         .function_ptr("thisptr", +[](RdpClient& ref) {
             return RED_EM_ASM_INT({ return $0; }, &ref.front);
         })
@@ -244,5 +252,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("sendUnicode", &RdpClient::rdp_input_unicode)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
+        .function("sendClipboardUtf8", &RdpClient::send_clipboard_utf8)
     ;
 }

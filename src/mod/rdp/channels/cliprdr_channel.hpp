@@ -135,8 +135,8 @@ public:
                                          this->clip_data.format_name_inventory,
                                          verbose);
 
-        if (!this->params.clipboard_down_authorized 
-        &&  !this->params.clipboard_up_authorized 
+        if (!this->params.clipboard_down_authorized
+        &&  !this->params.clipboard_up_authorized
         &&  !this->format_list_response_notifier) {
 
             LOG(LOG_WARNING,"ClipboardVirtualChannel::process_client_format_list_pdu: Clipboard is fully disabled.");
@@ -206,11 +206,11 @@ public:
         {
             case RDPECLIP::CB_CLIP_CAPS:
             {
-                       if (bool(verbose & RDPVerbose::cliprdr)) {
-            LOG(LOG_INFO,
-                "ClipboardVirtualChannel::process_client_message: "
-                    "Clipboard Capabilities PDU");
-            }
+                if (bool(verbose & RDPVerbose::cliprdr)) {
+                    LOG(LOG_INFO,
+                        "ClipboardVirtualChannel::process_client_message: "
+                            "Clipboard Capabilities PDU");
+                }
                 ClipboardCapabilitiesReceive receiver(this->clip_data.client_data, chunk, this->verbose);
                 send_message_to_server = true;
             }
@@ -407,7 +407,7 @@ public:
 
         this->clip_data.file_descr_list.clear();
 
-        if (!this->params.clipboard_down_authorized 
+        if (!this->params.clipboard_down_authorized
         &&  !this->params.clipboard_up_authorized) {
             LOG(LOG_WARNING,
                 "ClipboardVirtualChannel::process_server_format_list_pdu: "

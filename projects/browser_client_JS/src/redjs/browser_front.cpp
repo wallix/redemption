@@ -42,6 +42,9 @@ Author(s): Jonathan Poelen
 #include "utils/drawable_pointer.hpp"
 #include "utils/log.hpp"
 
+#include "core/RDP/clipboard.hpp"
+#include "client_redemption/client_channels/client_cliprdr_channel.hpp"
+
 #include <numeric>
 
 
@@ -101,17 +104,103 @@ namespace
             f(clip_drawable_cmd_intersect.intersect(cmd_rect));
         }
     }
+
+    struct Clip : ClientIOClipboardAPI
+    {
+        void emptyBuffer() override {}
+        void set_local_clipboard_stream(bool) override {}
+
+        void setClipboard_image(const uint8_t * /*data*/, const int /*image_width*/, const int /*image_height*/, const BitsPerPixel /*bpp*/) override {}
+        void setClipboard_files(const std::string & /*name*/) override {}
+
+        void setClipboard_text(const std::string & str) override
+        {
+            RED_EM_ASM(
+                {
+                    Module.RdpClientEventTable[$0].setClipboardUtf8(Pointer_stringify($1));
+                },
+                frontidx,
+                str.data()
+            );
+        }
+
+        void write_clipboard_temp_file(const std::string & /*fileName*/, const uint8_t * /*data*/, std::size_t /*data_len*/) override {}
+
+        uint16_t get_buffer_type_id() override
+        {
+            return RDPECLIP::CF_UNICODETEXT;
+        }
+
+        int get_citems_number() override { return 0; }
+
+        array_view_const_u8 get_cliboard_text() override
+        {
+            return this->clipboard_text_data;
+        }
+
+        size_t get_cliboard_data_length() override
+        {
+            return this->clipboard_text_data.size();
+        }
+
+        array_view_const_char get_file_item(int /*index*/) override { return {}; }
+        std::string get_file_item_name(int /*index*/) override { return {}; }
+
+        ConstImageDataView get_image() override
+        {
+            return ConstImageDataView{
+                nullptr, 0, 0, 0, BytesPerPixel{},
+                ConstImageDataView::Storage::BottomToTop
+            };
+        }
+
+        void set_utf8(std::string_view utf8_string)
+        {
+            const size_t len = utf8_string.size() * 4 + 2;
+            this->clipboard_text_data.resize(len + 2);
+            auto* data = this->clipboard_text_data.data();
+            auto real_len = UTF8toUTF16_CrLf(utf8_string, data, len - 2);
+            data[real_len] = 0;
+            data[real_len + 1] = 0;
+            this->clipboard_text_data.resize(real_len + 2);
+        }
+
+        int frontidx;
+
+    private:
+        std::vector<uint8_t> clipboard_text_data;
+    };
 }
 
 namespace redjs
 {
 
+struct BrowserFront::Clipboard
+{
+    Clipboard(RDPVerbose verbose)
+    : clientCLIPRDRChannel(verbose, &channel_mod, []{
+        RDPClipboardConfig config;
+        config.add_format(RDPECLIP::CF_UNICODETEXT, {});
+        return config;
+    }())
+    {
+        clientCLIPRDRChannel.set_api(&clip);
+    }
+
+    ClientChannelMod channel_mod;
+    ClientCLIPRDRChannel clientCLIPRDRChannel;
+    Clip clip;
+};
+
+// TODO RDPVerbose verbose
 BrowserFront::BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool verbose)
 : width(screen_info.width)
 , height(screen_info.height)
 , verbose(verbose)
 , screen_info(screen_info)
+, clipboard(std::make_unique<Clipboard>(RDPVerbose(verbose)))
 {
+    // TODO
     screen_info.width = 800;
     screen_info.height = 600;
     screen_info.bpp = BitsPerPixel{24};
@@ -122,7 +211,13 @@ BrowserFront::BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool 
     order_caps.orderSupport[TS_NEG_PATBLT_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_SCRBLT_INDEX] = 1;
     order_caps.orderSupport[TS_NEG_MEMBLT_INDEX] = 1;
+
+    this->cl.push_back(CHANNELS::ChannelDef(channel_names::cliprdr, 0, 0));
+
+    this->clipboard->clip.frontidx = RED_EM_ASM_INT({ return $0; }, this);
 }
+
+BrowserFront::~BrowserFront() = default;
 
 bool BrowserFront::can_be_start_capture()
 {
@@ -478,13 +573,29 @@ void BrowserFront::set_pointer(uint16_t cache_idx, Pointer const& cursor, SetPoi
 void BrowserFront::begin_update() { }
 void BrowserFront::end_update() { }
 
+void BrowserFront::set_mod(mod_api * mod)
+{
+    this->clipboard->channel_mod.set_mod(mod);
+}
+
+void BrowserFront::send_clipboard_utf8(std::string_view utf8_string)
+{
+    this->clipboard->clip.set_utf8(utf8_string);
+    this->clipboard->clientCLIPRDRChannel.send_FormatListPDU();
+}
+
 void BrowserFront::send_to_channel(
-    const CHANNELS::ChannelDef & /*channel*/, const uint8_t * /*data*/,
-    std::size_t /*length*/, std::size_t /*chunk_size*/, int /*flags*/)
+    const CHANNELS::ChannelDef & channel, const uint8_t * data,
+    std::size_t /*length*/, std::size_t chunk_size, int flags)
 {
     if (this->verbose) {
         LOG(LOG_INFO, "BrowserFront::send_to_channel");
     }
+
+    assert(channel.name == channel_names::cliprdr);
+
+    InStream chunk(data, chunk_size);
+    this->clipboard->clientCLIPRDRChannel.receive(chunk, flags);
 }
 
 void BrowserFront::update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/)

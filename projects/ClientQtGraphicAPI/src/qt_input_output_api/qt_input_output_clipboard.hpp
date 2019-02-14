@@ -24,6 +24,7 @@
 
 #include <fstream>
 #include <vector>
+#include <memory>
 
 
 #include "utils/log.hpp"
@@ -261,10 +262,7 @@ public:
 
         this->clean_CB_temp_dir();
 
-        this->_temp_files_list.clear();
-        for (size_t i = 0; i < _items_list.size(); i++) {
-            delete(this->_items_list[i]);
-        }
+        std::destroy(this->_items_list.begin(), this->_items_list.end());
         this->_items_list.clear();
     }
 
@@ -428,15 +426,15 @@ public Q_SLOTS:
         );
     }
 
-    uint8_t * get_text() override {
-        return this->_chunk.get();
+    array_view_const_u8 get_cliboard_text() override {
+        return {this->_chunk.get(), this->_cliboard_data_length};
     }
 
     std::string get_file_item_name(int index) override {
         return this->_items_list[index]->nameUTF8;
     }
 
-    array_view_char get_file_item(int index) override {
+    array_view_const_char get_file_item(int index) override {
         return {this->_items_list[index]->chunk, this->_items_list[index]->size};
     }
 

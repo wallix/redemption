@@ -35,8 +35,8 @@
 
 
 
-struct ClipboardSideData {
-
+struct ClipboardSideData
+{
      struct file_contents_request_info
     {
         uint32_t lindex;
@@ -156,8 +156,7 @@ struct ClipboardCapabilitiesReceive {
                 }
 
                 clip_data.use_long_format_names =
-                    bool(general_caps.generalFlags() &
-                     RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
+                    bool(general_caps.generalFlags() & RDPECLIP::CB_USE_LONG_FORMAT_NAMES);
             }
         }
     }

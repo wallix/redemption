@@ -768,9 +768,9 @@
 
     void ClientCLIPRDRChannel::send_FormatListPDU() {
         RDPECLIP::FormatListPDUEx format_list_pdu;
-
-        std::string format_name = this->formats_map[this->clientIOClipboardAPI->get_buffer_type_id()];
-        format_list_pdu.add_format_name(this->clientIOClipboardAPI->get_buffer_type_id(), format_name.c_str());
+        auto const type_id = this->clientIOClipboardAPI->get_buffer_type_id();
+        std::string const& format_name = this->formats_map[type_id];
+        format_list_pdu.add_format_name(type_id, format_name.c_str());
 
         const bool use_long_format_names = true;
         const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
@@ -793,11 +793,11 @@
                     );
     }
 
-    void ClientCLIPRDRChannel::process_monitor_ready() {
-
-        if (this->server_use_long_format_names) {
+    void ClientCLIPRDRChannel::process_monitor_ready()
+    {
+        // if (this->server_use_long_format_names) {
             this->generalFlags = this->generalFlags | RDPECLIP::CB_USE_LONG_FORMAT_NAMES;
-        }
+        // }
 
         {
             RDPECLIP::GeneralCapabilitySet general_cap_set(RDPECLIP::CB_CAPS_VERSION_2, this->generalFlags);
@@ -949,14 +949,15 @@
         int first_part_data_size(0);
         uint32_t total_length(this->clientIOClipboardAPI->get_cliboard_data_length() + RDPECLIP::CliprdrHeader::size());
         StaticOutStream<CHANNELS::CHANNEL_CHUNK_LENGTH> out_stream_first_part;
+        auto const type_id = this->clientIOClipboardAPI->get_buffer_type_id();
 
-        if (this->clientIOClipboardAPI->get_buffer_type_id() == chunk.in_uint32_le()) {
+        if (type_id == chunk.in_uint32_le()) {
 
             if (bool(this->verbose & RDPVerbose::cliprdr)) {
                 LOG(LOG_INFO, "CLIENT >> CB Channel: Format Data Response PDU");
             }
 
-            switch(this->clientIOClipboardAPI->get_buffer_type_id()) {
+            switch(type_id) {
 
                 case RDPECLIP::CF_METAFILEPICT:
                 {
@@ -1009,8 +1010,7 @@
                         , total_length
                         , out_stream_first_part
                         , first_part_data_size
-                        , {this->clientIOClipboardAPI->get_text()
-                        , this->clientIOClipboardAPI->get_cliboard_data_length()}
+                        , this->clientIOClipboardAPI->get_cliboard_text()
                         , CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL
                     );
                 }
@@ -1093,7 +1093,7 @@
                 }
                 break;
 
-                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", this->clientIOClipboardAPI->get_buffer_type_id());
+                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", type_id);
                 break;
             }
         }

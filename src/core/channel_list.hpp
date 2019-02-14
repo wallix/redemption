@@ -71,9 +71,7 @@ namespace CHANNELS {
         uint32_t flags{0};
         int      chanid{0};
 
-        ChannelDef()
-
-        = default;
+        ChannelDef() = default;
 
         ChannelDef(ChannelNameId name, uint32_t flags, int chanid)
         : name(name)

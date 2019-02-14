@@ -43,7 +43,6 @@
 
 class ClientIOClipboardAPI
 {
-
 public:
     virtual ~ClientIOClipboardAPI() = default;
 
@@ -59,20 +58,14 @@ public:
 
     //  get local clipboard data
     virtual uint16_t get_buffer_type_id() = 0;
-    virtual uint8_t * get_text() = 0;
     virtual int get_citems_number() = 0;
-    virtual size_t get_cliboard_data_length() = 0;
 
+    virtual array_view_const_u8 get_cliboard_text() = 0;
     virtual ConstImageDataView get_image() = 0;
-
-    // TODO should be `array_view_const_u8 (get_text + get_cliboard_data_length)`
-    // files data (file index to identify a file among a files group descriptor)
     virtual std::string get_file_item_name(int index) = 0;
+    virtual array_view_const_char get_file_item(int index) = 0;
 
-    // TODO should be `array_view_const_char get_file_item_size(int index)`
-    virtual array_view_char get_file_item(int index) = 0;
-
-
+    virtual size_t get_cliboard_data_length() = 0;
 };
 
 class ClientCLIPRDRChannel
@@ -115,7 +108,7 @@ public:
 
         array_view_const_u8 av() const noexcept
         {
-            return {this->data.get(), this->size};
+            return {this->data.get(), size_t(this->size)};
         }
     } _cb_buffers;
 

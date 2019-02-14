@@ -18,6 +18,7 @@ exe-js js_client :
   src/redjs/image_data_from_bitmap.bc
   src/redjs/image_data_from_pointer.bc
   projects/redemption_configs/redemption_src/configs/config.bc
+  src/client_redemption/client_channels/client_cliprdr_channel.bc
   src/core/RDP/dwt.bc
   src/core/RDP/mppc.bc
   src/core/RDP/nego.bc
@@ -78,6 +79,7 @@ objjs src/redjs/browser_transport.bc : src/redjs/browser_transport.cpp ;
 objjs src/redjs/image_data_from_bitmap.bc : src/redjs/image_data_from_bitmap.cpp ;
 objjs src/redjs/image_data_from_pointer.bc : src/redjs/image_data_from_pointer.cpp ;
 objjs projects/redemption_configs/redemption_src/configs/config.bc : $(REDEMPTION_CONFIG_PATH)/redemption_src/configs/config.cpp ;
+objjs src/client_redemption/client_channels/client_cliprdr_channel.bc : $(REDEMPTION_SRC_PATH)/client_redemption/client_channels/client_cliprdr_channel.cpp ;
 objjs src/core/RDP/dwt.bc : $(REDEMPTION_SRC_PATH)/core/RDP/dwt.cpp ;
 objjs src/core/RDP/mppc.bc : $(REDEMPTION_SRC_PATH)/core/RDP/mppc.cpp ;
 objjs src/core/RDP/nego.bc : $(REDEMPTION_SRC_PATH)/core/RDP/nego.cpp ;

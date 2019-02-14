@@ -53,14 +53,14 @@ public:
     {
         this->qt_sound = new QtOutputSound(this->config.SOUND_TEMP_DIR, this->qt_graphic.get_static_qwidget());
         this->qt_socket_listener = new QtInputSocket(session_reactor, this, this->qt_graphic.get_static_qwidget());
-        this->qt_clipboard = new QtInputOutputClipboard(&(this->clientCLIPRDRChannel), this->config.CB_TEMP_DIR, this->qt_graphic.get_static_qwidget());
+        this->qt_clipboard = new QtInputOutputClipboard(&this->clientCLIPRDRChannel, this->config.CB_TEMP_DIR, this->qt_graphic.get_static_qwidget());
 
         this->clientRDPSNDChannel.set_api(this->qt_sound);
         this->clientCLIPRDRChannel.set_api(this->qt_clipboard);
-        this->clientRDPDRChannel.set_api(&(this->ioDisk));
-        this->clientRemoteAppChannel.set_api(&(this->qt_graphic));
+        this->clientRDPDRChannel.set_api(&this->ioDisk);
+        this->clientRemoteAppChannel.set_api(&this->qt_graphic);
 
-        this->_callback.set_rdp_keyLayout_api(&(this->qt_rdp_keylayout));
+        this->_callback.set_rdp_keyLayout_api(&this->qt_rdp_keylayout);
 
         this->qt_graphic.init_form();
 

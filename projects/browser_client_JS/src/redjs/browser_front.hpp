@@ -29,6 +29,7 @@ Author(s): Jonathan Poelen
 
 class ScreenInfo;
 class OrderCaps;
+class mod_api;
 
 namespace redjs
 {
@@ -39,6 +40,7 @@ class BrowserFront : public FrontAPI
 {
 public:
     BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool verbose);
+    ~BrowserFront();
 
     bool can_be_start_capture() override;
     bool must_be_stop_capture() override;
@@ -101,6 +103,9 @@ public:
 
     void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override;
 
+    void send_clipboard_utf8(std::string_view utf8_string);
+    void set_mod(mod_api * mod);
+
 private:
     Rect intersect(Rect const& a, Rect const& b);
 
@@ -112,6 +117,9 @@ private:
     std::array<size_t, 3> image_data_index {0};
     size_t nb_image_datas {0};
     CHANNELS::ChannelDefArray cl;
+
+    class Clipboard;
+    std::unique_ptr<Clipboard> clipboard;
 };
 
 }

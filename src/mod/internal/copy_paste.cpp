@@ -122,7 +122,7 @@ bool CopyPaste::ready(FrontAPI & front)
 
         const size_t length_cb_clip_caps     = out_s_cb_clip_caps.get_offset();
         const size_t chunk_size_cb_clip_caps = length_cb_clip_caps;
-        this->front_->send_to_channel(*(this->channel_), out_s_cb_clip_caps.get_data(), length_cb_clip_caps, chunk_size_cb_clip_caps,
+        this->front_->send_to_channel(*this->channel_, out_s_cb_clip_caps.get_data(), length_cb_clip_caps, chunk_size_cb_clip_caps,
                                         CHANNELS::CHANNEL_FLAG_FIRST | CHANNELS::CHANNEL_FLAG_LAST | CHANNELS::CHANNEL_FLAG_SHOW_PROTOCOL);
 
         RDPECLIP::ServerMonitorReadyPDU monitor_ready_pdu;
@@ -152,7 +152,7 @@ void CopyPaste::paste(WidgetEdit & edit)
     }
     else {
         this->paste_edit_ = &edit;
-        
+
         RDPECLIP::FormatDataRequestPDU pdu;
         RDPECLIP::CliprdrHeader header(RDPECLIP::CB_FORMAT_DATA_REQUEST, RDPECLIP::CB_RESPONSE__NONE_, pdu.size());
 

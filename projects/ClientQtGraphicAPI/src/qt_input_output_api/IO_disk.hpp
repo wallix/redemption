@@ -43,21 +43,14 @@ public:
         std::ifstream file(new_path);
 
         if (file.good()) {
-            file.close();
             return true;
         }
-        file.close();
         return false;
     }
 
     bool ofile_good(const char * new_path) override {
         std::ofstream file(new_path, std::ios::out | std::ios::binary);
-        if (file.good()) {
-            file.close();
-            return true;
-        }
-        file.close();
-        return false;
+        return file.good();
     }
 
     bool dir_good(const char * new_path) override {
@@ -120,8 +113,7 @@ public:
         std::ifstream inFile(file_to_tread, std::ios::in | std::ios::binary);
         if(inFile.is_open()) {
             inFile.ignore(offset);
-            inFile.read(data.to_charp(), data.size());
-            inFile.close();
+            inFile.read(data.as_charp(), data.size());
         }
     }
 
@@ -134,30 +126,27 @@ public:
 
         DIR *dir;
         struct dirent *ent;
-        std::string ignored1("..");
-        std::string ignored2(".");
 
-        if ((dir = opendir (str_dir_path.c_str())) != nullptr) {
+        if ((dir = opendir(str_dir_path.c_str())) != nullptr) {
 
             try {
                 while ((ent = readdir (dir)) != nullptr) {
 
-                    std::string current_name = std::string (ent->d_name);
+                    std::string current_name(ent->d_name);
 
-                    if (!(current_name == ignored1) && !(current_name == ignored2)) {
-                        elem_list.push_back(current_name);
+                    if (current_name != ".." && current_name != ".") {
+                        elem_list.push_back(std::move(current_name));
                     }
                 }
             } catch (Error & e) {
                 LOG(LOG_WARNING, "readdir error: (%u) %s", e.id, e.errmsg());
             }
-            closedir (dir);
+            closedir(dir);
 
             return true;
-
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     int get_device(const char * file_path) override {
@@ -174,7 +163,6 @@ public:
         std::ofstream oFile(file_to_write, std::ios::out | std::ios::binary);
         if (oFile.good()) {
             oFile.write(data, data_len);
-            oFile.close();
             return true;
         }
         return false;
@@ -187,7 +175,4 @@ public:
     bool rename_file(const char * file_to_rename,  const char * new_name) override {
         return rename(file_to_rename, new_name) != 0;
     }
-
-
 };
-

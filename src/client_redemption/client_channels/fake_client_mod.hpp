@@ -134,8 +134,8 @@ public:
         this->data_text = str;
     }
 
-    uint8_t * get_text() override {
-        return this->_chunk.get();
+    array_view_const_char get_cliboard_text() override {
+        return {char_ptr_cast(this->_chunk.get()), this->_cliboard_data_length};
     }
 
     void setClipboard_image(const uint8_t * data, const int image_width, const int image_height, const BitsPerPixel bpp) override {
@@ -156,7 +156,7 @@ public:
         this->offset += data_len;
     }
 
-    array_view_char get_file_item(int /*index*/) override {
+    array_view_const_char get_file_item(int /*index*/) override {
         return {char_ptr_cast(this->_chunk.get()), this->size};
     }
 
