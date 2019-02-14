@@ -21,48 +21,39 @@ from select     import select
 import socket
 
 MAGICASK = u'UNLIKELYVALUEMAGICASPICONSTANTS3141592926ISUSEDTONOTIFYTHEVALUEMUSTBEASKED'
-DEBUG = False
+DEBUG = True
 
-def rvalue(value):
-    if value:
-        return value
-    return MAGICASK
+if DEBUG:
+    import pprint
 
 class AuthentifierSocketClosed(Exception):
     pass
 
-class ACLPassthrough():
-    def __init__(self, conn, addr):
-        self.cn = u'Unknown'
+class AuthentifierSharedData():
+    def __init__(self, conn):
+        self.proxy_conx = conn
+        self.shared = {
+            u'module':                  u'login',
+            u'selector_group_filter':   u'',
+            u'selector_device_filter':  u'',
+            u'selector_proto_filter':   u'',
+            u'selector':                u'False',
+            u'selector_current_page':   u'1',
+            u'selector_lines_per_page': u'0',
 
-        self.proxy_conx  = conn
-        self.addr        = addr
-        self.full_path   = None
-
-        self.shared                    = {}
-
-        self.shared[u'module']                  = u'login'
-        self.shared[u'selector_group_filter']   = u''
-        self.shared[u'selector_device_filter']  = u''
-        self.shared[u'selector_proto_filter']   = u''
-        self.shared[u'selector']                = u'False'
-        self.shared[u'selector_current_page']   = u'1'
-        self.shared[u'selector_lines_per_page'] = u'0'
-        self.pid = os.getpid()
-
-        self.shared[u'target_login']    = MAGICASK
-        self.shared[u'target_device']   = MAGICASK
-        self.shared[u'target_host']     = MAGICASK
-        self.shared[u'login']           = "admin"
-        self.shared[u'ip_client']       = MAGICASK
-        self.shared[u'target_protocol'] = MAGICASK
+            u'target_login':    MAGICASK,
+            u'target_device':   MAGICASK,
+            u'target_host':     MAGICASK,
+            u'login':           "admin",
+            u'ip_client':       MAGICASK,
+            u'target_protocol': MAGICASK,
+        }
 
     def send_data(self, data):
         u""" NB : Strings sent to the ReDemPtion proxy MUST be UTF-8 encoded """
 
         if DEBUG:
-            import pprint
-            Logger().info(u'================> send_data (update)=%s' % (pprint.pformat(data)))
+            Logger().info(u'================> send_data (update) =\n%s' % (pprint.pformat(data)))
         # replace MAGICASK with ASK and send data on the wire
         _list = []
         for key, value in data.items():
@@ -74,8 +65,7 @@ class ACLPassthrough():
             _list.append(_pair)
 
         if DEBUG:
-           import pprint
-           Logger().info(u'send_data (on the wire)=%s' % (pprint.pformat(_list)))
+           Logger().info(u'send_data (on the wire) =\n%s' % (pprint.pformat(_list)))
 
         _r_data = u"".join(_list)
         _r_data = _r_data.encode('utf-8')
@@ -136,8 +126,7 @@ class ACLPassthrough():
                 _status = False
 
             if DEBUG:
-                import pprint
-                Logger().info("received_data (on the wire) = %s" % (pprint.pformat(_data)))
+                Logger().info("received_data (on the wire) =\n%s" % (pprint.pformat(_data)))
 
         # may be actual socket error, or unpack or parsing failure
         # (because we got partial data). Whatever the case socket connection
@@ -151,42 +140,92 @@ class ACLPassthrough():
                     _data[key] = MAGICASK
                 elif (_data[key][:1] == u'!'):
                     _data[key] = _data[key][1:]
+                    if DEBUG:
+                        Logger().info("received_data: (%s, %s)" % (key, _data[key]))
                 else:
                     # _data[key] unchanged
                     pass
             self.shared.update(_data)
 
+            if DEBUG:
+                Logger().info("receive_data (is asked): =\n%s" % (pprint.pformat(
+                    [e[0] for e in self.shared.items()])))
+
         return _status, _error
 
+    def get(self, key, default=None):
+        return self.shared.get(key, default)
+
+    def is_asked(self, key):
+        return self.shared.get(key) == MAGICASK
+
+
+class ACLPassthrough():
+    def __init__(self, conn, addr):
+        self.proxy_conx = conn
+        self.addr       = addr
+        self.shared = AuthentifierSharedData(conn)
 
     def interactive_target(self, data_to_send):
         data_to_send.update({ u'module' : u'interactive_target' })
-        self.send_data(data_to_send)
-        _status, _error = self.receive_data()
+        self.shared.send_data(data_to_send)
+        _status, _error = self.shared.receive_data()
         if self.shared.get(u'display_message') != u'True':
             _status, _error = False, u'Connection closed by client'
         return _status, _error
 
-        # If we send close we should expect authentifier socket will be closed by the other end
-        # No need to return some warning message if that happen
-        self.send_data(data_to_send)
-        _status, _error = self.receive_data()
+    def receive_data(self):
+        status, error = self.shared.receive_data()
+        if not status:
+            raise Exception(error)
 
-        return _status, _error
+
+    def selector_target(self, data_to_send):
+        self.shared.send_data({
+            u'module': u'selector',
+            u'selector': '1',
+            u'login': self.shared.get(u'target_login')
+        })
+        self.receive_data()
+        self.shared.send_data(data_to_send)
+        self.receive_data()
+        if self.shared.is_asked(u'proto_dest'):
+            target = self.shared.get(u'login').split(':')
+            target_device = target[0]
+            target_login = target[1]
+            # login = target[2]
+            self.shared.shared[u'target_login'] = target_login
+            self.shared.shared[u'target_host'] = target_device
+            self.shared.shared[u'target_device'] = target_device
+            # self.shared.shared[u'target_password'] = '...'
+            # self.shared.shared[u'proto_dest'] = 'RDP'
+        else:
+            # selector_current_page, .....
+            pass
+
+
 
     def start(self):
-        _status, _error = self.receive_data()
+        _status, _error = self.shared.receive_data()
 
-        interactive_data = {}
-        interactive_data[u'target_password'] = rvalue(self.shared.get(u'password'))
-        interactive_data[u'target_host'] = rvalue(self.shared.get(u'real_target_device'))
-        interactive_data[u'target_login'] = rvalue(self.shared.get(u'login'))
-        interactive_data[u'target_device'] = (
-            "<host>$<application path>$<working dir>$"
-            "<args> for Application"
-        )
+        interactive_data = {
+            u'target_password': self.shared.get(u'password', MAGICASK),
+            u'target_host': self.shared.get(u'real_target_device', MAGICASK),
+            u'target_login': self.shared.get(u'login', MAGICASK),
+            u'target_device': (
+                "<host>$<application path>$<working dir>$"
+                "<args> for Application"
+            )
+        }
 
         _status, _error = self.interactive_target(interactive_data)
+
+        # selector_data = {
+        #     u'target_login': 'Proxy\\Administrator\x01login 2\x01login 3',
+        #     u'target_device': '10.10.44.27\x01device 2\x01device 3',
+        #     u'proto_dest': 'RDP\x01VNC\x01RDP',
+        # }
+        # self.selector_target(selector_data)
 
         kv = {}
         kv[u'login'] = self.shared.get(u'target_login')
@@ -201,6 +240,7 @@ class ACLPassthrough():
         kv[u'target_device'] = self.shared.get(u'target_host')
         kv[u'session_log_path'] = datetime.now().strftime(
             "session_log-%Y-%m-%d-%I:%M%p.log")
+        kv[u'session_probe'] = self.shared.get(u'0')
 
         if '$' in kv[u'target_host']:
             app_params = kv[u'target_host']
@@ -212,12 +252,12 @@ class ACLPassthrough():
                 kv[u'target_application'] = list_params[1]
                 kv[u'shell_arguments'] = list_params[3]
 
-        self.send_data(kv)
+        self.shared.send_data(kv)
 
         try_next = False
         signal.signal(signal.SIGUSR1, self.kill_handler)
         try:
-            self.send_data(kv)
+            self.shared.send_data(kv)
 
             # Looping on keepalived socket
             while True:
@@ -236,10 +276,10 @@ class ACLPassthrough():
                     Logger().info("Got Signal %s" % e)
                     got_signal = True
                 if self.proxy_conx in r:
-                    _status, _error = self.receive_data();
+                    _status, _error = self.shared.receive_data();
 
-                    if self.shared.get(u'keepalive') == MAGICASK:
-                        self.send_data({u'keepalive': u'True'})
+                    if self.shared.is_asked(u'keepalive'):
+                        self.shared.send_data({u'keepalive': u'True'})
                 # r can be empty
                 else: # (if self.proxy_conx in r)
                     Logger().info(u'Missing Keepalive')
