@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "utils/log.hpp"
 #include "configs/config.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
 #include "mod/rdp/channels/base_channel.hpp"
@@ -28,7 +29,6 @@
 #include "mod/rdp/channels/rail_window_id_manager.hpp"
 #include "mod/rdp/rdp_api.hpp"
 #include "mod/rdp/rdp_params.hpp"
-#include "utils/log.hpp"
 
 class FrontAPI;
 
@@ -204,45 +204,45 @@ private:
         return true;
     }
 
+    // Check if a PDU chunk is a "unit" on the channel, which means
+    // - it has both FLAG_FIRST and FLAG_LAST
+    // - it contains at least two bytes (to read the chunk length)
+    // - its total length is the same as the chunk length
+    void check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
+    {
+        if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST))
+                  != (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST)){
+            LOG(LOG_ERR, "RemoteProgramsVirtualChannel::%s unexpected fragmentation flags=%.4x", message, flags);
+            throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
+        }
+        
+        // orderLength(2)
+        if (!chunk.in_check_rem(2)) {
+            LOG(LOG_ERR, "Truncated RemoteProgramsVirtualChannel::%s::orderLength: expected=2 remains=%zu", message, chunk.in_remain());
+            throw Error(ERR_RDP_DATA_TRUNCATED);
+        }
+
+        auto order_length = chunk.in_uint16_le(); // orderLength(2)
+        if (total_length != order_length){
+            LOG(LOG_ERR, "RemoteProgramsVirtualChannel::%s unexpected fragmentation chunk=%u total=%u", message, order_length, total_length);
+            throw Error(ERR_RDP_DATA_CHANNEL_FRAGMENTATION);
+        }
+    }
+
+
     bool process_client_activate_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_activate_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_activate_pdu");
         return this->process_client_windowing_pdu<ClientActivatePDU>(flags, chunk);
     }
 
     bool process_client_compartment_status_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_compartment_statusinformation_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_compartment_statusinformation_pdu");
 
         CompartmentStatusInformationPDU csipdu;
-
         csipdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -255,22 +255,9 @@ private:
     bool process_client_execute_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_execute_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_execute_pdu");
 
         ClientExecutePDU cepdu;
-
         cepdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -320,42 +307,16 @@ private:
     bool process_client_get_application_id_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_get_application_id_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_get_application_id_pdu");
         return this->process_client_windowing_pdu<ClientGetApplicationIDPDU>(flags, chunk);
     }
 
     bool process_client_handshake_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_handshake_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_handshake_pdu");
 
         HandshakePDU hspdu;
-
         hspdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -368,22 +329,9 @@ private:
     bool process_client_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_information_pdu");
 
         ClientInformationPDU cipdu;
-
         cipdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -396,22 +344,9 @@ private:
     bool process_client_language_bar_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_language_bar_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_language_bar_information_pdu");
 
         LanguageBarInformationPDU lbipdu;
-
         lbipdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -427,14 +362,9 @@ private:
         (void)total_length;
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_language_profile_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
+            // TODO: fix that, see "check_is_unit_throw" in client_execute
+            // orderLength(2)
+            ::check_throw(chunk, 2, "RemoteProgramsVirtualChannel::process_client_language_profile_information_pdu::orderLength", ERR_RDP_DATA_TRUNCATED);
             chunk.in_skip_bytes(2); // orderLength(2)
         }
 
@@ -452,62 +382,23 @@ private:
     bool process_client_notify_event_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_notify_event_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_notify_event_pdu");
         return this->process_client_windowing_pdu<ClientNotifyEventPDU>(flags, chunk);
     }
 
     bool process_client_system_command_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_system_command_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_system_command_pdu");
         return this->process_client_windowing_pdu<ClientSystemCommandPDU>(flags, chunk);
     }
 
     bool process_client_system_parameters_update_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_system_parameters_update_pdu");
 
         ClientSystemParametersUpdatePDU cspupdu;
-
         cspupdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -563,40 +454,14 @@ private:
     bool process_client_system_menu_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_system_parameters_update_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_system_menu_pdu");
         return this->process_client_windowing_pdu<ClientSystemMenuPDU>(flags, chunk);
     }
 
     bool process_client_window_cloak_state_change_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_window_cloak_state_change_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_window_cloak_state_change_pdu");
         WindowCloakStateChangePDU wcscpdu;
 
         wcscpdu.receive(chunk);
@@ -611,20 +476,7 @@ private:
     bool process_client_window_move_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_window_move_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_client_window_move_pdu");
         return this->process_client_windowing_pdu<ClientWindowMovePDU>(flags, chunk);
     }
 
@@ -649,15 +501,11 @@ public:
 
         InStream  chunk(chunk_data, chunk_data_length);
 
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderType(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_client_message: "
-                        "Truncated orderType, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
 
+        // TODO: see that, order type lifetime seems much too long and not controlled
+        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
+            // orderType(2)
+            ::check_throw(chunk, 2, "RemoteProgramsVirtualChannel::process_client_message", ERR_RDP_DATA_TRUNCATED);
             this->client_order_type = chunk.in_uint16_le();
         }
 
@@ -857,21 +705,7 @@ public:
     bool process_server_compartment_status_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_compartment_status_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_compartment_status_information_pdu");
         CompartmentStatusInformationPDU csipdu;
 
         csipdu.receive(chunk);
@@ -886,27 +720,15 @@ public:
     bool process_server_execute_result_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
+    
+        // TODO: see use of is_auth_application, looks like it is used for
+        // executionflow control. We should avoid to do that
         bool is_auth_application = false;
 
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_execute_result_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_execute_result_pdu");
 
         ServerExecuteResultPDU serpdu;
-
         serpdu.receive(chunk);
-
         if (bool(this->verbose & RDPVerbose::rail)) {
             serpdu.log(LOG_INFO);
         }
@@ -974,7 +796,6 @@ public:
                     this->session_probe_stop_launch_sequence_notifier = nullptr;
                 }
 */
-
                 if (serpdu.ExecResult() != RAIL_EXEC_S_OK) {
                     throw Error(ERR_SESSION_PROBE_RP_LAUNCH_REFER_TO_SYSLOG);
                 }
@@ -1048,44 +869,15 @@ public:
     bool process_server_get_application_id_response_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_get_application_id_response_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_get_application_id_response_pdu");
         return this->process_server_windowing_pdu<ServerGetApplicationIDResponsePDU>(flags, chunk);
     }
 
     bool process_server_handshake_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_handshake_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_handshake_pdu");
         HandshakePDU hspdu;
-
         hspdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -1136,23 +928,8 @@ public:
     bool process_server_handshake_ex_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_handshake_ex_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_handshake_ex_pdu");
         HandshakeExPDU hsexpdu;
-
         hsexpdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -1165,23 +942,8 @@ public:
     bool process_server_language_bar_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_language_bar_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_language_bar_information_pdu");
         LanguageBarInformationPDU lbipdu;
-
         lbipdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -1194,64 +956,22 @@ public:
     bool process_server_min_max_info_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_min_max_info_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_min_max_info_pdu");
         return this->process_server_windowing_pdu<ServerMinMaxInfoPDU>(flags, chunk);
     }
 
     bool process_server_move_size_start_or_end_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_move_size_start_or_end_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_move_size_start_or_end_pdu");
         return this->process_server_windowing_pdu<ServerMoveSizeStartOrEndPDU>(flags, chunk);
     }
 
     bool process_server_system_parameters_update_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_system_parameters_update_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_system_parameters_update_pdu");
         ServerSystemParametersUpdatePDU sspupdu;
-
         sspupdu.receive(chunk);
 
         if (bool(this->verbose & RDPVerbose::rail)) {
@@ -1264,21 +984,7 @@ public:
     bool process_server_z_order_sync_information_pdu(uint32_t total_length,
         uint32_t flags, InStream& chunk)
     {
-        (void)total_length;
-        (void)flags;
-
-        if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderLength(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_z_order_sync_information_pdu: "
-                        "Truncated orderLength, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            chunk.in_skip_bytes(2); // orderLength(2)
-        }
-
+        this->check_is_unit_throw(total_length, flags, chunk, "process_server_z_order_sync_information_pdu");
         return this->process_server_windowing_pdu<ServerZOrderSyncInformationPDU>(flags, chunk);
     }
 
@@ -1306,15 +1012,9 @@ public:
         InStream chunk(chunk_data, chunk_data_length);
 
         if (flags & CHANNELS::CHANNEL_FLAG_FIRST) {
-            if (!chunk.in_check_rem(2 /* orderType(2) */)) {
-                LOG(LOG_ERR,
-                    "RemoteProgramsVirtualChannel::process_server_message: "
-                        "Truncated orderType, need=2 remains=%zu",
-                    chunk.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
-
-            this->server_order_type = chunk.in_uint16_le();
+            // orderType(2)
+            ::check_throw(chunk, 2, "RemoteProgramsVirtualChannel::process_server_message::orderLength", ERR_RDP_DATA_TRUNCATED);
+            this->server_order_type = chunk.in_uint16_le(); // orderType(2)
         }
 
         bool send_message_to_client = true;

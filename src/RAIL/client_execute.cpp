@@ -1835,7 +1835,7 @@ void ClientExecute::reset(bool soft)
 // Check if a PDU chunk is a "unit" on the channel, which means
 // - it has both FLAG_FIRST and FLAG_LAST
 // - it contains at least two bytes (to read the chunk length)
-// - it's total length is the same as the chunk length
+// - its total length is the same as the chunk length
 void ClientExecute::check_is_unit_throw(uint32_t total_length, uint32_t flags, InStream& chunk, const char * message)
 {
     if ((flags & (CHANNELS::CHANNEL_FLAG_FIRST|CHANNELS::CHANNEL_FLAG_LAST))
