@@ -25,6 +25,7 @@
 #pragma once
 
 #include "acl/auth_api.hpp"
+#include "core/RDP/windows_execute_shell_params.hpp"
 
 #include "core/RDP/MonitorLayoutPDU.hpp"
 #include "core/RDP/PersistentKeyListPDU.hpp"
@@ -922,15 +923,8 @@ private:
                 return;
             }
 
-            {
-                const unsigned expected = 4;    // Version(2) + DataLength(2)
-                if (!stream.in_check_rem(expected)) {
-                    LOG( LOG_ERR
-                       , "mod_rdp::process_checkout_event: data truncated (1), expected=%u remains=%zu"
-                       , expected, stream.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-            }
+            // Version(2) + DataLength(2)
+            ::check_throw(stream, 4, "mod_rdp::process_checkout_event", ERR_RDP_DATA_TRUNCATED);
 
             uint16_t const version = stream.in_uint16_le();
             uint16_t const data_length = stream.in_uint16_le();
@@ -2659,13 +2653,9 @@ public:
                         LOG(LOG_INFO, "Process pointer position (Fast)");
                     }
 
-                    const unsigned expected = 4; /* xPos(2) + yPos(2) */
-                    if (!stream.in_check_rem(expected)){
-                        LOG(LOG_ERR, "Truncated Fast-Path Pointer Position Update, need=%u remains=%zu",
-                            expected, stream.in_remain());
-                        //throw Error(ERR_RDP_DATA_TRUNCATED);
-                        break;
-                    }
+                    /* xPos(2) + yPos(2) */
+                    // TODO: there was a break instead of a throw here, see why.
+                    ::check_throw(stream, 4, "mod_rdp::Fast-Path Pointer Position Update", ERR_RDP_DATA_TRUNCATED);
 
                     uint16_t xPos = stream.in_uint16_le();
                     uint16_t yPos = stream.in_uint16_le();
@@ -2769,11 +2759,8 @@ public:
 
 
     void process_surface_command(InStream & stream, gdi::GraphicApi & drawable) {
-        unsigned expected = 2;
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Truncated SurfaceCommand, need=%u remains=%zu", expected, stream.in_remain());
-            throw Error(ERR_RDP_DATA_TRUNCATED);
-        }
+
+        ::check_throw(stream, 2, "mod_rdp::SurfaceCommand", ERR_RDP_DATA_TRUNCATED);
 
         uint16_t cmdType = stream.in_uint16_le();
 
@@ -2816,11 +2803,8 @@ public:
                 SURFACECMD_FRAMEACTION_END = 0x0001
             };
 
-            expected = 6;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR, "Truncated FrameMarker, need=%u remains=%zu", expected, stream.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+            // frameAction (2) + frameId (4)
+            ::check_throw(stream, 6, "mod_rdp::FrameMarker", ERR_RDP_DATA_TRUNCATED);
 
             uint16_t frameAction = stream.in_uint16_le();
             uint32_t frameId = stream.in_uint32_le();
@@ -4067,13 +4051,9 @@ public:
                     LOG(LOG_INFO, "Process pointer position");
                 }
 
-                const unsigned expected = 4; /* xPos(2) + yPos(2) */
-                if (!stream.in_check_rem(expected)){
-                    LOG(LOG_ERR, "Truncated Pointer Position Update, need=%u remains=%zu",
-                        expected, stream.in_remain());
-                    //throw Error(ERR_RDP_DATA_TRUNCATED);
-                    break;
-                }
+                //  xPos(2) + yPos(2)
+                // TODO: see why there was break instead of throw here
+                ::check_throw(stream, 6, "mod_rdp::Pointer Position Update", ERR_RDP_DATA_TRUNCATED);
 
                 uint16_t xPos = stream.in_uint16_le();
                 uint16_t yPos = stream.in_uint16_le();
@@ -5211,25 +5191,13 @@ public:
         stream.in_skip_bytes(2); /* pad */
 
         for (uint16_t n = 0; n < ncapsets; n++) {
-            unsigned expected = 4; /* capabilitySetType(2) + lengthCapability(2) */
-
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS_PDU_TRUNCATED);
-            }
-
+            //  capabilitySetType(2) + lengthCapability(2)
+            ::check_throw(stream, 6, "mod_rdp::Demand active PDU (1)", ERR_RDP_DATA_TRUNCATED);
             uint16_t capset_type = stream.in_uint16_le();
             uint16_t capset_length = stream.in_uint16_le();
 
-            expected = capset_length - 4 /* capabilitySetType(2) + lengthCapability(2) */;
-            if (!stream.in_check_rem(expected)){
-                LOG(LOG_ERR, "Truncated Demand active PDU data, need=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_MCS_PDU_TRUNCATED);
-            }
-
-            uint8_t const * next = stream.get_current() + expected;
+            ::check_throw(stream, capset_length - 4, "mod_rdp::Demand active PDU (2)", ERR_RDP_DATA_TRUNCATED);
+            uint8_t const * next = stream.get_current() + capset_length - 4;
 
             switch (capset_type) {
             case CAPSTYPE_GENERAL:
