@@ -22,6 +22,7 @@
 
 #define RED_TEST_MODULE TestNewOCR
 #include "test_only/test_framework/redemption_unit_tests.hpp"
+#include "test_only/test_framework/data_test_case.hpp"
 
 
 #include "capture/title_extractors/ocr_titles_extractor.hpp"
@@ -38,7 +39,7 @@ namespace {
     }
 
     void draw_bitmap(Drawable & drawable, char const * bitmap_filename) {
-        Bitmap bmp = bitmap_from_file(bitmap_filename);
+        Bitmap bmp = bitmap_from_file_impl(bitmap_filename);
         RED_REQUIRE(bmp.is_valid());
         drawable.draw_bitmap({0, 0, drawable.width(), drawable.height()}, bmp);
     }
@@ -516,7 +517,10 @@ RED_AUTO_TEST_CASE(TestOCRBug)
 }
 
 
-RED_AUTO_TEST_CASE(TestNewOCRRussian)
+RED_DATA_TEST_CASE(TestNewOCRRussian, (std::array{
+    FIXTURES_PATH "/win_unknown_russian.png",
+    FIXTURES_PATH "/win_unknown_russian2.png"
+}), filename)
 {
     Drawable drawable(816, 639);
 
@@ -526,35 +530,15 @@ RED_AUTO_TEST_CASE(TestNewOCRRussian)
     OcrTitleFilter filter;
     std::vector<OcrTitle> out_titles;
 
-    {
-        draw_bitmap(drawable, FIXTURES_PATH "/win_unknow_russian.png");
-        extractor.extract_titles(drawable, out_titles);
+    draw_bitmap(drawable, filename);
+    extractor.extract_titles(drawable, out_titles);
 
-        auto expected = make_array(
-            "Устройства и принтеры"
-        );
-        RED_CHECK_EQUAL(out_titles.size(), expected.size());
+    auto expected = make_array(
+        "Устройства и принтеры"
+    );
+    RED_CHECK_EQUAL(out_titles.size(), expected.size());
 
-        auto idx_best = filter.extract_best_title(out_titles);
-        RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
-
-        out_titles.clear();
-    }
-
-    {
-        draw_bitmap(drawable, FIXTURES_PATH "/win_unknow_russian2.png");
-        extractor.extract_titles(drawable, out_titles);
-
-        auto expected = make_array(
-            "Устройства и принтеры"
-        );
-        RED_CHECK_EQUAL(out_titles.size(), expected.size());
-
-        auto idx_best = filter.extract_best_title(out_titles);
-        RED_CHECK_EQUAL(idx_best, 0);
-        RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
-
-        out_titles.clear();
-    }
+    auto idx_best = filter.extract_best_title(out_titles);
+    RED_CHECK_EQUAL(idx_best, 0);
+    RED_CHECK_EQUAL(expected[idx_best], filter.get_title().data());
 }

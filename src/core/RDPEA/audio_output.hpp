@@ -754,7 +754,7 @@ static inline const char * get_wQualityMode_name(uint16_t wQualityMode) {
         case HIGH_QUALITY: return "HIGH_QUALITY";
     }
 
-    return "unknow";
+    return "unknown";
 }
 
 struct QualityModePDU {

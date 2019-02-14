@@ -37,7 +37,7 @@ private:
     enum : int {
         DATA_FROM_CLIENT,     // number of byte sent from client to server
         DATA_FROM_SERVER,     // number of byte sent from server to client
-        
+
         CLIPBOARD_DATA_FROM_CLIENT,     // number of byte sent from client to server
         CLIPBOARD_DATA_FROM_SERVER,     // number of byte sent from server to client
 
@@ -63,7 +63,7 @@ private:
             case COUNT_FIELD: break;
         }
 
-        return "unknow_vnc_metrics_name";
+        return "unknown_vnc_metrics_name";
     }
 
     const char * vnc_protocol_name = "vnc";
@@ -82,7 +82,7 @@ public:
     VNCMetrics(Metrics * metrics) : metrics(metrics)
     {
         this->metrics->set_protocol("v1.0", this->vnc_protocol_name, COUNT_FIELD);
-        LOG(LOG_INFO, "starting VNC Metrics");        
+        LOG(LOG_INFO, "starting VNC Metrics");
     }
 
     void data_from_client(long int len) {

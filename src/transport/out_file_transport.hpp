@@ -103,7 +103,7 @@ void report_and_transform_error(Error& error, F && report)
 {
     if (error.errnum == ENOSPC) {
         error.id = ERR_TRANSPORT_WRITE_NO_ROOM;
-        report("FILESYSTEM_FULL", "100|unknow");
+        report("FILESYSTEM_FULL", "100|unknown");
     }
 }
 

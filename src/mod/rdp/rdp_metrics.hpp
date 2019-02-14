@@ -118,7 +118,7 @@ class RDPMetrics
         }
 
         assert(false);
-        return "unknow_rdp_metrics_name";
+        return "unknown_rdp_metrics_name";
     }
 
     const char * rdp_protocol_name = "rdp";

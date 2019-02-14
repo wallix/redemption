@@ -89,7 +89,7 @@
  *      # Unknown key(0x1001257) to current layout 0x40c fr-FR.                                         // Qt identified this key as a character, but it didn't match inside the specific current character layout
  *                                                                                                      // change the current layout or improve current layout table
  *
- *      # Unknown keyboard layout (0x1). Reverting to default (English - United States - International) // If you call the constructor setting an unknow layout ID, default layout is set instead
+ *      # Unknown keyboard layout (0x1). Reverting to default (English - United States - International) // If you call the constructor setting an unknown layout ID, default layout is set instead
  *
  *
  ***********************************************************************************************************************************************************************************************************************/

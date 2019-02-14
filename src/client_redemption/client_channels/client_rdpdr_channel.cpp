@@ -198,7 +198,7 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                     this->process_core_device_iorequest(chunk);
                     break;
 
-                default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknow packetId = %x",       header.packet_id);
+                default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT RDPDR_CTYP_CORE unknown packetId = %x",       header.packet_id);
                 break;
             }
             break;
@@ -308,7 +308,7 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                             break;
 
                         default:
-                            LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow MajorFunction = %x", deviceIORequest.MajorFunction());
+                            LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknown MajorFunction = %x", deviceIORequest.MajorFunction());
                             //hexdump_c(chunk_series.get_data(), chunk_size);
                             break;
                     }
@@ -316,13 +316,13 @@ void ClientRDPDRChannel::receive(InStream & chunk) /*NOLINT*/
                     break;
 
                 default :
-                    LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknow packetId = %x", header.packet_id);
+                    LOG(LOG_WARNING, "SERVER >> RDPDR PRINTER: DEFAULT PRINTER unknown packetId = %x", header.packet_id);
                     break;
             }
         }
             break;
 
-        default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknow component = %x", header.component);
+        default: LOG(LOG_WARNING, "SERVER >> RDPDR: DEFAULT RDPDR unknown component = %x", header.component);
             break;
     }
 }
@@ -760,7 +760,7 @@ void ClientRDPDRChannel::process_iorequest_query_information(InStream & chunk, r
             }
             break;
 
-        default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request             unknow FsInformationClass = %x",       sdqir.FsInformationClass());
+        default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request             unknown FsInformationClass = %x",       sdqir.FsInformationClass());
             break;
     }
 }
@@ -870,7 +870,7 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
                 if (this->paths.end() != this->paths.find(id)) {
                     str_dir_path = this->paths.at(id);
                 } else {
-                    LOG(LOG_WARNING, " Device I/O Query Directory Request Unknow ID (%u).", id);
+                    LOG(LOG_WARNING, " Device I/O Query Directory Request Unknown ID (%u).", id);
                     deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
                 }
 
@@ -964,7 +964,7 @@ void ClientRDPDRChannel::process_iorequest_directory_control(InStream & chunk, r
                     ffi.emit(out_stream);
                 }
                     break;
-                default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow  FsInformationClass = 0x%x", sdqdr.FsInformationClass());
+                default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknown  FsInformationClass = 0x%x", sdqdr.FsInformationClass());
                         break;
             }
 
@@ -1025,7 +1025,7 @@ void ClientRDPDRChannel::process_iorequest_query_volume_information(InStream & c
     if (this->paths.end() != this->paths.find(id)) {
         str_path = this->paths.at(id);
     } else {
-        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknow ID (%u).", id);
+        LOG(LOG_WARNING, " Device I/O Query Volume Information Request Unknown ID (%u).", id);
         deviceIOResponse.set_IoStatus(erref::NTSTATUS::STATUS_NO_SUCH_FILE);
     }
 
@@ -1105,7 +1105,7 @@ void ClientRDPDRChannel::process_iorequest_query_volume_information(InStream & c
                 break;
 
             default:
-                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknow FsInformationClass = 0x%x", sdqvir.FsInformationClass());
+                LOG(LOG_WARNING, "SERVER >> RDPDR Channel: unknown FsInformationClass = 0x%x", sdqvir.FsInformationClass());
                 break;
         }
     }
@@ -1230,7 +1230,7 @@ void ClientRDPDRChannel::process_iorequest_set_information(InStream & chunk, rdp
         }
             break;
 
-        default:  LOG(LOG_WARNING, "SERVER >> RDPDR: unknow FsInformationClass = 0x%x", sdsir.FsInformationClass());
+        default:  LOG(LOG_WARNING, "SERVER >> RDPDR: unknown FsInformationClass = 0x%x", sdsir.FsInformationClass());
 
             break;
     }
@@ -1393,7 +1393,7 @@ void ClientRDPDRChannel::process_core_device_iorequest(InStream & chunk) {
             this->process_iorequest_device_control(chunk, deviceIOResponse, out_stream);
             break;
 
-        default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknow MajorFunction = %x",       deviceIORequest.MajorFunction());
+        default: LOG(LOG_WARNING, "SERVER >> RDPDR Channel: DEFAULT: Device I/O Request unknown MajorFunction = %x",       deviceIORequest.MajorFunction());
             break;
     }
 }

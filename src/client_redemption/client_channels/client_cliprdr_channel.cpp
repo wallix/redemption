@@ -682,7 +682,7 @@
 
                 }  else {
 
-                    LOG(LOG_WARNING, "SERVER >> CB channel: unknow CB Format = %x", this->_requestedFormatId);
+                    LOG(LOG_WARNING, "SERVER >> CB channel: unknown CB Format = %x", this->_requestedFormatId);
                 }
             break;
         }
@@ -1093,7 +1093,7 @@
                 }
                 break;
 
-                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknow CB format ID %x", type_id);
+                default: LOG(LOG_WARNING, "SERVER >> CB Channel: unknown CB format ID %x", type_id);
                 break;
             }
         }

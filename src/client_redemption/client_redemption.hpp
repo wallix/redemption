@@ -187,7 +187,7 @@ public:
                 case RDPEllipseCB:       return "RDPEllipseCB       ";
                 case RDPMem3Blt:         return "RDPMem3Blt         ";
                 case RDPGlyphIndex:      return "RDPGlyphIndex      ";
-                default: return "unknow wrm order index";
+                default: return "unknown wrm order index";
             }
         }
 
@@ -238,7 +238,7 @@ public:
         , start_win_session_time(tvtime())
         , secondary_connection_finished(false)
         , primary_connection_finished(false)
-        , local_IP("unknow_local_IP")
+        , local_IP("unknown_local_IP")
     {
         SSL_load_error_strings();
         SSL_library_init();
@@ -895,7 +895,7 @@ public:
             }
                 break;
 
-            default: LOG(LOG_WARNING, " send_to_channel unknow channel id: %d", channel.chanid);
+            default: LOG(LOG_WARNING, " send_to_channel unknown channel id: %d", channel.chanid);
                 break;*/
         }
     }

@@ -1281,7 +1281,7 @@ public:
                         }
                     }
                 } else {
-                    LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache unknow FontChar");
+                    LOG(LOG_WARNING, "DEFAULT: RDPGlyphIndex glyph_cache unknown FontChar");
                 }
 
                 if (cmd.ui_charinc) {

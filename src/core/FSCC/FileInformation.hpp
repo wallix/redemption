@@ -221,7 +221,7 @@ inline static const char * get_FSCTLStructures(uint32_t FSCTLStructures) {
         case FSCTL_GET_OBJECT_ID:           return "FSCTL_GET_OBJECT_ID";
     }
 
-    return "unknow";
+    return "unknown";
 }
 
 // [MS-FSCC]: File System Control Codes
