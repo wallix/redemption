@@ -35,7 +35,7 @@
 using std::size_t;
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-size_t UTF8Len(const_byte_ptr source)
+size_t UTF8Len(const_byte_ptr source) noexcept
 {
     size_t len = 0;
     uint8_t c = 0;
@@ -45,7 +45,7 @@ size_t UTF8Len(const_byte_ptr source)
     return len;
 }
 
-void UTF16Upper(uint8_t * source, size_t max_len)
+void UTF16Upper(uint8_t * source, size_t max_len) noexcept
 {
     for (size_t i = 0 ; i < max_len ; i=i+2){
         unsigned int wc = source[i];
@@ -64,7 +64,7 @@ void UTF16Upper(uint8_t * source, size_t max_len)
 
 // UTF8GetLen find the number of bytes of the len first characters of input.
 // It assumes input is valid utf8, zero terminated (that has been checked before).
-size_t UTF8GetPos(uint8_t const * source, size_t len)
+size_t UTF8GetPos(uint8_t const * source, size_t len) noexcept
 {
     len += 1;
     uint8_t c = 0;
@@ -80,7 +80,7 @@ size_t UTF8GetPos(uint8_t const * source, size_t len)
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source)
+bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, size_t max_source) noexcept
 {
     len += 1;
     uint8_t c = 0;
@@ -108,14 +108,14 @@ bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, si
 // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
 //        (valid means "that has been checked before". It means we are in a secure context).
 // output: number of bytes for 'one' char
-size_t UTF8CharNbBytes(const uint8_t * source)
+size_t UTF8CharNbBytes(const uint8_t * source) noexcept
 {
     uint8_t c = *source;
     return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
+size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len) noexcept
 {
     size_t adjust_len = 0;
     while (*source) {
@@ -132,7 +132,7 @@ size_t UTF8StringAdjustedNbBytes(const uint8_t * source, size_t max_len)
 }
 
 // UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
-void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
+void UTF8RemoveOneAtPos(uint8_t * source, size_t len) noexcept
 {
     len += 1;
     uint8_t c = 0;
@@ -151,7 +151,7 @@ void UTF8RemoveOneAtPos(uint8_t * source, size_t len)
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source)
+bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_char, size_t max_source) noexcept
 {
     uint8_t lo = to_insert_char & 0xFF;
     uint8_t hi  = (to_insert_char >> 8) & 0xFF;
@@ -177,7 +177,7 @@ bool UTF8InsertOneAtPos(uint8_t * source, size_t len, const uint32_t to_insert_c
     return UTF8InsertAtPos(source, len, to_insert, max_source);
 }
 
-size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len) noexcept
 {
 	const uint8_t * s = source.as_u8p();
 
@@ -239,7 +239,7 @@ UTF8toUTF16_exit:
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, size_t t_len)
+size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, size_t t_len) noexcept
 {
 	const uint8_t * s = source.as_u8p();
 
@@ -371,7 +371,7 @@ UTF8toUnicodeIterator & UTF8toUnicodeIterator::operator++() noexcept
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
-size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
+size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len) noexcept
 {
     size_t i_t = 0;
     size_t i_s = 0;
@@ -412,7 +412,7 @@ size_t UTF16toUTF8(const uint8_t * utf16_source, size_t utf16_len, uint8_t * utf
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
-size_t UTF16toUTF8(const uint16_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len)
+size_t UTF16toUTF8(const uint16_t * utf16_source, size_t utf16_len, uint8_t * utf8_target, size_t target_len) noexcept
 {
     size_t i_t = 0;
     for (size_t i = 0 ; i < utf16_len ; i++){
@@ -451,7 +451,7 @@ size_t UTF16toUTF8(const uint16_t * utf16_source, size_t utf16_len, uint8_t * ut
 
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
-size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf8_target, size_t target_len)
+size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf8_target, size_t target_len) noexcept
 {
     size_t i_t = 0;
     size_t i_s = 0;
@@ -492,7 +492,7 @@ size_t UTF32toUTF8(const uint8_t * utf32_source, size_t utf32_len, uint8_t * utf
 
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
-size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, size_t target_len)
+size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, size_t target_len) noexcept
 {
     size_t i_t = 0;
     uint8_t lo = (utf32_char & 0xffu);
@@ -532,7 +532,7 @@ size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, size_t target_len
 // The destination string will always be 0 terminated (dest_size 0 is forbidden)
 // The buffer after final 0 is not padded.
 
-size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source)
+size_t UTF8ToUTF8LCopy(uint8_t * dest, size_t dest_size, const uint8_t * source) noexcept
 {
     size_t source_len     = strlen(char_ptr_cast(source));
     if (source_len > dest_size - 1){
@@ -584,7 +584,7 @@ enum class Stat : uint8_t {
     FOURTH_UTF8_CHAR
 };
 
-bool is_utf8_string(uint8_t const * s, int length)
+bool is_utf8_string(uint8_t const * s, int length) noexcept
 {
     Stat stat = Stat::ASCII;
 
@@ -615,7 +615,7 @@ bool is_utf8_string(uint8_t const * s, int length)
     return (stat == Stat::ASCII);
 }
 
-bool is_ASCII_string(const_bytes_view source)
+bool is_ASCII_string(const_bytes_view source) noexcept
 {
     for (uint8_t c : source) {
         if (c > 0x7F) { return false; }
@@ -624,7 +624,7 @@ bool is_ASCII_string(const_bytes_view source)
     return true;
 }
 
-bool is_ASCII_string(const_byte_ptr source)
+bool is_ASCII_string(const_byte_ptr source) noexcept
 {
     auto const* s = source.as_u8p();
     for (; *s; ++s) {
@@ -634,7 +634,7 @@ bool is_ASCII_string(const_byte_ptr source)
     return true;
 }
 
-size_t UTF8StrLenInChar(const_byte_ptr source)
+size_t UTF8StrLenInChar(const_byte_ptr source) noexcept
 {
     auto const* s = source.as_u8p();
     size_t length = 0;
@@ -672,7 +672,7 @@ size_t UTF8StrLenInChar(const_byte_ptr source)
     return length;
 }   // UTF8StrLenInChar
 
-size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len)
+size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * latin1_target, size_t latin1_len) noexcept
 {
 
     utf16_len &= ~1;
@@ -726,7 +726,7 @@ size_t UTF16toLatin1(const uint8_t * utf16_source_, size_t utf16_len, uint8_t * 
     return current_latin1_target - latin1_target;
 }
 
-size_t Latin1toUTF16(const_bytes_view latin1_source, uint8_t * utf16_target, size_t utf16_len)
+size_t Latin1toUTF16(const_bytes_view latin1_source, uint8_t * utf16_target, size_t utf16_len) noexcept
 {
     auto converter = [](uint8_t src, uint8_t * & dst, size_t & remaining_dst_len) -> bool {
         if ((src < 0x80) || (src > 0x9F)) {
@@ -783,7 +783,7 @@ size_t Latin1toUTF16(const_bytes_view latin1_source, uint8_t * utf16_target, siz
 
 size_t Latin1toUTF8(
     const uint8_t * latin1_source, size_t latin1_len,
-    uint8_t * utf8_target, size_t utf8_len)
+    uint8_t * utf8_target, size_t utf8_len) noexcept
 {
     auto converter = [](uint8_t src, uint8_t *& dst, size_t & remaining_dst_len) -> bool {
         if (src < 0x80) {
@@ -813,7 +813,7 @@ size_t Latin1toUTF8(
     return (current_utf8_target - utf8_target);
 }
 
-size_t UTF16StrLen(const uint8_t * utf16_s) {
+size_t UTF16StrLen(const uint8_t * utf16_s) noexcept {
     size_t length = 0;
     while (utf16_s[0] | utf16_s[1]) {
         utf16_s += 2;

@@ -54,7 +54,7 @@ class InStream
     Parse p;
 
 public:
-    explicit InStream(uint8_t const * array, std::size_t len, std::size_t offset = 0)
+    explicit InStream(uint8_t const * array, std::size_t len, std::size_t offset = 0) noexcept
     : begin(array)
     , end(array + len)
     , p(this->begin + offset)
@@ -62,12 +62,12 @@ public:
         assert(len >= offset);
     }
 
-    explicit InStream(char const * array, std::size_t len, std::size_t offset = 0)
+    explicit InStream(char const * array, std::size_t len, std::size_t offset = 0) noexcept
     : InStream(byte_ptr_cast(array), len, offset)
     {
     }
 
-    explicit InStream(const_buffer_t buf)
+    explicit InStream(const_buffer_t buf) noexcept
     : InStream(buf.data(), buf.size())
     {
     }
@@ -81,7 +81,7 @@ private:
     InStream(InStream const &) = default;
 
 public:
-    InStream clone() const {
+    InStream clone() const noexcept {
         return InStream(*this);
     }
 
@@ -89,55 +89,55 @@ public:
         return {this->get_data(), this->get_offset()};
     }
 
-    uint8_t const * get_data() const {
+    uint8_t const * get_data() const noexcept {
         return this->begin;
     }
 
-    uint8_t const * get_data_end() const {
+    uint8_t const * get_data_end() const noexcept {
         return this->end;
     }
 
-    uint8_t const * get_current() const {
+    uint8_t const * get_current() const noexcept {
         return this->p.p;
     }
 
-    size_t get_offset() const {
+    size_t get_offset() const noexcept {
         return static_cast<size_t>(this->p.p - this->begin);
     }
 
-    bool in_check_rem(const unsigned n) const {
+    bool in_check_rem(const unsigned n) const noexcept {
     // returns true if there is enough data available to read n bytes
         return (n <= this->in_remain());
     }
 
-    size_t in_remain() const {
+    size_t in_remain() const noexcept {
         assert(this->p.p <= this->end);
         return this->end - this->p.p;
     }
 
 
-    bool check_end() const {
+    bool check_end() const noexcept {
         return this->p.p == this->end;
     }
 
-    size_t get_capacity() const {
+    size_t get_capacity() const noexcept {
         return this->end - this->begin;
     }
 
     // go back by the given amount (like rewind but relative)
-    void unget(size_t n) {
+    void unget(size_t n) noexcept {
         assert(this->begin + n < this->p.p);
         this->p.unget(n);
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind(std::size_t offset) {
+    void rewind(std::size_t offset) noexcept {
         assert(this->begin + offset <= this->end);
         this->p.p = this->begin + offset;
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind() {
+    void rewind() noexcept {
         this->p.p = this->begin;
     }
 
@@ -145,69 +145,69 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    int8_t in_sint8() {
+    int8_t in_sint8() noexcept {
         assert(this->in_check_rem(1));
         return this->p.in_sint8();
     }
 
     // ---------------------------------------------------------------------------
 
-    uint8_t in_uint8() {
+    uint8_t in_uint8() noexcept {
         assert(this->in_check_rem(1));
         return this->p.in_uint8();
     }
 
     /* Peek a byte from stream without move <p>. */
-    uint8_t peek_uint8() {
+    uint8_t peek_uint8() noexcept {
         assert(this->in_check_rem(1));
         return *this->p.p;
     }
 
-    int16_t in_sint16_be() {
+    int16_t in_sint16_be() noexcept {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_be();
     }
 
-    int16_t in_sint16_le() {
+    int16_t in_sint16_le() noexcept {
         assert(this->in_check_rem(2));
         return this->p.in_sint16_le();
     }
 
-    uint16_t in_uint16_le() {
+    uint16_t in_uint16_le() noexcept {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_le();
     }
 
-    uint16_t in_uint16_be() {
+    uint16_t in_uint16_be() noexcept {
         assert(this->in_check_rem(2));
         return this->p.in_uint16_be();
     }
 
-    uint32_t in_uint32_le() {
+    uint32_t in_uint32_le() noexcept {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_le();
     }
 
-    uint32_t in_uint32_be() {
+    uint32_t in_uint32_be() noexcept {
         assert(this->in_check_rem(4));
         return this->p.in_uint32_be();
     }
 
-    int32_t in_sint32_le() {
+    int32_t in_sint32_le() noexcept {
         return this->p.in_sint32_le();
     }
 
-    int32_t in_sint32_be() {
+    int32_t in_sint32_be() noexcept {
         return this->p.in_sint32_be();
     }
 
-    int64_t in_sint64_le() {
+    int64_t in_sint64_le() noexcept {
         return this->p.in_sint64_le();
     }
 
     // ---------------------------------------------------------------------------
 
-    void in_timeval_from_uint64le_usec(timeval & tv)
+    void in_timeval_from_uint64le_usec(timeval & tv) noexcept
     {
         const uint64_t movie_usec_lo = this->in_uint32_le();
         const uint64_t movie_usec_hi = this->in_uint32_le();
@@ -216,42 +216,42 @@ public:
         tv.tv_sec = static_cast<uint32_t>(movie_usec / 1000000LL);
     }
 
-    uint64_t in_uint64_le() {
+    uint64_t in_uint64_le() noexcept {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_le();
     }
 
-    uint64_t in_uint64_be() {
+    uint64_t in_uint64_be() noexcept {
         assert(this->in_check_rem(8));
         return this->p.in_uint64_be();
     }
 
-    uint32_t in_bytes_le(const uint8_t nb){
+    uint32_t in_bytes_le(const uint8_t nb) noexcept {
         assert(this->in_check_rem(nb));
         return this->p.in_bytes_le(nb);
     }
 
-    uint32_t in_bytes_be(const uint8_t nb){
+    uint32_t in_bytes_be(const uint8_t nb) noexcept {
         assert(this->in_check_rem(nb));
         return this->p.in_bytes_be(nb);
     }
 
-    void in_copy_bytes(uint8_t * v, size_t n) {
+    void in_copy_bytes(uint8_t * v, size_t n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_copy_bytes(v, n);
     }
 
-    void in_copy_bytes(char * v, size_t n) {
+    void in_copy_bytes(char * v, size_t n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_copy_bytes(v, n);
     }
 
-    const uint8_t *in_uint8p(unsigned int n) {
+    const uint8_t *in_uint8p(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_uint8p(n);
     }
 
-    void in_skip_bytes(unsigned int n) {
+    void in_skip_bytes(unsigned int n) noexcept {
         assert(this->in_check_rem(n));
         return this->p.in_skip_bytes(n);
     }
@@ -276,7 +276,7 @@ public:
     // val2 (1 byte): An 8-bit, unsigned integer containing the least significant
     // bits of the value represented by this structure.
 
-    uint16_t in_2BUE()
+    uint16_t in_2BUE() noexcept
     {
         return this->p.in_2BUE();
     }
@@ -332,7 +332,7 @@ public:
 // val4 (1 byte): An 8-bit, unsigned integer containing the least significant
 //  bits of the value represented by this structure.
 
-    uint32_t in_4BUE()
+    uint32_t in_4BUE() noexcept
     {
         return this->p.in_4BUE();
     }
@@ -351,11 +351,11 @@ public:
     //    of the first byte and the 8 bits of the next byte are concatenated
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
-    int16_t in_DEP() {
+    int16_t in_DEP() noexcept {
         return this->p.in_DEP();
     }
 
-    void in_utf16(uint16_t utf16[], size_t length)
+    void in_utf16(uint16_t utf16[], size_t length) noexcept
     {
         return this->p.in_utf16(utf16, length);
     }
@@ -365,13 +365,13 @@ public:
     // return UTF16 string length (number of chars, not bytes)
     // if number returned in same as input length, it means no
     // zero char has been found
-    size_t in_utf16_sz(uint16_t utf16[], size_t length)
+    size_t in_utf16_sz(uint16_t utf16[], size_t length) noexcept
     {
         return this->p.in_utf16_sz(utf16, length);
     }
 
     // sz utf16 bytes are translated to ascci, 00 terminated
-    void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz)
+    void in_uni_to_ascii_str(uint8_t * text, size_t sz, size_t bufsz) noexcept
     {
         UTF16toUTF8(this->p.p, sz / 2, text, bufsz);
         this->p.p += sz;
@@ -389,7 +389,7 @@ class OutStream
     uint8_t * p = nullptr;
 
 public:
-    explicit OutStream(uint8_t * array, std::size_t len, std::size_t offset = 0)
+    explicit OutStream(uint8_t * array, std::size_t len, std::size_t offset = 0) noexcept
     : begin(array)
     , end(array + len)
     , p(this->begin + offset)
@@ -397,12 +397,12 @@ public:
         assert(len >= offset);
     }
 
-    explicit OutStream(char * array, std::size_t len, std::size_t offset = 0)
+    explicit OutStream(char * array, std::size_t len, std::size_t offset = 0) noexcept
     : OutStream(byte_ptr_cast(array), len, offset)
     {
     }
 
-    explicit OutStream(buffer_t buf)
+    explicit OutStream(buffer_t buf) noexcept
     : OutStream(buf.data(), buf.size())
     {
     }
@@ -413,11 +413,11 @@ public:
     OutStream & operator=(OutStream &&) = default;
     OutStream & operator=(OutStream const &) = delete;
 
-    size_t tailroom() const {
+    size_t tailroom() const noexcept {
         return  this->end - this->p;
     }
 
-    bool has_room(size_t n) const {
+    bool has_room(size_t n) const noexcept {
         return  n <= this->tailroom();
     }
 
@@ -425,19 +425,19 @@ public:
         return {this->get_data(), this->get_offset()};
     }
 
-    uint8_t * get_data() const {
+    uint8_t * get_data() const noexcept {
         return this->begin;
     }
 
-    uint8_t * get_data_end() const {
+    uint8_t * get_data_end() const noexcept {
         return this->end;
     }
 
-    uint8_t * get_current() const {
+    uint8_t * get_current() const noexcept {
         return this->p;
     }
 
-    size_t get_offset() const {
+    size_t get_offset() const noexcept {
         return static_cast<size_t>(this->p - this->begin);
     }
 
@@ -445,7 +445,7 @@ public:
     // Generic binary Data access methods
     // =========================================================================
 
-    void out_timeval_to_uint64le_usec(const timeval & tv)
+    void out_timeval_to_uint64le_usec(const timeval & tv) noexcept
     {
         uint64_t usec = tv.tv_sec * 1000000ULL + tv.tv_usec;
         this->out_uint32_le(static_cast<uint32_t>(usec));
@@ -454,7 +454,7 @@ public:
 
     // ---------------------------------------------------------------------------
 
-    void out_uint64_le(uint64_t v) {
+    void out_uint64_le(uint64_t v) noexcept {
         assert(this->has_room(8));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
@@ -467,7 +467,7 @@ public:
         this->p+=8;
     }
 
-    void out_uint64_be(uint64_t v) {
+    void out_uint64_be(uint64_t v) noexcept {
         assert(this->has_room(8));
         this->p[0] = (v >> 56) & 0xFF;
         this->p[1] = (v >> 48) & 0xFF;
@@ -480,7 +480,7 @@ public:
         this->p+=8;
     }
 
-    void out_sint64_le(int64_t v) {
+    void out_sint64_le(int64_t v) noexcept {
         assert(this->has_room(8));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
@@ -493,17 +493,17 @@ public:
         this->p+=8;
     }
 
-    void out_skip_bytes(unsigned int n) {
+    void out_skip_bytes(unsigned int n) noexcept {
         assert(this->has_room(n));
         this->p+=n;
     }
 
-    void out_uint8(uint8_t v) {
+    void out_uint8(uint8_t v) noexcept {
         assert(this->has_room(1));
         *(this->p++) = v;
     }
 
-    void set_out_uint8(uint8_t v, size_t offset) {
+    void set_out_uint8(uint8_t v, size_t offset) noexcept {
         (this->get_data())[offset] = v;
     }
 
@@ -527,7 +527,7 @@ public:
     // val2 (1 byte): An 8-bit, unsigned integer containing the least significant
     // bits of the value represented by this structure.
 
-    void out_2BUE(uint16_t v){
+    void out_2BUE(uint16_t v) noexcept {
         if (v <= 127){
             this->out_uint8(static_cast<uint8_t>(v));
         }
@@ -588,7 +588,7 @@ public:
 //  bits of the value represented by this structure.
 
 
-    void out_4BUE(uint32_t v){
+    void out_4BUE(uint32_t v) noexcept {
         assert(!(v & 0xC0000000));
         if      (v <= 0x3F      ) {
             this->out_uint8(static_cast<uint8_t>(v));
@@ -626,7 +626,7 @@ public:
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
 
-    void out_DEP(int16_t point) {
+    void out_DEP(int16_t point) noexcept {
         if (abs(point) > 0x3F) {
             uint16_t data;
 
@@ -662,43 +662,43 @@ public:
         }
     }
 
-    void out_sint8(char v) {
+    void out_sint8(char v) noexcept {
         assert(this->has_room(1));
         *(this->p++) = v;
     }
 
-    void out_uint16_le(unsigned int v) {
+    void out_uint16_le(unsigned int v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void set_out_uint16_le(unsigned int v, size_t offset) {
+    void set_out_uint16_le(unsigned int v, size_t offset) noexcept {
         (this->get_data())[offset] = v & 0xFF;
         (this->get_data())[offset+1] = (v >> 8) & 0xFF;
     }
 
-    void out_sint16_le(signed int v) {
+    void out_sint16_le(signed int v) noexcept {
         assert(this->has_room(2));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void out_uint16_be(unsigned int v) {
+    void out_uint16_be(unsigned int v) noexcept {
         assert(this->has_room(2));
         this->p[1] = v & 0xFF;
         this->p[0] = (v >> 8) & 0xFF;
         this->p+=2;
     }
 
-    void set_out_uint16_be(unsigned int v, size_t offset) {
+    void set_out_uint16_be(unsigned int v, size_t offset) noexcept {
         (this->get_data())[offset+1] = v & 0xFF;
         (this->get_data())[offset] = (v >> 8) & 0xFF;
     }
 
-    void out_uint32_le(unsigned int v) {
+    void out_uint32_le(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
@@ -707,14 +707,14 @@ public:
         this->p+=4;
     }
 
-    void set_out_uint32_le(unsigned int v, size_t offset) {
+    void set_out_uint32_le(unsigned int v, size_t offset) noexcept {
         (this->get_data())[offset+0] = v & 0xFF;
         (this->get_data())[offset+1] = (v >> 8) & 0xFF;
         (this->get_data())[offset+2] = (v >> 16) & 0xFF;
         (this->get_data())[offset+3] = (v >> 24) & 0xFF;
     }
 
-    void out_uint32_be(unsigned int v) {
+    void out_uint32_be(unsigned int v) noexcept {
         assert(this->has_room(4));
         this->p[0] = (v >> 24) & 0xFF;
         this->p[1] = (v >> 16) & 0xFF;
@@ -723,7 +723,7 @@ public:
         this->p+=4;
     }
 
-    void set_out_uint32_be(unsigned int v, size_t offset) {
+    void set_out_uint32_be(unsigned int v, size_t offset) noexcept {
         assert(this->has_room(4));
         (this->get_data())[offset+0] = (v >> 24) & 0xFF;
         (this->get_data())[offset+1] = (v >> 16) & 0xFF;
@@ -731,7 +731,7 @@ public:
         (this->get_data())[offset+3] = v & 0xFF;
     }
 
-    void out_sint32_le(int64_t v) {
+    void out_sint32_le(int64_t v) noexcept {
         assert(this->has_room(4));
         this->p[0] = v & 0xFF;
         this->p[1] = (v >> 8) & 0xFF;
@@ -740,19 +740,19 @@ public:
         this->p+=4;
     }
 
-    void out_unistr(const uint8_t * text)
+    void out_unistr(const uint8_t * text) noexcept
     {
         const size_t len = UTF8toUTF16({text, strlen(char_ptr_cast(text))}, this->p, this->tailroom());
         this->p += len;
         this->out_clear_bytes(2);
     }
 
-    void out_unistr(const char* text)
+    void out_unistr(const char* text) noexcept
     {
         out_unistr(byte_ptr_cast(text));
     }
 
-    void out_date_name(const char* text, const size_t buflen)
+    void out_date_name(const char* text, const size_t buflen) noexcept
     {
         size_t i = 0;
         for (; i < (buflen/2) ; i++) {
@@ -768,45 +768,45 @@ public:
         }
     }
 
-    void out_utf16(const uint16_t utf16[], size_t length)
+    void out_utf16(const uint16_t utf16[], size_t length) noexcept
     {
         for (size_t i = 0; i < length ; i ++){
             this->out_uint16_le(utf16[i]);
         }
     }
 
-    size_t get_capacity() const {
+    size_t get_capacity() const noexcept {
         return this->end - this->begin;
     }
 
     /// set current position to start buffer (\a p = \a begin)
-    void rewind(std::size_t offset = 0) {
+    void rewind(std::size_t offset = 0) noexcept {
         assert(this->begin + offset <= this->end);
         this->p = this->begin + offset;
     }
 
-    void out_copy_bytes(cbytes_view data){
+    void out_copy_bytes(cbytes_view data) noexcept {
         assert(this->has_room(data.size()));
         memcpy(this->p, data.data(), data.size());
         this->p += data.size();
     }
 
-    void out_copy_bytes(cbyte_ptr v, size_t n) {
+    void out_copy_bytes(cbyte_ptr v, size_t n) noexcept {
         this->out_copy_bytes({v, n});
     }
 
     // Output zero terminated string, non including trailing 0
-    void out_string(const char * v) {
+    void out_string(const char * v) noexcept {
         this->out_copy_bytes(v, strlen(v));
     }
 
-    void out_clear_bytes(size_t n) {
+    void out_clear_bytes(size_t n) noexcept {
         assert(this->has_room(n));
         memset(this->p, 0, n);
         this->p += n;
     }
 
-    void out_bytes_le(const uint8_t nb, const unsigned value){
+    void out_bytes_le(const uint8_t nb, const unsigned value) noexcept {
         assert(this->has_room(nb));
         ::out_bytes_le(this->p, nb, value);
         this->p += nb;
@@ -849,7 +849,7 @@ public:
 template<std::size_t N, class StreamBase>
 struct BasicStaticStream : StreamBase
 {
-    explicit BasicStaticStream(std::size_t offset = 0)
+    explicit BasicStaticStream(std::size_t offset = 0) noexcept
     : StreamBase(this->array_, N, offset)
     {}
 
@@ -858,7 +858,7 @@ struct BasicStaticStream : StreamBase
 
     using array_type = uint8_t[N];
 
-    static constexpr std::size_t original_capacity() {
+    static constexpr std::size_t original_capacity() noexcept {
         return N;
     }
 
@@ -894,7 +894,7 @@ private:
 
 struct OutReservedStreamHelper
 {
-    OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len)
+    OutReservedStreamHelper(uint8_t * data, std::size_t reserved_leading_space, std::size_t buf_len) noexcept
     : buf(data + reserved_leading_space)
     , reserved_leading_space(reserved_leading_space)
     , stream(this->buf, buf_len - reserved_leading_space)
@@ -913,15 +913,15 @@ struct OutReservedStreamHelper
         return Packet{this->buf, std::size_t(this->stream.get_current() - this->buf)};
     }
 
-    std::size_t get_reserved_leading_space() const {
+    std::size_t get_reserved_leading_space() const noexcept {
         return this->reserved_leading_space;
     }
 
-    OutStream & get_data_stream() {
+    OutStream & get_data_stream() noexcept {
         return this->stream;
     }
 
-    Packet copy_to_head(OutStream const & stream) {
+    Packet copy_to_head(OutStream const & stream) noexcept {
         assert(stream.get_offset() <= this->reserved_leading_space);
         this->buf -= stream.get_offset();
         this->reserved_leading_space -= stream.get_offset();
@@ -930,7 +930,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) {
+    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -944,7 +944,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) {
+    Packet copy_to_head(OutStream const & stream1, OutStream const & stream2, OutStream const & stream3) noexcept {
         auto const total_stream_size = stream1.get_offset() + stream2.get_offset() + stream3.get_offset();
         assert(total_stream_size <= this->reserved_leading_space);
         this->reserved_leading_space -= total_stream_size;
@@ -960,7 +960,7 @@ struct OutReservedStreamHelper
         return get_packet();
     }
 
-    void rewind() {
+    void rewind() noexcept {
         this->reserved_leading_space += this->stream.get_data() - this->buf;
         this->buf = this->stream.get_data();
         this->stream.rewind();
@@ -976,7 +976,7 @@ private:
 template<std::size_t HeaderSz, std::size_t StreamSz>
 struct StaticOutReservedStreamHelper : OutReservedStreamHelper
 {
-    StaticOutReservedStreamHelper()
+    StaticOutReservedStreamHelper() noexcept
     : OutReservedStreamHelper(this->data, HeaderSz, HeaderSz + StreamSz)
     {}
 
@@ -1038,12 +1038,12 @@ namespace details_ {
     /// Extract stream size of Writer
     /// @{
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...)) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...)) noexcept {
         return Sz{};
     }
 
     template<class R, class C, class Sz, class ... Args>
-    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...) const) {
+    constexpr Sz packet_size_from_mfunc(R(C::* /*unused*/)(Sz, OutStream &, Args...) const) noexcept {
         return Sz{};
     }
 
@@ -1084,7 +1084,7 @@ namespace details_ {
     /// @{
     template<class T, class U>
     std::integral_constant<std::size_t, T::value + U::value>
-    packet_size_add(T const & /*unused*/, U const & /*unused*/) {
+    packet_size_add(T const & /*unused*/, U const & /*unused*/) noexcept {
         return {};
     }
 
@@ -1093,7 +1093,7 @@ namespace details_ {
         std::is_same<T, std::size_t>::value
      || std::is_same<U, std::size_t>::value
     , std::size_t>::type
-    packet_size_add(T const & a, U const & b) {
+    packet_size_add(T const & a, U const & b) noexcept {
         return a + b;
     }
 

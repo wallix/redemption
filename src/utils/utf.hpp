@@ -35,37 +35,37 @@ enum {
 
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-std::size_t UTF8Len(const_byte_ptr source);
+std::size_t UTF8Len(const_byte_ptr source) noexcept;
 
-void UTF16Upper(uint8_t * source, std::size_t max_len);
+void UTF16Upper(uint8_t * source, std::size_t max_len) noexcept;
 
 
 // UTF8GetLen find the number of bytes of the len first characters of input.
 // It assumes input is valid utf8, zero terminated (that has been checked before).
-std::size_t UTF8GetPos(uint8_t const * source, std::size_t len);
+std::size_t UTF8GetPos(uint8_t const * source, std::size_t len) noexcept;
 
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertAtPos(uint8_t * source, std::size_t len, const uint8_t * to_insert, std::size_t max_source);
+bool UTF8InsertAtPos(uint8_t * source, std::size_t len, const uint8_t * to_insert, std::size_t max_source) noexcept;
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
-std::size_t UTF8StringAdjustedNbBytes(const uint8_t * source, std::size_t max_len);
+std::size_t UTF8StringAdjustedNbBytes(const uint8_t * source, std::size_t max_len) noexcept;
 
 // UTF8RemoveOneAtPos assumes input is valid utf8, zero terminated, that has been checked before
-void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len);
+void UTF8RemoveOneAtPos(uint8_t * source, std::size_t len) noexcept;
 
 // UTF8InsertAtPos assumes input is valid utf8, zero terminated, that has been checked before
 // UTF8InsertAtPos won't insert anything and return false if modified string buffer does not have enough space to insert
-bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source);
+bool UTF8InsertOneAtPos(uint8_t * source, std::size_t len, const uint32_t to_insert_char, std::size_t max_source) noexcept;
 
 // UTF8toUTF16 never writes the trailing zero
-std::size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len);
+std::size_t UTF8toUTF16(const_bytes_view source, uint8_t * target, size_t t_len) noexcept;
 //std::size_t UTF8toUTF16(const uint8_t * source, std::size_t s_len, uint8_t * target, std::size_t t_len);
 
 
 // UTF8toUTF16 never writes the trailing zero (with Lf to CrLf conversion).
-std::size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, std::size_t t_len);
+std::size_t UTF8toUTF16_CrLf(const_bytes_view source, uint8_t * target, std::size_t t_len) noexcept;
 
 
 class UTF8toUnicodeIterator
@@ -91,43 +91,43 @@ private:
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
-std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len);
+std::size_t UTF16toUTF8(const uint8_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF16 input
 // do not write trailing 0
-std::size_t UTF16toUTF8(const uint16_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len);
+std::size_t UTF16toUTF8(const uint16_t * utf16_source, std::size_t utf16_len, uint8_t * utf8_target, std::size_t target_len) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
-std::size_t UTF32toUTF8(const uint8_t * utf32_source, std::size_t utf32_len, uint8_t * utf8_target, std::size_t target_len);
+std::size_t UTF32toUTF8(const uint8_t * utf32_source, std::size_t utf32_len, uint8_t * utf8_target, std::size_t target_len) noexcept;
 
 // Return number of UTF8 bytes used to encode UTF32 input
 // do not write trailing 0
-std::size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, std::size_t target_len);
+std::size_t UTF32toUTF8(uint32_t utf32_char, uint8_t * utf8_target, std::size_t target_len) noexcept;
 
 // Copy as many characters from source to dest fitting in dest buffer.
 // Returns the number of UTF8 characters copied.
 // The destination string will always be 0 terminated (dest_size 0 is forbidden)
 // The buffer after final 0 is not padded.
 
-std::size_t UTF8ToUTF8LCopy(uint8_t * dest, std::size_t dest_size, const uint8_t * source);
+std::size_t UTF8ToUTF8LCopy(uint8_t * dest, std::size_t dest_size, const uint8_t * source) noexcept;
 
-size_t UTF8CharNbBytes(const uint8_t * source);
+size_t UTF8CharNbBytes(const uint8_t * source) noexcept;
 
-bool is_utf8_string(uint8_t const * s, int length = -1);
+bool is_utf8_string(uint8_t const * s, int length = -1) noexcept;
 
-bool is_ASCII_string(const_bytes_view source);
-bool is_ASCII_string(const_byte_ptr source);
+bool is_ASCII_string(const_bytes_view source) noexcept;
+bool is_ASCII_string(const_byte_ptr source) noexcept;
 
-std::size_t UTF8StrLenInChar(const_byte_ptr source);
+std::size_t UTF8StrLenInChar(const_byte_ptr source) noexcept;
 
-std::size_t UTF16toLatin1(const uint8_t * utf16_source_, std::size_t utf16_len, uint8_t * latin1_target, std::size_t latin1_len);
+std::size_t UTF16toLatin1(const uint8_t * utf16_source_, std::size_t utf16_len, uint8_t * latin1_target, std::size_t latin1_len) noexcept;
 
 std::size_t Latin1toUTF16(const_bytes_view latin1_source,
-        uint8_t * utf16_target, std::size_t utf16_len);
+        uint8_t * utf16_target, std::size_t utf16_len) noexcept;
 
 std::size_t Latin1toUTF8(
     const uint8_t * latin1_source, std::size_t latin1_len,
-    uint8_t * utf8_target, std::size_t utf8_len);
+    uint8_t * utf8_target, std::size_t utf8_len) noexcept;
 
-std::size_t UTF16StrLen(const uint8_t * utf16_s);
+std::size_t UTF16StrLen(const uint8_t * utf16_s) noexcept;

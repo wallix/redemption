@@ -35,42 +35,42 @@ public:
 
 public:
     Parse() = default;
-    explicit Parse(uint8_t const * p) : p(p) {}
+    explicit Parse(uint8_t const * p) noexcept : p(p) {}
 
-    void unget(size_t n)
+    void unget(size_t n) noexcept
     {
         this->p -= n;
     }
 
-    int8_t in_sint8() {
+    int8_t in_sint8() noexcept {
         return *(reinterpret_cast<int8_t const *>(this->p++)); /*NOLINT*/
     }
 
-    uint8_t in_uint8() {
+    uint8_t in_uint8() noexcept {
         return *this->p++;
     }
 
-    int16_t in_sint16_be() {
+    int16_t in_sint16_be() noexcept {
         unsigned int v = this->in_uint16_be();
         return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
-    int16_t in_sint16_le() {
+    int16_t in_sint16_le() noexcept {
         unsigned int v = this->in_uint16_le();
         return static_cast<int16_t>(v > 32767 ? v - 65536 : v);
     }
 
-    uint16_t in_uint16_le() {
+    uint16_t in_uint16_le() noexcept {
         this->p += 2;
         return static_cast<uint16_t>(this->p[-2] | (this->p[-1] << 8));
     }
 
-    uint16_t in_uint16_be() {
+    uint16_t in_uint16_be() noexcept {
         this->p += 2;
         return static_cast<uint16_t>(this->p[-1] | (this->p[-2] << 8)) ;
     }
 
-    uint32_t in_uint32_le() {
+    uint32_t in_uint32_le() noexcept {
         this->p += 4;
         return  this->p[-4]
              | (this->p[-3] << 8)
@@ -79,7 +79,7 @@ public:
              ;
     }
 
-    uint32_t in_uint32_be() {
+    uint32_t in_uint32_be() noexcept {
         this->p += 4;
         return  this->p[-1]
              | (this->p[-2] << 8)
@@ -88,35 +88,35 @@ public:
              ;
     }
 
-    int32_t in_sint32_le() {
+    int32_t in_sint32_le() noexcept {
         uint64_t v = this->in_uint32_le();
         return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
-    int32_t in_sint32_be() {
+    int32_t in_sint32_be() noexcept {
         uint64_t v = this->in_uint32_be();
         return static_cast<int32_t>((v > 0x7FFFFFFF) ? v - 0x100000000LL : v);
     }
 
-    int64_t in_sint64_le() {
+    int64_t in_sint64_le() noexcept {
         int64_t res;
         *(reinterpret_cast<uint64_t *>(&res)) = this->in_uint64_le(); /*NOLINT*/
         return res;
     }
 
-    uint64_t in_uint64_le() {
+    uint64_t in_uint64_le() noexcept {
         uint64_t low = this->in_uint32_le();
         uint64_t high = this->in_uint32_le();
         return low + (high << 32);
     }
 
-    uint64_t in_uint64_be() {
+    uint64_t in_uint64_be() noexcept {
         uint64_t high = this->in_uint32_be();
         uint64_t low = this->in_uint32_be();
         return low + (high << 32);
     }
 
-    uint32_t in_bytes_le(const uint8_t nb){
+    uint32_t in_bytes_le(const uint8_t nb) noexcept {
         uint32_t res = 0;
         for (int b = 0 ; b < nb ; ++b){
             res |= this->p[b] << (8 * b);
@@ -126,7 +126,7 @@ public:
     }
 
 
-    uint32_t in_bytes_be(const uint8_t nb){
+    uint32_t in_bytes_be(const uint8_t nb) noexcept {
         uint32_t res = 0;
         for (int b = 0 ; b < nb ; ++b){
             res = (res << 8) | this->p[b];
@@ -135,21 +135,21 @@ public:
         return res;
     }
 
-    void in_copy_bytes(uint8_t * v, size_t n) {
+    void in_copy_bytes(uint8_t * v, size_t n) noexcept {
         memcpy(v, this->p, n);
         this->p += n;
     }
 
-    void in_copy_bytes(char * v, size_t n) {
+    void in_copy_bytes(char * v, size_t n) noexcept {
         this->in_copy_bytes(byte_ptr_cast(v), n);
     }
 
-    const uint8_t *in_uint8p(unsigned int n) {
+    const uint8_t *in_uint8p(unsigned int n) noexcept {
         this->p+=n;
         return this->p - n;
     }
 
-    void in_skip_bytes(unsigned int n) {
+    void in_skip_bytes(unsigned int n) noexcept {
         this->p+=n;
     }
 
@@ -227,7 +227,7 @@ public:
     // val2 (1 byte): An 8-bit, unsigned integer containing the least significant
     // bits of the value represented by this structure.
 
-    uint16_t in_2BUE()
+    uint16_t in_2BUE() noexcept
     {
         uint16_t length = this->in_uint8();
         if (length & 0x80){
@@ -288,7 +288,7 @@ public:
 // val4 (1 byte): An 8-bit, unsigned integer containing the least significant
 //  bits of the value represented by this structure.
 
-    uint32_t in_4BUE()
+    uint32_t in_4BUE() noexcept
     {
         uint32_t length = this->in_uint8();
         switch (length & 0xC0)
@@ -327,7 +327,7 @@ public:
     //    of the first byte and the 8 bits of the next byte are concatenated
     //    (the first byte containing the high-order bits) to create a 15-bit
     //    signed delta value.
-    int16_t in_DEP() {
+    int16_t in_DEP() noexcept {
         int16_t point = this->in_uint8();
         if (point & 0x80) {
             point = ((point & 0x7F) << 8) + this->in_uint8();
@@ -343,14 +343,14 @@ public:
         return point;
     }
 
-    void in_utf16(uint16_t utf16[], size_t length)
+    void in_utf16(uint16_t utf16[], size_t length) noexcept
     {
         for (size_t i = 0; i < length ; i ++){
             utf16[i] = this->in_uint16_le();
         }
     }
 
-    size_t in_utf16_sz(uint16_t utf16[], size_t length)
+    size_t in_utf16_sz(uint16_t utf16[], size_t length) noexcept
     {
         for (size_t i = 0; i < length ; i++){
             utf16[i] = this->in_uint16_le();
@@ -360,6 +360,4 @@ public:
         }
         return length;
     }
-
 };
-
