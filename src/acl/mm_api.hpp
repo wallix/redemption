@@ -66,7 +66,6 @@ public:
     virtual bool is_up_and_running() {
         return this->mod && this->mod->is_up_and_running();
     }
-    virtual void stop_record() {}
     virtual void check_module() {}
 
     virtual rdp_api* get_rdp_api() const { return nullptr; }
