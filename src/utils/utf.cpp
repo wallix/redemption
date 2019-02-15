@@ -103,6 +103,28 @@ bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, si
     return true;
 }
 
+namespace
+{
+    constexpr uint8_t utf8_byte_size_table[] {
+        // 0xxx x[xxx]
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        1, 1, 1, 1,
+        // 10xx x[xxx]  invalid value
+        2, 2, 2, 2,
+        2, 2, 2, 2,
+        // 110x x[xxx]
+        2, 2, 2, 2,
+        // 1110 x[xxx]
+        3, 3,
+        // 1111 0[xxx]
+        4,
+        // 1111 1[xxx]  invalid value
+        4,
+    };
+}
+
 // UTF8CharNbBytes:
 // ----------------
 // input: 'source' is the beginning of a char contained in a valid utf8 zero terminated string.
@@ -111,7 +133,8 @@ bool UTF8InsertAtPos(uint8_t * source, size_t len, const uint8_t * to_insert, si
 size_t UTF8CharNbBytes(const uint8_t * source) noexcept
 {
     uint8_t c = *source;
-    return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
+    return utf8_byte_size_table[(c >> 3)];
+    // return (c<=0x7F)?1:(c<=0xDF)?2:(c<=0xEF)?3:4;
 }
 
 // UTF8Len assumes input is valid utf8, zero terminated, that has been checked before
