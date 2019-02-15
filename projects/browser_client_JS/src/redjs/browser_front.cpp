@@ -199,17 +199,15 @@ struct BrowserFront::Clipboard
     Clip clip;
 };
 
-// TODO RDPVerbose verbose
-BrowserFront::BrowserFront(ScreenInfo& screen_info, OrderCaps& order_caps, bool verbose)
+BrowserFront::BrowserFront(uint16_t width, uint16_t height, ScreenInfo& screen_info, OrderCaps& order_caps, RDPVerbose verbose)
 : width(screen_info.width)
 , height(screen_info.height)
 , verbose(verbose)
 , screen_info(screen_info)
-, clipboard(std::make_unique<Clipboard>(RDPVerbose(verbose)))
+, clipboard(std::make_unique<Clipboard>(verbose))
 {
-    // TODO
-    screen_info.width = 800;
-    screen_info.height = 600;
+    screen_info.width = width;
+    screen_info.height = height;
     screen_info.bpp = BitsPerPixel{24};
 
     order_caps.orderSupport[TS_NEG_POLYLINE_INDEX] = 1;
@@ -519,7 +517,7 @@ BrowserFront::ResizeResult BrowserFront::server_resize(int width, int height, Bi
     this->screen_info.width = width;
     this->screen_info.height = height;
     this->screen_info.bpp = bpp;
-    if (this->verbose) {
+    if (bool(this->verbose & RDPVerbose::graphics)) {
         LOG(LOG_INFO, "BrowserFront::server_resize(width=%d, height=%d, bpp=%d", width, height, bpp);
     }
     return ResizeResult::instant_done;
@@ -601,7 +599,7 @@ void BrowserFront::send_to_channel(
     const CHANNELS::ChannelDef & channel, const uint8_t * data,
     std::size_t /*length*/, std::size_t chunk_size, int flags)
 {
-    if (this->verbose) {
+    if (bool(this->verbose & RDPVerbose::channels)) {
         LOG(LOG_INFO, "BrowserFront::send_to_channel");
     }
 
@@ -613,7 +611,7 @@ void BrowserFront::send_to_channel(
 
 void BrowserFront::update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/)
 {
-    if (this->verbose) {
+    if (bool(this->verbose & RDPVerbose::graphics_pointer)) {
         LOG(LOG_INFO, "BrowserFront::update_pointer_position");
     }
 }

@@ -98,7 +98,7 @@ const createRdpClient = (function(Module) {
 
     const noop = function(){};
 
-    return function(url, username, password, verbosity) {
+    return function(url, width, height, username, password, verbosity) {
         const socket = new WebSocket(url, "RDP");
         socket.binaryType = 'arraybuffer';
 
@@ -177,13 +177,17 @@ const createRdpClient = (function(Module) {
             }
 
             client.close = () => socket.close();
-            rdpclient = new Module.RdpClient(username || "", password || "", verbosity || 0);
-            // TODO
-            for (eventName in wrappersCbMod) {
-                if (!(eventName in events)) {
-                    events[eventName] = console.log.bind(console, eventName);
-                }
-            }
+            rdpclient = new Module.RdpClient(
+                width, height,
+                username || "", password || "",
+                verbosity || 0);
+
+            // for (eventName in wrappersCbMod) {
+            //     if (!(eventName in events)) {
+            //         events[eventName] = console.log.bind(console, eventName);
+            //     }
+            // }
+
             client.sendUnicode = function(unicode, flags) {
                 rdpclient.sendUnicode(unicode, flags);
                 send_data();
@@ -205,7 +209,7 @@ const createRdpClient = (function(Module) {
                 send_data();
             }
 
-            Module.RdpClientEventTable[rdpclient.thisptr()] = events;
+            Module.RdpClientEventTable[rdpclient.frontPtr()] = events;
 
             rdpclient.updateTime();
             timeoutDate = Date.now();
@@ -611,6 +615,8 @@ function run()
 {
     rdpclient = createRdpClient(
         "ws://localhost:8080",
+        ecanvas.width,
+        ecanvas.height,
         user_input.value,
         pass_input.value,
         0/*xff*/);

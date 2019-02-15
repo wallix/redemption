@@ -94,13 +94,11 @@ struct RdpClient
 
     std::unique_ptr<mod_api> mod;
 
-    uint64_t verbose;
-
     redjs::BrowserTransport browser_trans;
 
     ClientInfo client_info;
 
-    redjs::BrowserFront front = redjs::BrowserFront(client_info.screen_info, client_info.order_caps, verbose);
+    redjs::BrowserFront front;
     JsReportMessage report_message;
     SessionReactor session_reactor;
 
@@ -118,8 +116,11 @@ struct RdpClient
     Font font;
 
 
-    RdpClient(std::string const& username, std::string const& password, unsigned long verbose)
-    : verbose(verbose)
+    RdpClient(
+        uint16_t width, uint16_t height,
+        std::string const& username, std::string const& password,
+        unsigned long verbose)
+    : front(width, height, client_info.screen_info, client_info.order_caps, RDPVerbose(verbose))
     {
         ini.set<cfg::mod_rdp::server_redirection_support>(false);
         ini.set<cfg::mod_rdp::enable_nla>(false);
@@ -239,7 +240,7 @@ struct RdpClient
 EMSCRIPTEN_BINDINGS(client)
 {
     redjs::class_<RdpClient>("RdpClient")
-        .constructor<std::string, std::string, unsigned long>()
+        .constructor<uint16_t, uint16_t, std::string, std::string, unsigned long>()
         /// long long is not embind type. Use long or double (safe for 53 bits);
         .function_ptr("updateTime", [](RdpClient& client) {
             Ms ms = client.update_time(tvtime());
@@ -248,8 +249,7 @@ EMSCRIPTEN_BINDINGS(client)
         .function_ptr("getSendingData", [](RdpClient& client) {
             return redjs::emval_from_view(client.get_sending_data_view());
         })
-        // TODO front_ptr
-        .function_ptr("thisptr", +[](RdpClient& ref) {
+        .function_ptr("frontPtr", +[](RdpClient& ref) {
             return RED_EM_ASM_INT({ return $0; }, &ref.front);
         })
         .function("clearSendingData", &RdpClient::clear_sending_data)
