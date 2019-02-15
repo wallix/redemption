@@ -702,6 +702,9 @@ struct FileAllocationInformation {
     }
 
     void receive(InStream & stream) {
+        // AllocationSize(4)
+        ::check_throw(stream, 4, "FileAllocationInformation", ERR_FSCC_DATA_TRUNCATED);
+
         this->AllocationSize = stream.in_uint64_le();
     }
 
@@ -1215,7 +1218,6 @@ public:
         //     FileAttributes(4) + FileNameLength(4) +
         //     EaSize(4) + ShortNameLength(1) +
         //     ShortName(24)
-
         ::check_throw(stream, 93, "FileBothDirectoryInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->NextEntryOffset = stream.in_uint32_le();
@@ -1599,7 +1601,6 @@ struct FileDispositionInformation {
     }
 
     void receive(InStream & stream) {
-
         // DeletePending(1)
         ::check_throw(stream, 1, "FileDispositionInformation (0)", ERR_FSCC_DATA_TRUNCATED);
         this->DeletePending = stream.in_uint8();
@@ -1983,16 +1984,8 @@ public:
 
         this->EaSize = stream.in_uint32_le();
 
-        {
-            const unsigned expected = this->FileNameLength; // FileName(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFullDirectoryInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // FileName(variable = FileNameLength)
+        ::check_throw(stream, this->FileNameLength, "FileFullDirectoryInformation (1)", ERR_RDPDR_PDU_TRUNCATED);
 
         if (this->FileNameLength > sizeof(this->file_name_UTF16)) {
             LOG(LOG_ERR,
@@ -2165,30 +2158,15 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+        // NextEntryOffset(4) + FileIndex(4) + FileNameLength(4)
+        ::check_throw(stream, 12, "FileNamesInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->NextEntryOffset = stream.in_uint32_le();
         this->FileIndex       = stream.in_uint32_le();
         this->FileNameLength  = stream.in_uint32_le();
 
-        {
-            const unsigned expected = this->FileNameLength; // FileName(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // FileName(variable = FilenameLength)
+        ::check_throw(stream, this->FileNameLength, "FileNamesInformation (1)", ERR_FSCC_DATA_TRUNCATED);
 
         if (this->FileNameLength > sizeof(this->file_name_UTF16)) {
             LOG(LOG_ERR,
@@ -2372,6 +2350,9 @@ struct FileRenameInformation {
     }
 
     void receive(InStream & stream) {
+        // ReplaceIfExists(1) + padding(7) + RootDirectory(4) + FileNameLength(2)
+        ::check_throw(stream, 14, "FileNamesInformation (0)", ERR_FSCC_DATA_TRUNCATED);
+
         this->ReplaceIfExists = stream.in_uint8();
 
         stream.in_skip_bytes(7);
@@ -2379,16 +2360,8 @@ struct FileRenameInformation {
         this->RootDirectory  = stream.in_uint64_le();
         this->FileNameLength = stream.in_uint32_le();
 
-        {
-            const unsigned expected = this->FileNameLength; // FileName(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileNamesInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // FileName(variable = FileNameLength)
+        ::check_throw(stream, this->FileNameLength, "FileNamesInformation (1)", ERR_FSCC_DATA_TRUNCATED);
 
         if (this->FileNameLength > sizeof(this->file_name_UTF16)) {
             LOG(LOG_ERR,
@@ -2515,17 +2488,9 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 22;   // AllocationSize(8) + EndOfFile(8) +
-                                            //     NumberOfLinks(4) + DeletePending(1) +
-                                            //     Directory(1)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileStandardInformation: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+        // AllocationSize(8) + EndOfFile(8) + NumberOfLinks(4) 
+        //  + DeletePending(1) + Directory(1)
+        ::check_throw(stream, 22, "FileStandardInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->AllocationSize = stream.in_uint64_le();
         this->EndOfFile      = stream.in_uint64_le();
@@ -2777,33 +2742,17 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
-                                            //     FileSystemNameLength(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+        // FileSystemAttributes(4) + MaximumComponentNameLength(4) +
+        //     FileSystemNameLength(4)
+        ::check_throw(stream, 12, "FileFsAttributeInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->FileSystemAttributes_      = stream.in_uint32_le();
         this->MaximumComponentNameLength = stream.in_sint32_le();
 
         this->FileSystemNameLength = stream.in_uint32_le();
 
-        {
-            // FileSystemName(variable)
-            const unsigned expected = this->FileSystemNameLength;
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsAttributeInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // FileSystemName(variable)
+        ::check_throw(stream, this->FileSystemNameLength, "FileFsAttributeInformation (1)", ERR_FSCC_DATA_TRUNCATED);
 
         if (this->FileSystemNameLength > sizeof(this->file_system_name_UTF16)) {
             LOG(LOG_ERR,
@@ -2812,8 +2761,7 @@ public:
             throw Error(ERR_RDP_INTERNAL);
         }
 
-        stream.in_copy_bytes(this->file_system_name_UTF16,
-            this->FileSystemNameLength);
+        stream.in_copy_bytes(this->file_system_name_UTF16, this->FileSystemNameLength);
     }
 
     size_t size() const {
@@ -3004,20 +2952,14 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 32;   // TotalAllocationUnits(8) +
-                                            //     CallerAvailableAllocationUnits(8)
-                                            //     ActualAvailableAllocationUnits(8) +
-                                            //     SectorsPerAllocationUnit(4) +
-                                            //     BytesPerSector(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsFullSizeInformation: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
-
+    
+        // TotalAllocationUnits(8)
+        //   + CallerAvailableAllocationUnits(8)
+        //   + ActualAvailableAllocationUnits(8)
+        //   + SectorsPerAllocationUnit(4)
+        //   + BytesPerSector(4)
+        ::check_throw(stream, 32, "FileFsFullSizeInformation", ERR_FSCC_DATA_TRUNCATED);
+    
         this->TotalAllocationUnits           = stream.in_sint64_le();
         this->CallerAvailableAllocationUnits = stream.in_sint64_le();
         this->ActualAvailableAllocationUnits = stream.in_sint64_le();
@@ -3145,18 +3087,12 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 24;   // TotalAllocationUnits(8) +
-                                            //     AvailableAllocationUnits(8) +
-                                            //     SectorsPerAllocationUnit(4) +
-                                            //     BytesPerSector(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsSizeInformation: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+
+        // TotalAllocationUnits(8)
+        //   + AvailableAllocationUnits(8)
+        //   + SectorsPerAllocationUnit(4)
+        //   + BytesPerSector(4)
+        ::check_throw(stream, 24, "FileFsSizeInformation", ERR_FSCC_DATA_TRUNCATED);
 
         this->TotalAllocationUnits     = stream.in_sint64_le();
         this->AvailableAllocationUnits = stream.in_sint64_le();
@@ -3307,16 +3243,10 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 17;   // VolumeCreationTime(8) + VolumeSerialNumber(4) +
-                                            //     VolumeLabelLength(4) + SupportsObjects(1)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+
+        // VolumeCreationTime(8) + VolumeSerialNumber(4)
+        //   + VolumeLabelLength(4) + SupportsObjects(1)
+        ::check_throw(stream, 17, "FileFsVolumeInformation", ERR_FSCC_DATA_TRUNCATED);
 
         this->VolumeCreationTime = stream.in_uint64_le();
         this->VolumeSerialNumber = stream.in_uint32_le();
@@ -3325,16 +3255,8 @@ public:
 
         // Reserved(1), MUST NOT be transmitted.
 
-        {
-            const unsigned expected = this->VolumeLabelLength;    // VolumeLabel(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsVolumeInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // VolumeLabel(variable)
+        ::check_throw(stream, this->VolumeLabelLength, "FileFsVolumeInformation (1)", ERR_FSCC_DATA_TRUNCATED);
 
         if (this->VolumeLabelLength > sizeof(this->volume_label_UTF16)) {
             LOG(LOG_ERR,
@@ -3549,15 +3471,8 @@ public:
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 8;    // DeviceType(4) + Characteristics(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileFsDeviceInformation (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+        // DeviceType(4) + Characteristics(4)
+        ::check_throw(stream, 8, "FileFsDeviceInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->DeviceType      = stream.in_uint32_le();
         this->Characteristics = stream.in_uint32_le();
@@ -3771,31 +3686,15 @@ struct FileNotifyInformation {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 12;   // NextEntryOffset(4) + Action(4) +
-                                            //     FileNameLength(4)
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileNotifyInformation (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_FSCC_DATA_TRUNCATED);
-            }
-        }
+        // NextEntryOffset(4) + Action(4) +  FileNameLength(4)
+        ::check_throw(stream, 12, "FileNotifyInformation (0)", ERR_FSCC_DATA_TRUNCATED);
 
         this->NextEntryOffset = stream.in_uint32_le();
         this->Action          = stream.in_uint32_le();
         this->FileNameLength  = stream.in_uint32_le();
 
-        {
-            const unsigned expected = this->FileNameLength; // FileName(variable)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated FileNotifyInformation (1): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // FileName(variable)
+        ::check_throw(stream, this->FileNameLength, "FileNotifyInformation (1)", ERR_FSCC_DATA_TRUNCATED);
 
         if (this->FileNameLength > sizeof(this->file_name_UTF16)) {
             LOG(LOG_ERR,
