@@ -228,6 +228,11 @@ struct RdpClient
     {
         this->front.send_clipboard_utf8(utf8_string);
     }
+
+    void send_file(std::string const& name, std::vector<uint8_t> data)
+    {
+        this->front.send_file(name, std::move(data));
+    }
 };
 
 // Binding code
@@ -253,5 +258,6 @@ EMSCRIPTEN_BINDINGS(client)
         .function("sendScancode", &RdpClient::rdp_input_scancode)
         .function("sendMouseEvent", &RdpClient::rdp_input_mouse)
         .function("sendClipboardUtf8", &RdpClient::send_clipboard_utf8)
+        .function("sendFile", &RdpClient::send_file)
     ;
 }

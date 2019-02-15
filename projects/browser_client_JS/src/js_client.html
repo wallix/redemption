@@ -29,6 +29,10 @@
         <input type="text" id="pass" name="pass" value="x" placeholder="Password"/>
         <input type="submit" value="New Connection">
     </form>
+    <form id="sendCbFile" method="get" action="#">
+        <input type="submit" value="Send File">
+        <input id="sendCbFile_data" name="myFile" type="file">
+    </form>
     <form id="sendCbUtf8" method="get" action="#">
         <input type="submit" value="Send Clipboard">
         <textarea id="sendCbUtf8_data"></textarea>
@@ -111,11 +115,12 @@ const createRdpClient = (function(Module) {
                 events[eventName] = wrapCb(cb);
                 return this;
             },
+            close: noop,
             sendUnicode: noop,
             sendScancode: noop,
             sendMouseEvent: noop,
-            close: noop,
-            setClipboardUtf8: noop,
+            sendClipboardUtf8: noop,
+            sendFile: noop,
         };
 
         const send_data = function() {
@@ -193,6 +198,11 @@ const createRdpClient = (function(Module) {
             }
             client.sendClipboardUtf8 = (utf8String) => {
                 rdpclient.sendClipboardUtf8(utf8String);
+                send_data();
+            }
+            client.sendFile = (filename, binary) => {
+                rdpclient.sendFile(filename, binary);
+                send_data();
             }
 
             Module.RdpClientEventTable[rdpclient.thisptr()] = events;
@@ -244,9 +254,11 @@ const canvas = ecanvas.getContext('2d');
 const canvas2 = ecanvas2.getContext('2d');
 const login = document.getElementById('login');
 const sendCbUtf8 = document.getElementById('sendCbUtf8');
+const sendCbFile = document.getElementById('sendCbFile');
 // const receiveCbUtf8 = document.getElementById('receiveCbUtf8');
 const sendCbUtf8_data = document.getElementById('sendCbUtf8_data');
 const receiveCbUtf8_data = document.getElementById('receiveCbUtf8_data');
+const sendCbFile_data = document.getElementById('sendCbFile_data');
 const user_input = document.getElementById('user');
 const pass_input = document.getElementById('pass');
 let rdpclient;
@@ -724,6 +736,14 @@ sendCbUtf8.onsubmit = (e) => {
     e.preventDefault();
     if (rdpclient) {
         rdpclient.sendClipboardUtf8(sendCbUtf8_data.value);
+    }
+};
+
+sendCbFile.onsubmit = (e) => {
+    e.preventDefault();
+    if (rdpclient) {
+        const file = sendCbUtf8_data.files[0]
+        rdpclient.sendFile(file.name, file.binary);
     }
 };
 

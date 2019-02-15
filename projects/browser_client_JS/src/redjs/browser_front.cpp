@@ -128,10 +128,10 @@ namespace
 
         uint16_t get_buffer_type_id() override
         {
-            return RDPECLIP::CF_UNICODETEXT;
+            return this->type_id;
         }
 
-        int get_citems_number() override { return 0; }
+        int get_citems_number() override { return 1; }
 
         array_view_const_u8 get_cliboard_text() override
         {
@@ -156,6 +156,7 @@ namespace
 
         void set_utf8(std::string_view utf8_string)
         {
+            this->type_id = RDPECLIP::CF_UNICODETEXT;
             const size_t len = utf8_string.size() * 4 + 2;
             this->clipboard_text_data.resize(len + 2);
             auto* data = this->clipboard_text_data.data();
@@ -165,10 +166,16 @@ namespace
             this->clipboard_text_data.resize(real_len + 2);
         }
 
+        void set_file(std::string_view /*name*/, std::vector<uint8_t> /*data*/)
+        {
+            // this->type_id = ClientCLIPRDRConfig::CF_QT_CLIENT_FILEGROUPDESCRIPTORW;
+        }
+
         int frontidx;
 
     private:
         std::vector<uint8_t> clipboard_text_data;
+        uint16_t type_id = 0;
     };
 }
 
@@ -581,6 +588,12 @@ void BrowserFront::set_mod(mod_api * mod)
 void BrowserFront::send_clipboard_utf8(std::string_view utf8_string)
 {
     this->clipboard->clip.set_utf8(utf8_string);
+    this->clipboard->clientCLIPRDRChannel.send_FormatListPDU();
+}
+
+void BrowserFront::send_file(std::string_view name, std::vector<uint8_t> data)
+{
+    this->clipboard->clip.set_file(name, std::move(data));
     this->clipboard->clientCLIPRDRChannel.send_FormatListPDU();
 }
 

@@ -27,6 +27,9 @@ Author(s): Jonathan Poelen
 #include "core/channel_list.hpp"
 #include "core/front_api.hpp"
 
+#include <vector>
+#include <string_view>
+
 class ScreenInfo;
 class OrderCaps;
 class mod_api;
@@ -104,6 +107,7 @@ public:
     void update_pointer_position(uint16_t /*unused*/, uint16_t /*unused*/) override;
 
     void send_clipboard_utf8(std::string_view utf8_string);
+    void send_file(std::string_view name, std::vector<uint8_t> data);
     void set_mod(mod_api * mod);
 
 private:

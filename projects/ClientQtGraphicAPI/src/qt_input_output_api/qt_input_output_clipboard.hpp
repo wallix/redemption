@@ -308,7 +308,6 @@ public Q_SLOTS:
             } else if (mimeData->hasText()){                //  File or Text copy
 
                 QString qstr = this->_clipboard->text(QClipboard::Clipboard);
-                std::string utf8_text = qstr.toUtf8().constData();
 
                 if (qstr.size() > 0) {
                     this->emptyBuffer();
@@ -322,25 +321,22 @@ public Q_SLOTS:
                         this->_bufferTypeNameIndex = FILEGROUPDESCRIPTORW_BUFFER_TYPE;
 
                         // retrieve each path
-                        const std::string delimiter = "\n";
                         this->_cItems = 0;
                         uint32_t pos = 0;
                         while (pos <= str.size()) {
-                            pos = str.find(delimiter);
+                            pos = str.find('\n');
                             std::string path = str.substr(0, pos);
                             str = str.substr(pos+1, str.size());
 
                             // double slash
                             uint32_t posSlash(0);
-                            std::string slash = "/";
                             bool stillSlash = true;
                             while (stillSlash) {
-                                posSlash = path.find(slash, posSlash);
+                                posSlash = path.find('/', posSlash);
                                 if (posSlash < path.size()) {
                                     path = path.substr(0, posSlash) + "//" + path.substr(posSlash+1, path.size());
                                     posSlash += 2;
                                 } else {
-                                    path = path.substr(0, path.size());
                                     stillSlash = false;
                                 }
                             }
@@ -373,7 +369,7 @@ public Q_SLOTS:
                                 }
                                 uint8_t UTF16nameData[520];
                                 int UTF16nameSizeReal = ::UTF8toUTF16_CrLf(file->nameUTF8, UTF16nameData, UTF16nameSize);
-                                file->name = std::string(reinterpret_cast<char *>(UTF16nameData), UTF16nameSizeReal);
+                                file->name = std::string(char_ptr_cast(UTF16nameData), UTF16nameSizeReal);
                                 this->_cItems++;
                                 this->_items_list.push_back(file);
 
