@@ -112,10 +112,7 @@ sys_lib_assoc = dict((
     ('openssl/ssl.h', Dep(
         linkflags=['<library>openssl'])),
     ('boost/stacktrace.hpp', Dep(
-        linkflags=['<library>boost_stacktrace',
-                   '<variant>debug:<library>dl',
-                   '<variant>san:<library>dl',
-                   '<variant>coverage:<library>dl',],
+        linkflags=['$(BOOST_STACKTRACE_LINKFLAGS)'],
         cxxflags=['$(BOOST_STACKTRACE_CXXFLAGS)'])),
 ))
 sys_lib_prefix = (

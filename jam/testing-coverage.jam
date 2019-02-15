@@ -116,6 +116,15 @@ rule test-run ( target : source : requirements * : )
         requirements += <library>register_exception.o ;
     }
 
+    if "$(BOOST_STACKTRACE_LINKFLAGS)" != "" &&
+       ! ( <library>src/utils/stacktrace.o in $(requirements) )
+    {
+        requirements +=
+            <library>src/utils/stacktrace.o
+            $(BOOST_STACKTRACE_LINKFLAGS)
+        ;
+    }
+
     unit-test $(target) : $(source) : $(TEST_DEPENDENCIES) $(requirements) ;
 
     if ! <covflag>nocover in $(requirements)
