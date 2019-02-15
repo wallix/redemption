@@ -157,10 +157,10 @@ namespace
         void set_utf8(std::string_view utf8_string)
         {
             this->type_id = RDPECLIP::CF_UNICODETEXT;
-            const size_t len = utf8_string.size() * 4 + 2;
+            const size_t len = utf8_string.size() * 4;
             this->clipboard_text_data.resize(len + 2);
             auto* data = this->clipboard_text_data.data();
-            auto real_len = UTF8toUTF16_CrLf(utf8_string, data, len - 2);
+            auto real_len = UTF8toUTF16_CrLf(utf8_string, data, len);
             data[real_len] = 0;
             data[real_len + 1] = 0;
             this->clipboard_text_data.resize(real_len + 2);

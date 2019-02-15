@@ -26,16 +26,15 @@
 
 #include "mod/rdp/rdp_negociation.hpp"
 
-#include <tuple>
 #include <array>
 
 
 RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
-    std::tuple{"mer", "mollusque@rocher", "", "mollusque@rocher"},
-    std::tuple{"sable", "coquillage\\crustacé@plageabandonnée",
+    std::array{"mer", "mollusque@rocher", "", "mollusque@rocher"},
+    std::array{"sable", "coquillage\\crustacé@plageabandonnée",
                "", "coquillage\\crustacé@plageabandonnée"},
-    std::tuple{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
-    std::tuple{"ohnon", "zigouigoui", "", "zigouigoui"}
+    std::array{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
+    std::array{"ohnon", "zigouigoui", "", "zigouigoui"}
 }), hostname, target_user, domain, username)
 {
     RdpLogonInfo logon_info(hostname, false, target_user, false);
@@ -44,16 +43,14 @@ RED_BIND_DATA_TEST_CASE(TestRdpLogonInfo, (std::array{
 }
 
 RED_BIND_DATA_TEST_CASE(TestRdpLogonInfoLegacy, (std::array{
-    std::tuple{"mer", "mollusque@rocher", "rocher", "mollusque"},
-    std::tuple{"sable", "coquillage\\crustacé@plageabandonnée",
+    std::array{"mer", "mollusque@rocher", "rocher", "mollusque"},
+    std::array{"sable", "coquillage\\crustacé@plageabandonnée",
                "coquillage", "crustacé@plageabandonnée"},
-    std::tuple{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
-    std::tuple{"ohnon", "zigouigoui", "", "zigouigoui"}
+    std::array{"what", "tounicoti\\tournicoton", "tounicoti", "tournicoton"},
+    std::array{"ohnon", "zigouigoui", "", "zigouigoui"}
 }), hostname, target_user, domain, username)
 {
     RdpLogonInfo logon_info(hostname, false, target_user, true);
     RED_CHECK_EQUAL(logon_info.domain(), domain);
     RED_CHECK_EQUAL(logon_info.username(), username);
 }
-
-

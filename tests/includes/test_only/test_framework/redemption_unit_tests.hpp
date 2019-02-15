@@ -57,6 +57,8 @@ namespace redemption_unit_test__
 
 /// CHECK
 //@{
+# define RED_TEST(expr) RED_TEST_CHECK(expr)
+# define RED_TEST_CHECK(expr) RED_CHECK(expr)
 # define RED_CHECK_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_CHECK_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_CHECK_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
@@ -95,6 +97,7 @@ namespace redemption_unit_test__
 
 /// REQUIRE
 //@{
+# define RED_TEST_REQUIRE(expr) RED_REQUIRE(expr)
 # define RED_REQUIRE_EXCEPTION_ERROR_ID(stmt, id) do { stmt; (void)id; } while (0)
 # define RED_REQUIRE_NO_THROW(stmt) do { stmt; } while (0)
 # define RED_REQUIRE_THROW(stmt, exception) do { stmt; [](exception) {}; } while (0)
@@ -129,6 +132,11 @@ namespace redemption_unit_test__
 // require #include "test_only/get_file_contents.hpp"
 # define RED_REQUIRE_FILE_CONTENTS(filename, contents) \
     ::redemption_unit_test__::X(bool(get_file_contents(filename) == (contents)))
+//@}
+
+/// WARN
+//@{
+# define RED_TEST_WARN(expr) RED_CHECK(expr)
 //@}
 
 #else

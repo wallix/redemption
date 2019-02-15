@@ -3211,10 +3211,8 @@ private:
                     OutStream data_stream(uninit_buf_av.array_from_offset(header_size));
 
                     if (this->clipboard_data_ctx.clipboard_data_is_utf8_encoded()) {
-                    	auto av = this->clipboard_data_ctx.clipboard_data();
-
                         size_t utf16_data_length = UTF8toUTF16_CrLf(
-                            av,
+                            this->clipboard_data_ctx.clipboard_data(),
                             data_stream.get_data(),
                             data_stream.get_capacity()-2
                         );
