@@ -94,6 +94,7 @@
 #include "utils/sugar/cast.hpp"
 #include "utils/sugar/not_null_ptr.hpp"
 #include "utils/strutils.hpp"
+#include "core/stream_throw_helpers.hpp"
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -2198,22 +2199,14 @@ public:
                             LOG(LOG_INFO, "Front::incoming: Unexpected CONFIRMACTIVE PDU");
                         }
                         {
-                            unsigned expected = 6; /* shareId(4) + originatorId(2) */
-                            if (!sctrl.payload.in_check_rem(expected)) {
-                                LOG(LOG_ERR, "Front::incoming: Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
-                                    expected, sctrl.payload.in_remain());
-                                throw Error(ERR_MCS_PDU_TRUNCATED);
-                            }
+                            // shareId(4) + originatorId(2)
+                            ::check_throw(sctrl.payload, 6, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRUNCATED);
                             uint32_t share_id = sctrl.payload.in_uint32_le();
                             uint16_t originatorId = sctrl.payload.in_uint16_le();
                             this->process_confirm_active(sctrl.payload);
                             (void)share_id;
                             (void)originatorId;
-                        }
-                        if (!sctrl.payload.check_end()) {
-                            LOG(LOG_ERR, "Front::incoming: Trailing data after CONFIRMACTIVE PDU remains=%zu",
-                                sctrl.payload.in_remain());
-                            throw Error(ERR_MCS_PDU_TRAILINGDATA);
+                            ::check_end(sctrl.payload, "Front::ConfirmActivePDU", ERR_MCS_PDU_TRAILINGDATA);
                         }
                         break;
                     case PDUTYPE_DATAPDU: /* 7 */
@@ -2296,11 +2289,7 @@ public:
 
                     int num_events = cfpie.numEvents;
                     for (uint8_t i = 0; i < num_events; i++) {
-                        if (!cfpie.payload.in_check_rem(1)) {
-                            LOG(LOG_ERR, "Front::incoming: Truncated Fast-Path input event PDU, need=1 remains=%zu",
-                                cfpie.payload.in_remain());
-                            throw Error(ERR_RDP_DATA_TRUNCATED);
-                        }
+                        ::check_throw(cfpie.payload, 1, "Front::Fast-Path input event PDU", ERR_RDP_DATA_TRUNCATED);
 
                         uint8_t byte = cfpie.payload.in_uint8();
                         uint8_t eventCode  = (byte & 0xE0) >> 5;
@@ -2504,12 +2493,8 @@ public:
                         channel.log(mcs.channelId);
                     }
 
-                    unsigned expected = 8; /* length(4) + flags(4) */
-                    if (!sec.payload.in_check_rem(expected)) {
-                        LOG(LOG_ERR, "Front::incoming: Data truncated, need=%u remains=%zu",
-                            expected, sec.payload.in_remain());
-                        throw Error(ERR_MCS);
-                    }
+                    // length(4) + flags(4)
+                    ::check_throw(sec.payload, 8, "Front::Data", ERR_MCS);
 
                     uint32_t length = sec.payload.in_uint32_le();
                     uint32_t flags  = sec.payload.in_uint32_le();
@@ -2546,13 +2531,8 @@ public:
                                 LOG(LOG_INFO, "Front::incoming: Received CONFIRMACTIVEPDU");
                             }
                             {
-                                unsigned expected = 6;   /* shareId(4) + originatorId(2) */
-                                if (!sctrl.payload.in_check_rem(expected)) {
-                                    LOG(LOG_ERR,
-                                        "Front::incoming: Truncated Confirm Active PDU data, need=%u remains=%zu",
-                                        expected, sctrl.payload.in_remain());
-                                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                                }
+                                // shareId(4) + originatorId(2)
+                                ::check_throw(sctrl.payload, 6, "Front::Confirm Active PDU", ERR_RDP_DATA_TRUNCATED);
 
                                 uint32_t share_id = sctrl.payload.in_uint32_le();
                                 uint16_t originatorId = sctrl.payload.in_uint16_le();
@@ -2963,22 +2943,14 @@ private:
         // TODO We should separate the parts relevant to caps processing and the part relevant to actual confirm active
         // TODO Server Caps management should go to RDP layer and be unified between client (mod/rdp.hpp and server code front.hpp)
 
-        unsigned expected = 4; /* lengthSourceDescriptor(2) + lengthCombinedCapabilities(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
+        // lengthSourceDescriptor(2) + lengthCombinedCapabilities(2)
+        ::check_throw(stream, 4, "Front::process_confirm_active", ERR_MCS_PDU_TRUNCATED);
 
         uint16_t lengthSourceDescriptor = stream.in_uint16_le(); /* sizeof RDP_SOURCE */
         uint16_t lengthCombinedCapabilities = stream.in_uint16_le();
 
-        if (!stream.in_check_rem(lengthSourceDescriptor)) {
-            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU lengthSourceDescriptor, need=%u remains=%zu",
-                lengthSourceDescriptor, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
+        // SourceDescriptor(variable=lengthSourceDescriptor)
+        ::check_throw(stream, lengthSourceDescriptor, "Front::process_confirm_active", ERR_MCS_PDU_TRUNCATED);
         stream.in_skip_bytes(lengthSourceDescriptor);
 
         if (bool(this->verbose & Verbose::basic_trace)) {
@@ -2990,13 +2962,8 @@ private:
         uint8_t const * theoricCapabilitiesEnd = start + lengthCombinedCapabilities;
         uint8_t const * actualCapabilitiesEnd = stream.get_data_end();
 
-        expected = 4; /* numberCapabilities(2) + pad(2) */
-        if (!stream.in_check_rem(expected)) {
-            LOG(LOG_ERR, "Front::process_confirm_active: Truncated CONFIRMACTIVE PDU numberCapabilities, need=%u remains=%zu",
-                expected, stream.in_remain());
-            throw Error(ERR_MCS_PDU_TRUNCATED);
-        }
-
+        // numberCapabilities(2) + pad(2)
+        ::check_throw(stream, 4, "Front::process_confirm_active::numberCapabilities", ERR_MCS_PDU_TRUNCATED);
         int numberCapabilities = stream.in_uint16_le();
         stream.in_skip_bytes(2); /* pad */
 
@@ -3601,7 +3568,6 @@ private:
         if (bool(this->verbose & Verbose::basic_trace4)) {
             LOG(LOG_INFO, "Front::process_data");
         }
-        unsigned expected;
         ShareData_Recv sdata_in(stream, nullptr);
         if (bool(this->verbose & Verbose::basic_trace4)) {
             LOG(LOG_INFO, "Front::process_data: sdata_in.pdutype2=%" PRIu8
@@ -3630,13 +3596,8 @@ private:
                 LOG(LOG_INFO, "Front::process_data: PDUTYPE2_CONTROL");
             }
             {
-                expected = 8;   /* action(2) + grantId(2) + controlId(4) */
-                if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Front::process_data: Truncated Control PDU data, need=%u remains=%zu",
-                        expected, sdata_in.payload.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-
+                // action(2) + grantId(2) + controlId(4)
+                ::check_throw(sdata_in.payload, 8, "Front::process_data::Control PDU data", ERR_RDP_DATA_TRUNCATED);
                 int action = sdata_in.payload.in_uint16_le();
                 sdata_in.payload.in_skip_bytes(2); /* user id */
                 sdata_in.payload.in_skip_bytes(4); /* control id */
@@ -3785,12 +3746,8 @@ private:
                 LOG(LOG_INFO, "Front::process_data: PDUTYPE2_SYNCHRONIZE");
             }
             {
-                expected = 4;   /* messageType(2) + targetUser(4) */
-                if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Front::process_data: Truncated Synchronize PDU data, need=%u remains=%zu",
-                        expected, sdata_in.payload.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
+                // messageType(2) + targetUser(2)
+                ::check_throw(sdata_in.payload, 4, "Front::process_data::Synchronize PDU data", ERR_RDP_DATA_TRUNCATED);
 
                 uint16_t messageType = sdata_in.payload.in_uint16_le();
                 uint16_t controlId = sdata_in.payload.in_uint16_le();
@@ -3827,22 +3784,14 @@ private:
             // bottom (2 bytes): A 16-bit, unsigned integer. The lower bound of the rectangle.
 
             {
-                expected = 4;   /* numberOfAreas(1) + pad3Octects(3) */
-                if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Front::process_data: Truncated Refresh rect PDU data, need=%u remains=%zu",
-                        expected, sdata_in.payload.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
-
+                // numberOfAreas(1) + pad3Octects(3)
+                ::check_throw(sdata_in.payload, 4, "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
                 size_t numberOfAreas = sdata_in.payload.in_uint8();
                 sdata_in.payload.in_skip_bytes(3);
 
-                expected = numberOfAreas * 8;   /* numberOfAreas * (left(2) + top(2) + right(2) + bottom(2)) */
-                if (!sdata_in.payload.in_check_rem(expected)) {
-                    LOG(LOG_ERR, "Front::process_data: Truncated Refresh rect PDU data, need=%u remains=%zu",
-                        expected, sdata_in.payload.in_remain());
-                    throw Error(ERR_RDP_DATA_TRUNCATED);
-                }
+                // numberOfAreas * (left(2) + top(2) + right(2) + bottom(2))
+                ::check_throw(sdata_in.payload, numberOfAreas * 8, 
+                                                   "Front::process_data::Refresh rect PDU data", ERR_RDP_DATA_TRUNCATED);
 
                 auto rects_raw = std::make_unique<Rect[]>(numberOfAreas);
                 array_view<Rect> rects(rects_raw.get(), numberOfAreas);
@@ -3970,13 +3919,10 @@ private:
         // entrySize (2 bytes): A 16-bit, unsigned integer. The entry size. This
         // field SHOULD be set to 0x0032 (50 bytes).
 
-            expected = 8;   /* numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2) */
-            if (!sdata_in.payload.in_check_rem(expected)) {
-                LOG(LOG_ERR, "Front::process_data: Truncated Font list PDU data, need=%u remains=%zu",
-                    expected, sdata_in.payload.in_remain());
-                throw Error(ERR_RDP_DATA_TRUNCATED);
-            }
+            // numberFonts(2) + totalNumFonts(2) + listFlags(2) + entrySize(2)
+            ::check_throw(sdata_in.payload, 8, "Front::process_data::Font list PDU data", ERR_RDP_DATA_TRUNCATED);
 
+            // TODO: check we actually receive expected values
             sdata_in.payload.in_uint16_le(); /* numberFont -> 0*/
             sdata_in.payload.in_uint16_le(); /* totalNumFonts -> 0 */
             int seq = sdata_in.payload.in_uint16_le();

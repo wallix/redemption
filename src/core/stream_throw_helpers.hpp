@@ -25,10 +25,18 @@
 
 #pragma once
 
-inline void check_throw(InStream & stream, size_t expected, const char * message, error_type eid)
+inline void check_throw(const InStream & stream, size_t expected, const char * message, error_type eid)
 {
     if (!stream.in_check_rem(expected)) {
         LOG(LOG_ERR, "Truncated %s: expected=%zu remains=%zu", message, expected, stream.in_remain());
+        throw Error(eid);
+    }
+}
+
+inline void check_end(const InStream & stream, const char * message, error_type eid)
+{
+    if (!stream.check_end()) {
+        LOG(LOG_ERR, "Trailing data after %s remains=%zu", message, stream.in_remain());
         throw Error(eid);
     }
 }
