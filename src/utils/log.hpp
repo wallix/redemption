@@ -61,7 +61,7 @@ log_value(T const & e) noexcept
 namespace detail_ {
     // has c_str() member
     template<class T>
-    auto log_value(T const & x, int /*unused*/)
+    auto log_value(T const & x, int /*unused*/) noexcept
     -> typename std::enable_if<
         std::is_convertible<decltype(x.c_str()), char const *>::value,
         vlog_wrap<char const *>
@@ -69,13 +69,13 @@ namespace detail_ {
     { return {x.c_str()}; }
 
     template<class T>
-    vlog_wrap<T const &> log_value(T const & x, char /*unused*/)
+    vlog_wrap<T const &> log_value(T const & x, char /*unused*/) noexcept
     { return {x}; }
 } // namespace detail_
 
 // not enum type
 template<class T, typename std::enable_if<!std::is_enum<T>::value, bool>::type = 1>
-auto log_value(T const & x)
+auto log_value(T const & x) noexcept
 -> decltype(detail_::log_value(x, 1))
 { return detail_::log_value(x, 1); }
 
@@ -86,7 +86,7 @@ struct redemption_log_s
 };
 
 template<std::size_t n>
-detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x)
+detail_::vlog_wrap<char const*> log_value(redemption_log_s<n> const & x) noexcept
 { return {x.data}; }
 
 template<std::size_t n>
@@ -211,7 +211,7 @@ namespace compiler_aux_
 }
 #endif
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...);
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept;
 
 #ifdef REDEMPTION_DECL_LOG_TEST
 # include <string>
@@ -238,7 +238,7 @@ struct LOG__REDEMPTION__BUFFERED
 namespace detail
 {
     template<class... Ts>
-    void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args)
+    void LOG__REDEMPTION__INTERNAL(int priority, char const * format, Ts const & ... args) noexcept
     {
         // LOG_EMERG      system is unusable
         // LOG_ALERT      action must be taken immediately

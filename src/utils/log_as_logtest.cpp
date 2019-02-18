@@ -156,7 +156,7 @@ void LOG__REDEMPTION__BUFFERED::clear()
 }
 
 
-void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) /*NOLINT(cert-dcl50-cpp)*/
+void LOG__REDEMPTION__INTERNAL__IMPL(int priority, char const * format, ...) noexcept /*NOLINT(cert-dcl50-cpp)*/
 {
     if (enable_buf_log) {
         if (log_is_filename(priority)) {

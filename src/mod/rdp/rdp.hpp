@@ -111,6 +111,7 @@ class RDPMetrics;
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/server_transport_context.hpp"
+#include "mod/rdp/parse_extra_orders.hpp"
 
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
@@ -167,8 +168,8 @@ private:
         SessionReactor& session_reactor;
     };
 
-    struct Channels {
-
+    struct Channels
+    {
 #ifndef __EMSCRIPTEN__
         RDPMetrics * metrics;
 #endif
@@ -1921,21 +1922,25 @@ private:
 
     std::string& close_box_extra_message_ref;
 
-    const bool enable_fastpath;                    // choice of programmer
-          bool enable_fastpath_client_input_event; // choice of programmer + capability of server
-    const bool enable_fastpath_server_update;      // = choice of programmer
-    const bool enable_glyph_cache;
 #ifndef __EMSCRIPTEN__
     const bool session_probe_enable_launch_mask;
 #endif
+
+    const bool enable_fastpath;                    // choice of programmer
+          bool enable_fastpath_client_input_event; // choice of programmer + capability of server
+    const bool enable_fastpath_server_update;      // choice of programmer
+    const bool enable_glyph_cache;
     const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
     const bool enable_ninegrid_bitmap;
+
     const bool enable_remotefx;
     uint8_t remoteFx_codec_id;
+
+    OrdersSupport extra_orders_support;
 
     uint32_t frameInProgress = false;
     uint32_t currentFrameId = 0;
@@ -1966,16 +1971,6 @@ private:
 
     std::string end_session_reason;
     std::string end_session_message;
-
-    bool enable_polygonsc;
-    bool enable_polygoncb;
-    bool enable_polyline;
-    bool enable_ellipsesc;
-    bool enable_ellipsecb;
-    bool enable_multidstblt;
-    bool enable_multiopaquerect;
-    bool enable_multipatblt;
-    bool enable_multiscrblt;
 
     //uint64_t total_data_received;
 
@@ -2075,13 +2070,13 @@ public:
         , authentifier(authentifier)
         , report_message(report_message)
         , close_box_extra_message_ref(mod_rdp_params.close_box_extra_message_ref)
+#ifndef __EMSCRIPTEN__
+        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
+#endif
         , enable_fastpath(mod_rdp_params.enable_fastpath)
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-#ifndef __EMSCRIPTEN__
-        , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
-#endif
         , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
@@ -2090,6 +2085,7 @@ public:
         , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
         , remoteFx_codec_id(0)
+        , extra_orders_support(parse_extra_orders(mod_rdp_params.extra_orders, mod_rdp_params.verbose))
 #ifndef __EMSCRIPTEN__
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
@@ -2100,15 +2096,6 @@ public:
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , session_reactor(session_reactor)
-        , enable_polygonsc(false)
-        , enable_polygoncb(false)
-        , enable_polyline(false)
-        , enable_ellipsesc(false)
-        , enable_ellipsecb(false)
-        , enable_multidstblt(false)
-        , enable_multiopaquerect(false)
-        , enable_multipatblt(false)
-        , enable_multiscrblt(false)
         //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
@@ -2144,8 +2131,6 @@ public:
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
         this->stc.encrypt.encryptionMethod = 2; /* 128 bits */
-
-        this->configure_extra_orders(mod_rdp_params.extra_orders);
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
@@ -2227,89 +2212,6 @@ public:
             this->redir_info = RedirectionInfo();
         }
     }
-
-    void configure_extra_orders(const char * extra_orders) {
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);
-        }
-
-        char * end;
-        char const * p = extra_orders;
-        for (int order_number = std::strtol(p, &end, 0);
-            p != end;
-            order_number = std::strtol(p, &end, 0))
-        {
-            if (bool(this->verbose & RDPVerbose::capabilities)) {
-                LOG(LOG_INFO, "RDP Extra orders number=%d", order_number);
-            }
-            switch (order_number) {
-            case RDP::MULTIDSTBLT:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=MultiDstBlt");
-                }
-                this->enable_multidstblt = true;
-                break;
-            case RDP::MULTIOPAQUERECT:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=MultiOpaqueRect");
-                }
-                this->enable_multiopaquerect = true;
-                break;
-            case RDP::MULTIPATBLT:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=MultiPatBlt");
-                }
-                this->enable_multipatblt = true;
-                break;
-            case RDP::MULTISCRBLT:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=MultiScrBlt");
-                }
-                this->enable_multiscrblt = true;
-                break;
-            case RDP::POLYGONSC:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=PolygonSC");
-                }
-                this->enable_polygonsc = true;
-                break;
-            case RDP::POLYGONCB:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=PolygonCB");
-                }
-                this->enable_polygoncb = true;
-                break;
-            case RDP::POLYLINE:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=Polyline");
-                }
-                this->enable_polyline = true;
-                break;
-            case RDP::ELLIPSESC:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=EllipseSC");
-                }
-                this->enable_ellipsesc = true;
-                break;
-            case RDP::ELLIPSECB:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Extra orders=EllipseCB");
-                }
-                this->enable_ellipsecb = true;
-                break;
-            default:
-                if (bool(this->verbose & RDPVerbose::capabilities)) {
-                    LOG(LOG_INFO, "RDP Unknown Extra orders");
-                }
-                break;
-            }
-
-            p = end;
-            while (*p && (*p == ' ' || *p == '\t' || *p == ',')) {
-                ++p;
-            }
-        }
-    }   // configure_extra_orders
 
     void rdp_input_scancode( long param1, long param2, long device_flags, long time, Keymap2 * /*keymap*/) override {
         if ((UP_AND_RUNNING == this->connection_finalization_state)
@@ -3623,27 +3525,35 @@ public:
                                                                         | COLORINDEXSUPPORT       /* 0x20 */
                                                                         | ORDERFLAGS_EXTRA_FLAGS  /* 0x80 */
                                                                         ;
+
+
+                OrdersIndexes const extra_idx[]{
+                    TS_NEG_MULTIDSTBLT_INDEX,
+                    TS_NEG_MULTIOPAQUERECT_INDEX,
+                    TS_NEG_MULTIPATBLT_INDEX,
+                    TS_NEG_MULTISCRBLT_INDEX,
+                    TS_NEG_POLYGON_SC_INDEX,
+                    TS_NEG_POLYGON_CB_INDEX,
+                    TS_NEG_POLYLINE_INDEX,
+                    TS_NEG_ELLIPSE_SC_INDEX,
+                    TS_NEG_ELLIPSE_CB_INDEX,
+                };
+                for (auto idx : extra_idx) {
+                    order_caps.orderSupport[idx] = this->extra_orders_support.has(idx);
+                }
+
+                //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
+                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
+                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
                 order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MULTIDSTBLT_INDEX]        = (this->enable_multidstblt     ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTIOPAQUERECT_INDEX]    = (this->enable_multiopaquerect ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTIPATBLT_INDEX]        = (this->enable_multipatblt     ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_MULTISCRBLT_INDEX]        = (this->enable_multiscrblt     ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_SCRBLT_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_MEMBLT_INDEX]             = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_LINETO_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_MULTI_DRAWNINEGRID_INDEX] = 0;
                 order_caps.orderSupport[UnusedIndex3]                    = 1;
                 order_caps.orderSupport[UnusedIndex5]                    = 1;
-                order_caps.orderSupport[TS_NEG_POLYGON_SC_INDEX]         = (this->enable_polygonsc       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_POLYGON_CB_INDEX]         = (this->enable_polygoncb       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_POLYLINE_INDEX]           = (this->enable_polyline        ? 1 : 0);
-                //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_ELLIPSE_SC_INDEX]         = (this->enable_ellipsesc       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_ELLIPSE_CB_INDEX]         = (this->enable_ellipsecb       ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
-                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
                 order_caps.textFlags                                     = 0x06a1;
                 order_caps.orderSupportExFlags                           = ORDERFLAGS_EX_ALTSEC_FRAME_MARKER_SUPPORT;
                 order_caps.textANSICodePage                              = 0x4e4; // Windows-1252 codepage is passed (latin-1)

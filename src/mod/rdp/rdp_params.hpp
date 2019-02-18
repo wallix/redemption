@@ -99,7 +99,7 @@ struct ModRDPParams
     bool                         session_probe_enable_log = false;
     bool                         session_probe_enable_log_rotation = true;
 
-    struct SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
+    SessionProbeClipboardBasedLauncher::Params session_probe_clipboard_based_launcher;
 
     bool                         session_probe_allow_multiple_handshake = false;
 

@@ -317,6 +317,38 @@ enum OrdersIndexes {
     , UnusedIndex11 = 0x1F
 };
 
+struct OrdersSupport
+{
+    bool has(OrdersIndexes idx) const noexcept
+    {
+        return this->enable_orders & bit(idx);
+    }
+
+    void set(OrdersIndexes idx) noexcept
+    {
+        this->enable_orders |= bit(idx);
+    }
+
+    void clear(OrdersIndexes idx) noexcept
+    {
+        this->enable_orders &= ~bit(idx);
+    }
+
+private:
+    static_assert(NB_ORDER_SUPPORT == 32);
+    using bitset = uint32_t;
+
+    static bitset bit(OrdersIndexes idx) noexcept
+    {
+        auto i = bitset(idx);
+        assert(i < NB_ORDER_SUPPORT);
+        return bitset{1} << i;
+    }
+
+    bitset enable_orders = 0;
+};
+
+
 enum {
     CAPLEN_ORDER = 88
 };

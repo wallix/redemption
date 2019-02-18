@@ -616,9 +616,7 @@ public:
                 format_list_pdu.add_format_name(RDPECLIP::CF_TEXT);
 
                 const bool use_long_format_names =
-                    (this->cliprdr_channel ?
-                     this->cliprdr_channel->use_long_format_names() :
-                     false);
+                    (this->cliprdr_channel && this->cliprdr_channel->use_long_format_names());
                 const bool in_ASCII_8 = format_list_pdu.will_be_sent_in_ASCII_8(use_long_format_names);
 
                 RDPECLIP::CliprdrHeader clipboard_header(RDPECLIP::CB_FORMAT_LIST,

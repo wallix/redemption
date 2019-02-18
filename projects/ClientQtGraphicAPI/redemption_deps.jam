@@ -23,6 +23,7 @@ add_obj src/mod/internal/replay_mod.o : $(REDEMPTION_SRC_PATH)/mod/internal/repl
 add_obj src/mod/internal/widget/flat_button.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/flat_button.cpp ;
 add_obj src/mod/internal/widget/label.o : $(REDEMPTION_SRC_PATH)/mod/internal/widget/label.cpp ;
 add_obj src/mod/rdp/new_mod_rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
+add_obj src/mod/rdp/parse_extra_orders.o : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 add_obj src/mod/rdp/rdp_negociation.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 add_obj src/mod/rdp/rdp.o : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 add_obj src/mod/vnc/encoder/copyrect.o : $(REDEMPTION_SRC_PATH)/mod/vnc/encoder/copyrect.cpp ;
@@ -87,6 +88,7 @@ requirement_list += <library>src/mod/internal/replay_mod.o ;
 requirement_list += <library>src/mod/internal/widget/flat_button.o ;
 requirement_list += <library>src/mod/internal/widget/label.o ;
 requirement_list += <library>src/mod/rdp/new_mod_rdp.o ;
+requirement_list += <library>src/mod/rdp/parse_extra_orders.o ;
 requirement_list += <library>src/mod/rdp/rdp_negociation.o ;
 requirement_list += <library>src/mod/rdp/rdp.o ;
 requirement_list += <library>src/mod/vnc/encoder/copyrect.o ;

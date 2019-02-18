@@ -9,7 +9,6 @@ exe-js js_client :
   src/main/js_client.bc
 :
   app_path_exe.bc
-  boost_stacktrace.bc
   crypto.bc
   gssapi_krb5.bc
   krb5.bc
@@ -30,6 +29,7 @@ exe-js js_client :
   src/gdi/graphic_api.bc
   src/gdi/screen_functions.bc
   src/mod/rdp/new_mod_rdp.bc
+  src/mod/rdp/parse_extra_orders.bc
   src/mod/rdp/rdp.bc
   src/mod/rdp/rdp_negociation.bc
   src/utils/bitmap.bc
@@ -39,9 +39,11 @@ exe-js js_client :
   src/utils/hexdump.bc
   src/utils/primitives/primitives.bc
   src/utils/rle.bc
+  src/utils/stacktrace.bc
   src/utils/strutils.bc
   src/utils/sugar/multisz.bc
   src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
 :
   $(EXE_DEPENDENCIES)
 ;
@@ -50,27 +52,30 @@ exe-js js_client :
 test-run-js tests/redjs/test_browser_transport :
   tests/redjs/test_browser_transport.cpp
 :
-  boost_stacktrace.bc
   src/redjs/browser_transport.bc
   src/core/error.bc
+  src/utils/stacktrace.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_image_data_test_from_bitmap :
   tests/redjs/test_image_data_test_from_bitmap.cpp
 :
-  boost_stacktrace.bc
   src/redjs/image_data_from_bitmap.bc
   src/core/error.bc
   src/utils/bitmap.bc
   src/utils/rle.bc
+  src/utils/stacktrace.bc
   src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 test-run-js tests/redjs/test_image_data_test_from_pointer :
   tests/redjs/test_image_data_test_from_pointer.cpp
 :
-  boost_stacktrace.bc
   src/redjs/image_data_from_pointer.bc
   src/core/error.bc
+  src/utils/stacktrace.bc
   src/utils/utf.bc
+  $(BOOST_STACKTRACE_LINKFLAGS)
 ;
 
 objjs src/main/js_client.bc : src/main/js_client.cpp : <cxxflags>-fno-rtti&&-frtti ;
@@ -91,6 +96,7 @@ objjs src/core/font.bc : $(REDEMPTION_SRC_PATH)/core/font.cpp ;
 objjs src/gdi/graphic_api.bc : $(REDEMPTION_SRC_PATH)/gdi/graphic_api.cpp ;
 objjs src/gdi/screen_functions.bc : $(REDEMPTION_SRC_PATH)/gdi/screen_functions.cpp ;
 objjs src/mod/rdp/new_mod_rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/new_mod_rdp.cpp ;
+objjs src/mod/rdp/parse_extra_orders.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/parse_extra_orders.cpp ;
 objjs src/mod/rdp/rdp.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp.cpp ;
 objjs src/mod/rdp/rdp_negociation.bc : $(REDEMPTION_SRC_PATH)/mod/rdp/rdp_negociation.cpp ;
 objjs src/utils/bitmap.bc : $(REDEMPTION_SRC_PATH)/utils/bitmap.cpp ;
@@ -100,6 +106,7 @@ objjs src/utils/fileutils.bc : $(REDEMPTION_SRC_PATH)/utils/fileutils.cpp ;
 objjs src/utils/hexdump.bc : $(REDEMPTION_SRC_PATH)/utils/hexdump.cpp ;
 objjs src/utils/primitives/primitives.bc : $(REDEMPTION_SRC_PATH)/utils/primitives/primitives.cpp ;
 objjs src/utils/rle.bc : $(REDEMPTION_SRC_PATH)/utils/rle.cpp ;
+objjs src/utils/stacktrace.bc : $(REDEMPTION_SRC_PATH)/utils/stacktrace.cpp : $(BOOST_STACKTRACE_CXXFLAGS) ;
 objjs src/utils/strutils.bc : $(REDEMPTION_SRC_PATH)/utils/strutils.cpp ;
 objjs src/utils/sugar/multisz.bc : $(REDEMPTION_SRC_PATH)/utils/sugar/multisz.cpp ;
 objjs src/utils/utf.bc : $(REDEMPTION_SRC_PATH)/utils/utf.cpp ;

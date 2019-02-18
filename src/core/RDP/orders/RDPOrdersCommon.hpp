@@ -352,8 +352,8 @@ struct DeltaEncodedRectangle {
         ELLIPSESC       = 25,
         ELLIPSECB       = 26,
         GLYPHINDEX      = 27
-
     };
+
 
     enum SecondaryOrderType {
      // TS_CACHE_BITMAP_UNCOMPRESSED - Cache Bitmap - Revision 1

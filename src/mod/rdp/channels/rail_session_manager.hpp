@@ -228,6 +228,7 @@ public:
         }
 
         (void)param2;
+        // 28 for escape key
         if ((28 == param1) && !(device_flags & SlowPath::KBDFLAGS_RELEASE)) {
             LOG(LOG_INFO, "RemoteApp session initiated disconnect by user");
             this->authentifier.disconnect_target();
