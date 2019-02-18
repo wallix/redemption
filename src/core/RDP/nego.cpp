@@ -348,6 +348,7 @@ inline bool enable_client_tls(OutTransport trans, RdpNego::ServerCert const& cer
     switch (trans.enable_client_tls(
         cert.store, cert.check, cert.notifier, cert.path))
     {
+        case Transport::TlsResult::WaitExternalEvent: return false;
         case Transport::TlsResult::Want: return false;
         case Transport::TlsResult::Fail:
             LOG(LOG_ERR, "enable_client_tls fail");

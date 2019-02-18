@@ -247,6 +247,17 @@ void RdpNegociation::RDPServerNotifier::server_cert_error(const char * str_error
     }
 }
 
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+CertificateResult RdpNegociation::RDPServerNotifier::server_cert_callback(const X509& certificate)
+{
+    if (this->certificate_callback == nullptr) {
+        return CertificateResult::unchecked;
+    }
+
+    return this->certificate_callback(certificate);
+}
+#endif
+
 void RdpNegociation::RDPServerNotifier::log6_server_cert(charp_or_string type, charp_or_string description, const ArcsightLogInfo & arc_info)
 {
     this->message.assign(type.data, {{"description", description.data}});
@@ -444,6 +455,14 @@ void RdpNegociation::set_program(char const* program, char const* directory) noe
     utils::strlcpy(this->directory, directory);
 }
 
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+void RdpNegociation::set_cert_callback(std::function<CertificateResult(const X509&)> callback)
+{
+    this->server_notifier.certificate_callback = std::move(callback);
+}
+#endif
+
+
 void RdpNegociation::start_negociation()
 {
     this->nego.send_negotiation_request(this->trans);
@@ -452,6 +471,11 @@ void RdpNegociation::start_negociation()
 
 bool RdpNegociation::recv_data(TpduBuffer& buf)
 {
+    if (this->state == State::TERMINATED)
+    {
+        return true;
+    }
+
     if (this->state == State::NEGO)
     {
         bool const run = this->nego.recv_next_data(
@@ -487,6 +511,7 @@ bool RdpNegociation::recv_data(TpduBuffer& buf)
                 break;
             default:
                 if (this->get_license(x224_data)) {
+                    this->state = State::TERMINATED;
                     return true;
                 }
                 break;
@@ -1628,4 +1653,10 @@ void RdpNegociation::send_client_info_pdu()
 
     LOG_IF(bool(this->verbose & RDPVerbose::basic_trace), LOG_INFO,
         "mod_rdp::send_client_info_pdu done");
+}
+
+RdpNegociationResult const& RdpNegociation::get_result() const noexcept
+{
+    assert(this->state == State::TERMINATED);
+    return this->negociation_result;
 }

@@ -203,6 +203,10 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.server_cert_failure_message         = ini.get<cfg::mod_rdp::server_cert_failure_message>();
     mod_rdp_params.server_cert_error_message           = ini.get<cfg::mod_rdp::server_cert_error_message>();
 
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+    mod_rdp_params.enable_server_cert_external_validation = ini.get<cfg::mod_rdp::enable_server_cert_external_validation>();
+#endif
+
     mod_rdp_params.hide_client_name                    = ini.get<cfg::mod_rdp::hide_client_name>();
 
     mod_rdp_params.enable_persistent_disk_bitmap_cache = ini.get<cfg::mod_rdp::persistent_disk_bitmap_cache>();

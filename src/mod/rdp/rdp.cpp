@@ -23,13 +23,46 @@ Author(s): Jonathan Poelen
 #include "mod/rdp/rdp.hpp"
 #include "mod/rdp/rdp_negociation.hpp"
 
+
 namespace
 {
+
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+    bool cert_to_escaped_string(const X509& cert, std::string& output)
+    {
+        // TODO unique_ptr<BIO, BIO_delete>
+        BIO* bio = BIO_new(BIO_s_mem());
+        if (!bio) {
+            return false;
+        }
+
+        if (!PEM_write_bio_X509(bio, const_cast<X509*>(&cert))) {
+            BIO_free(bio);
+            return false;
+        }
+
+        std::size_t pem_len = bio->num_write + 1;
+        output.resize(pem_len);
+        std::fill(output.data(), output.data() + pem_len, 0);
+
+        BIO_read(bio, output.data(), bio->num_write);
+        BIO_free(bio);
+
+        std::replace(output.begin(), output.end(), '\n', '\x01');
+
+        return true;
+    }
+#endif
+
     struct PrivateRdpNegociation
     {
         RdpNegociation rdp_negociation;
         SessionReactor::GraphicEventPtr graphic_event;
         const std::chrono::seconds open_session_timeout;
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+        SessionReactor::SesmanEventPtr sesman_event;
+        CertificateResult result = CertificateResult::wait;
+#endif
 
         template<class... Ts>
         explicit PrivateRdpNegociation(
@@ -82,6 +115,7 @@ void mod_rdp::init_negociate_event_(
             CASE(CHANNEL_CONNECTION_ATTACH_USER, trkeys::err_mod_rdp_channel_connection_attach_user);
             CASE(CHANNEL_JOIN_CONFIRM, trkeys::mod_rdp_channel_join_confirme);
             CASE(GET_LICENSE, trkeys::mod_rdp_get_license);
+            CASE(TERMINATED, trkeys::err_mod_rdp_nego);
             #undef CASE
         }
 
@@ -112,10 +146,87 @@ void mod_rdp::init_negociate_event_(
     .set_timeout(std::chrono::milliseconds(0))
     .on_exit(check_error)
     .on_action(jln::exit_with_error<ERR_RDP_PROTOCOL>() /* replaced by on_timeout action*/)
-    .on_timeout([this](JLN_TOP_TIMER_CTX ctx, gdi::GraphicApi& gd, PrivateRdpNegociationPtr& private_rdp_negociation){
+    .on_timeout([this
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+      , enable_server_cert_external_validation
+        = mod_rdp_params.enable_server_cert_external_validation
+#endif
+      ](
+          JLN_TOP_TIMER_CTX ctx,
+          gdi::GraphicApi& gd,
+          PrivateRdpNegociationPtr& private_rdp_negociation
+    ){
+        RdpNegociation& rdp_negociation = private_rdp_negociation->rdp_negociation;
+
         gdi_clear_screen(gd, this->get_dim());
         LOG(LOG_INFO, "RdpNego::NEGO_STATE_INITIAL");
-        private_rdp_negociation->rdp_negociation.start_negociation();
+
+#ifdef REDEMPTION_SERVER_CERT_EXTERNAL_VALIDATION
+        if (enable_server_cert_external_validation) {
+            rdp_negociation.set_cert_callback([this, &private_rdp_negociation](
+                const X509& certificate
+            ) {
+                auto& result = private_rdp_negociation->result;
+
+                if (result != CertificateResult::wait) {
+                    return result;
+                }
+
+                std::string blob_str;
+                if (!cert_to_escaped_string(certificate, blob_str)) {
+                    LOG(LOG_ERR, "cert_to_string failed");
+                    return result;
+                }
+
+                // LOG(LOG_INFO, "cert pem: %s", blob_str);
+
+                this->vars.set_acl<cfg::mod_rdp::server_cert>(blob_str);
+                this->vars.get_ref<cfg::mod_rdp::server_cert_response>() = "";
+                this->vars.ask<cfg::mod_rdp::server_cert_response>();
+
+                private_rdp_negociation->sesman_event = this->session_reactor.create_sesman_event()
+                .on_action([&result, &private_rdp_negociation, this](auto ctx, Inifile& ini){
+                    auto const& message = ini.get<cfg::mod_rdp::server_cert_response>();
+                    if (message.empty()) {
+                        return ctx.ready();
+                    }
+
+                    if (message == "Ok" || message == "ok") {
+                        LOG(LOG_INFO, "certificate was valid according to authentifier");
+                        result = CertificateResult::valid;
+                    }
+                    else {
+                        LOG(LOG_INFO, "certificate was invalid according to authentifier: %s", message);
+                        result = CertificateResult::invalid;
+                        throw Error(ERR_TRANSPORT_TLS_CERTIFICATE_INVALID);
+                    }
+
+                    private_rdp_negociation->graphic_event
+                    = this->session_reactor.create_graphic_event()
+                    .on_action(jln::one_shot([this, &private_rdp_negociation](gdi::GraphicApi&) {
+                        RdpNegociation& rdp_negociation = private_rdp_negociation->rdp_negociation;
+
+                        bool const is_finish = rdp_negociation.recv_data(this->buf);
+                        if (is_finish) {
+                            this->negociation_result = rdp_negociation.get_result();
+                            if (this->buf.remaining()) {
+                                private_rdp_negociation->graphic_event = this->session_reactor.create_graphic_event()
+                                .on_action(jln::one_shot([this](gdi::GraphicApi& gd){
+                                    this->draw_event_impl(gd);
+                                }));
+                            }
+                        }
+                    }));
+
+                    return ctx.terminate();
+                });
+
+                return result;
+            });
+        }
+#endif
+
+        rdp_negociation.start_negociation();
 
         return ctx.replace_action([this](
             JLN_TOP_CTX ctx, gdi::GraphicApi&, PrivateRdpNegociationPtr& private_rdp_negociation
