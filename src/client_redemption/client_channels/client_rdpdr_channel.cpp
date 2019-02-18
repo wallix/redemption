@@ -516,26 +516,29 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
         for (auto const& device : this->device_list) {
 
             if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
-
+                // TODO: change code below to make a blob of printer specific data
+                // and get it's size in DeviceAnnounceHeader. It will help
+                // unify code. Also not sure it's ok to treat all devices
+                // as if as if there was no device data except for printer
                 rdpdr::DeviceAnnounceHeader_Send dah( device.type
                                             , device.ID
                                             , device.name
                                             , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
                 dah.emit(out_stream);
 
-                rdpdr::DeviceAnnounceHeaderPrinterSpecificData dahp(
+                rdpdr::DeviceAnnounceHeaderPrinterSpecificData_Send dahp(
                     rdpdr::RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII
                     , 0
-                    , 4       // PnPNameLen
-                    , 2       // DriverNameLen
+                    , 4  // PnPNameLen
+                    , 2  // DriverNameLen
                     , 8  // PrintNameLen
-                    , 0       // CachedFieldsLen
+                    , 0  // CachedFieldsLen
                     , const_cast<char*>("\x00\x61\x00\x00") /*NOLINT*/ // nPName
                     , const_cast<char*>("\x61\x00") /*NOLINT*/   // DriverName
                     , const_cast<char*>("\x00\x61\x00\x61\x00\x61\x00\x00") /*NOLINT*/ // PrintName
+                    , nullptr 
                     );
                 dahp.emit(out_stream);
-
             } else {
                 rdpdr::DeviceAnnounceHeader_Send dah( device.type
                                                 , device.ID

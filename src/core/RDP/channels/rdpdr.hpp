@@ -849,14 +849,7 @@ enum : uint32_t {
 //
 // CachedPrinterConfigData (variable): A variable-length array of bytes. This field is a binary large object (BLOB) of data that describes the cached printer configuration (see section 3.1.1.1).
 
-struct DeviceAnnounceHeaderPrinterSpecificData {
-//     RDPDR_DTYP DeviceType = RDPDR_DTYP_UNSPECIFIED;
-//     uint32_t DeviceId   = 0;
-//
-//     uint8_t  PreferredDosName[8 /* PreferredDosName(8) */ + 1] = { 0 };
-//
-//     size_t DeviceDataLength = 0;
-
+struct DeviceAnnounceHeaderPrinterSpecificData_Send {
     uint32_t Flags;
     uint32_t CodePage;
 
@@ -871,13 +864,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
 
     uint8_t * CachedPrinterConfigData;
 
-    explicit DeviceAnnounceHeaderPrinterSpecificData() = default;
-
-    explicit DeviceAnnounceHeaderPrinterSpecificData(/*RDPDR_DTYP DeviceType,
-                                                     uint32_t DeviceId,
-                                                     uint8_t * PreferredDosName,
-                                                     size_t DeviceDataLength,*/
-                                                     uint32_t Flags,
+    explicit DeviceAnnounceHeaderPrinterSpecificData_Send(uint32_t Flags,
                                                      uint32_t CodePage,
                                                      size_t PnPNameLen,
                                                      size_t DriverNameLen,
@@ -885,10 +872,8 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
                                                      size_t CachedFieldsLen,
                                                      char * PnPName,
                                                      char * DriverName,
-                                                     char * PrinterName )
-//         : DeviceType(DeviceType)
-//         , DeviceId(DeviceId)
-//         , DeviceDataLength(DeviceDataLength)
+                                                     char * PrinterName,
+                                                     uint8_t * CachedPrinterConfigData)
         : Flags(Flags)
         , CodePage(CodePage)
         , PnPNameLen(PnPNameLen)
@@ -898,17 +883,11 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         , PnPName(PnPName)
         , DriverName(DriverName)
         , PrinterName(PrinterName)
+        , CachedPrinterConfigData(CachedPrinterConfigData)
     {
-//         memcpy(
-//             this->PreferredDosName, PreferredDosName,
-//             sizeof(PreferredDosName));
     }
 
     void emit(OutStream & stream) const {
-//         stream.out_uint32_le(underlying_cast(this->DeviceType));
-//         stream.out_uint32_le(this->DeviceId);
-//         stream.out_copy_bytes(this->PreferredDosName, 8);
-//         stream.out_uint32_le(this->DeviceDataLength);
         stream.out_uint32_le(this->Flags);
         stream.out_uint32_le(this->CodePage);
         stream.out_uint32_le(this->PnPNameLen);
@@ -918,64 +897,11 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         stream.out_copy_bytes(byte_ptr_cast(this->PnPName), this->PnPNameLen);
         stream.out_copy_bytes(byte_ptr_cast(this->DriverName), this->DriverNameLen);
         stream.out_copy_bytes(byte_ptr_cast(this->PrinterName), this->PrintNameLen);
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 44;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4) +
-                                           //     Flags(4) + CodePage(4) + PnPNameLen(4) +
-                                           //     DriverNameLen(4) + PrintNameLen(4) +
-                                           //     CachedFieldsLen(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-//         this->DeviceType = RDPDR_DTYP(stream.in_uint32_le());
-//         this->DeviceId = stream.in_uint32_le();
-//         stream.in_copy_bytes(this->PreferredDosName, 8);
-//         this->DeviceDataLength = stream.in_uint32_le();
-        this->Flags = stream.in_uint32_le();
-        this->CodePage = stream.in_uint32_le();
-        this->PnPNameLen = stream.in_uint32_le();
-        this->DriverNameLen = stream.in_uint32_le();
-        this->PrintNameLen = stream.in_uint32_le();
-        this->CachedFieldsLen = stream.in_uint32_le();
-
-        if (!stream.in_check_rem(this->PnPNameLen )) {
-            LOG(LOG_ERR,
-                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
-                this->PnPNameLen , stream.in_remain());
-            throw Error(ERR_RDPDR_PDU_TRUNCATED);
-        }
-        stream.in_copy_bytes(this->PnPName, this->PnPNameLen);
-
-        if (!stream.in_check_rem(this->DriverNameLen)) {
-            LOG(LOG_ERR,
-                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
-                this->DriverNameLen, stream.in_remain());
-            throw Error(ERR_RDPDR_PDU_TRUNCATED);
-        }
-        stream.in_copy_bytes(this->DriverName, this->DriverNameLen);
-
-        if (!stream.in_check_rem(this->PrintNameLen)) {
-            LOG(LOG_ERR,
-                "Truncated DeviceAnnounceHeaderPrinterSpecificData: expected=%zu remains=%zu",
-                this->PrintNameLen, stream.in_remain());
-            throw Error(ERR_RDPDR_PDU_TRUNCATED);
-        }
-        stream.in_copy_bytes(this->PrinterName, this->PrintNameLen);
+        stream.out_copy_bytes(this->CachedPrinterConfigData, this->CachedFieldsLen);
     }
 
     void log() const {
         LOG(LOG_INFO, "     Device Announce Printer Specific Data:");
-//         LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType, get_DeviceType_name(this->DeviceType));
-//         LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId);
-//         LOG(LOG_INFO, "          * DeviceName       = \"%.*s\" (8 bytes)", 8, this->PreferredDosName);
-//         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->DeviceDataLength));
 #define ASTR(f) (this->Flags & f) ? " " #f : ""
         LOG(LOG_INFO, "          * Flags           = 0x%08x (4 bytes):%s%s%s%s%s", this->Flags,
             ASTR(RDPDR_PRINTER_ANNOUNCE_FLAG_ASCII),
@@ -993,7 +919,7 @@ struct DeviceAnnounceHeaderPrinterSpecificData {
         LOG(LOG_INFO, "          * PnPName         = \"%s\" (%zu bytes)", this->PnPName, this->PnPNameLen);
         LOG(LOG_INFO, "          * DriverName      = \"%s\" (%zu bytes)", this->DriverName, this->DriverNameLen);
         LOG(LOG_INFO, "          * PrinterName     = \"%s\" (%zu bytes)", this->PrinterName, this->PrintNameLen);
-//         LOG(LOG_INFO, "          * CachedPrinterConfigData  (%zu bytes)", this->CachedFieldsLen);
+        LOG(LOG_INFO, "          * CachedPrinterConfigData Blob (%zu bytes)", this->CachedFieldsLen);
     }
 
 };
