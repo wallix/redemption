@@ -517,7 +517,7 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
 
             if (device.type == rdpdr::RDPDR_DTYP_PRINT) {
 
-                rdpdr::DeviceAnnounceHeader dah( device.type
+                rdpdr::DeviceAnnounceHeader_Send dah( device.type
                                             , device.ID
                                             , device.name
                                             , nullptr, 24 + 0 + 4 + 2 + 8 + 0);
@@ -537,7 +537,7 @@ void ClientRDPDRChannel::process_core_clientID_confirm() {
                 dahp.emit(out_stream);
 
             } else {
-                rdpdr::DeviceAnnounceHeader dah( device.type
+                rdpdr::DeviceAnnounceHeader_Send dah( device.type
                                                 , device.ID
                                                 , device.name
                                                 , nullptr, 0);

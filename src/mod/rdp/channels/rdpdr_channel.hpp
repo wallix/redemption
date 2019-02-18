@@ -377,7 +377,7 @@ class FileSystemVirtualChannel final : public BaseVirtualChannel
                     (void)DeviceCount;
                     assert(DeviceCount == 1);
 
-                    rdpdr::DeviceAnnounceHeader device_announce_header;
+                    rdpdr::DeviceAnnounceHeader_Recv device_announce_header;
 
                     device_announce_header.receive(chunk);
 
@@ -1666,7 +1666,7 @@ public:
                               ? make_array_view(*p_device_name)
                               : array_view_const_char();
 
-                            auto device_type_name = rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(device_type);
+                            auto device_type_name = rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(device_type);
                             auto info = key_qvalue_pairs({
                                     { "type", "DRIVE_REDIRECTION_USE" },
                                     { "device_name", device_name },
@@ -1690,7 +1690,7 @@ public:
                                 std::string message = str_concat(
                                     "DRIVE_REDIRECTION_USE=",
                                     device_name,
-                                    '\x01', rdpdr::DeviceAnnounceHeader::get_DeviceType_friendly_name(
+                                    '\x01', rdpdr::DeviceAnnounceHeader_get_DeviceType_friendly_name(
                                     device_type)
                                 );
                                 this->front.session_update(message);

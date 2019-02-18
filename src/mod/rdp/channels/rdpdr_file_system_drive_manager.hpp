@@ -1670,7 +1670,7 @@ public:
                  1  // DeviceCount(4)
                 );
 
-            rdpdr::DeviceAnnounceHeader device_announce_header(
+            rdpdr::DeviceAnnounceHeader_Send device_announce_header(
                     rdpdr::RDPDR_DTYP_FILESYSTEM,   // DeviceType
                     managed_drive.device_id,
                     managed_drive.name.c_str(),     // PreferredDosName

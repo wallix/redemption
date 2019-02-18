@@ -152,16 +152,8 @@ struct SharedHeader {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;  // Component(2) + PacketId(2)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated SharedHeader: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // Component(2) + PacketId(2)
+        ::check_throw(stream, 4, "RDPDR::SharedHeader", ERR_RDPDR_PDU_TRUNCATED);
 
         this->component = static_cast<Component>(stream.in_uint16_le());
         this->packet_id = static_cast<PacketId>(stream.in_uint16_le());
@@ -459,25 +451,12 @@ struct ClientDriveDeviceListRemove {
     }
 
     void receive(InStream & stream) {
-        {
-            const unsigned expected = 4;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveDeviceListRemove: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+        // DeviceCount(4)
+        ::check_throw(stream, 4, "RDPDR::ClientDriveDeviceListRemove (0)", ERR_RDPDR_PDU_TRUNCATED);
         this->DeviceCount = stream.in_uint32_le();
-        {
-            const unsigned expected = this->DeviceCount * 4;
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated ClientDriveDeviceListRemove: expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
+
+        // DeviceIds(variable=4*DeviceCount)
+        ::check_throw(stream, this->DeviceCount * 4, "RDPDR::ClientDriveDeviceListRemove (1)", ERR_RDPDR_PDU_TRUNCATED);
         for (uint32_t i = 0; i < this->DeviceCount; i++) {
             this->DeviceIds[i] = stream.in_uint32_le();
         }
@@ -599,7 +578,89 @@ static const char * get_DeviceType_name(RDPDR_DTYP DeviceType) noexcept
 //  set to zero. See [MS-RDPESC] for details about the smart card device
 //  type.
 
-class DeviceAnnounceHeader {
+inline static const char * DeviceAnnounceHeader_get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
+    switch (DeviceType) {
+        case RDPDR_DTYP_SERIAL:     return "Serial port";
+        case RDPDR_DTYP_PARALLEL:   return "Parallel port";
+        case RDPDR_DTYP_PRINT:      return "Printer";
+        case RDPDR_DTYP_FILESYSTEM: return "File system";
+        case RDPDR_DTYP_SMARTCARD:  return "Smart card";
+        case RDPDR_DTYP_UNSPECIFIED: break;
+    }
+
+    return "<unknown>";
+}
+
+class DeviceAnnounceHeader_Recv {
+    RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
+    uint32_t DeviceId_   = 0;
+    uint8_t  PreferredDosName_[8 + 1] = { 0 };
+    struct { std::unique_ptr<uint8_t[]> p; std::size_t sz; } device_data = {nullptr, 0u};
+
+public:
+    explicit DeviceAnnounceHeader_Recv() = default;
+
+    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Recv);
+
+    void receive(InStream & stream) {
+        // // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
+        ::check_throw(stream, 20, "RDPDR::DeviceAnnounceHeader_Recv (0)", ERR_RDPDR_PDU_TRUNCATED);
+        this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
+        this->DeviceId_   = stream.in_uint32_le();
+
+        stream.in_copy_bytes(this->PreferredDosName_, 8);
+
+        this->device_data.sz = stream.in_uint32_le();
+        ::check_throw(stream, this->device_data.sz, "RDPDR::DeviceAnnounceHeader_Recv (1)", ERR_RDPDR_PDU_TRUNCATED);
+
+        this->device_data.p = std::make_unique<uint8_t[]>(this->device_data.sz);
+        stream.in_copy_bytes(this->device_data.p.get(), this->device_data.sz);
+    }
+
+    RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
+    
+    uint32_t DeviceId() const { return this->DeviceId_; }
+    
+    const char * PreferredDosName() const {
+        return ::char_ptr_cast(this->PreferredDosName_);
+    }
+
+//    const uint8_t * DeviceData() const {
+//        return this->device_data.p.get();
+//    }
+
+    size_t DeviceDataLength() const {
+        return this->device_data.sz /* DeviceData(variable) */
+            ;
+    }
+
+    size_t size() const {
+        return 20 + // DeviceType(4) + DeviceId(4) + PreferredDosName(8) +
+                    // DeviceDataLength(4)
+            this->device_data.sz /* DeviceData(variable) */
+            ;
+    }
+
+    void log(int level) const {
+        LOG(level, "DeviceAnnounceHeader_Recv: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
+            get_DeviceType_name(this->DeviceType_),
+            this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
+        if (level == LOG_INFO) {
+            hexdump(this->device_data.p.get(), this->device_data.sz);
+        }
+    }
+
+    void log() const {
+        LOG(LOG_INFO, "     Device Announce:");
+        LOG(LOG_INFO, "          * DeviceType       = 0x%08x (4 bytes): %s", this->DeviceType_, get_DeviceType_name(this->DeviceType_));
+        LOG(LOG_INFO, "          * DeviceId         = 0x%08x (4 bytes)", this->DeviceId_);
+        LOG(LOG_INFO, "          * PreferredDosName = \"%s\" (8 bytes)", this->PreferredDosName());
+        LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
+//         LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
+    }
+};  // DeviceAnnounceHeader_Recv
+
+class DeviceAnnounceHeader_Send {
     RDPDR_DTYP DeviceType_ = RDPDR_DTYP_SERIAL;
     uint32_t DeviceId_   = 0;
 
@@ -608,9 +669,8 @@ class DeviceAnnounceHeader {
     struct { uint8_t const * p; std::size_t sz; } device_data = {nullptr, 0u};
 
 public:
-    explicit DeviceAnnounceHeader() = default;
 
-    explicit DeviceAnnounceHeader(RDPDR_DTYP DeviceType, uint32_t DeviceId,
+    explicit DeviceAnnounceHeader_Send(RDPDR_DTYP DeviceType, uint32_t DeviceId,
                                   const char * preferred_dos_name,
                                   uint8_t const * device_data_p, size_t device_data_size)
     : DeviceType_(DeviceType)
@@ -620,7 +680,7 @@ public:
             strnlen(preferred_dos_name, sizeof(this->PreferredDosName_)-1));
     }
 
-    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader);
+    REDEMPTION_NON_COPYABLE(DeviceAnnounceHeader_Send);
 
     void emit(OutStream & stream) const {
         stream.out_uint32_le(underlying_cast(this->DeviceType_));
@@ -633,42 +693,6 @@ public:
         if (this->device_data.p) {
             stream.out_copy_bytes(this->device_data.p, this->device_data.sz);
         }
-    }
-
-    void receive(InStream & stream) {
-        {
-            const unsigned expected = 20;  // DeviceType(4) + DeviceId(4) + PreferredDosName(8) + DeviceDataLength(4)
-
-            if (!stream.in_check_rem(expected)) {
-                LOG(LOG_ERR,
-                    "Truncated DeviceAnnounceHeader (0): expected=%u remains=%zu",
-                    expected, stream.in_remain());
-                throw Error(ERR_RDPDR_PDU_TRUNCATED);
-            }
-        }
-
-        this->DeviceType_ = RDPDR_DTYP(stream.in_uint32_le());
-        this->DeviceId_   = stream.in_uint32_le();
-
-        stream.in_copy_bytes(this->PreferredDosName_, 8 /* PreferredDosName(8) */);
-        //this->PreferredDosName_[8 /* PreferredDosName(8) */ ] = '\0';
-
-//         const uint32_t DeviceDataLength = stream.in_uint32_le();
-
-//         {
-//             const unsigned expected = DeviceDataLength;  // DeviceData(variable)
-//
-//             if (!stream.in_check_rem(expected)) {
-//                 LOG(LOG_ERR,
-//                     "Truncated DeviceAnnounceHeader (1): expected=%u remains=%zu",
-//                     expected, stream.in_remain());
-//                 throw Error(ERR_RDPDR_PDU_TRUNCATED);
-//             }
-//         }
-
-        this->device_data.sz = stream.in_uint32_le();
-        //this->device_data = {stream.get_current(), DeviceDataLength};
-//         stream.in_skip_bytes(stream.in_remain());           // DeviceDataLength
     }
 
     RDPDR_DTYP DeviceType() const { return this->DeviceType_; }
@@ -695,23 +719,8 @@ public:
             ;
     }
 
-
-
-    static const char * get_DeviceType_friendly_name(RDPDR_DTYP DeviceType) {
-        switch (DeviceType) {
-            case RDPDR_DTYP_SERIAL:     return "Serial port";
-            case RDPDR_DTYP_PARALLEL:   return "Parallel port";
-            case RDPDR_DTYP_PRINT:      return "Printer";
-            case RDPDR_DTYP_FILESYSTEM: return "File system";
-            case RDPDR_DTYP_SMARTCARD:  return "Smart card";
-            case RDPDR_DTYP_UNSPECIFIED: break;
-        }
-
-        return "<unknown>";
-    }
-
     void log(int level) const {
-        LOG(level, "DeviceAnnounceHeader: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
+        LOG(level, "DeviceAnnounceHeader_Send: DeviceType=%s(%u) DeviceId=%u PreferredDosName=\"%s\"",
             get_DeviceType_name(this->DeviceType_),
             this->DeviceType_, this->DeviceId_, this->PreferredDosName_);
         if (level == LOG_INFO) {
@@ -727,7 +736,7 @@ public:
         LOG(LOG_INFO, "          * DeviceDataLength = %d (4 bytes)", int(this->device_data.sz));
 //         LOG(LOG_INFO, "          * DeviceData       = \"%.*s\" (%d byte(s))", int(this->device_data.sz), this->device_data.p, int(2*this->device_data.sz));
     }
-};  // DeviceAnnounceHeader
+};  // DeviceAnnounceHeader_Send
 
 
 // 2.2.2.1 Client Device List Announce Request (DR_PRN_DEVICE_ANNOUNCE)
@@ -5541,7 +5550,7 @@ void streamLog(InStream & stream , RdpDrStatus & status)
                         cdar.receive(s);
                         cdar.log();
                         for (uint32_t i = 0; i < cdar.DeviceCount; i++) {
-                            DeviceAnnounceHeader dah;
+                            DeviceAnnounceHeader_Recv dah;
                             dah.receive(s);
                             dah.log();
                         }
