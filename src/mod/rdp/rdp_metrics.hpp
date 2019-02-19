@@ -23,6 +23,7 @@
 #include "utils/sugar/cast.hpp"
 #include "mod/metrics.hpp"
 
+#include "core/callback.hpp"
 #include "core/client_info.hpp"
 #include "core/RDP/clipboard.hpp"
 #include "core/RDP/channels/rdpdr.hpp"
@@ -320,6 +321,21 @@ public:
         this->metrics->add_to_current_data(SERVER_MAIN_CHANNEL_DATA, len);
     }
 
+    void mouse_event(int device_flags, const int x, const int y)
+    {
+        if (device_flags & MOUSE_FLAG_MOVE) {
+            this->mouse_move(x, y);
+        }
+
+        if (device_flags & MOUSE_FLAG_DOWN) {
+            if (device_flags & MOUSE_FLAG_BUTTON2) {
+                this->right_click_pressed();
+            } else if (device_flags & MOUSE_FLAG_BUTTON1) {
+                this->left_click_pressed();
+            }
+        }
+    }
+
     void mouse_move(const int x, const int y) {
         if (this->last_x >= 0 && this->last_y >= 0) {
             int x_shift = x - this->last_x;
@@ -336,16 +352,16 @@ public:
         this->last_y = y;
     }
 
-    void key_pressed() {
-        this->metrics->add_to_current_data(KEYS_PRESSED, 1);
-    }
-
     void right_click_pressed() {
         this->metrics->add_to_current_data(RIGHT_CLICK, 1);
     }
 
     void left_click_pressed() {
         this->metrics->add_to_current_data(LEFT_CLICK, 1);
+    }
+
+    void key_pressed() {
+        this->metrics->add_to_current_data(KEYS_PRESSED, 1);
     }
 
     void client_main_channel_data(long int len) {

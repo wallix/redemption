@@ -110,8 +110,6 @@ struct RdpInput : private noncopyable
     virtual void rdp_suppress_display_updates() {}
 
     virtual void refresh(Rect clip) = 0;
-
-    virtual void set_last_tram_len(size_t tram_length) {(void)tram_length;}
 };
 
 struct Callback : RdpInput
@@ -126,5 +124,7 @@ struct Callback : RdpInput
     // Interface for session to send back to mod_rdp for tse virtual channel target data (asked previously)
     virtual void send_auth_channel_data(const char * data) { (void)data; }
     virtual void send_checkout_channel_data(const char * data) { (void)data; }
+
+    virtual void set_last_tram_len(size_t tram_length) {(void)tram_length;}
 };
 

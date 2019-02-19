@@ -122,6 +122,251 @@ class RDPMetrics;
 #include <cstdlib>
 #include <deque>
 
+class mod_rdp_input
+{
+    OutTransport trans;
+    CryptContext & encrypt;
+    int encryptionLevel = 0;
+    int encryptionMethod = 0;
+    uint16_t userid = 0;
+    const bool verbose;
+    bool enable_fastpath_client_input_event = false;
+    int share_id = 0;
+
+public:
+    mod_rdp_input(OutTransport trans, CryptContext& encrypt, bool verbose) noexcept
+    : trans(trans)
+    , encrypt(encrypt)
+    , verbose(verbose)
+    {}
+
+    void set_negociation(RdpNegociationResult const& r) noexcept
+    {
+        this->encryptionLevel = r.encryptionLevel;
+        this->encryptionMethod = r.encryptionMethod;
+        this->userid = r.userid;
+    }
+
+    int get_share_id() const noexcept
+    {
+        return this->share_id;
+    }
+
+    void set_share_id(int share_id) noexcept
+    {
+        this->share_id = share_id;
+    }
+
+    void set_enable_fastpath(bool enable_fastpath) noexcept
+    {
+        this->enable_fastpath_client_input_event = enable_fastpath;
+    }
+
+    void rdp_input_invalidate(Rect r)
+    {
+        if (this->verbose){
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
+        }
+
+        if (!r.isempty()){
+            RDP::RefreshRectPDU rrpdu(
+                this->share_id,
+                this->userid,
+                this->encryptionLevel,
+                this->encrypt);
+
+            rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
+
+            rrpdu.emit(this->trans);
+        }
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
+        }
+    }
+
+    void rdp_input_invalidate(array_view<Rect const> vr)
+    {
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
+        }
+
+        if (!vr.empty()) {
+            RDP::RefreshRectPDU rrpdu(
+                this->share_id,
+                this->userid,
+                this->encryptionLevel,
+                this->encrypt);
+
+            for (Rect const & rect : vr) {
+                if (!rect.isempty()){
+                    rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
+                }
+            }
+
+            rrpdu.emit(this->trans);
+        }
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
+        }
+    }
+
+    std::size_t send_input(int time, int message_type, int device_flags, int param1, int param2)
+    {
+        std::size_t channel_data_size = this->enable_fastpath_client_input_event
+            ? this->send_input_fastpath(time, message_type, device_flags, param1, param2)
+            : this->send_input_slowpath(time, message_type, device_flags, param1, param2);
+        return channel_data_size;
+    }
+
+    template<class... WriterData>
+    void send_data_request(WriterData... writer_data)
+    {
+        write_packets(
+            this->trans,
+            writer_data...,
+            X224::write_x224_dt_tpdu_fn{}
+        );
+    }
+
+    template<class... WriterData>
+    void send_data_request_ex(uint16_t channelId, WriterData... writer_data)
+    {
+        write_packets(
+            this->trans,
+            writer_data...,
+            SEC::write_sec_send_fn{0, this->encrypt, this->encryptionLevel},
+            [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
+                MCS::SendDataRequest_Send mcs(
+                    mcs_header, this->userid,
+                    channelId, 1, 3, packet_size, MCS::PER_ENCODING
+                );
+                (void)mcs;
+            },
+            X224::write_x224_dt_tpdu_fn{}
+        );
+    }
+
+    template<class DataWriter>
+    void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer)
+    {
+        using packet_size_t = decltype(details_::packet_size(data_writer));
+
+        this->send_data_request_ex(
+            GCC::MCS_GLOBAL_CHANNEL,
+            [this, &data_writer, pdu_type2, stream_id](
+                StreamSize<256 + packet_size_t{}>, OutStream & stream) {
+                ShareData sdata(stream);
+                sdata.emit_begin(pdu_type2, this->share_id, stream_id);
+                {
+                    OutStream substream(stream.get_current(), packet_size_t{});
+                    data_writer(packet_size_t{}, substream);
+                    stream.out_skip_bytes(substream.get_offset());
+                }
+                sdata.emit_end();
+            },
+            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
+                ShareControl_Send(
+                    sctrl_header, PDUTYPE_DATAPDU,
+                    this->userid + GCC::MCS_USERCHANNEL_BASE, packet_size
+                );
+            }
+        );
+    }
+
+    std::size_t send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2)
+    {
+        std::size_t channel_data_size = 0;
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
+        }
+
+        if (message_type == RDP_INPUT_SYNCHRONIZE) {
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath: Synchronize Event toggleFlags=0x%X",
+                static_cast<unsigned>(param1));
+        }
+
+        this->send_pdu_type2(
+            PDUTYPE2_INPUT, RDP::STREAM_HI,
+            [&](StreamSize<16>, OutStream & stream){
+                // Payload
+                stream.out_uint16_le(1); /* number of events */
+                stream.out_uint16_le(0);
+                stream.out_uint32_le(time);
+                stream.out_uint16_le(message_type);
+                stream.out_uint16_le(device_flags);
+                stream.out_uint16_le(param1);
+                stream.out_uint16_le(param2);
+
+                channel_data_size = stream.tailroom();
+            }
+        );
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
+        }
+
+        return channel_data_size;
+    }
+
+    std::size_t send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2)
+    {
+        std::size_t channel_data_size = 0;
+
+        (void)time;
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
+        }
+
+        write_packets(
+            this->trans,
+            [&](StreamSize<256>, OutStream & stream) {
+
+                switch (message_type) {
+                case RDP_INPUT_SCANCODE:
+                    FastPath::KeyboardEvent_Send(stream, device_flags, param1);
+                    break;
+
+                case RDP_INPUT_UNICODE:
+                    FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
+                    break;
+
+                case RDP_INPUT_SYNCHRONIZE:
+                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x%X",
+                        static_cast<unsigned>(param1));
+
+                    FastPath::SynchronizeEvent_Send(stream, param1);
+                    break;
+
+                case RDP_INPUT_MOUSE:
+                    FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
+                    break;
+
+                default:
+                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
+                    throw Error(ERR_RDP_FASTPATH);
+                }
+
+                channel_data_size = stream.tailroom();
+            },
+            [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
+                FastPath::ClientInputEventPDU_Send out_cie(
+                    fastpath_header, packet_data, packet_size, 1,
+                    this->encrypt, this->encryptionLevel, this->encryptionMethod
+                );
+                (void)out_cie;
+            }
+        );
+
+        if (this->verbose) {
+            LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
+        }
+
+        return channel_data_size;
+    }
+};
 
 class mod_rdp : public mod_api, public rdp_api
 {
@@ -700,7 +945,7 @@ private:
 #ifndef __EMSCRIPTEN__
         inline void create_session_probe_virtual_channel(
                         FrontAPI& front,
-                        ServerTransportContext & stc,
+                        ServerTransportContext stc,
                         AsynchronousTaskContainer & asynchronous_tasks,
                         SessionReactor& session_reactor,
                         mod_api& mod, rdp_api& rdp,
@@ -1875,7 +2120,9 @@ private:
     CryptContext encrypt {};
     RdpNegociationResult negociation_result;
 
-    ServerTransportContext stc;
+    mod_rdp_input rdp_input;
+
+    uint32_t front_multifragment_maxsize = 0;
 
 
     bool remote_apps_not_enabled = false;
@@ -1884,8 +2131,6 @@ private:
 
     rdp_orders orders;
     RfxDecoder rfxDecoder;
-
-    int share_id = 0;
 
     char client_name[128] = {};
 
@@ -1919,7 +2164,6 @@ private:
 #endif
 
     const bool enable_fastpath;                    // choice of programmer
-          bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // choice of programmer
     const bool enable_glyph_cache;
     const bool enable_new_pointer;
@@ -2044,7 +2288,7 @@ public:
         , target_host(mod_rdp_params.target_host)
         , monitor_count(mod_rdp_params.allow_using_multiple_monitors ? info.cs_monitor.monitorCount : 0)
         , trans(trans)
-        , stc(trans, this->encrypt, this->negociation_result)
+        , rdp_input(trans, this->encrypt, bool(mod_rdp_params.verbose & RDPVerbose::input))
         , front(front)
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
@@ -2061,7 +2305,6 @@ public:
         , session_probe_enable_launch_mask(mod_rdp_params.session_probe_enable_launch_mask)
 #endif
         , enable_fastpath(mod_rdp_params.enable_fastpath)
-        , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
@@ -2112,7 +2355,7 @@ public:
         }
 
         this->decrypt.encryptionMethod = 2; /* 128 bits */
-        this->stc.encrypt.encryptionMethod = 2; /* 128 bits */
+        this->encrypt.encryptionMethod = 2; /* 128 bits */
 
         snprintf(this->client_name, sizeof(this->client_name), "%s", info.hostname);
 
@@ -2203,8 +2446,10 @@ public:
 #ifndef __EMSCRIPTEN__
                 if (this->channels.session_probe.enabled) {
                     if (!this->channels.session_probe_virtual_channel) {
+                        ServerTransportContext stc{
+                            this->trans, this->encrypt, this->negociation_result};
                         this->channels.create_session_probe_virtual_channel(
-                                this->front, this->stc,
+                                this->front, stc,
                                 this->asynchronous_tasks, this->session_reactor,
                                 *this, *this,
                                 this->lang,
@@ -2267,17 +2512,7 @@ public:
             this->send_input(0, RDP_INPUT_MOUSE, device_flags, x, y);
 
 #ifndef __EMSCRIPTEN__
-            if (device_flags & MOUSE_FLAG_MOVE) {
-                IF_ENABLE_METRICS(mouse_move(x, y));
-            }
-
-            if (device_flags & MOUSE_FLAG_DOWN) {
-                if (device_flags & MOUSE_FLAG_BUTTON2) {
-                    IF_ENABLE_METRICS(right_click_pressed());
-                } else if (device_flags & MOUSE_FLAG_BUTTON1) {
-                    IF_ENABLE_METRICS(left_click_pressed());
-                }
-            }
+            IF_ENABLE_METRICS(mouse_event(device_flags, x, y));
 
             if (this->channels.remote_programs_session_manager) {
                 this->channels.remote_programs_session_manager->input_mouse(device_flags, x, y);
@@ -2297,14 +2532,14 @@ public:
                 front_channel_name);
         }
 
-        this->channels.send_to_mod_channel(front_channel_name, chunk, length, flags,
-                    this->front, this->stc,
-                    this->asynchronous_tasks,
-                    this->client_general_caps,
-                    this->vars,
-                    this->client_rail_caps,
-                    this->client_name
-            );
+        ServerTransportContext stc{
+            this->trans, this->encrypt, this->negociation_result};
+        this->channels.send_to_mod_channel(
+            front_channel_name, chunk, length, flags,
+            this->front, stc, this->asynchronous_tasks,
+            this->client_general_caps, this->vars,
+            this->client_rail_caps, this->client_name
+        );
     }
 
     // Method used by session to transmit sesman answer for auth_channel
@@ -2317,7 +2552,9 @@ public:
 
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server(this->stc, this->channels.auth_channel_chanid
+        ServerTransportContext stc{
+            this->trans, this->encrypt, this->negociation_result};
+        virtual_channel_pdu.send_to_server(stc, this->channels.auth_channel_chanid
                                           , stream_data.get_offset()
                                           , this->channels.auth_channel_flags
                                           , stream_data.get_data()
@@ -2337,43 +2574,14 @@ private:
         stream_data.out_uint16_le(data_size);
         stream_data.out_copy_bytes(string_data, data_size);
 
-        virtual_channel_pdu.send_to_server(this->stc, this->channels.checkout_channel_chanid
+        ServerTransportContext stc{
+            this->trans, this->encrypt, this->negociation_result};
+
+        virtual_channel_pdu.send_to_server(stc, this->channels.checkout_channel_chanid
           , stream_data.get_offset()
           , this->channels.checkout_channel_flags
           , stream_data.get_data()
           , stream_data.get_offset());
-    }
-
-    template<class... WriterData>
-    void send_data_request(uint16_t channelId, WriterData... writer_data) {
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "send data request");
-        }
-
-        write_packets(
-            this->stc.trans,
-            writer_data...,
-            [this, channelId](StreamSize<256>, OutStream & mcs_header, std::size_t packet_size) {
-                MCS::SendDataRequest_Send mcs(
-                    mcs_header, this->stc.negociation_result.userid,
-                    channelId, 1, 3, packet_size, MCS::PER_ENCODING
-                );
-                (void)mcs;
-            },
-            X224::write_x224_dt_tpdu_fn{}
-        );
-        if (bool(this->verbose & RDPVerbose::basic_trace)) {
-            LOG(LOG_INFO, "send data request done");
-        }
-    }
-
-    template<class... WriterData>
-    void send_data_request_ex(uint16_t channelId, WriterData... writer_data) {
-        this->send_data_request(
-            channelId,
-            writer_data...,
-            SEC::write_sec_send_fn{0, this->stc.encrypt, this->stc.negociation_result.encryptionLevel}
-        );
     }
 
 public:
@@ -2474,7 +2682,7 @@ public:
                 this->front.begin_update();
                 this->orders.process_orders(
                     stream, true, drawable,
-                    this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
+                    this->negociation_result.front_width, this->negociation_result.front_height);
                 this->front.end_update();
                 break;
 
@@ -2682,11 +2890,10 @@ public:
                     this->front.end_update();
 
                     LOG(LOG_DEBUG, "surfaceCmd framebegin, sending frameAck id=0x%x", this->currentFrameId);
-                    uint32_t localLastFrame = this->currentFrameId;
-                    this->send_pdu_type2(
+                    this->rdp_input.send_pdu_type2(
                         PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
-                        [localLastFrame](StreamSize<32>, OutStream & ostream) {
-                            ostream.out_uint32_le(localLastFrame);
+                        [this](StreamSize<32>, OutStream & ostream) {
+                            ostream.out_uint32_le(this->currentFrameId);
                         }
                     );
                 }
@@ -2699,7 +2906,7 @@ public:
                 LOG(LOG_DEBUG, "surfaceCmd frameEnd, sending frameAck id=0x%x", frameId);
                 this->frameInProgress = false;
                 this->front.end_update();
-                this->send_pdu_type2(
+                this->rdp_input.send_pdu_type2(
                     PDUTYPE2_FRAME_ACKNOWLEDGE, RDP::STREAM_HI,
                     [frameId](StreamSize<32>, OutStream & ostream) {
                         ostream.out_uint32_le(frameId);
@@ -2759,7 +2966,7 @@ public:
 
 
         MCS::SendDataIndication_Recv mcs(x224.payload, MCS::PER_ENCODING);
-        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->stc.negociation_result.encryptionLevel);
+        SEC::Sec_Recv sec(mcs.payload, this->decrypt, this->negociation_result.encryptionLevel);
         if (mcs.channelId != GCC::MCS_GLOBAL_CHANNEL){
             // TODO: this should move to channels
             if (bool(this->verbose & RDPVerbose::channels)) {
@@ -2783,15 +2990,19 @@ public:
 
             // If channel name is our virtual channel, then don't send data to front
             if (mod_channel.name == this->channels.auth_channel && this->channels.enable_auth_channel) {
-                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
+                this->channels.process_auth_event(mod_channel, sec.payload, length, flags, chunk_size, this->front, *this, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name, this->authentifier);
             }
             else if (mod_channel.name == this->channels.checkout_channel) {
                 this->channels.process_checkout_event(mod_channel, sec.payload, length, flags, chunk_size, this->authentifier);
             }
             else if (mod_channel.name == channel_names::sespro) {
 #ifndef __EMSCRIPTEN__
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
                 this->channels.process_session_probe_event(mod_channel, sec.payload, length, flags, chunk_size,
-                    this->front, *this, *this, this->stc,
+                    this->front, *this, *this, stc,
                     this->asynchronous_tasks, this->session_reactor,
                     this->client_general_caps, this->client_name,
                     this->monitor_count, this->bogus_refresh_rect, this->lang);
@@ -2800,23 +3011,31 @@ public:
             // Clipboard is a Clipboard PDU
             else if (mod_channel.name == channel_names::cliprdr) {
                 IF_ENABLE_METRICS(set_server_cliprdr_metrics(sec.payload.clone(), length, flags));
-                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, this->stc);
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
+                this->channels.process_cliprdr_event(sec.payload, length, flags, chunk_size, this->front, stc);
             }
             else if (mod_channel.name == channel_names::rail) {
 #ifndef __EMSCRIPTEN__
                 IF_ENABLE_METRICS(server_rail_channel_data(length));
-                this->channels.process_rail_event(mod_channel, sec.payload, length, flags, chunk_size,
-                            this->front, this->stc,
-                            this->vars, this->client_rail_caps);
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
+                this->channels.process_rail_event(
+                    mod_channel, sec.payload, length, flags, chunk_size,
+                    this->front, stc, this->vars, this->client_rail_caps);
 #endif
             }
             else if (mod_channel.name == channel_names::rdpdr) {
                 IF_ENABLE_METRICS(set_server_rdpdr_metrics(sec.payload.clone(), length, flags));
-                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, this->stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
+                this->channels.process_rdpdr_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks, this->client_general_caps, this->client_name);
             }
             else if (mod_channel.name == channel_names::drdynvc) {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
-                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, this->stc, this->asynchronous_tasks);
+                ServerTransportContext stc{
+                    this->trans, this->encrypt, this->negociation_result};
+                this->channels.process_drdynvc_event(sec.payload, length, flags, chunk_size, this->front, stc, this->asynchronous_tasks);
             }
             else {
                 IF_ENABLE_METRICS(server_other_channel_data(length));
@@ -2909,9 +3128,9 @@ public:
                                     }
                                 }
                                 else {
-                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->stc.negociation_result.front_width, this->stc.negociation_result.front_height, this->orders.bpp);
+                                    LOG(LOG_INFO, "Resizing to %ux%ux%u", this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp);
 
-                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->stc.negociation_result.front_width, this->stc.negociation_result.front_height, this->orders.bpp)){
+                                    if (FrontAPI::ResizeResult::fail == this->front.server_resize(this->negociation_result.front_width, this->negociation_result.front_height, this->orders.bpp)){
                                         LOG(LOG_ERR, "Resize not available on older clients,"
                                             " change client resolution to match server resolution");
                                         throw Error(ERR_RDP_RESIZE_NOT_AVAILABLE);
@@ -2976,9 +3195,11 @@ public:
                             if (!this->already_upped_and_running) {
 #ifndef __EMSCRIPTEN__
                                 if (this->channels.session_probe.enabled) {
+                                    ServerTransportContext stc{
+                                        this->trans, this->encrypt, this->negociation_result};
                                     this->channels.do_enable_session_probe(
                                                 this->front,
-                                                this->stc,
+                                                stc,
                                                 *this,
                                                 *this,
                                                 this->asynchronous_tasks,
@@ -3008,9 +3229,9 @@ public:
                             if (this->front.can_be_start_capture()) {
                                 if (this->bogus_refresh_rect && this->monitor_count) {
                                     this->rdp_suppress_display_updates();
-                                    this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
+                                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
                                 }
-                                this->rdp_input_invalidate(Rect(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height));
+                                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
                             }
                             break;
                         case UP_AND_RUNNING:
@@ -3038,7 +3259,7 @@ public:
                                             if (bool(this->verbose & RDPVerbose::graphics)){ LOG(LOG_INFO, "RDP_UPDATE_ORDERS"); }
                                             this->front.begin_update();
                                             this->orders.process_orders(sdata.payload, false,
-                                                drawable, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
+                                                drawable, this->negociation_result.front_width, this->negociation_result.front_height);
                                             this->front.end_update();
                                             break;
                                         case RDP_UPDATE_BITMAP:
@@ -3143,7 +3364,7 @@ public:
 //    shareId (4 bytes): A 32-bit, unsigned integer. The share identifier for the packet (see [T128]
 // section 8.4.2 for more information regarding share IDs).
 
-                            this->share_id = sctrl.payload.in_uint32_le();
+                            this->rdp_input.set_share_id(sctrl.payload.in_uint32_le());
 
 //    lengthSourceDescriptor (2 bytes): A 16-bit, unsigned integer. The size in bytes of the sourceDescriptor
 // field.
@@ -3182,7 +3403,7 @@ public:
                             this->send_control(RDP_CTL_REQUEST_CONTROL);
 
                             /* Including RDP 5.0 capabilities */
-                            if (this->stc.negociation_result.use_rdp5){
+                            if (this->negociation_result.use_rdp5){
                                 LOG(LOG_INFO, "use rdp5");
                                 if (this->enable_persistent_disk_bitmap_cache &&
                                     this->persist_bitmap_cache_on_disk) {
@@ -3335,7 +3556,7 @@ public:
                     StaticOutStream<256> stream;
                     X224::DR_TPDU_Send x224(stream, X224::REASON_NOT_SPECIFIED);
                     try {
-                        this->stc.trans.send(stream.get_bytes());
+                        this->trans.send(stream.get_bytes());
                         LOG(LOG_INFO, "Connection to server closed");
                     }
                     catch(Error const & e){
@@ -3431,16 +3652,16 @@ public:
         if (bool(this->verbose & RDPVerbose::capabilities)){
             LOG(LOG_INFO, "mod_rdp::send_confirm_active");
         }
-        this->send_data_request_ex(
+        this->rdp_input.send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this](StreamSize<65536>, OutStream & stream) {
                 RDP::ConfirmActivePDU_Send confirm_active_pdu(stream);
 
-                confirm_active_pdu.emit_begin(this->share_id);
+                confirm_active_pdu.emit_begin(this->rdp_input.get_share_id());
 
                 GeneralCaps general_caps;
                 general_caps.extraflags  =
-                    this->stc.negociation_result.use_rdp5
+                    this->negociation_result.use_rdp5
                     ? NO_BITMAP_COMPRESSION_HDR | AUTORECONNECT_SUPPORTED | LONG_CREDENTIALS_SUPPORTED
                     : 0
                     ;
@@ -3459,8 +3680,8 @@ public:
                 // TODO Client SHOULD set this field to the color depth requested in the Client Core Data
                 bitmap_caps.preferredBitsPerPixel = safe_int(this->orders.bpp);
                 //bitmap_caps.preferredBitsPerPixel = this->front_bpp;
-                bitmap_caps.desktopWidth          = this->stc.negociation_result.front_width;
-                bitmap_caps.desktopHeight         = this->stc.negociation_result.front_height;
+                bitmap_caps.desktopWidth          = this->negociation_result.front_width;
+                bitmap_caps.desktopHeight         = this->negociation_result.front_height;
                 bitmap_caps.bitmapCompressionFlag = 0x0001; // This field MUST be set to TRUE (0x0001).
                 //bitmap_caps.drawingFlags = DRAW_ALLOW_DYNAMIC_COLOR_FIDELITY | DRAW_ALLOW_COLOR_SUBSAMPLING | DRAW_ALLOW_SKIP_ALPHA;
                 bitmap_caps.drawingFlags = DRAW_ALLOW_SKIP_ALPHA;
@@ -3719,8 +3940,8 @@ public:
 
                     MultiFragmentUpdateCaps fragCaps;
                     fragCaps.MaxRequestSize = std::max(
-                            this->negociation_result.front_multifragment_maxsize,
-                            static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
+                        this->front_multifragment_maxsize,
+                        static_cast<uint32_t>(this->negociation_result.front_width * this->negociation_result.front_height * 4)
                     );
                     if (this->multifragment_update_data.get_capacity() < fragCaps.MaxRequestSize) {
                         this->multifragment_update_buffer.reset(new uint8_t[fragCaps.MaxRequestSize]());
@@ -3741,7 +3962,7 @@ public:
                 // containing information about the packet. The type subfield of the pduType
                 // field of the Share Control Header MUST be set to PDUTYPE_DEMANDACTIVEPDU (1).
                 ShareControl_Send(sctrl_header, PDUTYPE_CONFIRMACTIVEPDU,
-                    this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                    this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
             }
         );
 
@@ -5057,8 +5278,8 @@ public:
                         input_caps.log("Received from server");
                     }
 
-                    this->enable_fastpath_client_input_event =
-                        (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0));
+                    this->rdp_input.set_enable_fastpath(
+                        (this->enable_fastpath && ((input_caps.inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)) != 0)));
                 }
                 break;
             case CAPSTYPE_RAIL:
@@ -5095,7 +5316,7 @@ public:
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
                         multifrag_caps.log("Receiving from server");
                     }
-                    this->negociation_result.front_multifragment_maxsize = multifrag_caps.MaxRequestSize;
+                    this->front_multifragment_maxsize = multifrag_caps.MaxRequestSize;
                 }
                 break;
             case CAPSETTYPE_LARGE_POINTER:
@@ -5239,11 +5460,11 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_control");
         }
 
-        this->send_data_request_ex(
+        this->rdp_input.send_data_request_ex(
             GCC::MCS_GLOBAL_CHANNEL,
             [this, action](StreamSize<256>, OutStream & stream) {
                 ShareData sdata(stream);
-                sdata.emit_begin(PDUTYPE2_CONTROL, this->share_id, RDP::STREAM_MED);
+                sdata.emit_begin(PDUTYPE2_CONTROL, this->rdp_input.get_share_id(), RDP::STREAM_MED);
 
                 // Payload
                 stream.out_uint16_le(action);
@@ -5254,7 +5475,7 @@ public:
                 sdata.emit_end();
             },
             [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
-                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
+                ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU, this->negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size);
 
             }
         );
@@ -5262,42 +5483,6 @@ public:
         if (bool(this->verbose & RDPVerbose::basic_trace)) {
             LOG(LOG_INFO, "mod_rdp::send_control done");
         }
-    }
-
-    /* Send persistent bitmap cache enumeration PDU's
-       Not implemented yet because it should be implemented
-       before in process_data case. The problem is that
-       we don't save the bitmap key list attached with rdp_bmpcache2 capability
-       message so we can't develop this function yet */
-    template<class DataWriter>
-    void send_persistent_key_list_pdu(DataWriter data_writer) {
-        this->send_pdu_type2(PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, RDP::STREAM_MED, data_writer);
-    }
-
-    template<class DataWriter>
-    void send_pdu_type2(uint8_t pdu_type2, uint8_t stream_id, DataWriter data_writer) {
-        using packet_size_t = decltype(details_::packet_size(data_writer));
-
-        this->send_data_request_ex(
-            GCC::MCS_GLOBAL_CHANNEL,
-            [this, &data_writer, pdu_type2, stream_id](
-                StreamSize<256 + packet_size_t{}>, OutStream & stream) {
-                ShareData sdata(stream);
-                sdata.emit_begin(pdu_type2, this->share_id, stream_id);
-                {
-                    OutStream substream(stream.get_current(), packet_size_t{});
-                    data_writer(packet_size_t{}, substream);
-                    stream.out_skip_bytes(substream.get_offset());
-                }
-                sdata.emit_end();
-            },
-            [this](StreamSize<256>, OutStream & sctrl_header, std::size_t packet_size) {
-                ShareControl_Send(
-                    sctrl_header, PDUTYPE_DATAPDU,
-                    this->stc.negociation_result.userid + GCC::MCS_USERCHANNEL_BASE, packet_size
-                );
-            }
-        );
     }
 
     void send_persistent_key_list() {
@@ -5362,7 +5547,13 @@ public:
 
                         //pklpdu.log(LOG_INFO, "Send to server");
 
-                        this->send_persistent_key_list_pdu(
+                        // Send persistent bitmap cache enumeration PDU's not implemented
+                        // yet because it should be implemented before in process_data case.
+                        // The problem is that we don't save the bitmap key list attached
+                        // with rdp_bmpcache2 capability message so we can't develop this
+                        // function yet
+                        this->rdp_input.send_pdu_type2(
+                            PDUTYPE2_BITMAPCACHE_PERSISTENT_LIST, RDP::STREAM_MED,
                             [&pklpdu](StreamSize<2048>, OutStream & pdu_data_stream) {
                                 pklpdu.emit(pdu_data_stream);
                             }
@@ -5388,7 +5579,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_synchronise");
         }
 
-        this->send_pdu_type2(
+        this->rdp_input.send_pdu_type2(
             PDUTYPE2_SYNCHRONIZE, RDP::STREAM_MED,
             [](StreamSize<4>, OutStream & stream) {
                 stream.out_uint16_le(1); /* type */
@@ -5406,7 +5597,7 @@ public:
             LOG(LOG_INFO, "mod_rdp::send_fonts");
         }
 
-        this->send_pdu_type2(
+        this->rdp_input.send_pdu_type2(
             PDUTYPE2_FONTLIST, RDP::STREAM_MED,
             [seq](StreamSize<8>, OutStream & stream){
                 // Payload
@@ -5422,95 +5613,11 @@ public:
         }
     }
 
-public:
-    void send_input_slowpath(int time, int message_type, int device_flags, int param1, int param2) {
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::send_input_slowpath");
-        }
-
-        if (message_type == RDP_INPUT_SYNCHRONIZE) {
-            LOG(LOG_INFO, "mod_rdp::send_input_slowpath: Synchronize Event toggleFlags=0x%X",
-                static_cast<unsigned>(param1));
-        }
-
-        this->send_pdu_type2(
-            PDUTYPE2_INPUT, RDP::STREAM_HI,
-            [&](StreamSize<16>, OutStream & stream){
-                // Payload
-                stream.out_uint16_le(1); /* number of events */
-                stream.out_uint16_le(0);
-                stream.out_uint32_le(time);
-                stream.out_uint16_le(message_type);
-                stream.out_uint16_le(device_flags);
-                stream.out_uint16_le(param1);
-                stream.out_uint16_le(param2);
-
-                IF_ENABLE_METRICS(client_main_channel_data(stream.tailroom()));
-            }
-        );
-
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::send_input_slowpath done");
-        }
-    }
-
-    void send_input_fastpath(int time, int message_type, uint16_t device_flags, int param1, int param2) {
-        (void)time;
-        if (bool(this->verbose & RDPVerbose::input)) {
-            LOG(LOG_INFO, "mod_rdp::send_input_fastpath");
-        }
-
-        write_packets(
-            this->stc.trans,
-            [&](StreamSize<256>, OutStream & stream) {
-
-                switch (message_type) {
-                case RDP_INPUT_SCANCODE:
-                    FastPath::KeyboardEvent_Send(stream, device_flags, param1);
-                    break;
-
-                case RDP_INPUT_UNICODE:
-                    FastPath::UniCodeKeyboardEvent_Send(stream, device_flags, param1);
-                    break;
-
-                case RDP_INPUT_SYNCHRONIZE:
-                    LOG(LOG_INFO, "mod_rdp::send_input_fastpath: Synchronize Event toggleFlags=0x%X",
-                        static_cast<unsigned>(param1));
-
-                    FastPath::SynchronizeEvent_Send(stream, param1);
-                    break;
-
-                case RDP_INPUT_MOUSE:
-                    FastPath::MouseEvent_Send(stream, device_flags, param1, param2);
-                    break;
-
-                default:
-                    LOG(LOG_ERR, "unsupported fast-path input message type 0x%x", unsigned(message_type));
-                    throw Error(ERR_RDP_FASTPATH);
-                }
-                IF_ENABLE_METRICS(client_main_channel_data(stream.tailroom()));
-            },
-            [&](StreamSize<256>, OutStream & fastpath_header, uint8_t * packet_data, std::size_t packet_size) {
-                FastPath::ClientInputEventPDU_Send out_cie(
-                    fastpath_header, packet_data, packet_size, 1,
-                    this->stc.encrypt, this->stc.negociation_result.encryptionLevel, this->stc.negociation_result.encryptionMethod
-                );
-                (void)out_cie;
-            }
-        );
-
-        if (bool(this->verbose & RDPVerbose::input)) {
-            LOG(LOG_INFO, "mod_rdp::send_input_fastpath done");
-        }
-    }
-
     void send_input(int time, int message_type, int device_flags, int param1, int param2) override {
-        if (!this->enable_fastpath_client_input_event) {
-            this->send_input_slowpath(time, message_type, device_flags, param1, param2);
-        }
-        else {
-            this->send_input_fastpath(time, message_type, device_flags, param1, param2);
-        }
+        std::size_t const channel_data_size
+          = rdp_input.send_input(time, message_type, device_flags, param1, param2);
+
+        IF_ENABLE_METRICS(client_main_channel_data(channel_data_size));
 
         if (message_type == RDP_INPUT_SYNCHRONIZE) {
             this->last_key_flags_sent = param1;
@@ -5518,45 +5625,14 @@ public:
     }
 
     void rdp_input_invalidate(Rect r) override {
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate");
-        }
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            if (!r.isempty()){
-                RDP::RefreshRectPDU rrpdu(this->share_id,
-                                          this->stc.negociation_result.userid,
-                                          this->stc.negociation_result.encryptionLevel,
-                                          this->stc.encrypt);
-
-                rrpdu.addInclusiveRect(r.x, r.y, r.x + r.cx - 1, r.y + r.cy - 1);
-
-                rrpdu.emit(this->stc.trans);
-            }
-        }
-        //this->draw_event(time(nullptr), this->front);
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate done");
+            this->rdp_input.rdp_input_invalidate(r);
         }
     }
 
     void rdp_input_invalidate2(array_view<Rect const> vr) override {
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2");
-        }
-        if ((UP_AND_RUNNING == this->connection_finalization_state) && !vr.empty()) {
-            RDP::RefreshRectPDU rrpdu(this->share_id,
-                                      this->stc.negociation_result.userid,
-                                      this->stc.negociation_result.encryptionLevel,
-                                      this->stc.encrypt);
-            for (Rect const & rect : vr) {
-                if (!rect.isempty()){
-                    rrpdu.addInclusiveRect(rect.x, rect.y, rect.x + rect.cx - 1, rect.y + rect.cy - 1);
-                }
-            }
-            rrpdu.emit(this->stc.trans);
-        }
-        if (bool(this->verbose & RDPVerbose::input)){
-            LOG(LOG_INFO, "mod_rdp::rdp_input_invalidate 2 done");
+        if (UP_AND_RUNNING == this->connection_finalization_state) {
+            this->rdp_input.rdp_input_invalidate(vr);
         }
     }
 
@@ -5567,7 +5643,7 @@ public:
         }
 
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            this->send_pdu_type2(
+            this->rdp_input.send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
                 [left, top, right, bottom](StreamSize<32>, OutStream & stream) {
                     RDP::SuppressOutputPDUData sopdud(left, top, right, bottom);
@@ -5588,7 +5664,7 @@ public:
         }
 
         if (UP_AND_RUNNING == this->connection_finalization_state) {
-            this->send_pdu_type2(
+            this->rdp_input.send_pdu_type2(
                 PDUTYPE2_SUPPRESS_OUTPUT, RDP::STREAM_MED,
                 [](StreamSize<32>, OutStream & stream) {
                     RDP::SuppressOutputPDUData sopdud;
@@ -5604,7 +5680,7 @@ public:
     }
 
     void refresh(Rect r) override {
-        this->rdp_input_invalidate(r);
+        this->rdp_input.rdp_input_invalidate(r);
     }
 
     void set_last_tram_len([[maybe_unused]] size_t tram_length) override {
@@ -5996,53 +6072,17 @@ private:
         }
     }
 
-    //void send_shutdown_request() {
-    //    LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
-    //
-    //    BStream stream(65536);
-    //    ShareData sdata(stream);
-    //    sdata.emit_begin(PDUTYPE2_SHUTDOWN_REQUEST, this->share_id,
-    //                     RDP::STREAM_MED);
-    //    sdata.emit_end();
-    //    BStream sctrl_header(256);
-    //    ShareControl_Send(sctrl_header, PDUTYPE_DATAPDU,
-    //                      this->userid + GCC::MCS_USERCHANNEL_BASE,
-    //                      stream.size());
-    //    HStream target_stream(1024, 65536);
-    //    target_stream.out_copy_bytes(sctrl_header);
-    //    target_stream.out_copy_bytes(stream);
-    //    target_stream.mark_end();
-    //
-    //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    //}
-
     void send_disconnect_ultimatum() {
         if (bool(this->verbose & RDPVerbose::basic_trace)){
             LOG(LOG_INFO, "SEND MCS DISCONNECT PROVIDER ULTIMATUM PDU");
         }
 
         if (!this->mcs_disconnect_provider_ultimatum_pdu_received) {
-            write_packets(
-                this->stc.trans,
-                [](StreamSize<256>, OutStream & mcs_data) {
-                    MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
-                },
-                X224::write_x224_dt_tpdu_fn{}
-            );
+            this->rdp_input.send_data_request([](StreamSize<256>, OutStream & mcs_data) {
+                MCS::DisconnectProviderUltimatum_Send(mcs_data, 3, MCS::PER_ENCODING);
+            });
         }
     }
-
-    //void send_flow_response_pdu(uint8_t flow_id, uint8_t flow_number) {
-    //    LOG(LOG_INFO, "SEND FLOW RESPONSE PDU n° %u", flow_number);
-    //    BStream flowpdu(256);
-    //    FlowPDU_Send(flowpdu, FLOW_RESPONSE_PDU, flow_id, flow_number,
-    //                 this->userid + GCC::MCS_USERCHANNEL_BASE);
-    //    HStream target_stream(1024, 65536);
-    //    target_stream.out_copy_bytes(flowpdu);
-    //    target_stream.mark_end();
-    //    this->send_data_request_ex(GCC::MCS_GLOBAL_CHANNEL, target_stream);
-    //}
-
 
     bool disable_input_event_and_graphics_update(bool disable_input_event,
             bool disable_graphics_update) override {
@@ -6087,7 +6127,7 @@ public:
     }
 
     Dimension get_dim() const override
-    { return Dimension(this->stc.negociation_result.front_width, this->stc.negociation_result.front_height); }
+    { return Dimension(this->negociation_result.front_width, this->negociation_result.front_height); }
 
     bool is_auto_reconnectable() override {
         return this->is_server_auto_reconnec_packet_received
@@ -6102,9 +6142,11 @@ public:
             const char* exe_or_file, const char* working_dir,
             const char* arguments, const char* account, const char* password) override {
 #ifndef __EMSCRIPTEN__
+        ServerTransportContext stc{
+            this->trans, this->encrypt, this->negociation_result};
         this->channels.auth_rail_exec(flags, original_exe_or_file, exe_or_file,
                                 working_dir, arguments, account, password,
-                                this->front, this->stc, this->vars, this->client_rail_caps);
+                                this->front, stc, this->vars, this->client_rail_caps);
 #else
         (void)flags;
         (void)original_exe_or_file;
@@ -6118,8 +6160,11 @@ public:
 
     void auth_rail_exec_cancel(uint16_t flags, const char* original_exe_or_file, uint16_t exec_result) override {
 #ifndef __EMSCRIPTEN__
-        this->channels.auth_rail_exec_cancel(flags, original_exe_or_file, exec_result,
-                                    this->front, this->stc, this->vars, this->client_rail_caps);
+            ServerTransportContext stc{
+                this->trans, this->encrypt, this->negociation_result};
+        this->channels.auth_rail_exec_cancel(
+            flags, original_exe_or_file, exec_result,
+            this->front, stc, this->vars, this->client_rail_caps);
 #else
         (void)flags;
         (void)original_exe_or_file;
@@ -6129,8 +6174,11 @@ public:
 
     void sespro_rail_exec_result(uint16_t flags, const char* exe_or_file, uint16_t exec_result, uint32_t raw_result) override {
 #ifndef __EMSCRIPTEN__
-        this->channels.sespro_rail_exec_result(flags, exe_or_file, exec_result, raw_result,
-                                               this->front, this->stc, this->vars, this->client_rail_caps);
+        ServerTransportContext stc{
+            this->trans, this->encrypt, this->negociation_result};
+        this->channels.sespro_rail_exec_result(
+            flags, exe_or_file, exec_result, raw_result,
+            this->front, stc, this->vars, this->client_rail_caps);
 #else
         (void)flags;
         (void)exe_or_file;
@@ -6157,9 +6205,9 @@ public:
             if (this->front.can_be_start_capture()) {
                 if (this->bogus_refresh_rect && this->monitor_count) {
                     this->rdp_suppress_display_updates();
-                    this->rdp_allow_display_updates(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height);
+                    this->rdp_allow_display_updates(0, 0, this->negociation_result.front_width, this->negociation_result.front_height);
                 }
-                this->rdp_input_invalidate(Rect(0, 0, this->stc.negociation_result.front_width, this->stc.negociation_result.front_height));
+                this->rdp_input_invalidate(Rect(0, 0, this->negociation_result.front_width, this->negociation_result.front_height));
             }
         }
     }
