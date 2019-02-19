@@ -20,9 +20,9 @@ Author(s): Jonathan Poelen
 
 #include "mod/rdp/parse_extra_orders.hpp"
 
-OrdersSupport parse_extra_orders(char const* extra_orders, RDPVerbose rdp_verbose) noexcept
+PrimaryDrawingOrdersSupport parse_extra_orders(char const* extra_orders, RDPVerbose rdp_verbose) noexcept
 {
-    OrdersSupport orders_support;
+    PrimaryDrawingOrdersSupport orders_support;
 
     if (bool(rdp_verbose & RDPVerbose::basic_trace)) {
         LOG(LOG_INFO, "RDP Extra orders=\"%s\"", extra_orders);

@@ -29,10 +29,12 @@
 #include "utils/translation.hpp"
 #include "mod/rdp/channels/sespro_clipboard_based_launcher.hpp"
 #include "core/RDP/windows_execute_shell_params.hpp"
-
+#include "core/RDP/capabilities/order.hpp"
 
 #include <chrono>
 #include <string>
+#include <cstdint>
+
 
 class ClientExecute;
 class Transport;
@@ -69,12 +71,10 @@ struct ModRDPParams
     bool enable_nla = true;
     bool enable_krb = false;
     bool enable_fastpath = true;           // If true, fast-path must be supported.
-    bool enable_mem3blt = true;
     bool enable_new_pointer = true;
     bool enable_glyph_cache = false;
     bool enable_session_probe = false;
     bool session_probe_enable_launch_mask = true;
-    bool enable_ninegrid_bitmap = false;
     bool enable_remotefx = false;
 
     bool disable_clipboard_log_syslog = false;
@@ -157,7 +157,7 @@ struct ModRDPParams
 
     const char * device_id = "";
 
-    const char * extra_orders = "";
+    PrimaryDrawingOrdersSupport primary_drawing_orders_support{TS_NEG_MEM3BLT_INDEX};
 
     bool enable_persistent_disk_bitmap_cache = false;
     bool enable_cache_waiting_list = false;
@@ -268,11 +268,11 @@ struct ModRDPParams
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             primary_user_id);
         RDP_PARAMS_LOG("\"%s\"", s_or_null,             target_application);
 
+        RDP_PARAMS_LOG("%" PRIx32, RDP_PARAMS_LOG_GET,  primary_drawing_orders_support.as_uint());
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_tls);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_nla);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_krb);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_fastpath);
-        RDP_PARAMS_LOG("%s",     yes_or_no,             enable_mem3blt);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_new_pointer);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_glyph_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_remotefx);
@@ -357,8 +357,6 @@ struct ModRDPParams
         RDP_PARAMS_LOG("%d",     static_cast<int>,      server_cert_error_message);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             hide_client_name);
-
-        RDP_PARAMS_LOG("%s",     s_or_none,             extra_orders);
 
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_persistent_disk_bitmap_cache);
         RDP_PARAMS_LOG("%s",     yes_or_no,             enable_cache_waiting_list);

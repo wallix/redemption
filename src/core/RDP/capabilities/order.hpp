@@ -317,35 +317,85 @@ enum OrdersIndexes {
     , UnusedIndex11 = 0x1F
 };
 
-struct OrdersSupport
+// TODO using PrimaryDrawingOrdersSupport = enum_flags_t<OrdersIndexes, NB_ORDER_SUPPORT>;
+struct PrimaryDrawingOrdersSupport
 {
+    constexpr PrimaryDrawingOrdersSupport() = default;
+
+    constexpr PrimaryDrawingOrdersSupport(std::initializer_list<OrdersIndexes> l) noexcept
+    {
+        for (auto i : l) {
+            this->set(i);
+        }
+    }
+
+    constexpr PrimaryDrawingOrdersSupport(OrdersIndexes i) noexcept
+    : enable_order_flags(bit(i))
+    {}
+
     bool has(OrdersIndexes idx) const noexcept
     {
-        return this->enable_orders & bit(idx);
+        return this->enable_order_flags & bit(idx);
     }
 
     void set(OrdersIndexes idx) noexcept
     {
-        this->enable_orders |= bit(idx);
+        this->enable_order_flags |= bit(idx);
     }
 
     void clear(OrdersIndexes idx) noexcept
     {
-        this->enable_orders &= ~bit(idx);
+        this->enable_order_flags &= ~bit(idx);
+    }
+
+    PrimaryDrawingOrdersSupport& operator+=(PrimaryDrawingOrdersSupport const& other) noexcept
+    {
+        this->enable_order_flags |= other.enable_order_flags;
+        return *this;
+    }
+
+    PrimaryDrawingOrdersSupport operator+(PrimaryDrawingOrdersSupport const& other) noexcept
+    {
+        auto r = *this;
+        r += other;
+        return *this;
+    }
+
+    PrimaryDrawingOrdersSupport& operator-=(PrimaryDrawingOrdersSupport const& other) noexcept
+    {
+        this->enable_order_flags &= ~other.enable_order_flags;
+        return *this;
+    }
+
+    PrimaryDrawingOrdersSupport operator-(PrimaryDrawingOrdersSupport const& other) noexcept
+    {
+        auto r = *this;
+        r -= other;
+        return *this;
+    }
+
+    uint32_t as_uint() const noexcept
+    {
+        return this->enable_order_flags;
+    }
+
+    constexpr std::size_t size() noexcept
+    {
+        return NB_ORDER_SUPPORT;
     }
 
 private:
     static_assert(NB_ORDER_SUPPORT == 32);
     using bitset = uint32_t;
 
-    static bitset bit(OrdersIndexes idx) noexcept
+    constexpr static bitset bit(OrdersIndexes idx) noexcept
     {
         auto i = bitset(idx);
         assert(i < NB_ORDER_SUPPORT);
         return bitset{1} << i;
     }
 
-    bitset enable_orders = 0;
+    bitset enable_order_flags = 0;
 };
 
 

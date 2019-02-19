@@ -23,4 +23,4 @@ Author(s): Jonathan Poelen
 #include "core/RDP/capabilities/order.hpp"
 #include "mod/rdp/rdp_verbose.hpp"
 
-OrdersSupport parse_extra_orders(char const* extra_orders, RDPVerbose rdp_verbose) noexcept;
+PrimaryDrawingOrdersSupport parse_extra_orders(char const* extra_orders, RDPVerbose rdp_verbose) noexcept;

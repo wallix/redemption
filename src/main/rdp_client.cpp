@@ -231,10 +231,8 @@ int main(int argc, char** argv)
     mod_rdp_params.enable_tls                 = true;
     mod_rdp_params.enable_nla                 = true;
     mod_rdp_params.enable_fastpath            = true;
-    mod_rdp_params.enable_mem3blt             = true;
     mod_rdp_params.enable_new_pointer         = true;
     mod_rdp_params.enable_glyph_cache         = true;
-    mod_rdp_params.enable_ninegrid_bitmap     = true;
     std::string allow_channels                = "*";
     mod_rdp_params.allow_channels             = &allow_channels;
     mod_rdp_params.deny_channels              = nullptr;

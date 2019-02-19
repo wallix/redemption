@@ -22,16 +22,17 @@
   find out the next module to run from context reading
 */
 
+#include "acl/module_manager.hpp"
 #include "configs/config.hpp"
+#include "core/channels_authorizations.hpp"
 #include "core/client_info.hpp"
 #include "core/report_message_api.hpp"
-#include "utils/sugar/unique_fd.hpp"
-#include "utils/sugar/scope_exit.hpp"
-#include "mod/rdp/rdp_params.hpp"
-#include "mod/rdp/rdp.hpp"
 #include "keyboard/keymap2.hpp"
-#include "core/channels_authorizations.hpp"
-#include "acl/module_manager.hpp"
+#include "mod/rdp/parse_extra_orders.hpp"
+#include "mod/rdp/rdp.hpp"
+#include "mod/rdp/rdp_params.hpp"
+#include "utils/sugar/scope_exit.hpp"
+#include "utils/sugar/unique_fd.hpp"
 
 #ifndef __EMSCRIPTEN__
 # include "mod/metrics_hmac.hpp"
@@ -205,7 +206,9 @@ void ModuleManager::create_mod_rdp(
     mod_rdp_params.password_printing_mode              = ini.get<cfg::debug::password>();
     mod_rdp_params.cache_verbose                       = to_verbose_flags(ini.get<cfg::debug::cache>());
 
-    mod_rdp_params.extra_orders                        = ini.get<cfg::mod_rdp::extra_orders>().c_str();
+    mod_rdp_params.primary_drawing_orders_support      += parse_extra_orders(
+        ini.get<cfg::mod_rdp::extra_orders>().c_str(),
+        to_verbose_flags(ini.get<cfg::debug::mod_rdp>()));
 
     mod_rdp_params.bogus_sc_net_size                   = ini.get<cfg::mod_rdp::bogus_sc_net_size>();
     mod_rdp_params.bogus_refresh_rect                  = ini.get<cfg::globals::bogus_refresh_rect>();
@@ -224,16 +227,16 @@ void ModuleManager::create_mod_rdp(
                                                             (CaptureFlags::wrm | CaptureFlags::ocr)) !=
                                                             CaptureFlags::none));
     mod_rdp_params.rail_client_execute               = &rail_client_execute;
-    
+
     mod_rdp_params.client_execute                      = rail_client_execute.get_client_execute();
 
     mod_rdp_params.should_ignore_first_client_execute  = rail_client_execute.should_ignore_first_client_execute();
 
-    mod_rdp_params.remote_program                      = (client_info.remote_program 
-                                                       && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>() 
-                                                       && ((mod_rdp_params.target_application 
-                                                       && (*mod_rdp_params.target_application)) 
-                                                        || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>() 
+    mod_rdp_params.remote_program                      = (client_info.remote_program
+                                                       && ini.get<cfg::mod_rdp::use_native_remoteapp_capability>()
+                                                       && ((mod_rdp_params.target_application
+                                                       && (*mod_rdp_params.target_application))
+                                                        || (ini.get<cfg::mod_rdp::use_client_provided_remoteapp>()
                                                             && not mod_rdp_params.client_execute.exe_or_file.empty())));
     mod_rdp_params.remote_program_enhanced             = client_info.remote_program_enhanced;
     mod_rdp_params.use_client_provided_remoteapp       = ini.get<cfg::mod_rdp::use_client_provided_remoteapp>();

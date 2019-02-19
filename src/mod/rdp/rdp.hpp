@@ -111,7 +111,6 @@ class RDPMetrics;
 #include "mod/rdp/rdp_orders.hpp"
 #include "mod/rdp/rdp_params.hpp"
 #include "mod/rdp/server_transport_context.hpp"
-#include "mod/rdp/parse_extra_orders.hpp"
 
 #include "core/channels_authorizations.hpp"
 #include "utils/genrandom.hpp"
@@ -1930,17 +1929,15 @@ private:
           bool enable_fastpath_client_input_event; // choice of programmer + capability of server
     const bool enable_fastpath_server_update;      // choice of programmer
     const bool enable_glyph_cache;
-    const bool enable_mem3blt;
     const bool enable_new_pointer;
     const bool enable_persistent_disk_bitmap_cache;
     const bool enable_cache_waiting_list;
     const bool persist_bitmap_cache_on_disk;
-    const bool enable_ninegrid_bitmap;
 
     const bool enable_remotefx;
     uint8_t remoteFx_codec_id;
 
-    OrdersSupport extra_orders_support;
+    PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
     uint32_t frameInProgress = false;
     uint32_t currentFrameId = 0;
@@ -2077,15 +2074,13 @@ public:
         , enable_fastpath_client_input_event(false)
         , enable_fastpath_server_update(mod_rdp_params.enable_fastpath)
         , enable_glyph_cache(mod_rdp_params.enable_glyph_cache)
-        , enable_mem3blt(mod_rdp_params.enable_mem3blt)
         , enable_new_pointer(mod_rdp_params.enable_new_pointer)
         , enable_persistent_disk_bitmap_cache(mod_rdp_params.enable_persistent_disk_bitmap_cache)
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
-        , enable_ninegrid_bitmap(mod_rdp_params.enable_ninegrid_bitmap)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
         , remoteFx_codec_id(0)
-        , extra_orders_support(parse_extra_orders(mod_rdp_params.extra_orders, mod_rdp_params.verbose))
+        , primary_drawing_orders_support(mod_rdp_params.primary_drawing_orders_support)
 #ifndef __EMSCRIPTEN__
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
@@ -3528,10 +3523,12 @@ public:
 
 
                 OrdersIndexes const extra_idx[]{
+                    TS_NEG_MEM3BLT_INDEX,
+                    TS_NEG_DRAWNINEGRID_INDEX,
                     TS_NEG_MULTIDSTBLT_INDEX,
-                    TS_NEG_MULTIOPAQUERECT_INDEX,
                     TS_NEG_MULTIPATBLT_INDEX,
                     TS_NEG_MULTISCRBLT_INDEX,
+                    TS_NEG_MULTIOPAQUERECT_INDEX,
                     TS_NEG_POLYGON_SC_INDEX,
                     TS_NEG_POLYGON_CB_INDEX,
                     TS_NEG_POLYLINE_INDEX,
@@ -3539,12 +3536,10 @@ public:
                     TS_NEG_ELLIPSE_CB_INDEX,
                 };
                 for (auto idx : extra_idx) {
-                    order_caps.orderSupport[idx] = this->extra_orders_support.has(idx);
+                    order_caps.orderSupport[idx] = this->primary_drawing_orders_support.has(idx);
                 }
 
                 //order_caps.orderSupport[TS_NEG_FAST_GLYPH_INDEX]         = 1;
-                order_caps.orderSupport[TS_NEG_MEM3BLT_INDEX]            = (this->enable_mem3blt         ? 1 : 0);
-                order_caps.orderSupport[TS_NEG_DRAWNINEGRID_INDEX] = (this->enable_ninegrid_bitmap ? 1 : 0);
                 order_caps.orderSupport[TS_NEG_INDEX_INDEX]              = 1;
                 order_caps.orderSupport[TS_NEG_DSTBLT_INDEX]             = 1;
                 order_caps.orderSupport[TS_NEG_PATBLT_INDEX]             = 1;
@@ -3578,17 +3573,17 @@ public:
                     , TS_NEG_MEM3BLT_INDEX
                     , TS_NEG_DRAWNINEGRID_INDEX
                     , TS_NEG_LINETO_INDEX
-//                    , TS_NEG_MULTI_DRAWNINEGRID_INDEX
-//                    , TS_NEG_SAVEBITMAP_INDEX
+                    // , TS_NEG_MULTI_DRAWNINEGRID_INDEX
+                    // , TS_NEG_SAVEBITMAP_INDEX
                     , TS_NEG_MULTIDSTBLT_INDEX
                     , TS_NEG_MULTIPATBLT_INDEX
                     , TS_NEG_MULTISCRBLT_INDEX
                     , TS_NEG_MULTIOPAQUERECT_INDEX
-//                    , TS_NEG_FAST_INDEX_INDEX
+                    // , TS_NEG_FAST_INDEX_INDEX
                     , TS_NEG_POLYGON_SC_INDEX
                     , TS_NEG_POLYGON_CB_INDEX
                     , TS_NEG_POLYLINE_INDEX
-//                    , TS_NEG_FAST_GLYPH_INDEX
+                    // , TS_NEG_FAST_GLYPH_INDEX
                     , TS_NEG_ELLIPSE_SC_INDEX
                     , TS_NEG_ELLIPSE_CB_INDEX
                     , TS_NEG_INDEX_INDEX
@@ -3769,7 +3764,7 @@ public:
                     }
                 }
 
-                if (this->enable_ninegrid_bitmap) {
+                if (this->primary_drawing_orders_support.has(TS_NEG_DRAWNINEGRID_INDEX)) {
                     DrawNineGridCacheCaps ninegrid_caps(DRAW_NINEGRID_SUPPORTED, 0xffff, 256);
                     confirm_active_pdu.emit_capability_set(ninegrid_caps);
                     if (bool(this->verbose & RDPVerbose::capabilities)) {
