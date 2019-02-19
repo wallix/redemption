@@ -1885,12 +1885,12 @@ private:
     rdp_orders orders;
     RfxDecoder rfxDecoder;
 
-    int share_id;
+    int share_id = 0;
 
     char client_name[128] = {};
 
     const int key_flags;
-    int  last_key_flags_sent = 0;
+    int  last_key_flags_sent;
     bool first_scancode = true;
 
     enum : uint8_t {
@@ -1900,7 +1900,7 @@ private:
         WAITING_GRANT_CONTROL_COOPERATE,
         WAITING_FONT_MAP,
         UP_AND_RUNNING
-    } connection_finalization_state;
+    } connection_finalization_state = EARLY;
 
     Pointer cursors[32];
 
@@ -1928,7 +1928,7 @@ private:
     const bool persist_bitmap_cache_on_disk;
 
     const bool enable_remotefx;
-    uint8_t remoteFx_codec_id;
+    uint8_t remoteFx_codec_id = 0;
 
     PrimaryDrawingOrdersSupport primary_drawing_orders_support;
 
@@ -1945,7 +1945,7 @@ private:
 
     const bool                        experimental_fix_input_event_sync;
 
-    size_t recv_bmp_update;
+    size_t recv_bmp_update = 0;
 
     rdp_mppc_unified_dec mppc_dec;
 
@@ -2049,10 +2049,8 @@ public:
         , orders( mod_rdp_params.target_host, mod_rdp_params.enable_persistent_disk_bitmap_cache
                 , mod_rdp_params.persist_bitmap_cache_on_disk, mod_rdp_params.verbose
                 , report_error_from_reporter(report_message))
-        , share_id(0)
         , key_flags(mod_rdp_params.key_flags)
         , last_key_flags_sent(key_flags)
-        , connection_finalization_state(EARLY)
         , gen(gen)
         , verbose(mod_rdp_params.verbose)
         , cache_verbose(mod_rdp_params.cache_verbose)
@@ -2071,19 +2069,16 @@ public:
         , enable_cache_waiting_list(mod_rdp_params.enable_cache_waiting_list)
         , persist_bitmap_cache_on_disk(mod_rdp_params.persist_bitmap_cache_on_disk)
         , enable_remotefx(mod_rdp_params.enable_remotefx)
-        , remoteFx_codec_id(0)
         , primary_drawing_orders_support(mod_rdp_params.primary_drawing_orders_support)
 #ifndef __EMSCRIPTEN__
         , remoteapp_bypass_legal_notice_delay(mod_rdp_params.remoteapp_bypass_legal_notice_delay)
         , remoteapp_bypass_legal_notice_timeout(mod_rdp_params.remoteapp_bypass_legal_notice_timeout)
 #endif
         , experimental_fix_input_event_sync(mod_rdp_params.experimental_fix_input_event_sync)
-        , recv_bmp_update(0)
         , error_message(mod_rdp_params.error_message)
         , disconnect_on_logon_user_change(mod_rdp_params.disconnect_on_logon_user_change)
         , open_session_timeout(mod_rdp_params.open_session_timeout)
         , session_reactor(session_reactor)
-        //, total_data_received(0)
         , bogus_refresh_rect(mod_rdp_params.bogus_refresh_rect)
         , asynchronous_tasks(session_reactor)
         , lang(mod_rdp_params.lang)
@@ -2757,32 +2752,8 @@ public:
 #endif
             this->report_message.report("CLOSE_SESSION_SUCCESSFUL", "OK.");
 
-            if (!this->session_disconnection_logged) {
-                double seconds = ::difftime(now, this->beginning);
+            this->log_disconnection(now, bool(this->verbose & RDPVerbose::sesprobe));
 
-                char duration[1024];
-                snprintf(duration, sizeof(duration), "%d:%02d:%02d",
-                    (int(seconds) / 3600), ((int(seconds) % 3600) / 60),
-                    (int(seconds) % 60));
-
-                auto info = key_qvalue_pairs({
-                    {"type", "SESSION_DISCONNECTION"},
-                    {"duration", duration},
-                    });
-
-                ArcsightLogInfo arc_info;
-                arc_info.name = "SESSION_DISCONNECTION";
-                arc_info.signatureID = ArcsightLogInfo::SESSION_DISCONNECTION;
-                arc_info.ApplicationProtocol = "rdp";
-                arc_info.endTime = long(seconds);
-
-                this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
-
-                if (bool(this->verbose & RDPVerbose::sesprobe)) {
-                    LOG(LOG_INFO, "%s", info);
-                }
-                this->session_disconnection_logged = true;
-            }
             throw Error(ERR_MCS_APPID_IS_MCS_DPUM);
         }
 
@@ -3735,7 +3706,7 @@ public:
 
                 BitmapCodecCaps bitmap_codec_caps(true);
 
-                if (this->enable_remotefx && (this->remoteFx_codec_id != 1)) {
+                if (this->enable_remotefx && this->remoteFx_codec_id != 1) {
                     bitmap_codec_caps.addCodec(CODEC_GUID_REMOTEFX, this->remoteFx_codec_id);
 
                     FrameAcknowledgeCaps frameAck;
@@ -5990,6 +5961,13 @@ public:
             // this->draw_event(time(nullptr));
             this->send_disconnect_ultimatum();
         }
+
+        this->log_disconnection(now, false);
+    }
+
+private:
+    void log_disconnection(time_t now, bool enable_verbose)
+    {
         if (!this->session_disconnection_logged) {
             double seconds = ::difftime(now, this->beginning);
 
@@ -6013,10 +5991,11 @@ public:
             this->report_message.log6(info, arc_info, this->session_reactor.get_current_time());
 
             this->session_disconnection_logged = true;
+
+            LOG_IF(enable_verbose, LOG_INFO, "%s", info);
         }
     }
 
-private:
     //void send_shutdown_request() {
     //    LOG(LOG_INFO, "SEND SHUTDOWN REQUEST PDU");
     //
